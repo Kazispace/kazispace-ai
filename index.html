@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KaziSpace — Your AI Partner for Career, Learning & Life</title>
+  <meta name="description" content="KaziSpace is the AI-native growth engine for the Global South — your AI partner for career, learning, and life." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange:  #F47920;
+      --green:   #4CAF50;
+      --blue:    #2196F3;
+      --teal:    #26C6DA;
+      --navy:    #0D1B2A;
+      --navy2:   #132237;
+      --white:   #FFFFFF;
+      --gray:    #F5F7FA;
+      --text:    #1A2B3C;
+      --muted:   #6B7A8D;
+      --border:  #E2E8F0;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--white);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(13, 27, 42, 0.96);
+      backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%;
+      height: 68px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    nav .logo-wrap img { height: 38px; display: block; }
+    nav .nav-links { display: flex; gap: 2rem; list-style: none; }
+    nav .nav-links a {
+      color: rgba(255,255,255,0.75);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    nav .nav-links a:hover { color: var(--orange); }
+    nav .cta-btn {
+      background: var(--orange);
+      color: var(--white);
+      border: none; border-radius: 8px;
+      padding: 0.55rem 1.3rem;
+      font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      transition: background .2s, transform .15s;
+    }
+    nav .cta-btn:hover { background: #d96a10; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 60%, #0a2540 100%);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 5% 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(244,121,32,0.08) 0%, transparent 70%);
+    }
+    .hero-content { position: relative; max-width: 820px; }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(244,121,32,0.15);
+      border: 1px solid rgba(244,121,32,0.35);
+      color: var(--orange);
+      font-size: 0.78rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 0.35rem 1rem; border-radius: 50px;
+      margin-bottom: 1.8rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.15;
+      margin-bottom: 1.4rem;
+    }
+    .hero h1 span { color: var(--orange); }
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: rgba(255,255,255,0.7);
+      max-width: 620px;
+      margin: 0 auto 2.5rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--orange);
+      color: var(--white);
+      padding: 0.85rem 2rem;
+      border-radius: 10px; border: none;
+      font-size: 1rem; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 20px rgba(244,121,32,0.35);
+    }
+    .btn-primary:hover { background: #d96a10; transform: translateY(-2px); box-shadow: 0 6px 28px rgba(244,121,32,0.45); }
+    .btn-outline {
+      background: transparent;
+      color: rgba(255,255,255,0.85);
+      padding: 0.85rem 2rem;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.25);
+      font-size: 1rem; font-weight: 500;
+      cursor: pointer; text-decoration: none;
+      transition: border-color .2s, color .2s, transform .15s;
+    }
+    .btn-outline:hover { border-color: var(--orange); color: var(--orange); transform: translateY(-2px); }
+
+    /* ── SECTION BASE ── */
+    section { padding: 96px 5%; }
+    .section-label {
+      font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--orange); margin-bottom: 0.75rem;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      font-weight: 800; color: var(--navy);
+      margin-bottom: 1rem; line-height: 1.2;
+    }
+    .section-sub {
+      font-size: 1.05rem; color: var(--muted);
+      max-width: 600px; margin: 0 auto 3.5rem;
+    }
+    .center { text-align: center; }
+
+    /* ── MARKET ── */
+    .market { background: var(--gray); }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem; margin-top: 3rem;
+    }
+    .stat-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      border: 1px solid var(--border);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+    .stat-num {
+      font-size: 2.4rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--orange), var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.4rem;
+    }
+    .stat-label { font-size: 0.9rem; color: var(--muted); font-weight: 500; }
+
+    /* ── PARTNERS (trio) ── */
+    .partners-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem; margin-top: 1rem;
+    }
+    .partner-card {
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      position: relative; overflow: hidden;
+      transition: transform .25s, box-shadow .25s;
+    }
+    .partner-card:hover { transform: translateY(-6px); box-shadow: 0 20px 48px rgba(0,0,0,0.12); }
+    .partner-card.career  { background: linear-gradient(135deg, #fff7f0, #fff); border: 1px solid #fde0c8; }
+    .partner-card.learning{ background: linear-gradient(135deg, #f0fff4, #fff); border: 1px solid #c6f0d0; }
+    .partner-card.social  { background: linear-gradient(135deg, #f0f8ff, #fff); border: 1px solid #c0dcf8; }
+    .partner-icon {
+      width: 56px; height: 56px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; margin-bottom: 1.2rem;
+    }
+    .career  .partner-icon { background: rgba(244,121,32,0.12); }
+    .learning .partner-icon { background: rgba(76,175,80,0.12); }
+    .social  .partner-icon { background: rgba(33,150,243,0.12); }
+    .partner-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.6rem; color: var(--navy); }
+    .partner-card p  { font-size: 0.95rem; color: var(--muted); line-height: 1.65; }
+    .partner-tag {
+      display: inline-block; margin-top: 1.2rem;
+      font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 0.3rem 0.9rem; border-radius: 50px;
+    }
+    .career  .partner-tag { background: rgba(244,121,32,0.12); color: var(--orange); }
+    .learning .partner-tag { background: rgba(76,175,80,0.12);  color: #2e7d32; }
+    .social  .partner-tag { background: rgba(33,150,243,0.12);  color: #1565c0; }
+
+    /* ── AI TRIO ── */
+    .trio { background: var(--navy); }
+    .trio .section-title { color: var(--white); }
+    .trio .section-sub   { color: rgba(255,255,255,0.55); }
+    .trio .section-label { color: var(--orange); }
+    .trio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    .trio-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px; padding: 2.2rem 1.8rem;
+      transition: background .25s, transform .25s;
+    }
+    .trio-card:hover { background: rgba(255,255,255,0.08); transform: translateY(-4px); }
+    .trio-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1.2rem;
+    }
+    .ali-av  { background: linear-gradient(135deg, var(--orange), #f9a825); }
+    .max-av  { background: linear-gradient(135deg, var(--green), #1b5e20); }
+    .aida-av { background: linear-gradient(135deg, var(--blue), var(--teal)); }
+    .trio-card h3 { font-size: 1.15rem; font-weight: 700; color: var(--white); margin-bottom: 0.5rem; }
+    .trio-card .role { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.9rem; }
+    .ali-role  { color: var(--orange); }
+    .max-role  { color: var(--green); }
+    .aida-role { color: var(--teal); }
+    .trio-card p { font-size: 0.92rem; color: rgba(255,255,255,0.55); line-height: 1.65; }
+
+    /* ── MARKET FOCUS ── */
+    .focus-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem; margin-top: 1rem;
+    }
+    .focus-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.8rem 1.5rem;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .focus-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+    .focus-flag { font-size: 2rem; margin-bottom: 0.8rem; }
+    .focus-card h4 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 0.4rem; }
+    .focus-card p  { font-size: 0.88rem; color: var(--muted); }
+
+    /* ── FOUNDER ── */
+    .founder { background: var(--gray); }
+    .founder-inner {
+      display: flex; gap: 4rem; align-items: center;
+      max-width: 900px; margin: 0 auto;
+      flex-wrap: wrap;
+    }
+    .founder-avatar {
+      width: 140px; height: 140px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), var(--green));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem; flex-shrink: 0;
+      box-shadow: 0 8px 32px rgba(244,121,32,0.3);
+    }
+    .founder-info h3 { font-size: 1.6rem; font-weight: 800; color: var(--navy); margin-bottom: 0.3rem; }
+    .founder-info .title { font-size: 1rem; color: var(--orange); font-weight: 600; margin-bottom: 1rem; }
+    .founder-info p { font-size: 0.97rem; color: var(--muted); line-height: 1.7; margin-bottom: 1rem; }
+    .founder-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .tag {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 50px; padding: 0.3rem 0.9rem;
+      font-size: 0.8rem; font-weight: 500; color: var(--text);
+    }
+
+    /* ── CONTACT ── */
+    .contact { background: var(--navy); text-align: center; }
+    .contact .section-title { color: var(--white); }
+    .contact .section-sub   { color: rgba(255,255,255,0.55); }
+    .contact .section-label { color: var(--orange); }
+    .contact-cards {
+      display: flex; gap: 1.5rem; justify-content: center;
+      flex-wrap: wrap; margin-top: 2.5rem;
+    }
+    .contact-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 1.8rem 2.2rem;
+      text-align: center; text-decoration: none;
+      transition: background .2s, transform .2s;
+      min-width: 200px;
+    }
+    .contact-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-4px); }
+    .contact-card .cc-icon { font-size: 2rem; margin-bottom: 0.8rem; }
+    .contact-card .cc-label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange); margin-bottom: 0.4rem; }
+    .contact-card .cc-value { font-size: 0.95rem; color: rgba(255,255,255,0.8); font-weight: 500; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #060e18;
+      padding: 2rem 5%;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    footer img { height: 28px; opacity: 0.7; }
+    footer p { font-size: 0.82rem; color: rgba(255,255,255,0.35); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav .nav-links { display: none; }
+      .founder-inner { flex-direction: column; text-align: center; }
+      .founder-tags { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo-wrap">
+      <img src="logo.png" alt="KaziSpace Logo" />
+    </div>
+    <ul class="nav-links">
+      <li><a href="#partners">What We Do</a></li>
+      <li><a href="#trio">AI Trio</a></li>
+      <li><a href="#markets">Markets</a></li>
+      <li><a href="#founder">Founder</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a href="#contact" class="cta-btn">Get in Touch</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">🌍 AI-Native · Global South · Next Billion Users</div>
+      <h1>The AI Growth Engine<br/>for the <span>Next Billion</span></h1>
+      <p>KaziSpace empowers the youth of the Global South with AI-powered career, learning, and life companions — built for their language, culture, and ambitions.</p>
+      <div class="hero-actions">
+        <a href="#partners" class="btn-primary">Explore the Platform</a>
+        <a href="#contact" class="btn-outline">Connect with Us</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKET STATS -->
+  <section class="market" id="market">
+    <div class="center">
+      <div class="section-label">The Opportunity</div>
+      <h2 class="section-title">A $10T Market Being Ignored by Big Tech</h2>
+      <p class="section-sub">4.8 billion people across the Global South — young, mobile-first, and deeply underserved by existing AI products.</p>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num">4.8B+</div>
+        <div class="stat-label">Population in Target Markets</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$10T+</div>
+        <div class="stat-label">Digital Economy Potential</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">85%</div>
+        <div class="stat-label">Population Under 35</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">$19.2B</div>
+        <div class="stat-label">Central Asia E-Commerce (2025)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">28%</div>
+        <div class="stat-label">E-Commerce CAGR to 2034</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THREE PARTNERS -->
+  <section id="partners">
+    <div class="center">
+      <div class="section-label">What We Do</div>
+      <h2 class="section-title">Your AI Partner for Career, Learning & Life</h2>
+      <p class="section-sub">Three companion experiences, one platform — designed to help young people in emerging markets achieve their full potential.</p>
+    </div>
+    <div class="partners-grid">
+      <div class="partner-card career">
+        <div class="partner-icon">💼</div>
+        <h3>AI Career Partner</h3>
+        <p>Craft winning resumes, find global freelance opportunities, prepare for interviews, and build the professional profile that opens doors — in your language.</p>
+        <span class="partner-tag">Jobs · Freelance · Upwork</span>
+      </div>
+      <div class="partner-card learning">
+        <div class="partner-icon">📚</div>
+        <h3>AI Learning Partner</h3>
+        <p>Master English, coding, and in-demand skills through personalized AI-powered learning paths. Every lesson builds a verified digital asset you own.</p>
+        <span class="partner-tag">English · Coding · Skills</span>
+      </div>
+      <div class="partner-card social">
+        <div class="partner-icon">🤝</div>
+        <h3>AI Life Companion</h3>
+        <p>Always available, never judgmental. Your AI companion understands your culture, speaks your language, and supports you through every step of your journey.</p>
+        <span class="partner-tag">Aida · Companion · Network</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI TRIO -->
+  <section class="trio" id="trio">
+    <div class="center">
+      <div class="section-label">The AI Trio</div>
+      <h2 class="section-title">Meet Your AI Team</h2>
+      <p class="section-sub">Three specialized AI agents working together to discover opportunities, build assets, and grow your network.</p>
+    </div>
+    <div class="trio-grid">
+      <div class="trio-card">
+        <div class="trio-avatar ali-av">🔍</div>
+        <h3>Ali</h3>
+        <div class="role ali-role">AI Researcher · Opportunity Finder</div>
+        <p>Ali scans the global landscape to surface the right jobs, scholarships, freelance gigs, and market opportunities tailored to your profile and goals.</p>
+      </div>
+      <div class="trio-card">
+        <div class="trio-avatar max-av">⚡</div>
+        <h3>Max</h3>
+        <div class="role max-role">AI Asset Builder · Growth Engine</div>
+        <p>Max transforms every interaction into a lasting digital asset — your resume, portfolio, skill certificates, and creative work — building your personal wealth of knowledge.</p>
+      </div>
+      <div class="trio-card">
+        <div class="trio-avatar aida-av">🌐</div>
+        <h3>Aida</h3>
+        <div class="role aida-role">AI Networker · Life Companion</div>
+        <p>Aida connects you with people, communities, and opportunities that matter. She remembers your journey, celebrates your wins, and supports you through every challenge.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKET FOCUS -->
+  <section id="markets">
+    <div class="center">
+      <div class="section-label">Market Focus</div>
+      <h2 class="section-title">Built for the Global South</h2>
+      <p class="section-sub">Starting with Central Asia and expanding across Latin America, Africa, and Southeast Asia — markets where AI can create the most transformative impact.</p>
+    </div>
+    <div class="focus-grid">
+      <div class="focus-card">
+        <div class="focus-flag">🇰🇿</div>
+        <h4>Kazakhstan</h4>
+        <p>AI Year 2026 declared. Growing tech hub with 13.7% AI adoption rate and rising.</p>
+      </div>
+      <div class="focus-card">
+        <div class="focus-flag">🇺🇿</div>
+        <h4>Uzbekistan</h4>
+        <p>70M+ annual labor market entrants. $18.9B in remittances. Massive digital upskilling demand.</p>
+      </div>
+      <div class="focus-card">
+        <div class="focus-flag">🌎</div>
+        <h4>Latin America</h4>
+        <p>650M+ population, mobile-first economy, rapidly growing freelance and creator markets.</p>
+      </div>
+      <div class="focus-card">
+        <div class="focus-flag">🌍</div>
+        <h4>Africa</h4>
+        <p>Youngest continent on earth. 60% under 25. The next frontier for digital economic empowerment.</p>
+      </div>
+      <div class="focus-card">
+        <div class="focus-flag">🌏</div>
+        <h4>Southeast Asia</h4>
+        <p>$300B+ internet economy. High mobile penetration and strong demand for AI-powered tools.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOUNDER -->
+  <section class="founder" id="founder">
+    <div class="center" style="margin-bottom: 3rem;">
+      <div class="section-label">The Founder</div>
+      <h2 class="section-title">Built by Someone Who Understands Both Worlds</h2>
+    </div>
+    <div class="founder-inner">
+      <div class="founder-avatar">👨‍💻</div>
+      <div class="founder-info">
+        <h3>Dr. Shouwen Lai</h3>
+        <div class="title">Founder & CEO, KaziSpace</div>
+        <p>Computer Science PhD from Virginia Tech. Former AI R&D Director at Chery and Xpeng Motors, leading teams of 100+ engineers and holding 10+ patents. Dr. Lai combines deep technical expertise with a mission-driven vision to democratize AI for the next billion users.</p>
+        <div class="founder-tags">
+          <span class="tag">Virginia Tech PhD</span>
+          <span class="tag">AI R&D Director</span>
+          <span class="tag">10+ Patents</span>
+          <span class="tag">100+ Team Leadership</span>
+          <span class="tag">Chery · Xpeng</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="contact" id="contact">
+    <div class="section-label">Get in Touch</div>
+    <h2 class="section-title">Let's Build the Future Together</h2>
+    <p class="section-sub">Whether you're an investor, partner, or potential team member — we'd love to hear from you.</p>
+    <div class="contact-cards">
+      <a href="mailto:owen@kazirobotcis.ai" class="contact-card">
+        <div class="cc-icon">✉️</div>
+        <div class="cc-label">Email</div>
+        <div class="cc-value">owen@kazirobotcis.ai</div>
+      </a>
+      <a href="https://www.linkedin.com/in/shouwenlai/" target="_blank" rel="noopener" class="contact-card">
+        <div class="cc-icon">💼</div>
+        <div class="cc-label">LinkedIn</div>
+        <div class="cc-value">linkedin.com/in/shouwenlai</div>
+      </a>
+      <a href="https://kazispace.ai" class="contact-card">
+        <div class="cc-icon">🌐</div>
+        <div class="cc-label">Website</div>
+        <div class="cc-value">kazispace.ai</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <img src="logo.png" alt="KaziSpace" />
+    <p>© 2026 KaziSpace. All rights reserved. · Empowering the Next Billion.</p>
+  </footer>
+
+</body>
+</html>
