@@ -412,6 +412,56 @@
       padding: 0 0.25rem;
     }
 
+    /* ── TELEGRAM LOGIN WIDGET ── */
+    .tg-login-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.6rem 1.2rem;
+      background: linear-gradient(90deg, #0D1B2A 0%, #132237 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+    .tg-login-bar.hidden { display: none; }
+    .tg-login-info {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.65);
+      flex: 1;
+    }
+    .tg-login-info strong { color: var(--white); }
+    .tg-user-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: var(--white);
+    }
+    .tg-user-badge .tg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+    .tg-logout-btn {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.4);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      transition: color 0.2s;
+    }
+    .tg-logout-btn:hover { color: rgba(255,255,255,0.8); }
+
     /* ── TOAST ── */
     .toast {
       position: fixed;
@@ -470,6 +520,25 @@
     </div>
   </header>
 
+  <!-- TELEGRAM LOGIN BAR -->
+  <div class="tg-login-bar" id="tg-login-bar">
+    <div class="tg-login-info">
+      <strong>Sign in with Telegram</strong> to save your chat history and sync with the Bot
+    </div>
+    <div id="tg-widget-container"></div>
+  </div>
+
+  <!-- TELEGRAM USER BADGE (shown after login) -->
+  <div class="tg-login-bar hidden" id="tg-user-bar">
+    <div class="tg-user-badge">
+      <div class="tg-avatar" id="tg-avatar-initials">?</div>
+      <span id="tg-user-name">Loading...</span>
+      <span style="color:rgba(255,255,255,0.3)">·</span>
+      <span style="color:#22c55e;font-size:0.75rem;">✓ Telegram linked</span>
+    </div>
+    <button class="tg-logout-btn" onclick="logoutTelegram()">Sign out</button>
+  </div>
+
   <!-- CREDITS BAR -->
   <div class="credits-bar" id="credits-bar" style="display:none;">
     <span>Free resume optimizations remaining:</span>
@@ -520,7 +589,8 @@
 
 <script>
   // ── CONFIG ──────────────────────────────────────────────────────────────
-  const API_BASE = 'https://bot.kazispace.ai';
+  const API_BASE  = 'https://bot.kazispace.ai';
+  const TG_BOT_NAME = 'KaziSpaceBot';  // Must match @username in BotFather
 
   // Generate or restore a persistent web user ID
   function getWebUserId() {
@@ -546,8 +616,80 @@
   const SESSION_ID  = getSessionId();
 
   // ── STATE ────────────────────────────────────────────────────────────────
-  let isLoading = false;
-  let userCredits = null;
+  let isLoading    = false;
+  let userCredits  = null;
+  let tgUser       = null;  // Telegram user object after login
+
+  // ── TELEGRAM LOGIN ───────────────────────────────────────────────────────
+  function initTelegramWidget() {
+    const stored = localStorage.getItem('kazi_tg_user');
+    if (stored) {
+      try {
+        tgUser = JSON.parse(stored);
+        showTgUserBadge(tgUser);
+        return;
+      } catch { localStorage.removeItem('kazi_tg_user'); }
+    }
+
+    // Inject Telegram Login Widget script
+    const script = document.createElement('script');
+    script.async = true;
+    script.src   = 'https://telegram.org/js/telegram-widget.js?22';
+    script.setAttribute('data-telegram-login', TG_BOT_NAME);
+    script.setAttribute('data-size', 'small');
+    script.setAttribute('data-radius', '6');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+    script.setAttribute('data-request-access', 'write');
+    document.getElementById('tg-widget-container').appendChild(script);
+  }
+
+  // Called by Telegram Widget after user authorizes
+  async function onTelegramAuth(user) {
+    try {
+      const payload = { ...user, web_user_id: WEB_USER_ID };
+      const res = await fetch(API_BASE + '/api/v1/auth/telegram', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('Auth failed');
+      const data = await res.json();
+
+      // Persist login
+      tgUser = { ...user, ...data };
+      localStorage.setItem('kazi_tg_user', JSON.stringify(tgUser));
+
+      // Update credits from server
+      if (data.credits_left !== undefined) {
+        userCredits = data.credits_left;
+        updateCreditsBar();
+      }
+
+      showTgUserBadge(tgUser);
+      showToast('✅ Telegram account linked!');
+    } catch (e) {
+      showToast('⚠️ Login failed. Please try again.');
+    }
+  }
+
+  function showTgUserBadge(user) {
+    const name = user.first_name || user.display_name || 'User';
+    document.getElementById('tg-login-bar').classList.add('hidden');
+    document.getElementById('tg-user-bar').classList.remove('hidden');
+    document.getElementById('tg-user-name').textContent = name;
+    document.getElementById('tg-avatar-initials').textContent = name.charAt(0).toUpperCase();
+  }
+
+  function logoutTelegram() {
+    localStorage.removeItem('kazi_tg_user');
+    tgUser = null;
+    document.getElementById('tg-user-bar').classList.add('hidden');
+    document.getElementById('tg-login-bar').classList.remove('hidden');
+    // Re-init widget
+    document.getElementById('tg-widget-container').innerHTML = '';
+    initTelegramWidget();
+    showToast('Signed out from Telegram');
+  }
 
   // ── DOM REFS ─────────────────────────────────────────────────────────────
   const messagesEl   = document.getElementById('messages');
@@ -813,6 +955,7 @@
     await checkHealth();
     await registerUser();
     await loadHistory();
+    initTelegramWidget();  // Show login bar or restore Telegram session
     inputEl.focus();
   }
 
