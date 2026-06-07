@@ -461,6 +461,23 @@
       transition: color 0.2s;
     }
     .tg-logout-btn:hover { color: rgba(255,255,255,0.8); }
+    .tg-deeplink-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: #229ED9;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .tg-deeplink-btn:hover { background: #1a8bbf; transform: scale(1.03); }
+    .tg-deeplink-btn:disabled { background: #666; cursor: not-allowed; transform: none; }
 
     /* ── TOAST ── */
     .toast {
@@ -620,7 +637,10 @@
   let userCredits  = null;
   let tgUser       = null;  // Telegram user object after login
 
-  // ── TELEGRAM LOGIN ───────────────────────────────────────────────────────
+  // ── TELEGRAM LOGIN (Deep-link flow — works on mobile & desktop) ─────────────
+  let _pollInterval = null;
+  let _loginToken   = null;
+
   function initTelegramWidget() {
     const stored = localStorage.getItem('kazi_tg_user');
     if (stored) {
@@ -630,46 +650,101 @@
         return;
       } catch { localStorage.removeItem('kazi_tg_user'); }
     }
-
-    // Inject Telegram Login Widget script
-    const script = document.createElement('script');
-    script.async = true;
-    script.src   = 'https://telegram.org/js/telegram-widget.js?22';
-    script.setAttribute('data-telegram-login', TG_BOT_NAME);
-    script.setAttribute('data-size', 'small');
-    script.setAttribute('data-radius', '6');
-    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-    script.setAttribute('data-request-access', 'write');
-    document.getElementById('tg-widget-container').appendChild(script);
+    // Show the deep-link login button
+    renderLoginButton();
   }
 
-  // Called by Telegram Widget after user authorizes
-  async function onTelegramAuth(user) {
+  function renderLoginButton() {
+    const container = document.getElementById('tg-widget-container');
+    container.innerHTML = `
+      <button class="tg-deeplink-btn" id="tg-deeplink-btn" onclick="startTelegramLogin()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" style="flex-shrink:0">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.04 9.613c-.152.67-.548.834-1.11.518l-3.074-2.265-1.483 1.428c-.164.164-.302.302-.619.302l.22-3.123 5.682-5.133c.247-.22-.054-.342-.384-.122L7.19 14.4l-3.04-.95c-.66-.207-.673-.66.138-.977l11.878-4.578c.55-.2 1.03.134.396.353z"/>
+        </svg>
+        Sign in with Telegram
+      </button>
+    `;
+  }
+
+  async function startTelegramLogin() {
+    const btn = document.getElementById('tg-deeplink-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Opening Telegram...'; }
+
     try {
-      const payload = { ...user, web_user_id: WEB_USER_ID };
-      const res = await fetch(API_BASE + '/api/v1/auth/telegram', {
+      // Step 1: Get one-time token + deep link from backend
+      const res = await fetch(API_BASE + '/api/v1/auth/telegram/init', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
+        body:    JSON.stringify({ web_user_id: WEB_USER_ID }),
       });
-      if (!res.ok) throw new Error('Auth failed');
-      const data = await res.json();
+      if (!res.ok) throw new Error('Init failed');
+      const { token, deep_link } = await res.json();
+      _loginToken = token;
 
-      // Persist login
-      tgUser = { ...user, ...data };
-      localStorage.setItem('kazi_tg_user', JSON.stringify(tgUser));
+      // Step 2: Open Telegram deep link
+      window.open(deep_link, '_blank');
 
-      // Update credits from server
-      if (data.credits_left !== undefined) {
-        userCredits = data.credits_left;
-        updateCreditsBar();
-      }
+      // Step 3: Start polling for login confirmation
+      showToast('⏳ Waiting for Telegram confirmation...');
+      startPolling(token);
 
-      showTgUserBadge(tgUser);
-      showToast('✅ Telegram account linked!');
+      // Update button state
+      const container = document.getElementById('tg-widget-container');
+      container.innerHTML = `
+        <span style="font-size:0.75rem;color:rgba(255,255,255,0.6);">
+          ⏳ Waiting… <button onclick="cancelLogin()" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.72rem;">Cancel</button>
+        </span>
+      `;
     } catch (e) {
-      showToast('⚠️ Login failed. Please try again.');
+      showToast('⚠️ Could not start login. Please try again.');
+      renderLoginButton();
     }
+  }
+
+  function startPolling(token) {
+    if (_pollInterval) clearInterval(_pollInterval);
+    let attempts = 0;
+    const maxAttempts = 60; // 2 minutes at 2s intervals
+
+    _pollInterval = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(_pollInterval);
+        showToast('⚠️ Login timed out. Please try again.');
+        renderLoginButton();
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/telegram/poll/${token}`);
+        if (res.status === 404 || res.status === 410) {
+          clearInterval(_pollInterval);
+          showToast('⚠️ Login link expired. Please try again.');
+          renderLoginButton();
+          return;
+        }
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === 'ok') {
+          clearInterval(_pollInterval);
+          // Persist login
+          tgUser = { display_name: data.display_name, user_id: data.user_id };
+          localStorage.setItem('kazi_tg_user', JSON.stringify(tgUser));
+          if (data.credits_left !== undefined) {
+            userCredits = data.credits_left;
+            updateCreditsBar();
+          }
+          showTgUserBadge(tgUser);
+          showToast('✅ Telegram account linked!');
+        }
+      } catch { /* network hiccup, retry next interval */ }
+    }, 2000);
+  }
+
+  function cancelLogin() {
+    if (_pollInterval) clearInterval(_pollInterval);
+    _loginToken = null;
+    renderLoginButton();
+    showToast('Login cancelled');
   }
 
   function showTgUserBadge(user) {
@@ -681,13 +756,12 @@
   }
 
   function logoutTelegram() {
+    if (_pollInterval) clearInterval(_pollInterval);
     localStorage.removeItem('kazi_tg_user');
     tgUser = null;
     document.getElementById('tg-user-bar').classList.add('hidden');
     document.getElementById('tg-login-bar').classList.remove('hidden');
-    // Re-init widget
-    document.getElementById('tg-widget-container').innerHTML = '';
-    initTelegramWidget();
+    renderLoginButton();
     showToast('Signed out from Telegram');
   }
 
