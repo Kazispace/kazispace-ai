@@ -8,11 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- marked.js for Markdown rendering -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --orange:   #F47920;
       --orange-d: #d96a10;
@@ -20,932 +18,647 @@
       --navy2:    #132237;
       --blue:     #1a56db;
       --blue-d:   #1447c0;
-      --white:    #FFFFFF;
-      --gray-bg:  #F5F7FA;
-      --gray-1:   #E2E8F0;
-      --gray-2:   #CBD5E1;
-      --text:     #1A2B3C;
-      --muted:    #6B7A8D;
-      --green:    #22c55e;
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --surface2: #1c2128;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --success:  #3fb950;
+      --danger:   #f85149;
       --radius:   12px;
+      --font:     'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
-
-    html, body {
-      font-family: 'Inter', sans-serif;
-      background: var(--gray-bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    html, body { font-family: var(--font); background: var(--bg); color: var(--text); height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
 
     /* ── NAV ── */
-    nav {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(13,27,42,0.97);
-      backdrop-filter: blur(12px);
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 5%;
-      height: 64px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-    .nav-logo { display: flex; align-items: center; gap: 0.8rem; text-decoration: none; }
-    .nav-logo img { height: 30px; }
-    .nav-logo span { color: rgba(255,255,255,0.85); font-size: 0.9rem; font-weight: 600; }
-    .nav-right { display: flex; align-items: center; gap: 0.75rem; }
-    .nav-link {
-      color: rgba(255,255,255,0.65); text-decoration: none;
-      font-size: 0.85rem; font-weight: 500;
-      transition: color .2s;
-    }
-    .nav-link:hover { color: var(--orange); }
-    .nav-btn {
-      background: var(--orange); color: var(--white);
-      border: none; border-radius: 8px;
-      padding: 0.45rem 1.1rem;
-      font-size: 0.85rem; font-weight: 600;
-      cursor: pointer; text-decoration: none;
-      transition: background .2s;
-    }
-    .nav-btn:hover { background: var(--orange-d); }
+    nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; height: 52px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .nav-logo { font-weight: 700; font-size: 1.1rem; color: var(--text); text-decoration: none; }
+    .nav-logo em { color: var(--orange); font-style: normal; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-link { color: var(--muted); text-decoration: none; font-size: 0.85rem; transition: color .2s; }
+    .nav-link:hover { color: var(--text); }
+    .credits-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 0.8rem; color: var(--muted); display: none; }
+    .credits-badge span { color: var(--success); font-weight: 600; }
+
+    /* ── LOGIN BANNER ── */
+    #login-banner { background: linear-gradient(90deg,rgba(244,121,32,.12),transparent); border-bottom: 1px solid var(--border); padding: 10px 20px; display: none; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
+    #login-banner p { font-size: 0.85rem; color: var(--muted); }
+    #login-banner p strong { color: var(--text); }
+    .btn-tg-login { background: #229ED9; color: #fff; border: none; border-radius: 8px; padding: 7px 16px; font-size: 0.82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .btn-tg-login:hover { background: #1a8fc4; }
 
     /* ── MAIN LAYOUT ── */
-    .page {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 2.5rem 1.5rem 4rem;
-    }
+    .main { flex: 1; display: flex; overflow: hidden; }
 
-    /* ── PAGE HEADER ── */
-    .page-header {
-      text-align: center;
-      margin-bottom: 2.5rem;
-    }
-    .page-header h1 {
-      font-size: 2rem; font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 0.5rem;
-    }
-    .page-header p {
-      color: var(--muted); font-size: 1rem;
-      max-width: 520px; margin: 0 auto;
-    }
+    /* ── CHAT PANEL ── */
+    .chat-panel { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .chat-header { padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
+    .chat-header-left h2 { font-size: 1rem; font-weight: 600; }
+    .chat-header-left .subtitle { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+    .btn-new-cv { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 5px 12px; font-size: 0.8rem; cursor: pointer; transition: all .2s; }
+    .btn-new-cv:hover { border-color: var(--orange); color: var(--orange); }
 
-    /* ── AUTH BANNER ── */
-    .auth-banner {
-      background: #fff8f0;
-      border: 1.5px solid #fcd9b0;
-      border-radius: var(--radius);
-      padding: 1rem 1.5rem;
-      display: flex; align-items: center; gap: 1rem;
-      margin-bottom: 2rem;
-      font-size: 0.9rem;
-    }
-    .auth-banner.hidden { display: none; }
-    .auth-banner .auth-icon { font-size: 1.4rem; flex-shrink: 0; }
-    .auth-banner p { flex: 1; color: var(--text); }
-    .auth-banner a { color: var(--orange); font-weight: 600; text-decoration: none; }
-    .auth-banner a:hover { text-decoration: underline; }
+    /* ── MESSAGES ── */
+    .messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    /* ── TWO-COLUMN LAYOUT ── */
-    .cv-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      align-items: start;
-    }
-    @media (max-width: 768px) {
-      .cv-layout { grid-template-columns: 1fr; }
-    }
+    /* ── BUBBLES ── */
+    .bubble-row { display: flex; gap: 10px; max-width: 680px; }
+    .bubble-row.user { flex-direction: row-reverse; align-self: flex-end; }
+    .bubble-row.bot  { align-self: flex-start; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .avatar.bot-av  { background: linear-gradient(135deg,var(--orange),#c0392b); }
+    .avatar.user-av { background: var(--surface2); border: 1px solid var(--border); }
+    .bubble { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; font-size: 0.9rem; line-height: 1.6; max-width: 540px; }
+    .bubble-row.user .bubble { background: var(--blue); border-color: var(--blue); color: #fff; border-radius: var(--radius) var(--radius) 4px var(--radius); }
+    .bubble-row.bot  .bubble { border-radius: 4px var(--radius) var(--radius) var(--radius); }
+    .bubble h1,.bubble h2,.bubble h3 { margin: 8px 0 4px; }
+    .bubble h1 { font-size: 1.05rem; }
+    .bubble h2 { font-size: 0.9rem; color: #60a5fa; border-bottom: 1px solid var(--border); padding-bottom: 3px; }
+    .bubble h3 { font-size: 0.85rem; }
+    .bubble ul { padding-left: 16px; margin: 4px 0; }
+    .bubble li { margin-bottom: 2px; }
+    .bubble p { margin-bottom: 5px; }
+    .bubble strong { font-weight: 600; }
 
-    /* ── FORM CARD ── */
-    .form-card {
-      background: var(--white);
-      border-radius: var(--radius);
-      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-      overflow: hidden;
-    }
-    .form-card-header {
-      background: var(--navy);
-      padding: 1.25rem 1.5rem;
-      display: flex; align-items: center; gap: 0.75rem;
-    }
-    .form-card-header h2 {
-      color: var(--white); font-size: 1rem; font-weight: 600;
-    }
-    .form-card-header .step-badge {
-      background: var(--orange);
-      color: var(--white);
-      font-size: 0.72rem; font-weight: 700;
-      padding: 0.2rem 0.6rem;
-      border-radius: 20px;
-      margin-left: auto;
-    }
+    /* ── CHIPS ── */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 20px; padding: 6px 14px; font-size: 0.82rem; cursor: pointer; transition: all .15s; white-space: nowrap; }
+    .chip:hover { border-color: var(--orange); color: var(--orange); }
+    .chip.selected { background: var(--orange); border-color: var(--orange); color: #fff; }
+    .chip.disabled { opacity: .4; pointer-events: none; }
 
-    /* ── STEP PROGRESS ── */
-    .step-progress {
-      display: flex;
-      padding: 1.25rem 1.5rem 0;
-      gap: 0.4rem;
-    }
-    .step-dot {
-      flex: 1; height: 4px; border-radius: 2px;
-      background: var(--gray-1);
-      transition: background .3s;
-    }
-    .step-dot.active { background: var(--orange); }
-    .step-dot.done   { background: var(--green); }
+    /* ── TYPING INDICATOR ── */
+    .typing-row { display: flex; gap: 10px; align-self: flex-start; }
+    .typing-bubble { background: var(--surface); border: 1px solid var(--border); border-radius: 4px var(--radius) var(--radius) var(--radius); padding: 12px 16px; display: flex; gap: 5px; align-items: center; }
+    .typing-dot { width: 7px; height: 7px; background: var(--muted); border-radius: 50%; animation: bounce 1.2s infinite; }
+    .typing-dot:nth-child(2) { animation-delay: .2s; }
+    .typing-dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
 
-    /* ── FORM BODY ── */
-    .form-body { padding: 1.5rem; }
+    /* ── INPUT BAR ── */
+    .input-bar { padding: 12px 20px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; gap: 10px; align-items: flex-end; }
+    #msg-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 14px; font-size: 0.9rem; resize: none; max-height: 120px; font-family: var(--font); line-height: 1.5; }
+    #msg-input:focus { outline: none; border-color: var(--orange); }
+    #msg-input::placeholder { color: var(--muted); }
+    #msg-input:disabled { opacity: .5; cursor: not-allowed; }
+    #send-btn { background: var(--orange); border: none; color: #fff; border-radius: 10px; width: 42px; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s; }
+    #send-btn:hover { background: var(--orange-d); }
+    #send-btn:disabled { opacity: .4; pointer-events: none; }
 
-    .step-panel { display: none; }
-    .step-panel.active { display: block; }
-
-    .step-label {
-      font-size: 0.78rem; font-weight: 600;
-      color: var(--orange); text-transform: uppercase;
-      letter-spacing: 0.05em; margin-bottom: 0.4rem;
-    }
-    .step-title {
-      font-size: 1.05rem; font-weight: 700;
-      color: var(--navy); margin-bottom: 0.4rem;
-    }
-    .step-hint {
-      font-size: 0.82rem; color: var(--muted);
-      margin-bottom: 1.1rem; line-height: 1.5;
-    }
-
-    label {
-      display: block;
-      font-size: 0.82rem; font-weight: 600;
-      color: var(--text); margin-bottom: 0.35rem;
-    }
-    input[type="text"], textarea, select {
-      width: 100%;
-      border: 1.5px solid var(--gray-1);
-      border-radius: 8px;
-      padding: 0.65rem 0.9rem;
-      font-size: 0.9rem;
-      font-family: inherit;
-      color: var(--text);
-      background: var(--white);
-      transition: border-color .2s, box-shadow .2s;
-      resize: vertical;
-    }
-    input[type="text"]:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(26,86,219,0.1);
-    }
-    textarea { min-height: 110px; }
-
-    .style-options {
-      display: grid; grid-template-columns: 1fr 1fr 1fr;
-      gap: 0.6rem; margin-top: 0.5rem;
-    }
-    .style-opt {
-      border: 1.5px solid var(--gray-1);
-      border-radius: 8px;
-      padding: 0.75rem 0.6rem;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color .2s, background .2s;
-    }
-    .style-opt:hover { border-color: var(--blue); background: #f0f5ff; }
-    .style-opt.selected { border-color: var(--blue); background: #eff6ff; }
-    .style-opt input { display: none; }
-    .style-opt .style-icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
-    .style-opt .style-name { font-size: 0.78rem; font-weight: 600; color: var(--text); }
-    .style-opt .style-desc { font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem; }
-
-    /* ── FORM NAVIGATION ── */
-    .form-nav {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-top: 1.5rem; padding-top: 1.25rem;
-      border-top: 1px solid var(--gray-1);
-    }
-    .btn-back {
-      background: none; border: 1.5px solid var(--gray-2);
-      border-radius: 8px; padding: 0.6rem 1.2rem;
-      font-size: 0.88rem; font-weight: 600;
-      color: var(--muted); cursor: pointer;
-      transition: border-color .2s, color .2s;
-    }
-    .btn-back:hover { border-color: var(--text); color: var(--text); }
-    .btn-next {
-      background: var(--blue); color: var(--white);
-      border: none; border-radius: 8px;
-      padding: 0.65rem 1.5rem;
-      font-size: 0.9rem; font-weight: 600;
-      cursor: pointer; transition: background .2s, transform .15s;
-      display: flex; align-items: center; gap: 0.5rem;
-    }
-    .btn-next:hover { background: var(--blue-d); transform: translateY(-1px); }
-    .btn-next:disabled { background: var(--gray-2); cursor: not-allowed; transform: none; }
-    .btn-generate {
-      background: var(--orange); color: var(--white);
-      border: none; border-radius: 8px;
-      padding: 0.65rem 1.5rem;
-      font-size: 0.9rem; font-weight: 700;
-      cursor: pointer; transition: background .2s, transform .15s;
-      display: flex; align-items: center; gap: 0.5rem;
-    }
-    .btn-generate:hover { background: var(--orange-d); transform: translateY(-1px); }
-    .btn-generate:disabled { background: var(--gray-2); cursor: not-allowed; transform: none; }
-
-    /* ── PREVIEW CARD ── */
-    .preview-card {
-      background: var(--white);
-      border-radius: var(--radius);
-      box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-      overflow: hidden;
-      position: sticky;
-      top: 80px;
-    }
-    .preview-header {
-      background: var(--navy2);
-      padding: 1.25rem 1.5rem;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .preview-header h2 { color: var(--white); font-size: 1rem; font-weight: 600; }
-    .preview-actions { display: flex; gap: 0.6rem; }
-    .btn-pdf {
-      background: var(--orange); color: var(--white);
-      border: none; border-radius: 7px;
-      padding: 0.45rem 1rem;
-      font-size: 0.82rem; font-weight: 600;
-      cursor: pointer; transition: background .2s;
-      display: flex; align-items: center; gap: 0.4rem;
-    }
-    .btn-pdf:hover { background: var(--orange-d); }
-    .btn-pdf:disabled { background: var(--gray-2); cursor: not-allowed; }
-    .btn-edit {
-      background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8);
-      border: 1px solid rgba(255,255,255,0.2); border-radius: 7px;
-      padding: 0.45rem 1rem;
-      font-size: 0.82rem; font-weight: 600;
-      cursor: pointer; transition: background .2s;
-    }
-    .btn-edit:hover { background: rgba(255,255,255,0.2); }
-    .btn-edit:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    .preview-body {
-      padding: 1.5rem;
-      min-height: 400px;
-      max-height: 70vh;
-      overflow-y: auto;
-    }
-
-    /* ── EMPTY STATE ── */
-    .preview-empty {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 320px; text-align: center;
-      color: var(--muted);
-    }
-    .preview-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
-    .preview-empty p { font-size: 0.9rem; max-width: 240px; line-height: 1.5; }
-
-    /* ── GENERATING STATE ── */
-    .preview-generating {
-      display: none;
-      flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 320px; text-align: center;
-    }
-    .preview-generating.active { display: flex; }
-    .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--gray-1);
-      border-top-color: var(--orange);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 1rem;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .preview-generating p { color: var(--muted); font-size: 0.9rem; }
-
-    /* ── CV MARKDOWN CONTENT ── */
-    .cv-content { display: none; }
-    .cv-content.active { display: block; }
-    .cv-content h1 { font-size: 1.3rem; font-weight: 700; color: var(--navy); margin-bottom: 0.25rem; }
-    .cv-content h2 {
-      font-size: 0.85rem; font-weight: 700;
-      color: var(--blue); text-transform: uppercase;
-      letter-spacing: 0.06em;
-      border-bottom: 1.5px solid var(--blue);
-      padding-bottom: 3px;
-      margin-top: 1.25rem; margin-bottom: 0.6rem;
-    }
-    .cv-content h3 { font-size: 0.92rem; font-weight: 600; color: var(--navy); margin-top: 0.75rem; }
-    .cv-content p { font-size: 0.88rem; line-height: 1.6; margin-bottom: 0.4rem; color: var(--text); }
-    .cv-content ul { margin-left: 1.2rem; margin-bottom: 0.5rem; }
-    .cv-content li { font-size: 0.88rem; line-height: 1.6; color: var(--text); margin-bottom: 0.2rem; }
-    .cv-content strong { font-weight: 600; }
-    .cv-content em { color: var(--muted); font-style: italic; }
+    /* ── PREVIEW PANEL ── */
+    .preview-panel { width: 420px; border-left: 1px solid var(--border); display: flex; flex-direction: column; background: var(--surface); flex-shrink: 0; }
+    @media (max-width: 900px) { .preview-panel { display: none; } }
+    .preview-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .preview-header h3 { font-size: 0.9rem; font-weight: 600; }
+    .preview-actions { display: flex; gap: 8px; }
+    .btn-sm { border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 8px; padding: 5px 12px; font-size: 0.8rem; cursor: pointer; transition: all .2s; white-space: nowrap; }
+    .btn-sm:hover { border-color: var(--orange); color: var(--orange); }
+    .btn-sm.primary { background: var(--orange); border-color: var(--orange); color: #fff; }
+    .btn-sm.primary:hover { background: var(--orange-d); }
+    .btn-sm:disabled { opacity: .4; pointer-events: none; }
+    .preview-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .preview-body::-webkit-scrollbar { width: 4px; }
+    .preview-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .preview-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--muted); text-align: center; }
+    .preview-placeholder .icon { font-size: 3rem; opacity: .4; }
+    .preview-placeholder p { font-size: 0.85rem; max-width: 220px; line-height: 1.5; }
+    #cv-preview-content h1 { font-size: 1.15rem; margin-bottom: 4px; }
+    #cv-preview-content h2 { font-size: 0.82rem; color: var(--orange); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--border); padding-bottom: 3px; margin: 14px 0 6px; }
+    #cv-preview-content h3 { font-size: 0.85rem; font-weight: 600; margin: 8px 0 2px; }
+    #cv-preview-content ul { padding-left: 16px; margin-bottom: 6px; }
+    #cv-preview-content li { margin-bottom: 2px; font-size: 0.83rem; }
+    #cv-preview-content p { font-size: 0.83rem; margin-bottom: 4px; }
+    #cv-preview-content strong { font-weight: 600; }
 
     /* ── EDIT PANEL ── */
-    .edit-panel {
-      display: none;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--gray-1);
-      background: var(--gray-bg);
-    }
-    .edit-panel.active { display: block; }
-    .edit-panel label { margin-bottom: 0.4rem; }
-    .edit-panel textarea { min-height: 70px; }
-    .edit-panel .btn-apply {
-      margin-top: 0.75rem;
-      background: var(--blue); color: var(--white);
-      border: none; border-radius: 8px;
-      padding: 0.55rem 1.2rem;
-      font-size: 0.85rem; font-weight: 600;
-      cursor: pointer; transition: background .2s;
-    }
-    .edit-panel .btn-apply:hover { background: var(--blue-d); }
-    .edit-panel .btn-apply:disabled { background: var(--gray-2); cursor: not-allowed; }
-
-    /* ── CREDITS BADGE ── */
-    .credits-badge {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      background: #fff8f0; border: 1px solid #fcd9b0;
-      border-radius: 20px; padding: 0.3rem 0.75rem;
-      font-size: 0.78rem; font-weight: 600; color: var(--orange);
-    }
+    #edit-panel { border-top: 1px solid var(--border); padding: 12px 16px; display: none; flex-direction: column; gap: 8px; }
+    #edit-panel.visible { display: flex; }
+    #edit-input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; resize: none; height: 64px; width: 100%; font-family: var(--font); }
+    #edit-input:focus { outline: none; border-color: var(--orange); }
+    .edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
     /* ── TOAST ── */
-    .toast {
-      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(80px);
-      background: var(--navy); color: var(--white);
-      padding: 0.7rem 1.4rem; border-radius: 8px;
-      font-size: 0.88rem; font-weight: 500;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      transition: transform .3s ease, opacity .3s ease;
-      opacity: 0; pointer-events: none; z-index: 9999;
-      white-space: nowrap;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-    /* ── MY CVS LIST ── */
-    .my-cvs {
-      margin-top: 3rem;
-    }
-    .my-cvs h2 {
-      font-size: 1.1rem; font-weight: 700;
-      color: var(--navy); margin-bottom: 1rem;
-    }
-    .cv-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
-    .cv-item {
-      background: var(--white);
-      border: 1.5px solid var(--gray-1);
-      border-radius: var(--radius);
-      padding: 1.1rem 1.25rem;
-      cursor: pointer;
-      transition: border-color .2s, box-shadow .2s;
-    }
-    .cv-item:hover { border-color: var(--blue); box-shadow: 0 2px 12px rgba(26,86,219,0.08); }
-    .cv-item-role { font-size: 0.92rem; font-weight: 700; color: var(--navy); margin-bottom: 0.25rem; }
-    .cv-item-meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.5rem; }
-    .cv-item-preview { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
-    .cv-item-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
-    .cv-item-btn {
-      flex: 1; padding: 0.4rem 0;
-      border-radius: 6px; border: 1.5px solid var(--gray-1);
-      font-size: 0.75rem; font-weight: 600;
-      cursor: pointer; background: none; color: var(--muted);
-      transition: border-color .2s, color .2s;
-    }
-    .cv-item-btn:hover { border-color: var(--blue); color: var(--blue); }
-    .cv-item-btn.pdf { border-color: var(--orange); color: var(--orange); }
-    .cv-item-btn.pdf:hover { background: var(--orange); color: var(--white); }
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 20px; font-size: 0.85rem; color: var(--text); transition: transform .3s ease; z-index: 999; pointer-events: none; white-space: nowrap; }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.error { border-color: var(--danger); color: var(--danger); }
+    #toast.success { border-color: var(--success); color: var(--success); }
   </style>
 </head>
 <body>
 
 <!-- NAV -->
 <nav>
-  <a class="nav-logo" href="index.html">
-    <img src="logo.png" alt="KaziSpace" />
-    <span>CV Builder</span>
-  </a>
+  <a class="nav-logo" href="index.html">Kazi<em>Space</em></a>
   <div class="nav-right">
-    <a class="nav-link" href="chat.html">💬 Chat with Kazi</a>
-    <a class="nav-btn" href="index.html">Home</a>
+    <a class="nav-link" href="chat.html">💬 Chat</a>
+    <a class="nav-link" href="cv.html" style="color:var(--text);">📄 CV Builder</a>
+    <div class="credits-badge" id="credits-display">Credits: <span id="credits-val">—</span></div>
   </div>
 </nav>
 
+<!-- LOGIN BANNER -->
+<div id="login-banner">
+  <p><strong>Sign in with Telegram</strong> to save your CV and access it from any device.</p>
+  <button class="btn-tg-login" onclick="loginWithTelegram()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/></svg>
+    Login with Telegram
+  </button>
+</div>
+
 <!-- MAIN -->
-<main class="page">
+<div class="main">
 
-  <!-- PAGE HEADER -->
-  <div class="page-header">
-    <h2 style="font-size:0.78rem;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;">AI-Powered</h2>
-    <h1>Build Your Professional CV</h1>
-    <p>Fill in 5 quick steps and let Kazi AI craft a polished, ATS-optimized CV in seconds.</p>
-  </div>
-
-  <!-- AUTH BANNER -->
-  <div class="auth-banner" id="auth-banner">
-    <span class="auth-icon">🔐</span>
-    <p>Sign in with Telegram to save your CVs and download PDFs. <a href="chat.html">Sign in here →</a></p>
-  </div>
-
-  <!-- TWO-COLUMN LAYOUT -->
-  <div class="cv-layout">
-
-    <!-- LEFT: FORM -->
-    <div class="form-card">
-      <div class="form-card-header">
-        <h2>📝 Your Information</h2>
-        <span class="step-badge" id="step-badge">Step 1 of 5</span>
+  <!-- CHAT PANEL -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <h2>📄 CV Builder</h2>
+        <div class="subtitle">Chat-first · AI-powered · ATS-optimized</div>
       </div>
-
-      <!-- STEP PROGRESS BAR -->
-      <div class="step-progress" id="step-progress">
-        <div class="step-dot active" id="dot-1"></div>
-        <div class="step-dot" id="dot-2"></div>
-        <div class="step-dot" id="dot-3"></div>
-        <div class="step-dot" id="dot-4"></div>
-        <div class="step-dot" id="dot-5"></div>
-      </div>
-
-      <div class="form-body">
-
-        <!-- STEP 1: Target Role -->
-        <div class="step-panel active" id="step-1">
-          <div class="step-label">Step 1 of 5</div>
-          <div class="step-title">What position are you targeting?</div>
-          <div class="step-hint">Enter the job title you want to apply for. Be specific — it helps Kazi tailor your CV.</div>
-          <label for="target-role">Target Job Title</label>
-          <input type="text" id="target-role" placeholder="e.g. Senior Software Engineer, Customer Support Specialist" />
-        </div>
-
-        <!-- STEP 2: Work Experience -->
-        <div class="step-panel" id="step-2">
-          <div class="step-label">Step 2 of 5</div>
-          <div class="step-title">Tell us about your work experience</div>
-          <div class="step-hint">Include company names, job titles, dates, and key achievements. No experience? Write "No experience" and Kazi will work with your education and skills.</div>
-          <label for="experience">Work Experience</label>
-          <textarea id="experience" placeholder="e.g. Software Engineer at Qualcomm (2020–2024): Led development of AI-powered features, reduced latency by 30%..."></textarea>
-        </div>
-
-        <!-- STEP 3: Education -->
-        <div class="step-panel" id="step-3">
-          <div class="step-label">Step 3 of 5</div>
-          <div class="step-title">What is your educational background?</div>
-          <div class="step-hint">Include institution name, degree/major, and graduation year.</div>
-          <label for="education">Education</label>
-          <textarea id="education" placeholder="e.g. PhD in Computer Science, Virginia Tech, 2020&#10;BSc in Electrical Engineering, Nazarbayev University, 2016"></textarea>
-        </div>
-
-        <!-- STEP 4: Skills -->
-        <div class="step-panel" id="step-4">
-          <div class="step-label">Step 4 of 5</div>
-          <div class="step-title">What are your key skills?</div>
-          <div class="step-hint">List technical skills, tools, languages, and soft skills relevant to your target role.</div>
-          <label for="skills">Skills & Tools</label>
-          <textarea id="skills" placeholder="e.g. Python, AI/ML, PyTorch, C++, System Design, Team Leadership, English B2, Russian (native)"></textarea>
-        </div>
-
-        <!-- STEP 5: Style -->
-        <div class="step-panel" id="step-5">
-          <div class="step-label">Step 5 of 5</div>
-          <div class="step-title">Choose your CV style</div>
-          <div class="step-hint">Select the format that best fits your target role and experience level.</div>
-          <div class="style-options">
-            <label class="style-opt selected" onclick="selectStyle('1')">
-              <input type="radio" name="style" value="1" checked />
-              <div class="style-icon">📄</div>
-              <div class="style-name">Concise</div>
-              <div class="style-desc">1 page, essentials only</div>
-            </label>
-            <label class="style-opt" onclick="selectStyle('2')">
-              <input type="radio" name="style" value="2" />
-              <div class="style-icon">📋</div>
-              <div class="style-name">Detailed</div>
-              <div class="style-desc">Full experience & skills</div>
-            </label>
-            <label class="style-opt" onclick="selectStyle('3')">
-              <input type="radio" name="style" value="3" />
-              <div class="style-icon">🏆</div>
-              <div class="style-name">Achievement</div>
-              <div class="style-desc">Numbers & KPIs focused</div>
-            </label>
-          </div>
-        </div>
-
-        <!-- FORM NAVIGATION -->
-        <div class="form-nav">
-          <button class="btn-back" id="btn-back" onclick="prevStep()" style="visibility:hidden">← Back</button>
-          <div style="display:flex;align-items:center;gap:0.75rem">
-            <span class="credits-badge" id="credits-badge" style="display:none">
-              ⚡ <span id="credits-count">3</span> credits
-            </span>
-            <button class="btn-next" id="btn-next" onclick="nextStep()">
-              Next →
-            </button>
-            <button class="btn-generate" id="btn-generate" style="display:none" onclick="generateCV()">
-              ✨ Generate CV
-            </button>
-          </div>
-        </div>
-
-      </div>
+      <button class="btn-new-cv" onclick="startNewCV()">+ New CV</button>
     </div>
 
-    <!-- RIGHT: PREVIEW -->
-    <div class="preview-card">
-      <div class="preview-header">
-        <h2>👁 CV Preview</h2>
-        <div class="preview-actions">
-          <button class="btn-edit" id="btn-edit" disabled onclick="toggleEditPanel()">✏️ Edit</button>
-          <button class="btn-pdf" id="btn-pdf" disabled onclick="downloadPDF()">📥 PDF</button>
-        </div>
-      </div>
+    <div class="messages" id="messages"></div>
 
-      <div class="preview-body">
-        <!-- Empty state -->
-        <div class="preview-empty" id="preview-empty">
-          <div class="empty-icon">📄</div>
-          <p>Fill in the form and click <strong>Generate CV</strong> to see your AI-crafted CV here.</p>
-        </div>
+    <div class="input-bar">
+      <textarea id="msg-input" placeholder="Type your answer here..." rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button id="send-btn" onclick="sendMessage()" title="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
 
-        <!-- Generating state -->
-        <div class="preview-generating" id="preview-generating">
-          <div class="spinner"></div>
-          <p>✨ Kazi is crafting your CV...</p>
-          <p style="font-size:0.78rem;margin-top:0.4rem;color:#aaa">This usually takes 15–25 seconds</p>
-        </div>
-
-        <!-- CV content -->
-        <div class="cv-content" id="cv-content"></div>
-      </div>
-
-      <!-- Edit panel -->
-      <div class="edit-panel" id="edit-panel">
-        <label for="edit-instruction">Edit instruction</label>
-        <textarea id="edit-instruction" placeholder="e.g. Make the summary more concise. Add more emphasis on leadership skills."></textarea>
-        <button class="btn-apply" onclick="applyEdit()">Apply Changes</button>
+  <!-- PREVIEW PANEL -->
+  <div class="preview-panel">
+    <div class="preview-header">
+      <h3>CV Preview</h3>
+      <div class="preview-actions">
+        <button class="btn-sm" id="btn-edit-cv" onclick="toggleEditPanel()" disabled>✏️ Edit</button>
+        <button class="btn-sm primary" id="btn-pdf" onclick="exportPDF()" disabled>📥 PDF</button>
       </div>
     </div>
-
+    <div class="preview-body">
+      <div class="preview-placeholder" id="preview-placeholder">
+        <div class="icon">📄</div>
+        <p>Your CV will appear here once generated.</p>
+      </div>
+      <div id="cv-preview-content" style="display:none;"></div>
+    </div>
+    <div id="edit-panel">
+      <textarea id="edit-input" placeholder="e.g. Make the summary shorter, add more technical skills..."></textarea>
+      <div class="edit-actions">
+        <button class="btn-sm" onclick="toggleEditPanel()">Cancel</button>
+        <button class="btn-sm primary" onclick="submitEdit()">Apply Edit</button>
+      </div>
+    </div>
   </div>
 
-  <!-- MY CVS LIST -->
-  <div class="my-cvs" id="my-cvs" style="display:none">
-    <h2>📂 My Saved CVs</h2>
-    <div class="cv-list" id="cv-list"></div>
-  </div>
-
-</main>
+</div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"></div>
+<div id="toast"></div>
 
 <script>
-  // ── CONFIG ──────────────────────────────────────────────────────────────
-  const API_BASE = 'https://bot.kazispace.ai';
+// =================================================================
+// Config & State
+// =================================================================
+const API = 'https://bot.kazispace.ai';
+let userId    = localStorage.getItem('kazi_user_id');
+let authToken = localStorage.getItem('kazi_auth_token');
+let cvState   = 'idle';
+let currentDocId = null;
+let regenerateRemaining = 2;
+let inputLocked = false;
 
-  // ── STATE ────────────────────────────────────────────────────────────────
-  let currentStep  = 1;
-  const TOTAL_STEPS = 5;
-  let selectedStyle = '1';
-  let currentDocId  = null;
-  let userCredits   = null;
-  let isGenerating  = false;
+// =================================================================
+// Init
+// =================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  if (!userId) {
+    userId = 'web_' + Math.random().toString(36).slice(2, 11);
+    localStorage.setItem('kazi_user_id', userId);
+  }
+  checkLoginState();
+  updateCreditsDisplay();
+  startNewCV();
+});
 
-  // ── INIT ─────────────────────────────────────────────────────────────────
-  async function init() {
-    const jwt = getJWT();
-    if (jwt) {
-      document.getElementById('auth-banner').classList.add('hidden');
-      await fetchMe(jwt);
-      await loadMyCVs(jwt);
+function checkLoginState() {
+  if (!authToken) {
+    document.getElementById('login-banner').style.display = 'flex';
+  } else {
+    document.getElementById('login-banner').style.display = 'none';
+  }
+}
+
+async function updateCreditsDisplay() {
+  if (!authToken) return;
+  try {
+    const r = await fetch(`${API}/api/v1/me`, { headers: { Authorization: `Bearer ${authToken}` } });
+    if (r.ok) {
+      const d = await r.json();
+      document.getElementById('credits-display').style.display = 'block';
+      document.getElementById('credits-val').textContent = d.credits_left ?? '—';
     }
+  } catch {}
+}
+
+// =================================================================
+// Session Management
+// =================================================================
+async function startNewCV() {
+  clearMessages();
+  cvState = 'idle';
+  currentDocId = null;
+  regenerateRemaining = 2;
+  inputLocked = false;
+  resetPreview();
+  document.getElementById('btn-edit-cv').disabled = true;
+  document.getElementById('btn-pdf').disabled = true;
+  setInputEnabled(false, 'Please select an option above...');
+
+  const resp = await callCV({ action: 'reset' });
+  if (resp) handleCVResponse(resp);
+}
+
+async function callCV(body) {
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    else headers['X-User-Id'] = userId;
+
+    const r = await fetch(`${API}/api/v1/cv/chat`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ ...body, session_key: `cv_web_${userId}` }),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      showToast(err.detail || 'Request failed', 'error');
+      return null;
+    }
+    return await r.json();
+  } catch {
+    showToast('Network error. Please try again.', 'error');
+    return null;
+  }
+}
+
+// =================================================================
+// Message Rendering
+// =================================================================
+function clearMessages() {
+  document.getElementById('messages').innerHTML = '';
+}
+
+function addBotMessage(text, chips = [], chipAction = null) {
+  const row = document.createElement('div');
+  row.className = 'bubble-row bot';
+  const html = typeof marked !== 'undefined'
+    ? marked.parse(text)
+    : text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  let chipsHtml = '';
+  if (chips.length) {
+    const id = 'chips_' + Date.now();
+    chipsHtml = `<div class="chips" id="${id}">` +
+      chips.map(c =>
+        `<button class="chip" data-action="${chipAction}" data-value="${escHtml(c)}" onclick="selectChip(this)">${escHtml(c)}</button>`
+      ).join('') + `</div>`;
+  }
+  row.innerHTML = `
+    <div class="avatar bot-av">🤖</div>
+    <div class="bubble">${html}${chipsHtml}</div>`;
+  document.getElementById('messages').appendChild(row);
+  scrollToBottom();
+}
+
+function addUserMessage(text) {
+  const row = document.createElement('div');
+  row.className = 'bubble-row user';
+  row.innerHTML = `
+    <div class="avatar user-av">👤</div>
+    <div class="bubble">${escHtml(text)}</div>`;
+  document.getElementById('messages').appendChild(row);
+  scrollToBottom();
+}
+
+function showTyping() {
+  removeTyping();
+  const row = document.createElement('div');
+  row.className = 'typing-row';
+  row.id = 'typing-indicator';
+  row.innerHTML = `
+    <div class="avatar bot-av">🤖</div>
+    <div class="typing-bubble">
+      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+    </div>`;
+  document.getElementById('messages').appendChild(row);
+  scrollToBottom();
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+function disableAllChips() {
+  document.querySelectorAll('.chip:not(.selected)').forEach(c => c.classList.add('disabled'));
+}
+
+// =================================================================
+// Chip Selection
+// =================================================================
+async function selectChip(btn) {
+  if (inputLocked) return;
+  const action = btn.dataset.action;
+  const value  = btn.dataset.value;
+
+  // Post-generate actions handled locally
+  if (action === 'post_generate') {
+    disableAllChips();
+    btn.classList.add('selected');
+    if (value.startsWith('🔄 Regenerate')) {
+      await doRegenerate();
+    } else if (value === '✏️ Edit CV') {
+      toggleEditPanel();
+    } else if (value === '🆕 Start New CV') {
+      startNewCV();
+    }
+    return;
   }
 
-  function getJWT() {
-    return localStorage.getItem('kazi_auth_token') || localStorage.getItem('kazi_jwt');
+  disableAllChips();
+  btn.classList.add('selected');
+  addUserMessage(value);
+  inputLocked = true;
+  setInputEnabled(false, 'Please wait...');
+  showTyping();
+
+  const resp = await callCV({ action, value });
+  removeTyping();
+  inputLocked = false;
+  if (resp) handleCVResponse(resp);
+}
+
+// =================================================================
+// Free Text Input
+// =================================================================
+function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const text  = input.value.trim();
+  if (!text || inputLocked || input.disabled) return;
+  input.value = '';
+  autoResize(input);
+  addUserMessage(text);
+  disableAllChips();
+  inputLocked = true;
+  setInputEnabled(false, 'Please wait...');
+  showTyping();
+
+  callCV({ message: text }).then(resp => {
+    removeTyping();
+    inputLocked = false;
+    if (resp) handleCVResponse(resp);
+  });
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+// =================================================================
+// Handle CV API Response
+// =================================================================
+function handleCVResponse(resp) {
+  cvState = resp.state;
+
+  if (resp.state === 'generated') {
+    currentDocId = resp.doc_id;
+    regenerateRemaining = resp.regenerate_remaining ?? 2;
+    if (resp.cv_content) showCVPreview(resp.cv_content);
+    addBotMessage(resp.message || '✅ Your CV is ready! Check the preview on the right.');
+
+    // Post-generate action chips
+    const actionChips = [];
+    if (regenerateRemaining > 0) actionChips.push(`🔄 Regenerate (${regenerateRemaining} left)`);
+    actionChips.push('✏️ Edit CV');
+    actionChips.push('🆕 Start New CV');
+    addBotMessage('What would you like to do next?', actionChips, 'post_generate');
+
+    document.getElementById('btn-edit-cv').disabled = false;
+    document.getElementById('btn-pdf').disabled = false;
+    setInputEnabled(false, 'Use the buttons above or edit in the preview panel');
+    updateCreditsDisplay();
+    return;
   }
 
-  async function fetchMe(jwt) {
+  if (resp.state === 'paywall') {
+    addBotMessage(resp.message || '⚠️ You have used all your free CV credits. Please top up to continue.');
+    setInputEnabled(false, 'Credits required');
+    return;
+  }
+
+  const chips      = resp.buttons || [];
+  const chipAction = resp.button_action || null;
+  addBotMessage(resp.message || '', chips, chipAction);
+
+  // If chips are present and it's not a confirm_or_more action, lock free text
+  if (chips.length && chipAction !== 'confirm_or_more') {
+    setInputEnabled(false, 'Please select an option above');
+  } else {
+    setInputEnabled(true, 'Type your answer here...');
+  }
+}
+
+// =================================================================
+// Regenerate
+// =================================================================
+async function doRegenerate() {
+  inputLocked = true;
+  setInputEnabled(false, 'Regenerating...');
+  showTyping();
+  const resp = await callCV({ action: 'regenerate' });
+  removeTyping();
+  inputLocked = false;
+  if (!resp) { setInputEnabled(false, 'Error. Please try again.'); return; }
+
+  if (resp.cv_content) showCVPreview(resp.cv_content);
+  regenerateRemaining = resp.regenerate_remaining ?? 0;
+  addBotMessage(resp.message || '🔄 New version generated!');
+
+  const actionChips = [];
+  if (regenerateRemaining > 0) actionChips.push(`🔄 Regenerate (${regenerateRemaining} left)`);
+  actionChips.push('✏️ Edit CV');
+  actionChips.push('🆕 Start New CV');
+  addBotMessage('What would you like to do next?', actionChips, 'post_generate');
+  setInputEnabled(false, 'Use the buttons above');
+}
+
+// =================================================================
+// CV Preview
+// =================================================================
+function showCVPreview(markdown) {
+  document.getElementById('preview-placeholder').style.display = 'none';
+  const el = document.getElementById('cv-preview-content');
+  el.style.display = 'block';
+  el.innerHTML = typeof marked !== 'undefined' ? marked.parse(markdown) : markdown.replace(/\n/g, '<br>');
+}
+
+function resetPreview() {
+  document.getElementById('preview-placeholder').style.display = 'flex';
+  const el = document.getElementById('cv-preview-content');
+  el.style.display = 'none';
+  el.innerHTML = '';
+  document.getElementById('edit-panel').classList.remove('visible');
+}
+
+// =================================================================
+// Edit CV
+// =================================================================
+function toggleEditPanel() {
+  const panel = document.getElementById('edit-panel');
+  panel.classList.toggle('visible');
+  if (panel.classList.contains('visible')) document.getElementById('edit-input').focus();
+}
+
+async function submitEdit() {
+  const instruction = document.getElementById('edit-input').value.trim();
+  if (!instruction || !currentDocId) return;
+  document.getElementById('edit-input').value = '';
+  toggleEditPanel();
+  addUserMessage(`✏️ Edit: ${instruction}`);
+  showTyping();
+
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    else headers['X-User-Id'] = userId;
+
+    const r = await fetch(`${API}/api/v1/cv/${currentDocId}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ edit_instruction: instruction }),
+    });
+    removeTyping();
+    if (!r.ok) { showToast('Edit failed. Please try again.', 'error'); return; }
+    const d = await r.json();
+    if (d.content) showCVPreview(d.content);
+    addBotMessage(`✅ CV updated (v${d.version}). Check the preview!`);
+  } catch {
+    removeTyping();
+    showToast('Network error.', 'error');
+  }
+}
+
+// =================================================================
+// PDF Export
+// =================================================================
+async function exportPDF() {
+  if (!currentDocId) return;
+  const btn = document.getElementById('btn-pdf');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating...';
+  showToast('Generating PDF...');
+
+  try {
+    const headers = {};
+    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+    else headers['X-User-Id'] = userId;
+
+    const r = await fetch(`${API}/api/v1/cv/${currentDocId}/export`, { method: 'POST', headers });
+    if (!r.ok) { showToast('PDF export failed.', 'error'); return; }
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `KaziSpace_CV_${currentDocId}.pdf`; a.click();
+    URL.revokeObjectURL(url);
+    showToast('PDF downloaded!', 'success');
+  } catch {
+    showToast('Network error.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📥 PDF';
+  }
+}
+
+// =================================================================
+// Telegram Login
+// =================================================================
+async function loginWithTelegram() {
+  try {
+    const r = await fetch(`${API}/api/v1/auth/telegram/init`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ web_user_id: userId }),
+    });
+    if (!r.ok) { showToast('Login init failed.', 'error'); return; }
+    const { token, deep_link } = await r.json();
+    window.open(deep_link, '_blank');
+    showToast('Opened Telegram. Please confirm login there.');
+    pollLogin(token);
+  } catch { showToast('Network error.', 'error'); }
+}
+
+async function pollLogin(token) {
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 3000));
     try {
-      const res = await fetch(API_BASE + '/api/v1/me', {
-        headers: { 'Authorization': 'Bearer ' + jwt }
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      userCredits = data.credits_left ?? data.credits ?? null;
-      if (userCredits !== null) {
-        document.getElementById('credits-count').textContent = userCredits;
-        document.getElementById('credits-badge').style.display = 'inline-flex';
+      const r = await fetch(`${API}/api/v1/auth/telegram/poll/${token}`);
+      if (!r.ok) break;
+      const d = await r.json();
+      if (d.status === 'ok') {
+        authToken = d.user_id;
+        localStorage.setItem('kazi_auth_token', authToken);
+        localStorage.setItem('kazi_user_id', d.user_id);
+        userId = d.user_id;
+        document.getElementById('login-banner').style.display = 'none';
+        document.getElementById('credits-display').style.display = 'block';
+        document.getElementById('credits-val').textContent = d.credits_left ?? '—';
+        showToast(`Welcome, ${d.display_name}! 🎉`, 'success');
+        break;
       }
-    } catch {}
+    } catch { break; }
   }
+}
 
-  async function loadMyCVs(jwt) {
-    try {
-      const res = await fetch(API_BASE + '/api/v1/cv/list', {
-        headers: { 'Authorization': 'Bearer ' + jwt }
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.total > 0) {
-        renderCVList(data.items);
-        document.getElementById('my-cvs').style.display = 'block';
-      }
-    } catch {}
-  }
+// =================================================================
+// Utilities
+// =================================================================
+function setInputEnabled(enabled, placeholder) {
+  const inp = document.getElementById('msg-input');
+  const btn = document.getElementById('send-btn');
+  inp.disabled = !enabled;
+  btn.disabled = !enabled;
+  if (placeholder) inp.placeholder = placeholder;
+}
 
-  function renderCVList(items) {
-    const listEl = document.getElementById('cv-list');
-    listEl.innerHTML = items.map(item => `
-      <div class="cv-item">
-        <div class="cv-item-role">${escHtml(item.target_role || 'Untitled CV')}</div>
-        <div class="cv-item-meta">v${item.version} · ${new Date(item.updated_at).toLocaleDateString()}</div>
-        <div class="cv-item-preview">${escHtml(item.preview)}...</div>
-        <div class="cv-item-actions">
-          <button class="cv-item-btn" onclick="loadCV(${item.doc_id})">View</button>
-          <button class="cv-item-btn pdf" onclick="downloadPDFById(${item.doc_id})">📥 PDF</button>
-        </div>
-      </div>
-    `).join('');
-  }
+function scrollToBottom() {
+  const el = document.getElementById('messages');
+  el.scrollTop = el.scrollHeight;
+}
 
-  // ── STEP NAVIGATION ──────────────────────────────────────────────────────
-  function nextStep() {
-    if (!validateStep(currentStep)) return;
-    if (currentStep < TOTAL_STEPS) {
-      goToStep(currentStep + 1);
-    }
-  }
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
 
-  function prevStep() {
-    if (currentStep > 1) goToStep(currentStep - 1);
-  }
+function escHtml(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-  function goToStep(n) {
-    // Hide current
-    document.getElementById(`step-${currentStep}`).classList.remove('active');
-    document.getElementById(`dot-${currentStep}`).classList.remove('active');
-    document.getElementById(`dot-${currentStep}`).classList.add('done');
-
-    currentStep = n;
-
-    // Show new
-    document.getElementById(`step-${currentStep}`).classList.add('active');
-
-    // Update dots
-    for (let i = 1; i <= TOTAL_STEPS; i++) {
-      const dot = document.getElementById(`dot-${i}`);
-      dot.classList.remove('active', 'done');
-      if (i < currentStep) dot.classList.add('done');
-      else if (i === currentStep) dot.classList.add('active');
-    }
-
-    // Update badge
-    document.getElementById('step-badge').textContent = `Step ${currentStep} of ${TOTAL_STEPS}`;
-
-    // Back button
-    const backBtn = document.getElementById('btn-back');
-    backBtn.style.visibility = currentStep > 1 ? 'visible' : 'hidden';
-
-    // Next / Generate buttons
-    const nextBtn = document.getElementById('btn-next');
-    const genBtn  = document.getElementById('btn-generate');
-    if (currentStep === TOTAL_STEPS) {
-      nextBtn.style.display = 'none';
-      genBtn.style.display  = 'flex';
-    } else {
-      nextBtn.style.display = 'flex';
-      genBtn.style.display  = 'none';
-    }
-  }
-
-  function validateStep(step) {
-    if (step === 1) {
-      const val = document.getElementById('target-role').value.trim();
-      if (!val) { showToast('Please enter your target job title.'); return false; }
-    }
-    if (step === 2) {
-      const val = document.getElementById('experience').value.trim();
-      if (!val) { showToast('Please describe your work experience (or write "No experience").'); return false; }
-    }
-    if (step === 3) {
-      const val = document.getElementById('education').value.trim();
-      if (!val) { showToast('Please enter your education background.'); return false; }
-    }
-    if (step === 4) {
-      const val = document.getElementById('skills').value.trim();
-      if (!val) { showToast('Please list your key skills.'); return false; }
-    }
-    return true;
-  }
-
-  function selectStyle(val) {
-    selectedStyle = val;
-    document.querySelectorAll('.style-opt').forEach(el => el.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
-  }
-
-  // ── GENERATE CV ──────────────────────────────────────────────────────────
-  async function generateCV() {
-    const jwt = getJWT();
-    if (!jwt) {
-      showToast('Please sign in with Telegram first.');
-      document.getElementById('auth-banner').classList.remove('hidden');
-      return;
-    }
-
-    if (isGenerating) return;
-    isGenerating = true;
-
-    const genBtn = document.getElementById('btn-generate');
-    genBtn.disabled = true;
-    genBtn.textContent = '⏳ Generating...';
-
-    // Show generating state
-    document.getElementById('preview-empty').style.display = 'none';
-    document.getElementById('preview-generating').classList.add('active');
-    document.getElementById('cv-content').classList.remove('active');
-
-    const payload = {
-      target_role: document.getElementById('target-role').value.trim(),
-      experience:  document.getElementById('experience').value.trim(),
-      education:   document.getElementById('education').value.trim(),
-      skills:      document.getElementById('skills').value.trim(),
-      style:       selectedStyle,
-    };
-
-    try {
-      const res = await fetch(API_BASE + '/api/v1/cv/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + jwt,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.status === 402) {
-        showToast('⚠️ No credits remaining. Please top up to continue.');
-        resetGenerating();
-        return;
-      }
-      if (!res.ok) throw new Error('Generation failed');
-
-      const data = await res.json();
-      currentDocId = data.doc_id;
-
-      // Update credits
-      if (data.credits_left !== undefined) {
-        userCredits = data.credits_left;
-        document.getElementById('credits-count').textContent = userCredits;
-      }
-
-      renderCVContent(data.content);
-      showToast('✅ CV generated successfully!');
-
-      // Reload CV list
-      await loadMyCVs(jwt);
-      document.getElementById('my-cvs').style.display = 'block';
-
-    } catch (err) {
-      showToast('Generation failed. Please try again.');
-      resetGenerating();
-    } finally {
-      isGenerating = false;
-      genBtn.disabled = false;
-      genBtn.textContent = '✨ Generate CV';
-    }
-  }
-
-  function resetGenerating() {
-    document.getElementById('preview-generating').classList.remove('active');
-    document.getElementById('preview-empty').style.display = 'flex';
-  }
-
-  function renderCVContent(markdown) {
-    document.getElementById('preview-generating').classList.remove('active');
-    const contentEl = document.getElementById('cv-content');
-    contentEl.innerHTML = marked.parse(markdown);
-    contentEl.classList.add('active');
-
-    // Enable PDF and Edit buttons
-    document.getElementById('btn-pdf').disabled  = false;
-    document.getElementById('btn-edit').disabled = false;
-  }
-
-  // ── LOAD EXISTING CV ─────────────────────────────────────────────────────
-  async function loadCV(docId) {
-    const jwt = getJWT();
-    if (!jwt) return;
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/cv/${docId}`, {
-        headers: { 'Authorization': 'Bearer ' + jwt }
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      currentDocId = data.doc_id;
-      renderCVContent(data.content);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      showToast('CV loaded.');
-    } catch {
-      showToast('Failed to load CV.');
-    }
-  }
-
-  // ── EDIT CV ──────────────────────────────────────────────────────────────
-  function toggleEditPanel() {
-    const panel = document.getElementById('edit-panel');
-    panel.classList.toggle('active');
-  }
-
-  async function applyEdit() {
-    if (!currentDocId) return;
-    const jwt = getJWT();
-    if (!jwt) { showToast('Please sign in first.'); return; }
-
-    const instruction = document.getElementById('edit-instruction').value.trim();
-    if (!instruction) { showToast('Please enter an edit instruction.'); return; }
-
-    const applyBtn = document.querySelector('.btn-apply');
-    applyBtn.disabled = true;
-    applyBtn.textContent = '⏳ Applying...';
-
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/cv/${currentDocId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + jwt,
-        },
-        body: JSON.stringify({ edit_instruction: instruction }),
-      });
-      if (!res.ok) throw new Error('Edit failed');
-      const data = await res.json();
-      renderCVContent(data.content);
-      document.getElementById('edit-instruction').value = '';
-      document.getElementById('edit-panel').classList.remove('active');
-      showToast('✅ CV updated!');
-    } catch {
-      showToast('Edit failed. Please try again.');
-    } finally {
-      applyBtn.disabled = false;
-      applyBtn.textContent = 'Apply Changes';
-    }
-  }
-
-  // ── PDF DOWNLOAD ─────────────────────────────────────────────────────────
-  async function downloadPDF() {
-    if (!currentDocId) return;
-    await downloadPDFById(currentDocId);
-  }
-
-  async function downloadPDFById(docId) {
-    const jwt = getJWT();
-    if (!jwt) { showToast('Please sign in first.'); return; }
-
-    const pdfBtn = document.getElementById('btn-pdf');
-    if (pdfBtn) { pdfBtn.disabled = true; pdfBtn.textContent = '⏳ Generating PDF...'; }
-    showToast('⏳ Generating PDF...');
-
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/cv/${docId}/export`, {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + jwt },
-      });
-      if (!res.ok) throw new Error('PDF failed');
-
-      const blob = await res.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      const date = new Date().toISOString().slice(0, 10);
-      a.href = url; a.download = `KaziSpace_CV_${date}.pdf`;
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('✅ PDF downloaded!');
-    } catch {
-      showToast('PDF download failed. Please try again.');
-    } finally {
-      if (pdfBtn) { pdfBtn.disabled = false; pdfBtn.textContent = '📥 PDF'; }
-    }
-  }
-
-  // ── HELPERS ──────────────────────────────────────────────────────────────
-  function showToast(msg) {
-    const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 3500);
-  }
-
-  function escHtml(str) {
-    return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  init();
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = type ? `show ${type}` : 'show';
+  setTimeout(() => { t.className = type || ''; }, 3000);
+}
 </script>
-
 </body>
 </html>
