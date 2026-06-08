@@ -726,13 +726,13 @@
         const data = await res.json();
         if (data.status === 'ok') {
           clearInterval(_pollInterval);
-          // Persist login
+          // Persist login token + basic info
+          const kaziToken = data.kazi_auth_token || null;
+          if (kaziToken) localStorage.setItem('kazi_auth_token', kaziToken);
           tgUser = { display_name: data.display_name, user_id: data.user_id };
           localStorage.setItem('kazi_tg_user', JSON.stringify(tgUser));
-          if (data.credits_left !== undefined) {
-            userCredits = data.credits_left;
-            updateCreditsBar();
-          }
+          // Fetch full user state from /me
+          await fetchAndApplyMe();
           showTgUserBadge(tgUser);
           showToast('✅ Telegram account linked!');
         }
@@ -763,6 +763,40 @@
     document.getElementById('tg-login-bar').classList.remove('hidden');
     renderLoginButton();
     showToast('Signed out from Telegram');
+  }
+
+  // ── /me 接口：获取并应用用户状态 ─────────────────────────────────────────────
+  async function fetchAndApplyMe() {
+    const token = localStorage.getItem('kazi_auth_token');
+    if (!token) return;
+    try {
+      const res = await fetch(API_BASE + '/api/v1/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          // Token 失效，清除登录状态
+          localStorage.removeItem('kazi_auth_token');
+          localStorage.removeItem('kazi_tg_user');
+        }
+        return;
+      }
+      const me = await res.json();
+      // 更新 Credits 显示
+      if (me.billing_snapshot && me.billing_snapshot.credits !== undefined) {
+        userCredits = me.billing_snapshot.credits;
+        updateCreditsBar();
+      }
+      // 更新用户名显示
+      if (me.display_name && tgUser) {
+        tgUser.display_name = me.display_name;
+        localStorage.setItem('kazi_tg_user', JSON.stringify(tgUser));
+      }
+      // 将 user_id 写入 localStorage（供后续接口使用）
+      if (me.user_id) localStorage.setItem('kazi_user_id', me.user_id);
+    } catch {
+      // 静默失败，不影响主流程
+    }
   }
 
   // ── DOM REFS ─────────────────────────────────────────────────────────────
@@ -1030,6 +1064,7 @@
     await registerUser();
     await loadHistory();
     initTelegramWidget();  // Show login bar or restore Telegram session
+    await fetchAndApplyMe(); // Restore credits + user state from /me if JWT exists
     inputEl.focus();
   }
 
