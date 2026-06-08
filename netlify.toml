@@ -9,6 +9,12 @@
   to   = "/chat.html"
   status = 200
 
+# Clean URL: /cv → /cv.html
+[[redirects]]
+  from = "/cv"
+  to   = "/cv.html"
+  status = 200
+
 # Security headers
 [[headers]]
   for = "/*"
