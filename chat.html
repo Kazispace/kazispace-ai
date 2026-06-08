@@ -570,7 +570,8 @@
       <h2>Hi, I'm KaziSpace!</h2>
       <p>Your AI career partner for Central Asia. I can help you optimize your resume, prepare for interviews, and navigate the job market in Kazakhstan and beyond.</p>
       <div class="quick-prompts">
-        <button class="quick-btn" onclick="sendQuick('Help me improve my resume')">📄 Improve my resume</button>
+        <button class="quick-btn" onclick="startCvBuilder()">📄 Build my CV</button>
+        <button class="quick-btn" onclick="sendQuick('Help me improve my resume')">✏️ Improve my resume</button>
         <button class="quick-btn" onclick="sendQuick('What jobs are in demand in Kazakhstan?')">🇰🇿 Jobs in Kazakhstan</button>
         <button class="quick-btn" onclick="sendQuick('How do I prepare for a job interview?')">🎯 Interview tips</button>
         <button class="quick-btn" onclick="sendQuick('Write a cover letter for a software engineer role')">✍️ Cover letter</button>
@@ -874,6 +875,22 @@
   async function sendMessage(text) {
     if (!text.trim() || isLoading) return;
 
+    // If in CV Builder mode, route to CV conversation
+    if (cvMode) {
+      // Check if user wants to restart
+      const lower = text.toLowerCase();
+      if (lower.includes('начать заново') || lower.includes('restart') || lower.includes('start over')) {
+        appendMessage('user', text);
+        scrollToBottom();
+        sendCvMessage('', true);
+        return;
+      }
+      appendMessage('user', text);
+      scrollToBottom();
+      sendCvMessage(text);
+      return;
+    }
+
     // Hide welcome, show message
     welcomeEl.style.display = 'none';
     appendMessage('user', text);
@@ -1047,6 +1064,209 @@
       sendMessage(text);
     }
   });
+
+  // ── CV BUILDER MODE ─────────────────────────────────────────────────────
+  let cvMode = false;          // true = currently in CV Builder conversation
+  let cvDocId = null;          // doc_id after CV is generated
+  let cvPdfBtnEl = null;       // reference to the PDF download button
+
+  function startCvBuilder() {
+    cvMode = true;
+    cvDocId = null;
+    welcomeEl.style.display = 'none';
+    // Show a user-side bubble to signal intent
+    appendMessage('user', '📄 Build my CV');
+    scrollToBottom();
+    sendCvMessage('', true);  // reset=true to start fresh
+  }
+
+  async function sendCvMessage(text, reset = false) {
+    const typingEl = showTyping();
+    isLoading = true;
+    sendBtnEl.disabled = true;
+
+    try {
+      const jwt = localStorage.getItem('kazi_jwt');
+      if (!jwt) {
+        removeTyping(typingEl);
+        appendMessage('ai',
+          '🔐 Please sign in with Telegram first to use CV Builder.\n\n'
+          + 'Click the "Sign in with Telegram" button above.');
+        cvMode = false;
+        return;
+      }
+
+      const res = await fetch(API_BASE + '/api/v1/cv/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + jwt,
+        },
+        body: JSON.stringify({ message: text, reset }),
+      });
+
+      removeTyping(typingEl);
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Render AI response with Markdown-like formatting
+      appendCvMessage(data.message, data.state);
+
+      // Update credits
+      if (data.credits_left !== undefined) {
+        userCredits = data.credits_left;
+        updateCreditsBar();
+      }
+
+      // CV generated — show PDF download button
+      if (data.state === 'done' && data.cv_doc_id) {
+        cvDocId = data.cv_doc_id;
+        if (data.cv_content) {
+          appendCvContent(data.cv_content);
+        }
+        showPdfDownloadBtn(data.cv_doc_id);
+      }
+
+      // If credits exhausted, exit CV mode
+      if (data.state === 'credits_exhausted') {
+        cvMode = false;
+      }
+
+    } catch (err) {
+      removeTyping(typingEl);
+      appendMessage('ai', `⚠️ ${err.message}`);
+      cvMode = false;
+    } finally {
+      isLoading = false;
+      updateSendBtn();
+      scrollToBottom();
+    }
+  }
+
+  function appendCvMessage(text, state) {
+    // Convert basic Markdown bold (**text**) to <strong>
+    const formatted = text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'msg ai';
+
+    const avatarEl = document.createElement('div');
+    avatarEl.className = 'msg-avatar';
+    avatarEl.textContent = '🤖';
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'msg-body';
+
+    const bubbleEl = document.createElement('div');
+    bubbleEl.className = 'msg-bubble';
+    bubbleEl.innerHTML = formatted;
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'msg-time';
+    timeEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Intent badge for CV mode
+    const intentEl = document.createElement('div');
+    intentEl.className = 'msg-intent intent-resume';
+    intentEl.textContent = '📄 CV Builder';
+
+    bodyEl.appendChild(bubbleEl);
+    bodyEl.appendChild(intentEl);
+    bodyEl.appendChild(timeEl);
+    msgEl.appendChild(avatarEl);
+    msgEl.appendChild(bodyEl);
+    messagesEl.appendChild(msgEl);
+  }
+
+  function appendCvContent(content) {
+    // Show CV content in a styled code-like block
+    const msgEl = document.createElement('div');
+    msgEl.className = 'msg ai';
+
+    const avatarEl = document.createElement('div');
+    avatarEl.className = 'msg-avatar';
+    avatarEl.textContent = '📄';
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'msg-body';
+
+    const bubbleEl = document.createElement('div');
+    bubbleEl.className = 'msg-bubble';
+    bubbleEl.style.cssText = 'font-family: monospace; font-size: 0.82rem; white-space: pre-wrap; background: #f8fafc; color: #1a2b3c; border: 1px solid #e2e8f0; max-height: 320px; overflow-y: auto;';
+    bubbleEl.textContent = content;
+
+    bodyEl.appendChild(bubbleEl);
+    msgEl.appendChild(avatarEl);
+    msgEl.appendChild(bodyEl);
+    messagesEl.appendChild(msgEl);
+  }
+
+  function showPdfDownloadBtn(docId) {
+    // Remove existing PDF button if any
+    if (cvPdfBtnEl && cvPdfBtnEl.parentNode) {
+      cvPdfBtnEl.parentNode.removeChild(cvPdfBtnEl);
+    }
+
+    const wrapEl = document.createElement('div');
+    wrapEl.style.cssText = 'display: flex; justify-content: center; padding: 12px 0;';
+
+    const btn = document.createElement('button');
+    btn.textContent = '📥 Download PDF';
+    btn.style.cssText = [
+      'background: #1a56db',
+      'color: #fff',
+      'border: none',
+      'border-radius: 8px',
+      'padding: 10px 28px',
+      'font-size: 0.92rem',
+      'font-weight: 600',
+      'cursor: pointer',
+      'transition: background 0.2s',
+    ].join(';');
+    btn.onmouseover = () => { btn.style.background = '#1447c0'; };
+    btn.onmouseout  = () => { btn.style.background = '#1a56db'; };
+    btn.onclick = () => downloadCvPdf(docId);
+
+    wrapEl.appendChild(btn);
+    messagesEl.appendChild(wrapEl);
+    cvPdfBtnEl = wrapEl;
+    scrollToBottom();
+  }
+
+  async function downloadCvPdf(docId) {
+    const jwt = localStorage.getItem('kazi_jwt');
+    if (!jwt) { showToast('Please sign in first.'); return; }
+
+    showToast('Generating PDF...');
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/cv/${docId}/export`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + jwt },
+      });
+      if (!res.ok) throw new Error('PDF generation failed');
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      const date = new Date().toISOString().slice(0, 10);
+      a.href     = url;
+      a.download = `KaziSpace_CV_${date}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('✅ PDF downloaded!');
+    } catch (err) {
+      showToast('PDF download failed. Please try again.');
+    }
+  }
 
   // ── QUICK PROMPTS ─────────────────────────────────────────────────────────
   function sendQuick(text) {
