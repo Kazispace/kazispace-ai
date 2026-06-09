@@ -15,6 +15,12 @@
   to   = "/cv.html"
   status = 200
 
+# Clean URL: /interview → /interview.html
+[[redirects]]
+  from = "/interview"
+  to   = "/interview.html"
+  status = 200
+
 # Security headers
 [[headers]]
   for = "/*"
