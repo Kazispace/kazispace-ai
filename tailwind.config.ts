@@ -10,6 +10,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        border: 'hsl(var(--border))',
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        kazi: {
+          orange: '#F47920',
+          'orange-dark': '#d96a10',
+          navy: '#0D1B2A',
+          navy2: '#132237',
+        },
+        'clinic-bubble': '#F0F2F5',
+        'agent-bubble': '#F0FDF4',
         orange: {
           DEFAULT: '#F47920',
           d: '#d96a10',
@@ -20,14 +35,27 @@ const config: Config = {
         },
         'gray-bg': '#F5F7FA',
         text: '#1A2B3C',
-        muted: '#6B7A8D',
-        border: '#E2E8F0',
-        green: '#4CAF50',
-        blue: '#2196F3',
-        teal: '#26C6DA',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        bubble: '18px',
+        pill: '24px',
+      },
+      keyframes: {
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'bounce-dot': {
+          '0%, 80%, 100%': { transform: 'translateY(0)' },
+          '40%': { transform: 'translateY(-4px)' },
+        },
+      },
+      animation: {
+        'fade-up': 'fade-up 0.22s ease-out',
+        'bounce-dot': 'bounce-dot 1.2s infinite ease-in-out',
       },
     },
   },

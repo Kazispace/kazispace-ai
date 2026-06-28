@@ -40,7 +40,7 @@ export function ChatInput({ onSend, disabled, placeholder }: ChatInputProps) {
           disabled={disabled}
           rows={1}
           className={cn(
-            "w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm",
+            "w-full resize-none rounded-[24px] border border-gray-200 bg-gray-50 px-4 py-3 text-sm",
             "focus:outline-none focus:border-kazi-orange focus:bg-white transition-colors",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             "max-h-32"

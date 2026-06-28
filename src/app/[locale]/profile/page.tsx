@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { useUIStore } from "@/lib/store";
 
 interface ProfilePageProps {
   params: { locale: string };
@@ -16,6 +16,7 @@ interface ProfilePageProps {
 export default function ProfilePage({ params }: ProfilePageProps) {
   const t = useTranslations("profile");
   const router = useRouter();
+  const showToast = useUIStore((s) => s.showToast);
   const { locale } = params;
   
   const [form, setForm] = useState({
@@ -29,7 +30,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(t("saveSuccess"));
+    showToast(t("saveSuccess"), "info");
     router.push(`/${locale}/mine`);
   };
 

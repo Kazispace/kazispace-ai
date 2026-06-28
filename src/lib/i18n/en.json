@@ -171,5 +171,63 @@
 		"detailPrice": "Paid {price}",
 		"detailFree": "System Grant",
 		"remaining": "Balance: {count}"
+	},
+	"nav": {
+		"home": "Home",
+		"chat": "Chat",
+		"profile": "Profile"
+	},
+	"chat": {
+		"title": "{name} · AI Career Partner",
+		"backToClinic": "← Back to clinic",
+		"status": {
+			"online": "Online",
+			"offline": "Offline"
+		},
+		"welcome": {
+			"greeting": "👋 Hi! I'm {name}, your AI career partner.",
+			"prompt": "Tell me what's on your mind, or pick a specialist below:",
+			"title": "Welcome to KaziSpace",
+			"desc": "Your AI career partner for Central Asia"
+		},
+		"input": {
+			"placeholder": "Talk to me about your career…"
+		}
+	},
+	"clinic": {
+		"comingSoon": "Coming soon",
+		"openAgent": "Open",
+		"loginToContinue": "Sign in to continue",
+		"guestBanner": "Sign in to save chat history and unlock specialists",
+		"signIn": "Sign in",
+		"englishLevelLabel": "English level (optional)",
+		"englishLevel": {
+			"basic": "Basic",
+			"intermediate": "Intermediate",
+			"fluent": "Fluent"
+		},
+		"prompts": {
+			"cv": "✏️ Improve my resume",
+			"jobs": "🇰🇿 Jobs in Kazakhstan",
+			"interview": "🎯 Interview tips",
+			"cvText": "Help me improve my resume",
+			"jobsText": "What jobs are in demand in Kazakhstan?",
+			"interviewText": "How do I prepare for a job interview?"
+		},
+		"sendFailed": "Failed to send message",
+		"agentHubSprint2": "Expert mode ships in Sprint 2 ({agent})"
+	},
+	"subscription": {
+		"title": "Upgrade to PRO / Sprint",
+		"proTab": "PRO Subscription",
+		"sprintTab": "Career Sprint",
+		"proMonthlyName": "PRO Monthly",
+		"savePercentage": "Save 40%",
+		"payNow": "Purchase Now"
+	},
+	"credits": {
+		"title": "Buy Credits",
+		"currentBalance": "Current balance",
+		"buyCredits": "Buy Credits"
 	}
 }

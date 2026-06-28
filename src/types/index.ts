@@ -29,6 +29,7 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   sessionId: string;
+  intent?: string;
 }
 
 export interface ChatSession {

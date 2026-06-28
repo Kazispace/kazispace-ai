@@ -171,5 +171,63 @@
 		"detailPrice": "{price} төленді",
 		"detailFree": "Жүйемен берілді",
 		"remaining": "Қалдық: {count}"
+	},
+	"nav": {
+		"home": "Басты",
+		"chat": "Чат",
+		"profile": "Профиль"
+	},
+	"chat": {
+		"title": "{name} · AI мансап серіктесі",
+		"backToClinic": "← Клиникаға оралу",
+		"status": {
+			"online": "Желіде",
+			"offline": "Желіде емес"
+		},
+		"welcome": {
+			"greeting": "👋 Сәлем! Мен {name}, сіздің AI мансап серіктесіңіз.",
+			"prompt": "Мәселеңізді айтыңыз немесе маман таңдаңыз:",
+			"title": "Қош келдіңіз",
+			"desc": "Орталық Азияға арналған AI мансап серіктесі"
+		},
+		"input": {
+			"placeholder": "Мансап туралы жазыңыз…"
+		}
+	},
+	"clinic": {
+		"comingSoon": "Жақында",
+		"openAgent": "Ашу",
+		"loginToContinue": "Жалғастыру үшін кіріңіз",
+		"guestBanner": "Тарихты сақтау және мамандар үшін кіріңіз",
+		"signIn": "Кіру",
+		"englishLevelLabel": "Ағылшын деңгейі (міндетті емес)",
+		"englishLevel": {
+			"basic": "Базалық",
+			"intermediate": "Орташа",
+			"fluent": "Еркін"
+		},
+		"prompts": {
+			"cv": "✏️ Түйіндемені жақсарту",
+			"jobs": "🇰🇿 Қазақстандағы жұмыс",
+			"interview": "🎯 Сұхбат кеңестері",
+			"cvText": "Түйіндемемді жақсартуға көмектес",
+			"jobsText": "Қазақстанда қандай жұмыс орындары сұраныста?",
+			"interviewText": "Жұмыс сұхбатына қалай дайындалу керек?"
+		},
+		"sendFailed": "Хабарлама жіберілмеді",
+		"agentHubSprint2": "Маман режимі — Sprint 2 ({agent})"
+	},
+	"subscription": {
+		"title": "PRO / Sprint жаңарту",
+		"proTab": "PRO жазылым",
+		"sprintTab": "Мансап Sprint",
+		"proMonthlyName": "PRO ай сайын",
+		"savePercentage": "40% үнемдеу",
+		"payNow": "Қазір сатып алу"
+	},
+	"credits": {
+		"title": "Кредиттер сатып алу",
+		"currentBalance": "Ағымдағы баланс",
+		"buyCredits": "Кредиттер сатып алу"
 	}
 }

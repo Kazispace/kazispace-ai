@@ -1,0 +1,78 @@
+"use client";
+
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { AGENT_NAME } from "@/lib/constants";
+
+interface ChatHeaderProps {
+  locale: string;
+  mode?: "clinic" | "agent";
+  agentName?: string;
+  agentEmoji?: string;
+  isOnline?: boolean;
+  onBackToClinic?: () => void;
+}
+
+export function ChatHeader({
+  locale,
+  mode = "clinic",
+  agentName,
+  agentEmoji,
+  isOnline = true,
+  onBackToClinic,
+}: ChatHeaderProps) {
+  const t = useTranslations("chat");
+  const tNav = useTranslations("nav");
+
+  return (
+    <header className="bg-kazi-navy px-4 py-3 flex items-center gap-3 shrink-0 border-b border-white/5">
+      {mode === "agent" && onBackToClinic ? (
+        <button
+          type="button"
+          onClick={onBackToClinic}
+          className="text-sm font-medium text-kazi-orange hover:text-white transition-colors shrink-0"
+        >
+          {t("backToClinic")}
+        </button>
+      ) : (
+        <Link href={`/${locale}/chat`} className="text-white shrink-0">
+          <span className="text-lg font-bold">
+            <span className="text-kazi-orange">Kazi</span>Space
+          </span>
+        </Link>
+      )}
+
+      <div className="w-px h-6 bg-white/20 shrink-0" />
+
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-kazi-orange to-amber-500 flex items-center justify-center text-lg shrink-0">
+          {mode === "agent" && agentEmoji ? agentEmoji : "🤖"}
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-white truncate">
+            {mode === "agent" && agentName ? agentName : t("title", { name: AGENT_NAME })}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div
+              className={cn(
+                "w-2 h-2 rounded-full shrink-0",
+                isOnline ? "bg-green-500" : "bg-red-500"
+              )}
+            />
+            <span className="text-xs text-white/50">
+              {isOnline ? t("status.online") : t("status.offline")}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <Link href={`/${locale}/mine`} className="shrink-0">
+        <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
+          {tNav("profile")}
+        </Button>
+      </Link>
+    </header>
+  );
+}

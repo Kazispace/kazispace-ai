@@ -1,10 +1,15 @@
 import { API_BASE_URL } from './constants';
 import { getAuthToken, getDeviceId, clearAuthToken } from './auth';
-import type { ApiResponse, OtpRequestResponse, OtpVerifyResponse, User, ChatMessage, CreditBalance, LedgerEntry } from '@/types';
+import type {
+  ApiResponse,
+  OtpRequestResponse,
+  OtpVerifyResponse,
+  User,
+  ChatMessage,
+  CreditBalance,
+  LedgerEntry,
+} from '@/types';
 
-/**
- * Core fetch wrapper with auth injection and error handling
- */
 async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -13,11 +18,14 @@ async function apiRequest<T>(
   const token = getAuthToken();
   const deviceId = getDeviceId();
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Device-ID': deviceId,
-    ...options.headers,
   };
+
+  if (options.headers) {
+    Object.assign(headers, options.headers as Record<string, string>);
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -38,7 +46,11 @@ async function apiRequest<T>(
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        error: errorData.message || errorData.error || `HTTP ${response.status}`,
+        error:
+          errorData.message ||
+          errorData.error ||
+          errorData.error_code ||
+          `HTTP ${response.status}`,
       };
     }
 
@@ -52,9 +64,9 @@ async function apiRequest<T>(
   }
 }
 
-// ---- Auth APIs ----
-
-export async function requestOtp(phoneOrEmail: string): Promise<ApiResponse<OtpRequestResponse>> {
+export async function requestOtp(
+  phoneOrEmail: string
+): Promise<ApiResponse<OtpRequestResponse>> {
   return apiRequest<OtpRequestResponse>('/api/v1/auth/otp/request', {
     method: 'POST',
     body: JSON.stringify({ contact: phoneOrEmail }),
@@ -75,32 +87,29 @@ export async function getMe(): Promise<ApiResponse<User>> {
   return apiRequest<User>('/api/v1/me');
 }
 
-export async function bindWebUser(userData: Partial<User>): Promise<ApiResponse<User>> {
-  return apiRequest<User>('/api/v1/user/bind', {
-    method: 'POST',
-    body: JSON.stringify(userData),
-  });
+export interface ClinicChatResponse {
+  reply?: string;
+  response?: { text?: string };
+  message_id?: string;
+  messageId?: string;
+  intent?: string;
 }
-
-// ---- Chat APIs ----
 
 export async function sendChatMessage(
   sessionId: string,
-  message: string
-): Promise<ApiResponse<{ reply: string; messageId: string }>> {
-  return apiRequest('/api/v1/chat/messages', {
+  text: string
+): Promise<ApiResponse<ClinicChatResponse>> {
+  return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
-    body: JSON.stringify({ sessionId, message }),
+    body: JSON.stringify({ session_id: sessionId, text }),
   });
 }
 
 export async function fetchChatHistory(
   sessionId: string
-): Promise<ApiResponse<{ messages: ChatMessage[] }>> {
+): Promise<ApiResponse<{ messages: ChatMessage[] } | ChatMessage[]>> {
   return apiRequest(`/api/v1/chat/sessions/${sessionId}/messages`);
 }
-
-// ---- Credits APIs ----
 
 export async function getCreditBalance(): Promise<ApiResponse<CreditBalance>> {
   return apiRequest<CreditBalance>('/api/v1/credits/balance');
@@ -111,4 +120,13 @@ export async function getLedger(
 ): Promise<ApiResponse<{ entries: LedgerEntry[] }>> {
   const query = filter && filter !== 'all' ? `?filter=${filter}` : '';
   return apiRequest(`/api/v1/credits/ledger${query}`);
+}
+
+export function parseClinicReply(data: ClinicChatResponse | undefined): {
+  reply: string;
+  intent?: string;
+} {
+  if (!data) return { reply: '' };
+  const reply = data.reply ?? data.response?.text ?? '';
+  return { reply, intent: data.intent };
 }
