@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KaziSpace Chat — AI Career Partner</title>
+  <meta name="description" content="Chat with Kazi — your AI career partner for resume optimization, job search, and career advice in Central Asia." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange:   #F47920;
+      --orange-d: #d96a10;
+      --navy:     #0D1B2A;
+      --navy2:    #132237;
+      --white:    #FFFFFF;
+      --gray-bg:  #F5F7FA;
+      --gray-1:   #E2E8F0;
+      --gray-2:   #CBD5E1;
+      --text:     #1A2B3C;
+      --muted:    #6B7A8D;
+      --bubble-user: #F47920;
+      --bubble-ai:   #FFFFFF;
+      --green:    #22c55e;
+      --red:      #ef4444;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background: var(--gray-bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ── LAYOUT ── */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 860px;
+      margin: 0 auto;
+      background: var(--white);
+      box-shadow: 0 0 60px rgba(0,0,0,0.08);
+    }
+
+    /* ── HEADER ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      padding: 0 1.2rem;
+      height: 64px;
+      background: var(--navy);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .header-logo {
+      height: 32px;
+      display: block;
+    }
+    .header-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(255,255,255,0.15);
+    }
+    .header-ai {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex: 1;
+    }
+    .ai-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), #f9a825);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .ai-info { line-height: 1.3; }
+    .ai-name {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--white);
+    }
+    .ai-status {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.5);
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0;
+    }
+    .status-dot.offline { background: var(--red); }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .header-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 0.35rem 0.8rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .header-btn:hover {
+      background: rgba(255,255,255,0.15);
+      color: var(--white);
+    }
+    .header-btn.tg {
+      background: rgba(41,182,246,0.15);
+      border-color: rgba(41,182,246,0.3);
+      color: #29b6f6;
+    }
+    .header-btn.tg:hover {
+      background: rgba(41,182,246,0.25);
+    }
+
+    /* ── CREDITS BANNER ── */
+    .credits-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.55rem 1.2rem;
+      background: rgba(244,121,32,0.06);
+      border-bottom: 1px solid rgba(244,121,32,0.15);
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+    .credits-bar span { color: var(--muted); }
+    .credits-count {
+      font-weight: 700;
+      color: var(--orange);
+    }
+
+    /* ── MESSAGES ── */
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.4rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      scroll-behavior: smooth;
+    }
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: var(--gray-1); border-radius: 2px; }
+
+    /* ── MESSAGE BUBBLE ── */
+    .msg {
+      display: flex;
+      gap: 0.6rem;
+      max-width: 78%;
+      animation: fadeUp 0.22s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .msg.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .msg.ai {
+      align-self: flex-start;
+    }
+    .msg-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      margin-top: 2px;
+    }
+    .msg.ai .msg-avatar {
+      background: linear-gradient(135deg, var(--orange), #f9a825);
+    }
+    .msg.user .msg-avatar {
+      background: var(--gray-1);
+      color: var(--muted);
+    }
+    .msg-body { display: flex; flex-direction: column; gap: 0.25rem; }
+    .msg-bubble {
+      padding: 0.75rem 1rem;
+      border-radius: 16px;
+      font-size: 0.93rem;
+      line-height: 1.65;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .msg.user .msg-bubble {
+      background: var(--bubble-user);
+      color: var(--white);
+      border-bottom-right-radius: 4px;
+    }
+    .msg.ai .msg-bubble {
+      background: var(--bubble-ai);
+      color: var(--text);
+      border: 1px solid var(--gray-1);
+      border-bottom-left-radius: 4px;
+    }
+    .msg-time {
+      font-size: 0.7rem;
+      color: var(--gray-2);
+      padding: 0 0.25rem;
+    }
+    .msg.user .msg-time { text-align: right; }
+    .msg-intent {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.5rem;
+      border-radius: 50px;
+      align-self: flex-start;
+    }
+    .intent-resume {
+      background: rgba(244,121,32,0.1);
+      color: var(--orange);
+    }
+    .intent-chitchat {
+      background: rgba(34,197,94,0.1);
+      color: #16a34a;
+    }
+    .intent-payment {
+      background: rgba(99,102,241,0.1);
+      color: #4f46e5;
+    }
+
+    /* ── TYPING INDICATOR ── */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      align-self: flex-start;
+      max-width: 78%;
+      animation: fadeUp 0.22s ease;
+    }
+    .typing-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), #f9a825);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+    .typing-bubble {
+      background: var(--white);
+      border: 1px solid var(--gray-1);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .typing-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gray-2);
+      animation: bounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+
+    /* ── WELCOME STATE ── */
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      flex: 1;
+    }
+    .welcome-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), #f9a825);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 8px 32px rgba(244,121,32,0.3);
+    }
+    .welcome h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 0.6rem;
+    }
+    .welcome p {
+      font-size: 0.93rem;
+      color: var(--muted);
+      max-width: 380px;
+      line-height: 1.65;
+      margin-bottom: 1.8rem;
+    }
+    .quick-prompts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      justify-content: center;
+      max-width: 500px;
+    }
+    .quick-btn {
+      background: var(--white);
+      border: 1px solid var(--gray-1);
+      border-radius: 50px;
+      padding: 0.5rem 1rem;
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .quick-btn:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(244,121,32,0.04);
+    }
+
+    /* ── INPUT AREA ── */
+    .input-area {
+      padding: 0.9rem 1.2rem 1rem;
+      background: var(--white);
+      border-top: 1px solid var(--gray-1);
+      flex-shrink: 0;
+    }
+    .input-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.6rem;
+      background: var(--gray-bg);
+      border: 1.5px solid var(--gray-1);
+      border-radius: 14px;
+      padding: 0.6rem 0.6rem 0.6rem 1rem;
+      transition: border-color 0.2s;
+    }
+    .input-wrap:focus-within {
+      border-color: var(--orange);
+      background: var(--white);
+    }
+    #msg-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.93rem;
+      color: var(--text);
+      resize: none;
+      outline: none;
+      max-height: 120px;
+      min-height: 24px;
+      line-height: 1.5;
+    }
+    #msg-input::placeholder { color: var(--gray-2); }
+    .send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--orange);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .send-btn:hover { background: var(--orange-d); transform: scale(1.05); }
+    .send-btn:disabled { background: var(--gray-1); cursor: not-allowed; transform: none; }
+    .send-btn svg { width: 18px; height: 18px; fill: var(--white); }
+    .input-hint {
+      font-size: 0.72rem;
+      color: var(--gray-2);
+      margin-top: 0.45rem;
+      padding: 0 0.25rem;
+    }
+
+    /* ── TELEGRAM LOGIN WIDGET ── */
+    .tg-login-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.6rem 1.2rem;
+      background: linear-gradient(90deg, #0D1B2A 0%, #132237 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+    .tg-login-bar.hidden { display: none; }
+    .tg-login-info {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.65);
+      flex: 1;
+    }
+    .tg-login-info strong { color: var(--white); }
+    .tg-user-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      color: var(--white);
+    }
+    .tg-user-badge .tg-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+    .tg-logout-btn {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.4);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      transition: color 0.2s;
+    }
+    .tg-logout-btn:hover { color: rgba(255,255,255,0.8); }
+    .tg-deeplink-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: #229ED9;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .tg-deeplink-btn:hover { background: #1a8bbf; transform: scale(1.03); }
+    .tg-deeplink-btn:disabled { background: #666; cursor: not-allowed; transform: none; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--navy);
+      color: var(--white);
+      font-size: 0.82rem;
+      padding: 0.55rem 1.2rem;
+      border-radius: 50px;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 999;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .header-btn { display: none; }
+      .msg { max-width: 88%; }
+      .welcome h2 { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <a href="/" title="KaziSpace Home">
+      <img src="logo.png" alt="KaziSpace" class="header-logo" />
+    </a>
+    <div class="header-divider"></div>
+    <div class="header-ai">
+      <div class="ai-avatar">🤖</div>
+      <div class="ai-info">
+        <div class="ai-name">KaziSpace Chat — AI Career Partner</div>
+        <div class="ai-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Connecting...</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="https://t.me/kazispace_bot" target="_blank" rel="noopener" class="header-btn tg">
+        ✈ Telegram Bot
+      </a>
+      <a href="cv.html" class="header-btn" style="border-color:#1a56db;color:#1a56db;">📄 CV Builder</a>
+      <a href="/" class="header-btn">← Home</a>
+    </div>
+  </header>
+
+  <!-- TELEGRAM LOGIN BAR -->
+  <div class="tg-login-bar" id="tg-login-bar">
+    <div class="tg-login-info">
+      <strong>Sign in with Telegram</strong> to save your chat history and sync with the Bot
+    </div>
+    <div id="tg-widget-container"></div>
+  </div>
+
+  <!-- TELEGRAM USER BADGE (shown after login) -->
+  <div class="tg-login-bar hidden" id="tg-user-bar">
+    <div class="tg-user-badge">
+      <div class="tg-avatar" id="tg-avatar-initials">?</div>
+      <span id="tg-user-name">Loading...</span>
+      <span style="color:rgba(255,255,255,0.3)">·</span>
+      <span style="color:#22c55e;font-size:0.75rem;">✓ Telegram linked</span>
+    </div>
+    <button class="tg-logout-btn" onclick="logoutTelegram()">Sign out</button>
+  </div>
+
+  <!-- CREDITS BAR -->
+  <div class="credits-bar" id="credits-bar" style="display:none;">
+    <span>Free resume optimizations remaining:</span>
+    <span class="credits-count" id="credits-count">3</span>
+  </div>
+
+  <!-- MESSAGES -->
+  <div class="messages" id="messages">
+    <!-- Welcome state shown before first message -->
+    <div class="welcome" id="welcome-state">
+      <div class="welcome-icon">🤖</div>
+      <h2>Hi, I'm KaziSpace!</h2>
+      <p>Your AI career partner for Central Asia. I can help you optimize your resume, prepare for interviews, and navigate the job market in Kazakhstan and beyond.</p>
+      <div class="quick-prompts">
+        <button class="quick-btn" onclick="startCvBuilder()">📄 Build my CV</button>
+        <button class="quick-btn" onclick="sendQuick('Help me improve my resume')">✏️ Improve my resume</button>
+        <button class="quick-btn" onclick="sendQuick('What jobs are in demand in Kazakhstan?')">🇰🇿 Jobs in Kazakhstan</button>
+        <button class="quick-btn" onclick="sendQuick('How do I prepare for a job interview?')">🎯 Interview tips</button>
+        <button class="quick-btn" onclick="sendQuick('Write a cover letter for a software engineer role')">✍️ Cover letter</button>
+        <button class="quick-btn" onclick="sendQuick('What skills should I learn in 2026?')">📈 Skills to learn</button>
+        <button class="quick-btn" onclick="sendQuick('Привет! Помоги мне с резюме')">🇷🇺 Помоги с резюме</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT AREA -->
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea
+        id="msg-input"
+        placeholder="Ask Kazi anything about your career..."
+        rows="1"
+        autocomplete="off"
+        spellcheck="true"
+      ></textarea>
+      <button class="send-btn" id="send-btn" disabled title="Send message">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="input-hint">Press Enter to send · Shift+Enter for new line</div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── CONFIG ──────────────────────────────────────────────────────────────
+  const API_BASE  = 'https://bot.kazispace.ai';
+  const TG_BOT_NAME = 'kazispace_bot';  // Must match @username in BotFather
+
+  // Generate or restore a persistent web user ID
+  function getWebUserId() {
+    let id = localStorage.getItem('kazi_web_user_id');
+    if (!id) {
+      id = 'web_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      localStorage.setItem('kazi_web_user_id', id);
+    }
+    return id;
+  }
+
+  // Generate or restore a session ID (resets on page reload for fresh sessions)
+  function getSessionId() {
+    let sid = sessionStorage.getItem('kazi_session_id');
+    if (!sid) {
+      sid = 'web_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      sessionStorage.setItem('kazi_session_id', sid);
+    }
+    return sid;
+  }
+
+  const WEB_USER_ID = getWebUserId();
+  const SESSION_ID  = getSessionId();
+
+  // ── STATE ────────────────────────────────────────────────────────────────
+  let isLoading    = false;
+  let userCredits  = null;
+  let tgUser       = null;  // Telegram user object after login
+
+  // ── TELEGRAM LOGIN (Deep-link flow — works on mobile & desktop) ─────────────
+  let _pollInterval = null;
+  let _loginToken   = null;
+
+  function initTelegramWidget() {
+    const stored = localStorage.getItem('kazi_tg_user');
+    if (stored) {
+      try {
+        tgUser = JSON.parse(stored);
+        showTgUserBadge(tgUser);
+        return;
+      } catch { localStorage.removeItem('kazi_tg_user'); }
+    }
+    // Show the deep-link login button
+    renderLoginButton();
+  }
+
+  function renderLoginButton() {
+    const container = document.getElementById('tg-widget-container');
+    container.innerHTML = `
+      <button class="tg-deeplink-btn" id="tg-deeplink-btn" onclick="startTelegramLogin()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white" style="flex-shrink:0">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.04 9.613c-.152.67-.548.834-1.11.518l-3.074-2.265-1.483 1.428c-.164.164-.302.302-.619.302l.22-3.123 5.682-5.133c.247-.22-.054-.342-.384-.122L7.19 14.4l-3.04-.95c-.66-.207-.673-.66.138-.977l11.878-4.578c.55-.2 1.03.134.396.353z"/>
+        </svg>
+        Sign in with Telegram
+      </button>
+    `;
+  }
+
+  async function startTelegramLogin() {
+    const btn = document.getElementById('tg-deeplink-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Opening Telegram...'; }
+
+    try {
+      // Step 1: Get one-time token + deep link from backend
+      const res = await fetch(API_BASE + '/api/v1/auth/telegram/init', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ web_user_id: WEB_USER_ID }),
+      });
+      if (!res.ok) throw new Error('Init failed');
+      const { token, deep_link } = await res.json();
+      _loginToken = token;
+
+      // Step 2: Open Telegram deep link
+      window.open(deep_link, '_blank');
+
+      // Step 3: Start polling for login confirmation
+      showToast('⏳ Waiting for Telegram confirmation...');
+      startPolling(token);
+
+      // Update button state
+      const container = document.getElementById('tg-widget-container');
+      container.innerHTML = `
+        <span style="font-size:0.75rem;color:rgba(255,255,255,0.6);">
+          ⏳ Waiting… <button onclick="cancelLogin()" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.72rem;">Cancel</button>
+        </span>
+      `;
+    } catch (e) {
+      showToast('⚠️ Could not start login. Please try again.');
+      renderLoginButton();
+    }
+  }
+
+  function startPolling(token) {
+    if (_pollInterval) clearInterval(_pollInterval);
+    let attempts = 0;
+    const maxAttempts = 60; // 2 minutes at 2s intervals
+
+    _pollInterval = setInterval(async () => {
+      attempts++;
+      if (attempts > maxAttempts) {
+        clearInterval(_pollInterval);
+        showToast('⚠️ Login timed out. Please try again.');
+        renderLoginButton();
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/auth/telegram/poll/${token}`);
+        if (res.status === 404 || res.status === 410) {
+          clearInterval(_pollInterval);
+          showToast('⚠️ Login link expired. Please try again.');
+          renderLoginButton();
+          return;
+        }
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === 'ok') {
+          clearInterval(_pollInterval);
+          // Persist login token + basic info
+          const kaziToken = data.kazi_auth_token || null;
+          if (kaziToken) localStorage.setItem('kazi_auth_token', kaziToken);
+          tgUser = { display_name: data.display_name, user_id: data.user_id };
+          localStorage.setItem('kazi_tg_user', JSON.stringify(tgUser));
+          // Fetch full user state from /me
+          await fetchAndApplyMe();
+          showTgUserBadge(tgUser);
+          showToast('✅ Telegram account linked!');
+        }
+      } catch { /* network hiccup, retry next interval */ }
+    }, 2000);
+  }
+
+  function cancelLogin() {
+    if (_pollInterval) clearInterval(_pollInterval);
+    _loginToken = null;
+    renderLoginButton();
+    showToast('Login cancelled');
+  }
+
+  function showTgUserBadge(user) {
+    const name = user.first_name || user.display_name || 'User';
+    document.getElementById('tg-login-bar').classList.add('hidden');
+    document.getElementById('tg-user-bar').classList.remove('hidden');
+    document.getElementById('tg-user-name').textContent = name;
+    document.getElementById('tg-avatar-initials').textContent = name.charAt(0).toUpperCase();
+  }
+
+  function logoutTelegram() {
+    if (_pollInterval) clearInterval(_pollInterval);
+    localStorage.removeItem('kazi_tg_user');
+    tgUser = null;
+    document.getElementById('tg-user-bar').classList.add('hidden');
+    document.getElementById('tg-login-bar').classList.remove('hidden');
+    renderLoginButton();
+    showToast('Signed out from Telegram');
+  }
+
+  // ── /me 接口：获取并应用用户状态 ─────────────────────────────────────────────
+  async function fetchAndApplyMe() {
+    const token = localStorage.getItem('kazi_auth_token');
+    if (!token) return;
+    try {
+      const res = await fetch(API_BASE + '/api/v1/me', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          // Token 失效，清除登录状态
+          localStorage.removeItem('kazi_auth_token');
+          localStorage.removeItem('kazi_tg_user');
+        }
+        return;
+      }
+      const me = await res.json();
+      // 更新 Credits 显示
+      if (me.billing_snapshot && me.billing_snapshot.credits !== undefined) {
+        userCredits = me.billing_snapshot.credits;
+        updateCreditsBar();
+      }
+      // 更新用户名显示
+      if (me.display_name && tgUser) {
+        tgUser.display_name = me.display_name;
+        localStorage.setItem('kazi_tg_user', JSON.stringify(tgUser));
+      }
+      // 将 user_id 写入 localStorage（供后续接口使用）
+      if (me.user_id) localStorage.setItem('kazi_user_id', me.user_id);
+    } catch {
+      // 静默失败，不影响主流程
+    }
+  }
+
+  // ── DOM REFS ─────────────────────────────────────────────────────────────
+  const messagesEl   = document.getElementById('messages');
+  const welcomeEl    = document.getElementById('welcome-state');
+  const inputEl      = document.getElementById('msg-input');
+  const sendBtnEl    = document.getElementById('send-btn');
+  const statusDotEl  = document.getElementById('status-dot');
+  const statusTextEl = document.getElementById('status-text');
+  const creditsBarEl = document.getElementById('credits-bar');
+  const creditsCountEl = document.getElementById('credits-count');
+  const toastEl      = document.getElementById('toast');
+
+  // ── HEALTH CHECK ─────────────────────────────────────────────────────────
+  async function checkHealth() {
+    try {
+      const res = await fetch(API_BASE + '/health', { signal: AbortSignal.timeout(5000) });
+      const data = await res.json();
+      if (data.status === 'healthy') {
+        statusDotEl.classList.remove('offline');
+        statusTextEl.textContent = 'Online · Ready to help';
+      } else {
+        throw new Error('unhealthy');
+      }
+    } catch {
+      statusDotEl.classList.add('offline');
+      statusTextEl.textContent = 'Offline · Please try later';
+    }
+  }
+
+  // ── REGISTER USER ────────────────────────────────────────────────────────
+  async function registerUser() {
+    try {
+      const res = await fetch(API_BASE + '/api/v1/user/bind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ web_user_id: WEB_USER_ID })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        userCredits = data.credits ?? 3;
+        updateCreditsBar();
+      }
+    } catch {
+      // Silent fail — user can still chat
+    }
+  }
+
+  function updateCreditsBar() {
+    if (userCredits !== null) {
+      creditsCountEl.textContent = userCredits;
+      creditsBarEl.style.display = 'flex';
+    }
+  }
+
+  // ── LOAD HISTORY ─────────────────────────────────────────────────────────
+  async function loadHistory() {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/chat/history/${SESSION_ID}`);
+      if (!res.ok) return;
+      const history = await res.json();
+      if (history && history.length > 0) {
+        welcomeEl.style.display = 'none';
+        history.forEach(msg => {
+          appendMessage(msg.role === 'user' ? 'user' : 'ai', msg.content, null, msg.created_at);
+        });
+        scrollToBottom();
+      }
+    } catch {
+      // No history — show welcome state
+    }
+  }
+
+  // ── SEND MESSAGE ─────────────────────────────────────────────────────────
+  async function sendMessage(text) {
+    if (!text.trim() || isLoading) return;
+
+    // If in CV Builder mode, route to CV conversation
+    if (cvMode) {
+      // Check if user wants to restart
+      const lower = text.toLowerCase();
+      if (lower.includes('начать заново') || lower.includes('restart') || lower.includes('start over')) {
+        appendMessage('user', text);
+        scrollToBottom();
+        sendCvMessage('', true);
+        return;
+      }
+      appendMessage('user', text);
+      scrollToBottom();
+      sendCvMessage(text);
+      return;
+    }
+
+    // Hide welcome, show message
+    welcomeEl.style.display = 'none';
+    appendMessage('user', text);
+    scrollToBottom();
+
+    // Show typing indicator
+    const typingEl = showTyping();
+    isLoading = true;
+    sendBtnEl.disabled = true;
+
+    try {
+      const res = await fetch(API_BASE + '/api/v1/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          web_user_id: WEB_USER_ID,
+          session_id:  SESSION_ID,
+          message:     text
+        })
+      });
+
+      removeTyping(typingEl);
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+      appendMessage('ai', data.reply, data.intent);
+
+      // Update credits if resume optimization was used
+      if (data.intent === 'RESUME_OPTIMIZE' && userCredits !== null) {
+        userCredits = Math.max(0, userCredits - 1);
+        updateCreditsBar();
+        if (userCredits === 0) {
+          showToast('You have used all free resume optimizations.');
+        }
+      }
+
+    } catch (err) {
+      removeTyping(typingEl);
+      appendMessage('ai', `⚠️ Sorry, something went wrong: ${err.message}. Please try again.`, null);
+      showToast('Connection error. Please check your network.');
+    } finally {
+      isLoading = false;
+      updateSendBtn();
+      scrollToBottom();
+    }
+  }
+
+  // ── DOM HELPERS ──────────────────────────────────────────────────────────
+  function appendMessage(role, content, intent, timestamp) {
+    const isUser = role === 'user';
+    const time = timestamp
+      ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const msgEl = document.createElement('div');
+    msgEl.className = `msg ${isUser ? 'user' : 'ai'}`;
+
+    const avatarEl = document.createElement('div');
+    avatarEl.className = 'msg-avatar';
+    avatarEl.textContent = isUser ? '👤' : '🤖';
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'msg-body';
+
+    const bubbleEl = document.createElement('div');
+    bubbleEl.className = 'msg-bubble';
+    bubbleEl.textContent = content;
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'msg-time';
+    timeEl.textContent = time;
+
+    bodyEl.appendChild(bubbleEl);
+
+    // Show intent badge for AI messages
+    if (!isUser && intent && intent !== 'CHITCHAT') {
+      const intentEl = document.createElement('div');
+      intentEl.className = 'msg-intent ' + getIntentClass(intent);
+      intentEl.textContent = formatIntent(intent);
+      bodyEl.appendChild(intentEl);
+    }
+
+    bodyEl.appendChild(timeEl);
+    msgEl.appendChild(avatarEl);
+    msgEl.appendChild(bodyEl);
+    messagesEl.appendChild(msgEl);
+  }
+
+  function getIntentClass(intent) {
+    if (intent === 'RESUME_OPTIMIZE') return 'intent-resume';
+    if (intent === 'PAYMENT') return 'intent-payment';
+    return 'intent-chitchat';
+  }
+
+  function formatIntent(intent) {
+    const map = {
+      'RESUME_OPTIMIZE': '📄 Resume Mode',
+      'PAYMENT': '💳 Payment',
+      'CHITCHAT': '💬 Chat'
+    };
+    return map[intent] || intent;
+  }
+
+  function showTyping() {
+    const el = document.createElement('div');
+    el.className = 'typing-indicator';
+    el.innerHTML = `
+      <div class="typing-avatar">🤖</div>
+      <div class="typing-bubble">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    `;
+    messagesEl.appendChild(el);
+    scrollToBottom();
+    return el;
+  }
+
+  function removeTyping(el) {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
+
+  function scrollToBottom() {
+    requestAnimationFrame(() => {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    });
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 3500);
+  }
+
+  // ── INPUT HANDLING ────────────────────────────────────────────────────────
+  function updateSendBtn() {
+    sendBtnEl.disabled = !inputEl.value.trim() || isLoading;
+  }
+
+  // Auto-resize textarea
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+    updateSendBtn();
+  });
+
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const text = inputEl.value.trim();
+      if (text && !isLoading) {
+        inputEl.value = '';
+        inputEl.style.height = 'auto';
+        updateSendBtn();
+        sendMessage(text);
+      }
+    }
+  });
+
+  sendBtnEl.addEventListener('click', () => {
+    const text = inputEl.value.trim();
+    if (text && !isLoading) {
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      updateSendBtn();
+      sendMessage(text);
+    }
+  });
+
+  // ── CV BUILDER MODE ─────────────────────────────────────────────────────
+  let cvMode = false;          // true = currently in CV Builder conversation
+  let cvDocId = null;          // doc_id after CV is generated
+  let cvPdfBtnEl = null;       // reference to the PDF download button
+
+  function startCvBuilder() {
+    cvMode = true;
+    cvDocId = null;
+    welcomeEl.style.display = 'none';
+    // Show a user-side bubble to signal intent
+    appendMessage('user', '📄 Build my CV');
+    scrollToBottom();
+    sendCvMessage('', true);  // reset=true to start fresh
+  }
+
+  async function sendCvMessage(text, reset = false) {
+    const typingEl = showTyping();
+    isLoading = true;
+    sendBtnEl.disabled = true;
+
+    try {
+      const jwt = localStorage.getItem('kazi_jwt');
+      if (!jwt) {
+        removeTyping(typingEl);
+        appendMessage('ai',
+          '🔐 Please sign in with Telegram first to use CV Builder.\n\n'
+          + 'Click the "Sign in with Telegram" button above.');
+        cvMode = false;
+        return;
+      }
+
+      const res = await fetch(API_BASE + '/api/v1/cv/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + jwt,
+        },
+        body: JSON.stringify({ message: text, reset }),
+      });
+
+      removeTyping(typingEl);
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.detail || `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Render AI response with Markdown-like formatting
+      appendCvMessage(data.message, data.state);
+
+      // Update credits
+      if (data.credits_left !== undefined) {
+        userCredits = data.credits_left;
+        updateCreditsBar();
+      }
+
+      // CV generated — show PDF download button
+      if (data.state === 'done' && data.cv_doc_id) {
+        cvDocId = data.cv_doc_id;
+        if (data.cv_content) {
+          appendCvContent(data.cv_content);
+        }
+        showPdfDownloadBtn(data.cv_doc_id);
+      }
+
+      // If credits exhausted, exit CV mode
+      if (data.state === 'credits_exhausted') {
+        cvMode = false;
+      }
+
+    } catch (err) {
+      removeTyping(typingEl);
+      appendMessage('ai', `⚠️ ${err.message}`);
+      cvMode = false;
+    } finally {
+      isLoading = false;
+      updateSendBtn();
+      scrollToBottom();
+    }
+  }
+
+  function appendCvMessage(text, state) {
+    // Convert basic Markdown bold (**text**) to <strong>
+    const formatted = text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'msg ai';
+
+    const avatarEl = document.createElement('div');
+    avatarEl.className = 'msg-avatar';
+    avatarEl.textContent = '🤖';
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'msg-body';
+
+    const bubbleEl = document.createElement('div');
+    bubbleEl.className = 'msg-bubble';
+    bubbleEl.innerHTML = formatted;
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'msg-time';
+    timeEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Intent badge for CV mode
+    const intentEl = document.createElement('div');
+    intentEl.className = 'msg-intent intent-resume';
+    intentEl.textContent = '📄 CV Builder';
+
+    bodyEl.appendChild(bubbleEl);
+    bodyEl.appendChild(intentEl);
+    bodyEl.appendChild(timeEl);
+    msgEl.appendChild(avatarEl);
+    msgEl.appendChild(bodyEl);
+    messagesEl.appendChild(msgEl);
+  }
+
+  function appendCvContent(content) {
+    // Show CV content in a styled code-like block
+    const msgEl = document.createElement('div');
+    msgEl.className = 'msg ai';
+
+    const avatarEl = document.createElement('div');
+    avatarEl.className = 'msg-avatar';
+    avatarEl.textContent = '📄';
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'msg-body';
+
+    const bubbleEl = document.createElement('div');
+    bubbleEl.className = 'msg-bubble';
+    bubbleEl.style.cssText = 'font-family: monospace; font-size: 0.82rem; white-space: pre-wrap; background: #f8fafc; color: #1a2b3c; border: 1px solid #e2e8f0; max-height: 320px; overflow-y: auto;';
+    bubbleEl.textContent = content;
+
+    bodyEl.appendChild(bubbleEl);
+    msgEl.appendChild(avatarEl);
+    msgEl.appendChild(bodyEl);
+    messagesEl.appendChild(msgEl);
+  }
+
+  function showPdfDownloadBtn(docId) {
+    // Remove existing PDF button if any
+    if (cvPdfBtnEl && cvPdfBtnEl.parentNode) {
+      cvPdfBtnEl.parentNode.removeChild(cvPdfBtnEl);
+    }
+
+    const wrapEl = document.createElement('div');
+    wrapEl.style.cssText = 'display: flex; justify-content: center; padding: 12px 0;';
+
+    const btn = document.createElement('button');
+    btn.textContent = '📥 Download PDF';
+    btn.style.cssText = [
+      'background: #1a56db',
+      'color: #fff',
+      'border: none',
+      'border-radius: 8px',
+      'padding: 10px 28px',
+      'font-size: 0.92rem',
+      'font-weight: 600',
+      'cursor: pointer',
+      'transition: background 0.2s',
+    ].join(';');
+    btn.onmouseover = () => { btn.style.background = '#1447c0'; };
+    btn.onmouseout  = () => { btn.style.background = '#1a56db'; };
+    btn.onclick = () => downloadCvPdf(docId);
+
+    wrapEl.appendChild(btn);
+    messagesEl.appendChild(wrapEl);
+    cvPdfBtnEl = wrapEl;
+    scrollToBottom();
+  }
+
+  async function downloadCvPdf(docId) {
+    const jwt = localStorage.getItem('kazi_jwt');
+    if (!jwt) { showToast('Please sign in first.'); return; }
+
+    showToast('Generating PDF...');
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/cv/${docId}/export`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + jwt },
+      });
+      if (!res.ok) throw new Error('PDF generation failed');
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      const date = new Date().toISOString().slice(0, 10);
+      a.href     = url;
+      a.download = `KaziSpace_CV_${date}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('✅ PDF downloaded!');
+    } catch (err) {
+      showToast('PDF download failed. Please try again.');
+    }
+  }
+
+  // ── QUICK PROMPTS ─────────────────────────────────────────────────────────
+  function sendQuick(text) {
+    inputEl.value = text;
+    updateSendBtn();
+    sendMessage(text);
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    updateSendBtn();
+  }
+
+  // ── INIT ──────────────────────────────────────────────────────────────────
+  async function init() {
+    await checkHealth();
+    await registerUser();
+    await loadHistory();
+    initTelegramWidget();  // Show login bar or restore Telegram session
+    await fetchAndApplyMe(); // Restore credits + user state from /me if JWT exists
+    inputEl.focus();
+  }
+
+  init();
+</script>
+
+</body>
+</html>
