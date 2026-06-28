@@ -2,7 +2,8 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://bot
 
 export const SUPPORTED_LOCALES = ['en', 'ru', 'kk', 'uz'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-export const DEFAULT_LOCALE: SupportedLocale = 'en';
+/** CIS / Kazakhstan primary market — SDD §11 */
+export const DEFAULT_LOCALE: SupportedLocale = 'ru';
 
 export const ROUTES = {
   HOME: '/',

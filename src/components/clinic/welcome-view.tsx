@@ -34,9 +34,9 @@ export function WelcomeView({
   const tClinic = useTranslations("clinic");
 
   const quickPrompts = [
-    { label: tClinic("prompts.cv"), text: "Help me improve my resume" },
-    { label: tClinic("prompts.jobs"), text: "What jobs are in demand in Kazakhstan?" },
-    { label: tClinic("prompts.interview"), text: "How do I prepare for a job interview?" },
+    { label: tClinic("prompts.cv"), text: tClinic("prompts.cvText") },
+    { label: tClinic("prompts.jobs"), text: tClinic("prompts.jobsText") },
+    { label: tClinic("prompts.interview"), text: tClinic("prompts.interviewText") },
   ];
 
   return (

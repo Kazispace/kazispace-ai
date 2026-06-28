@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useChatStore } from '@/lib/store';
 import {
   sendChatMessage,
@@ -27,6 +27,7 @@ function normalizeHistoryMessage(
 }
 
 export function useClinicChat() {
+  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const {
     messages,
     isStreaming,
@@ -39,19 +40,24 @@ export function useClinicChat() {
   } = useChatStore();
 
   const loadHistory = useCallback(async () => {
-    const sessionId = getSessionId();
-    const res = await fetchChatHistory(sessionId);
-    if (!res.success || !res.data) return;
+    setIsHistoryLoading(true);
+    try {
+      const sessionId = getSessionId();
+      const res = await fetchChatHistory(sessionId);
+      if (!res.success || !res.data) return;
 
-    const list = Array.isArray(res.data)
-      ? res.data
-      : (res.data as { messages: ChatMessage[] }).messages ?? [];
+      const list = Array.isArray(res.data)
+        ? res.data
+        : (res.data as { messages: ChatMessage[] }).messages ?? [];
 
-    setMessages(
-      list.map((m) =>
-        normalizeHistoryMessage(m as unknown as Record<string, unknown>, sessionId)
-      )
-    );
+      setMessages(
+        list.map((m) =>
+          normalizeHistoryMessage(m as unknown as Record<string, unknown>, sessionId)
+        )
+      );
+    } finally {
+      setIsHistoryLoading(false);
+    }
   }, [setMessages]);
 
   const sendMessage = useCallback(
@@ -104,6 +110,7 @@ export function useClinicChat() {
     messages,
     isStreaming,
     isSending,
+    isHistoryLoading,
     loadHistory,
     sendMessage,
   };

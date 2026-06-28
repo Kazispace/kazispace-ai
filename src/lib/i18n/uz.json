@@ -209,7 +209,10 @@
 		"prompts": {
 			"cv": "✏️ Rezyumeni yaxshilash",
 			"jobs": "🇰🇿 Qozog'istondagi ishlar",
-			"interview": "🎯 Suhbat maslahatlari"
+			"interview": "🎯 Suhbat maslahatlari",
+			"cvText": "Rezyumemni yaxshilashga yordam bering",
+			"jobsText": "Qozog'istonda qanday ishlar talab qilinmoqda?",
+			"interviewText": "Ish suhbatiga qanday tayyorlanish kerak?"
 		},
 		"sendFailed": "Xabar yuborilmadi",
 		"agentHubSprint2": "Mutaxassis rejimi — Sprint 2 ({agent})"

@@ -209,7 +209,10 @@
 		"prompts": {
 			"cv": "✏️ Improve my resume",
 			"jobs": "🇰🇿 Jobs in Kazakhstan",
-			"interview": "🎯 Interview tips"
+			"interview": "🎯 Interview tips",
+			"cvText": "Help me improve my resume",
+			"jobsText": "What jobs are in demand in Kazakhstan?",
+			"interviewText": "How do I prepare for a job interview?"
 		},
 		"sendFailed": "Failed to send message",
 		"agentHubSprint2": "Expert mode ships in Sprint 2 ({agent})"

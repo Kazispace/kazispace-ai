@@ -20,7 +20,8 @@ interface ClinicShellProps {
 export function ClinicShell({ locale }: ClinicShellProps) {
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
-  const { messages, isSending, isStreaming, loadHistory, sendMessage } = useClinicChat();
+  const { messages, isSending, isStreaming, isHistoryLoading, loadHistory, sendMessage } =
+    useClinicChat();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const [isOnline, setIsOnline] = useState(false);
@@ -51,10 +52,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       showToast(tClinic("loginToContinue"), "info");
       return;
     }
+    // TODO: Sprint 2 — replace with useAgentSwitch(agentId)
     showToast(tClinic("agentHubSprint2", { agent: agentId }), "info");
   };
 
-  const showWelcome = messages.length === 0;
+  const showWelcome = !isHistoryLoading && messages.length === 0;
 
   return (
     <div className="flex flex-col h-screen max-w-[860px] mx-auto bg-white shadow-xl">
