@@ -9,9 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/lib/store";
-import { getTelegramUser, removeAuthToken } from "@/lib/auth";
-import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, Bell, User } from "lucide-react";
-import { toast } from "sonner";
+import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, User } from "lucide-react";
 
 interface MinePageProps {
   params: { locale: string };
@@ -21,33 +19,33 @@ export default function MinePage({ params }: MinePageProps) {
   const t = useTranslations("mine");
   const router = useRouter();
   const { locale } = params;
-  const { credits, logout } = useAuthStore();
-  const tgUser = getTelegramUser();
+  const { user, logout } = useAuthStore();
+
+  const displayName = user?.displayName || "Guest User";
+  const displayInitial = displayName[0]?.toUpperCase() || "?";
 
   const handleLogout = () => {
     if (confirm(t("logoutConfirmContent"))) {
-      removeAuthToken();
       logout();
-      toast.success(t("logoutToast"));
       router.push(`/${locale}/login`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-bg pb-20">
       <Header locale={locale} />
 
       <main className="pt-20 px-4 max-w-lg mx-auto space-y-6">
         {/* User Card */}
-        <Card className="bg-gradient-to-br from-kazi-navy to-kazi-navy2 border-0">
+        <Card className="bg-gradient-to-br from-navy to-navy-2 border-0">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-kazi-orange to-amber-500 flex items-center justify-center text-2xl font-bold text-white">
-                {tgUser?.display_name?.[0]?.toUpperCase() || "?"}
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange to-amber-500 flex items-center justify-center text-2xl font-bold text-white">
+                {displayInitial}
               </div>
               <div className="flex-1">
                 <h2 className="text-xl font-bold text-white">
-                  {tgUser?.display_name || "Guest User"}
+                  {displayName}
                 </h2>
                 <Badge variant="secondary" className="mt-1">
                   {t("freeTrialBadge")}
@@ -66,23 +64,23 @@ export default function MinePage({ params }: MinePageProps) {
         <div className="grid grid-cols-3 gap-3">
           <Card>
             <CardContent className="p-4 text-center">
-              <FileText className="w-6 h-6 text-kazi-orange mx-auto mb-2" />
-              <div className="text-2xl font-bold text-kazi-navy">{credits ?? 3}</div>
-              <div className="text-xs text-gray-500">{t("cvCreditsLabel")}</div>
+              <FileText className="w-6 h-6 text-orange mx-auto mb-2" />
+              <div className="text-2xl font-bold text-navy">3</div>
+              <div className="text-xs text-muted">{t("cvCreditsLabel")}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <Mic className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-kazi-navy">{credits ?? 1}</div>
-              <div className="text-xs text-gray-500">{t("mockInterviewsLabel")}</div>
+              <Mic className="w-6 h-6 text-blue mx-auto mb-2" />
+              <div className="text-2xl font-bold text-navy">1</div>
+              <div className="text-xs text-muted">{t("mockInterviewsLabel")}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <Zap className="w-6 h-6 text-green-500 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-kazi-navy">0</div>
-              <div className="text-xs text-gray-500">{t("streakLabel")}</div>
+              <Zap className="w-6 h-6 text-green mx-auto mb-2" />
+              <div className="text-2xl font-bold text-navy">0</div>
+              <div className="text-xs text-muted">{t("streakLabel")}</div>
             </CardContent>
           </Card>
         </div>
@@ -96,18 +94,18 @@ export default function MinePage({ params }: MinePageProps) {
 
         {/* Prep & Learn */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
             {t("jobPrepGroupTitle")}
           </h3>
           <div className="space-y-2">
             <Link href={`/${locale}/chat`}>
-              <Card className="hover:border-kazi-orange cursor-pointer transition-colors">
+              <Card className="hover:border-orange cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-kazi-orange" />
+                    <FileText className="w-5 h-5 text-orange" />
                     <span className="font-medium">{t("cvRepoLabel")}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 text-sm text-muted">
                     <span>{t("cvRepoValue")?.split(" ")[0]}</span>
                     <ChevronRight className="w-4 h-4" />
                   </div>
@@ -115,13 +113,13 @@ export default function MinePage({ params }: MinePageProps) {
               </Card>
             </Link>
             <Link href={`/${locale}/chat`}>
-              <Card className="hover:border-kazi-orange cursor-pointer transition-colors">
+              <Card className="hover:border-orange cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Mic className="w-5 h-5 text-blue-500" />
+                    <Mic className="w-5 h-5 text-blue" />
                     <span className="font-medium">{t("interviewRecordsLabel")}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-muted" />
                 </CardContent>
               </Card>
             </Link>
@@ -130,29 +128,29 @@ export default function MinePage({ params }: MinePageProps) {
 
         {/* Profile & Preferences */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
             {t("profilePreferencesGroupTitle")}
           </h3>
           <div className="space-y-2">
             <Link href={`/${locale}/profile`}>
-              <Card className="hover:border-kazi-orange cursor-pointer transition-colors">
+              <Card className="hover:border-orange cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-gray-400" />
+                    <User className="w-5 h-5 text-muted" />
                     <span className="font-medium">{t("targetRoleLabel")}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-muted" />
                 </CardContent>
               </Card>
             </Link>
             <Card>
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 text-sky-500 flex items-center justify-center font-bold text-sm">✈</div>
+                  <div className="w-5 h-5 text-teal flex items-center justify-center font-bold text-sm">&#x2708;</div>
                   <span className="font-medium">{t("bindTelegramLabel")}</span>
                 </div>
-                <Badge variant={tgUser ? "default" : "secondary"}>
-                  {tgUser ? t("tgLinked") : t("tgUnlinked")}
+                <Badge variant="secondary">
+                  {t("tgUnlinked")}
                 </Badge>
               </CardContent>
             </Card>
@@ -161,29 +159,29 @@ export default function MinePage({ params }: MinePageProps) {
 
         {/* Billing & Services */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
             {t("billingServicesGroupTitle")}
           </h3>
           <div className="space-y-2">
             <Link href={`/${locale}/subscription`}>
-              <Card className="hover:border-kazi-orange cursor-pointer transition-colors">
+              <Card className="hover:border-orange cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-gray-400" />
+                    <CreditCard className="w-5 h-5 text-muted" />
                     <span className="font-medium">{t("subscriptionPlansLabel")}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-muted" />
                 </CardContent>
               </Card>
             </Link>
             <Link href={`/${locale}/ledger`}>
-              <Card className="hover:border-kazi-orange cursor-pointer transition-colors">
+              <Card className="hover:border-orange cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-gray-400" />
+                    <CreditCard className="w-5 h-5 text-muted" />
                     <span className="font-medium">{t("creditsLedgerLabel")}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-muted" />
                 </CardContent>
               </Card>
             </Link>
@@ -192,17 +190,17 @@ export default function MinePage({ params }: MinePageProps) {
 
         {/* Settings */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
             {t("systemSettingsGroupTitle")}
           </h3>
           <div className="space-y-2">
             <Card>
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-gray-400" />
+                  <Globe className="w-5 h-5 text-muted" />
                   <span className="font-medium">{t("interfaceLanguageLabel")}</span>
                 </div>
-                <span className="text-sm text-gray-500 uppercase">{locale}</span>
+                <span className="text-sm text-muted uppercase">{locale}</span>
               </CardContent>
             </Card>
             <button onClick={handleLogout} className="w-full">
