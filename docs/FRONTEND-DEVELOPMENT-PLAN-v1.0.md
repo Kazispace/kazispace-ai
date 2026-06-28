@@ -1,11 +1,27 @@
-# KaziSpace Web App 前端开发计划 v1.0
+# KaziSpace Web App 前端开发计划 v1.1
 
 **日期**：2026-06-28  
 **状态**：Draft（执行用）  
 **代码库**：[kazispace-ai](https://github.com/Kazispace/kazispace-ai)  
-**设计 SSOT**：[Web App SDD v1.0](https://github.com/Kazispace/kazispace-design/blob/docs/web-app-sdd-v1.0/docs/sdd/kazispace-web-app-v1.0.md)（PR #220）  
+**设计 SSOT**：[Web App SDD v1.1](https://github.com/Kazispace/kazispace-design/blob/main/docs/sdd/kazispace-web-app-v1.0.md)（[PR #221](https://github.com/Kazispace/kazispace-design/pull/221) 已合并）  
 **基线分支**：`dev/next-app`（合并 `fix/next-app-review-fixes` 后开工）  
 **后端**：`kazispace-backend` · API `https://bot.kazispace.ai`
+
+### 本地目录（`~/Projects`）
+
+| 路径 | 仓库 | 用途 |
+| --- | --- | --- |
+| `~/Projects/kazispace-ai` | 前端实现 | 本计划执行仓库；基线分支 `dev/next-app` |
+| `~/Projects/kazispace-design` | 设计 / 契约 | SDD、API Spec、UX Guide；`main` 为 SSOT |
+| `~/Projects/kazispace-backend` | 后端（可选 clone） | Agent Hub §13 联调 |
+
+```bash
+cd ~/Projects/kazispace-ai
+git fetch origin
+git checkout dev/next-app          # 或 feature 分支
+cp .env.local.example .env.local   # NEXT_PUBLIC_API_BASE_URL=https://bot.kazispace.ai
+npm install && npm run dev
+```
 
 ---
 
@@ -79,8 +95,9 @@
 | 0.2 | 统一环境变量：`NEXT_PUBLIC_API_BASE_URL=https://bot.kazispace.ai` | `.env.local.example` |
 | 0.3 | 根路由：`/` → `/{locale}/chat`（SDD §4.1） | 减少一步点击 |
 | 0.4 | 设计 Token 初版：`tailwind.config.ts`（Navy + 橙；气泡色对齐 UX Guide） | 待产品确认主色后锁定 |
-| 0.5 | 引入 `@tanstack/react-query` + Provider | 基础设施 |
+| 0.5 | 引入 `@tanstack/react-query` + Provider；**职责分离**（对齐 SDD v1.1 §2）：TanStack Query 管 `GET /me`、`GET /agents/active`、历史消息拉取；Zustand 管会话内 UI（当前消息流、`isSwitching`、modal） | 基础设施 |
 | 0.6 | `components/clinic/` 目录占位 | 与 `components/chat/` 分工 |
+| 0.7 | 认证双写骨架：`setAuthToken` 同时写 `localStorage` + `kazi_token` cookie（SDD v1.1 §4.2、§7.2） | middleware 可读 cookie |
 
 **验收**：`npm run build` 通过；Staging 可打开 `/ru/chat`。
 
@@ -102,7 +119,7 @@
 | 1.6 | `useChatStore` 接入页面（替换 `useState`） | SDD §5.3 |
 | 1.7 | `ChatInput`：药丸形 24px、Enter 发送 | UX §6.4 |
 | 1.8 | 历史消息：`GET /chat/sessions/{id}/messages` | API |
-| 1.9 | Guest：`X-Device-ID` + session 持久化 | User System §3 |
+| 1.9 | Guest：`X-Device-ID` + session 持久化；**Guest 不可 `activate` 专家**（卡片 🔒，对齐 SDD §7.3） | User System §3 |
 | 1.10 | OTP 登录页打通 `useAuthStore` | SDD §7 |
 
 **暂不实现**：专家切换、SSE、转诊按钮（可显示 disabled）。
@@ -133,7 +150,7 @@
 | 2.7 | `QuickReplies` chip 组 | UX §7.6 |
 | 2.8 | `context_module` 深链 + `popstate` 后退 | SDD §8.3 |
 | 2.9 | `AgentSwitcher`（`+` 面板） | UX §3.6 |
-| 2.10 | 专家间切换过渡屏（不闪回门诊 UI） | UX §5.3 |
+| 2.10 | 专家间切换过渡屏：`isSwitching === true` 时**不渲染 Welcome**，仅显示「🔄 Переключение...」过渡画面（SDD v1.1 §8.4、UX §5.3） | UX §5.3 |
 | 2.11 | 错误：专家 500 → 回落门诊 + Toast | UX §9.3 |
 
 **验收**：
@@ -162,7 +179,7 @@
 | 3.5 | 发送失败：气泡标红 + 重试 | UX §9.1 |
 | 3.6 | `/mine`、`/credits`、`/ledger`、`/subscription` 接真实 API | SDD §6 |
 | 3.7 | Paywall Modal 骨架（`INSUFFICIENT_CREDITS` / Pro 锁） | PRD §4.5 |
-| 3.8 | `middleware.ts`：仅 i18n；认证用 client guard（避免 cookie/localStorage 分裂） | Review PR #220 |
+| 3.8 | `middleware.ts`：i18n + 读 `kazi_token` **cookie** 守卫 `/mine` 等；登录 **双写** cookie + localStorage，登出双清（SDD v1.1 §4.2、§7.2） | SDD v1.1 |
 | 3.9 | `PROFILE_INCOMPLETE` → Toast 回 Chat，**不**跳阻塞表单 | 平台 BR |
 
 **验收**：
@@ -229,12 +246,29 @@
 
 ## 8. 文档阅读顺序（开发时）
 
+### 8.1 文档层级（摘自 SDD v1.1 §1.3）
+
+```
+PRD v2.0 / API Spec v2.8
+        ↓
+Web App SDD v1.1（前端工程总纲 — 信实现决策）
+        ↓
+  ┌─────┼─────┐
+  ↓     ↓     ↓
+Clinic  UX    TMA
+Shell   Guide SDD
+```
+
+**冲突时**：PRD / API Spec > Web App SDD > Clinic Shell / UX Guide。
+
+### 8.2 推荐阅读顺序
+
 1. 本文（排期）
-2. [Web App SDD v1.0](https://github.com/Kazispace/kazispace-design/blob/docs/web-app-sdd-v1.0/docs/sdd/kazispace-web-app-v1.0.md) — 实现细节
+2. [Web App SDD v1.1](https://github.com/Kazispace/kazispace-design/blob/main/docs/sdd/kazispace-web-app-v1.0.md) — 实现细节
 3. [Clinic Shell SDD](https://github.com/Kazispace/kazispace-design/blob/main/docs/sdd/web-app-clinic-shell-v1.0.md) — `active_agent` 协议
 4. [UX Guide](https://github.com/Kazispace/kazispace-design/blob/main/docs/ux/clinic-specialist-ux-guide-v1.0.md) — 视觉走查
 5. [API Spec v2.8](https://github.com/Kazispace/kazispace-design/blob/main/docs/api/web-app-api-spec-v2.7.md) — 联调
-6. `_reference/*.html` — 像素参考
+6. `~/Projects/kazispace-ai/_reference/*.html` — 像素参考
 
 ---
 
@@ -243,7 +277,8 @@
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
 | v1.0 | 2026-06-28 | 初版：4 Sprint 适度计划，对齐 Web App SDD PR #220 |
+| v1.1 | 2026-06-28 | 对齐 SDD v1.1（PR #221）：SSOT 引用、认证双写、TanStack/Zustand 分工、§8.4 过渡屏、Guest 不可 activate、`~/Projects` 本地说明 |
 
 ---
 
-*本计划随 backend Agent Hub 与 PR #220 合并情况更新；重大变更升 v1.1。*
+*本计划随 backend Agent Hub 与 design repo `main` 同步更新。*
