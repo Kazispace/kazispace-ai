@@ -171,5 +171,60 @@
 		"detailPrice": "{price} to'landi",
 		"detailFree": "Tizim tomonidan berildi",
 		"remaining": "Qoldiq: {count}"
+	},
+	"nav": {
+		"home": "Bosh",
+		"chat": "Chat",
+		"profile": "Profil"
+	},
+	"chat": {
+		"title": "{name} · AI karyera hamkori",
+		"backToClinic": "← Klinikaga qaytish",
+		"status": {
+			"online": "Onlayn",
+			"offline": "Oflayn"
+		},
+		"welcome": {
+			"greeting": "👋 Salom! Men {name}, sizning AI karyera hamkoringiz.",
+			"prompt": "Savolingizni yozing yoki mutaxassis tanlang:",
+			"title": "Xush kelibsiz",
+			"desc": "Markaziy Osiyo uchun AI karyera hamkori"
+		},
+		"input": {
+			"placeholder": "Karyera haqida yozing…"
+		}
+	},
+	"clinic": {
+		"comingSoon": "Tez orada",
+		"openAgent": "Ochish",
+		"loginToContinue": "Davom etish uchun kiring",
+		"guestBanner": "Tarixni saqlash va mutaxassislarni ochish uchun kiring",
+		"signIn": "Kirish",
+		"englishLevelLabel": "Ingliz tili darajasi (ixtiyoriy)",
+		"englishLevel": {
+			"basic": "Boshlang'ich",
+			"intermediate": "O'rta",
+			"fluent": "Erkin"
+		},
+		"prompts": {
+			"cv": "✏️ Rezyumeni yaxshilash",
+			"jobs": "🇰🇿 Qozog'istondagi ishlar",
+			"interview": "🎯 Suhbat maslahatlari"
+		},
+		"sendFailed": "Xabar yuborilmadi",
+		"agentHubSprint2": "Mutaxassis rejimi — Sprint 2 ({agent})"
+	},
+	"subscription": {
+		"title": "PRO / Sprint yangilash",
+		"proTab": "PRO obuna",
+		"sprintTab": "Karyera Sprint",
+		"proMonthlyName": "PRO oylik",
+		"savePercentage": "40% tejash",
+		"payNow": "Hozir sotib olish"
+	},
+	"credits": {
+		"title": "Kredit sotib olish",
+		"currentBalance": "Joriy balans",
+		"buyCredits": "Kredit sotib olish"
 	}
 }

@@ -19,7 +19,12 @@ export const ROUTES = {
 
 export const STORAGE_KEYS = {
   AUTH_TOKEN: 'kazi_auth_token',
+  AUTH_COOKIE: 'kazi_token',
   DEVICE_ID: 'kazi_device_id',
   USER_INFO: 'kazi_user_info',
   PREFERRED_LOCALE: 'kazi_preferred_locale',
+  SESSION_ID: 'kazi_chat_session_id',
+  ENGLISH_LEVEL: 'kazi_english_level',
 } as const;
+
+export const AGENT_NAME = 'Serík';

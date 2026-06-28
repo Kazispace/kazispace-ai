@@ -171,5 +171,60 @@
 		"detailPrice": "Оплачено {price}",
 		"detailFree": "Начислено системой",
 		"remaining": "Остаток: {count}"
+	},
+	"nav": {
+		"home": "Главная",
+		"chat": "Чат",
+		"profile": "Профиль"
+	},
+	"chat": {
+		"title": "{name} · AI-карьерный партнёр",
+		"backToClinic": "← Назад в клинику",
+		"status": {
+			"online": "В сети",
+			"offline": "Не в сети"
+		},
+		"welcome": {
+			"greeting": "👋 Привет! Я {name}, твой AI-карьерный партнёр.",
+			"prompt": "Расскажи, что тебя волнует, или выбери специалиста:",
+			"title": "Добро пожаловать",
+			"desc": "AI-партнёр для карьеры в Центральной Азии"
+		},
+		"input": {
+			"placeholder": "Напиши мне о карьере…"
+		}
+	},
+	"clinic": {
+		"comingSoon": "Скоро",
+		"openAgent": "Открыть",
+		"loginToContinue": "Войди, чтобы продолжить",
+		"guestBanner": "Войди, чтобы сохранить историю и открыть специалистов",
+		"signIn": "Войти",
+		"englishLevelLabel": "Уровень английского (необязательно)",
+		"englishLevel": {
+			"basic": "Базовый",
+			"intermediate": "Средний",
+			"fluent": "Свободный"
+		},
+		"prompts": {
+			"cv": "✏️ Улучшить резюме",
+			"jobs": "🇰🇿 Работа в Казахстане",
+			"interview": "🎯 Советы по интервью"
+		},
+		"sendFailed": "Не удалось отправить сообщение",
+		"agentHubSprint2": "Режим эксперта — в Sprint 2 ({agent})"
+	},
+	"subscription": {
+		"title": "Перейти на PRO / Sprint",
+		"proTab": "PRO-подписка",
+		"sprintTab": "Карьерный Sprint",
+		"proMonthlyName": "PRO на месяц",
+		"savePercentage": "Скидка 40%",
+		"payNow": "Купить сейчас"
+	},
+	"credits": {
+		"title": "Купить кредиты",
+		"currentBalance": "Текущий баланс",
+		"buyCredits": "Купить кредиты"
 	}
 }

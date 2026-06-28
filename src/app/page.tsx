@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
+import { DEFAULT_LOCALE } from '@/lib/constants';
 
 export default function Home() {
-  redirect('/en');
+  redirect(`/${DEFAULT_LOCALE}/chat`);
 }
