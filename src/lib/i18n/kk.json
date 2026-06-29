@@ -1,6 +1,17 @@
 {
 	"login": {
 		"title": "Кіру",
+		"phoneLabel": "Телефон нөмірі",
+		"phonePlaceholder": "+77015551234",
+		"phoneHint": "Тек Қазақстан (+7), Өзбекстан (+998) немесе Қытай (+86) нөмірлері",
+		"phoneInvalid": "+7, +998 немесе +86 форматында нөмір енгізіңіз",
+		"sendCode": "Код алу",
+		"sending": "Жіберілуде...",
+		"otpLabel": "Растау коды",
+		"otpPlaceholder": "000000",
+		"verify": "Кіру",
+		"verifying": "Тексерілуде...",
+		"back": "← Артқа",
 		"sessionExpiredTitle": "Сессия мерзімі аяқталды",
 		"sessionExpiredContent": "Сессияңыздың мерзімі аяқталды. Жалғастыру үшін қайта кіріңіз.",
 		"reLogin": "Кіру",
@@ -162,6 +173,7 @@
 		"consumptionFilter": "Шығын",
 		"rechargeFilter": "Толықтыру",
 		"emptyState": "Транзакциялар тарихы бос",
+		"comingSoon": "Транзакциялар тарихы жақында",
 		"typeCvConsume": "Түйіндемені оңтайландыру",
 		"typeInterviewConsume": "Сұхбатқа дайындық",
 		"typeCvRecharge": "Түйіндеме кредиттерін сатып алу",
@@ -229,6 +241,9 @@
 	"credits": {
 		"title": "Кредиттер сатып алу",
 		"currentBalance": "Ағымдағы баланс",
-		"buyCredits": "Кредиттер сатып алу"
+		"buyCredits": "Кредиттер сатып алу",
+		"totalCredits": "Барлық кредиттер",
+		"loading": "Жүктелуде...",
+		"loadError": "Балансты жүктеу сәтсіз"
 	}
 }

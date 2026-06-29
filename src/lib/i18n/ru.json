@@ -1,6 +1,17 @@
 {
 	"login": {
 		"title": "Вход",
+		"phoneLabel": "Номер телефона",
+		"phonePlaceholder": "+77015551234",
+		"phoneHint": "Только номера Казахстана (+7), Узбекистана (+998) или Китая (+86)",
+		"phoneInvalid": "Введите номер в формате +7, +998 или +86",
+		"sendCode": "Получить код",
+		"sending": "Отправка...",
+		"otpLabel": "Код подтверждения",
+		"otpPlaceholder": "000000",
+		"verify": "Войти",
+		"verifying": "Проверка...",
+		"back": "← Назад",
 		"sessionExpiredTitle": "Сессия истекла",
 		"sessionExpiredContent": "Ваша сессия истекла. Пожалуйста, войдите снова, чтобы продолжить.",
 		"reLogin": "Войти",
@@ -162,6 +173,7 @@
 		"consumptionFilter": "Расход",
 		"rechargeFilter": "Пополнение",
 		"emptyState": "История транзакций пуста",
+		"comingSoon": "История транзакций скоро появится",
 		"typeCvConsume": "Оптимизация резюме",
 		"typeInterviewConsume": "Пробное интервью",
 		"typeCvRecharge": "Покупка кредитов резюме",
@@ -229,6 +241,9 @@
 	"credits": {
 		"title": "Купить кредиты",
 		"currentBalance": "Текущий баланс",
-		"buyCredits": "Купить кредиты"
+		"buyCredits": "Купить кредиты",
+		"totalCredits": "Всего кредитов",
+		"loading": "Загрузка...",
+		"loadError": "Не удалось загрузить баланс"
 	}
 }

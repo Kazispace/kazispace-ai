@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User, ChatMessage, CreditBalance } from '@/types';
 import { setAuthToken, clearAuthToken, setUserInfo } from './auth';
+import { clearBillingCache } from './billing-cache';
 
 // ---- Auth Store ----
 interface AuthStore {
@@ -23,6 +24,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   },
   logout: () => {
     clearAuthToken();
+    clearBillingCache();
     set({ token: null, user: null, isLoggedIn: false });
   },
   updateUser: (partialUser) =>

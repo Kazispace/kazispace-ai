@@ -1,5 +1,6 @@
 import { API_BASE_URL } from './constants';
 import { getAuthToken, getDeviceId, clearAuthToken } from './auth';
+import { mapUserFromApi } from './api-mappers';
 import type {
   ApiResponse,
   OtpRequestResponse,
@@ -7,6 +8,8 @@ import type {
   User,
   ChatMessage,
   CreditBalance,
+  BillingSummary,
+  CurrentPlan,
   LedgerEntry,
 } from '@/types';
 
@@ -44,9 +47,15 @@ async function apiRequest<T>(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      const detail = errorData.detail;
+      const detailMessage =
+        typeof detail === 'object' && detail !== null
+          ? detail.message ?? detail.error_code
+          : undefined;
       return {
         success: false,
         error:
+          detailMessage ||
           errorData.message ||
           errorData.error ||
           errorData.error_code ||
@@ -65,31 +74,56 @@ async function apiRequest<T>(
 }
 
 export async function requestOtp(
-  phoneOrEmail: string
+  phone: string
 ): Promise<ApiResponse<OtpRequestResponse>> {
   return apiRequest<OtpRequestResponse>('/api/v1/auth/otp/request', {
     method: 'POST',
-    body: JSON.stringify({ phone: phoneOrEmail }),
+    body: JSON.stringify({ phone }),
   });
 }
 
 export async function verifyOtp(
-  phoneOrEmail: string,
+  phone: string,
   code: string
 ): Promise<ApiResponse<OtpVerifyResponse>> {
-  return apiRequest<OtpVerifyResponse>('/api/v1/auth/otp/verify', {
+  const res = await apiRequest<Record<string, unknown>>('/api/v1/auth/otp/verify', {
     method: 'POST',
-    body: JSON.stringify({ phone: phoneOrEmail, code }),
+    body: JSON.stringify({ phone, code }),
   });
+
+  if (!res.success || !res.data) {
+    return { success: false, error: res.error };
+  }
+
+  const raw = res.data;
+  const token = (raw.access_token ?? raw.token) as string | undefined;
+  if (!token) {
+    return { success: false, error: 'Invalid login response' };
+  }
+
+  const userRaw = (raw.user ?? {}) as Record<string, unknown>;
+  return {
+    success: true,
+    data: {
+      success: true,
+      token,
+      user: mapUserFromApi(userRaw),
+    },
+  };
 }
 
 export async function getMe(): Promise<ApiResponse<User>> {
-  return apiRequest<User>('/api/v1/me');
+  const res = await apiRequest<Record<string, unknown>>('/api/v1/me');
+  if (!res.success || !res.data) {
+    return { success: false, error: res.error };
+  }
+  return { success: true, data: mapUserFromApi(res.data) };
 }
 
 export interface ClinicChatResponse {
   reply?: string;
   response?: { text?: string };
+  assistant_response?: { content?: string };
   message_id?: string;
   messageId?: string;
   intent?: string;
@@ -99,9 +133,10 @@ export async function sendChatMessage(
   sessionId: string,
   text: string
 ): Promise<ApiResponse<ClinicChatResponse>> {
+  // Backend WebChatRequest: { session_id, content } — not `text`
   return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
-    body: JSON.stringify({ session_id: sessionId, text }),
+    body: JSON.stringify({ session_id: sessionId, content: text }),
   });
 }
 
@@ -111,15 +146,32 @@ export async function fetchChatHistory(
   return apiRequest(`/api/v1/chat/sessions/${sessionId}/messages`);
 }
 
+/** @deprecated Use getBillingSummary */
 export async function getCreditBalance(): Promise<ApiResponse<CreditBalance>> {
-  return apiRequest<CreditBalance>('/api/v1/credits/balance');
+  const res = await getBillingSummary();
+  if (!res.success || !res.data) {
+    return { success: false, error: res.error };
+  }
+  const balance = res.data.credits?.balance ?? 0;
+  return {
+    success: true,
+    data: { cvCredits: balance, interviewCredits: 0 },
+  };
 }
 
+export async function getBillingSummary(): Promise<ApiResponse<BillingSummary>> {
+  return apiRequest<BillingSummary>('/api/v1/billing/summary');
+}
+
+export async function getCurrentPlan(): Promise<ApiResponse<CurrentPlan>> {
+  return apiRequest<CurrentPlan>('/api/v1/plans/current');
+}
+
+/** No ledger endpoint on backend yet — returns empty list */
 export async function getLedger(
-  filter?: 'all' | 'consumption' | 'recharge'
+  _filter?: 'all' | 'consumption' | 'recharge'
 ): Promise<ApiResponse<{ entries: LedgerEntry[] }>> {
-  const query = filter && filter !== 'all' ? `?filter=${filter}` : '';
-  return apiRequest(`/api/v1/credits/ledger${query}`);
+  return { success: true, data: { entries: [] } };
 }
 
 export function parseClinicReply(data: ClinicChatResponse | undefined): {
@@ -127,6 +179,10 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   intent?: string;
 } {
   if (!data) return { reply: '' };
-  const reply = data.reply ?? data.response?.text ?? '';
+  const reply =
+    data.reply ??
+    data.assistant_response?.content ??
+    data.response?.text ??
+    '';
   return { reply, intent: data.intent };
 }

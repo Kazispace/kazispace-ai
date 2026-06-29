@@ -1,6 +1,17 @@
 {
 	"login": {
 		"title": "Login",
+		"phoneLabel": "Phone number",
+		"phonePlaceholder": "+77015551234",
+		"phoneHint": "Kazakhstan (+7), Uzbekistan (+998), or China (+86) numbers only",
+		"phoneInvalid": "Enter a valid phone number starting with +7, +998, or +86",
+		"sendCode": "Send Code",
+		"sending": "Sending...",
+		"otpLabel": "Verification Code",
+		"otpPlaceholder": "000000",
+		"verify": "Verify",
+		"verifying": "Verifying...",
+		"back": "← Back",
 		"sessionExpiredTitle": "Session Expired",
 		"sessionExpiredContent": "Your session has expired. Please log in again to continue.",
 		"reLogin": "Log In",
@@ -162,6 +173,7 @@
 		"consumptionFilter": "Usage",
 		"rechargeFilter": "Recharge",
 		"emptyState": "No transaction logs found",
+		"comingSoon": "Transaction history coming soon",
 		"typeCvConsume": "Resume Optimization",
 		"typeInterviewConsume": "Mock Interview Prep",
 		"typeCvRecharge": "CV Credits Recharge",
@@ -229,6 +241,9 @@
 	"credits": {
 		"title": "Buy Credits",
 		"currentBalance": "Current balance",
-		"buyCredits": "Buy Credits"
+		"buyCredits": "Buy Credits",
+		"totalCredits": "Total credits",
+		"loading": "Loading...",
+		"loadError": "Could not load balance"
 	}
 }
