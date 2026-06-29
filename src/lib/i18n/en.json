@@ -173,6 +173,7 @@
 		"consumptionFilter": "Usage",
 		"rechargeFilter": "Recharge",
 		"emptyState": "No transaction logs found",
+		"comingSoon": "Transaction history coming soon",
 		"typeCvConsume": "Resume Optimization",
 		"typeInterviewConsume": "Mock Interview Prep",
 		"typeCvRecharge": "CV Credits Recharge",

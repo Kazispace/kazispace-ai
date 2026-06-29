@@ -173,6 +173,7 @@
 		"consumptionFilter": "Расход",
 		"rechargeFilter": "Пополнение",
 		"emptyState": "История транзакций пуста",
+		"comingSoon": "История транзакций скоро появится",
 		"typeCvConsume": "Оптимизация резюме",
 		"typeInterviewConsume": "Пробное интервью",
 		"typeCvRecharge": "Покупка кредитов резюме",

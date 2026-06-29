@@ -25,10 +25,18 @@ export function mapUserFromApi(raw: Record<string, unknown>): User {
 }
 
 export function parseCreditBalance(summary: BillingSummary): CreditBalance {
+  const buckets = summary.credits?.by_bucket ?? {};
   const balance = summary.credits?.balance ?? 0;
+
+  // Backend by_bucket keys today: free_trial, subscription, addon (no interview split yet)
+  const interviewFromBucket =
+    (buckets.interview as number | undefined) ??
+    (buckets.mock_interview as number | undefined);
+
   return {
     cvCredits: balance,
-    interviewCredits: 0,
+    // TODO: map interview credits when backend exposes a dedicated bucket
+    interviewCredits: interviewFromBucket ?? 0,
   };
 }
 

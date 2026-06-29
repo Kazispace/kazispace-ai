@@ -133,6 +133,7 @@ export async function sendChatMessage(
   sessionId: string,
   text: string
 ): Promise<ApiResponse<ClinicChatResponse>> {
+  // Backend WebChatRequest: { session_id, content } — not `text`
   return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
     body: JSON.stringify({ session_id: sessionId, content: text }),

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
 import { isValidOtpPhone } from "@/lib/api-mappers";
+import { setAuthToken } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store";
 
 interface LoginPageProps {
@@ -18,7 +19,6 @@ export default function LoginPage({ params }: LoginPageProps) {
   const t = useTranslations("login");
   const router = useRouter();
   const { locale } = params;
-  const { login } = useAuthStore();
 
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState("");
@@ -70,11 +70,12 @@ export default function LoginPage({ params }: LoginPageProps) {
     try {
       const result = await verifyOtp(normalizedPhone, otp);
       if (result.success && result.data) {
-        login(result.data.token, result.data.user);
+        const { token, user: otpUser } = result.data;
+        setAuthToken(token);
         const me = await getMe();
-        if (me.success && me.data) {
-          login(result.data.token, me.data);
-        }
+        useAuthStore
+          .getState()
+          .login(token, me.success && me.data ? me.data : otpUser);
         router.push(`/${locale}/chat`);
       } else {
         setError(result.error || "Invalid code");

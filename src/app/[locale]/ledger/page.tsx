@@ -74,7 +74,10 @@ export default function LedgerPage({ params }: LedgerPageProps) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">{t("emptyState")}</div>
+          <div className="text-center py-12 text-gray-500">
+            <p className="font-medium text-kazi-navy">{t("comingSoon")}</p>
+            <p className="text-sm mt-2">{t("emptyState")}</p>
+          </div>
         )}
       </main>
       <BottomNav locale={locale} />

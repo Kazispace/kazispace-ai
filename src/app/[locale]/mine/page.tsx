@@ -23,7 +23,7 @@ export default function MinePage({ params }: MinePageProps) {
   const t = useTranslations("mine");
   const router = useRouter();
   const { locale } = params;
-  const { user, logout, login, token, isLoggedIn } = useAuthStore();
+  const { user, logout, token, isLoggedIn } = useAuthStore();
   const { balance, plan, isLoading: billingLoading } = useBilling();
 
   const displayName = user?.displayName || "Guest User";
@@ -33,11 +33,11 @@ export default function MinePage({ params }: MinePageProps) {
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     getMe().then((res) => {
-      if (res.success && res.data && token) {
-        login(token, res.data);
+      if (res.success && res.data) {
+        useAuthStore.getState().login(token, res.data);
       }
     });
-  }, [isLoggedIn, token, login]);
+  }, [isLoggedIn, token]);
 
   const handleLogout = () => {
     if (confirm(t("logoutConfirmContent"))) {
