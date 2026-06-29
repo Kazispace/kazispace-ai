@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -9,6 +10,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/lib/store";
+import { useBilling } from "@/hooks/use-billing";
+import { planBadgeKey } from "@/lib/api-mappers";
+import { getMe } from "@/lib/api-client";
 import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, User } from "lucide-react";
 
 interface MinePageProps {
@@ -19,10 +23,21 @@ export default function MinePage({ params }: MinePageProps) {
   const t = useTranslations("mine");
   const router = useRouter();
   const { locale } = params;
-  const { user, logout } = useAuthStore();
+  const { user, logout, login, token, isLoggedIn } = useAuthStore();
+  const { balance, plan, isLoading: billingLoading } = useBilling();
 
   const displayName = user?.displayName || "Guest User";
   const displayInitial = displayName[0]?.toUpperCase() || "?";
+  const badgeKey = planBadgeKey(plan);
+
+  useEffect(() => {
+    if (!isLoggedIn || !token) return;
+    getMe().then((res) => {
+      if (res.success && res.data && token) {
+        login(token, res.data);
+      }
+    });
+  }, [isLoggedIn, token, login]);
 
   const handleLogout = () => {
     if (confirm(t("logoutConfirmContent"))) {
@@ -48,7 +63,7 @@ export default function MinePage({ params }: MinePageProps) {
                   {displayName}
                 </h2>
                 <Badge variant="secondary" className="mt-1">
-                  {t("freeTrialBadge")}
+                  {t(badgeKey)}
                 </Badge>
               </div>
               <Link href={`/${locale}/profile`}>
@@ -65,14 +80,18 @@ export default function MinePage({ params }: MinePageProps) {
           <Card>
             <CardContent className="p-4 text-center">
               <FileText className="w-6 h-6 text-orange mx-auto mb-2" />
-              <div className="text-2xl font-bold text-navy">3</div>
+              <div className="text-2xl font-bold text-navy">
+                {billingLoading ? "…" : (balance?.cvCredits ?? 0)}
+              </div>
               <div className="text-xs text-muted">{t("cvCreditsLabel")}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Mic className="w-6 h-6 text-blue mx-auto mb-2" />
-              <div className="text-2xl font-bold text-navy">1</div>
+              <div className="text-2xl font-bold text-navy">
+                {billingLoading ? "…" : (balance?.interviewCredits ?? 0)}
+              </div>
               <div className="text-xs text-muted">{t("mockInterviewsLabel")}</div>
             </CardContent>
           </Card>

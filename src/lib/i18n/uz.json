@@ -1,6 +1,17 @@
 {
 	"login": {
 		"title": "Kirish",
+		"phoneLabel": "Telefon raqami",
+		"phonePlaceholder": "+77015551234",
+		"phoneHint": "Faqat Qozog'iston (+7), O'zbekiston (+998) yoki Xitoy (+86) raqamlari",
+		"phoneInvalid": "+7, +998 yoki +86 formatida raqam kiriting",
+		"sendCode": "Kod olish",
+		"sending": "Yuborilmoqda...",
+		"otpLabel": "Tasdiqlash kodi",
+		"otpPlaceholder": "000000",
+		"verify": "Kirish",
+		"verifying": "Tekshirilmoqda...",
+		"back": "← Orqaga",
 		"sessionExpiredTitle": "Seans muddati tugadi",
 		"sessionExpiredContent": "Sizning seansingiz muddati tugadi. Davom etish uchun qayta kiring.",
 		"reLogin": "Kirish",
@@ -229,6 +240,9 @@
 	"credits": {
 		"title": "Kredit sotib olish",
 		"currentBalance": "Joriy balans",
-		"buyCredits": "Kredit sotib olish"
+		"buyCredits": "Kredit sotib olish",
+		"totalCredits": "Jami kreditlar",
+		"loading": "Yuklanmoqda...",
+		"loadError": "Balansni yuklab bo'lmadi"
 	}
 }

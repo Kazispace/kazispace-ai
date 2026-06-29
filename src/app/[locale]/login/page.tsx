@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requestOtp, verifyOtp } from "@/lib/api-client";
+import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
+import { isValidOtpPhone } from "@/lib/api-mappers";
 import { useAuthStore } from "@/lib/store";
 
 interface LoginPageProps {
@@ -18,29 +19,36 @@ export default function LoginPage({ params }: LoginPageProps) {
   const router = useRouter();
   const { locale } = params;
   const { login } = useAuthStore();
-  
+
   const [step, setStep] = useState<"phone" | "otp">("phone");
-  const [contact, setContact] = useState("");
+  const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [sessionExpired, setSessionExpired] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("expired") === "1") {
+    const search = new URLSearchParams(window.location.search);
+    if (search.get("expired") === "1") {
       setSessionExpired(true);
     }
   }, []);
 
+  const normalizedPhone = phone.replace(/\s/g, "");
+
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!contact.trim()) return;
-    
+    if (!normalizedPhone) return;
+
+    if (!isValidOtpPhone(normalizedPhone)) {
+      setError(t("phoneInvalid"));
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     try {
-      const result = await requestOtp(contact);
+      const result = await requestOtp(normalizedPhone);
       if (result.success) {
         setStep("otp");
       } else {
@@ -56,13 +64,17 @@ export default function LoginPage({ params }: LoginPageProps) {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otp.length !== 6) return;
-    
+
     setIsLoading(true);
     setError("");
     try {
-      const result = await verifyOtp(contact, otp);
+      const result = await verifyOtp(normalizedPhone, otp);
       if (result.success && result.data) {
         login(result.data.token, result.data.user);
+        const me = await getMe();
+        if (me.success && me.data) {
+          login(result.data.token, me.data);
+        }
         router.push(`/${locale}/chat`);
       } else {
         setError(result.error || "Invalid code");
@@ -93,45 +105,48 @@ export default function LoginPage({ params }: LoginPageProps) {
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-text mb-1 block">
-                  Phone or Email
+                  {t("phoneLabel")}
                 </label>
                 <Input
-                  type="text"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
-                  placeholder="Enter phone or email"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={t("phonePlaceholder")}
                   className="w-full"
                 />
+                <p className="text-xs text-muted-foreground mt-1.5">{t("phoneHint")}</p>
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Sending..." : "Send Code"}
+                {isLoading ? t("sending") : t("sendCode")}
               </Button>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-text mb-1 block">
-                  Verification Code
+                  {t("otpLabel")}
                 </label>
                 <Input
                   type="text"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="000000"
+                  placeholder={t("otpPlaceholder")}
                   className="w-full text-center text-2xl tracking-widest"
                 />
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Verifying..." : "Verify"}
+                {isLoading ? t("verifying") : t("verify")}
               </Button>
               <button
                 type="button"
                 onClick={() => setStep("phone")}
                 className="w-full text-sm text-muted hover:text-orange"
               >
-                ← Back
+                {t("back")}
               </button>
             </form>
           )}

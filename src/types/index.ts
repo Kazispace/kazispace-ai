@@ -46,6 +46,25 @@ export interface CreditBalance {
   interviewCredits: number;
 }
 
+export interface BillingSummary {
+  credits?: {
+    balance?: number;
+    by_bucket?: Record<string, number>;
+  };
+  entitlements?: unknown[];
+}
+
+export interface CurrentPlan {
+  plan_type?: string;
+  is_locked?: boolean;
+  summary?: {
+    title?: string;
+    days_total?: number;
+    days_completed?: number;
+  };
+  upgrade_hint?: string;
+}
+
 export interface LedgerEntry {
   id: string;
   type: 'cv_consume' | 'interview_consume' | 'cv_recharge' | 'interview_recharge' | 'welcome_gift' | 'pro_recharge';
