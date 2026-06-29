@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { User, ChatMessage, CreditBalance } from '@/types';
 import { setAuthToken, clearAuthToken, setUserInfo } from './auth';
 import { clearBillingCache } from './billing-cache';
+import { clearMockAgentSessions } from './agent-api';
 
 // ---- Auth Store ----
 interface AuthStore {
@@ -25,6 +26,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   logout: () => {
     clearAuthToken();
     clearBillingCache();
+    useAgentStore.getState().reset();
     set({ token: null, user: null, isLoggedIn: false });
   },
   updateUser: (partialUser) =>
@@ -96,4 +98,70 @@ interface CreditsStore {
 export const useCreditsStore = create<CreditsStore>()((set) => ({
   balance: { cvCredits: 0, interviewCredits: 0 },
   setBalance: (balance) => set({ balance }),
+}));
+
+// ---- Agent Store (Sprint 2) ----
+interface AgentStore {
+  activeAgentId: string | null;
+  agentSessionId: string | null;
+  isSwitching: boolean;
+  switcherOpen: boolean;
+  isAgentSending: boolean;
+  isAgentStreaming: boolean;
+  agentMessages: Record<string, ChatMessage[]>;
+  setSwitcherOpen: (open: boolean) => void;
+  setSwitching: (switching: boolean) => void;
+  setActiveAgent: (agentId: string | null, sessionId: string | null) => void;
+  getAgentMessages: (agentId: string) => ChatMessage[];
+  setAgentMessages: (agentId: string, messages: ChatMessage[]) => void;
+  addAgentMessage: (agentId: string, message: ChatMessage) => void;
+  updateAgentMessage: (agentId: string, id: string, patch: Partial<ChatMessage>) => void;
+  setAgentSending: (sending: boolean) => void;
+  setAgentStreaming: (streaming: boolean) => void;
+  reset: () => void;
+}
+
+const initialAgentState = {
+  activeAgentId: null as string | null,
+  agentSessionId: null as string | null,
+  isSwitching: false,
+  switcherOpen: false,
+  isAgentSending: false,
+  isAgentStreaming: false,
+  agentMessages: {} as Record<string, ChatMessage[]>,
+};
+
+export const useAgentStore = create<AgentStore>()((set, get) => ({
+  ...initialAgentState,
+  setSwitcherOpen: (open) => set({ switcherOpen: open }),
+  setSwitching: (switching) => set({ isSwitching: switching }),
+  setActiveAgent: (agentId, sessionId) =>
+    set({ activeAgentId: agentId, agentSessionId: sessionId }),
+  getAgentMessages: (agentId) => get().agentMessages[agentId] ?? [],
+  setAgentMessages: (agentId, messages) =>
+    set((state) => ({
+      agentMessages: { ...state.agentMessages, [agentId]: messages },
+    })),
+  addAgentMessage: (agentId, message) =>
+    set((state) => ({
+      agentMessages: {
+        ...state.agentMessages,
+        [agentId]: [...(state.agentMessages[agentId] ?? []), message],
+      },
+    })),
+  updateAgentMessage: (agentId, id, patch) =>
+    set((state) => ({
+      agentMessages: {
+        ...state.agentMessages,
+        [agentId]: (state.agentMessages[agentId] ?? []).map((m) =>
+          m.id === id ? { ...m, ...patch } : m
+        ),
+      },
+    })),
+  setAgentSending: (sending) => set({ isAgentSending: sending }),
+  setAgentStreaming: (streaming) => set({ isAgentStreaming: streaming }),
+  reset: () => {
+    clearMockAgentSessions();
+    set({ ...initialAgentState, agentMessages: {} });
+  },
 }));

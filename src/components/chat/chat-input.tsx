@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send } from "lucide-react";
+import { Plus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -9,9 +9,17 @@ interface ChatInputProps {
   onSend: (message: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  onOpenAgents?: () => void;
+  showAgentButton?: boolean;
 }
 
-export function ChatInput({ onSend, disabled, placeholder }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  disabled,
+  placeholder,
+  onOpenAgents,
+  showAgentButton,
+}: ChatInputProps) {
   const [message, setMessage] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,7 +38,19 @@ export function ChatInput({ onSend, disabled, placeholder }: ChatInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3 p-4 bg-white border-t">
+    <form onSubmit={handleSubmit} className="flex gap-2 p-4 bg-white border-t items-end">
+      {showAgentButton && onOpenAgents && (
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          className="h-12 w-12 shrink-0 rounded-full"
+          onClick={onOpenAgents}
+          disabled={disabled}
+        >
+          <Plus className="w-5 h-5" />
+        </Button>
+      )}
       <div className="flex-1 relative">
         <textarea
           value={message}

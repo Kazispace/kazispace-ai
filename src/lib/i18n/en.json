@@ -228,7 +228,13 @@
 			"interviewText": "How do I prepare for a job interview?"
 		},
 		"sendFailed": "Failed to send message",
-		"agentHubSprint2": "Expert mode ships in Sprint 2 ({agent})"
+		"switching": "Switching expert…",
+		"switchExpert": "Choose an expert",
+		"closeSwitcher": "Close",
+		"switchHint": "Selecting another expert will switch your session",
+		"activateFailed": "Could not open expert",
+		"deactivateFailed": "Could not return to clinic",
+		"agentErrorFallback": "Expert unavailable — returned to clinic"
 	},
 	"subscription": {
 		"title": "Upgrade to PRO / Sprint",

@@ -9,6 +9,7 @@ interface MessageBubbleProps {
   name?: string;
   intent?: string;
   isStreaming?: boolean;
+  variant?: "clinic" | "agent";
 }
 
 export function MessageBubble({
@@ -17,6 +18,7 @@ export function MessageBubble({
   name,
   intent,
   isStreaming,
+  variant = "clinic",
 }: MessageBubbleProps) {
   const isUser = role === "user";
   const displayName = name ?? (isUser ? undefined : AGENT_NAME);
@@ -47,7 +49,9 @@ export function MessageBubble({
             "px-4 py-3 rounded-[18px] text-[15px] leading-relaxed whitespace-pre-wrap break-words",
             isUser
               ? "bg-kazi-orange text-white rounded-br-[4px]"
-              : "bg-clinic-bubble text-gray-900 border border-gray-200/80 rounded-bl-[4px]"
+              : variant === "agent"
+                ? "bg-agent-bubble text-gray-900 border border-green-200/80 rounded-bl-[4px]"
+                : "bg-clinic-bubble text-gray-900 border border-gray-200/80 rounded-bl-[4px]"
           )}
         >
           {content}

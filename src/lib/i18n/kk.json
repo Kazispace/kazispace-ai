@@ -228,7 +228,13 @@
 			"interviewText": "Жұмыс сұхбатына қалай дайындалу керек?"
 		},
 		"sendFailed": "Хабарлама жіберілмеді",
-		"agentHubSprint2": "Маман режимі — Sprint 2 ({agent})"
+		"switching": "Маман ауыстырылуда…",
+		"switchExpert": "Маман таңдау",
+		"closeSwitcher": "Жабу",
+		"switchHint": "Басқа маман таңдасаңыз, сессия ауысады",
+		"activateFailed": "Маманды ашу сәтсіз",
+		"deactivateFailed": "Клиникаға оралу сәтсіз",
+		"agentErrorFallback": "Маман қолжетімсіз — клиникаға оралды"
 	},
 	"subscription": {
 		"title": "PRO / Sprint жаңарту",

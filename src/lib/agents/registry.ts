@@ -91,3 +91,38 @@ export function getAgentLabel(
   const loc = locale as SupportedLocale;
   return agent[field][loc] ?? agent[field].en;
 }
+
+/** Quick-reply chips shown in expert mode (UX §3.3) */
+export const AGENT_QUICK_REPLIES: Record<
+  string,
+  Record<SupportedLocale, string[]>
+> = {
+  job_search: {
+    en: ['💰 Salary focus', '🌍 Remote only', '📈 Career growth', '🏢 Almaty jobs'],
+    ru: ['💰 Зарплата', '🌍 Remote', '📈 Рост', '🏢 Алматы'],
+    kk: ['💰 Жалақы', '🌍 Remote', '📈 Өсу', '🏢 Алматы'],
+    uz: ['💰 Maosh', '🌍 Remote', '📈 O\'sish', '🏢 Olmaota'],
+  },
+  mock_interview: {
+    en: ['Behavioral questions', 'Technical round', 'English practice'],
+    ru: ['Поведенческие вопросы', 'Техническое интервью', 'Практика английского'],
+    kk: ['Мінез-құлық сұрақтары', 'Техникалық сұхбат', 'Ағылшын практикасы'],
+    uz: ['Xulq-atvor savollari', 'Texnik suhbat', 'Ingliz amaliyoti'],
+  },
+};
+
+export function getAgentStatusBadge(
+  agentId: string,
+  locale: SupportedLocale
+): string | null {
+  if (agentId === 'job_search') {
+    const labels: Record<SupportedLocale, string> = {
+      en: '🔍 12 positions found · Refresh',
+      ru: '🔍 Найдено 12 вакансий · Обновить',
+      kk: '🔍 12 лауазым табылды · Жаңарту',
+      uz: '🔍 12 ta vakansiya · Yangilash',
+    };
+    return labels[locale] ?? labels.en;
+  }
+  return null;
+}

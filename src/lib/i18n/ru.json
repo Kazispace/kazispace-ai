@@ -228,7 +228,13 @@
 			"interviewText": "Как подготовиться к собеседованию?"
 		},
 		"sendFailed": "Не удалось отправить сообщение",
-		"agentHubSprint2": "Режим эксперта — в Sprint 2 ({agent})"
+		"switching": "Переключение эксперта…",
+		"switchExpert": "Выберите эксперта",
+		"closeSwitcher": "Закрыть",
+		"switchHint": "Выбор другого эксперта переключит сессию",
+		"activateFailed": "Не удалось открыть эксперта",
+		"deactivateFailed": "Не удалось вернуться в клинику",
+		"agentErrorFallback": "Эксперт недоступен — возврат в клинику"
 	},
 	"subscription": {
 		"title": "Перейти на PRO / Sprint",

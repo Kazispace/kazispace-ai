@@ -1,0 +1,165 @@
+'use client';
+
+import { useCallback } from 'react';
+import {
+  activateAgent,
+  deactivateAgent,
+  getActiveAgent,
+} from '@/lib/agent-api';
+import { AGENT_REGISTRY, getAgentStatusBadge } from '@/lib/agents/registry';
+import type { SupportedLocale } from '@/lib/constants';
+import { useAgentStore, useChatStore, useUIStore } from '@/lib/store';
+
+const FADE_OUT_MS = 300;
+const FADE_IN_MS = 700;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function pushAgentHistory(agentId: string) {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.set('agent', agentId);
+  window.history.pushState({ agentHub: true, agentId }, '', url.toString());
+}
+
+function clearAgentHistory() {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.delete('agent');
+  window.history.pushState({ agentHub: false }, '', url.toString());
+}
+
+export function useAgentSwitch(locale: string) {
+  const {
+    activeAgentId,
+    agentSessionId,
+    isSwitching,
+    setSwitching,
+    setActiveAgent,
+    setAgentMessages,
+    addAgentMessage,
+    setSwitcherOpen,
+  } = useAgentStore();
+  const addClinicMessage = useChatStore((s) => s.addMessage);
+  const showToast = useUIStore((s) => s.showToast);
+
+  const fetchActiveAgent = useCallback(async () => {
+    const res = await getActiveAgent();
+    if (!res.success || !res.data?.active_agent) return null;
+    setActiveAgent(res.data.active_agent, res.data.session_id);
+    return res.data;
+  }, [setActiveAgent]);
+
+  const switchToAgent = useCallback(
+    async (agentId: string, triggerMessage?: string) => {
+      const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
+      if (!entry || entry.status === 'coming_soon') {
+        showToast('Coming soon', 'info');
+        return { ok: false as const };
+      }
+
+      setSwitching(true);
+      setSwitcherOpen(false);
+      await sleep(FADE_OUT_MS);
+
+      try {
+        if (activeAgentId && activeAgentId !== agentId) {
+          await deactivateAgent(activeAgentId, locale);
+          setActiveAgent(null, null);
+        }
+
+        const res = await activateAgent(agentId, locale, triggerMessage);
+        if (!res.success || !res.data) {
+          showToast(res.error ?? 'Failed to activate expert', 'error');
+          return { ok: false as const, error: res.error };
+        }
+
+        const { session_id, greeting, agent_id } = res.data;
+        setActiveAgent(agent_id, session_id);
+
+        const existing = useAgentStore.getState().getAgentMessages(agent_id);
+        if (existing.length === 0) {
+          setAgentMessages(agent_id, [
+            {
+              id: `greeting_${Date.now()}`,
+              role: 'assistant',
+              content: greeting,
+              timestamp: new Date().toISOString(),
+              sessionId: session_id,
+            },
+          ]);
+        }
+
+        pushAgentHistory(agent_id);
+        await sleep(FADE_IN_MS);
+        return { ok: true as const };
+      } catch {
+        showToast('Failed to activate expert', 'error');
+        return { ok: false as const };
+      } finally {
+        setSwitching(false);
+      }
+    },
+    [locale, activeAgentId, setSwitching, setSwitcherOpen, setActiveAgent, setAgentMessages, showToast]
+  );
+
+  const exitToClinic = useCallback(
+    async (options?: { skipHistory?: boolean }) => {
+      if (!activeAgentId) return { ok: true as const };
+
+      setSwitching(true);
+      await sleep(FADE_OUT_MS);
+
+      try {
+        const res = await deactivateAgent(activeAgentId, locale);
+        if (!res.success || !res.data) {
+          showToast(res.error ?? 'Failed to return to clinic', 'error');
+          return { ok: false as const };
+        }
+
+        const sessionId = agentSessionId ?? 'clinic';
+        addClinicMessage({
+          id: `return_${Date.now()}`,
+          role: 'assistant',
+          content: res.data.return_message,
+          timestamp: new Date().toISOString(),
+          sessionId,
+        });
+
+        setActiveAgent(null, null);
+        if (!options?.skipHistory) {
+          clearAgentHistory();
+        }
+
+        await sleep(FADE_IN_MS);
+        return { ok: true as const };
+      } finally {
+        setSwitching(false);
+      }
+    },
+    [
+      activeAgentId,
+      agentSessionId,
+      locale,
+      setSwitching,
+      setActiveAgent,
+      addClinicMessage,
+      showToast,
+    ]
+  );
+
+  const statusBadge =
+    activeAgentId && getAgentStatusBadge(activeAgentId, locale as SupportedLocale);
+
+  return {
+    activeAgentId,
+    agentSessionId,
+    isSwitching,
+    statusBadge,
+    fetchActiveAgent,
+    switchToAgent,
+    exitToClinic,
+  };
+}
