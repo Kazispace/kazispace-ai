@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChatHeader } from "./chat-header";
 import { WelcomeView } from "./welcome-view";
@@ -18,9 +19,10 @@ interface ClinicShellProps {
 }
 
 export function ClinicShell({ locale }: ClinicShellProps) {
+  const router = useRouter();
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
-  const { messages, isSending, isStreaming, isHistoryLoading, loadHistory, sendMessage } =
+  const { messages, isSending, isStreaming, isHistoryLoading, loadHistory, skipHistoryLoad, sendMessage } =
     useClinicChat();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
@@ -30,17 +32,27 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   useEffect(() => {
     setEnglishLevelState(getEnglishLevel());
-    loadHistory();
+    if (isLoggedIn) {
+      loadHistory();
+    } else {
+      skipHistoryLoad();
+    }
     fetch(`${API_BASE_URL}/health`, { signal: AbortSignal.timeout(5000) })
       .then((r) => setIsOnline(r.ok))
       .catch(() => setIsOnline(false));
-  }, [loadHistory]);
+  }, [isLoggedIn, loadHistory, skipHistoryLoad]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSending]);
 
   const handleSend = async (text: string) => {
+    if (!isLoggedIn) {
+      showToast(tClinic("loginToChat"), "info");
+      router.push(`/${locale}/login`);
+      return;
+    }
+
     const result = await sendMessage(text);
     if (result && !result.ok) {
       showToast(result.error ?? tClinic("sendFailed"), "error");
@@ -50,6 +62,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const handleAgentSelect = (agentId: string) => {
     if (!isLoggedIn) {
       showToast(tClinic("loginToContinue"), "info");
+      router.push(`/${locale}/login`);
       return;
     }
     // TODO: Sprint 2 — replace with useAgentSwitch(agentId)

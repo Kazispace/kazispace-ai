@@ -17,19 +17,18 @@ interface AgentCardProps {
 export function AgentCard({ agent, locale, locked, onSelect }: AgentCardProps) {
   const t = useTranslations("clinic");
   const isSoon = agent.status === "coming_soon";
-  const disabled = isSoon || locked;
 
   return (
     <button
       type="button"
-      disabled={disabled}
-      onClick={() => !disabled && onSelect?.(agent.agentId)}
+      disabled={isSoon}
+      onClick={() => onSelect?.(agent.agentId)}
       className={cn(
         "text-left rounded-xl border border-gray-200 bg-gray-50 p-4 min-h-[180px] flex flex-col",
         "transition-all duration-200",
-        !disabled && "hover:-translate-y-0.5 hover:shadow-md hover:border-kazi-orange/40",
-        disabled && "opacity-50 cursor-not-allowed",
-        locked && !isSoon && "opacity-70"
+        !isSoon && "hover:-translate-y-0.5 hover:shadow-md hover:border-kazi-orange/40",
+        isSoon && "opacity-50 cursor-not-allowed",
+        locked && !isSoon && "opacity-90"
       )}
     >
       <div className="text-3xl mb-2">{agent.emoji}</div>

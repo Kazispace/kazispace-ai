@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Home, MessageCircle, User } from "lucide-react";
 
 interface BottomNavProps {
@@ -10,11 +11,12 @@ interface BottomNavProps {
 
 export function BottomNav({ locale }: BottomNavProps) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
 
   const navItems = [
-    { href: `/${locale}`, icon: Home, label: "Home" },
-    { href: `/${locale}/chat`, icon: MessageCircle, label: "Chat" },
-    { href: `/${locale}/mine`, icon: User, label: "Profile" },
+    { href: `/${locale}`, icon: Home, label: t("home") },
+    { href: `/${locale}/chat`, icon: MessageCircle, label: t("chat") },
+    { href: `/${locale}/mine`, icon: User, label: t("profile") },
   ];
 
   return (

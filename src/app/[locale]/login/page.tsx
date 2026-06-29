@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,14 @@ export default function LoginPage({ params }: LoginPageProps) {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("expired") === "1") {
+      setSessionExpired(true);
+    }
+  }, []);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +63,7 @@ export default function LoginPage({ params }: LoginPageProps) {
       const result = await verifyOtp(contact, otp);
       if (result.success && result.data) {
         login(result.data.token, result.data.user);
-        router.push(`/${locale}/mine`);
+        router.push(`/${locale}/chat`);
       } else {
         setError(result.error || "Invalid code");
       }
@@ -76,6 +84,11 @@ export default function LoginPage({ params }: LoginPageProps) {
           <CardTitle className="text-xl">{t("title")}</CardTitle>
         </CardHeader>
         <CardContent>
+          {sessionExpired && (
+            <p className="mb-4 rounded-lg bg-orange-50 border border-orange-100 px-3 py-2 text-sm text-orange-900">
+              {t("sessionExpiredContent")}
+            </p>
+          )}
           {step === "phone" ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>

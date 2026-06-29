@@ -60,6 +60,10 @@ export function useClinicChat() {
     }
   }, [setMessages]);
 
+  const skipHistoryLoad = useCallback(() => {
+    setIsHistoryLoading(false);
+  }, []);
+
   const sendMessage = useCallback(
     async (text: string) => {
       const sessionId = getSessionId();
@@ -112,6 +116,7 @@ export function useClinicChat() {
     isSending,
     isHistoryLoading,
     loadHistory,
+    skipHistoryLoad,
     sendMessage,
   };
 }

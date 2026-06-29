@@ -69,7 +69,7 @@ export async function requestOtp(
 ): Promise<ApiResponse<OtpRequestResponse>> {
   return apiRequest<OtpRequestResponse>('/api/v1/auth/otp/request', {
     method: 'POST',
-    body: JSON.stringify({ contact: phoneOrEmail }),
+    body: JSON.stringify({ phone: phoneOrEmail }),
   });
 }
 
@@ -79,7 +79,7 @@ export async function verifyOtp(
 ): Promise<ApiResponse<OtpVerifyResponse>> {
   return apiRequest<OtpVerifyResponse>('/api/v1/auth/otp/verify', {
     method: 'POST',
-    body: JSON.stringify({ contact: phoneOrEmail, code }),
+    body: JSON.stringify({ phone: phoneOrEmail, code }),
   });
 }
 
