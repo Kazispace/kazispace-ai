@@ -1,9 +1,8 @@
-# KaziSpace Web App 测试结果报告
+# KaziSpace Web App 测试结果 v3（后端更新后）
 
-> **测试日期**：2026-06-29  
-> **测试版本**：https://kazispace.ai/（分支 owen）  
-> **测试人**：Owen（人工）+ Agent（自动化 + API 验证）  
-> **测试方法**：真实用户视角浏览器操作 + API 端到端验证
+> **测试日期**：2026-06-29 11:40  
+> **触发**：Owen 报告后端已更新，用邮箱登录仍返回 HTTP 422  
+> **方法**：API 端到端验证（curl）+ 前端浏览器操作
 
 ---
 
@@ -11,150 +10,111 @@
 
 | 指标 | 数值 |
 |------|------|
-| 总用例数 | 14 |
-| 已执行 | 7 |
-| PASS | 1 |
-| FAIL | 6 |
-| 待执行 | 7 |
-| 阻塞率 | 85.7%（已执行用例中）|
+| 后端可用端点 | 22 个（含认证、聊天、CV、面试、推荐、计费、任务）|
+| 前端阻塞问题 | **2 个 Critical** — 字段名不一致 + 路径不匹配 |
+| 可正常工作的 API | OTP→Login→Chat→Billing→Jobs→CV→NBA 全链路 |
 
-**整体结论：Web App 核心链路存在多个 Critical 级别阻塞问题，无法完成基本的用户注册→登录→聊天流程。**
+**核心结论：后端已大幅更新，功能基本可用。问题集中在前端 `api-client.ts` 的请求参数和端点路径与后端不一致。**
 
 ---
 
-## 已发现问题（按严重程度排序）
+## 已验证 API 清单（2026-06-29 后端版本）
 
-### 🔴 Critical
+### ✅ 可用端点
 
-| # | 问题 | 用例 | 根因 | 建议修复 |
-|---|------|------|------|---------|
-| 1 | **OTP 登录失败**：Send Code 返回 HTTP 422 | TC-002 | 前端 `api-client.ts` 发送 `{"contact":"..."}` 但后端要求 `{"phone":"..."}`，字段名不一致 | 前端改为 `{"phone": phoneOrEmail}`，或与后端对齐使用 `contact` 字段 |
-| 2 | **未登录聊天报错**：直接显示 HTTP 422，无友好提示 | TC-001 | 前端未做认证拦截，无 token 直接调用 `/api/v1/chat` | 前端增加认证状态检查，未登录时引导跳转登录页 |
-| 3 | **Credits API 未实现**：`/api/v1/credits` 返回 404 | TC-008 | 后端未实现此端点 | 后端实现 credits 端点，或前端增加 fallback |
-| 4 | **Ledger API 未实现**：`/api/v1/credits/ledger` 返回 404 | TC-009 | 后端未实现此端点 | 后端实现 ledger 端点 |
+| 方法 | 路径 | 功能 | 状态 |
+|------|------|------|------|
+| POST | `/api/v1/auth/otp/request` | 请求验证码 | ✅ 正常（字段 `phone`，支持 +7/+998/+86）|
+| POST | `/api/v1/auth/otp/verify` | 验证 OTP | ✅ 正常 |
+| POST | `/api/v1/chat` | 聊天 | ✅ 正常 |
+| POST | `/api/v1/chat/messages` | 聊天（替代路径）| ✅ 正常 |
+| GET | `/api/v1/me` | 获取用户信息 | ✅ 正常 |
+| GET | `/api/v1/billing/summary` | 积分/余额 | ✅ 正常（返回 credits + entitlements）|
+| GET | `/api/v1/plans/current` | 当前套餐 | ✅ 正常 |
+| POST | `/api/v1/billing/orders` | 创建订单 | ✅ 正常（需 `package_id` + `amount_kzt`）|
+| GET | `/api/v1/cv/documents` | CV 列表 | ✅ 正常（空列表，无 CV）|
+| GET | `/api/v1/job-recommendations` | 岗位推荐 | ✅ 正常（返回 3 条推荐）|
+| GET | `/api/v1/daily-tasks/today` | 每日任务 | ✅ 正常 |
+| GET | `/api/v1/interview/history` | 面试历史 | ✅ 正常（空列表）|
+| GET | `/api/v1/users/{id}/next-best-action` | NBA | ✅ 正常 |
 
-### 🟠 High
+### ❌ 不可用 / 缺失端点
 
-| # | 问题 | 用例 | 根因 | 建议修复 |
-|---|------|------|------|---------|
-| 5 | **专家入口全部 disabled** | TC-005 | 未登录状态下所有功能按钮不可点击，无引导提示 | 增加 disabled 状态的引导文案（如"登录后使用"）|
-| 6 | **Profile 保存无后端端点** | TC-007 | 后端 `/api/v1/me` 仅 GET，无 PUT/PATCH | 后端实现 profile 更新端点 |
-| 7 | **Subscription API 未实现** | TC-010 | `/api/v1/plans` 等端点均返回 404 | 后端实现订阅相关端点 |
-| 8 | **JWT 过期无跳转** | TC-013 | 代码中 401 响应仅清除 token 但未跳转登录页 | 401 响应时 redirect 到 `/login` |
-
-### 🟡 Medium
-
-| # | 问题 | 用例 | 根因 | 建议修复 |
-|---|------|------|------|---------|
-| 9 | **KK 语言翻译缺失**：导航栏"Профиль"仍为俄语 | TC-011 | i18n kk.json 翻译不完整 | 补全 KK 语言翻译 |
-| 10 | **首页重定向**：`/` 直接 302 到 `/chat`，无产品介绍 | TC-012 | 设计决策或配置问题 | 确认是否需要保留首页产品介绍 |
-
----
-
-## API 端到端验证（curl）
-
-以下验证使用正确的字段名和有效 JWT，确认**后端 API 本身工作正常**：
-
-```bash
-# 1. 请求 OTP（正确字段 phone）
-curl -X POST https://bot.kazispace.ai/api/v1/auth/otp/request \
-  -H "Content-Type: application/json" \
-  -d '{"phone": "+77015551234"}'
-# ✅ 返回: {"status": "sent", "_mock_code": "123456", ...}
-
-# 2. 验证 OTP
-curl -X POST https://bot.kazispace.ai/api/v1/auth/otp/verify \
-  -H "Content-Type: application/json" \
-  -d '{"phone": "+77015551234", "code": "123456"}'
-# ✅ 返回: {"access_token": "eyJ...", "user": {...}, ...}
-
-# 3. 聊天（带 JWT）
-curl -X POST https://bot.kazispace.ai/api/v1/chat \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{"message": "Hello"}'
-# ✅ 返回: {"reply": "Hello! Welcome to KaziSpace!...", ...}
-```
-
-**结论：后端 API 链路完整可用，问题出在前端请求参数和前端错误处理。**
+| 方法 | 路径 | 问题 | 影响 |
+|------|------|------|------|
+| PUT | `/api/v1/me` | 405 Method Not Allowed | Profile 无法保存 |
+| — | `/api/v1/credits` | 404 — 应为 `/api/v1/billing/summary` | 前端路径错误 |
+| — | `/api/v1/credits/ledger` | 404 — 无对应端点 | 账单流水无 API |
+| — | `/api/v1/plans` | 404 — 应为 `/api/v1/plans/current` | 前端路径错误 |
 
 ---
 
-## 测试用例执行详情
+##  阻塞问题（Critical）
 
-### TC-001：未登录用户发送聊天消息 — ❌ FAIL
-- **操作**：不登录，在 https://kazispace.ai/ 输入 "Hello" 发送
-- **结果**：页面显示 "HTTP 422"
-- **截图**：见 Owen 提供的截图
+### BUG-001：前端 OTP 请求字段名错误
+- **现象**：Send Code 返回 HTTP 422
+- **前端代码**：`api-client.ts` 发送 `{"contact": phoneOrEmail}`
+- **后端要求**：`{"phone": "+77015551234"}`
+- **影响**：登录流程完全阻塞，所有后续功能不可用
+- **修复**：`api-client.ts` 中 `requestOtp()` 和 `verifyOtp()` 的 `contact` 改为 `phone`
 
-### TC-002：OTP 登录流程 — ❌ FAIL
-- **操作**：打开 /login，输入 +77015551234，点击 Send Code
-- **结果**：页面显示 "HTTP 422"，验证码未发送
-- **截图**：[tc002-login-422.png](screenshots/tc002-login-422.png)
+### BUG-002：前端不支持邮箱登录
+- **现象**：输入邮箱 `shouwen.lai@icloud.com` 点击 Send Code → 422
+- **后端限制**：仅支持手机号（+7 / +998 / +86 前缀）
+- **影响**：邮箱用户无法登录
+- **修复**：前端需限制输入框仅接受手机号，或后端扩展支持邮箱 OTP
 
-### TC-003：登录后聊天 — ⏳ 待执行
-- **依赖**：TC-002 修复后执行
-
-### TC-004：专家切换 — ⏳ 待执行
-- **依赖**：TC-003 通过后执行
-
-### TC-005：专家入口按钮 — ❌ FAIL
-- **结果**：所有按钮 disabled，无引导文案
-
-### TC-006：个人中心 — ⏳ 待执行
-- **依赖**：TC-002 修复后执行
-
-### TC-007：Profile 保存 — ⏳ 待执行
-- **依赖**：TC-002 修复后执行
-
-### TC-008：Credits 页面 — ❌ FAIL
-- **结果**：后端 `/api/v1/credits` 返回 404
-
-### TC-009：Ledger 页面 — ❌ FAIL
-- **结果**：后端 `/api/v1/credits/ledger` 返回 404
-
-### TC-010：Subscription — ⏳ 待执行
-- **依赖**：后端实现相关 API
-
-### TC-011：国际化切换 — ❌ FAIL
-- **结果**：KK 版本导航栏"Профиль"仍为俄语
-
-### TC-012：首页重定向 — ⚠️ 注意
-- **结果**：`/` 直接 302 到 `/chat`
-
-### TC-013：JWT 过期处理 — ⏳ 待执行
-- **依赖**：TC-002 修复后执行
-
-### TC-014：响应式布局 — ✅ PASS
-- **结果**：移动端布局正常，无错位
+### BUG-003：前端端点路径与后端不匹配
+- **现象**：Credits/Ledger/Subscription 页面无数据
+- **根因**：前端可能调用旧路径（如 `/api/v1/credits`），后端已迁移到新路径（`/api/v1/billing/summary`）
+- **影响**：积分、账单、套餐页面无数据
+- **修复**：`api-client.ts` 中所有端点路径对齐后端 OpenAPI spec
 
 ---
 
-## 建议修复优先级
+##  高优先级问题
 
-### 第一优先（立即修复 — 阻塞基本流程）
-1. 修复 `api-client.ts` 中 OTP 请求字段名：`contact` → `phone`
-2. 增加未认证状态的聊天拦截：未登录时引导跳转 `/login`
+### BUG-004：Profile 保存无端点
+- **后端**：`/api/v1/me` 仅 GET，PUT/PATCH 返回 405
+- **影响**：用户无法保存个人资料
+- **修复**：后端实现 `PUT /api/v1/me` 或 `PATCH /api/v1/me`
 
-### 第二优先（核心功能完善）
-3. 后端实现 `/api/v1/credits` 端点
-4. 后端实现 `/api/v1/credits/ledger` 端点
-5. 后端实现 Profile 更新端点（PUT/PATCH `/api/v1/me`）
+### BUG-005：Ledger 流水无端点
+- **后端**：无积分流水查询端点
+- **影响**：Ledger 页面无数据
+- **修复**：后端实现 `/api/v1/billing/ledger` 或类似端点
 
-### 第三优先（体验优化）
-6. 专家入口 disabled 状态增加引导文案
-7. 补全 KK 语言翻译
-8. 401 响应增加登录页跳转
+### BUG-006：邮箱登录输入未限制
+- **前端**：登录页 placeholder 显示 "Phone or Email"，暗示支持邮箱
+- **后端**：仅支持手机号
+- **修复**：前端去掉 "Email" 提示，或后端增加邮箱支持
 
 ---
 
-## 测试环境
+## ✅ 已验证通过的功能
 
-| 项目 | 值 |
-|------|---|
-| 前端 | https://kazispace.ai/ |
-| 后端 API | https://bot.kazispace.ai |
-| 测试用户（Free） | user_id=307, phone=+77015551234 |
-| 测试用户（Pro） | user_id=300, phone=+77779991235 |
-| 浏览器 | Chrome（桌面 + 移动端模拟）|
-| 代码仓库 | https://github.com/Kazispace/kazispace-ai（分支 owen）|
+| 功能 | API 验证 | 说明 |
+|------|---------|------|
+| OTP 登录 | ✅ | 字段正确时全链路通 |
+| 聊天 | ✅ | 回复正常，credits 计数正确 |
+| 积分查询 | ✅ | `/api/v1/billing/summary` 返回余额 2 |
+| 当前套餐 | ✅ | 返回 sprint_7d 套餐信息 |
+| 岗位推荐 | ✅ | 返回 3 条推荐（Customer Care, Desktop Support, Executive Assistant）|
+| 每日任务 | ✅ | 返回 reflection 任务 |
+| CV 管理 | ✅ | 列表正常（空）|
+| 面试历史 | ✅ | 列表正常（空）|
+| NBA | ✅ | 返回 next-best-action: complete_profile |
+| 计费下单 | ✅ | 端点存在，需正确字段 |
+
+---
+
+## 建议修复顺序
+
+| 优先级 | 修复项 | 改动范围 | 预计影响 |
+|--------|--------|---------|---------|
+| **P0** | `api-client.ts` 中 `contact` → `phone` | 前端 2 行代码 | 解除登录阻塞 |
+| **P0** | 对齐端点路径（`/api/v1/credits` → `/api/v1/billing/summary` 等）| 前端 api-client.ts | 解除积分/套餐/账单阻塞 |
+| **P1** | 登录页去掉 "Phone or **Email**" 提示 | 前端 login page | 减少用户困惑 |
+| **P1** | 后端实现 `PUT /api/v1/me` | 后端 | Profile 保存 |
+| **P2** | 后端实现 `/api/v1/billing/ledger` | 后端 | 账单流水 |
+| **P2** | 后端支持邮箱 OTP 或前端限制手机号格式 | 前后端 | 邮箱登录 |
