@@ -24,6 +24,7 @@ import {
 } from "@/lib/agents/registry";
 import { getEnglishLevel } from "@/lib/auth";
 import { dismissReferral, isReferralDismissed, clearExpiredReferralDismissals } from "@/lib/referral-dismiss";
+import { consumePendingTmaAction } from "@/lib/tma-routing";
 import type { SupportedLocale } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/lib/constants";
@@ -63,8 +64,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const switchToAgentRef = useRef(switchToAgent);
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
+  const exitToClinicRef = useRef(exitToClinic);
   switchToAgentRef.current = switchToAgent;
   fetchActiveAgentRef.current = fetchActiveAgent;
+  exitToClinicRef.current = exitToClinic;
 
   const {
     messages: agentMessages,
@@ -81,6 +84,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
+  const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
+  const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
 
   const [isOnline, setIsOnline] = useState(false);
   const [englishLevel, setEnglishLevelState] = useState<string | null>(null);
@@ -140,8 +145,27 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   useEffect(() => {
     if (!isLoggedIn) return;
+    if (isTelegramMiniApp && !tmaInitComplete) return;
 
     const initAgent = async () => {
+      const pending = consumePendingTmaAction();
+      if (pending?.type === 'activate_agent') {
+        if (AGENT_REGISTRY.some((a) => a.agentId === pending.agentId)) {
+          await switchToAgentRef.current(pending.agentId);
+          return;
+        }
+      }
+      if (pending?.type === 'clinic') {
+        if (useAgentStore.getState().activeAgentId) {
+          await exitToClinicRef.current();
+        }
+        return;
+      }
+      if (pending?.type === 'subscription') {
+        router.push(`/${locale}/subscription`);
+        return;
+      }
+
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
       if (
         deepLinkAgent &&
@@ -157,7 +181,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     };
 
     void initAgent();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, isTelegramMiniApp, tmaInitComplete, locale, router]);
 
   useEffect(() => {
     if (activeAgentId && agentSessionId) {

@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Home, MessageCircle, User } from "lucide-react";
 
+import { useUIStore } from "@/lib/store";
+
 interface BottomNavProps {
   locale: string;
 }
@@ -12,6 +14,9 @@ interface BottomNavProps {
 export function BottomNav({ locale }: BottomNavProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
+  const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
+
+  if (isTelegramMiniApp) return null;
 
   const navItems = [
     { href: `/${locale}`, icon: Home, label: t("home") },

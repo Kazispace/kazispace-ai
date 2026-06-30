@@ -270,5 +270,14 @@
 		"totalCredits": "Всего кредитов",
 		"loading": "Загрузка...",
 		"loadError": "Не удалось загрузить баланс"
+	},
+	"tma": {
+		"launching": "Открываем KaziSpace…",
+		"authFailed": "Не удалось войти через Telegram",
+		"useOtpLogin": "Войти по телефону",
+		"openInTelegramTitle": "Откройте в Telegram",
+		"openInTelegramDesc": "Это приложение работает внутри бота KaziSpace. Откройте бота и нажмите кнопку меню.",
+		"continueInBrowser": "Продолжить в браузере",
+		"backToBot": "← Назад в бот"
 	}
 }

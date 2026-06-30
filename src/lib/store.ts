@@ -82,12 +82,16 @@ interface UIStore {
   toast: { message: string; type: 'error' | 'info' } | null;
   paywallModalOpen: boolean;
   paywallTrigger: PaywallTrigger | null;
+  isTelegramMiniApp: boolean;
+  tmaInitComplete: boolean;
   setLocale: (locale: string) => void;
   toggleSidebar: () => void;
   showToast: (message: string, type?: 'error' | 'info') => void;
   clearToast: () => void;
   openPaywall: (trigger: PaywallTrigger) => void;
   closePaywall: () => void;
+  setTelegramMiniApp: (value: boolean) => void;
+  setTmaInitComplete: (value: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>()((set) => ({
@@ -96,12 +100,16 @@ export const useUIStore = create<UIStore>()((set) => ({
   toast: null,
   paywallModalOpen: false,
   paywallTrigger: null,
+  isTelegramMiniApp: false,
+  tmaInitComplete: false,
   setLocale: (locale) => set({ locale }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   showToast: (message, type = 'info') => set({ toast: { message, type } }),
   clearToast: () => set({ toast: null }),
   openPaywall: (trigger) => set({ paywallModalOpen: true, paywallTrigger: trigger }),
   closePaywall: () => set({ paywallModalOpen: false, paywallTrigger: null }),
+  setTelegramMiniApp: (value) => set({ isTelegramMiniApp: value }),
+  setTmaInitComplete: (value) => set({ tmaInitComplete: value }),
 }));
 
 // ---- Credits Store ----

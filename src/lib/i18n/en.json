@@ -270,5 +270,14 @@
 		"totalCredits": "Total credits",
 		"loading": "Loading...",
 		"loadError": "Could not load balance"
+	},
+	"tma": {
+		"launching": "Opening KaziSpace…",
+		"authFailed": "Telegram sign-in failed",
+		"useOtpLogin": "Sign in with phone",
+		"openInTelegramTitle": "Open in Telegram",
+		"openInTelegramDesc": "This experience works best inside the KaziSpace Telegram bot. Open the bot and tap the menu button.",
+		"continueInBrowser": "Continue in browser",
+		"backToBot": "← Back to bot"
 	}
 }
