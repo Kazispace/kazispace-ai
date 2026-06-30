@@ -1,0 +1,77 @@
+{
+  "stamp": "2026-06-30T0752",
+  "base": "http://localhost:3000",
+  "phone": "+77015559920",
+  "evidenceDir": "test/evidence/uat-p0/2026-06-30",
+  "pass": 10,
+  "fail": 0,
+  "blocked": 0,
+  "total": 10,
+  "consoleErrors": [],
+  "networkWarnings": [
+    "Failed to load resource: the server responded with a status of 400 (Bad Request)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "results": [
+    {
+      "id": "UAT-WA-AUTH-01",
+      "status": "PASS",
+      "note": "banner=true greeting=true cards=true/true/true send→login=true",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/auth01-guest.png"
+    },
+    {
+      "id": "UAT-WA-AUTH-03",
+      "status": "PASS",
+      "note": "redirect ok; post-login url=http://localhost:3000/ru/mine",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/auth03-after-login-mine.png"
+    },
+    {
+      "id": "UAT-WA-AUTH-02",
+      "status": "PASS",
+      "note": "phone=+77015559920 name=User 322 badge=false",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/auth02-mine-profile.png"
+    },
+    {
+      "id": "UAT-WA-AGENT-01",
+      "status": "PASS",
+      "note": "greeting=true available=true/true soon=true openBtns=2",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/agent01-hub.png"
+    },
+    {
+      "id": "UAT-WA-AGENT-02",
+      "status": "PASS",
+      "note": "expert=true quickReply=true url=http://localhost:3000/ru/chat?context_module=job_search",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/agent02-job-search.png"
+    },
+    {
+      "id": "UAT-WA-AGENT-03",
+      "status": "PASS",
+      "note": "reply detected=true bodyLen=16869",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/agent03-expert-reply.png"
+    },
+    {
+      "id": "UAT-WA-AGENT-04",
+      "status": "PASS",
+      "note": "clinicUI=true noModule=true greeting=true",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/agent04-back-clinic.png"
+    },
+    {
+      "id": "UAT-WA-CLINIC-01",
+      "status": "PASS",
+      "note": "userBubble+reply=true bodyLen=16891",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/clinic01-first-message.png"
+    },
+    {
+      "id": "UAT-WA-AGENT-05",
+      "status": "PASS",
+      "note": "job=true mock=true mockQuick=true",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/agent05-mock-interview.png"
+    },
+    {
+      "id": "UAT-WA-NFR-03",
+      "status": "PASS",
+      "note": "redirect=true content=true uncaught=0 networkWarn=2: Failed to load resource: the server responded with a status of 400 (Bad Request); Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "test/evidence/uat-p0/2026-06-30/nfr03-runtime.png"
+    }
+  ]
+}
