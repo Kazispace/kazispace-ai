@@ -1,0 +1,98 @@
+{
+  "results": [
+    {
+      "case_id": "WB-WA-AUTH-05",
+      "status": "BLOCKED",
+      "note": "endpoint HTTP 404 \u2014 backend E2 not deployed"
+    },
+    {
+      "case_id": "WB-WA-AUTH-05b",
+      "status": "BLOCKED",
+      "note": "skipped \u2014 endpoint 404"
+    },
+    {
+      "case_id": "WB-WA-TMA-01",
+      "status": "PASS",
+      "note": "api-client merges getTmaClientHeaders; telegram.ts sets X-Client-Variant"
+    },
+    {
+      "case_id": "WB-WA-TMA-02",
+      "status": "PASS",
+      "note": "parseStartParam routes + clinic-shell consumes pending action"
+    },
+    {
+      "case_id": "WB-WA-TMA-02-agent_job_search",
+      "status": "PASS",
+      "note": "start_param='agent_job_search' \u2192 expect type=activate_agent"
+    },
+    {
+      "case_id": "WB-WA-TMA-02-clinic",
+      "status": "PASS",
+      "note": "start_param='clinic' \u2192 expect type=clinic"
+    },
+    {
+      "case_id": "WB-WA-TMA-02-billing_pro",
+      "status": "PASS",
+      "note": "start_param='billing_pro' \u2192 expect type=subscription"
+    },
+    {
+      "case_id": "WB-WA-TMA-02-job_abc123",
+      "status": "PASS",
+      "note": "start_param='job_abc123' \u2192 expect type=job"
+    },
+    {
+      "case_id": "WB-WA-TMA-02-empty",
+      "status": "PASS",
+      "note": "start_param='' \u2192 expect type=restore"
+    },
+    {
+      "case_id": "WB-WA-TMA-03",
+      "status": "PASS",
+      "note": "middleware PUBLIC_PATH_SEGMENTS includes tma"
+    },
+    {
+      "case_id": "WB-WA-TMA-03b",
+      "status": "PASS",
+      "note": "launch page: browser fallback + stable effect (tRef)"
+    },
+    {
+      "case_id": "WB-WA-TMA-04",
+      "status": "PASS",
+      "note": "TMA hides Header/BottomNav; chat-header Back to bot"
+    },
+    {
+      "case_id": "WB-WA-AUTH-04-tma",
+      "status": "PASS",
+      "note": "401 in TMA \u2192 initData reauth before login redirect"
+    },
+    {
+      "case_id": "WB-WA-TMA-05-types",
+      "status": "PASS",
+      "note": "telegram-web-app.d.ts includes isVerticalSwipesEnabled"
+    },
+    {
+      "case_id": "WB-WA-TMA-theme",
+      "status": "PASS",
+      "note": "applyTelegramTheme syncs header + background"
+    },
+    {
+      "case_id": "WB-WA-TMA-routing-guard",
+      "status": "PASS",
+      "note": "start_param/id length clamp 64"
+    },
+    {
+      "case_id": "WB-WA-TMA-03-curl",
+      "status": "PASS",
+      "note": "/ru/tma/launch \u2192 HTTP 200 (no auth redirect)"
+    },
+    {
+      "case_id": "WB-WA-TMA-03-curl-mine",
+      "status": "PASS",
+      "note": "/ru/mine \u2192 307 location=/ru/login?redirect=%2Fru%2Fmine"
+    }
+  ],
+  "counts": {
+    "BLOCKED": 2,
+    "PASS": 16
+  }
+}
