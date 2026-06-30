@@ -86,20 +86,20 @@ export async function getActiveAgent(): Promise<ApiResponse<ActiveAgentState>> {
 export async function activateAgent(
   agentId: string,
   locale: string,
-  triggerMessage?: string
+  handoffMessage?: string
 ): Promise<ApiResponse<ActivateAgentResponse>> {
   const res = await apiRequest<ActivateAgentResponse>(
     `/api/v1/agents/${agentId}/activate`,
     {
       method: 'POST',
       body: JSON.stringify(
-        triggerMessage ? { trigger_message: triggerMessage } : {}
+        handoffMessage ? { handoff_message: handoffMessage } : {}
       ),
     }
   );
   if (res.success) return res;
   if (useMockFallback(res.error)) {
-    return { success: true, data: mockActivate(agentId, locale, triggerMessage) };
+    return { success: true, data: mockActivate(agentId, locale, handoffMessage) };
   }
   return res;
 }
@@ -168,5 +168,6 @@ export async function fetchAgentMessages(
 
 export function parseAgentReply(data: AgentChatResponse | undefined): string {
   if (!data) return '';
+  // API Spec §13.5: response.text; `reply` kept for backward compatibility
   return data.response?.text ?? data.reply ?? '';
 }

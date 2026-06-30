@@ -13,7 +13,7 @@ import { QuickReplies } from "./quick-replies";
 import { AgentSwitcher } from "./agent-switcher";
 import { ChatInput } from "@/components/chat/chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
-import { useAgentSwitch } from "@/hooks/use-agent-switch";
+import { getDeepLinkAgentId, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useAuthStore, useAgentStore, useUIStore } from "@/lib/store";
 import {
@@ -55,6 +55,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     exitToClinic,
   } = useAgentSwitch(locale);
 
+  const switchToAgentRef = useRef(switchToAgent);
+  const fetchActiveAgentRef = useRef(fetchActiveAgent);
+  switchToAgentRef.current = switchToAgent;
+  fetchActiveAgentRef.current = fetchActiveAgent;
+
   const {
     messages: agentMessages,
     isAgentSending,
@@ -62,6 +67,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     loadAgentHistory,
     sendMessage: sendAgentMessage,
   } = useAgentChat(activeAgentId, agentSessionId);
+
+  const loadAgentHistoryRef = useRef(loadAgentHistory);
+  loadAgentHistoryRef.current = loadAgentHistory;
 
   const switcherOpen = useAgentStore((s) => s.switcherOpen);
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
@@ -103,20 +111,22 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     if (!isLoggedIn) return;
 
     const initAgent = async () => {
-      const params = new URLSearchParams(window.location.search);
-      const deepLinkAgent = params.get("agent");
-      if (deepLinkAgent) {
-        await switchToAgent(deepLinkAgent);
+      const deepLinkAgent = getDeepLinkAgentId(window.location.search);
+      if (
+        deepLinkAgent &&
+        AGENT_REGISTRY.some((a) => a.agentId === deepLinkAgent)
+      ) {
+        await switchToAgentRef.current(deepLinkAgent);
         return;
       }
-      const active = await fetchActiveAgent();
+      const active = await fetchActiveAgentRef.current();
       if (active?.active_agent && active.session_id) {
-        await loadAgentHistory();
+        await loadAgentHistoryRef.current();
       }
     };
 
-    initAgent();
-  }, [isLoggedIn]); // eslint-disable-line react-hooks/exhaustive-deps
+    void initAgent();
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (activeAgentId && agentSessionId) {

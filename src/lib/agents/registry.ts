@@ -115,6 +115,7 @@ export function getAgentStatusBadge(
   agentId: string,
   locale: SupportedLocale
 ): string | null {
+  // TODO: read ui.status_badge from GET /agents or GET /agents/active when backend §13 ships
   if (agentId === 'job_search') {
     const labels: Record<SupportedLocale, string> = {
       en: '🔍 12 positions found · Refresh',

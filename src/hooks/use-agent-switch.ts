@@ -20,15 +20,22 @@ function sleep(ms: number) {
 function pushAgentHistory(agentId: string) {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
-  url.searchParams.set('agent', agentId);
+  url.searchParams.set('context_module', agentId);
+  url.searchParams.delete('agent');
   window.history.pushState({ agentHub: true, agentId }, '', url.toString());
 }
 
 function clearAgentHistory() {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
+  url.searchParams.delete('context_module');
   url.searchParams.delete('agent');
   window.history.pushState({ agentHub: false }, '', url.toString());
+}
+
+export function getDeepLinkAgentId(search: string): string | null {
+  const params = new URLSearchParams(search);
+  return params.get('context_module') ?? params.get('agent');
 }
 
 export function useAgentSwitch(locale: string) {
@@ -65,8 +72,9 @@ export function useAgentSwitch(locale: string) {
       await sleep(FADE_OUT_MS);
 
       try {
-        if (activeAgentId && activeAgentId !== agentId) {
-          await deactivateAgent(activeAgentId, locale);
+        const currentActive = useAgentStore.getState().activeAgentId;
+        if (currentActive && currentActive !== agentId) {
+          await deactivateAgent(currentActive, locale);
           setActiveAgent(null, null);
         }
 
@@ -102,7 +110,7 @@ export function useAgentSwitch(locale: string) {
         setSwitching(false);
       }
     },
-    [locale, activeAgentId, setSwitching, setSwitcherOpen, setActiveAgent, setAgentMessages, showToast]
+    [locale, setSwitching, setSwitcherOpen, setActiveAgent, setAgentMessages, showToast]
   );
 
   const exitToClinic = useCallback(
