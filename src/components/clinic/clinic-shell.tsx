@@ -136,13 +136,26 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   useEffect(() => {
     const onPopState = () => {
-      if (activeAgentId) {
-        exitToClinic({ skipHistory: true });
+      const agentFromUrl = getDeepLinkAgentId(window.location.search);
+      const current = useAgentStore.getState().activeAgentId;
+
+      if (!agentFromUrl) {
+        if (current) {
+          void exitToClinic({ skipHistory: true });
+        }
+        return;
+      }
+
+      if (
+        agentFromUrl !== current &&
+        AGENT_REGISTRY.some((a) => a.agentId === agentFromUrl)
+      ) {
+        void switchToAgentRef.current(agentFromUrl);
       }
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [activeAgentId, exitToClinic]);
+  }, [exitToClinic]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
