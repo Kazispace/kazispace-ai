@@ -204,7 +204,26 @@
 		},
 		"input": {
 			"placeholder": "Karyera haqida yozing…"
-		}
+		},
+		"retry": "Qayta urinish"
+	},
+	"referral": {
+		"accept": "{agentName} ochish",
+		"dismiss": "Bu yerda suhbatni davom ettirish",
+		"defaultReason": "{name} yordam bera oladi — o'tamizmi?"
+	},
+	"paywall": {
+		"close": "Yopish",
+		"proTitle": "PRO ga o'tish",
+		"proDescription": "Bu funksiya PRO obunasi bilan mavjud. Cheksiz mashq uchun yangilang.",
+		"creditsTitle": "Kreditlar yetarli emas",
+		"creditsDescription": "Kreditlar tugadi. Paket sotib oling yoki rejani yangilang.",
+		"upgradePro": "PRO rejalari",
+		"buyCredits": "Kredit sotib olish",
+		"continueFree": "Bepul davom etish"
+	},
+	"errors": {
+		"profileIncomplete": "Shaxsiylashtirish uchun profilni to'ldiring — bu yerda suhbatni davom ettira olasiz."
 	},
 	"clinic": {
 		"comingSoon": "Tez orada",

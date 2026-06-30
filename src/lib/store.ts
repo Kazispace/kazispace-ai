@@ -44,6 +44,7 @@ interface ChatStore {
   setCurrentSession: (sessionId: string) => void;
   addMessage: (message: ChatMessage) => void;
   updateMessage: (id: string, patch: Partial<ChatMessage>) => void;
+  removeMessage: (id: string) => void;
   setMessages: (messages: ChatMessage[]) => void;
   setStreaming: (streaming: boolean) => void;
   setSending: (sending: boolean) => void;
@@ -62,6 +63,10 @@ export const useChatStore = create<ChatStore>()((set) => ({
     set((state) => ({
       messages: state.messages.map((m) => (m.id === id ? { ...m, ...patch } : m)),
     })),
+  removeMessage: (id) =>
+    set((state) => ({
+      messages: state.messages.filter((m) => m.id !== id),
+    })),
   setMessages: (messages) => set({ messages }),
   setStreaming: (streaming) => set({ isStreaming: streaming }),
   setSending: (sending) => set({ isSending: sending }),
@@ -69,24 +74,34 @@ export const useChatStore = create<ChatStore>()((set) => ({
 }));
 
 // ---- UI Store ----
+export type PaywallTrigger = 'INSUFFICIENT_CREDITS' | 'PRO_FEATURE_LOCKED' | string;
+
 interface UIStore {
   locale: string;
   sidebarOpen: boolean;
   toast: { message: string; type: 'error' | 'info' } | null;
+  paywallModalOpen: boolean;
+  paywallTrigger: PaywallTrigger | null;
   setLocale: (locale: string) => void;
   toggleSidebar: () => void;
   showToast: (message: string, type?: 'error' | 'info') => void;
   clearToast: () => void;
+  openPaywall: (trigger: PaywallTrigger) => void;
+  closePaywall: () => void;
 }
 
 export const useUIStore = create<UIStore>()((set) => ({
   locale: 'en',
   sidebarOpen: false,
   toast: null,
+  paywallModalOpen: false,
+  paywallTrigger: null,
   setLocale: (locale) => set({ locale }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   showToast: (message, type = 'info') => set({ toast: { message, type } }),
   clearToast: () => set({ toast: null }),
+  openPaywall: (trigger) => set({ paywallModalOpen: true, paywallTrigger: trigger }),
+  closePaywall: () => set({ paywallModalOpen: false, paywallTrigger: null }),
 }));
 
 // ---- Credits Store ----

@@ -46,6 +46,18 @@ export function getDeepLinkAgentId(search: string): string | null {
   return params.get('context_module') ?? params.get('agent');
 }
 
+export function getDeepLinkReferralId(search: string): string | null {
+  const params = new URLSearchParams(search);
+  return params.get('referral');
+}
+
+export function clearReferralFromUrl(): void {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.delete('referral');
+  window.history.replaceState(window.history.state, '', url.toString());
+}
+
 export function useAgentSwitch(locale: string) {
   const {
     activeAgentId,

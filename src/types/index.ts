@@ -23,6 +23,12 @@ export interface AuthState {
 }
 
 // Chat types
+export interface ReferralPayload {
+  agentId: string;
+  reason: string;
+  dismissed?: boolean;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -30,6 +36,9 @@ export interface ChatMessage {
   timestamp: string;
   sessionId: string;
   intent?: string;
+  status?: 'sending' | 'sent' | 'failed';
+  referral?: ReferralPayload;
+  streamComplete?: boolean;
 }
 
 export interface ChatSession {
@@ -87,6 +96,7 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   message?: string;
   error?: string;
+  errorCode?: string;
 }
 
 export interface OtpRequestResponse {

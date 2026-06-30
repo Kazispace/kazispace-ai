@@ -3,6 +3,7 @@ import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { SUPPORTED_LOCALES } from "@/lib/constants";
 import { Providers } from "@/components/providers";
+import { AppChrome } from "@/components/app-chrome";
 
 export function generateStaticParams() {
   return SUPPORTED_LOCALES.map((locale) => ({ locale }));
@@ -37,6 +38,7 @@ export default async function LocaleLayout({
             <div className="min-h-screen bg-background">
               {children}
             </div>
+            <AppChrome />
           </NextIntlClientProvider>
         </Providers>
       </body>

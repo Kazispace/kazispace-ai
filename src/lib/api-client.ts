@@ -1,6 +1,7 @@
 import { API_BASE_URL } from './constants';
 import { getAuthToken, getDeviceId, clearAuthToken } from './auth';
 import { mapUserFromApi } from './api-mappers';
+import { isReferralDismissed } from './referral-dismiss';
 import type {
   ApiResponse,
   OtpRequestResponse,
@@ -50,8 +51,15 @@ export async function apiRequest<T>(
       const detail = errorData.detail;
       const detailMessage =
         typeof detail === 'object' && detail !== null
-          ? detail.message ?? detail.error_code
+          ? (detail as { message?: string; error_code?: string }).message ??
+            (detail as { error_code?: string }).error_code
           : undefined;
+      const errorCode =
+        (typeof detail === 'object' && detail !== null
+          ? (detail as { error_code?: string }).error_code
+          : undefined) ??
+        errorData.error_code ??
+        (typeof errorData.error === 'string' ? errorData.error : undefined);
       return {
         success: false,
         error:
@@ -60,6 +68,7 @@ export async function apiRequest<T>(
           errorData.error ||
           errorData.error_code ||
           `HTTP ${response.status}`,
+        errorCode,
       };
     }
 
@@ -127,6 +136,9 @@ export interface ClinicChatResponse {
   message_id?: string;
   messageId?: string;
   intent?: string;
+  referral_agent_id?: string;
+  referral_reason?: string;
+  referral?: { agent_id?: string; reason?: string };
 }
 
 export async function sendChatMessage(
@@ -167,16 +179,29 @@ export async function getCurrentPlan(): Promise<ApiResponse<CurrentPlan>> {
   return apiRequest<CurrentPlan>('/api/v1/plans/current');
 }
 
-/** No ledger endpoint on backend yet — returns empty list */
+/** Ledger — falls back to empty when endpoint unavailable */
 export async function getLedger(
   _filter?: 'all' | 'consumption' | 'recharge'
 ): Promise<ApiResponse<{ entries: LedgerEntry[] }>> {
-  return { success: true, data: { entries: [] } };
+  const res = await apiRequest<{ entries?: LedgerEntry[] } | LedgerEntry[]>(
+    '/api/v1/billing/ledger'
+  );
+  if (res.success && res.data) {
+    const entries = Array.isArray(res.data)
+      ? res.data
+      : (res.data.entries ?? []);
+    return { success: true, data: { entries } };
+  }
+  if (res.error?.includes('404') || res.error?.includes('Not Found')) {
+    return { success: true, data: { entries: [] } };
+  }
+  return { success: false, error: res.error, errorCode: res.errorCode };
 }
 
 export function parseClinicReply(data: ClinicChatResponse | undefined): {
   reply: string;
   intent?: string;
+  referral?: { agentId: string; reason: string };
 } {
   if (!data) return { reply: '' };
   const reply =
@@ -184,5 +209,19 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
     data.assistant_response?.content ??
     data.response?.text ??
     '';
-  return { reply, intent: data.intent };
+
+  let referralAgentId =
+    data.referral_agent_id ?? data.referral?.agent_id;
+  let referralReason = data.referral_reason ?? data.referral?.reason ?? '';
+
+  if (!referralAgentId && data.intent?.startsWith('REFERRAL_')) {
+    referralAgentId = data.intent.replace(/^REFERRAL_/, '');
+  }
+
+  const referral =
+    referralAgentId && !isReferralDismissed(referralAgentId)
+      ? { agentId: referralAgentId, reason: referralReason }
+      : undefined;
+
+  return { reply, intent: data.intent, referral };
 }
