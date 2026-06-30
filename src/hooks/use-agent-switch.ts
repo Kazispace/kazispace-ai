@@ -25,12 +25,20 @@ function pushAgentHistory(agentId: string) {
   window.history.pushState({ agentHub: true, agentId }, '', url.toString());
 }
 
-function clearAgentHistory() {
+/** Remove agent deep-link params without adding a history entry */
+export function stripAgentParamsFromUrl(): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
+  if (!url.searchParams.has('context_module') && !url.searchParams.has('agent')) {
+    return;
+  }
   url.searchParams.delete('context_module');
   url.searchParams.delete('agent');
-  window.history.pushState({ agentHub: false }, '', url.toString());
+  window.history.replaceState(window.history.state, '', url.toString());
+}
+
+function clearAgentHistory() {
+  stripAgentParamsFromUrl();
 }
 
 export function getDeepLinkAgentId(search: string): string | null {
@@ -139,6 +147,8 @@ export function useAgentSwitch(locale: string) {
         setActiveAgent(null, null);
         if (!options?.skipHistory) {
           clearAgentHistory();
+        } else {
+          stripAgentParamsFromUrl();
         }
 
         await sleep(FADE_IN_MS);
