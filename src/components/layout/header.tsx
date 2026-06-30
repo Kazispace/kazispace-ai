@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 
+import { useUIStore } from "@/lib/store";
+
 interface HeaderProps {
   locale: string;
 }
@@ -11,6 +13,9 @@ interface HeaderProps {
 export function Header({ locale }: HeaderProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
+
+  if (isTelegramMiniApp) return null;
 
   const navItems = [
     { href: `/${locale}`, label: t("home") },

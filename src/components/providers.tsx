@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getAuthToken, getUserInfo } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store";
+import { useTmaInit, reauthTelegramIfPossible } from "@/hooks/use-tma-init";
+import { isTelegramWebApp } from "@/lib/telegram";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import type { User } from "@/types";
 
@@ -28,6 +30,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
+  useTmaInit();
+
   useEffect(() => {
     const token = getAuthToken();
     const user = getUserInfo<User>();
@@ -37,7 +41,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const onSessionExpired = () => {
+    const onSessionExpired = async () => {
+      if (isTelegramWebApp()) {
+        const ok = await reauthTelegramIfPossible();
+        if (ok) return;
+      }
       useAuthStore.getState().logout();
       const locale = localeFromPathname(pathname);
       router.push(`/${locale}/login?expired=1`);

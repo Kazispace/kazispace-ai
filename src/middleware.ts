@@ -12,7 +12,7 @@ const intlMiddleware = createMiddleware({
   localePrefix: "always",
 });
 
-const PUBLIC_PATH_SEGMENTS = new Set(["login", "chat"]);
+const PUBLIC_PATH_SEGMENTS = new Set(["login", "chat", "tma"]);
 
 function stripLocale(pathname: string): { locale: string; path: string } {
   const segments = pathname.split("/").filter(Boolean);

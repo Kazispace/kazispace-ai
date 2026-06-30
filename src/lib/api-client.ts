@@ -2,6 +2,7 @@ import { API_BASE_URL } from './constants';
 import { getAuthToken, getDeviceId, clearAuthToken } from './auth';
 import { mapUserFromApi } from './api-mappers';
 import { isReferralDismissed } from './referral-dismiss';
+import { getTmaClientHeaders } from './telegram';
 import type {
   ApiResponse,
   OtpRequestResponse,
@@ -12,6 +13,7 @@ import type {
   BillingSummary,
   CurrentPlan,
   LedgerEntry,
+  TelegramWebappResponse,
 } from '@/types';
 
 export async function apiRequest<T>(
@@ -34,6 +36,8 @@ export async function apiRequest<T>(
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
+
+  Object.assign(headers, getTmaClientHeaders());
 
   try {
     const response = await fetch(url, { ...options, headers });
@@ -127,6 +131,15 @@ export async function getMe(): Promise<ApiResponse<User>> {
     return { success: false, error: res.error };
   }
   return { success: true, data: mapUserFromApi(res.data) };
+}
+
+export async function authTelegramWebapp(
+  initData: string
+): Promise<ApiResponse<TelegramWebappResponse>> {
+  return apiRequest<TelegramWebappResponse>('/api/v1/auth/telegram/webapp', {
+    method: 'POST',
+    body: JSON.stringify({ init_data: initData }),
+  });
 }
 
 export interface ClinicChatResponse {

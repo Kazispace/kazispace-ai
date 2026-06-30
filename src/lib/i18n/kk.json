@@ -270,5 +270,14 @@
 		"totalCredits": "Барлық кредиттер",
 		"loading": "Жүктелуде...",
 		"loadError": "Балансты жүктеу сәтсіз"
+	},
+	"tma": {
+		"launching": "KaziSpace ашылуда…",
+		"authFailed": "Telegram арқылы кіру сәтсіз",
+		"useOtpLogin": "Телефонмен кіру",
+		"openInTelegramTitle": "Telegram-да ашыңыз",
+		"openInTelegramDesc": "Бұл қолданба KaziSpace ботының ішінде жұмыс істейді. Ботты ашып, мәзір түймесін басыңыз.",
+		"continueInBrowser": "Браузерде жалғастыру",
+		"backToBot": "← Ботқа оралу"
 	}
 }

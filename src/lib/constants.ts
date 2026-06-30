@@ -16,6 +16,12 @@ export const ROUTES = {
   LEDGER: '/ledger',
   CV: '/cv',
   INTERVIEW: '/interview',
+  TMA_LAUNCH: '/tma/launch',
+} as const;
+
+export const CLIENT_VARIANTS = {
+  WEB_BROWSER: 'web_browser',
+  TELEGRAM_MINI_APP: 'telegram_mini_app',
 } as const;
 
 export const STORAGE_KEYS = {
@@ -27,6 +33,7 @@ export const STORAGE_KEYS = {
   SESSION_ID: 'kazi_chat_session_id',
   ENGLISH_LEVEL: 'kazi_english_level',
   REFERRAL_DISMISSED: 'kazi_referral_dismissed',
+  TMA_PENDING_ACTION: 'kazi_tma_pending_action',
 } as const;
 
 export const AGENT_NAME = 'Serík';

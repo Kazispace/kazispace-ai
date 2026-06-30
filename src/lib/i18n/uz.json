@@ -270,5 +270,14 @@
 		"totalCredits": "Jami kreditlar",
 		"loading": "Yuklanmoqda...",
 		"loadError": "Balansni yuklab bo'lmadi"
+	},
+	"tma": {
+		"launching": "KaziSpace ochilmoqda…",
+		"authFailed": "Telegram orqali kirish muvaffaqiyatsiz",
+		"useOtpLogin": "Telefon bilan kirish",
+		"openInTelegramTitle": "Telegramda oching",
+		"openInTelegramDesc": "Bu ilova KaziSpace boti ichida ishlaydi. Botni oching va menyu tugmasini bosing.",
+		"continueInBrowser": "Brauzerda davom etish",
+		"backToBot": "← Botga qaytish"
 	}
 }

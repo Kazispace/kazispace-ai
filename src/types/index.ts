@@ -110,6 +110,14 @@ export interface OtpVerifyResponse {
   user: User;
 }
 
+export interface TelegramWebappResponse {
+  access_token: string;
+  token_type: string;
+  user_id: number;
+  is_new_user: boolean;
+  expires_in: number;
+}
+
 // Agent Hub types (API Spec §13)
 export interface ActiveAgentState {
   active_agent: string | null;

@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
+import { useUIStore } from "@/lib/store";
+import { closeTelegramWebApp } from "@/lib/telegram";
 
 interface ChatHeaderProps {
   locale: string;
@@ -25,6 +27,8 @@ export function ChatHeader({
 }: ChatHeaderProps) {
   const t = useTranslations("chat");
   const tNav = useTranslations("nav");
+  const tTma = useTranslations("tma");
+  const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
 
   return (
     <header className="bg-kazi-navy px-4 py-3 flex items-center gap-3 shrink-0 border-b border-white/5">
@@ -73,6 +77,18 @@ export function ChatHeader({
           {tNav("profile")}
         </Button>
       </Link>
+
+      {isTelegramMiniApp && mode === "clinic" && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-white/70 hover:text-white shrink-0"
+          onClick={() => closeTelegramWebApp()}
+        >
+          {tTma("backToBot")}
+        </Button>
+      )}
     </header>
   );
 }
