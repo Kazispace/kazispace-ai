@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useChatStore } from '@/lib/store';
+import { useTranslations } from 'next-intl';
+import { useChatStore, useUIStore } from '@/lib/store';
 import {
   sendChatMessage,
   fetchChatHistory,
   parseClinicReply,
 } from '@/lib/api-client';
+import { isPaywallError, isProfileIncomplete } from '@/lib/api-errors';
 import { getSessionId } from '@/lib/auth';
 import type { ChatMessage } from '@/types';
 
@@ -23,6 +25,8 @@ function normalizeHistoryMessage(
     content: (raw.content as string) ?? (raw.text as string) ?? '',
     timestamp: (raw.timestamp as string) ?? (raw.created_at as string) ?? new Date().toISOString(),
     sessionId,
+    status: 'sent',
+    streamComplete: true,
   };
 }
 
@@ -37,7 +41,24 @@ export function useClinicChat() {
     setStreaming,
     setSending,
     updateMessage,
+    removeMessage,
   } = useChatStore();
+  const showToast = useUIStore((s) => s.showToast);
+  const openPaywall = useUIStore((s) => s.openPaywall);
+  const tErrors = useTranslations('errors');
+
+  const handleApiFailure = useCallback(
+    (res: { error?: string; errorCode?: string }) => {
+      if (isProfileIncomplete(res)) {
+        showToast(tErrors('profileIncomplete'), 'info');
+        return;
+      }
+      if (isPaywallError(res) && res.errorCode) {
+        openPaywall(res.errorCode);
+      }
+    },
+    [showToast, openPaywall, tErrors]
+  );
 
   const loadHistory = useCallback(async () => {
     setIsHistoryLoading(true);
@@ -65,17 +86,23 @@ export function useClinicChat() {
   }, []);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, options?: { retryMessageId?: string }) => {
       const sessionId = getSessionId();
-      const userMsg: ChatMessage = {
-        id: `user_${Date.now()}`,
-        role: 'user',
-        content: text,
-        timestamp: new Date().toISOString(),
-        sessionId,
-      };
+      const userMsgId = options?.retryMessageId ?? `user_${Date.now()}`;
 
-      addMessage(userMsg);
+      if (options?.retryMessageId) {
+        updateMessage(userMsgId, { status: 'sending', content: text });
+      } else {
+        addMessage({
+          id: userMsgId,
+          role: 'user',
+          content: text,
+          timestamp: new Date().toISOString(),
+          sessionId,
+          status: 'sending',
+        });
+      }
+
       setSending(true);
 
       const assistantId = `assistant_${Date.now()}`;
@@ -85,6 +112,7 @@ export function useClinicChat() {
         content: '',
         timestamp: new Date().toISOString(),
         sessionId,
+        streamComplete: false,
       });
       setStreaming(true);
 
@@ -93,21 +121,51 @@ export function useClinicChat() {
       setStreaming(false);
 
       if (!res.success || !res.data) {
-        updateMessage(assistantId, {
-          content: `⚠️ ${res.error ?? 'Something went wrong. Please try again.'}`,
-        });
-        return { ok: false as const, error: res.error };
+        removeMessage(assistantId);
+        updateMessage(userMsgId, { status: 'failed' });
+        handleApiFailure(res);
+        return { ok: false as const, error: res.error, errorCode: res.errorCode };
       }
 
-      const { reply, intent } = parseClinicReply(res.data);
+      const { reply, intent, referral } = parseClinicReply(res.data);
+      updateMessage(userMsgId, { status: 'sent' });
       updateMessage(assistantId, {
         content: reply || '…',
         ...(intent ? { intent } : {}),
+        ...(referral ? { referral } : {}),
+        streamComplete: false,
       });
 
-      return { ok: true as const };
+      return { ok: true as const, assistantId };
     },
-    [addMessage, setSending, setStreaming, updateMessage]
+    [addMessage, setSending, setStreaming, updateMessage, removeMessage, handleApiFailure]
+  );
+
+  const markStreamComplete = useCallback(
+    (messageId: string) => {
+      updateMessage(messageId, { streamComplete: true });
+    },
+    [updateMessage]
+  );
+
+  const dismissMessageReferral = useCallback(
+    (messageId: string) => {
+      const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
+      if (!msg?.referral) return;
+      updateMessage(messageId, {
+        referral: { ...msg.referral, dismissed: true },
+      });
+    },
+    [updateMessage]
+  );
+
+  const retryMessage = useCallback(
+    async (messageId: string) => {
+      const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
+      if (!msg || msg.role !== 'user') return { ok: false as const };
+      return sendMessage(msg.content, { retryMessageId: messageId });
+    },
+    [sendMessage]
   );
 
   return {
@@ -118,5 +176,8 @@ export function useClinicChat() {
     loadHistory,
     skipHistoryLoad,
     sendMessage,
+    retryMessage,
+    markStreamComplete,
+    dismissMessageReferral,
   };
 }

@@ -11,9 +11,10 @@ import { SwitchingOverlay } from "./switching-overlay";
 import { AgentStatusBar } from "./agent-status-bar";
 import { QuickReplies } from "./quick-replies";
 import { AgentSwitcher } from "./agent-switcher";
+import { ReferralPrompt } from "./referral-prompt";
 import { ChatInput } from "@/components/chat/chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
-import { getDeepLinkAgentId, useAgentSwitch } from "@/hooks/use-agent-switch";
+import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useAuthStore, useAgentStore, useUIStore } from "@/lib/store";
 import {
@@ -22,6 +23,7 @@ import {
   getAgentLabel,
 } from "@/lib/agents/registry";
 import { getEnglishLevel } from "@/lib/auth";
+import { dismissReferral, isReferralDismissed, clearExpiredReferralDismissals } from "@/lib/referral-dismiss";
 import type { SupportedLocale } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/lib/constants";
@@ -34,6 +36,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const router = useRouter();
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
+  const tReferral = useTranslations("referral");
 
   const {
     messages: clinicMessages,
@@ -43,6 +46,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     loadHistory,
     skipHistoryLoad,
     sendMessage: sendClinicMessage,
+    retryMessage,
+    markStreamComplete,
+    dismissMessageReferral,
   } = useClinicChat();
 
   const {
@@ -78,6 +84,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const [isOnline, setIsOnline] = useState(false);
   const [englishLevel, setEnglishLevelState] = useState<string | null>(null);
+  const [pendingReferral, setPendingReferral] = useState<{
+    agentId: string;
+    reason: string;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeEntry = AGENT_REGISTRY.find((a) => a.agentId === activeAgentId);
@@ -97,6 +107,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   useEffect(() => {
     setEnglishLevelState(getEnglishLevel());
+    clearExpiredReferralDismissals();
     if (isLoggedIn) {
       loadHistory();
     } else {
@@ -106,6 +117,26 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       .then((r) => setIsOnline(r.ok))
       .catch(() => setIsOnline(false));
   }, [isLoggedIn, loadHistory, skipHistoryLoad]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const referralId = getDeepLinkReferralId(window.location.search);
+    if (referralId && AGENT_REGISTRY.some((a) => a.agentId === referralId)) {
+      if (!isReferralDismissed(referralId)) {
+        const entry = AGENT_REGISTRY.find((a) => a.agentId === referralId);
+        setPendingReferral({
+          agentId: referralId,
+          reason: entry
+            ? tReferral("defaultReason", {
+                name: getAgentLabel(entry, locale, "name"),
+              })
+            : "",
+        });
+      }
+      clearReferralFromUrl();
+    }
+  }, [isLoggedIn, locale, tReferral]);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -201,6 +232,18 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     }
   };
 
+  const handleReferralAccept = async (agentId: string, messageId?: string) => {
+    if (messageId) dismissMessageReferral(messageId);
+    setPendingReferral(null);
+    await handleAgentSelect(agentId);
+  };
+
+  const handleReferralDismiss = (agentId: string, messageId?: string) => {
+    dismissReferral(agentId);
+    if (messageId) dismissMessageReferral(messageId);
+    setPendingReferral(null);
+  };
+
   const showWelcome =
     !isSwitching && !isAgentMode && !isHistoryLoading && clinicMessages.length === 0;
 
@@ -243,16 +286,51 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             onQuickPrompt={handleSend}
           />
         ) : (
-          messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              role={msg.role === "user" ? "user" : "assistant"}
-              content={msg.content}
-              intent={msg.intent}
-              isStreaming={isStreaming && msg.content === ""}
-              variant={isAgentMode ? "agent" : "clinic"}
-            />
-          ))
+          messages.map((msg) => {
+            const referralEntry =
+              msg.referral &&
+              AGENT_REGISTRY.find((a) => a.agentId === msg.referral?.agentId);
+            return (
+              <MessageBubble
+                key={msg.id}
+                role={msg.role === "user" ? "user" : "assistant"}
+                content={msg.content}
+                intent={msg.intent}
+                status={msg.status}
+                referral={msg.referral}
+                streamComplete={msg.streamComplete ?? true}
+                isStreaming={isStreaming && msg.content === ""}
+                variant={isAgentMode ? "agent" : "clinic"}
+                agentEmoji={referralEntry?.emoji}
+                agentName={
+                  referralEntry
+                    ? getAgentLabel(referralEntry, locale, "name")
+                    : undefined
+                }
+                onRetry={
+                  !isAgentMode && msg.role === "user" && msg.status === "failed"
+                    ? () => void retryMessage(msg.id)
+                    : undefined
+                }
+                onStreamComplete={
+                  !isAgentMode && msg.streamComplete === false
+                    ? () => markStreamComplete(msg.id)
+                    : undefined
+                }
+                onReferralAccept={
+                  msg.referral && !msg.referral.dismissed
+                    ? () => void handleReferralAccept(msg.referral!.agentId, msg.id)
+                    : undefined
+                }
+                onReferralDismiss={
+                  msg.referral && !msg.referral.dismissed
+                    ? () => handleReferralDismiss(msg.referral!.agentId, msg.id)
+                    : undefined
+                }
+                referralDisabled={isSending || isSwitching}
+              />
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -264,6 +342,25 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           onSelect={handleSend}
         />
       )}
+
+      {pendingReferral && !isAgentMode && (() => {
+        const entry = AGENT_REGISTRY.find((a) => a.agentId === pendingReferral.agentId);
+        if (!entry) return null;
+        return (
+          <div className="px-4 pb-2 bg-gray-bg border-t border-gray-100">
+            <div className="rounded-2xl bg-white border border-gray-200 p-4 shadow-sm">
+              <ReferralPrompt
+                agentEmoji={entry.emoji}
+                agentName={getAgentLabel(entry, locale, "name")}
+                reason={pendingReferral.reason}
+                onAccept={() => void handleReferralAccept(pendingReferral.agentId)}
+                onDismiss={() => handleReferralDismiss(pendingReferral.agentId)}
+                disabled={isSending || isSwitching}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       <ChatInput
         onSend={handleSend}

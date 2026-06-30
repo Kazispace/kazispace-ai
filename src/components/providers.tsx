@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getAuthToken, getUserInfo } from "@/lib/auth";
 import { useAuthStore } from "@/lib/store";
-import { ToastHost } from "@/components/ui/toast";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import type { User } from "@/types";
 
@@ -51,7 +50,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <ToastHost />
     </QueryClientProvider>
   );
 }

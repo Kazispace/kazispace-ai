@@ -76,7 +76,9 @@ export default function LoginPage({ params }: LoginPageProps) {
         useAuthStore
           .getState()
           .login(token, me.success && me.data ? me.data : otpUser);
-        router.push(`/${locale}/chat`);
+        const search = new URLSearchParams(window.location.search);
+        const redirect = search.get("redirect");
+        router.push(redirect && redirect.startsWith("/") ? redirect : `/${locale}/chat`);
       } else {
         setError(result.error || "Invalid code");
       }

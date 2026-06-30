@@ -26,6 +26,7 @@ export const STORAGE_KEYS = {
   PREFERRED_LOCALE: 'kazi_preferred_locale',
   SESSION_ID: 'kazi_chat_session_id',
   ENGLISH_LEVEL: 'kazi_english_level',
+  REFERRAL_DISMISSED: 'kazi_referral_dismissed',
 } as const;
 
 export const AGENT_NAME = 'Serík';

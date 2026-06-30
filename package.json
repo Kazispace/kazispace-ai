@@ -9,19 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-avatar": "^1.1.0",
+    "@radix-ui/react-slot": "^1.1.0",
+    "@tanstack/react-query": "^5.51.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.424.0",
     "next": "14.2.5",
+    "next-intl": "^3.17.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "next-intl": "^3.17.2",
-    "zustand": "^4.5.4",
-    "clsx": "^2.1.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^2.4.0",
-    "lucide-react": "^0.424.0",
-    "@radix-ui/react-slot": "^1.1.0",
-    "@radix-ui/react-avatar": "^1.1.0",
-    "class-variance-authority": "^0.7.0",
     "tailwindcss-animate": "^1.0.7",
-    "@tanstack/react-query": "^5.51.1"
+    "zustand": "^4.5.4"
   },
   "devDependencies": {
     "@netlify/plugin-nextjs": "^5.9.0",

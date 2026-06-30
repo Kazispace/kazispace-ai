@@ -204,7 +204,26 @@
 		},
 		"input": {
 			"placeholder": "Talk to me about your career…"
-		}
+		},
+		"retry": "Retry"
+	},
+	"referral": {
+		"accept": "Open {agentName}",
+		"dismiss": "Or keep chatting here",
+		"defaultReason": "It looks like {name} could help — want to switch?"
+	},
+	"paywall": {
+		"close": "Close",
+		"proTitle": "Upgrade to PRO",
+		"proDescription": "This feature requires a PRO subscription. Upgrade to unlock unlimited practice.",
+		"creditsTitle": "Need more credits",
+		"creditsDescription": "You've run out of credits for this action. Buy a pack or upgrade your plan.",
+		"upgradePro": "View PRO plans",
+		"buyCredits": "Buy credits",
+		"continueFree": "Continue with free tier"
+	},
+	"errors": {
+		"profileIncomplete": "Add a few profile details to unlock personalized features — you can keep chatting here."
 	},
 	"clinic": {
 		"comingSoon": "Coming soon",
