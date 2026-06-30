@@ -12,7 +12,7 @@
 | --- | --- |
 | **测试轮次** | UAT-P0 / `owen` @ `99703c6` |
 | **测试日期** | 2026-06-30 07:49 UTC |
-| **测试人** | Cloud Agent (Playwright headless Chrome) |
+| **测试人** | FrontEnd DEV (Playwright headless Chrome) |
 | **Web App** | `http://localhost:3000`（`npm run build && npm start`） |
 | **API 环境** | `https://bot.kazispace.ai` |
 | **浏览器** | Chromium 375×812, locale `ru-RU` |
@@ -79,6 +79,6 @@
 
 | 角色 | 姓名 | 日期 | 签字 |
 | --- | --- | --- | --- |
-| 工程 | Cloud Agent | 2026-06-30 | 自动执行 |
+| 工程 | FrontEnd DEV | 2026-06-30 | 自动执行 |
 | QA | | | |
 | 产品 | | | |
