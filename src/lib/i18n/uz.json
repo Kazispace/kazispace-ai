@@ -228,7 +228,13 @@
 			"interviewText": "Ish suhbatiga qanday tayyorlanish kerak?"
 		},
 		"sendFailed": "Xabar yuborilmadi",
-		"agentHubSprint2": "Mutaxassis rejimi — Sprint 2 ({agent})"
+		"switching": "Mutaxassis almashtirilmoqda…",
+		"switchExpert": "Mutaxassis tanlang",
+		"closeSwitcher": "Yopish",
+		"switchHint": "Boshqa mutaxassis tanlansa, sessiya almashtiriladi",
+		"activateFailed": "Mutaxassisni ochib bo'lmadi",
+		"deactivateFailed": "Klinikaga qaytib bo'lmadi",
+		"agentErrorFallback": "Mutaxassis mavjud emas — klinikaga qaytdi"
 	},
 	"subscription": {
 		"title": "PRO / Sprint yangilash",

@@ -99,3 +99,46 @@ export interface OtpVerifyResponse {
   token: string;
   user: User;
 }
+
+// Agent Hub types (API Spec §13)
+export interface ActiveAgentState {
+  active_agent: string | null;
+  session_id: string | null;
+  activated_at?: string;
+  context_module?: string | null;
+}
+
+export interface ActivateAgentResponse {
+  agent_id: string;
+  session_id: string;
+  greeting: string;
+  context_summary?: {
+    master_messages_passed?: number;
+    profile_fields_shared?: string[];
+  };
+}
+
+export interface DeactivateAgentResponse {
+  deactivated_agent: string;
+  return_message: string;
+  session_summary?: {
+    duration_minutes?: number;
+    messages_exchanged?: number;
+    artifacts_created?: string[];
+  };
+}
+
+export interface AgentChatResponse {
+  message_id?: string;
+  agent_id?: string;
+  response?: { text?: string };
+  reply?: string;
+  credits_consumed?: number;
+}
+
+export interface AgentMessagesResponse {
+  session_id: string;
+  agent_id: string;
+  messages: ChatMessage[];
+  has_more?: boolean;
+}

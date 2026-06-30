@@ -13,7 +13,7 @@ import type {
   LedgerEntry,
 } from '@/types';
 
-async function apiRequest<T>(
+export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
