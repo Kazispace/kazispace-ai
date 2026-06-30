@@ -70,8 +70,10 @@ export function applyTelegramTheme(): void {
   }
 
   if (themeParams.bg_color) {
-    tg.setBackgroundColor(themeParams.bg_color);
-    root.style.setProperty('--tma-bg', themeParams.bg_color);
+    const bg = themeParams.bg_color;
+    tg.setBackgroundColor(bg);
+    tg.setHeaderColor(bg);
+    root.style.setProperty('--tma-bg', bg);
   }
   if (themeParams.text_color) {
     root.style.setProperty('--tma-text', themeParams.text_color);

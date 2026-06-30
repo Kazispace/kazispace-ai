@@ -1,6 +1,17 @@
 import { STORAGE_KEYS } from './constants';
 import { resolveStartParam } from './telegram';
 
+/** TMA SDD §3.3: start_param ≤ 64 chars; cap stored ids defensively */
+const MAX_TMA_PARAM_ID_LEN = 64;
+
+function clampId(value: string, label: string): string {
+  if (value.length <= MAX_TMA_PARAM_ID_LEN) return value;
+  if (typeof console !== 'undefined') {
+    console.warn(`[tma-routing] ${label} truncated to ${MAX_TMA_PARAM_ID_LEN} chars`);
+  }
+  return value.slice(0, MAX_TMA_PARAM_ID_LEN);
+}
+
 export type TmaPendingAction =
   | { type: 'activate_agent'; agentId: string }
   | { type: 'clinic' }
@@ -11,19 +22,30 @@ export type TmaPendingAction =
 export function parseStartParam(startParam: string | null | undefined): TmaPendingAction {
   if (!startParam) return { type: 'restore' };
 
-  if (startParam === 'clinic') {
+  const param =
+    startParam.length > MAX_TMA_PARAM_ID_LEN
+      ? startParam.slice(0, MAX_TMA_PARAM_ID_LEN)
+      : startParam;
+
+  if (param === 'clinic') {
     return { type: 'clinic' };
   }
 
-  if (startParam.startsWith('agent_')) {
-    return { type: 'activate_agent', agentId: startParam.slice('agent_'.length) };
+  if (param.startsWith('agent_')) {
+    return {
+      type: 'activate_agent',
+      agentId: clampId(param.slice('agent_'.length), 'agentId'),
+    };
   }
 
-  if (startParam.startsWith('job_')) {
-    return { type: 'job', jobId: startParam.slice('job_'.length) };
+  if (param.startsWith('job_')) {
+    return {
+      type: 'job',
+      jobId: clampId(param.slice('job_'.length), 'jobId'),
+    };
   }
 
-  if (startParam === 'billing_pro') {
+  if (param === 'billing_pro') {
     return { type: 'subscription' };
   }
 
@@ -32,7 +54,11 @@ export function parseStartParam(startParam: string | null | undefined): TmaPendi
 
 export function setPendingTmaAction(action: TmaPendingAction): void {
   if (typeof window === 'undefined') return;
-  sessionStorage.setItem(STORAGE_KEYS.TMA_PENDING_ACTION, JSON.stringify(action));
+  try {
+    sessionStorage.setItem(STORAGE_KEYS.TMA_PENDING_ACTION, JSON.stringify(action));
+  } catch {
+    // QuotaExceeded or disabled storage — non-fatal; routing falls back to restore
+  }
 }
 
 export function consumePendingTmaAction(): TmaPendingAction | null {

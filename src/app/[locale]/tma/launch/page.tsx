@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -42,15 +42,19 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
   const { locale } = params;
   const router = useRouter();
   const t = useTranslations('tma');
+  const tRef = useRef(t);
+  tRef.current = t;
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<'loading' | 'fallback' | 'error'>('loading');
 
   useEffect(() => {
+    let cancelled = false;
+
     const run = async () => {
       const tg = getTelegramWebApp();
 
       if (!tg || !getInitData()) {
-        setStatus('fallback');
+        if (!cancelled) setStatus('fallback');
         return;
       }
 
@@ -60,8 +64,10 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
       applyTelegramTheme();
 
       const authRes = await authTelegramWebapp(getInitData());
+      if (cancelled) return;
+
       if (!authRes.success || !authRes.data?.access_token) {
-        setError(authRes.error ?? t('authFailed'));
+        setError(authRes.error ?? tRef.current('authFailed'));
         setStatus('error');
         return;
       }
@@ -70,6 +76,8 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
       setAuthToken(token);
 
       const me = await getMe();
+      if (cancelled) return;
+
       if (me.success && me.data) {
         useAuthStore.getState().login(token, me.data);
       } else {
@@ -82,7 +90,10 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
     };
 
     void run();
-  }, [locale, router, t]);
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, router]);
 
   if (status === 'loading') {
     return (
@@ -98,7 +109,12 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="text-lg font-semibold text-kazi-navy">{t('authFailed')}</p>
         <p className="text-sm text-gray-600">{error}</p>
-        <Button onClick={() => router.push(`/${locale}/login`)}>{t('useOtpLogin')}</Button>
+        <div className="flex flex-col gap-2 w-full max-w-xs">
+          <Button onClick={() => router.push(`/${locale}/login`)}>{t('useOtpLogin')}</Button>
+          <Button onClick={() => router.push(`/${locale}/chat`)} variant="secondary">
+            {t('continueInBrowser')}
+          </Button>
+        </div>
       </div>
     );
   }
