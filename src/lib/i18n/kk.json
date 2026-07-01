@@ -198,6 +198,19 @@
 		"loginBanner": "Жеке жұмыс ұсыныстарын көру үшін кіріңіз.",
 		"signIn": "Кіру",
 		"matchScore": "Сәйкестік {score}%",
+		"matchLevel": {
+			"excellent": "Өте жақсы сәйкестік",
+			"good": "Жақсы сәйкестік",
+			"fair": "Орташа сәйкестік"
+		},
+		"matchDimensions": {
+			"skills": "Дағдылар",
+			"experience": "Тәжірибе",
+			"language": "Тіл",
+			"preference": "Қалаулар"
+		},
+		"overallMatch": "Сәйкестік талдауы",
+		"requiredSkills": "Қажетті дағдылар",
 		"locked": "Pro",
 		"unlockPro": "Pro арқылы ашу",
 		"viewDetails": "Толығырақ",

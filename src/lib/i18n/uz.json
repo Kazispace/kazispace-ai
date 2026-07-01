@@ -198,6 +198,19 @@
 		"loginBanner": "Shaxsiy ish tavsiyalarini ko'rish uchun tizimga kiring.",
 		"signIn": "Kirish",
 		"matchScore": "Moslik {score}%",
+		"matchLevel": {
+			"excellent": "A'lo moslik",
+			"good": "Yaxshi moslik",
+			"fair": "O'rtacha moslik"
+		},
+		"matchDimensions": {
+			"skills": "Ko'nikmalar",
+			"experience": "Tajriba",
+			"language": "Til",
+			"preference": "Afzalliklar"
+		},
+		"overallMatch": "Moslik tahlili",
+		"requiredSkills": "Talab qilinadigan ko'nikmalar",
 		"locked": "Pro",
 		"unlockPro": "Pro bilan ochish",
 		"viewDetails": "Batafsil",
