@@ -235,10 +235,13 @@ export interface CvChatMessage {
 export interface CvChatResponse {
   reply?: string;
   message?: string;
-  assistant_message?: string;
+  assistant_message?: string | { role?: string; content?: string };
+  cv_content?: string;
+  content_markdown?: string;
   preview_html?: string;
   preview_markdown?: string;
   preview_text?: string;
+  buttons?: string[];
   document?: {
     content?: string;
     html?: string;

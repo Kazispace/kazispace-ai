@@ -308,6 +308,8 @@
 		"backToMine": "← Back to profile",
 		"loginBanner": "Sign in to build and save your CV.",
 		"signIn": "Sign in",
+		"onboardingBanner": "Complete your career profile in chat before building a CV.",
+		"completeProfile": "Go to chat",
 		"sessionLoading": "Starting CV session…",
 		"inputPlaceholder": "Describe your experience or ask for changes…",
 		"previewTitle": "Live preview",

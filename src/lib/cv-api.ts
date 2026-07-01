@@ -11,22 +11,42 @@ export async function postCvChat(
 }
 
 export function extractCvReply(data: CvChatResponse): string {
-  return (
-    data.reply ??
-    data.assistant_message ??
-    data.message ??
-    ''
-  );
+  const am = data.assistant_message;
+  if (typeof am === 'string') return am;
+  if (am && typeof am === 'object' && 'content' in am) {
+    return String(am.content ?? '');
+  }
+  return data.reply ?? data.message ?? '';
 }
 
-export function extractCvPreview(data: CvChatResponse): string | null {
-  return (
-    data.preview_html ??
-    data.document?.html ??
+export type CvPreviewContent =
+  | { format: 'html'; content: string }
+  | { format: 'markdown'; content: string };
+
+export function extractCvPreview(data: CvChatResponse): CvPreviewContent | null {
+  const html = data.preview_html ?? data.document?.html;
+  if (html) {
+    return { format: 'html', content: html };
+  }
+
+  const markdown =
+    data.cv_content ??
     data.preview_markdown ??
     data.document?.markdown ??
-    data.preview_text ??
     data.document?.content ??
-    null
-  );
+    data.preview_text ??
+    data.content_markdown;
+
+  if (markdown) {
+    return { format: 'markdown', content: markdown };
+  }
+
+  return null;
+}
+
+export function extractCvButtons(data: CvChatResponse): string[] {
+  if (data.buttons?.length) {
+    return data.buttons;
+  }
+  return data.options?.map((o) => o.label).filter(Boolean) ?? [];
 }
