@@ -19,17 +19,17 @@ export function getJobCtaHref(
   cta: string,
   jobId?: string
 ): string | null {
+  const withJobId = (base: string) =>
+    jobId ? `${base}&job_id=${encodeURIComponent(jobId)}` : base;
+
   switch (cta) {
     case 'complete_profile':
       return `/${locale}/chat`;
+    // Interim: dedicated /cv and /interview ship in KAZI-23 / KAZI-25; route to experts to avoid 404.
     case 'edit_cv':
-      return jobId
-        ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
-        : `/${locale}/cv`;
+      return withJobId(`/${locale}/chat?context_module=job_search`);
     case 'start_interview':
-      return jobId
-        ? `/${locale}/interview?job_id=${encodeURIComponent(jobId)}`
-        : `/${locale}/interview`;
+      return withJobId(`/${locale}/chat?context_module=mock_interview`);
     case 'unlock_pro':
       return null;
     default:
