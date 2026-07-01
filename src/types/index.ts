@@ -217,6 +217,39 @@ export interface JobDetailResponse {
   };
 }
 
+// CV Builder (KAZI-23 / API §6)
+export interface CvChatRequest {
+  action?: string | null;
+  message?: string | null;
+  device_id?: string | null;
+  job_id?: string | null;
+  value?: string | null;
+}
+
+export interface CvChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export interface CvChatResponse {
+  reply?: string;
+  message?: string;
+  assistant_message?: string | { role?: string; content?: string };
+  cv_content?: string;
+  content_markdown?: string;
+  preview_html?: string;
+  preview_markdown?: string;
+  preview_text?: string;
+  buttons?: string[];
+  document?: {
+    content?: string;
+    html?: string;
+    markdown?: string;
+  };
+  options?: Array<{ label: string; value: string }>;
+}
+
 // Mock Interview (KAZI-25 / API §7)
 export interface InterviewQuestion {
   question_id: string;

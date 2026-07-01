@@ -26,7 +26,9 @@ export function getJobCtaHref(
     case 'complete_profile':
       return `/${locale}/chat`;
     case 'edit_cv':
-      return withJobId(`/${locale}/chat?context_module=job_search`);
+      return jobId
+        ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
+        : `/${locale}/cv`;
     case 'start_interview':
       return jobId
         ? `/${locale}/interview?job_id=${encodeURIComponent(jobId)}`
