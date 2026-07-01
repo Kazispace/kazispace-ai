@@ -187,7 +187,30 @@
 	"nav": {
 		"home": "Bosh",
 		"chat": "Chat",
+		"jobs": "Ishlar",
 		"profile": "Profil"
+	},
+	"jobs": {
+		"title": "Ish tavsiyalari",
+		"loading": "Vakansiyalar yuklanmoqda…",
+		"loadError": "Ro'yxatni yuklab bo'lmadi",
+		"empty": "Hali tavsiyalar yo'q. Avval chatda profilingizni to'ldiring.",
+		"loginBanner": "Shaxsiy ish tavsiyalarini ko'rish uchun tizimga kiring.",
+		"signIn": "Kirish",
+		"matchScore": "Moslik {score}%",
+		"locked": "Pro",
+		"unlockPro": "Pro bilan ochish",
+		"viewDetails": "Batafsil",
+		"upgradeHint": "Ko'proq mos rollar uchun tarifni yangilang",
+		"engineTotal": "Siz uchun {count} ta vakansiya",
+		"detailTitle": "Vakansiya tafsilotlari",
+		"detailLoading": "Yuklanmoqda…",
+		"detailError": "Vakansiya topilmadi",
+		"apply": "Ariza berish",
+		"proLocked": "Pro da mavjud",
+		"whyMatched": "Nima uchun mos",
+		"gaps": "Yaxshilash kerak",
+		"backToList": "← Ro'yxatga"
 	},
 	"chat": {
 		"title": "{name} · AI karyera hamkori",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -77,6 +77,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     sendMessage: sendAgentMessage,
   } = useAgentChat(activeAgentId, agentSessionId);
 
+  const loadHistoryRef = useRef(loadHistory);
+  loadHistoryRef.current = loadHistory;
+
   const loadAgentHistoryRef = useRef(loadAgentHistory);
   loadAgentHistoryRef.current = loadAgentHistory;
 
@@ -86,6 +89,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const showToast = useUIStore((s) => s.showToast);
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
   const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
+
+  const reloadClinicIfNeeded = useCallback(
+    async (result?: { reloadClinic?: boolean; ok?: boolean }) => {
+      if (result?.reloadClinic && isLoggedIn) {
+        await loadHistory();
+      }
+    },
+    [isLoggedIn, loadHistory]
+  );
 
   const [isOnline, setIsOnline] = useState(false);
   const [englishLevel, setEnglishLevelState] = useState<string | null>(null);
@@ -157,7 +169,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       }
       if (pending?.type === 'clinic') {
         if (useAgentStore.getState().activeAgentId) {
-          await exitToClinicRef.current();
+          const result = await exitToClinicRef.current();
+          if (result?.reloadClinic && isLoggedIn) {
+            await loadHistoryRef.current();
+          }
         }
         return;
       }
@@ -196,7 +211,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       if (!agentFromUrl) {
         if (current) {
-          void exitToClinic({ skipHistory: true });
+          void exitToClinic({ skipHistory: true }).then((result) => {
+            if (result?.reloadClinic && isLoggedIn) {
+              void loadHistory();
+            }
+          });
         }
         return;
       }
@@ -210,7 +229,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [exitToClinic]);
+  }, [exitToClinic, isLoggedIn, loadHistory]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -230,7 +249,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     if (result && !result.ok) {
       if (result.error?.includes("500")) {
         showToast(tClinic("agentErrorFallback"), "error");
-        await exitToClinic();
+        const exitResult = await exitToClinic();
+        await reloadClinicIfNeeded(exitResult);
         return;
       }
       showToast(result.error ?? tClinic("sendFailed"), "error");
@@ -253,7 +273,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     const result = await exitToClinic();
     if (result && !result.ok) {
       showToast(tClinic("deactivateFailed"), "error");
+      return;
     }
+    await reloadClinicIfNeeded(result);
   };
 
   const handleReferralAccept = async (agentId: string, messageId?: string) => {

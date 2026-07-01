@@ -1,4 +1,6 @@
 // User types
+// API path types: run `npm run gen:api` → src/types/api.generated.ts (from docs/openapi.json)
+
 export interface User {
   id: string;
   displayName: string;
@@ -159,4 +161,58 @@ export interface AgentMessagesResponse {
   agent_id: string;
   messages: ChatMessage[];
   has_more?: boolean;
+}
+
+// Jobs (KAZI-24 / API §8)
+export interface JobRecommendationItem {
+  job_id: string;
+  title: string;
+  company: string;
+  logo_url?: string | null;
+  location?: string | null;
+  work_mode?: string | null;
+  salary?: string | null;
+  match_score?: number;
+  match_level?: string;
+  why_matched?: string[];
+  gap_to_close?: string[];
+  primary_cta?: string;
+  is_locked: boolean;
+  is_saved?: boolean;
+  source?: string;
+  published_at?: string | null;
+}
+
+export interface JobRecommendationsResponse {
+  items: JobRecommendationItem[];
+  is_pro_user: boolean;
+  page: number;
+  limit: number;
+  total?: number;
+  engine_total?: number;
+  upgrade_hint?: string;
+}
+
+export interface JobDetailResponse {
+  job_id: string;
+  title: string;
+  company: string;
+  logo_url?: string | null;
+  location?: string | null;
+  work_mode?: string | null;
+  salary?: string | null;
+  description_text?: string;
+  required_skills?: string[];
+  match_score?: number;
+  why_matched?: string[];
+  gap_to_close?: string[];
+  apply_url?: string | null;
+  primary_cta?: string;
+  is_pro_user?: boolean;
+  pro_features_locked?: boolean;
+  match_analysis?: {
+    overall_reason?: string;
+    why_matched?: string[];
+    gap_to_close?: string[];
+  };
 }
