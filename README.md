@@ -38,6 +38,25 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
 
+## API contract (KAZI-3)
+
+Machine-readable types come from the backend OpenAPI snapshot. Human integration notes live in `kazispace-backend/docs/INTEGRATION.md`.
+
+```bash
+# Refresh snapshot from backend main (sibling clone)
+npm run sync:openapi
+
+# Generate TypeScript paths (after npm install)
+npm run gen:api
+
+# Both steps
+npm run gen:api:full
+```
+
+- Committed snapshot: `docs/openapi.json` (sync from `kazispace-backend` after backend API changes)
+- Generated output: `src/types/api.generated.ts` (run `gen:api` after install; commit with API updates)
+- Staging API: `https://bot.kazispace.ai`
+
 ## Project Structure
 
 ```

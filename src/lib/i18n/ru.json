@@ -189,6 +189,26 @@
 		"chat": "Чат",
 		"profile": "Профиль"
 	},
+	"jobs": {
+		"title": "Подбор вакансий",
+		"loading": "Загрузка вакансий…",
+		"loadError": "Не удалось загрузить список",
+		"empty": "Пока нет рекомендаций. Заполните профиль в чате.",
+		"matchScore": "Совпадение {score}%",
+		"locked": "Pro",
+		"unlockPro": "Открыть с Pro",
+		"viewDetails": "Подробнее",
+		"upgradeHint": "Обновите тариф, чтобы видеть больше вакансий",
+		"engineTotal": "Подобрано {count} вакансий",
+		"detailTitle": "Описание вакансии",
+		"detailLoading": "Загрузка…",
+		"detailError": "Вакансия не найдена",
+		"apply": "Откликнуться",
+		"proLocked": "Доступно в Pro",
+		"whyMatched": "Почему подходит",
+		"gaps": "Что улучшить",
+		"backToList": "← К списку"
+	},
 	"chat": {
 		"title": "{name} · AI-карьерный партнёр",
 		"backToClinic": "← Назад в клинику",
