@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Briefcase, Lock, MapPin } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -18,8 +19,9 @@ interface JobsPageProps {
 
 export default function JobsPage({ params }: JobsPageProps) {
   const { locale } = params;
+  const router = useRouter();
   const t = useTranslations("jobs");
-  const { items, isProUser, upgradeHint, engineTotal, isLoading, error } =
+  const { items, isProUser, upgradeHint, engineTotal, isLoading, error, needsLogin } =
     useJobRecommendations();
   const openPaywall = useUIStore((s) => s.openPaywall);
 
@@ -34,7 +36,14 @@ export default function JobsPage({ params }: JobsPageProps) {
           </p>
         )}
 
-        {isLoading ? (
+        {needsLogin ? (
+          <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center">
+            <p className="text-sm text-gray-700 mb-4">{t("loginBanner")}</p>
+            <Button size="sm" onClick={() => router.push(`/${locale}/login`)}>
+              {t("signIn")}
+            </Button>
+          </div>
+        ) : isLoading ? (
           <p className="text-center text-gray-500 py-12">{t("loading")}</p>
         ) : error ? (
           <p className="text-center text-red-500 py-12">{t("loadError")}</p>
@@ -79,7 +88,12 @@ export default function JobsPage({ params }: JobsPageProps) {
                     )}
 
                     <div className="mt-3 flex gap-2">
-                      {job.is_locked ? (
+                      <Button size="sm" asChild>
+                        <Link href={`/${locale}/jobs/${job.job_id}`}>
+                          {t("viewDetails")}
+                        </Link>
+                      </Button>
+                      {job.is_locked && (
                         <Button
                           size="sm"
                           variant="secondary"
@@ -88,12 +102,6 @@ export default function JobsPage({ params }: JobsPageProps) {
                         >
                           <Lock className="w-3.5 h-3.5" />
                           {t("unlockPro")}
-                        </Button>
-                      ) : (
-                        <Button size="sm" asChild>
-                          <Link href={`/${locale}/jobs/${job.job_id}`}>
-                            {t("viewDetails")}
-                          </Link>
                         </Button>
                       )}
                     </div>

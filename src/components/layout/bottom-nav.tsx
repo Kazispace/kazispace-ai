@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Home, MessageCircle, User } from "lucide-react";
+import { Home, MessageCircle, Briefcase, User } from "lucide-react";
 
 import { useUIStore } from "@/lib/store";
 
@@ -19,16 +19,19 @@ export function BottomNav({ locale }: BottomNavProps) {
   if (isTelegramMiniApp) return null;
 
   const navItems = [
-    { href: `/${locale}`, icon: Home, label: t("home") },
-    { href: `/${locale}/chat`, icon: MessageCircle, label: t("chat") },
-    { href: `/${locale}/mine`, icon: User, label: t("profile") },
+    { href: `/${locale}`, icon: Home, label: t("home"), matchPrefix: false },
+    { href: `/${locale}/chat`, icon: MessageCircle, label: t("chat"), matchPrefix: false },
+    { href: `/${locale}/jobs`, icon: Briefcase, label: t("jobs"), matchPrefix: true },
+    { href: `/${locale}/mine`, icon: User, label: t("profile"), matchPrefix: false },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden safe-area-inset">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = item.matchPrefix
+            ? pathname.startsWith(item.href)
+            : pathname === item.href;
           return (
             <Link
               key={item.href}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { MapPin, ExternalLink } from "lucide-react";
 
@@ -18,8 +19,9 @@ interface JobDetailPageProps {
 
 export default function JobDetailPage({ params }: JobDetailPageProps) {
   const { locale, id } = params;
+  const router = useRouter();
   const t = useTranslations("jobs");
-  const { job, isLoading, error } = useJobDetail(id);
+  const { job, isLoading, error, needsLogin } = useJobDetail(id);
   const openPaywall = useUIStore((s) => s.openPaywall);
 
   const locked = job?.pro_features_locked === true;
@@ -35,7 +37,14 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
           {t("backToList")}
         </Link>
 
-        {isLoading ? (
+        {needsLogin ? (
+          <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center">
+            <p className="text-sm text-gray-700 mb-4">{t("loginBanner")}</p>
+            <Button size="sm" onClick={() => router.push(`/${locale}/login`)}>
+              {t("signIn")}
+            </Button>
+          </div>
+        ) : isLoading ? (
           <p className="text-center text-gray-500 py-12">{t("detailLoading")}</p>
         ) : error || !job ? (
           <p className="text-center text-red-500 py-12">{t("detailError")}</p>
@@ -86,15 +95,15 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
               </Card>
             )}
 
-            {job.why_matched && job.why_matched.length > 0 && (
+            {!locked && job.why_matched && job.why_matched.length > 0 && (
               <Card className="mb-4">
                 <CardContent className="p-4">
                   <h2 className="font-semibold text-kazi-navy mb-2">
                     {t("whyMatched")}
                   </h2>
                   <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                    {job.why_matched.map((line) => (
-                      <li key={line}>{line}</li>
+                    {job.why_matched.map((line, i) => (
+                      <li key={`why-${i}`}>{line}</li>
                     ))}
                   </ul>
                 </CardContent>
@@ -106,8 +115,8 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
                 <CardContent className="p-4">
                   <h2 className="font-semibold text-kazi-navy mb-2">{t("gaps")}</h2>
                   <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                    {job.gap_to_close.map((line) => (
-                      <li key={line}>{line}</li>
+                    {job.gap_to_close.map((line, i) => (
+                      <li key={`gap-${i}`}>{line}</li>
                     ))}
                   </ul>
                 </CardContent>

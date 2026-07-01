@@ -13,13 +13,16 @@ export function useJobRecommendations(page = 1, limit = 10) {
   const [engineTotal, setEngineTotal] = useState<number | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!isLoggedIn) {
       setItems([]);
+      setNeedsLogin(true);
       setIsLoading(false);
       return;
     }
+    setNeedsLogin(false);
     setIsLoading(true);
     setError(null);
     const res = await listJobRecommendations(page, limit);
@@ -39,7 +42,16 @@ export function useJobRecommendations(page = 1, limit = 10) {
     void refresh();
   }, [refresh]);
 
-  return { items, isProUser, upgradeHint, engineTotal, isLoading, error, refresh };
+  return {
+    items,
+    isProUser,
+    upgradeHint,
+    engineTotal,
+    isLoading,
+    error,
+    needsLogin,
+    refresh,
+  };
 }
 
 export function useJobDetail(jobId: string) {
@@ -47,13 +59,16 @@ export function useJobDetail(jobId: string) {
   const [job, setJob] = useState<JobDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   useEffect(() => {
     if (!isLoggedIn || !jobId) {
       setJob(null);
+      setNeedsLogin(!isLoggedIn);
       setIsLoading(false);
       return;
     }
+    setNeedsLogin(false);
     let cancelled = false;
     (async () => {
       setIsLoading(true);
@@ -73,5 +88,5 @@ export function useJobDetail(jobId: string) {
     };
   }, [isLoggedIn, jobId]);
 
-  return { job, isLoading, error };
+  return { job, isLoading, error, needsLogin };
 }

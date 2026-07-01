@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "sync:openapi": "cp ../kazispace-backend/docs/openapi.json docs/openapi.json",
+    "sync:openapi": "bash scripts/sync-openapi.sh",
     "gen:api": "openapi-typescript docs/openapi.json -o src/types/api.generated.ts",
     "gen:api:full": "npm run sync:openapi && npm run gen:api"
   },
