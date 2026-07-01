@@ -8,7 +8,7 @@ import {
 } from '@/lib/agent-api';
 import { AGENT_REGISTRY, getAgentStatusBadge } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
-import { useAgentStore, useChatStore, useUIStore } from '@/lib/store';
+import { useAgentStore, useUIStore } from '@/lib/store';
 
 const FADE_OUT_MS = 300;
 const FADE_IN_MS = 700;
@@ -69,7 +69,6 @@ export function useAgentSwitch(locale: string) {
     addAgentMessage,
     setSwitcherOpen,
   } = useAgentStore();
-  const addClinicMessage = useChatStore((s) => s.addMessage);
   const showToast = useUIStore((s) => s.showToast);
 
   const fetchActiveAgent = useCallback(async () => {
@@ -147,16 +146,10 @@ export function useAgentSwitch(locale: string) {
           return { ok: false as const };
         }
 
-        const sessionId = agentSessionId ?? 'clinic';
-        addClinicMessage({
-          id: `return_${Date.now()}`,
-          role: 'assistant',
-          content: res.data.return_message,
-          timestamp: new Date().toISOString(),
-          sessionId,
-        });
-
         setActiveAgent(null, null);
+        if (res.data.return_message) {
+          showToast(res.data.return_message, 'info');
+        }
         if (!options?.skipHistory) {
           clearAgentHistory();
         } else {
@@ -164,20 +157,12 @@ export function useAgentSwitch(locale: string) {
         }
 
         await sleep(FADE_IN_MS);
-        return { ok: true as const };
+        return { ok: true as const, reloadClinic: true as const };
       } finally {
         setSwitching(false);
       }
     },
-    [
-      activeAgentId,
-      agentSessionId,
-      locale,
-      setSwitching,
-      setActiveAgent,
-      addClinicMessage,
-      showToast,
-    ]
+    [activeAgentId, locale, setSwitching, setActiveAgent, showToast]
   );
 
   const statusBadge =

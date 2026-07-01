@@ -189,6 +189,26 @@
 		"chat": "Chat",
 		"profile": "Profile"
 	},
+	"jobs": {
+		"title": "Job recommendations",
+		"loading": "Loading jobs…",
+		"loadError": "Could not load job list",
+		"empty": "No recommendations yet. Complete your profile in chat first.",
+		"matchScore": "Match {score}%",
+		"locked": "Pro",
+		"unlockPro": "Unlock with Pro",
+		"viewDetails": "View details",
+		"upgradeHint": "Upgrade to see more tailored roles",
+		"engineTotal": "{count} roles matched for you",
+		"detailTitle": "Job details",
+		"detailLoading": "Loading…",
+		"detailError": "Job not found",
+		"apply": "Apply",
+		"proLocked": "Pro features locked",
+		"whyMatched": "Why this fits you",
+		"gaps": "Gaps to close",
+		"backToList": "← Back to jobs"
+	},
 	"chat": {
 		"title": "{name} · AI Career Partner",
 		"backToClinic": "← Back to clinic",

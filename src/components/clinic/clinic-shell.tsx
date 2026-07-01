@@ -196,7 +196,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       if (!agentFromUrl) {
         if (current) {
-          void exitToClinic({ skipHistory: true });
+          void exitToClinic({ skipHistory: true }).then((result) => {
+            if (result?.reloadClinic && isLoggedIn) {
+              void loadHistory();
+            }
+          });
         }
         return;
       }
@@ -210,7 +214,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [exitToClinic]);
+  }, [exitToClinic, isLoggedIn, loadHistory]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -253,6 +257,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     const result = await exitToClinic();
     if (result && !result.ok) {
       showToast(tClinic("deactivateFailed"), "error");
+      return;
+    }
+    if (result?.reloadClinic && isLoggedIn) {
+      await loadHistory();
     }
   };
 
