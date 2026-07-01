@@ -301,6 +301,22 @@
 		"loading": "Жүктелуде...",
 		"loadError": "Балансты жүктеу сәтсіз"
 	},
+	"cv": {
+		"title": "Түйіндеме құрастырушы",
+		"subtitle": "ЖИ көмегімен түйіндеме жасаңыз",
+		"subtitleWithJob": "Вакансияға арналған түйіндеме: {jobId}",
+		"backToMine": "← Жеке кабинетке",
+		"loginBanner": "Түйіндеме жасау үшін кіріңіз.",
+		"signIn": "Кіру",
+		"onboardingBanner": "Түйіндеме жасамас бұрын сөйлесуде профильді толтырыңыз.",
+		"completeProfile": "Сөйлесуге өту",
+		"sessionLoading": "Сессия басталуда…",
+		"inputPlaceholder": "Тәжірибеңізді сипаттаңыз…",
+		"previewTitle": "Алдын ала қарау",
+		"previewSubtitle": "Сөйлесу барысында жаңартылады",
+		"previewLoading": "Жасалуда…",
+		"previewEmpty": "Түйіндеме мұнда көрсетіледі"
+	},
 	"tma": {
 		"launching": "KaziSpace ашылуда…",
 		"authFailed": "Telegram арқылы кіру сәтсіз",
