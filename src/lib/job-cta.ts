@@ -37,6 +37,7 @@ export function getJobCtaHref(
   }
 }
 
+/** Fallback list: backend returns ≤3 items, each with complete_profile (TR-V01-02). */
 export function shouldShowProfileFallbackCta(
   items: Array<{ primary_cta?: string }>
 ): boolean {
@@ -45,4 +46,32 @@ export function shouldShowProfileFallbackCta(
     items.length <= 3 &&
     items.every((item) => item.primary_cta === 'complete_profile')
   );
+}
+
+export function shouldRenderListPrimaryCta(
+  primaryCta: string | undefined
+): primaryCta is JobPrimaryCta {
+  return isJobPrimaryCta(primaryCta) && primaryCta !== 'complete_profile';
+}
+
+/** Avoid duplicate unlock buttons when primary_cta already handles unlock_pro. */
+export function shouldShowLegacyUnlockButton(item: {
+  is_locked?: boolean;
+  primary_cta?: string;
+}): boolean {
+  return Boolean(item.is_locked) && item.primary_cta !== 'unlock_pro';
+}
+
+export function shouldRenderDetailPrimaryCta(
+  primaryCta: string | undefined,
+  locked: boolean
+): primaryCta is JobPrimaryCta {
+  if (!isJobPrimaryCta(primaryCta) || primaryCta === 'complete_profile') {
+    return false;
+  }
+  // Locked detail uses the pro banner for unlock_pro (API §10.2).
+  if (locked && primaryCta === 'unlock_pro') {
+    return false;
+  }
+  return true;
 }

@@ -11,6 +11,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useJobDetail } from "@/hooks/use-jobs";
+import {
+  getJobCtaHref,
+  shouldRenderDetailPrimaryCta,
+} from "@/lib/job-cta";
 import { useUIStore } from "@/lib/store";
 
 interface JobDetailPageProps {
@@ -25,6 +29,15 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
   const openPaywall = useUIStore((s) => s.openPaywall);
 
   const locked = job?.pro_features_locked === true;
+
+  const handlePrimaryCta = (cta: string, jobId: string) => {
+    if (cta === "unlock_pro") {
+      openPaywall("PRO_FEATURE_LOCKED");
+      return;
+    }
+    const href = getJobCtaHref(locale, cta, jobId);
+    if (href) router.push(href);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -123,14 +136,24 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
               </Card>
             )}
 
-            {job.apply_url && !locked && (
-              <Button asChild className="w-full gap-2">
-                <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-                  {t("apply")}
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              </Button>
-            )}
+            <div className="flex flex-col gap-2">
+              {shouldRenderDetailPrimaryCta(job.primary_cta, locked) && (
+                <Button
+                  className="w-full"
+                  onClick={() => handlePrimaryCta(job.primary_cta!, job.job_id)}
+                >
+                  {t(`cta.${job.primary_cta}`)}
+                </Button>
+              )}
+              {job.apply_url && !locked && (
+                <Button asChild className="w-full gap-2">
+                  <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
+                    {t("apply")}
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                </Button>
+              )}
+            </div>
           </>
         )}
       </main>

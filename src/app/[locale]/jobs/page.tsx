@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { useJobRecommendations } from "@/hooks/use-jobs";
 import {
   getJobCtaHref,
-  isJobPrimaryCta,
+  shouldRenderListPrimaryCta,
+  shouldShowLegacyUnlockButton,
   shouldShowProfileFallbackCta,
 } from "@/lib/job-cta";
 import { useUIStore } from "@/lib/store";
@@ -119,9 +120,7 @@ export default function JobsPage({ params }: JobsPageProps) {
                           {t("viewDetails")}
                         </Link>
                       </Button>
-                      {job.primary_cta &&
-                        isJobPrimaryCta(job.primary_cta) &&
-                        job.primary_cta !== "complete_profile" && (
+                      {shouldRenderListPrimaryCta(job.primary_cta) && (
                           <Button
                             size="sm"
                             variant="secondary"
@@ -132,7 +131,7 @@ export default function JobsPage({ params }: JobsPageProps) {
                             {t(`cta.${job.primary_cta}`)}
                           </Button>
                         )}
-                      {job.is_locked && (
+                      {shouldShowLegacyUnlockButton(job) && (
                         <Button
                           size="sm"
                           variant="secondary"
