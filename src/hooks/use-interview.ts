@@ -25,7 +25,7 @@ export type InterviewPhase =
   | 'feedback_ready'
   | 'feedback_failed';
 
-export function useInterview() {
+export function useInterview(jobId?: string | null) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
 
@@ -39,52 +39,79 @@ export function useInterview() {
   const [feedback, setFeedback] = useState<InterviewFeedbackSummary | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [isPolling, setIsPolling] = useState(false);
+  const [isCheckingFeedback, setIsCheckingFeedback] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const runIdRef = useRef(0);
+
+  const isStale = useCallback((runId: number) => runId !== runIdRef.current, []);
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
       clearInterval(pollRef.current);
       pollRef.current = null;
     }
-    setIsPolling(false);
   }, []);
 
   const appendMessage = useCallback((role: 'user' | 'assistant', content: string) => {
     setMessages((prev) => [...prev, { id: nextId('int'), role, content }]);
   }, []);
 
-  const pollFeedback = useCallback(async () => {
-    if (!sessionId) return;
-    const res = await getInterviewSession(sessionId);
-    if (!res.success || !res.data) return;
+  const pollFeedback = useCallback(
+    async (runId: number) => {
+      if (!sessionId || isStale(runId)) return;
+      setIsCheckingFeedback(true);
+      const res = await getInterviewSession(sessionId);
+      if (isStale(runId)) {
+        setIsCheckingFeedback(false);
+        return;
+      }
+      setIsCheckingFeedback(false);
 
-    const data = res.data;
-    if (data.status === 'feedback_pending') return;
+      if (!res.success || !res.data) return;
 
-    stopPolling();
+      const data = res.data;
+      if (data.status === 'feedback_pending') return;
 
-    if (data.status === 'feedback_failed') {
+      if (data.status === 'feedback_failed') {
+        stopPolling();
+        setPhase('feedback_failed');
+        appendMessage(
+          'assistant',
+          data.message ?? 'Feedback generation failed. Please start a new interview.'
+        );
+        return;
+      }
+
+      if (data.status === 'completed' && data.feedback_summary) {
+        stopPolling();
+        setFeedback(data.feedback_summary);
+        setPhase('feedback_ready');
+        return;
+      }
+
+      if (data.status === 'completed') {
+        // Report still generating — keep polling.
+        return;
+      }
+
+      stopPolling();
       setPhase('feedback_failed');
       appendMessage(
         'assistant',
-        'Feedback generation failed. Please start a new interview.'
+        data.message ?? 'Could not load feedback. Please try again.'
       );
-      return;
-    }
+    },
+    [appendMessage, isStale, sessionId, stopPolling]
+  );
 
-    if (data.status === 'completed' && data.feedback_summary) {
-      setFeedback(data.feedback_summary);
-      setPhase('feedback_ready');
-    }
-  }, [appendMessage, sessionId, stopPolling]);
-
-  const startPolling = useCallback(() => {
-    stopPolling();
-    setIsPolling(true);
-    void pollFeedback();
-    pollRef.current = setInterval(() => void pollFeedback(), 5000);
-  }, [pollFeedback, stopPolling]);
+  const startPolling = useCallback(
+    (runId: number) => {
+      stopPolling();
+      void pollFeedback(runId);
+      pollRef.current = setInterval(() => void pollFeedback(runId), 5000);
+    },
+    [pollFeedback, stopPolling]
+  );
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
@@ -101,6 +128,7 @@ export function useInterview() {
   const startSession = useCallback(
     async (role: string) => {
       if (!isLoggedIn || isStarting) return;
+      const runId = ++runIdRef.current;
       setIsStarting(true);
       setTargetRole(role);
       setMessages([]);
@@ -112,10 +140,17 @@ export function useInterview() {
         interview_level: DEFAULT_INTERVIEW_LEVEL,
         source_channel: 'web',
         answer_mode: 'text',
+        job_id: jobId ?? undefined,
       });
 
+      if (isStale(runId)) return;
+
       if (!res.success || !res.data) {
-        showToast(res.error ?? 'Failed to start interview', 'error');
+        if (res.errorCode === 'ONBOARDING_INCOMPLETE') {
+          showToast(res.error ?? 'Complete your profile in chat first', 'error');
+        } else {
+          showToast(res.error ?? 'Failed to start interview', 'error');
+        }
         setPhase('role_select');
         setIsStarting(false);
         return;
@@ -139,12 +174,13 @@ export function useInterview() {
       }
       setIsStarting(false);
     },
-    [appendMessage, isLoggedIn, isStarting, showQuestion, showToast]
+    [appendMessage, isLoggedIn, isStale, isStarting, jobId, showQuestion, showToast]
   );
 
   const submitAnswer = useCallback(
     async (text: string) => {
       if (!text.trim() || !sessionId || !currentQuestion || isSending) return;
+      const runId = runIdRef.current;
       setIsSending(true);
       appendMessage('user', text.trim());
 
@@ -152,6 +188,8 @@ export function useInterview() {
         question_id: currentQuestion.question_id,
         answer_text: text.trim(),
       });
+
+      if (isStale(runId)) return;
 
       if (!res.success || !res.data) {
         showToast(res.error ?? 'Failed to submit answer', 'error');
@@ -168,7 +206,7 @@ export function useInterview() {
           data.loading_hint ??
             'All answers submitted! Generating your personalized feedback…'
         );
-        startPolling();
+        startPolling(runId);
         setIsSending(false);
         return;
       }
@@ -182,6 +220,7 @@ export function useInterview() {
       appendMessage,
       currentQuestion,
       isSending,
+      isStale,
       questionCount,
       questionIndex,
       sessionId,
@@ -192,6 +231,7 @@ export function useInterview() {
   );
 
   const reset = useCallback(() => {
+    runIdRef.current += 1;
     stopPolling();
     setPhase('role_select');
     setMessages([]);
@@ -201,10 +241,13 @@ export function useInterview() {
     setQuestionCount(3);
     setCurrentQuestion(null);
     setFeedback(null);
+    setIsStarting(false);
+    setIsSending(false);
+    setIsCheckingFeedback(false);
   }, [stopPolling]);
 
   const checkFeedbackNow = useCallback(() => {
-    void pollFeedback();
+    void pollFeedback(runIdRef.current);
   }, [pollFeedback]);
 
   return {
@@ -218,7 +261,7 @@ export function useInterview() {
     feedback,
     isStarting,
     isSending,
-    isPolling,
+    isCheckingFeedback,
     needsLogin: !isLoggedIn,
     startSession,
     submitAnswer,

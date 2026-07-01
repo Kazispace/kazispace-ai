@@ -10,6 +10,7 @@ interface InterviewFeedbackCardProps {
   targetRole: string | null;
   feedback: InterviewFeedbackSummary;
   locale: string;
+  jobId?: string | null;
   onPracticeAgain: () => void;
 }
 
@@ -28,6 +29,7 @@ export function InterviewFeedbackCard({
   targetRole,
   feedback,
   locale,
+  jobId,
   onPracticeAgain,
 }: InterviewFeedbackCardProps) {
   const t = useTranslations('interview');
@@ -123,7 +125,15 @@ export function InterviewFeedbackCard({
           {t('practiceAgain')}
         </Button>
         <Button size="sm" variant="outline" asChild>
-          <Link href={`/${locale}/cv`}>{t('buildCv')}</Link>
+          <Link
+            href={
+              jobId
+                ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
+                : `/${locale}/cv`
+            }
+          >
+            {t('buildCv')}
+          </Link>
         </Button>
       </div>
     </div>

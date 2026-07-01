@@ -229,6 +229,7 @@ export interface CreateInterviewSessionRequest {
   interview_level: string;
   source_channel?: string;
   answer_mode?: string;
+  job_id?: string;
 }
 
 export interface CreateInterviewSessionResponse {

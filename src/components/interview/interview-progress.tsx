@@ -9,7 +9,7 @@ interface InterviewProgressProps {
 
 export function InterviewProgress({ questionIndex, questionCount }: InterviewProgressProps) {
   const t = useTranslations('interview');
-  const pct = questionCount > 0 ? ((questionIndex - 1) / questionCount) * 100 : 0;
+  const pct = questionCount > 0 ? (questionIndex / questionCount) * 100 : 0;
 
   return (
     <div className="px-4 py-2 border-b border-gray-100 bg-white">

@@ -34,13 +34,13 @@ function InterviewPageContent({ locale }: { locale: string }) {
     feedback,
     isStarting,
     isSending,
-    isPolling,
+    isCheckingFeedback,
     needsLogin,
     startSession,
     submitAnswer,
     reset,
     checkFeedbackNow,
-  } = useInterview();
+  } = useInterview(jobId);
 
   const subtitle = useMemo(
     () => (jobId ? t("subtitleWithJob", { jobId }) : null),
@@ -128,7 +128,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
                     size="sm"
                     className="mt-3"
                     onClick={checkFeedbackNow}
-                    disabled={isPolling}
+                    disabled={isCheckingFeedback}
                   >
                     {t("checkFeedback")}
                   </Button>
@@ -140,6 +140,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
                   targetRole={targetRole}
                   feedback={feedback}
                   locale={locale}
+                  jobId={jobId}
                   onPracticeAgain={reset}
                 />
               )}
