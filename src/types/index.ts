@@ -216,3 +216,66 @@ export interface JobDetailResponse {
     gap_to_close?: string[];
   };
 }
+
+// Mock Interview (KAZI-25 / API §7)
+export interface InterviewQuestion {
+  question_id: string;
+  category: string;
+  content: string;
+}
+
+export interface CreateInterviewSessionRequest {
+  target_role: string;
+  interview_level: string;
+  source_channel?: string;
+  answer_mode?: string;
+}
+
+export interface CreateInterviewSessionResponse {
+  session_id: string;
+  status: string;
+  interview_level?: string;
+  question_index?: number;
+  question_count?: number;
+  language_notice?: string;
+  question?: InterviewQuestion;
+}
+
+export interface SubmitInterviewAnswerRequest {
+  question_id: string;
+  answer_text: string;
+}
+
+export interface SubmitInterviewAnswerResponse {
+  session_id: string;
+  status: string;
+  loading_hint?: string;
+  next_question?: InterviewQuestion;
+}
+
+export interface InterviewFeedbackSummary {
+  scores?: {
+    clarity?: number;
+    relevance?: number;
+    confidence?: number;
+  };
+  overall_summary?: string;
+  strengths?: string[];
+  improvements?: string[];
+  sample_better_answer?: string;
+  next_step?: string;
+}
+
+export interface InterviewSessionDetail {
+  session_id: string;
+  status: string;
+  target_role?: string;
+  feedback_summary?: InterviewFeedbackSummary;
+  message?: string;
+}
+
+export interface InterviewMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}

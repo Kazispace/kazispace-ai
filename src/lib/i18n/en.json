@@ -301,6 +301,51 @@
 		"loading": "Loading...",
 		"loadError": "Could not load balance"
 	},
+	"interview": {
+		"title": "Mock Interview Practice",
+		"subtitle": "Answer 3 questions and get AI feedback on clarity, relevance, and confidence.",
+		"subtitleWithJob": "Practice for job {jobId}",
+		"languageHint": "You can answer in English, Russian, or mixed language.",
+		"backToMine": "← Back to profile",
+		"loginBanner": "Sign in to save your interview results and track progress.",
+		"signIn": "Sign in",
+		"loading": "Loading…",
+		"newInterview": "New Interview",
+		"questionOf": "Question {current} of {total}",
+		"progressLabel": "Question {current} / {total}",
+		"completed": "Completed",
+		"inputPlaceholder": "Type your answer… (Enter to send)",
+		"feedbackPending": "Generating your personalized feedback…",
+		"checkFeedback": "Check Feedback",
+		"tryAgain": "Try Again",
+		"practiceAgain": "Practice Again",
+		"buildCv": "Build My CV",
+		"feedbackTitle": "Interview Feedback — {role}",
+		"overallSummary": "Overall Summary",
+		"strengths": "Strengths",
+		"improvements": "Areas to Improve",
+		"sampleAnswer": "Sample Better Answer",
+		"nextStep": "Your Next Step",
+		"scores": {
+			"clarity": "Clarity",
+			"relevance": "Relevance",
+			"confidence": "Confidence"
+		},
+		"roles": {
+			"csr": {
+				"title": "Customer Support Representative",
+				"desc": "Communication, empathy, problem-solving"
+			},
+			"it": {
+				"title": "IT Support",
+				"desc": "Technical troubleshooting, tools, processes"
+			},
+			"admin": {
+				"title": "Remote Admin Assistant",
+				"desc": "Organization, remote tools, communication"
+			}
+		}
+	},
 	"tma": {
 		"launching": "Opening KaziSpace…",
 		"authFailed": "Telegram sign-in failed",

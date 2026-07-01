@@ -301,6 +301,51 @@
 		"loading": "Yuklanmoqda...",
 		"loadError": "Balansni yuklab bo'lmadi"
 	},
+	"interview": {
+		"title": "Sinov suhbati",
+		"subtitle": "3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.",
+		"subtitleWithJob": "Vakansiyaga tayyorgarlik: {jobId}",
+		"languageHint": "Ingliz, rus yoki aralash tilda javob berishingiz mumkin.",
+		"backToMine": "← Profilga",
+		"loginBanner": "Suhbat natijalarini saqlash uchun tizimga kiring.",
+		"signIn": "Kirish",
+		"loading": "Yuklanmoqda…",
+		"newInterview": "Yangi suhbat",
+		"questionOf": "Savol {current} / {total}",
+		"progressLabel": "Savol {current} / {total}",
+		"completed": "Tugallandi",
+		"inputPlaceholder": "Javobingizni yozing…",
+		"feedbackPending": "Shaxsiy fikr-mulohaza tayyorlanmoqda…",
+		"checkFeedback": "Natijani tekshirish",
+		"tryAgain": "Qayta urinish",
+		"practiceAgain": "Yana mashq qilish",
+		"buildCv": "Rezyume yaratish",
+		"feedbackTitle": "Fikr-mulohaza — {role}",
+		"overallSummary": "Umumiy xulosa",
+		"strengths": "Kuchli tomonlar",
+		"improvements": "Yaxshilash kerak",
+		"sampleAnswer": "Yaxshi javob namunasi",
+		"nextStep": "Keyingi qadam",
+		"scores": {
+			"clarity": "Aniqlik",
+			"relevance": "Muvofiqlik",
+			"confidence": "Ishonch"
+		},
+		"roles": {
+			"csr": {
+				"title": "Mijozlarni qo'llab-quvvatlash mutaxassisi",
+				"desc": "Muloqot, hamdardlik, muammolarni hal qilish"
+			},
+			"it": {
+				"title": "IT qo'llab-quvvatlash",
+				"desc": "Texnik diagnostika, vositalar, jarayonlar"
+			},
+			"admin": {
+				"title": "Masofaviy administrator",
+				"desc": "Tashkillashtirish, masofaviy vositalar, muloqot"
+			}
+		}
+	},
 	"tma": {
 		"launching": "KaziSpace ochilmoqda…",
 		"authFailed": "Telegram orqali kirish muvaffaqiyatsiz",
