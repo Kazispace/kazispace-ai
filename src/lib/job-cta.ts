@@ -30,7 +30,9 @@ export function getJobCtaHref(
         ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
         : `/${locale}/cv`;
     case 'start_interview':
-      return withJobId(`/${locale}/chat?context_module=mock_interview`);
+      return jobId
+        ? `/${locale}/interview?job_id=${encodeURIComponent(jobId)}`
+        : `/${locale}/interview`;
     case 'unlock_pro':
       return null;
     default:

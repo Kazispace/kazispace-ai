@@ -317,6 +317,51 @@
 		"previewLoading": "Жасалуда…",
 		"previewEmpty": "Түйіндеме мұнда көрсетіледі"
 	},
+	"interview": {
+		"title": "Сынақ сұхбат",
+		"subtitle": "3 сұраққа жауап беріп, анықтық, релеванттылық және сенімділік бойынша кері байланыс алыңыз.",
+		"subtitleWithJob": "Вакансияға дайындық: {jobId}",
+		"languageHint": "Ағылшын, орыс немесе аралас тілде жауап беруге болады.",
+		"backToMine": "← Жеке кабинетке",
+		"loginBanner": "Сұхбат нәтижелерін сақтау үшін кіріңіз.",
+		"signIn": "Кіру",
+		"loading": "Жүктелуде…",
+		"newInterview": "Жаңа сұхбат",
+		"questionOf": "Сұрақ {current} / {total}",
+		"progressLabel": "Сұрақ {current} / {total}",
+		"completed": "Аяқталды",
+		"inputPlaceholder": "Жауабыңызды жазыңыз…",
+		"feedbackPending": "Жеке кері байланыс дайындалуда…",
+		"checkFeedback": "Нәтижені тексеру",
+		"tryAgain": "Қайта көру",
+		"practiceAgain": "Қайта жаттығу",
+		"buildCv": "Түйіндеме жасау",
+		"feedbackTitle": "Кері байланыс — {role}",
+		"overallSummary": "Жалпы қорытынды",
+		"strengths": "Күшті жақтары",
+		"improvements": "Жақсарту керек",
+		"sampleAnswer": "Жақсы жауап үлгісі",
+		"nextStep": "Келесі қадам",
+		"scores": {
+			"clarity": "Анықтық",
+			"relevance": "Релеванттылық",
+			"confidence": "Сенімділік"
+		},
+		"roles": {
+			"csr": {
+				"title": "Клиенттерді қолдау маманы",
+				"desc": "Коммуникация, эмпатия, мәселе шешу"
+			},
+			"it": {
+				"title": "IT қолдау",
+				"desc": "Техникалық диагностика, құралдар, процестер"
+			},
+			"admin": {
+				"title": "Қашықтан әкімші",
+				"desc": "Ұйымдастыру, қашықтан құралдар, коммуникация"
+			}
+		}
+	},
 	"tma": {
 		"launching": "KaziSpace ашылуда…",
 		"authFailed": "Telegram арқылы кіру сәтсіз",
