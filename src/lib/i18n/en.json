@@ -210,7 +210,14 @@
 		"proLocked": "Pro features locked",
 		"whyMatched": "Why this fits you",
 		"gaps": "Gaps to close",
-		"backToList": "← Back to jobs"
+		"backToList": "← Back to jobs",
+		"profileCtaHint": "Complete your profile in chat to unlock full job recommendations.",
+		"ctaCompleteProfile": "Complete profile",
+		"cta": {
+			"edit_cv": "Improve CV",
+			"start_interview": "Practice interview",
+			"unlock_pro": "Unlock with Pro"
+		}
 	},
 	"chat": {
 		"title": "{name} · AI Career Partner",

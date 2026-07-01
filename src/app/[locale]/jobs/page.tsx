@@ -11,6 +11,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useJobRecommendations } from "@/hooks/use-jobs";
+import {
+  getJobCtaHref,
+  shouldRenderListPrimaryCta,
+  shouldShowLegacyUnlockButton,
+  shouldShowProfileFallbackCta,
+} from "@/lib/job-cta";
 import { useUIStore } from "@/lib/store";
 
 interface JobsPageProps {
@@ -24,6 +30,16 @@ export default function JobsPage({ params }: JobsPageProps) {
   const { items, isProUser, upgradeHint, engineTotal, isLoading, error, needsLogin } =
     useJobRecommendations();
   const openPaywall = useUIStore((s) => s.openPaywall);
+  const showProfileCta = shouldShowProfileFallbackCta(items);
+
+  const handlePrimaryCta = (cta: string, jobId: string) => {
+    if (cta === "unlock_pro") {
+      openPaywall("PRO_FEATURE_LOCKED");
+      return;
+    }
+    const href = getJobCtaHref(locale, cta, jobId);
+    if (href) router.push(href);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -50,6 +66,17 @@ export default function JobsPage({ params }: JobsPageProps) {
         ) : items.length === 0 ? (
           <p className="text-center text-gray-500 py-12">{t("empty")}</p>
         ) : (
+          <>
+          {showProfileCta && (
+            <Card className="mb-4 border-kazi-orange/30 bg-orange-50">
+              <CardContent className="p-4">
+                <p className="text-sm text-gray-700 mb-3">{t("profileCtaHint")}</p>
+                <Button size="sm" onClick={() => router.push(`/${locale}/chat`)}>
+                  {t("ctaCompleteProfile")}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
           <ul className="space-y-3">
             {items.map((job) => (
               <li key={job.job_id}>
@@ -87,13 +114,24 @@ export default function JobsPage({ params }: JobsPageProps) {
                       </p>
                     )}
 
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       <Button size="sm" asChild>
                         <Link href={`/${locale}/jobs/${job.job_id}`}>
                           {t("viewDetails")}
                         </Link>
                       </Button>
-                      {job.is_locked && (
+                      {shouldRenderListPrimaryCta(job.primary_cta) && (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() =>
+                              handlePrimaryCta(job.primary_cta!, job.job_id)
+                            }
+                          >
+                            {t(`cta.${job.primary_cta}`)}
+                          </Button>
+                        )}
+                      {shouldShowLegacyUnlockButton(job) && (
                         <Button
                           size="sm"
                           variant="secondary"
@@ -110,6 +148,7 @@ export default function JobsPage({ params }: JobsPageProps) {
               </li>
             ))}
           </ul>
+          </>
         )}
 
         {!isProUser && upgradeHint && items.length > 0 && (

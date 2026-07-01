@@ -210,7 +210,14 @@
 		"proLocked": "Pro-да қолжетімді",
 		"whyMatched": "Неге сәйкес",
 		"gaps": "Жетілдіру керек",
-		"backToList": "← Тізімге"
+		"backToList": "← Тізімге",
+		"profileCtaHint": "Толық жұмыс ұсыныстарын ашу үшін чатта профильді толықтырыңыз.",
+		"ctaCompleteProfile": "Профильді толықтыру",
+		"cta": {
+			"edit_cv": "Түйіндемені жақсарту",
+			"start_interview": "Сұхбатты жаттығу",
+			"unlock_pro": "Pro арқылы ашу"
+		}
 	},
 	"chat": {
 		"title": "{name} · AI мансап серіктесі",

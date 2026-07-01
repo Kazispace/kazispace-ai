@@ -136,7 +136,7 @@ export async function getMe(): Promise<ApiResponse<User>> {
 export async function authTelegramWebapp(
   initData: string
 ): Promise<ApiResponse<TelegramWebappResponse>> {
-  return apiRequest<TelegramWebappResponse>('/api/v1/auth/telegram/webapp', {
+  return apiRequest<TelegramWebappResponse>('/api/v1/auth/telegram-miniapp', {
     method: 'POST',
     body: JSON.stringify({ init_data: initData }),
   });
