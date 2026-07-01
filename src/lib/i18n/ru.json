@@ -301,6 +301,20 @@
 		"loading": "Загрузка...",
 		"loadError": "Не удалось загрузить баланс"
 	},
+	"cv": {
+		"title": "Конструктор резюме",
+		"subtitle": "Создайте резюме в диалоге с ИИ",
+		"subtitleWithJob": "Резюме под вакансию {jobId}",
+		"backToMine": "← В профиль",
+		"loginBanner": "Войдите, чтобы создавать и сохранять резюме.",
+		"signIn": "Войти",
+		"sessionLoading": "Запуск сессии…",
+		"inputPlaceholder": "Опишите опыт или попросите правки…",
+		"previewTitle": "Предпросмотр",
+		"previewSubtitle": "Обновляется по ходу диалога",
+		"previewLoading": "Генерация…",
+		"previewEmpty": "Здесь появится превью резюме"
+	},
 	"tma": {
 		"launching": "Открываем KaziSpace…",
 		"authFailed": "Не удалось войти через Telegram",

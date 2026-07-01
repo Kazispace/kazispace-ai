@@ -301,6 +301,20 @@
 		"loading": "Yuklanmoqda...",
 		"loadError": "Balansni yuklab bo'lmadi"
 	},
+	"cv": {
+		"title": "Rezyume yaratuvchi",
+		"subtitle": "AI bilan suhbatda rezyume tuzing",
+		"subtitleWithJob": "Vakansiya uchun rezyume: {jobId}",
+		"backToMine": "← Profilga",
+		"loginBanner": "Rezyume yaratish uchun tizimga kiring.",
+		"signIn": "Kirish",
+		"sessionLoading": "Sessiya boshlanmoqda…",
+		"inputPlaceholder": "Tajribangizni yozing…",
+		"previewTitle": "Jonli ko‘rinish",
+		"previewSubtitle": "Suhbat davomida yangilanadi",
+		"previewLoading": "Yaratilmoqda…",
+		"previewEmpty": "Rezyume ko‘rinishi shu yerda chiqadi"
+	},
 	"tma": {
 		"launching": "KaziSpace ochilmoqda…",
 		"authFailed": "Telegram orqali kirish muvaffaqiyatsiz",

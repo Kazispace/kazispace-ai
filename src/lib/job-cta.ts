@@ -25,9 +25,10 @@ export function getJobCtaHref(
   switch (cta) {
     case 'complete_profile':
       return `/${locale}/chat`;
-    // Interim: dedicated /cv and /interview ship in KAZI-23 / KAZI-25; route to experts to avoid 404.
     case 'edit_cv':
-      return withJobId(`/${locale}/chat?context_module=job_search`);
+      return jobId
+        ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
+        : `/${locale}/cv`;
     case 'start_interview':
       return withJobId(`/${locale}/chat?context_module=mock_interview`);
     case 'unlock_pro':
