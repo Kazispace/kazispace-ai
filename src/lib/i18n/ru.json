@@ -210,7 +210,14 @@
 		"proLocked": "Доступно в Pro",
 		"whyMatched": "Почему подходит",
 		"gaps": "Что улучшить",
-		"backToList": "← К списку"
+		"backToList": "← К списку",
+		"profileCtaHint": "Заполните профиль в чате, чтобы открыть полный подбор вакансий.",
+		"ctaCompleteProfile": "Заполнить профиль",
+		"cta": {
+			"edit_cv": "Улучшить резюме",
+			"start_interview": "Тренировка интервью",
+			"unlock_pro": "Открыть с Pro"
+		}
 	},
 	"chat": {
 		"title": "{name} · AI-карьерный партнёр",

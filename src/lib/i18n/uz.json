@@ -210,7 +210,14 @@
 		"proLocked": "Pro da mavjud",
 		"whyMatched": "Nima uchun mos",
 		"gaps": "Yaxshilash kerak",
-		"backToList": "← Ro'yxatga"
+		"backToList": "← Ro'yxatga",
+		"profileCtaHint": "To'liq ish tavsiyalarini ochish uchun chatda profilingizni to'ldiring.",
+		"ctaCompleteProfile": "Profilni to'ldirish",
+		"cta": {
+			"edit_cv": "Rezyumeni yaxshilash",
+			"start_interview": "Suhbat mashqi",
+			"unlock_pro": "Pro bilan ochish"
+		}
 	},
 	"chat": {
 		"title": "{name} · AI karyera hamkori",
