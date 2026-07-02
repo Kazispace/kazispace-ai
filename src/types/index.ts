@@ -179,20 +179,15 @@ export type {
   JobDetailResponse,
   JobMatchAnalysis,
   JobMatchLevel,
-  JobMatchScores,
   JobPrimaryCtaValue,
   JobRecommendationItem,
   JobRecommendationsResponse,
 } from './jobs';
 
+export type { MatchAnalysisScores as JobMatchScores } from './api-schema';
+
 // CV Builder (KAZI-23 / API §6)
-export interface CvChatRequest {
-  action?: string | null;
-  message?: string | null;
-  device_id?: string | null;
-  job_id?: string | null;
-  value?: string | null;
-}
+export type { CvChatRequest, CvChatResponse, CvDiffChange, CvDiffPayload } from './api-schema';
 
 export interface CvChatMessage {
   id: string;
@@ -200,31 +195,8 @@ export interface CvChatMessage {
   content: string;
 }
 
-export interface CvChatResponse {
-  reply?: string;
-  message?: string;
-  assistant_message?: string | { role?: string; content?: string };
-  cv_content?: string;
-  content_markdown?: string;
-  preview_html?: string;
-  preview_markdown?: string;
-  preview_text?: string;
-  buttons?: string[];
-  diff?: import('./cv-contract').CvDiffPayload;
-  document?: {
-    content?: string;
-    html?: string;
-    markdown?: string;
-  };
-  options?: Array<{ label: string; value: string }>;
-}
-
 // Mock Interview (KAZI-25 / API §7)
-export interface InterviewQuestion {
-  question_id: string;
-  category: string;
-  content: string;
-}
+export type InterviewQuestion = import('./api-schema').InterviewQuestionBlock;
 
 export interface CreateInterviewSessionRequest {
   target_role: string;
@@ -234,16 +206,7 @@ export interface CreateInterviewSessionRequest {
   job_id?: string;
 }
 
-export interface CreateInterviewSessionResponse {
-  session_id: string;
-  status: string;
-  interview_level?: string;
-  question_index?: number;
-  question_count?: number;
-  language_notice?: string;
-  question?: InterviewQuestion;
-  prep_card?: import('./interview-contract').InterviewPrepCard;
-}
+export type { CreateInterviewSessionResponse, InterviewPrepCard } from './api-schema';
 
 export interface SubmitInterviewAnswerRequest {
   question_id: string;
@@ -283,6 +246,3 @@ export interface InterviewMessage {
   role: 'user' | 'assistant';
   content: string;
 }
-
-export type { CvDiffPayload, CvDiffChange } from './cv-contract';
-export type { InterviewPrepCard } from './interview-contract';

@@ -1,6 +1,6 @@
 import { apiRequest } from '@/lib/api-client';
 import type { ApiResponse, CvChatRequest, CvChatResponse } from '@/types';
-import type { CvDiffPayload, CvDiffChange } from '@/types/cv-contract';
+import type { CvDiffPayload, CvDiffChange } from '@/types/api-schema';
 
 export async function postCvChat(
   body: CvChatRequest
@@ -13,30 +13,46 @@ export async function postCvChat(
 
 export function extractCvReply(data: CvChatResponse): string {
   const am = data.assistant_message;
-  if (typeof am === 'string') return am;
   if (am && typeof am === 'object' && 'content' in am) {
     return String(am.content ?? '');
   }
-  return data.reply ?? data.message ?? '';
+  if (typeof am === 'string') return am;
+  const legacy = data as Record<string, unknown>;
+  if (typeof legacy.reply === 'string') return legacy.reply;
+  if (typeof legacy.message === 'string') return legacy.message;
+  return '';
 }
 
 export type CvPreviewContent =
   | { format: 'html'; content: string }
   | { format: 'markdown'; content: string };
 
+function cvLegacy(data: CvChatResponse): Record<string, unknown> {
+  return data as Record<string, unknown>;
+}
+
+function cvDocument(data: CvChatResponse): Record<string, unknown> | undefined {
+  const doc = cvLegacy(data).document;
+  return doc && typeof doc === 'object' ? (doc as Record<string, unknown>) : undefined;
+}
+
 export function extractCvPreview(data: CvChatResponse): CvPreviewContent | null {
-  const html = data.preview_html ?? data.document?.html;
+  const legacy = cvLegacy(data);
+  const document = cvDocument(data);
+  const html =
+    (typeof legacy.preview_html === 'string' ? legacy.preview_html : undefined) ??
+    (typeof document?.html === 'string' ? document.html : undefined);
   if (html) {
     return { format: 'html', content: html };
   }
 
   const markdown =
     data.cv_content ??
-    data.preview_markdown ??
-    data.document?.markdown ??
-    data.document?.content ??
-    data.preview_text ??
-    data.content_markdown;
+    (typeof legacy.preview_markdown === 'string' ? legacy.preview_markdown : undefined) ??
+    (typeof document?.markdown === 'string' ? document.markdown : undefined) ??
+    (typeof document?.content === 'string' ? document.content : undefined) ??
+    (typeof legacy.preview_text === 'string' ? legacy.preview_text : undefined) ??
+    (typeof legacy.content_markdown === 'string' ? legacy.content_markdown : undefined);
 
   if (markdown) {
     return { format: 'markdown', content: markdown };
@@ -49,7 +65,15 @@ export function extractCvButtons(data: CvChatResponse): string[] {
   if (data.buttons?.length) {
     return data.buttons;
   }
-  return data.options?.map((o) => o.label).filter(Boolean) ?? [];
+  const options = cvLegacy(data).options;
+  if (!Array.isArray(options)) return [];
+  return options
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const label = (item as { label?: unknown }).label;
+      return typeof label === 'string' ? label : null;
+    })
+    .filter((label): label is string => Boolean(label));
 }
 
 export function extractCvDiff(data: CvChatResponse): CvDiffPayload | null {

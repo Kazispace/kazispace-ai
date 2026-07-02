@@ -5,7 +5,7 @@ import { Clock, Target } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { InterviewPrepCard as PrepCardData } from '@/types/interview-contract';
+import type { InterviewPrepCard as PrepCardData } from '@/types/api-schema';
 
 interface InterviewPrepCardProps {
   prep: PrepCardData;
@@ -22,9 +22,6 @@ export function InterviewPrepCard({ prep, onStart, disabled }: InterviewPrepCard
         <CardContent className="p-5 space-y-4">
           <div>
             <h2 className="text-lg font-bold text-kazi-navy">{t('prepTitle')}</h2>
-            {prep.job_title && (
-              <p className="text-sm text-gray-600 mt-1">{prep.job_title}</p>
-            )}
           </div>
 
           {prep.estimated_duration_min != null && (
@@ -65,7 +62,7 @@ export function InterviewPrepCard({ prep, onStart, disabled }: InterviewPrepCard
           )}
 
           <Button className="w-full" onClick={onStart} disabled={disabled}>
-            {prep.primary_cta ?? t('startInterview')}
+            {t('startInterview')}
           </Button>
         </CardContent>
       </Card>

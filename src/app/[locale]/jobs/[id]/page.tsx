@@ -17,7 +17,6 @@ import {
   getJobApplyUrl,
   getJobGaps,
   getJobWhyMatched,
-  isKnownMatchLevel,
 } from "@/lib/jobs-display";
 import {
   getJobCtaHref,
@@ -98,11 +97,6 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
             <div className="flex flex-wrap gap-2 mb-4">
               {job.match_score != null && (
                 <Badge>{t("matchScore", { score: job.match_score })}</Badge>
-              )}
-              {job.match_level && isKnownMatchLevel(job.match_level) && (
-                <Badge variant="secondary">
-                  {t(`matchLevel.${job.match_level}`)}
-                </Badge>
               )}
             </div>
 
