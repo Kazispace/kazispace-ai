@@ -1,5 +1,9 @@
 import { apiRequest } from '@/lib/api-client';
-import type { ApiResponse, JobDetailResponse, JobRecommendationsResponse } from '@/types';
+import type { ApiResponse } from '@/types';
+import type {
+  JobDetailResponse,
+  JobRecommendationsResponse,
+} from '@/types/jobs';
 
 export async function listJobRecommendations(
   page = 1,

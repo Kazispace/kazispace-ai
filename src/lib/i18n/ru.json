@@ -198,6 +198,19 @@
 		"loginBanner": "Войдите, чтобы увидеть персональные рекомендации вакансий.",
 		"signIn": "Войти",
 		"matchScore": "Совпадение {score}%",
+		"matchLevel": {
+			"excellent": "Отличное совпадение",
+			"good": "Хорошее совпадение",
+			"fair": "Умеренное совпадение"
+		},
+		"matchDimensions": {
+			"skills": "Навыки",
+			"experience": "Опыт",
+			"language": "Язык",
+			"preference": "Предпочтения"
+		},
+		"overallMatch": "Анализ совпадения",
+		"requiredSkills": "Требуемые навыки",
 		"locked": "Pro",
 		"unlockPro": "Открыть с Pro",
 		"viewDetails": "Подробнее",

@@ -198,6 +198,19 @@
 		"loginBanner": "Sign in to see personalized job recommendations.",
 		"signIn": "Sign in",
 		"matchScore": "Match {score}%",
+		"matchLevel": {
+			"excellent": "Excellent match",
+			"good": "Good match",
+			"fair": "Fair match"
+		},
+		"matchDimensions": {
+			"skills": "Skills",
+			"experience": "Experience",
+			"language": "Language",
+			"preference": "Preferences"
+		},
+		"overallMatch": "Match analysis",
+		"requiredSkills": "Required skills",
 		"locked": "Pro",
 		"unlockPro": "Unlock with Pro",
 		"viewDetails": "View details",

@@ -10,7 +10,15 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { JobLogo } from "@/components/jobs/job-logo";
+import { MatchAnalysisPanel } from "@/components/jobs/match-analysis-panel";
 import { useJobDetail } from "@/hooks/use-jobs";
+import {
+  getJobApplyUrl,
+  getJobGaps,
+  getJobWhyMatched,
+  isKnownMatchLevel,
+} from "@/lib/jobs-display";
 import {
   getJobCtaHref,
   shouldRenderDetailPrimaryCta,
@@ -29,6 +37,9 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
   const openPaywall = useUIStore((s) => s.openPaywall);
 
   const locked = job?.pro_features_locked === true;
+  const whyMatched = job ? getJobWhyMatched(job) : [];
+  const gaps = job ? getJobGaps(job) : [];
+  const applyUrl = job ? getJobApplyUrl(job) : null;
 
   const handlePrimaryCta = (cta: string, jobId: string) => {
     if (cta === "unlock_pro") {
@@ -63,20 +74,38 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
           <p className="text-center text-red-500 py-12">{t("detailError")}</p>
         ) : (
           <>
-            <h1 className="text-2xl font-bold text-kazi-navy mb-1">{job.title}</h1>
-            <p className="text-gray-600 mb-2">{job.company}</p>
+            <div className="flex gap-3 mb-3">
+              <JobLogo
+                logoUrl={job.logo_url}
+                company={job.company}
+                className="w-12 h-12"
+                iconClassName="w-6 h-6"
+              />
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold text-kazi-navy">{job.title}</h1>
+                <p className="text-gray-600">{job.company}</p>
+              </div>
+            </div>
+
             {job.location && (
-              <p className="text-sm text-gray-500 flex items-center gap-1 mb-4">
-                <MapPin className="w-4 h-4" />
+              <p className="text-sm text-gray-500 flex items-center gap-1 mb-3">
+                <MapPin className="w-4 h-4 shrink-0" />
                 {job.location}
                 {job.work_mode ? ` · ${job.work_mode}` : ""}
               </p>
             )}
-            {job.match_score != null && (
-              <Badge className="mb-4">
-                {t("matchScore", { score: job.match_score })}
-              </Badge>
-            )}
+
+            <div className="flex flex-wrap gap-2 mb-4">
+              {job.match_score != null && (
+                <Badge>{t("matchScore", { score: job.match_score })}</Badge>
+              )}
+              {job.match_level && isKnownMatchLevel(job.match_level) && (
+                <Badge variant="secondary">
+                  {t(`matchLevel.${job.match_level}`)}
+                </Badge>
+              )}
+            </div>
+
             {job.salary && (
               <p className="text-lg font-semibold text-kazi-orange mb-4">
                 {job.salary}
@@ -108,28 +137,56 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
               </Card>
             )}
 
-            {!locked && job.why_matched && job.why_matched.length > 0 && (
+            {job.required_skills && job.required_skills.length > 0 && (
+              <Card className="mb-4">
+                <CardContent className="p-4">
+                  <h2 className="font-semibold text-kazi-navy mb-2">
+                    {t("requiredSkills")}
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {job.required_skills.map((skill) => (
+                      <Badge key={skill} variant="outline">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {!locked && job.match_analysis && (
+              <Card className="mb-4">
+                <CardContent className="p-4">
+                  <h2 className="font-semibold text-kazi-navy mb-3">
+                    {t("overallMatch")}
+                  </h2>
+                  <MatchAnalysisPanel analysis={job.match_analysis} />
+                </CardContent>
+              </Card>
+            )}
+
+            {!locked && whyMatched.length > 0 && (
               <Card className="mb-4">
                 <CardContent className="p-4">
                   <h2 className="font-semibold text-kazi-navy mb-2">
                     {t("whyMatched")}
                   </h2>
                   <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                    {job.why_matched.map((line, i) => (
-                      <li key={`why-${i}`}>{line}</li>
+                    {whyMatched.map((line) => (
+                      <li key={line}>{line}</li>
                     ))}
                   </ul>
                 </CardContent>
               </Card>
             )}
 
-            {!locked && job.gap_to_close && job.gap_to_close.length > 0 && (
+            {!locked && gaps.length > 0 && (
               <Card className="mb-4">
                 <CardContent className="p-4">
                   <h2 className="font-semibold text-kazi-navy mb-2">{t("gaps")}</h2>
                   <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                    {job.gap_to_close.map((line, i) => (
-                      <li key={`gap-${i}`}>{line}</li>
+                    {gaps.map((line) => (
+                      <li key={line}>{line}</li>
                     ))}
                   </ul>
                 </CardContent>
@@ -145,9 +202,9 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
                   {t(`cta.${job.primary_cta}`)}
                 </Button>
               )}
-              {job.apply_url && !locked && (
+              {applyUrl && !locked && (
                 <Button asChild className="w-full gap-2">
-                  <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
+                  <a href={applyUrl} target="_blank" rel="noopener noreferrer">
                     {t("apply")}
                     <ExternalLink className="w-4 h-4" />
                   </a>

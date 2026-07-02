@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getJobDetail, listJobRecommendations } from '@/lib/jobs-api';
 import { useAuthStore } from '@/lib/store';
-import type { JobDetailResponse, JobRecommendationItem } from '@/types';
+import type { JobDetailResponse, JobRecommendationItem } from '@/types/jobs';
 
 export function useJobRecommendations(page = 1, limit = 10) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
