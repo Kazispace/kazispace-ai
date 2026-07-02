@@ -29,6 +29,7 @@ import {
   CV_BUILDER_AGENT_ID,
   isCvBuilderAgent,
 } from "@/lib/cv-agent-config";
+import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -328,6 +329,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     if (result.ok && result.routedToAgent) {
       if (isCvBuilderAgent(result.routedToAgent.agentId)) {
+        const msg = useChatStore
+          .getState()
+          .messages.find((m) => m.id === result.assistantId);
+        setCvAgentHandoff({
+          sessionId: result.routedToAgent.sessionId,
+          greeting: msg?.content?.trim() || undefined,
+        });
         markStreamComplete(result.assistantId);
         routeCvBuilderPage();
         return;
