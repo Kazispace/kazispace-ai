@@ -19,6 +19,42 @@ import { apiRequest } from '@/lib/api-client';
 
 const mockSessions = new Map<string, ActiveAgentState>();
 
+type MockCvBuilderState = {
+  jobId?: string;
+};
+
+const mockCvBuilderBySession = new Map<string, MockCvBuilderState>();
+
+function mockCvBuilderDiff(variant: 'job' | 'regen' = 'job') {
+  if (variant === 'regen') {
+    return {
+      added: ['Optimized keywords for ATS matching'],
+      removed: ['Outdated toolchain references'],
+      modified: [
+        {
+          path: 'Experience',
+          before: 'Built scalable web apps',
+          after: 'Delivered high-traffic React/Python services with measurable latency gains',
+        },
+      ],
+    };
+  }
+  return {
+    added: ['Tailored summary for target role'],
+    removed: [],
+    modified: [
+      {
+        path: 'Summary',
+        before: 'Full-stack engineer with 5+ years of experience',
+        after: 'Senior full-stack engineer aligned with the target job requirements',
+      },
+    ],
+  };
+}
+
+const MOCK_CV_PREVIEW_SAVED =
+  '# Alex Developer\n\n## Experience\n- Senior Engineer at Tech Co (2020–present)\n- Built scalable web apps with React & Python';
+
 function useMockFallback(error?: string): boolean {
   if (process.env.NEXT_PUBLIC_AGENT_API_MOCK === 'true') return true;
   if (!error) return false;
@@ -37,14 +73,17 @@ function getMockActive(): ActiveAgentState {
 function mockActivate(
   agentId: string,
   locale: string,
-  triggerMessage?: string
+  triggerMessage?: string,
+  options?: { job_id?: string }
 ): ActivateAgentResponse {
   const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
   const name = entry ? getAgentLabel(entry, locale, 'name') : agentId;
   const hint = entry ? getAgentLabel(entry, locale, 'promptHint') : '';
   const greeting = triggerMessage
     ? `${name}: "${triggerMessage}" — ${hint}`
-    : `${name} — ${hint}`;
+    : options?.job_id
+      ? `${name} — tailoring your CV for this role. ${hint}`
+      : `${name} — ${hint}`;
 
   const sessionId = `mock_agent_${agentId}_${Date.now()}`;
   mockSessions.set(sessionId, {
@@ -55,6 +94,7 @@ function mockActivate(
   });
 
   if (agentId === CV_BUILDER_AGENT_ID) {
+    mockCvBuilderBySession.set(sessionId, { jobId: options?.job_id });
     return {
       agent_id: agentId,
       session_id: sessionId,
@@ -65,6 +105,9 @@ function mockActivate(
           { type: 'manager', label: 'Product Manager' },
         ],
       },
+      ...(options?.job_id
+        ? { meta: { diff: mockCvBuilderDiff('job') } }
+        : {}),
     };
   }
 
@@ -75,6 +118,7 @@ function mockDeactivate(agentId: string, locale: string): DeactivateAgentRespons
   mockSessions.forEach((state, key) => {
     if (state.active_agent === agentId) {
       mockSessions.delete(key);
+      mockCvBuilderBySession.delete(key);
     }
   });
   const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
@@ -90,6 +134,7 @@ function mockDeactivate(agentId: string, locale: string): DeactivateAgentRespons
 
 export function clearMockAgentSessions(): void {
   mockSessions.clear();
+  mockCvBuilderBySession.clear();
 }
 
 export async function getActiveAgent(): Promise<ApiResponse<ActiveAgentState>> {
@@ -120,7 +165,7 @@ export async function activateAgent(
   );
   if (res.success) return res;
   if (useMockFallback(res.error)) {
-    return { success: true, data: mockActivate(agentId, locale, handoffMessage) };
+    return { success: true, data: mockActivate(agentId, locale, handoffMessage, options) };
   }
   return res;
 }
@@ -160,24 +205,48 @@ export async function sendAgentChat(
     if (agentId === CV_BUILDER_AGENT_ID) {
       const isRegenerate =
         message === '__action:regenerate' || message.toLowerCase() === 'regenerate';
-      const meta =
-        message === 'confirm' || isRegenerate
-          ? {
-              cv_preview_markdown:
-                '# Alex Developer\n\n## Experience\n- Senior Engineer at Tech Co (2020–present)\n- Built scalable web apps with React & Python',
-            }
-          : {
-              cv_preview_markdown:
-                '# Alex Developer\n\n## Summary\nFull-stack engineer with 5+ years of experience.\n\n## Skills\nReact, TypeScript, Python',
-              buttons: ['Looks good', 'Add more detail'],
-            };
+      const isConfirm = message === 'confirm';
+      const cvState = sessionId ? mockCvBuilderBySession.get(sessionId) : undefined;
+      const hasJobContext = Boolean(cvState?.jobId);
+
+      let meta: AgentChatResponse['meta'];
+      if (isConfirm) {
+        meta = {
+          cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
+          diff: null,
+        };
+      } else if (isRegenerate) {
+        meta = {
+          cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
+          diff: mockCvBuilderDiff('regen'),
+        };
+      } else if (hasJobContext) {
+        meta = {
+          cv_preview_markdown:
+            '# Alex Developer\n\n## Summary\nJob-tailored CV draft for your target role.\n\n## Skills\nReact, TypeScript, Python',
+          diff: mockCvBuilderDiff('job'),
+        };
+      } else {
+        meta = {
+          cv_preview_markdown:
+            '# Alex Developer\n\n## Summary\nFull-stack engineer with 5+ years of experience.\n\n## Skills\nReact, TypeScript, Python',
+          buttons: ['Looks good', 'Add more detail'],
+        };
+      }
+
       return {
         success: true,
         data: {
           agent_id: agentId,
           message_id: `mock_${Date.now()}`,
           response: {
-            text: `${emoji} (Mock) ${message === 'confirm' ? 'CV saved.' : 'Updated your CV preview.'}`,
+            text: `${emoji} (Mock) ${
+              isConfirm
+                ? 'CV saved.'
+                : isRegenerate
+                  ? 'Regenerated job-specific edits.'
+                  : 'Updated your CV preview.'
+            }`,
           },
           meta,
         },

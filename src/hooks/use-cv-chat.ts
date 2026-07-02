@@ -45,8 +45,9 @@ export function useCvChat(
       if (nextPreview) {
         setPreview(nextPreview);
       }
-      const nextDiff = extractCvDiff(data);
-      setDiff(nextDiff);
+      if ('diff' in data) {
+        setDiff(extractCvDiff(data));
+      }
       setQuickReplies(extractCvButtons(data));
     },
     []

@@ -7,9 +7,9 @@ import { isAgentBlocked, isPaywallError } from '@/lib/api-errors';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import {
   extractCvButtonsFromAgent,
-  extractCvDiffFromAgent,
   extractCvPreviewFromAgent,
   extractCvReplyFromAgent,
+  patchDiffFromAgentMeta,
   type CvPreviewContent,
 } from '@/lib/cv-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
@@ -71,8 +71,7 @@ export function useCvAgent(
       if (nextPreview) {
         setPreview(nextPreview);
       }
-      const nextDiff = extractCvDiffFromAgent(data);
-      setDiff(nextDiff);
+      patchDiffFromAgentMeta(data, setDiff);
       const buttons = extractCvButtonsFromAgent(data);
       if (buttons.length > 0) {
         setQuickReplies(buttons);
@@ -91,6 +90,7 @@ export function useCvAgent(
       if (nextPreview) {
         setPreview(nextPreview);
       }
+      patchDiffFromAgentMeta(data, setDiff);
       const buttons = extractCvButtonsFromAgent({
         response: { next_actions: data.response?.next_actions },
         meta: data.meta,

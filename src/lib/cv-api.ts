@@ -1,6 +1,7 @@
 import { apiRequest } from '@/lib/api-client';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import type {
+  AgentChatMeta,
   AgentChatResponse,
   ApiResponse,
   CvChatRequest,
@@ -114,6 +115,18 @@ export function extractCvPreviewFromAgent(
 
 export function extractCvDiffFromAgent(data: AgentChatResponse): CvDiffPayload | null {
   return normalizeCvDiff(agentMeta(data)?.diff);
+}
+
+/** Update diff only when agent meta includes an explicit `diff` key (null clears the panel). */
+export function patchDiffFromAgentMeta(
+  data: { meta?: AgentChatMeta | null },
+  setDiff: (diff: CvDiffPayload | null) => void
+): void {
+  const meta = data.meta;
+  if (!meta || !Object.prototype.hasOwnProperty.call(meta, 'diff')) {
+    return;
+  }
+  setDiff(normalizeCvDiff(meta.diff));
 }
 
 export function extractCvButtonsFromAgent(data: AgentChatResponse): string[] {
