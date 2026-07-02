@@ -34,6 +34,7 @@ export const STORAGE_KEYS = {
   ENGLISH_LEVEL: 'kazi_english_level',
   REFERRAL_DISMISSED: 'kazi_referral_dismissed',
   TMA_PENDING_ACTION: 'kazi_tma_pending_action',
+  CV_AGENT_HANDOFF: 'kazi_cv_agent_handoff',
 } as const;
 
 export const AGENT_NAME = 'Serík';

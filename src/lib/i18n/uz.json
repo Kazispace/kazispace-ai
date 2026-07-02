@@ -256,7 +256,9 @@
 			"return_to_clinic": "Klinikaga qaytish",
 			"mock_interview": "Suhbat mashqi",
 			"complete_profile": "Profilni to'ldirish",
-			"job_search": "Ish qidirish mutaxassisi"
+			"job_search": "Ish qidirish mutaxassisi",
+			"edit_cv": "Rezyumeni yaxshilash",
+			"cv_builder": "Rezyume yaratuvchini ochish"
 		}
 	},
 	"referral": {

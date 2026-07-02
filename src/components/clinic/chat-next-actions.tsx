@@ -21,6 +21,8 @@ const KNOWN_ACTION_TYPES = [
   'mock_interview',
   'complete_profile',
   'job_search',
+  'edit_cv',
+  'cv_builder',
 ] as const;
 
 type KnownActionType = (typeof KNOWN_ACTION_TYPES)[number];

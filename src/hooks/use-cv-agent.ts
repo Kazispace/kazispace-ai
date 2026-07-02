@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { activateAgent, sendAgentChat } from '@/lib/agent-api';
+import { activateAgent, getActiveAgent, sendAgentChat } from '@/lib/agent-api';
 import { isAgentBlocked, isPaywallError } from '@/lib/api-errors';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
 import {
   extractCvButtonsFromAgent,
   extractCvPreviewFromAgent,
@@ -132,6 +133,47 @@ export function useCvAgent(
     setNeedsOnboarding(false);
     setNeedsProfile(false);
     setSessionId(null);
+
+    const handoff = consumeCvAgentHandoff();
+    const handoffSessionId = handoff?.sessionId;
+
+    if (!handoffSessionId) {
+      const activeRes = await getActiveAgent();
+      if (gen !== activateGenRef.current) return;
+      if (
+        activeRes.success &&
+        activeRes.data?.active_agent === CV_BUILDER_AGENT_ID &&
+        activeRes.data.session_id
+      ) {
+        setSessionId(activeRes.data.session_id);
+        if (handoff?.greeting) {
+          setMessages([
+            {
+              id: nextId('cv'),
+              role: 'assistant',
+              content: handoff.greeting,
+            },
+          ]);
+        }
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    if (handoffSessionId) {
+      setSessionId(handoffSessionId);
+      if (handoff?.greeting) {
+        setMessages([
+          {
+            id: nextId('cv'),
+            role: 'assistant',
+            content: handoff.greeting,
+          },
+        ]);
+      }
+      setIsLoading(false);
+      return;
+    }
 
     const res = await activateAgent(CV_BUILDER_AGENT_ID, locale, undefined, {
       job_id: jobId ?? undefined,
