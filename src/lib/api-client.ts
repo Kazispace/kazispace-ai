@@ -165,6 +165,7 @@ export interface ClinicChatResponse {
   referral?: { agent_id?: string; reason?: string };
   routed_to_agent?: boolean;
   agent_id?: string;
+  session_id?: string;
 }
 
 export async function sendChatMessage(
@@ -230,6 +231,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   referral?: { agentId: string; reason: string };
   nextActions: ChatNextAction[];
   cards: ChatJobCard[];
+  routedToAgent?: { agentId: string; sessionId?: string };
 } {
   if (!data) {
     return { reply: '', nextActions: [], cards: [] };
@@ -250,11 +252,21 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
       ? { agentId: referralAgentId, reason: referralReason }
       : undefined;
 
+  const routedToAgent =
+    data.routed_to_agent && data.agent_id
+      ? {
+          agentId: data.agent_id,
+          sessionId:
+            typeof data.session_id === 'string' ? data.session_id : undefined,
+        }
+      : undefined;
+
   return {
     reply: envelope.reply,
     intent: data.intent ?? envelope.intent,
     referral,
     nextActions: envelope.nextActions,
     cards: envelope.cards,
+    routedToAgent,
   };
 }

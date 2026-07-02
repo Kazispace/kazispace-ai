@@ -16,7 +16,7 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
-import { useAuthStore, useAgentStore, useUIStore } from "@/lib/store";
+import { useAuthStore, useAgentStore, useChatStore, useUIStore } from "@/lib/store";
 import {
   AGENT_REGISTRY,
   AGENT_QUICK_REPLIES,
@@ -39,7 +39,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
   const tReferral = useTranslations("referral");
-  const tErrors = useTranslations("errors");
 
   const {
     messages: clinicMessages,
@@ -61,6 +60,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     statusBadge,
     fetchActiveAgent,
     switchToAgent,
+    syncActiveAgentFromGateway,
     exitToClinic,
   } = useAgentSwitch(locale);
 
@@ -245,11 +245,41 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       return;
     }
 
-    const result = isAgentMode
-      ? await sendAgentMessage(text)
-      : await sendClinicMessage(text);
+    if (isAgentMode) {
+      const result = await sendAgentMessage(text);
+      if (result && !result.ok) {
+        if (result.error?.includes("500")) {
+          showToast(tClinic("agentErrorFallback"), "error");
+          const exitResult = await exitToClinic();
+          await reloadClinicIfNeeded(exitResult);
+          return;
+        }
+        showToast(result.error ?? tClinic("sendFailed"), "error");
+      }
+      return;
+    }
 
-    if (result && !result.ok) {
+    const result = await sendClinicMessage(text);
+
+    if (result.ok && result.routedToAgent) {
+      const msg = useChatStore
+        .getState()
+        .messages.find((m) => m.id === result.assistantId);
+      if (msg?.role === "assistant") {
+        const syncResult = await syncActiveAgentFromGateway(
+          result.routedToAgent.agentId,
+          {
+            ...msg,
+            sessionId: result.routedToAgent.sessionId ?? msg.sessionId,
+          }
+        );
+        if (syncResult && !syncResult.ok) {
+          showToast(tClinic("activateFailed"), "error");
+        }
+      }
+    }
+
+    if (!result.ok) {
       if (result.error?.includes("500")) {
         showToast(tClinic("agentErrorFallback"), "error");
         const exitResult = await exitToClinic();
@@ -313,13 +343,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           void handleAgentSelect("job_search");
           return;
         case "complete_profile":
-          showToast(tErrors("profileIncomplete"), "info");
+          router.push(`/${locale}/profile`);
           return;
         default:
           return;
       }
     },
-    [locale, router, openPaywall, showToast, tErrors, handleBackToClinic, handleAgentSelect]
+    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect]
   );
 
   const handleJobCardClick = useCallback(
