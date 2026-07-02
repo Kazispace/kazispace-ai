@@ -248,7 +248,16 @@
 		"input": {
 			"placeholder": "Talk to me about your career…"
 		},
-		"retry": "Retry"
+		"retry": "Retry",
+		"actions": {
+			"open_list": "View job recommendations",
+			"view_job_recommendations": "View job recommendations",
+			"upgrade_pro": "Upgrade to Pro",
+			"return_to_clinic": "Back to clinic",
+			"mock_interview": "Practice interview",
+			"complete_profile": "Complete profile",
+			"job_search": "Talk to job search expert"
+		}
 	},
 	"referral": {
 		"accept": "Open {agentName}",

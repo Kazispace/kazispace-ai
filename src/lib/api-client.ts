@@ -1,6 +1,7 @@
 import { API_BASE_URL } from './constants';
 import { getAuthToken, getDeviceId, clearAuthToken } from './auth';
 import { mapUserFromApi } from './api-mappers';
+import { parseAssistantEnvelope } from './chat-envelope';
 import { isReferralDismissed } from './referral-dismiss';
 import { getTmaClientHeaders } from './telegram';
 import type {
@@ -13,6 +14,8 @@ import type {
   BillingSummary,
   CurrentPlan,
   LedgerEntry,
+  ChatJobCard,
+  ChatNextAction,
   TelegramWebappResponse,
 } from '@/types';
 
@@ -144,14 +147,25 @@ export async function authTelegramWebapp(
 
 export interface ClinicChatResponse {
   reply?: string;
-  response?: { text?: string };
-  assistant_response?: { content?: string };
+  response?: {
+    text?: string;
+    next_actions?: ChatNextAction[];
+    cards?: ChatJobCard[];
+  };
+  assistant_response?: {
+    content?: string;
+    next_actions?: ChatNextAction[];
+    cards?: ChatJobCard[];
+  };
   message_id?: string;
   messageId?: string;
   intent?: string;
   referral_agent_id?: string;
   referral_reason?: string;
   referral?: { agent_id?: string; reason?: string };
+  routed_to_agent?: boolean;
+  agent_id?: string;
+  session_id?: string;
 }
 
 export async function sendChatMessage(
@@ -215,13 +229,15 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   reply: string;
   intent?: string;
   referral?: { agentId: string; reason: string };
+  nextActions: ChatNextAction[];
+  cards: ChatJobCard[];
+  routedToAgent?: { agentId: string; sessionId?: string };
 } {
-  if (!data) return { reply: '' };
-  const reply =
-    data.reply ??
-    data.assistant_response?.content ??
-    data.response?.text ??
-    '';
+  if (!data) {
+    return { reply: '', nextActions: [], cards: [] };
+  }
+
+  const envelope = parseAssistantEnvelope(data);
 
   let referralAgentId =
     data.referral_agent_id ?? data.referral?.agent_id;
@@ -236,5 +252,21 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
       ? { agentId: referralAgentId, reason: referralReason }
       : undefined;
 
-  return { reply, intent: data.intent, referral };
+  const routedToAgent =
+    data.routed_to_agent && data.agent_id
+      ? {
+          agentId: data.agent_id,
+          sessionId:
+            typeof data.session_id === 'string' ? data.session_id : undefined,
+        }
+      : undefined;
+
+  return {
+    reply: envelope.reply,
+    intent: data.intent ?? envelope.intent,
+    referral,
+    nextActions: envelope.nextActions,
+    cards: envelope.cards,
+    routedToAgent,
+  };
 }

@@ -87,8 +87,11 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
         return { ok: false as const, error: res.error };
       }
 
+      const parsed = parseAgentReply(res.data);
       updateAgentMessage(agentId, assistantId, {
-        content: parseAgentReply(res.data) || '…',
+        content: parsed.reply || '…',
+        ...(parsed.nextActions.length > 0 ? { nextActions: parsed.nextActions } : {}),
+        ...(parsed.cards.length > 0 ? { cards: parsed.cards } : {}),
       });
       return { ok: true as const };
     },

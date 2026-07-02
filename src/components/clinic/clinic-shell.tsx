@@ -16,7 +16,7 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
-import { useAuthStore, useAgentStore, useUIStore } from "@/lib/store";
+import { useAuthStore, useAgentStore, useChatStore, useUIStore } from "@/lib/store";
 import {
   AGENT_REGISTRY,
   AGENT_QUICK_REPLIES,
@@ -26,6 +26,7 @@ import { getEnglishLevel } from "@/lib/auth";
 import { dismissReferral, isReferralDismissed, clearExpiredReferralDismissals } from "@/lib/referral-dismiss";
 import { consumePendingTmaAction } from "@/lib/tma-routing";
 import type { SupportedLocale } from "@/lib/constants";
+import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/lib/constants";
 
@@ -59,6 +60,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     statusBadge,
     fetchActiveAgent,
     switchToAgent,
+    syncActiveAgentFromGateway,
     exitToClinic,
   } = useAgentSwitch(locale);
 
@@ -87,6 +89,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
+  const openPaywall = useUIStore((s) => s.openPaywall);
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
   const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
 
@@ -242,11 +245,41 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       return;
     }
 
-    const result = isAgentMode
-      ? await sendAgentMessage(text)
-      : await sendClinicMessage(text);
+    if (isAgentMode) {
+      const result = await sendAgentMessage(text);
+      if (result && !result.ok) {
+        if (result.error?.includes("500")) {
+          showToast(tClinic("agentErrorFallback"), "error");
+          const exitResult = await exitToClinic();
+          await reloadClinicIfNeeded(exitResult);
+          return;
+        }
+        showToast(result.error ?? tClinic("sendFailed"), "error");
+      }
+      return;
+    }
 
-    if (result && !result.ok) {
+    const result = await sendClinicMessage(text);
+
+    if (result.ok && result.routedToAgent) {
+      const msg = useChatStore
+        .getState()
+        .messages.find((m) => m.id === result.assistantId);
+      if (msg?.role === "assistant") {
+        const syncResult = await syncActiveAgentFromGateway(
+          result.routedToAgent.agentId,
+          {
+            ...msg,
+            sessionId: result.routedToAgent.sessionId ?? msg.sessionId,
+          }
+        );
+        if (syncResult && !syncResult.ok) {
+          showToast(tClinic("activateFailed"), "error");
+        }
+      }
+    }
+
+    if (!result.ok) {
       if (result.error?.includes("500")) {
         showToast(tClinic("agentErrorFallback"), "error");
         const exitResult = await exitToClinic();
@@ -289,6 +322,46 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     if (messageId) dismissMessageReferral(messageId);
     setPendingReferral(null);
   };
+
+  const handleNextAction = useCallback(
+    (action: ChatNextAction) => {
+      switch (action.type) {
+        case "open_list":
+        case "view_job_recommendations":
+          router.push(`/${locale}/jobs`);
+          return;
+        case "upgrade_pro":
+          openPaywall("PRO_FEATURE_LOCKED");
+          return;
+        case "return_to_clinic":
+          void handleBackToClinic();
+          return;
+        case "mock_interview":
+          void handleAgentSelect("mock_interview");
+          return;
+        case "job_search":
+          void handleAgentSelect("job_search");
+          return;
+        case "complete_profile":
+          router.push(`/${locale}/profile`);
+          return;
+        default:
+          return;
+      }
+    },
+    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect]
+  );
+
+  const handleJobCardClick = useCallback(
+    (card: ChatJobCard) => {
+      if (card.job_id) {
+        router.push(`/${locale}/jobs/${encodeURIComponent(card.job_id)}`);
+        return;
+      }
+      router.push(`/${locale}/jobs`);
+    },
+    [locale, router]
+  );
 
   const showWelcome =
     !isSwitching && !isAgentMode && !isHistoryLoading && clinicMessages.length === 0;
@@ -344,6 +417,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 intent={msg.intent}
                 status={msg.status}
                 referral={msg.referral}
+                nextActions={msg.nextActions}
+                cards={msg.cards}
+                locale={locale}
                 streamComplete={msg.streamComplete ?? true}
                 isStreaming={isStreaming && msg.content === ""}
                 variant={isAgentMode ? "agent" : "clinic"}
@@ -374,6 +450,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                     : undefined
                 }
                 referralDisabled={isSending || isSwitching}
+                onNextAction={handleNextAction}
+                onJobCardClick={handleJobCardClick}
+                actionsDisabled={isSending || isSwitching}
               />
             );
           })

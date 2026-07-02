@@ -9,6 +9,7 @@ import {
 import { AGENT_REGISTRY, getAgentStatusBadge } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
 import { useAgentStore, useUIStore } from '@/lib/store';
+import type { ChatMessage } from '@/types';
 
 const FADE_OUT_MS = 300;
 const FADE_IN_MS = 700;
@@ -132,6 +133,59 @@ export function useAgentSwitch(locale: string) {
     [locale, setSwitching, setSwitcherOpen, setActiveAgent, setAgentMessages, showToast]
   );
 
+  const syncActiveAgentFromGateway = useCallback(
+    async (agentId: string, assistantMessage: ChatMessage) => {
+      const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
+      if (!entry || entry.status === 'coming_soon') {
+        return { ok: false as const };
+      }
+
+      setSwitching(true);
+      setSwitcherOpen(false);
+      await sleep(FADE_OUT_MS);
+
+      try {
+        let sessionId = assistantMessage.sessionId;
+        const activeRes = await getActiveAgent();
+        if (activeRes.success && activeRes.data?.active_agent === agentId) {
+          sessionId = activeRes.data.session_id ?? sessionId;
+        } else if (!sessionId) {
+          const activateRes = await activateAgent(agentId, locale);
+          if (!activateRes.success || !activateRes.data) {
+            showToast(activateRes.error ?? 'Failed to activate expert', 'error');
+            return { ok: false as const, error: activateRes.error };
+          }
+          sessionId = activateRes.data.session_id;
+        }
+
+        setActiveAgent(agentId, sessionId);
+        setAgentMessages(agentId, [
+          {
+            ...assistantMessage,
+            sessionId,
+            streamComplete: assistantMessage.streamComplete ?? true,
+          },
+        ]);
+        pushAgentHistory(agentId);
+        await sleep(FADE_IN_MS);
+        return { ok: true as const };
+      } catch {
+        showToast('Failed to activate expert', 'error');
+        return { ok: false as const };
+      } finally {
+        setSwitching(false);
+      }
+    },
+    [
+      locale,
+      setSwitching,
+      setSwitcherOpen,
+      setActiveAgent,
+      setAgentMessages,
+      showToast,
+    ]
+  );
+
   const exitToClinic = useCallback(
     async (options?: { skipHistory?: boolean }) => {
       if (!activeAgentId) return { ok: true as const };
@@ -175,6 +229,7 @@ export function useAgentSwitch(locale: string) {
     statusBadge,
     fetchActiveAgent,
     switchToAgent,
+    syncActiveAgentFromGateway,
     exitToClinic,
   };
 }
