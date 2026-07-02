@@ -17,9 +17,16 @@ function normalizeNextActions(raw: unknown): ChatNextAction[] {
   const actions: ChatNextAction[] = [];
   for (const item of raw) {
     const action = asRecord(item);
-    if (!action || typeof action.type !== 'string') continue;
+    if (!action) continue;
+    const type =
+      typeof action.type === 'string'
+        ? action.type
+        : typeof action.action === 'string'
+          ? action.action
+          : null;
+    if (!type) continue;
     const label = action.label;
-    const entry: ChatNextAction = { type: action.type };
+    const entry: ChatNextAction = { type };
     if (typeof label === 'string' || (label && typeof label === 'object')) {
       entry.label = label as LocalizedLabel;
     }

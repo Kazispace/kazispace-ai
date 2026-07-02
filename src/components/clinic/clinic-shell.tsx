@@ -120,6 +120,20 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const isSending = isAgentMode ? isAgentSending : isClinicSending;
   const isStreaming = isAgentMode ? isAgentStreaming : isClinicStreaming;
 
+  const routeCvBuilderPage = useCallback(
+    (targetJobId?: string | null) => {
+      const query = targetJobId
+        ? `?job_id=${encodeURIComponent(targetJobId)}`
+        : '';
+      router.push(`/${locale}/cv${query}`);
+    },
+    [locale, router]
+  );
+
+  const shouldOpenCvBuilderPage = useCallback((agentId: string) => {
+    return agentId === CV_BUILDER_AGENT_ID && CV_AGENT_HUB_ENABLED;
+  }, []);
+
   const inputPlaceholder = isAgentMode
     ? getAgentLabel(activeEntry, locale, "promptHint")
     : t("input.placeholder");
@@ -173,7 +187,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           pending.agentId === CV_BUILDER_AGENT_ID &&
           CV_AGENT_HUB_ENABLED
         ) {
-          router.push(`/${locale}/cv`);
+          routeCvBuilderPage();
           return;
         }
         if (AGENT_REGISTRY.some((a) => a.agentId === pending.agentId)) {
@@ -207,6 +221,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       }
 
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
+      if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
+        routeCvBuilderPage();
+        return;
+      }
       if (
         deepLinkAgent &&
         AGENT_REGISTRY.some((a) => a.agentId === deepLinkAgent)
@@ -221,7 +239,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     };
 
     void initAgent();
-  }, [isLoggedIn, isTelegramMiniApp, tmaInitComplete, locale, router]);
+  }, [
+    isLoggedIn,
+    isTelegramMiniApp,
+    tmaInitComplete,
+    locale,
+    router,
+    routeCvBuilderPage,
+    shouldOpenCvBuilderPage,
+  ]);
 
   useEffect(() => {
     if (activeAgentId && agentSessionId) {
@@ -249,12 +275,22 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         agentFromUrl !== current &&
         AGENT_REGISTRY.some((a) => a.agentId === agentFromUrl)
       ) {
+        if (shouldOpenCvBuilderPage(agentFromUrl)) {
+          routeCvBuilderPage();
+          return;
+        }
         void switchToAgentRef.current(agentFromUrl);
       }
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, [exitToClinic, isLoggedIn, loadHistory]);
+  }, [
+    exitToClinic,
+    isLoggedIn,
+    loadHistory,
+    routeCvBuilderPage,
+    shouldOpenCvBuilderPage,
+  ]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -327,7 +363,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       return;
     }
     if (agentId === CV_BUILDER_AGENT_ID && CV_AGENT_HUB_ENABLED) {
-      router.push(`/${locale}/cv`);
+      routeCvBuilderPage();
       return;
     }
     const result = await switchToAgent(agentId);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { activateAgent, sendAgentChat } from '@/lib/agent-api';
 import { isAgentBlocked, isPaywallError } from '@/lib/api-errors';
@@ -13,10 +13,22 @@ import {
   type CvPreviewContent,
 } from '@/lib/cv-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
-import type { AgentChatResponse, CvChatMessage, CvDiffPayload } from '@/types';
+import type { ActivateAgentResponse, AgentChatResponse, CvChatMessage, CvDiffPayload } from '@/types';
 
 function nextId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function applyAgentMetaSideEffects(
+  data: Pick<AgentChatResponse, 'meta'>,
+  openPaywall: (code: string) => void
+): boolean {
+  const errorCode = data.meta?.error_code;
+  if (errorCode && isPaywallError({ errorCode })) {
+    openPaywall(errorCode);
+    return true;
+  }
+  return false;
 }
 
 export function useCvAgent(
@@ -29,6 +41,7 @@ export function useCvAgent(
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const openPaywall = useUIStore((s) => s.openPaywall);
+  const activateGenRef = useRef(0);
 
   const [messages, setMessages] = useState<CvChatMessage[]>([]);
   const [preview, setPreview] = useState<CvPreviewContent | null>(null);
@@ -41,25 +54,53 @@ export function useCvAgent(
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
 
-  const applyResponse = useCallback((data: AgentChatResponse) => {
-    const reply = extractCvReplyFromAgent(data);
-    if (reply) {
-      setMessages((prev) => [
-        ...prev,
-        { id: nextId('cv'), role: 'assistant', content: reply },
-      ]);
-    }
-    const nextPreview = extractCvPreviewFromAgent(data);
-    if (nextPreview) {
-      setPreview(nextPreview);
-    }
-    const nextDiff = extractCvDiffFromAgent(data);
-    setDiff(nextDiff);
-    setQuickReplies(extractCvButtonsFromAgent(data));
-    if (data.session_id) {
-      setSessionId(data.session_id);
-    }
-  }, []);
+  const applyResponse = useCallback(
+    (data: AgentChatResponse, options?: { skipReply?: boolean }) => {
+      applyAgentMetaSideEffects(data, openPaywall);
+
+      if (!options?.skipReply) {
+        const reply = extractCvReplyFromAgent(data);
+        if (reply) {
+          setMessages((prev) => [
+            ...prev,
+            { id: nextId('cv'), role: 'assistant', content: reply },
+          ]);
+        }
+      }
+      const nextPreview = extractCvPreviewFromAgent(data);
+      if (nextPreview) {
+        setPreview(nextPreview);
+      }
+      const nextDiff = extractCvDiffFromAgent(data);
+      setDiff(nextDiff);
+      const buttons = extractCvButtonsFromAgent(data);
+      if (buttons.length > 0) {
+        setQuickReplies(buttons);
+      }
+      if (data.session_id) {
+        setSessionId(data.session_id);
+      }
+    },
+    [openPaywall]
+  );
+
+  const applyActivateResponse = useCallback(
+    (data: ActivateAgentResponse) => {
+      applyAgentMetaSideEffects(data, openPaywall);
+      const nextPreview = extractCvPreviewFromAgent(data);
+      if (nextPreview) {
+        setPreview(nextPreview);
+      }
+      const buttons = extractCvButtonsFromAgent({
+        response: { next_actions: data.response?.next_actions },
+        meta: data.meta,
+      });
+      if (buttons.length > 0) {
+        setQuickReplies(buttons);
+      }
+    },
+    [openPaywall]
+  );
 
   const handleApiError = useCallback(
     (res: { error?: string; errorCode?: string }) => {
@@ -85,14 +126,18 @@ export function useCvAgent(
 
   const startSession = useCallback(async () => {
     if (!enabled) return;
+    const gen = ++activateGenRef.current;
     setIsLoading(true);
     setError(null);
     setNeedsOnboarding(false);
     setNeedsProfile(false);
+    setSessionId(null);
 
     const res = await activateAgent(CV_BUILDER_AGENT_ID, locale, undefined, {
       job_id: jobId ?? undefined,
     });
+    if (gen !== activateGenRef.current) return;
+
     if (!res.success || !res.data) {
       handleApiError(res);
       setIsLoading(false);
@@ -108,8 +153,9 @@ export function useCvAgent(
         content: greeting,
       },
     ]);
+    applyActivateResponse(res.data);
     setIsLoading(false);
-  }, [enabled, handleApiError, jobId, locale]);
+  }, [applyActivateResponse, enabled, handleApiError, jobId, locale]);
 
   useEffect(() => {
     if (!enabled) {
@@ -138,7 +184,7 @@ export function useCvAgent(
 
   const sendAgentMessage = useCallback(
     async (text: string, options?: { showUserBubble?: boolean }) => {
-      if (!text.trim() || isSending || !enabled) {
+      if (!text.trim() || isSending || !enabled || !sessionId) {
         return { ok: false as const };
       }
       setIsSending(true);
@@ -153,7 +199,7 @@ export function useCvAgent(
       const res = await sendAgentChat(
         CV_BUILDER_AGENT_ID,
         text.trim(),
-        sessionId ?? undefined
+        sessionId
       );
       if (!res.success || !res.data) {
         if (res.errorCode === 'ONBOARDING_INCOMPLETE') {
@@ -186,9 +232,12 @@ export function useCvAgent(
   );
 
   const regenerateCv = useCallback(
-    () => sendAgentMessage('regenerate', { showUserBubble: false }),
+    () => sendAgentMessage('__action:regenerate', { showUserBubble: false }),
     [sendAgentMessage]
   );
+
+  const isSessionReady =
+    !!sessionId && !isLoading && !needsProfile && !needsOnboarding && !error;
 
   return {
     messages,
@@ -201,6 +250,7 @@ export function useCvAgent(
     needsLogin: !isLoggedIn,
     needsOnboarding,
     needsProfile,
+    isSessionReady,
     sendMessage,
     confirmCv,
     regenerateCv,

@@ -47,6 +47,9 @@ function CvPageContent({ locale }: { locale: string }) {
   } = session;
   const showProfileGate =
     CV_AGENT_HUB_ENABLED && agentSession.needsProfile === true;
+  const canChat = CV_AGENT_HUB_ENABLED
+    ? agentSession.isSessionReady
+    : !isLoading && !needsOnboarding && !error;
 
   const subtitle = useMemo(
     () => (jobId ? t("subtitleWithJob", { jobId }) : t("subtitle")),
@@ -119,13 +122,13 @@ function CvPageContent({ locale }: { locale: string }) {
               {quickReplies.length > 0 && (
                 <QuickReplies
                   options={quickReplies}
-                  disabled={isLoading || isSending}
+                  disabled={!canChat || isSending}
                   onSelect={(text) => void sendMessage(text)}
                 />
               )}
               <ChatInput
                 onSend={(text) => void sendMessage(text)}
-                disabled={isLoading || isSending}
+                disabled={!canChat || isSending}
                 placeholder={t("inputPlaceholder")}
               />
             </>

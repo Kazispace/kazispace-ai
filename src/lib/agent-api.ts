@@ -54,6 +54,20 @@ function mockActivate(
     context_module: agentId,
   });
 
+  if (agentId === CV_BUILDER_AGENT_ID) {
+    return {
+      agent_id: agentId,
+      session_id: sessionId,
+      greeting,
+      response: {
+        next_actions: [
+          { type: 'developer', label: 'Software Engineer' },
+          { type: 'manager', label: 'Product Manager' },
+        ],
+      },
+    };
+  }
+
   return { agent_id: agentId, session_id: sessionId, greeting };
 }
 
@@ -144,9 +158,10 @@ export async function sendAgentChat(
     const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
     const emoji = entry?.emoji ?? '🤖';
     if (agentId === CV_BUILDER_AGENT_ID) {
-      const lower = message.toLowerCase();
+      const isRegenerate =
+        message === '__action:regenerate' || message.toLowerCase() === 'regenerate';
       const meta =
-        lower === 'confirm' || lower === 'regenerate'
+        message === 'confirm' || isRegenerate
           ? {
               cv_preview_markdown:
                 '# Alex Developer\n\n## Experience\n- Senior Engineer at Tech Co (2020–present)\n- Built scalable web apps with React & Python',
