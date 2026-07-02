@@ -16,10 +16,10 @@ export function extractCvReply(data: CvChatResponse): string {
   if (am && typeof am === 'object' && 'content' in am) {
     return String(am.content ?? '');
   }
+  if (typeof am === 'string') return am;
   const legacy = data as Record<string, unknown>;
   if (typeof legacy.reply === 'string') return legacy.reply;
   if (typeof legacy.message === 'string') return legacy.message;
-  if (typeof am === 'string') return am;
   return '';
 }
 
