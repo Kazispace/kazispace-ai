@@ -248,7 +248,16 @@
 		"input": {
 			"placeholder": "Мансап туралы жазыңыз…"
 		},
-		"retry": "Қайталау"
+		"retry": "Қайталау",
+		"actions": {
+			"open_list": "Жұмыс ұсыныстарын көру",
+			"view_job_recommendations": "Жұмыс ұсыныстарын көру",
+			"upgrade_pro": "Pro-ға көшу",
+			"return_to_clinic": "Клиникаға оралу",
+			"mock_interview": "Сұхбат жаттығу",
+			"complete_profile": "Профильді толықтыру",
+			"job_search": "Жұмыс іздеу сарапшысы"
+		}
 	},
 	"referral": {
 		"accept": "{agentName} ашу",

@@ -248,7 +248,16 @@
 		"input": {
 			"placeholder": "Напиши мне о карьере…"
 		},
-		"retry": "Повторить"
+		"retry": "Повторить",
+		"actions": {
+			"open_list": "Смотреть рекомендации",
+			"view_job_recommendations": "Смотреть рекомендации",
+			"upgrade_pro": "Перейти на Pro",
+			"return_to_clinic": "Вернуться в клинику",
+			"mock_interview": "Тренировка собеседования",
+			"complete_profile": "Заполнить профиль",
+			"job_search": "Эксперт по поиску работы"
+		}
 	},
 	"referral": {
 		"accept": "Открыть {agentName}",

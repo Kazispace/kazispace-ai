@@ -127,12 +127,14 @@ export function useClinicChat() {
         return { ok: false as const, error: res.error, errorCode: res.errorCode };
       }
 
-      const { reply, intent, referral } = parseClinicReply(res.data);
+      const { reply, intent, referral, nextActions, cards } = parseClinicReply(res.data);
       updateMessage(userMsgId, { status: 'sent' });
       updateMessage(assistantId, {
         content: reply || '…',
         ...(intent ? { intent } : {}),
         ...(referral ? { referral } : {}),
+        ...(nextActions.length > 0 ? { nextActions } : {}),
+        ...(cards.length > 0 ? { cards } : {}),
         streamComplete: false,
       });
 

@@ -26,6 +26,7 @@ import { getEnglishLevel } from "@/lib/auth";
 import { dismissReferral, isReferralDismissed, clearExpiredReferralDismissals } from "@/lib/referral-dismiss";
 import { consumePendingTmaAction } from "@/lib/tma-routing";
 import type { SupportedLocale } from "@/lib/constants";
+import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/lib/constants";
 
@@ -38,6 +39,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
   const tReferral = useTranslations("referral");
+  const tErrors = useTranslations("errors");
 
   const {
     messages: clinicMessages,
@@ -87,6 +89,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
+  const openPaywall = useUIStore((s) => s.openPaywall);
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
   const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
 
@@ -290,6 +293,46 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     setPendingReferral(null);
   };
 
+  const handleNextAction = useCallback(
+    (action: ChatNextAction) => {
+      switch (action.type) {
+        case "open_list":
+        case "view_job_recommendations":
+          router.push(`/${locale}/jobs`);
+          return;
+        case "upgrade_pro":
+          openPaywall("PRO_FEATURE_LOCKED");
+          return;
+        case "return_to_clinic":
+          void handleBackToClinic();
+          return;
+        case "mock_interview":
+          void handleAgentSelect("mock_interview");
+          return;
+        case "job_search":
+          void handleAgentSelect("job_search");
+          return;
+        case "complete_profile":
+          showToast(tErrors("profileIncomplete"), "info");
+          return;
+        default:
+          return;
+      }
+    },
+    [locale, router, openPaywall, showToast, tErrors, handleBackToClinic, handleAgentSelect]
+  );
+
+  const handleJobCardClick = useCallback(
+    (card: ChatJobCard) => {
+      if (card.job_id) {
+        router.push(`/${locale}/jobs/${encodeURIComponent(card.job_id)}`);
+        return;
+      }
+      router.push(`/${locale}/jobs`);
+    },
+    [locale, router]
+  );
+
   const showWelcome =
     !isSwitching && !isAgentMode && !isHistoryLoading && clinicMessages.length === 0;
 
@@ -344,6 +387,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 intent={msg.intent}
                 status={msg.status}
                 referral={msg.referral}
+                nextActions={msg.nextActions}
+                cards={msg.cards}
+                locale={locale}
                 streamComplete={msg.streamComplete ?? true}
                 isStreaming={isStreaming && msg.content === ""}
                 variant={isAgentMode ? "agent" : "clinic"}
@@ -374,6 +420,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                     : undefined
                 }
                 referralDisabled={isSending || isSwitching}
+                onNextAction={handleNextAction}
+                onJobCardClick={handleJobCardClick}
+                actionsDisabled={isSending || isSwitching}
               />
             );
           })

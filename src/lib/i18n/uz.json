@@ -248,7 +248,16 @@
 		"input": {
 			"placeholder": "Karyera haqida yozing…"
 		},
-		"retry": "Qayta urinish"
+		"retry": "Qayta urinish",
+		"actions": {
+			"open_list": "Ish tavsiyalarini ko'rish",
+			"view_job_recommendations": "Ish tavsiyalarini ko'rish",
+			"upgrade_pro": "Pro ga o'tish",
+			"return_to_clinic": "Klinikaga qaytish",
+			"mock_interview": "Suhbat mashqi",
+			"complete_profile": "Profilni to'ldirish",
+			"job_search": "Ish qidirish mutaxassisi"
+		}
 	},
 	"referral": {
 		"accept": "{agentName} ochish",

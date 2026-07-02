@@ -5,8 +5,11 @@ import type {
   AgentMessagesResponse,
   ApiResponse,
   ChatMessage,
+  ChatJobCard,
+  ChatNextAction,
   DeactivateAgentResponse,
 } from '@/types';
+import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import {
   AGENT_REGISTRY,
   getAgentLabel,
@@ -166,8 +169,16 @@ export async function fetchAgentMessages(
   return res;
 }
 
-export function parseAgentReply(data: AgentChatResponse | undefined): string {
-  if (!data) return '';
-  // API Spec §13.5: response.text; `reply` kept for backward compatibility
-  return data.response?.text ?? data.reply ?? '';
+export function parseAgentReply(data: AgentChatResponse | undefined): {
+  reply: string;
+  nextActions: ChatNextAction[];
+  cards: ChatJobCard[];
+} {
+  if (!data) return { reply: '', nextActions: [], cards: [] };
+  const envelope = parseAssistantEnvelope(data);
+  return {
+    reply: envelope.reply,
+    nextActions: envelope.nextActions,
+    cards: envelope.cards,
+  };
 }

@@ -25,11 +25,15 @@ export interface AuthState {
 }
 
 // Chat types
+import type { ChatJobCard, ChatNextAction } from './chat-envelope';
+
 export interface ReferralPayload {
   agentId: string;
   reason: string;
   dismissed?: boolean;
 }
+
+export type { ChatJobCard, ChatNextAction, LocalizedLabel, ParsedAssistantEnvelope } from './chat-envelope';
 
 export interface ChatMessage {
   id: string;
@@ -40,6 +44,8 @@ export interface ChatMessage {
   intent?: string;
   status?: 'sending' | 'sent' | 'failed';
   referral?: ReferralPayload;
+  nextActions?: ChatNextAction[];
+  cards?: ChatJobCard[];
   streamComplete?: boolean;
 }
 
@@ -151,9 +157,15 @@ export interface DeactivateAgentResponse {
 export interface AgentChatResponse {
   message_id?: string;
   agent_id?: string;
-  response?: { text?: string };
+  session_id?: string;
+  response?: {
+    text?: string;
+    next_actions?: ChatNextAction[];
+    cards?: ChatJobCard[];
+  };
   reply?: string;
   credits_consumed?: number;
+  idempotent_replay?: boolean;
 }
 
 export interface AgentMessagesResponse {

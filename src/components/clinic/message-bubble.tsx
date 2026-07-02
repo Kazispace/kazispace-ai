@@ -3,10 +3,12 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
+import { ChatJobTeasers } from "./chat-job-teasers";
+import { ChatNextActions } from "./chat-next-actions";
 import { MarkdownContent } from "./markdown-content";
 import { ReferralPrompt } from "./referral-prompt";
 import { StreamingText } from "@/components/chat/streaming-text";
-import type { ReferralPayload } from "@/types";
+import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -17,13 +19,19 @@ interface MessageBubbleProps {
   variant?: "clinic" | "agent";
   status?: "sending" | "sent" | "failed";
   referral?: ReferralPayload;
+  nextActions?: ChatNextAction[];
+  cards?: ChatJobCard[];
+  locale?: string;
   streamComplete?: boolean;
   agentEmoji?: string;
   agentName?: string;
   onRetry?: () => void;
   onReferralAccept?: () => void;
   onReferralDismiss?: () => void;
+  onNextAction?: (action: ChatNextAction) => void;
+  onJobCardClick?: (card: ChatJobCard) => void;
   referralDisabled?: boolean;
+  actionsDisabled?: boolean;
   onStreamComplete?: () => void;
 }
 
@@ -36,13 +44,19 @@ export function MessageBubble({
   variant = "clinic",
   status,
   referral,
+  nextActions,
+  cards,
+  locale = "en",
   streamComplete = true,
   agentEmoji,
   agentName,
   onRetry,
   onReferralAccept,
   onReferralDismiss,
+  onNextAction,
+  onJobCardClick,
   referralDisabled,
+  actionsDisabled,
   onStreamComplete,
 }: MessageBubbleProps) {
   const t = useTranslations("chat");
@@ -55,6 +69,12 @@ export function MessageBubble({
     !referral.dismissed &&
     onReferralAccept &&
     onReferralDismiss;
+  const showEnrichment =
+    !isUser && streamComplete && !isStreaming;
+  const jobCards = cards?.filter((card) => card.type === "job") ?? [];
+  const showJobCards = showEnrichment && jobCards.length > 0;
+  const showNextActions =
+    showEnrichment && (nextActions?.length ?? 0) > 0 && onNextAction;
 
   const renderAssistantContent = () => {
     if (isStreaming && !content) {
@@ -116,6 +136,21 @@ export function MessageBubble({
           )}
         >
           {renderAssistantContent()}
+          {showJobCards && (
+            <ChatJobTeasers
+              cards={jobCards}
+              locale={locale}
+              onCardClick={onJobCardClick}
+            />
+          )}
+          {showNextActions && (
+            <ChatNextActions
+              actions={nextActions!}
+              locale={locale}
+              onAction={onNextAction!}
+              disabled={actionsDisabled}
+            />
+          )}
           {showReferral && agentEmoji && agentName && (
             <ReferralPrompt
               agentEmoji={agentEmoji}
