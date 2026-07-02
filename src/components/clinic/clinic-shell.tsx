@@ -24,7 +24,7 @@ import {
 } from "@/lib/agents/registry";
 import { getEnglishLevel } from "@/lib/auth";
 import { dismissReferral, isReferralDismissed, clearExpiredReferralDismissals } from "@/lib/referral-dismiss";
-import { consumePendingTmaAction } from "@/lib/tma-routing";
+import { consumePendingTmaAction, routeForTmaAction } from "@/lib/tma-routing";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -181,6 +181,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       }
       if (pending?.type === 'subscription') {
         router.push(`/${locale}/subscription`);
+        return;
+      }
+      if (
+        pending &&
+        (pending.type === 'jobs' ||
+          pending.type === 'profile' ||
+          pending.type === 'job')
+      ) {
+        router.push(routeForTmaAction(locale, pending));
         return;
       }
 
