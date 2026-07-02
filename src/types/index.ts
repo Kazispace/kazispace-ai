@@ -162,7 +162,7 @@ export interface DeactivateAgentResponse {
 
 export interface AgentChatMeta {
   cv_preview_markdown?: string;
-  diff?: unknown;
+  diff?: unknown | null;
   buttons?: string[];
   error_code?: string;
 }
