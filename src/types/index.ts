@@ -154,6 +154,12 @@ export interface DeactivateAgentResponse {
   };
 }
 
+export interface AgentChatMeta {
+  cv_preview_markdown?: string;
+  diff?: unknown;
+  buttons?: string[];
+}
+
 export interface AgentChatResponse {
   message_id?: string;
   agent_id?: string;
@@ -163,6 +169,7 @@ export interface AgentChatResponse {
     next_actions?: ChatNextAction[];
     cards?: ChatJobCard[];
   };
+  meta?: AgentChatMeta;
   reply?: string;
   credits_consumed?: number;
   idempotent_replay?: boolean;

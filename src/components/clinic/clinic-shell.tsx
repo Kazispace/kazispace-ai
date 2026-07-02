@@ -25,6 +25,10 @@ import {
 import { getEnglishLevel } from "@/lib/auth";
 import { dismissReferral, isReferralDismissed, clearExpiredReferralDismissals } from "@/lib/referral-dismiss";
 import { consumePendingTmaAction, routeForTmaAction } from "@/lib/tma-routing";
+import {
+  CV_AGENT_HUB_ENABLED,
+  CV_BUILDER_AGENT_ID,
+} from "@/lib/cv-agent-config";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -165,6 +169,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     const initAgent = async () => {
       const pending = consumePendingTmaAction();
       if (pending?.type === 'activate_agent') {
+        if (
+          pending.agentId === CV_BUILDER_AGENT_ID &&
+          CV_AGENT_HUB_ENABLED
+        ) {
+          router.push(`/${locale}/cv`);
+          return;
+        }
         if (AGENT_REGISTRY.some((a) => a.agentId === pending.agentId)) {
           await switchToAgentRef.current(pending.agentId);
           return;
@@ -187,7 +198,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         pending &&
         (pending.type === 'jobs' ||
           pending.type === 'profile' ||
-          pending.type === 'job')
+          pending.type === 'job' ||
+          pending.type === 'cv' ||
+          pending.type === 'cv_job')
       ) {
         router.push(routeForTmaAction(locale, pending));
         return;
@@ -247,6 +260,14 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSending, isSwitching]);
 
+  const handleQuickPrompt = (text: string) => {
+    if (text === tClinic("prompts.cvText")) {
+      router.push(`/${locale}/cv`);
+      return;
+    }
+    void handleSend(text);
+  };
+
   const handleSend = async (text: string) => {
     if (!isLoggedIn) {
       showToast(tClinic("loginToChat"), "info");
@@ -303,6 +324,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     if (!isLoggedIn) {
       showToast(tClinic("loginToContinue"), "info");
       router.push(`/${locale}/login`);
+      return;
+    }
+    if (agentId === CV_BUILDER_AGENT_ID && CV_AGENT_HUB_ENABLED) {
+      router.push(`/${locale}/cv`);
       return;
     }
     const result = await switchToAgent(agentId);
@@ -411,7 +436,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             selectedLevel={englishLevel}
             onLevelChange={setEnglishLevelState}
             onAgentSelect={handleAgentSelect}
-            onQuickPrompt={handleSend}
+            onQuickPrompt={handleQuickPrompt}
           />
         ) : (
           messages.map((msg) => {

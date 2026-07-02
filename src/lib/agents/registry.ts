@@ -36,6 +36,29 @@ export const AGENT_REGISTRY: AgentRegistryEntry[] = [
     },
   },
   {
+    agentId: 'cv_builder',
+    emoji: '📄',
+    status: 'available',
+    name: {
+      en: 'CV Builder',
+      ru: 'Конструктор резюме',
+      kk: 'Түйіндеме құрастырушы',
+      uz: 'Rezyume yaratuvchi',
+    },
+    description: {
+      en: 'Build and polish your resume with AI',
+      ru: 'Создай и улучши резюме с ИИ',
+      kk: 'ЖИ көмегімен түйіндеме жасау',
+      uz: 'AI bilan rezyumeni yaratish',
+    },
+    promptHint: {
+      en: 'Tell me about your experience or target role',
+      ru: 'Расскажи об опыте или желаемой роли',
+      kk: 'Тәжірибе немесе мақсатты рөл туралы айтыңыз',
+      uz: 'Tajriba yoki maqsad rol haqida ayting',
+    },
+  },
+  {
     agentId: 'mock_interview',
     emoji: '🎤',
     status: 'available',
@@ -108,6 +131,12 @@ export const AGENT_QUICK_REPLIES: Record<
     ru: ['Поведенческие вопросы', 'Техническое интервью', 'Практика английского'],
     kk: ['Мінез-құлық сұрақтары', 'Техникалық сұхбат', 'Ағылшын практикасы'],
     uz: ['Xulq-atvor savollari', 'Texnik suhbat', 'Ingliz amaliyoti'],
+  },
+  cv_builder: {
+    en: ['Add work experience', 'Tailor for a job', 'Improve summary'],
+    ru: ['Добавить опыт', 'Под вакансию', 'Улучшить summary'],
+    kk: ['Жұмыс тәжірибесін қосу', 'Вакансияға бейімдеу', 'Summary жақсарту'],
+    uz: ['Ish tajribasini qo\'shish', 'Vakansiyaga moslash', 'Summary yaxshilash'],
   },
 };
 

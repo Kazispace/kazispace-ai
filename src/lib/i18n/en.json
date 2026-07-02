@@ -332,6 +332,8 @@
 		"signIn": "Sign in",
 		"onboardingBanner": "Complete your career profile in chat before building a CV.",
 		"completeProfile": "Go to chat",
+		"profileBanner": "Complete your profile before using CV Builder.",
+		"goToProfile": "Go to profile",
 		"sessionLoading": "Starting CV session…",
 		"inputPlaceholder": "Describe your experience or ask for changes…",
 		"previewTitle": "Live preview",

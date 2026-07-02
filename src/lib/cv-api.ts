@@ -1,5 +1,11 @@
 import { apiRequest } from '@/lib/api-client';
-import type { ApiResponse, CvChatRequest, CvChatResponse } from '@/types';
+import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import type {
+  AgentChatResponse,
+  ApiResponse,
+  CvChatRequest,
+  CvChatResponse,
+} from '@/types';
 import type { CvDiffPayload, CvDiffChange } from '@/types/api-schema';
 
 export async function postCvChat(
@@ -78,6 +84,50 @@ export function extractCvButtons(data: CvChatResponse): string[] {
 
 export function extractCvDiff(data: CvChatResponse): CvDiffPayload | null {
   return normalizeCvDiff(data.diff);
+}
+
+function agentMeta(data: AgentChatResponse): Record<string, unknown> | undefined {
+  const meta = data.meta;
+  return meta && typeof meta === 'object' ? (meta as Record<string, unknown>) : undefined;
+}
+
+export function extractCvReplyFromAgent(data: AgentChatResponse): string {
+  const envelope = parseAssistantEnvelope(data);
+  if (envelope.reply) return envelope.reply;
+  if (typeof data.reply === 'string') return data.reply;
+  return '';
+}
+
+export function extractCvPreviewFromAgent(
+  data: AgentChatResponse
+): CvPreviewContent | null {
+  const meta = agentMeta(data);
+  const markdown =
+    typeof meta?.cv_preview_markdown === 'string'
+      ? meta.cv_preview_markdown
+      : undefined;
+  if (markdown) {
+    return { format: 'markdown', content: markdown };
+  }
+  return null;
+}
+
+export function extractCvDiffFromAgent(data: AgentChatResponse): CvDiffPayload | null {
+  return normalizeCvDiff(agentMeta(data)?.diff);
+}
+
+export function extractCvButtonsFromAgent(data: AgentChatResponse): string[] {
+  const meta = agentMeta(data);
+  if (Array.isArray(meta?.buttons)) {
+    return meta.buttons.filter((b): b is string => typeof b === 'string');
+  }
+  const envelope = parseAssistantEnvelope(data);
+  return envelope.nextActions
+    .map((action) => {
+      if (typeof action.label === 'string') return action.label;
+      return action.type;
+    })
+    .filter(Boolean);
 }
 
 /** Normalize API diff to KAZI-35 shape; accepts legacy section objects during transition. */
