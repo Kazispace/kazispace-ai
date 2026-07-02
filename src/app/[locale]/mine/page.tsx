@@ -117,7 +117,7 @@ export default function MinePage({ params }: MinePageProps) {
             {t("jobPrepGroupTitle")}
           </h3>
           <div className="space-y-2">
-            <Link href={`/${locale}/chat`}>
+            <Link href={`/${locale}/cv`}>
               <Card className="hover:border-orange cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -131,7 +131,7 @@ export default function MinePage({ params }: MinePageProps) {
                 </CardContent>
               </Card>
             </Link>
-            <Link href={`/${locale}/chat`}>
+            <Link href={`/${locale}/interview`}>
               <Card className="hover:border-orange cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
