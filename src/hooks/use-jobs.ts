@@ -33,8 +33,8 @@ export function useJobRecommendations(page = 1, limit = 10) {
     }
     setItems(res.data.items ?? []);
     setIsProUser(!!res.data.is_pro_user);
-    setUpgradeHint(res.data.upgrade_hint);
-    setEngineTotal(res.data.engine_total ?? res.data.total);
+    setUpgradeHint(res.data.upgrade_hint ?? undefined);
+    setEngineTotal(res.data.engine_total ?? res.data.total ?? undefined);
     setIsLoading(false);
   }, [isLoggedIn, page, limit]);
 

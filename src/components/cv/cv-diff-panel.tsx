@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
-import type { CvDiffChange, CvDiffPayload } from '@/types/cv-contract';
+import type { CvDiffChange, CvDiffPayload } from '@/types/api-schema';
 
 interface CvDiffPanelProps {
   diff: CvDiffPayload;
