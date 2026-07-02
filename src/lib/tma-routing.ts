@@ -94,6 +94,11 @@ export function setPendingTmaAction(action: TmaPendingAction): void {
   }
 }
 
+export function clearPendingTmaAction(): void {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(STORAGE_KEYS.TMA_PENDING_ACTION);
+}
+
 export function consumePendingTmaAction(): TmaPendingAction | null {
   if (typeof window === 'undefined') return null;
   const raw = sessionStorage.getItem(STORAGE_KEYS.TMA_PENDING_ACTION);
@@ -109,6 +114,10 @@ export function consumePendingTmaAction(): TmaPendingAction | null {
 export function captureStartParamFromContext(search?: string): TmaPendingAction {
   const startParam = resolveStartParam(search);
   const action = parseStartParam(startParam);
-  setPendingTmaAction(action);
+  if (shouldPersistTmaAction(action)) {
+    setPendingTmaAction(action);
+  } else {
+    clearPendingTmaAction();
+  }
   return action;
 }

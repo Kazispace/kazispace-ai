@@ -4,10 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  parseStartParam,
+  captureStartParamFromContext,
   routeForTmaAction,
-  shouldPersistTmaAction,
-  setPendingTmaAction,
 } from '@/lib/tma-routing';
 import {
   expandTelegramWebApp,
@@ -15,7 +13,6 @@ import {
   getTelegramWebApp,
   readyTelegramWebApp,
   applyTelegramTheme,
-  resolveStartParam,
 } from '@/lib/telegram';
 import { authTelegramWebapp, getMe } from '@/lib/api-client';
 import { setAuthToken } from '@/lib/auth';
@@ -72,10 +69,7 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
         useAuthStore.setState({ token, isLoggedIn: true, user: null });
       }
 
-      const action = parseStartParam(resolveStartParam());
-      if (shouldPersistTmaAction(action)) {
-        setPendingTmaAction(action);
-      }
+      const action = captureStartParamFromContext();
       useUIStore.getState().setTmaInitComplete(true);
       router.replace(routeForTmaAction(locale, action));
     };
