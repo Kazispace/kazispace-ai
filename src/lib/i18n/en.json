@@ -256,7 +256,9 @@
 			"return_to_clinic": "Back to clinic",
 			"mock_interview": "Practice interview",
 			"complete_profile": "Complete profile",
-			"job_search": "Talk to job search expert"
+			"job_search": "Talk to job search expert",
+			"edit_cv": "Improve CV",
+			"cv_builder": "Open CV Builder"
 		}
 	},
 	"referral": {

@@ -26,8 +26,8 @@ import { getEnglishLevel } from "@/lib/auth";
 import { dismissReferral, isReferralDismissed, clearExpiredReferralDismissals } from "@/lib/referral-dismiss";
 import { consumePendingTmaAction, routeForTmaAction } from "@/lib/tma-routing";
 import {
-  CV_AGENT_HUB_ENABLED,
   CV_BUILDER_AGENT_ID,
+  isCvBuilderAgent,
 } from "@/lib/cv-agent-config";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
@@ -131,7 +131,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   );
 
   const shouldOpenCvBuilderPage = useCallback((agentId: string) => {
-    return agentId === CV_BUILDER_AGENT_ID && CV_AGENT_HUB_ENABLED;
+    return isCvBuilderAgent(agentId);
   }, []);
 
   const inputPlaceholder = isAgentMode
@@ -184,8 +184,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const pending = consumePendingTmaAction();
       if (pending?.type === 'activate_agent') {
         if (
-          pending.agentId === CV_BUILDER_AGENT_ID &&
-          CV_AGENT_HUB_ENABLED
+          pending.agentId === CV_BUILDER_AGENT_ID
         ) {
           routeCvBuilderPage();
           return;
@@ -328,6 +327,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     const result = await sendClinicMessage(text);
 
     if (result.ok && result.routedToAgent) {
+      if (isCvBuilderAgent(result.routedToAgent.agentId)) {
+        markStreamComplete(result.assistantId);
+        routeCvBuilderPage();
+        return;
+      }
       const msg = useChatStore
         .getState()
         .messages.find((m) => m.id === result.assistantId);
@@ -362,7 +366,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       router.push(`/${locale}/login`);
       return;
     }
-    if (agentId === CV_BUILDER_AGENT_ID && CV_AGENT_HUB_ENABLED) {
+    if (isCvBuilderAgent(agentId)) {
       routeCvBuilderPage();
       return;
     }
@@ -412,6 +416,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         case "job_search":
           void handleAgentSelect("job_search");
           return;
+        case "edit_cv":
+        case "cv_builder":
+          routeCvBuilderPage();
+          return;
         case "complete_profile":
           router.push(`/${locale}/profile`);
           return;
@@ -419,7 +427,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect]
+    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage]
   );
 
   const handleJobCardClick = useCallback(
