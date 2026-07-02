@@ -4,16 +4,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
-  captureStartParamFromContext,
-  type TmaPendingAction,
+  parseStartParam,
+  routeForTmaAction,
+  shouldPersistTmaAction,
+  setPendingTmaAction,
 } from '@/lib/tma-routing';
 import {
   expandTelegramWebApp,
   getInitData,
   getTelegramWebApp,
-  isTelegramWebApp,
   readyTelegramWebApp,
   applyTelegramTheme,
+  resolveStartParam,
 } from '@/lib/telegram';
 import { authTelegramWebapp, getMe } from '@/lib/api-client';
 import { setAuthToken } from '@/lib/auth';
@@ -22,20 +24,6 @@ import { Button } from '@/components/ui/button';
 
 interface TmaLaunchPageProps {
   params: { locale: string };
-}
-
-function routeForAction(locale: string, action: TmaPendingAction): string {
-  switch (action.type) {
-    case 'subscription':
-      return `/${locale}/subscription`;
-    case 'job':
-      return `/${locale}/chat`;
-    case 'activate_agent':
-    case 'clinic':
-    case 'restore':
-    default:
-      return `/${locale}/chat`;
-  }
 }
 
 export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
@@ -84,9 +72,12 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
         useAuthStore.setState({ token, isLoggedIn: true, user: null });
       }
 
-      const action = captureStartParamFromContext();
+      const action = parseStartParam(resolveStartParam());
+      if (shouldPersistTmaAction(action)) {
+        setPendingTmaAction(action);
+      }
       useUIStore.getState().setTmaInitComplete(true);
-      router.replace(routeForAction(locale, action));
+      router.replace(routeForTmaAction(locale, action));
     };
 
     void run();

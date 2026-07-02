@@ -17,7 +17,32 @@ export type TmaPendingAction =
   | { type: 'clinic' }
   | { type: 'restore' }
   | { type: 'subscription' }
+  | { type: 'jobs' }
+  | { type: 'profile' }
   | { type: 'job'; jobId: string };
+
+/** Routes that clinic-shell must handle after landing on /chat. */
+export function shouldPersistTmaAction(action: TmaPendingAction): boolean {
+  return action.type === 'activate_agent' || action.type === 'clinic';
+}
+
+export function routeForTmaAction(locale: string, action: TmaPendingAction): string {
+  switch (action.type) {
+    case 'subscription':
+      return `/${locale}/subscription`;
+    case 'jobs':
+      return `/${locale}/jobs`;
+    case 'profile':
+      return `/${locale}/profile`;
+    case 'job':
+      return `/${locale}/jobs/${encodeURIComponent(action.jobId)}`;
+    case 'activate_agent':
+    case 'clinic':
+    case 'restore':
+    default:
+      return `/${locale}/chat`;
+  }
+}
 
 export function parseStartParam(startParam: string | null | undefined): TmaPendingAction {
   if (!startParam) return { type: 'restore' };
@@ -29,6 +54,14 @@ export function parseStartParam(startParam: string | null | undefined): TmaPendi
 
   if (param === 'clinic') {
     return { type: 'clinic' };
+  }
+
+  if (param === 'jobs') {
+    return { type: 'jobs' };
+  }
+
+  if (param === 'profile') {
+    return { type: 'profile' };
   }
 
   if (param.startsWith('agent_')) {
