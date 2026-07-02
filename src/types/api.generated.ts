@@ -38,6 +38,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/telegram/webapp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Auth Telegram Miniapp
+         * @description Validate Telegram Mini App initData and issue a JWT (same shape as OTP verify).
+         */
+        post: operations["auth_telegram_miniapp_api_v1_auth_telegram_webapp_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/telegram-miniapp": {
         parameters: {
             query?: never;
@@ -47,7 +67,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Auth Telegram Miniapp */
+        /**
+         * Auth Telegram Miniapp
+         * @description Validate Telegram Mini App initData and issue a JWT (same shape as OTP verify).
+         */
         post: operations["auth_telegram_miniapp_api_v1_auth_telegram_miniapp_post"];
         delete?: never;
         options?: never;
@@ -64,12 +87,14 @@ export interface paths {
         };
         /** Get Me */
         get: operations["get_me_api_v1_me_get"];
-        put?: never;
+        /** Patch Me */
+        put: operations["patch_me_api_v1_me_put"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Patch Me */
+        patch: operations["patch_me_api_v1_me_patch"];
         trace?: never;
     };
     "/api/v1/me/bind/phone/request": {
@@ -889,6 +914,8 @@ export interface components {
              * @default web
              */
             source_channel: string;
+            /** Job Id */
+            job_id?: string | null;
         };
         /** CvChatRequest */
         CvChatRequest: {
@@ -898,6 +925,8 @@ export interface components {
             message?: string | null;
             /** Device Id */
             device_id?: string | null;
+            /** Job Id */
+            job_id?: string | null;
             /** Value */
             value?: string | null;
             /** Tg Action */
@@ -941,10 +970,29 @@ export interface components {
             /** Otp Request Id */
             otp_request_id?: number | string | null;
         };
-        /** TelegramMiniAppAuthBody */
-        TelegramMiniAppAuthBody: {
-            /** Init Data */
-            init_data: string;
+        /**
+         * PatchMeBody
+         * @description Partial profile update — all fields optional.
+         */
+        PatchMeBody: {
+            /** Primary Country */
+            primary_country?: string | null;
+            /** Primary Locale */
+            primary_locale?: string | null;
+            /** Career Goal */
+            career_goal?: string | null;
+            /** Target Role */
+            target_role?: string | null;
+            /** English Level */
+            english_level?: string | null;
+            /** Weekly Hours Budget */
+            weekly_hours_budget?: number | null;
+            /** Current Status */
+            current_status?: string | null;
+            /** Education Text */
+            education_text?: string | null;
+            /** Experience Text */
+            experience_text?: string | null;
         };
         /** RespondRequest */
         RespondRequest: {
@@ -989,6 +1037,11 @@ export interface components {
             /** Web User Id */
             web_user_id?: string | null;
         };
+        /** TelegramMiniAppAuthBody */
+        TelegramMiniAppAuthBody: {
+            /** Init Data */
+            init_data: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1031,6 +1084,382 @@ export interface components {
             email?: string | null;
             /** Full Name */
             full_name?: string | null;
+        };
+        /** ActiveEntitlementBlock */
+        ActiveEntitlementBlock: {
+            /** Type */
+            type: string;
+            /** Expire At */
+            expire_at?: string | null;
+        };
+        /** BillingSnapshotBlock */
+        BillingSnapshotBlock: {
+            /** Credits */
+            credits: number;
+            active_entitlement?: components["schemas"]["ActiveEntitlementBlock"] | null;
+            /** Is Paid */
+            is_paid: boolean;
+        };
+        /** CapabilitiesBlock */
+        CapabilitiesBlock: {
+            /** Can Save Progress */
+            can_save_progress: boolean;
+            /** Can View Full Plan */
+            can_view_full_plan: boolean;
+            /** Can Access Web App */
+            can_access_web_app: boolean;
+            /** Can Purchase */
+            can_purchase: boolean;
+            /** Can Use Paid Features */
+            can_use_paid_features: boolean;
+        };
+        /** CreateInterviewSessionResponse */
+        CreateInterviewSessionResponse: {
+            /** Session Id */
+            session_id: string;
+            /**
+             * Status
+             * @constant
+             */
+            status: "in_progress";
+            /** Interview Level */
+            interview_level: string;
+            /** Charged */
+            charged: boolean;
+            /** Question Index */
+            question_index: number;
+            /** Question Count */
+            question_count: number;
+            /** Estimated Duration Minutes */
+            estimated_duration_minutes: number;
+            /** Language Notice */
+            language_notice: string;
+            question: components["schemas"]["InterviewQuestionBlock"];
+            prep_card?: components["schemas"]["InterviewPrepCard"] | null;
+            /**
+             * Job Id
+             * @description Echoed when sent; prep_card generation is KAZI-32 (schema ahead of runtime).
+             */
+            job_id?: string | null;
+        };
+        /** CvAssistantMessage */
+        CvAssistantMessage: {
+            /**
+             * Role
+             * @default assistant
+             * @constant
+             */
+            role: "assistant";
+            /** Content */
+            content: string;
+        };
+        /** CvChatResponse */
+        CvChatResponse: {
+            /** Cv Session Id */
+            cv_session_id: string;
+            /** Status */
+            status: string;
+            /** Is Anonymous */
+            is_anonymous: boolean;
+            assistant_message: components["schemas"]["CvAssistantMessage"];
+            profile_hints: components["schemas"]["CvProfileHints"];
+            regenerate_policy: components["schemas"]["CvRegeneratePolicy"];
+            /** Buttons */
+            buttons?: string[] | null;
+            /** Button Action */
+            button_action?: string | null;
+            /** Cv Content */
+            cv_content?: string | null;
+            /** Document Id */
+            document_id?: string | null;
+            /** Version */
+            version?: number | string | null;
+            /** Error */
+            error?: boolean | string | null;
+            /** Error Code */
+            error_code?: string | null;
+            /** Paywall Source */
+            paywall_source?: string | null;
+            /** Fields Summary */
+            fields_summary?: {
+                [key: string]: unknown;
+            } | null;
+            /** Followup Round */
+            followup_round?: number | null;
+            /** Followup Remaining */
+            followup_remaining?: number | null;
+            /** Prefilled */
+            prefilled?: {
+                [key: string]: unknown;
+            } | null;
+            /** Job Id */
+            job_id?: string | null;
+            diff?: components["schemas"]["CvDiffPayload"] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * CvDiffChange
+         * @description Planned v0.2d depth (KAZI-33).
+         */
+        CvDiffChange: {
+            /** Path */
+            path?: string | null;
+            /** Before */
+            before?: string | null;
+            /** After */
+            after?: string | null;
+        };
+        /** CvDiffPayload */
+        CvDiffPayload: {
+            /** Added */
+            added?: string[];
+            /** Removed */
+            removed?: string[];
+            /** Modified */
+            modified?: components["schemas"]["CvDiffChange"][];
+        };
+        /** CvProfileHints */
+        CvProfileHints: {
+            /** Target Role */
+            target_role?: string | null;
+            /** English Level */
+            english_level?: string | null;
+            /** Current Status */
+            current_status?: string | null;
+        };
+        /** CvRegeneratePolicy */
+        CvRegeneratePolicy: {
+            /** Current Flow Id */
+            current_flow_id?: string | null;
+            /**
+             * Free Regenerates Used
+             * @default 0
+             */
+            free_regenerates_used: number;
+            /**
+             * Free Regenerates Remaining
+             * @default 0
+             */
+            free_regenerates_remaining: number;
+        };
+        /**
+         * InterviewPrepCard
+         * @description Planned v0.2d depth (KAZI-32) — returned when ``job_id`` is set.
+         */
+        InterviewPrepCard: {
+            /** Focus Areas */
+            focus_areas?: string[];
+            /** Sample Questions */
+            sample_questions?: string[];
+            /** Estimated Duration Min */
+            estimated_duration_min?: number | null;
+        };
+        /** InterviewQuestionBlock */
+        InterviewQuestionBlock: {
+            /** Question Id */
+            question_id: string;
+            /** Category */
+            category: string;
+            /** Content */
+            content: string;
+        };
+        /** JobDetailResponse */
+        JobDetailResponse: {
+            /** Job Id */
+            job_id: string;
+            /** Title */
+            title: string;
+            /** Company */
+            company: string;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Work Mode */
+            work_mode?: string | null;
+            /** Salary */
+            salary?: string | null;
+            /** Description Text */
+            description_text?: string | null;
+            /** Required Skills */
+            required_skills?: string[];
+            /** Match Score */
+            match_score: number;
+            match_analysis: components["schemas"]["MatchAnalysisBlock"];
+            /** Why Matched */
+            why_matched?: string[];
+            /** Gap To Close */
+            gap_to_close?: string[];
+            /** Apply Url */
+            apply_url?: string | null;
+            /** Source Url */
+            source_url?: string | null;
+            /** Source */
+            source?: string | null;
+            /** Published At */
+            published_at?: string | null;
+            /** Primary Cta */
+            primary_cta: string;
+            /** Is Pro User */
+            is_pro_user: boolean;
+            /**
+             * Pro Features Locked
+             * @default false
+             */
+            pro_features_locked: boolean;
+        };
+        /** JobRecommendationItem */
+        JobRecommendationItem: {
+            /** Job Id */
+            job_id: string;
+            /** Title */
+            title: string;
+            /** Company */
+            company: string;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** Location */
+            location?: string | null;
+            /** Work Mode */
+            work_mode?: string | null;
+            /** Salary */
+            salary?: string | null;
+            /** Match Score */
+            match_score: number;
+            /** Match Level */
+            match_level: string;
+            /** Why Matched */
+            why_matched?: string[];
+            /** Gap To Close */
+            gap_to_close?: string[];
+            /** Ranking Reason */
+            ranking_reason?: string | null;
+            /** Primary Cta */
+            primary_cta: string;
+            /**
+             * Is Saved
+             * @default false
+             */
+            is_saved: boolean;
+            /**
+             * Is Locked
+             * @default false
+             */
+            is_locked: boolean;
+            /** Source */
+            source?: string | null;
+            /** Published At */
+            published_at?: string | null;
+        };
+        /** JobRecommendationsResponse */
+        JobRecommendationsResponse: {
+            /** Items */
+            items: components["schemas"]["JobRecommendationItem"][];
+            /** Is Pro User */
+            is_pro_user: boolean;
+            /** Page */
+            page: number;
+            /** Limit */
+            limit: number;
+            /** Generated At */
+            generated_at: string;
+            /** Total */
+            total?: number | null;
+            /** Engine Total */
+            engine_total?: number | null;
+            /** Upgrade Hint */
+            upgrade_hint?: string | null;
+        };
+        /** MatchAnalysisBlock */
+        MatchAnalysisBlock: {
+            /** Overall Reason */
+            overall_reason: string;
+            scores: components["schemas"]["MatchAnalysisScores"];
+            /** Why Matched */
+            why_matched?: string[];
+            /** Gap To Close */
+            gap_to_close?: string[];
+        };
+        /** MatchAnalysisScores */
+        MatchAnalysisScores: {
+            /** Skills Match */
+            skills_match: number;
+            /** Experience Match */
+            experience_match: number;
+            /** Language Match */
+            language_match: number;
+            /** Preference Match */
+            preference_match: number;
+        };
+        /** MeResponse */
+        MeResponse: {
+            /** User Id */
+            user_id: string;
+            /** Status */
+            status: string;
+            /** Is Bound */
+            is_bound: boolean;
+            /** Is Paid */
+            is_paid: boolean;
+            /** Primary Locale */
+            primary_locale: string;
+            /** Primary Country */
+            primary_country?: string | null;
+            /** Source Channel */
+            source_channel?: string | null;
+            /** Onboarding Stage */
+            onboarding_stage?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+            /** First Value At */
+            first_value_at?: string | null;
+            /** First Paid At */
+            first_paid_at?: string | null;
+            /** Hook State */
+            hook_state: string;
+            /** Hook State Label */
+            hook_state_label: string;
+            /** Hook State Updated At */
+            hook_state_updated_at?: string | null;
+            profile_completion: components["schemas"]["ProfileCompletionBlock"];
+            profile?: components["schemas"]["UserProfileBlock"] | null;
+            capabilities: components["schemas"]["CapabilitiesBlock"];
+            billing_snapshot: components["schemas"]["BillingSnapshotBlock"];
+        };
+        /** ProfileCompletionBlock */
+        ProfileCompletionBlock: {
+            /** Minimum Fields Completed */
+            minimum_fields_completed: number;
+            /** Minimum Fields Total */
+            minimum_fields_total: number;
+            /** Minimum Complete */
+            minimum_complete: boolean;
+            /** Deferred Fields Completed */
+            deferred_fields_completed: number;
+            /** Deferred Fields Total */
+            deferred_fields_total: number;
+            /** Overall Pct */
+            overall_pct: number;
+            /** Missing Minimum */
+            missing_minimum: string[];
+        };
+        /** UserProfileBlock */
+        UserProfileBlock: {
+            /** Career Goal */
+            career_goal?: string | null;
+            /** Target Role */
+            target_role?: string | null;
+            /** English Level */
+            english_level?: string | null;
+            /** Current Status */
+            current_status?: string | null;
+            /** Weekly Hours Budget */
+            weekly_hours_budget?: number | null;
+            /** Education Text */
+            education_text?: string | null;
+            /** Experience Text */
+            experience_text?: string | null;
         };
     };
     responses: never;
@@ -1107,6 +1536,39 @@ export interface operations {
             };
         };
     };
+    auth_telegram_miniapp_api_v1_auth_telegram_webapp_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TelegramMiniAppAuthBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     auth_telegram_miniapp_api_v1_auth_telegram_miniapp_post: {
         parameters: {
             query?: never;
@@ -1155,7 +1617,73 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+        };
+    };
+    patch_me_api_v1_me_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchMeBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_me_api_v1_me_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchMeBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1245,7 +1773,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CvChatResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1426,7 +1954,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CreateInterviewSessionResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1829,7 +2357,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["JobRecommendationsResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1860,7 +2388,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["JobDetailResponse"];
                 };
             };
             /** @description Validation Error */

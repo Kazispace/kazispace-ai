@@ -77,9 +77,47 @@
         }
       }
     },
+    "/api/v1/auth/telegram/webapp": {
+      "post": {
+        "summary": "Auth Telegram Miniapp",
+        "description": "Validate Telegram Mini App initData and issue a JWT (same shape as OTP verify).",
+        "operationId": "auth_telegram_miniapp_api_v1_auth_telegram_webapp_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelegramMiniAppAuthBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/telegram-miniapp": {
       "post": {
         "summary": "Auth Telegram Miniapp",
+        "description": "Validate Telegram Mini App initData and issue a JWT (same shape as OTP verify).",
         "operationId": "auth_telegram_miniapp_api_v1_auth_telegram_miniapp_post",
         "requestBody": {
           "content": {
@@ -122,7 +160,91 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Patch Me",
+        "operationId": "patch_me_api_v1_me_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchMeBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "summary": "Patch Me",
+        "operationId": "patch_me_api_v1_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchMeBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -236,7 +358,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CvChatResponse"
+                }
               }
             }
           },
@@ -476,7 +600,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CreateInterviewSessionResponse"
+                }
               }
             }
           },
@@ -1059,7 +1185,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/JobRecommendationsResponse"
+                }
               }
             }
           },
@@ -1104,7 +1232,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/JobDetailResponse"
+                }
               }
             }
           },
@@ -1893,6 +2023,17 @@
             "type": "string",
             "title": "Source Channel",
             "default": "web"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
           }
         },
         "type": "object",
@@ -1936,6 +2077,17 @@
               }
             ],
             "title": "Device Id"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
           },
           "value": {
             "anyOf": [
@@ -2084,18 +2236,111 @@
         ],
         "title": "OtpVerifyBody"
       },
-      "TelegramMiniAppAuthBody": {
+      "PatchMeBody": {
         "properties": {
-          "init_data": {
-            "type": "string",
-            "title": "Init Data"
+          "primary_country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Country"
+          },
+          "primary_locale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Locale"
+          },
+          "career_goal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Career Goal"
+          },
+          "target_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Role"
+          },
+          "english_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "English Level"
+          },
+          "weekly_hours_budget": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weekly Hours Budget"
+          },
+          "current_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Status"
+          },
+          "education_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Education Text"
+          },
+          "experience_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experience Text"
           }
         },
         "type": "object",
-        "required": [
-          "init_data"
-        ],
-        "title": "TelegramMiniAppAuthBody"
+        "title": "PatchMeBody",
+        "description": "Partial profile update — all fields optional."
       },
       "RespondRequest": {
         "properties": {
@@ -2235,6 +2480,19 @@
           "hash"
         ],
         "title": "TelegramAuthRequest"
+      },
+      "TelegramMiniAppAuthBody": {
+        "properties": {
+          "init_data": {
+            "type": "string",
+            "title": "Init Data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "init_data"
+        ],
+        "title": "TelegramMiniAppAuthBody"
       },
       "ValidationError": {
         "properties": {
@@ -2415,6 +2673,1278 @@
           "web_user_id"
         ],
         "title": "WebUserBindRequest"
+      },
+      "ActiveEntitlementBlock": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "expire_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expire At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "ActiveEntitlementBlock"
+      },
+      "BillingSnapshotBlock": {
+        "properties": {
+          "credits": {
+            "type": "integer",
+            "title": "Credits"
+          },
+          "active_entitlement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActiveEntitlementBlock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "is_paid": {
+            "type": "boolean",
+            "title": "Is Paid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "credits",
+          "is_paid"
+        ],
+        "title": "BillingSnapshotBlock"
+      },
+      "CapabilitiesBlock": {
+        "properties": {
+          "can_save_progress": {
+            "type": "boolean",
+            "title": "Can Save Progress"
+          },
+          "can_view_full_plan": {
+            "type": "boolean",
+            "title": "Can View Full Plan"
+          },
+          "can_access_web_app": {
+            "type": "boolean",
+            "title": "Can Access Web App"
+          },
+          "can_purchase": {
+            "type": "boolean",
+            "title": "Can Purchase"
+          },
+          "can_use_paid_features": {
+            "type": "boolean",
+            "title": "Can Use Paid Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "can_save_progress",
+          "can_view_full_plan",
+          "can_access_web_app",
+          "can_purchase",
+          "can_use_paid_features"
+        ],
+        "title": "CapabilitiesBlock"
+      },
+      "CreateInterviewSessionResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "status": {
+            "type": "string",
+            "const": "in_progress",
+            "title": "Status"
+          },
+          "interview_level": {
+            "type": "string",
+            "title": "Interview Level"
+          },
+          "charged": {
+            "type": "boolean",
+            "title": "Charged"
+          },
+          "question_index": {
+            "type": "integer",
+            "title": "Question Index"
+          },
+          "question_count": {
+            "type": "integer",
+            "title": "Question Count"
+          },
+          "estimated_duration_minutes": {
+            "type": "integer",
+            "title": "Estimated Duration Minutes"
+          },
+          "language_notice": {
+            "type": "string",
+            "title": "Language Notice"
+          },
+          "question": {
+            "$ref": "#/components/schemas/InterviewQuestionBlock"
+          },
+          "prep_card": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InterviewPrepCard"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id",
+            "description": "Echoed when sent; prep_card generation is KAZI-32 (schema ahead of runtime)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "status",
+          "interview_level",
+          "charged",
+          "question_index",
+          "question_count",
+          "estimated_duration_minutes",
+          "language_notice",
+          "question"
+        ],
+        "title": "CreateInterviewSessionResponse"
+      },
+      "CvAssistantMessage": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "const": "assistant",
+            "title": "Role",
+            "default": "assistant"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "CvAssistantMessage"
+      },
+      "CvChatResponse": {
+        "properties": {
+          "cv_session_id": {
+            "type": "string",
+            "title": "Cv Session Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "is_anonymous": {
+            "type": "boolean",
+            "title": "Is Anonymous"
+          },
+          "assistant_message": {
+            "$ref": "#/components/schemas/CvAssistantMessage"
+          },
+          "profile_hints": {
+            "$ref": "#/components/schemas/CvProfileHints"
+          },
+          "regenerate_policy": {
+            "$ref": "#/components/schemas/CvRegeneratePolicy"
+          },
+          "buttons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Buttons"
+          },
+          "button_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Button Action"
+          },
+          "cv_content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cv Content"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "paywall_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paywall Source"
+          },
+          "fields_summary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fields Summary"
+          },
+          "followup_round": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Followup Round"
+          },
+          "followup_remaining": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Followup Remaining"
+          },
+          "prefilled": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prefilled"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "diff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CvDiffPayload"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "cv_session_id",
+          "status",
+          "is_anonymous",
+          "assistant_message",
+          "profile_hints",
+          "regenerate_policy"
+        ],
+        "title": "CvChatResponse"
+      },
+      "CvDiffChange": {
+        "properties": {
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before"
+          },
+          "after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After"
+          }
+        },
+        "type": "object",
+        "title": "CvDiffChange",
+        "description": "Planned v0.2d depth (KAZI-33)."
+      },
+      "CvDiffPayload": {
+        "properties": {
+          "added": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Added"
+          },
+          "removed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Removed"
+          },
+          "modified": {
+            "items": {
+              "$ref": "#/components/schemas/CvDiffChange"
+            },
+            "type": "array",
+            "title": "Modified"
+          }
+        },
+        "type": "object",
+        "title": "CvDiffPayload"
+      },
+      "CvProfileHints": {
+        "properties": {
+          "target_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Role"
+          },
+          "english_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "English Level"
+          },
+          "current_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Status"
+          }
+        },
+        "type": "object",
+        "title": "CvProfileHints"
+      },
+      "CvRegeneratePolicy": {
+        "properties": {
+          "current_flow_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Flow Id"
+          },
+          "free_regenerates_used": {
+            "type": "integer",
+            "title": "Free Regenerates Used",
+            "default": 0
+          },
+          "free_regenerates_remaining": {
+            "type": "integer",
+            "title": "Free Regenerates Remaining",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "CvRegeneratePolicy"
+      },
+      "InterviewPrepCard": {
+        "properties": {
+          "focus_areas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Focus Areas"
+          },
+          "sample_questions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sample Questions"
+          },
+          "estimated_duration_min": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Duration Min"
+          }
+        },
+        "type": "object",
+        "title": "InterviewPrepCard",
+        "description": "Planned v0.2d depth (KAZI-32) — returned when ``job_id`` is set."
+      },
+      "InterviewQuestionBlock": {
+        "properties": {
+          "question_id": {
+            "type": "string",
+            "title": "Question Id"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question_id",
+          "category",
+          "content"
+        ],
+        "title": "InterviewQuestionBlock"
+      },
+      "JobDetailResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "company": {
+            "type": "string",
+            "title": "Company"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "work_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Mode"
+          },
+          "salary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary"
+          },
+          "description_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Text"
+          },
+          "required_skills": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required Skills"
+          },
+          "match_score": {
+            "type": "integer",
+            "title": "Match Score"
+          },
+          "match_analysis": {
+            "$ref": "#/components/schemas/MatchAnalysisBlock"
+          },
+          "why_matched": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Why Matched"
+          },
+          "gap_to_close": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Gap To Close"
+          },
+          "apply_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apply Url"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "primary_cta": {
+            "type": "string",
+            "title": "Primary Cta"
+          },
+          "is_pro_user": {
+            "type": "boolean",
+            "title": "Is Pro User"
+          },
+          "pro_features_locked": {
+            "type": "boolean",
+            "title": "Pro Features Locked",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "title",
+          "company",
+          "match_score",
+          "match_analysis",
+          "primary_cta",
+          "is_pro_user"
+        ],
+        "title": "JobDetailResponse"
+      },
+      "JobRecommendationItem": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "company": {
+            "type": "string",
+            "title": "Company"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "work_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Mode"
+          },
+          "salary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary"
+          },
+          "match_score": {
+            "type": "integer",
+            "title": "Match Score"
+          },
+          "match_level": {
+            "type": "string",
+            "title": "Match Level"
+          },
+          "why_matched": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Why Matched"
+          },
+          "gap_to_close": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Gap To Close"
+          },
+          "ranking_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ranking Reason"
+          },
+          "primary_cta": {
+            "type": "string",
+            "title": "Primary Cta"
+          },
+          "is_saved": {
+            "type": "boolean",
+            "title": "Is Saved",
+            "default": false
+          },
+          "is_locked": {
+            "type": "boolean",
+            "title": "Is Locked",
+            "default": false
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "title",
+          "company",
+          "match_score",
+          "match_level",
+          "primary_cta"
+        ],
+        "title": "JobRecommendationItem"
+      },
+      "JobRecommendationsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/JobRecommendationItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "is_pro_user": {
+            "type": "boolean",
+            "title": "Is Pro User"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "engine_total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine Total"
+          },
+          "upgrade_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upgrade Hint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "is_pro_user",
+          "page",
+          "limit",
+          "generated_at"
+        ],
+        "title": "JobRecommendationsResponse"
+      },
+      "MatchAnalysisBlock": {
+        "properties": {
+          "overall_reason": {
+            "type": "string",
+            "title": "Overall Reason"
+          },
+          "scores": {
+            "$ref": "#/components/schemas/MatchAnalysisScores"
+          },
+          "why_matched": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Why Matched"
+          },
+          "gap_to_close": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Gap To Close"
+          }
+        },
+        "type": "object",
+        "required": [
+          "overall_reason",
+          "scores"
+        ],
+        "title": "MatchAnalysisBlock"
+      },
+      "MatchAnalysisScores": {
+        "properties": {
+          "skills_match": {
+            "type": "integer",
+            "title": "Skills Match"
+          },
+          "experience_match": {
+            "type": "integer",
+            "title": "Experience Match"
+          },
+          "language_match": {
+            "type": "integer",
+            "title": "Language Match"
+          },
+          "preference_match": {
+            "type": "integer",
+            "title": "Preference Match"
+          }
+        },
+        "type": "object",
+        "required": [
+          "skills_match",
+          "experience_match",
+          "language_match",
+          "preference_match"
+        ],
+        "title": "MatchAnalysisScores"
+      },
+      "MeResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "is_bound": {
+            "type": "boolean",
+            "title": "Is Bound"
+          },
+          "is_paid": {
+            "type": "boolean",
+            "title": "Is Paid"
+          },
+          "primary_locale": {
+            "type": "string",
+            "title": "Primary Locale"
+          },
+          "primary_country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Country"
+          },
+          "source_channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Channel"
+          },
+          "onboarding_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding Stage"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "first_value_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Value At"
+          },
+          "first_paid_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Paid At"
+          },
+          "hook_state": {
+            "type": "string",
+            "title": "Hook State"
+          },
+          "hook_state_label": {
+            "type": "string",
+            "title": "Hook State Label"
+          },
+          "hook_state_updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hook State Updated At"
+          },
+          "profile_completion": {
+            "$ref": "#/components/schemas/ProfileCompletionBlock"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserProfileBlock"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/CapabilitiesBlock"
+          },
+          "billing_snapshot": {
+            "$ref": "#/components/schemas/BillingSnapshotBlock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "status",
+          "is_bound",
+          "is_paid",
+          "primary_locale",
+          "hook_state",
+          "hook_state_label",
+          "profile_completion",
+          "capabilities",
+          "billing_snapshot"
+        ],
+        "title": "MeResponse"
+      },
+      "ProfileCompletionBlock": {
+        "properties": {
+          "minimum_fields_completed": {
+            "type": "integer",
+            "title": "Minimum Fields Completed"
+          },
+          "minimum_fields_total": {
+            "type": "integer",
+            "title": "Minimum Fields Total"
+          },
+          "minimum_complete": {
+            "type": "boolean",
+            "title": "Minimum Complete"
+          },
+          "deferred_fields_completed": {
+            "type": "integer",
+            "title": "Deferred Fields Completed"
+          },
+          "deferred_fields_total": {
+            "type": "integer",
+            "title": "Deferred Fields Total"
+          },
+          "overall_pct": {
+            "type": "integer",
+            "title": "Overall Pct"
+          },
+          "missing_minimum": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Minimum"
+          }
+        },
+        "type": "object",
+        "required": [
+          "minimum_fields_completed",
+          "minimum_fields_total",
+          "minimum_complete",
+          "deferred_fields_completed",
+          "deferred_fields_total",
+          "overall_pct",
+          "missing_minimum"
+        ],
+        "title": "ProfileCompletionBlock"
+      },
+      "UserProfileBlock": {
+        "properties": {
+          "career_goal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Career Goal"
+          },
+          "target_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Role"
+          },
+          "english_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "English Level"
+          },
+          "current_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Status"
+          },
+          "weekly_hours_budget": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weekly Hours Budget"
+          },
+          "education_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Education Text"
+          },
+          "experience_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experience Text"
+          }
+        },
+        "type": "object",
+        "title": "UserProfileBlock"
       }
     },
     "securitySchemes": {
