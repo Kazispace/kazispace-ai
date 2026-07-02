@@ -1,14 +1,13 @@
-/** Contract shapes for KAZI-33 / TR-V02-05 — aligned with OpenAPI draft (KAZI-35). */
+/** Contract shapes for KAZI-33 / KAZI-35 OpenAPI (api_schemas.CvDiffPayload). */
 
-export interface CvDiffSection {
-  section: string;
-  text?: string;
+export interface CvDiffChange {
+  path: string;
   before?: string;
   after?: string;
 }
 
 export interface CvDiffPayload {
-  added?: CvDiffSection[];
-  removed?: CvDiffSection[];
-  modified?: CvDiffSection[];
+  added?: string[];
+  removed?: string[];
+  modified?: CvDiffChange[];
 }

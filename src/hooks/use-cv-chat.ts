@@ -42,9 +42,7 @@ export function useCvChat(jobId?: string | null) {
         setPreview(nextPreview);
       }
       const nextDiff = extractCvDiff(data);
-      if (nextDiff) {
-        setDiff(nextDiff);
-      }
+      setDiff(nextDiff);
       setQuickReplies(extractCvButtons(data));
     },
     []
@@ -143,9 +141,6 @@ export function useCvChat(jobId?: string | null) {
         return;
       }
       applyResponse(res.data);
-      if (action === 'confirm') {
-        setDiff(null);
-      }
       setIsSending(false);
     },
     [applyResponse, isSending, jobId, showToast]

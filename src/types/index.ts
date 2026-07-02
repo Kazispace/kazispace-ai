@@ -272,5 +272,5 @@ export interface InterviewMessage {
   content: string;
 }
 
-export type { CvDiffPayload, CvDiffSection } from './cv-contract';
+export type { CvDiffPayload, CvDiffChange } from './cv-contract';
 export type { InterviewPrepCard } from './interview-contract';
