@@ -138,6 +138,12 @@ export interface ActivateAgentResponse {
   agent_id: string;
   session_id: string;
   greeting: string;
+  response?: {
+    text?: string;
+    next_actions?: ChatNextAction[];
+    cards?: ChatJobCard[];
+  };
+  meta?: AgentChatMeta;
   context_summary?: {
     master_messages_passed?: number;
     profile_fields_shared?: string[];
@@ -154,6 +160,13 @@ export interface DeactivateAgentResponse {
   };
 }
 
+export interface AgentChatMeta {
+  cv_preview_markdown?: string;
+  diff?: unknown;
+  buttons?: string[];
+  error_code?: string;
+}
+
 export interface AgentChatResponse {
   message_id?: string;
   agent_id?: string;
@@ -163,6 +176,7 @@ export interface AgentChatResponse {
     next_actions?: ChatNextAction[];
     cards?: ChatJobCard[];
   };
+  meta?: AgentChatMeta;
   reply?: string;
   credits_consumed?: number;
   idempotent_replay?: boolean;

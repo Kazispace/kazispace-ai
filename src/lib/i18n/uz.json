@@ -332,6 +332,8 @@
 		"signIn": "Kirish",
 		"onboardingBanner": "Rezyume yaratishdan oldin chatda profilingizni to'ldiring.",
 		"completeProfile": "Chatga o'tish",
+		"profileBanner": "Rezyume yaratuvchidan oldin profilingizni to'ldiring.",
+		"goToProfile": "Profilga o'tish",
 		"sessionLoading": "Sessiya boshlanmoqda…",
 		"inputPlaceholder": "Tajribangizni yozing…",
 		"previewTitle": "Jonli ko‘rinish",

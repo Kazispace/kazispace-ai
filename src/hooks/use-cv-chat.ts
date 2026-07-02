@@ -16,14 +16,18 @@ function nextId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function useCvChat(jobId?: string | null) {
+export function useCvChat(
+  jobId?: string | null,
+  options?: { enabled?: boolean }
+) {
+  const enabled = options?.enabled !== false;
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const [messages, setMessages] = useState<CvChatMessage[]>([]);
   const [preview, setPreview] = useState<CvPreviewContent | null>(null);
   const [diff, setDiff] = useState<CvDiffPayload | null>(null);
   const [quickReplies, setQuickReplies] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(enabled);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
@@ -61,6 +65,7 @@ export function useCvChat(jobId?: string | null) {
   );
 
   const startSession = useCallback(async () => {
+    if (!enabled) return;
     setIsLoading(true);
     setError(null);
     setNeedsOnboarding(false);
@@ -75,9 +80,13 @@ export function useCvChat(jobId?: string | null) {
     }
     applyResponse(res.data);
     setIsLoading(false);
-  }, [applyResponse, handleApiError, jobId]);
+  }, [applyResponse, enabled, handleApiError, jobId]);
 
   useEffect(() => {
+    if (!enabled) {
+      setIsLoading(false);
+      return;
+    }
     if (!isLoggedIn) {
       setIsLoading(false);
       setMessages([]);
@@ -93,11 +102,11 @@ export function useCvChat(jobId?: string | null) {
     setError(null);
     setNeedsOnboarding(false);
     void startSession();
-  }, [isLoggedIn, jobId, startSession]);
+  }, [enabled, isLoggedIn, jobId, startSession]);
 
   const sendMessage = useCallback(
     async (text: string) => {
-      if (!text.trim() || isSending) return;
+      if (!text.trim() || isSending || !enabled) return;
       setIsSending(true);
       setError(null);
       setQuickReplies([]);
@@ -123,12 +132,12 @@ export function useCvChat(jobId?: string | null) {
       setIsSending(false);
       return { ok: true as const };
     },
-    [applyResponse, isSending, jobId, showToast]
+    [applyResponse, enabled, isSending, jobId, showToast]
   );
 
   const runAction = useCallback(
     async (action: 'confirm' | 'regenerate') => {
-      if (isSending) return;
+      if (isSending || !enabled) return;
       setIsSending(true);
       setError(null);
       const res = await postCvChat({
@@ -143,7 +152,7 @@ export function useCvChat(jobId?: string | null) {
       applyResponse(res.data);
       setIsSending(false);
     },
-    [applyResponse, isSending, jobId, showToast]
+    [applyResponse, enabled, isSending, jobId, showToast]
   );
 
   const confirmCv = useCallback(() => runAction('confirm'), [runAction]);

@@ -19,7 +19,9 @@ export type TmaPendingAction =
   | { type: 'subscription' }
   | { type: 'jobs' }
   | { type: 'profile' }
-  | { type: 'job'; jobId: string };
+  | { type: 'job'; jobId: string }
+  | { type: 'cv' }
+  | { type: 'cv_job'; jobId: string };
 
 /** Routes that clinic-shell must handle after landing on /chat. */
 export function shouldPersistTmaAction(action: TmaPendingAction): boolean {
@@ -36,6 +38,10 @@ export function routeForTmaAction(locale: string, action: TmaPendingAction): str
       return `/${locale}/profile`;
     case 'job':
       return `/${locale}/jobs/${encodeURIComponent(action.jobId)}`;
+    case 'cv':
+      return `/${locale}/cv`;
+    case 'cv_job':
+      return `/${locale}/cv?job_id=${encodeURIComponent(action.jobId)}`;
     case 'activate_agent':
     case 'clinic':
     case 'restore':
@@ -62,6 +68,17 @@ export function parseStartParam(startParam: string | null | undefined): TmaPendi
 
   if (param === 'profile') {
     return { type: 'profile' };
+  }
+
+  if (param === 'cv') {
+    return { type: 'cv' };
+  }
+
+  if (param.startsWith('cv_job_')) {
+    return {
+      type: 'cv_job',
+      jobId: clampId(param.slice('cv_job_'.length), 'jobId'),
+    };
   }
 
   if (param.startsWith('agent_')) {

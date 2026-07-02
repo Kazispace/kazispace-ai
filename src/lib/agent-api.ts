@@ -14,6 +14,7 @@ import {
   AGENT_REGISTRY,
   getAgentLabel,
 } from '@/lib/agents/registry';
+import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { apiRequest } from '@/lib/api-client';
 
 const mockSessions = new Map<string, ActiveAgentState>();
@@ -53,6 +54,20 @@ function mockActivate(
     context_module: agentId,
   });
 
+  if (agentId === CV_BUILDER_AGENT_ID) {
+    return {
+      agent_id: agentId,
+      session_id: sessionId,
+      greeting,
+      response: {
+        next_actions: [
+          { type: 'developer', label: 'Software Engineer' },
+          { type: 'manager', label: 'Product Manager' },
+        ],
+      },
+    };
+  }
+
   return { agent_id: agentId, session_id: sessionId, greeting };
 }
 
@@ -89,15 +104,18 @@ export async function getActiveAgent(): Promise<ApiResponse<ActiveAgentState>> {
 export async function activateAgent(
   agentId: string,
   locale: string,
-  handoffMessage?: string
+  handoffMessage?: string,
+  options?: { job_id?: string }
 ): Promise<ApiResponse<ActivateAgentResponse>> {
+  const body: Record<string, string> = {};
+  if (handoffMessage) body.handoff_message = handoffMessage;
+  if (options?.job_id) body.job_id = options.job_id;
+
   const res = await apiRequest<ActivateAgentResponse>(
     `/api/v1/agents/${agentId}/activate`,
     {
       method: 'POST',
-      body: JSON.stringify(
-        handoffMessage ? { handoff_message: handoffMessage } : {}
-      ),
+      body: JSON.stringify(body),
     }
   );
   if (res.success) return res;
@@ -139,6 +157,32 @@ export async function sendAgentChat(
   if (useMockFallback(res.error)) {
     const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
     const emoji = entry?.emoji ?? '🤖';
+    if (agentId === CV_BUILDER_AGENT_ID) {
+      const isRegenerate =
+        message === '__action:regenerate' || message.toLowerCase() === 'regenerate';
+      const meta =
+        message === 'confirm' || isRegenerate
+          ? {
+              cv_preview_markdown:
+                '# Alex Developer\n\n## Experience\n- Senior Engineer at Tech Co (2020–present)\n- Built scalable web apps with React & Python',
+            }
+          : {
+              cv_preview_markdown:
+                '# Alex Developer\n\n## Summary\nFull-stack engineer with 5+ years of experience.\n\n## Skills\nReact, TypeScript, Python',
+              buttons: ['Looks good', 'Add more detail'],
+            };
+      return {
+        success: true,
+        data: {
+          agent_id: agentId,
+          message_id: `mock_${Date.now()}`,
+          response: {
+            text: `${emoji} (Mock) ${message === 'confirm' ? 'CV saved.' : 'Updated your CV preview.'}`,
+          },
+          meta,
+        },
+      };
+    }
     return {
       success: true,
       data: {

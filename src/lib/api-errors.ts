@@ -18,3 +18,7 @@ export function isPaywallError(res: ErrorLike): boolean {
     res.errorCode === 'PRO_FEATURE_LOCKED'
   );
 }
+
+export function isAgentBlocked(res: ErrorLike): boolean {
+  return res.errorCode === 'AGENT_BLOCKED';
+}
