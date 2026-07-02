@@ -328,7 +328,14 @@
 		"previewTitle": "Предпросмотр",
 		"previewSubtitle": "Обновляется по ходу диалога",
 		"previewLoading": "Генерация…",
-		"previewEmpty": "Здесь появится превью резюме"
+		"previewEmpty": "Здесь появится превью резюме",
+		"diffTitle": "Предлагаемые правки",
+		"diffSubtitle": "Проверьте изменения под вакансию перед подтверждением",
+		"diffAdded": "Добавлено",
+		"diffRemoved": "Удалено",
+		"diffModified": "Изменено",
+		"confirmChanges": "Принять изменения",
+		"regenerate": "Перегенерировать"
 	},
 	"interview": {
 		"title": "Пробное интервью",
@@ -349,6 +356,11 @@
 		"tryAgain": "Попробовать снова",
 		"practiceAgain": "Практиковать снова",
 		"buildCv": "Создать резюме",
+		"prepTitle": "Подготовка к интервью",
+		"prepFocusAreas": "Фокус",
+		"prepSampleQuestions": "Примеры вопросов",
+		"prepDuration": "Около {min} мин",
+		"startInterview": "Начать интервью",
 		"feedbackTitle": "Обратная связь — {role}",
 		"overallSummary": "Общий итог",
 		"strengths": "Сильные стороны",

@@ -10,6 +10,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { ChatInput } from "@/components/chat/chat-input";
 import { MessageBubble } from "@/components/clinic/message-bubble";
 import { InterviewRolePicker } from "@/components/interview/interview-role-picker";
+import { InterviewPrepCard } from "@/components/interview/interview-prep-card";
 import { InterviewProgress } from "@/components/interview/interview-progress";
 import { InterviewFeedbackCard } from "@/components/interview/interview-feedback-card";
 import { Button } from "@/components/ui/button";
@@ -32,11 +33,13 @@ function InterviewPageContent({ locale }: { locale: string }) {
     questionIndex,
     questionCount,
     feedback,
+    prepCard,
     isStarting,
     isSending,
     isCheckingFeedback,
     needsLogin,
     startSession,
+    beginInterviewFromPrep,
     submitAnswer,
     reset,
     checkFeedbackNow,
@@ -75,6 +78,17 @@ function InterviewPageContent({ locale }: { locale: string }) {
                 disabled={isStarting}
               />
             )}
+          </>
+        ) : phase === "prep_review" && prepCard ? (
+          <>
+            {subtitle && (
+              <p className="text-center text-xs text-gray-500 px-4 pt-2">{subtitle}</p>
+            )}
+            <InterviewPrepCard
+              prep={prepCard}
+              onStart={beginInterviewFromPrep}
+              disabled={isStarting}
+            />
           </>
         ) : (
           <>

@@ -198,6 +198,7 @@ export interface CvChatResponse {
   preview_markdown?: string;
   preview_text?: string;
   buttons?: string[];
+  diff?: import('./cv-contract').CvDiffPayload;
   document?: {
     content?: string;
     html?: string;
@@ -229,6 +230,7 @@ export interface CreateInterviewSessionResponse {
   question_count?: number;
   language_notice?: string;
   question?: InterviewQuestion;
+  prep_card?: import('./interview-contract').InterviewPrepCard;
 }
 
 export interface SubmitInterviewAnswerRequest {
@@ -269,3 +271,6 @@ export interface InterviewMessage {
   role: 'user' | 'assistant';
   content: string;
 }
+
+export type { CvDiffPayload, CvDiffSection } from './cv-contract';
+export type { InterviewPrepCard } from './interview-contract';

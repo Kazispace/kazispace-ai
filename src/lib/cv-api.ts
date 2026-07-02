@@ -1,5 +1,6 @@
 import { apiRequest } from '@/lib/api-client';
 import type { ApiResponse, CvChatRequest, CvChatResponse } from '@/types';
+import type { CvDiffPayload } from '@/types/cv-contract';
 
 export async function postCvChat(
   body: CvChatRequest
@@ -49,4 +50,16 @@ export function extractCvButtons(data: CvChatResponse): string[] {
     return data.buttons;
   }
   return data.options?.map((o) => o.label).filter(Boolean) ?? [];
+}
+
+export function extractCvDiff(data: CvChatResponse): CvDiffPayload | null {
+  const diff = data.diff;
+  if (!diff || typeof diff !== 'object') return null;
+
+  const hasContent =
+    (diff.added?.length ?? 0) > 0 ||
+    (diff.removed?.length ?? 0) > 0 ||
+    (diff.modified?.length ?? 0) > 0;
+
+  return hasContent ? diff : null;
 }

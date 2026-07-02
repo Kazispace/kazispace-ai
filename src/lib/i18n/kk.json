@@ -328,7 +328,14 @@
 		"previewTitle": "Алдын ала қарау",
 		"previewSubtitle": "Сөйлесу барысында жаңартылады",
 		"previewLoading": "Жасалуда…",
-		"previewEmpty": "Түйіндеме мұнда көрсетіледі"
+		"previewEmpty": "Түйіндеме мұнда көрсетіледі",
+		"diffTitle": "Ұсынылған өзгерістер",
+		"diffSubtitle": "Растамас бұрын вакансияға сай түзетулерді қараңыз",
+		"diffAdded": "Қосылды",
+		"diffRemoved": "Жойылды",
+		"diffModified": "Өзгертілді",
+		"confirmChanges": "Қабылдау",
+		"regenerate": "Қайта жасау"
 	},
 	"interview": {
 		"title": "Сынақ сұхбат",
@@ -349,6 +356,11 @@
 		"tryAgain": "Қайта көру",
 		"practiceAgain": "Қайта жаттығу",
 		"buildCv": "Түйіндеме жасау",
+		"prepTitle": "Сұхбатқа дайындық",
+		"prepFocusAreas": "Негізгі бағыттар",
+		"prepSampleQuestions": "Үлгі сұрақтар",
+		"prepDuration": "Шамамен {min} мин",
+		"startInterview": "Сұхбатты бастау",
 		"feedbackTitle": "Кері байланыс — {role}",
 		"overallSummary": "Жалпы қорытынды",
 		"strengths": "Күшті жақтары",

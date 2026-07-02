@@ -328,7 +328,14 @@
 		"previewTitle": "Live preview",
 		"previewSubtitle": "Updates as you chat",
 		"previewLoading": "Generating preview…",
-		"previewEmpty": "Your CV preview will appear here"
+		"previewEmpty": "Your CV preview will appear here",
+		"diffTitle": "Suggested changes",
+		"diffSubtitle": "Review job-specific edits before confirming",
+		"diffAdded": "Added",
+		"diffRemoved": "Removed",
+		"diffModified": "Modified",
+		"confirmChanges": "Accept changes",
+		"regenerate": "Regenerate"
 	},
 	"interview": {
 		"title": "Mock Interview Practice",
@@ -349,6 +356,11 @@
 		"tryAgain": "Try Again",
 		"practiceAgain": "Practice Again",
 		"buildCv": "Build My CV",
+		"prepTitle": "Interview prep",
+		"prepFocusAreas": "Focus areas",
+		"prepSampleQuestions": "Sample questions",
+		"prepDuration": "About {min} min",
+		"startInterview": "Start interview",
 		"feedbackTitle": "Interview Feedback — {role}",
 		"overallSummary": "Overall Summary",
 		"strengths": "Strengths",

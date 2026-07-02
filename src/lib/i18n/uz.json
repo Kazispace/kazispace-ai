@@ -328,7 +328,14 @@
 		"previewTitle": "Jonli ko‘rinish",
 		"previewSubtitle": "Suhbat davomida yangilanadi",
 		"previewLoading": "Yaratilmoqda…",
-		"previewEmpty": "Rezyume ko‘rinishi shu yerda chiqadi"
+		"previewEmpty": "Rezyume ko‘rinishi shu yerda chiqadi",
+		"diffTitle": "Taklif etilgan o‘zgarishlar",
+		"diffSubtitle": "Tasdiqlashdan oldin vakansiyaga mos tahrirlarni ko‘rib chiqing",
+		"diffAdded": "Qo‘shildi",
+		"diffRemoved": "Olib tashlandi",
+		"diffModified": "O‘zgartirildi",
+		"confirmChanges": "Qabul qilish",
+		"regenerate": "Qayta yaratish"
 	},
 	"interview": {
 		"title": "Sinov suhbati",
@@ -349,6 +356,11 @@
 		"tryAgain": "Qayta urinish",
 		"practiceAgain": "Yana mashq qilish",
 		"buildCv": "Rezyume yaratish",
+		"prepTitle": "Suhbatga tayyorgarlik",
+		"prepFocusAreas": "Asosiy yo‘nalishlar",
+		"prepSampleQuestions": "Namuna savollar",
+		"prepDuration": "Taxminan {min} daqiqa",
+		"startInterview": "Suhbatni boshlash",
 		"feedbackTitle": "Fikr-mulohaza — {role}",
 		"overallSummary": "Umumiy xulosa",
 		"strengths": "Kuchli tomonlar",

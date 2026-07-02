@@ -11,6 +11,7 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { MessageBubble } from "@/components/clinic/message-bubble";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
+import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
 import { Button } from "@/components/ui/button";
 import { useCvChat } from "@/hooks/use-cv-chat";
 
@@ -27,6 +28,7 @@ function CvPageContent({ locale }: { locale: string }) {
   const {
     messages,
     preview,
+    diff,
     quickReplies,
     isLoading,
     isSending,
@@ -34,6 +36,8 @@ function CvPageContent({ locale }: { locale: string }) {
     needsLogin,
     needsOnboarding,
     sendMessage,
+    confirmCv,
+    regenerateCv,
   } = useCvChat(jobId);
 
   const subtitle = useMemo(
@@ -112,7 +116,20 @@ function CvPageContent({ locale }: { locale: string }) {
         </section>
 
         {!needsLogin && !needsOnboarding && (
-          <CvPreviewPane preview={preview} isLoading={isLoading && !preview} />
+          <CvPreviewPane
+            preview={preview}
+            isLoading={isLoading && !preview}
+            footer={
+              diff ? (
+                <CvDiffPanel
+                  diff={diff}
+                  onConfirm={() => void confirmCv()}
+                  onRegenerate={() => void regenerateCv()}
+                  disabled={isSending}
+                />
+              ) : null
+            }
+          />
         )}
       </main>
       <BottomNav locale={locale} />
