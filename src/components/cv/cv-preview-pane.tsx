@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { MarkdownContent } from '@/components/clinic/markdown-content';
@@ -8,9 +9,10 @@ import type { CvPreviewContent } from '@/lib/cv-api';
 interface CvPreviewPaneProps {
   preview: CvPreviewContent | null;
   isLoading?: boolean;
+  footer?: ReactNode;
 }
 
-export function CvPreviewPane({ preview, isLoading }: CvPreviewPaneProps) {
+export function CvPreviewPane({ preview, isLoading, footer }: CvPreviewPaneProps) {
   const t = useTranslations('cv');
 
   return (
@@ -37,6 +39,7 @@ export function CvPreviewPane({ preview, isLoading }: CvPreviewPaneProps) {
           <p className="text-sm text-gray-400 text-center py-12">{t('previewEmpty')}</p>
         )}
       </div>
+      {footer}
     </aside>
   );
 }

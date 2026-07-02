@@ -11,6 +11,7 @@ import { useAuthStore, useUIStore } from '@/lib/store';
 import type {
   InterviewFeedbackSummary,
   InterviewMessage,
+  InterviewPrepCard,
   InterviewQuestion,
 } from '@/types';
 
@@ -20,6 +21,7 @@ function nextId(prefix: string) {
 
 export type InterviewPhase =
   | 'role_select'
+  | 'prep_review'
   | 'interview'
   | 'feedback_pending'
   | 'feedback_ready'
@@ -37,11 +39,19 @@ export function useInterview(jobId?: string | null) {
   const [questionCount, setQuestionCount] = useState(3);
   const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestion | null>(null);
   const [feedback, setFeedback] = useState<InterviewFeedbackSummary | null>(null);
+  const [prepCard, setPrepCard] = useState<InterviewPrepCard | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isCheckingFeedback, setIsCheckingFeedback] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const runIdRef = useRef(0);
+  const pendingStartRef = useRef<{
+    session_id: string;
+    question_count?: number;
+    question_index?: number;
+    question?: InterviewQuestion;
+    language_notice?: string;
+  } | null>(null);
 
   const isStale = useCallback((runId: number) => runId !== runIdRef.current, []);
 
@@ -125,6 +135,40 @@ export function useInterview(jobId?: string | null) {
     [appendMessage]
   );
 
+  const beginInterview = useCallback(
+    (
+      data: {
+        session_id: string;
+        question_count?: number;
+        question_index?: number;
+        question?: InterviewQuestion;
+        language_notice?: string;
+      },
+      runId: number
+    ) => {
+      if (isStale(runId)) return;
+
+      setSessionId(data.session_id);
+      setQuestionCount(data.question_count ?? 3);
+      setQuestionIndex(data.question_index ?? 1);
+      setCurrentQuestion(data.question ?? null);
+      setPhase('interview');
+
+      if (data.language_notice) {
+        appendMessage('assistant', data.language_notice);
+      }
+      if (data.question) {
+        showQuestion(
+          data.question,
+          data.question_index ?? 1,
+          data.question_count ?? 3
+        );
+      }
+      setIsStarting(false);
+    },
+    [appendMessage, isStale, showQuestion]
+  );
+
   const startSession = useCallback(
     async (role: string) => {
       if (!isLoggedIn || isStarting) return;
@@ -133,7 +177,7 @@ export function useInterview(jobId?: string | null) {
       setTargetRole(role);
       setMessages([]);
       setFeedback(null);
-      setPhase('interview');
+      setPrepCard(null);
 
       const res = await createInterviewSession({
         target_role: role,
@@ -157,25 +201,35 @@ export function useInterview(jobId?: string | null) {
       }
 
       const data = res.data;
-      setSessionId(data.session_id);
-      setQuestionCount(data.question_count ?? 3);
-      setQuestionIndex(data.question_index ?? 1);
-      setCurrentQuestion(data.question ?? null);
 
-      if (data.language_notice) {
-        appendMessage('assistant', data.language_notice);
+      if (data.prep_card && Object.keys(data.prep_card).length > 0) {
+        pendingStartRef.current = {
+          session_id: data.session_id,
+          question_count: data.question_count,
+          question_index: data.question_index,
+          question: data.question,
+          language_notice: data.language_notice,
+        };
+        setPrepCard(data.prep_card);
+        setSessionId(data.session_id);
+        setPhase('prep_review');
+        setIsStarting(false);
+        return;
       }
-      if (data.question) {
-        showQuestion(
-          data.question,
-          data.question_index ?? 1,
-          data.question_count ?? 3
-        );
-      }
-      setIsStarting(false);
+
+      beginInterview(data, runId);
     },
-    [appendMessage, isLoggedIn, isStale, isStarting, jobId, showQuestion, showToast]
+    [beginInterview, isLoggedIn, isStale, isStarting, jobId, showToast]
   );
+
+  const beginInterviewFromPrep = useCallback(() => {
+    const pending = pendingStartRef.current;
+    if (!pending) return;
+    const runId = runIdRef.current;
+    beginInterview(pending, runId);
+    pendingStartRef.current = null;
+    setPrepCard(null);
+  }, [beginInterview]);
 
   const submitAnswer = useCallback(
     async (text: string) => {
@@ -241,6 +295,8 @@ export function useInterview(jobId?: string | null) {
     setQuestionCount(3);
     setCurrentQuestion(null);
     setFeedback(null);
+    setPrepCard(null);
+    pendingStartRef.current = null;
     setIsStarting(false);
     setIsSending(false);
     setIsCheckingFeedback(false);
@@ -255,6 +311,7 @@ export function useInterview(jobId?: string | null) {
     messages,
     sessionId,
     targetRole,
+    prepCard,
     questionIndex,
     questionCount,
     currentQuestion,
@@ -264,6 +321,7 @@ export function useInterview(jobId?: string | null) {
     isCheckingFeedback,
     needsLogin: !isLoggedIn,
     startSession,
+    beginInterviewFromPrep,
     submitAnswer,
     reset,
     checkFeedbackNow,
