@@ -30,6 +30,9 @@ function normalizeNextActions(raw: unknown): ChatNextAction[] {
     if (typeof label === 'string' || (label && typeof label === 'object')) {
       entry.label = label as LocalizedLabel;
     }
+    if (typeof action.payload === 'string') {
+      entry.payload = action.payload;
+    }
     actions.push(entry);
   }
   return actions;

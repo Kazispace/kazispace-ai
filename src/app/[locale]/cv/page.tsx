@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -9,13 +9,17 @@ import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { ChatInput } from "@/components/chat/chat-input";
 import { MessageBubble } from "@/components/clinic/message-bubble";
+import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
 import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
 import { Button } from "@/components/ui/button";
 import { CV_AGENT_HUB_ENABLED } from "@/lib/cv-agent-config";
+import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
 import { useCvChat } from "@/hooks/use-cv-chat";
+import { useUIStore } from "@/lib/store";
+import type { ChatNextAction } from "@/types/chat-envelope";
 
 interface CvPageProps {
   params: { locale: string };
@@ -26,6 +30,7 @@ function CvPageContent({ locale }: { locale: string }) {
   const searchParams = useSearchParams();
   const jobId = searchParams.get("job_id");
   const t = useTranslations("cv");
+  const openPaywall = useUIStore((s) => s.openPaywall);
 
   const legacySession = useCvChat(jobId, { enabled: !CV_AGENT_HUB_ENABLED });
   const agentSession = useCvAgent(jobId, { enabled: CV_AGENT_HUB_ENABLED });
@@ -45,11 +50,29 @@ function CvPageContent({ locale }: { locale: string }) {
     confirmCv,
     regenerateCv,
   } = session;
+  const nextActions = CV_AGENT_HUB_ENABLED ? agentSession.nextActions : [];
   const showProfileGate =
     CV_AGENT_HUB_ENABLED && agentSession.needsProfile === true;
   const canChat = CV_AGENT_HUB_ENABLED
     ? agentSession.isSessionReady
     : !isLoading && !needsOnboarding && !error;
+
+  const routedActions = nextActions.filter((a) => isRoutedCvAction(a.type));
+  const pickerActions = nextActions.filter((a) => !isRoutedCvAction(a.type));
+
+  const handleCvAction = useCallback(
+    (action: ChatNextAction) => {
+      handleCvNextAction(action, {
+        locale,
+        router,
+        openPaywall,
+        sendPayload: (payload) => void sendMessage(payload),
+        confirmCv: () => void confirmCv(),
+        regenerateCv: () => void regenerateCv(),
+      });
+    },
+    [confirmCv, locale, openPaywall, regenerateCv, router, sendMessage]
+  );
 
   const subtitle = useMemo(
     () => (jobId ? t("subtitleWithJob", { jobId }) : t("subtitle")),
@@ -119,6 +142,28 @@ function CvPageContent({ locale }: { locale: string }) {
                   </p>
                 )}
               </div>
+              {routedActions.length > 0 && (
+                <div className="px-4 pb-2 bg-gray-bg">
+                  <ChatNextActions
+                    actions={routedActions}
+                    locale={locale}
+                    onAction={handleCvAction}
+                    disabled={!canChat || isSending}
+                  />
+                </div>
+              )}
+              {pickerActions.length > 0 && (
+                <QuickReplies
+                  options={pickerActions.map((a) => quickReplyLabel(a, locale))}
+                  disabled={!canChat || isSending}
+                  onSelect={(text) => {
+                    const action = pickerActions.find(
+                      (a) => quickReplyLabel(a, locale) === text
+                    );
+                    if (action) handleCvAction(action);
+                  }}
+                />
+              )}
               {quickReplies.length > 0 && (
                 <QuickReplies
                   options={quickReplies}
