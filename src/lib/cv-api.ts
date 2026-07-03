@@ -132,6 +132,59 @@ export function extractCvDiffFromAgent(data: AgentChatResponse): CvDiffPayload |
   return normalizeCvDiff(agentMeta(data)?.diff);
 }
 
+export function extractPipelineState(
+  data:
+    | Pick<AgentChatResponse, 'meta' | 'response'>
+    | Pick<ActivateAgentResponse, 'meta' | 'response'>
+): string | null {
+  const raw = resolveAgentMeta(data)?.pipeline_state;
+  return typeof raw === 'string' ? raw : null;
+}
+
+/** Scan assistant history (newest first) for the latest CV agent meta snapshot. */
+export function hydrateCvMetaFromAgentHistory(
+  messages: unknown[],
+  handlers: {
+    setPipelineState: (state: string | null) => void;
+    setPreview: (preview: CvPreviewContent | null) => void;
+    setDiff: (diff: CvDiffPayload | null) => void;
+  }
+): void {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const row = messages[i];
+    if (!row || typeof row !== 'object') continue;
+    const record = row as Record<string, unknown>;
+    if (record.role === 'user') continue;
+
+    const envelope = {
+      meta: record.meta as AgentChatMeta | undefined,
+      response: record.response as AgentChatResponse['response'],
+    };
+    if (!resolveAgentMeta(envelope)) continue;
+
+    patchPipelineStateFromMeta(envelope, handlers.setPipelineState);
+    const preview = extractCvPreviewFromAgent(envelope);
+    if (preview) handlers.setPreview(preview);
+    patchDiffFromAgentMeta(envelope, handlers.setDiff);
+    return;
+  }
+}
+
+/** Update pipeline_state when agent meta includes an explicit key. */
+export function patchPipelineStateFromMeta(
+  data:
+    | Pick<AgentChatResponse, 'meta' | 'response'>
+    | Pick<ActivateAgentResponse, 'meta' | 'response'>,
+  setPipelineState: (state: string | null) => void
+): void {
+  const meta = resolveAgentMeta(data);
+  if (!meta || !Object.prototype.hasOwnProperty.call(meta, 'pipeline_state')) {
+    return;
+  }
+  const raw = meta.pipeline_state;
+  setPipelineState(typeof raw === 'string' ? raw : null);
+}
+
 /** Update diff only when agent meta includes an explicit `diff` key (null clears the panel). */
 export function patchDiffFromAgentMeta(
   data: Pick<AgentChatResponse, 'meta' | 'response'> | Pick<ActivateAgentResponse, 'meta' | 'response'>,

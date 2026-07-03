@@ -348,7 +348,14 @@
 		"diffRemoved": "Жойылды",
 		"diffModified": "Өзгертілді",
 		"confirmChanges": "Қабылдау",
-		"regenerate": "Қайта жасау"
+		"regenerate": "Қайта жасау",
+		"newCv": "Жаңа түйіндеме",
+		"pipelineAria": "Түйіндеме құру барысы",
+		"stepIntake": "Ақпарат",
+		"stepAnalyze": "Талдау",
+		"stepGenerate": "Жасау",
+		"stepReview": "Тексеру",
+		"stepDone": "Дайын"
 	},
 	"interview": {
 		"title": "Сынақ сұхбат",

@@ -107,12 +107,13 @@ function mockActivate(
         ...(options?.job_id
           ? {
               meta: {
+                pipeline_state: 'collecting',
                 cv_preview_markdown:
                   '# Alex Developer\n\n## Summary\nJob-tailored CV draft for your target role.',
                 diff: mockCvBuilderDiff('job'),
               },
             }
-          : {}),
+          : { meta: { pipeline_state: 'intake' } }),
       },
     };
   }
@@ -221,11 +222,13 @@ export async function sendAgentChat(
       let nextActions: ChatNextAction[] | undefined;
       if (isAcceptCv) {
         meta = {
+          pipeline_state: 'generated',
           cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
           diff: null,
         };
       } else if (isIntakeConfirm) {
         meta = {
+          pipeline_state: 'review_confirm',
           cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
           diff: hasJobContext ? mockCvBuilderDiff('job') : null,
         };
@@ -237,6 +240,7 @@ export async function sendAgentChat(
         }
       } else if (isRegenerate) {
         meta = {
+          pipeline_state: 'review_confirm',
           cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
           diff: mockCvBuilderDiff('regen'),
         };
@@ -246,6 +250,7 @@ export async function sendAgentChat(
         ];
       } else if (hasJobContext) {
         meta = {
+          pipeline_state: 'review_confirm',
           cv_preview_markdown:
             '# Alex Developer\n\n## Summary\nJob-tailored CV draft for your target role.\n\n## Skills\nReact, TypeScript, Python',
           diff: mockCvBuilderDiff('job'),
@@ -256,6 +261,7 @@ export async function sendAgentChat(
         ];
       } else {
         meta = {
+          pipeline_state: 'collecting',
           cv_preview_markdown:
             '# Alex Developer\n\n## Summary\nFull-stack engineer with 5+ years of experience.\n\n## Skills\nReact, TypeScript, Python',
           buttons: ['Looks good', 'Add more detail'],
