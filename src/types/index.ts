@@ -188,9 +188,25 @@ export interface AgentChatResponse {
   idempotent_replay?: boolean;
 }
 
+export interface AgentSessionSummary {
+  session_id: string;
+  agent_id: string;
+  status: 'active' | 'exited' | string;
+  pipeline_state?: string | null;
+  title: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface AgentSessionsListResponse {
+  sessions: AgentSessionSummary[];
+}
+
 export interface AgentMessagesResponse {
   session_id: string;
   agent_id: string;
+  status?: string;
+  pipeline_state?: string | null;
   messages: ChatMessage[];
   has_more?: boolean;
 }
