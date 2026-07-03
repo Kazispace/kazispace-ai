@@ -30,7 +30,8 @@ export function handleCvNextAction(
     router: AppRouterInstance;
     openPaywall: (code: string) => void;
     sendPayload: (payload: string, showUserBubble?: boolean) => void;
-    confirmCv: () => void;
+    intakeConfirm: () => void;
+    acceptCv: () => void;
     regenerateCv: () => void;
   }
 ): void {
@@ -48,9 +49,11 @@ export function handleCvNextAction(
     case 'regenerate':
       deps.regenerateCv();
       return;
-    case 'accept_cv':
     case 'confirm':
-      deps.confirmCv();
+      deps.intakeConfirm();
+      return;
+    case 'accept_cv':
+      deps.acceptCv();
       return;
     default:
       if (action.payload) {

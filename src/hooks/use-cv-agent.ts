@@ -237,10 +237,17 @@ export function useCvAgent(
       if (!text.trim() || isSending || !enabled || !sessionId) {
         return { ok: false as const };
       }
+      const ctaSnapshot = { nextActions: [] as ChatNextAction[], quickReplies: [] as string[] };
       setIsSending(true);
       setError(null);
-      setNextActions([]);
-      setQuickReplies([]);
+      setNextActions((prev) => {
+        ctaSnapshot.nextActions = prev;
+        return [];
+      });
+      setQuickReplies((prev) => {
+        ctaSnapshot.quickReplies = prev;
+        return [];
+      });
       if (options?.showUserBubble !== false) {
         setMessages((prev) => [
           ...prev,
@@ -253,6 +260,8 @@ export function useCvAgent(
         sessionId
       );
       if (!res.success || !res.data) {
+        setNextActions(ctaSnapshot.nextActions);
+        setQuickReplies(ctaSnapshot.quickReplies);
         if (res.errorCode === 'ONBOARDING_INCOMPLETE') {
           setNeedsOnboarding(true);
         } else if (isAgentBlocked(res)) {
@@ -277,10 +286,18 @@ export function useCvAgent(
     [sendAgentMessage]
   );
 
-  const confirmCv = useCallback(
+  const intakeConfirm = useCallback(
+    () => sendAgentMessage('__action:confirm', { showUserBubble: false }),
+    [sendAgentMessage]
+  );
+
+  const acceptCv = useCallback(
     () => sendAgentMessage('__action:accept_cv', { showUserBubble: false }),
     [sendAgentMessage]
   );
+
+  /** @deprecated alias — diff panel Accept */
+  const confirmCv = acceptCv;
 
   const regenerateCv = useCallback(
     () => sendAgentMessage('__action:regenerate', { showUserBubble: false }),
@@ -304,6 +321,8 @@ export function useCvAgent(
     needsProfile,
     isSessionReady,
     sendMessage,
+    intakeConfirm,
+    acceptCv,
     confirmCv,
     regenerateCv,
     restart: startSession,
