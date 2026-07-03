@@ -5,4 +5,6 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--no-optional"
+  # Staging (kazispace.ai): Agent Hub cv_builder on /cv — ship with BE KAZI-46/52
+  NEXT_PUBLIC_CV_AGENT_HUB = "true"
 
