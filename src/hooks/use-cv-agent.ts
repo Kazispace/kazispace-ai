@@ -87,7 +87,16 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       const hist = await fetchAgentMessages(sid);
       if (gen !== activateGenRef.current) return;
 
-      if (hist.success && hist.data?.messages?.length) {
+      if (!hist.success) {
+        setError(hist.error ?? 'Failed to load session');
+        setMessages([]);
+        setPreview(null);
+        setDiff(null);
+        setPipelineState(null);
+        return;
+      }
+
+      if (hist.data?.messages?.length) {
         setMessages(
           hist.data.messages.map((m, i) => ({
             id: m.id ?? `hist_${i}`,
@@ -307,11 +316,15 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setIsLoading(true);
       setError(null);
       setSessionId(sid);
+      setMessages([]);
+      setPreview(null);
+      setDiff(null);
+      setPipelineState(null);
       setNextActions([]);
       setQuickReplies([]);
 
       const entry = sessions.find((s) => s.session_id === sid);
-      setIsReadOnly(entry?.status !== 'active');
+      setIsReadOnly(entry?.status === 'exited');
 
       await loadSessionMessages(sid, gen);
       finishSessionLoad(gen);
