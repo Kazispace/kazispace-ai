@@ -14,11 +14,10 @@ import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
 import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
 import { CvPipelineSteps } from "@/components/cv/cv-pipeline-steps";
+import { CvSessionSidebar } from "@/components/cv/cv-session-sidebar";
 import { Button } from "@/components/ui/button";
-import { CV_AGENT_HUB_ENABLED } from "@/lib/cv-agent-config";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
-import { useCvChat } from "@/hooks/use-cv-chat";
 import { useUIStore } from "@/lib/store";
 import type { ChatNextAction } from "@/types/chat-envelope";
 
@@ -33,9 +32,7 @@ function CvPageContent({ locale }: { locale: string }) {
   const t = useTranslations("cv");
   const openPaywall = useUIStore((s) => s.openPaywall);
 
-  const legacySession = useCvChat(jobId, { enabled: !CV_AGENT_HUB_ENABLED });
-  const agentSession = useCvAgent(jobId, { enabled: CV_AGENT_HUB_ENABLED });
-  const session = CV_AGENT_HUB_ENABLED ? agentSession : legacySession;
+  const agentSession = useCvAgent(jobId);
 
   const {
     messages,
@@ -47,19 +44,25 @@ function CvPageContent({ locale }: { locale: string }) {
     error,
     needsLogin,
     needsOnboarding,
+    needsProfile,
+    pipelineState,
+    nextActions,
+    isSessionReady,
+    isReadOnly,
+    sessions,
+    sessionsLoading,
+    sessionId,
     sendMessage,
     confirmCv,
     regenerateCv,
-  } = session;
-  const nextActions = CV_AGENT_HUB_ENABLED ? agentSession.nextActions : [];
-  const showProfileGate =
-    CV_AGENT_HUB_ENABLED && agentSession.needsProfile === true;
-  const pipelineState = CV_AGENT_HUB_ENABLED ? agentSession.pipelineState : null;
+    selectSession,
+    refreshSessions,
+    restart,
+  } = agentSession;
+
+  const showProfileGate = needsProfile === true;
   const showPipelineSteps =
-    CV_AGENT_HUB_ENABLED && !needsLogin && !needsOnboarding && !showProfileGate;
-  const canChat = CV_AGENT_HUB_ENABLED
-    ? agentSession.isSessionReady
-    : !isLoading && !needsOnboarding && !error;
+    !needsLogin && !needsOnboarding && !showProfileGate && !isReadOnly;
 
   const routedActions = nextActions.filter((a) => isRoutedCvAction(a.type));
   const pickerActions = nextActions.filter((a) => !isRoutedCvAction(a.type));
@@ -84,10 +87,27 @@ function CvPageContent({ locale }: { locale: string }) {
     [jobId, t]
   );
 
+  const handleRestart = useCallback(async () => {
+    await restart();
+    await refreshSessions();
+  }, [refreshSessions, restart]);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0 flex flex-col">
       <Header locale={locale} />
-      <main className="pt-16 flex-1 flex flex-col lg:flex-row max-w-6xl mx-auto w-full">
+      <main className="pt-16 flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full">
+        {!needsLogin && !needsOnboarding && !showProfileGate && (
+          <CvSessionSidebar
+            sessions={sessions}
+            activeSessionId={sessionId}
+            isLoading={sessionsLoading}
+            onSelect={(id) => void selectSession(id)}
+            onNew={() => void handleRestart()}
+            disabled={isSending || isLoading}
+            className="hidden lg:flex"
+          />
+        )}
+
         <section className="flex-1 flex flex-col min-w-0 min-h-[50vh] lg:min-h-[calc(100vh-4rem)]">
           <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -100,13 +120,13 @@ function CvPageContent({ locale }: { locale: string }) {
               <h1 className="text-lg font-bold text-kazi-navy mt-1">{t("title")}</h1>
               <p className="text-xs text-gray-500">{subtitle}</p>
             </div>
-            {CV_AGENT_HUB_ENABLED && !needsLogin && (
+            {!needsLogin && (
               <Button
                 size="sm"
                 variant="outline"
-                className="shrink-0"
+                className="shrink-0 lg:hidden"
                 disabled={isLoading || isSending}
-                onClick={() => void agentSession.restart()}
+                onClick={() => void handleRestart()}
               >
                 {t("newCv")}
               </Button>
@@ -149,6 +169,11 @@ function CvPageContent({ locale }: { locale: string }) {
             </div>
           ) : (
             <>
+              {isReadOnly && (
+                <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 text-xs text-amber-900 text-center">
+                  {t("readOnlyBanner")}
+                </div>
+              )}
               <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg">
                 {error && (
                   <p className="text-sm text-red-500 text-center">{error}</p>
@@ -167,40 +192,44 @@ function CvPageContent({ locale }: { locale: string }) {
                   </p>
                 )}
               </div>
-              {routedActions.length > 0 && (
-                <div className="px-4 pb-2 bg-gray-bg">
-                  <ChatNextActions
-                    actions={routedActions}
-                    locale={locale}
-                    onAction={handleCvAction}
-                    disabled={!canChat || isSending}
+              {!isReadOnly && (
+                <>
+                  {routedActions.length > 0 && (
+                    <div className="px-4 pb-2 bg-gray-bg">
+                      <ChatNextActions
+                        actions={routedActions}
+                        locale={locale}
+                        onAction={handleCvAction}
+                        disabled={!isSessionReady || isSending}
+                      />
+                    </div>
+                  )}
+                  {pickerActions.length > 0 && (
+                    <QuickReplies
+                      options={pickerActions.map((a) => quickReplyLabel(a, locale))}
+                      disabled={!isSessionReady || isSending}
+                      onSelect={(text) => {
+                        const action = pickerActions.find(
+                          (a) => quickReplyLabel(a, locale) === text
+                        );
+                        if (action) handleCvAction(action);
+                      }}
+                    />
+                  )}
+                  {quickReplies.length > 0 && (
+                    <QuickReplies
+                      options={quickReplies}
+                      disabled={!isSessionReady || isSending}
+                      onSelect={(text) => void sendMessage(text)}
+                    />
+                  )}
+                  <ChatInput
+                    onSend={(text) => void sendMessage(text)}
+                    disabled={!isSessionReady || isSending}
+                    placeholder={t("inputPlaceholder")}
                   />
-                </div>
+                </>
               )}
-              {pickerActions.length > 0 && (
-                <QuickReplies
-                  options={pickerActions.map((a) => quickReplyLabel(a, locale))}
-                  disabled={!canChat || isSending}
-                  onSelect={(text) => {
-                    const action = pickerActions.find(
-                      (a) => quickReplyLabel(a, locale) === text
-                    );
-                    if (action) handleCvAction(action);
-                  }}
-                />
-              )}
-              {quickReplies.length > 0 && (
-                <QuickReplies
-                  options={quickReplies}
-                  disabled={!canChat || isSending}
-                  onSelect={(text) => void sendMessage(text)}
-                />
-              )}
-              <ChatInput
-                onSend={(text) => void sendMessage(text)}
-                disabled={!canChat || isSending}
-                placeholder={t("inputPlaceholder")}
-              />
             </>
           )}
         </section>
@@ -210,7 +239,7 @@ function CvPageContent({ locale }: { locale: string }) {
             preview={preview}
             isLoading={isLoading && !preview}
             footer={
-              diff ? (
+              diff && !isReadOnly ? (
                 <CvDiffPanel
                   diff={diff}
                   onConfirm={() => void confirmCv()}

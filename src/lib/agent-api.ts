@@ -3,6 +3,7 @@ import type {
   ActiveAgentState,
   AgentChatResponse,
   AgentMessagesResponse,
+  AgentSessionsListResponse,
   ApiResponse,
   ChatMessage,
   ChatJobCard,
@@ -299,6 +300,33 @@ export async function sendAgentChat(
         },
       },
     };
+  }
+  return res;
+}
+
+export async function fetchAgentSessions(
+  agentId: string,
+  limit = 20
+): Promise<ApiResponse<AgentSessionsListResponse>> {
+  const params = new URLSearchParams({ agent_id: agentId, limit: String(limit) });
+  const res = await apiRequest<AgentSessionsListResponse>(
+    `/api/v1/agents/sessions?${params}`
+  );
+  if (res.success) return res;
+  if (useMockFallback(res.error)) {
+    const active = getMockActive();
+    const sessions = Array.from(mockSessions.entries()).map(([id, state]) => ({
+      session_id: id,
+      agent_id: state.active_agent ?? agentId,
+      status: 'active' as const,
+      pipeline_state: 'intake',
+      title: 'Mock CV session',
+      updated_at: state.activated_at ?? new Date().toISOString(),
+    }));
+    if (active.session_id && active.active_agent === agentId) {
+      return { success: true, data: { sessions } };
+    }
+    return { success: true, data: { sessions: [] } };
   }
   return res;
 }
