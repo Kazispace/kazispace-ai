@@ -6,6 +6,9 @@ import { getEnglishLevel, setEnglishLevel } from "@/lib/auth";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
 import { AgentCard } from "./agent-card";
 import { AGENT_NAME } from "@/lib/constants";
+import { NbaActionCard } from "@/components/nba/nba-action-card";
+import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
+import type { NextBestActionItem } from "@/types";
 
 const ENGLISH_LEVELS = [
   { value: 'basic', key: 'basic' as const },
@@ -20,6 +23,8 @@ interface WelcomeViewProps {
   onLevelChange: (level: string) => void;
   onAgentSelect: (agentId: string) => void;
   onQuickPrompt: (text: string) => void;
+  nbaAction?: NextBestActionItem | null;
+  nbaLoading?: boolean;
 }
 
 export function WelcomeView({
@@ -29,6 +34,8 @@ export function WelcomeView({
   onLevelChange,
   onAgentSelect,
   onQuickPrompt,
+  nbaAction,
+  nbaLoading,
 }: WelcomeViewProps) {
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
@@ -47,6 +54,16 @@ export function WelcomeView({
         </p>
         <p className="text-sm text-muted-foreground mt-2">{t("welcome.prompt")}</p>
       </div>
+
+      {isLoggedIn && nbaLoading ? (
+        <NbaActionCardSkeleton className="w-full mb-6" />
+      ) : isLoggedIn && nbaAction ? (
+        <NbaActionCard
+          locale={locale}
+          action={nbaAction}
+          className="w-full mb-6"
+        />
+      ) : null}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full mb-6">
         {AGENT_REGISTRY.map((agent) => (

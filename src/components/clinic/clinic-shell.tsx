@@ -16,6 +16,7 @@ import { ChatInput } from "@/components/chat/chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
+import { useNbaAction } from "@/hooks/use-nba-action";
 import { useAuthStore, useAgentStore, useChatStore, useUIStore } from "@/lib/store";
 import {
   AGENT_REGISTRY,
@@ -83,6 +84,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     loadAgentHistory,
     sendMessage: sendAgentMessage,
   } = useAgentChat(activeAgentId, agentSessionId);
+
+  const { nba: nbaResponse, isLoading: nbaLoading } = useNbaAction();
 
   const loadHistoryRef = useRef(loadHistory);
   loadHistoryRef.current = loadHistory;
@@ -490,6 +493,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             onLevelChange={setEnglishLevelState}
             onAgentSelect={handleAgentSelect}
             onQuickPrompt={handleQuickPrompt}
+            nbaAction={nbaResponse?.next_best_action ?? null}
+            nbaLoading={nbaLoading}
           />
         ) : (
           messages.map((msg) => {

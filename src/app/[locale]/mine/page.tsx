@@ -11,9 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/lib/store";
 import { useBilling } from "@/hooks/use-billing";
+import { useNbaAction } from "@/hooks/use-nba-action";
 import { planBadgeKey } from "@/lib/api-mappers";
 import { getMe } from "@/lib/api-client";
 import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, User } from "lucide-react";
+import { NbaActionCard } from "@/components/nba/nba-action-card";
+import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
 
 interface MinePageProps {
   params: { locale: string };
@@ -25,6 +28,7 @@ export default function MinePage({ params }: MinePageProps) {
   const { locale } = params;
   const { user, logout, token, isLoggedIn } = useAuthStore();
   const { balance, plan, isLoading: billingLoading } = useBilling();
+  const { nba: nbaResponse, isLoading: nbaLoading } = useNbaAction();
 
   const displayName = user?.displayName || "Guest User";
   const displayInitial = displayName[0]?.toUpperCase() || "?";
@@ -74,6 +78,15 @@ export default function MinePage({ params }: MinePageProps) {
             </div>
           </CardContent>
         </Card>
+
+        {isLoggedIn && nbaLoading ? (
+          <NbaActionCardSkeleton />
+        ) : isLoggedIn && nbaResponse?.next_best_action ? (
+          <NbaActionCard
+            locale={locale}
+            action={nbaResponse.next_best_action}
+          />
+        ) : null}
 
         {/* Credits */}
         <div className="grid grid-cols-3 gap-3">

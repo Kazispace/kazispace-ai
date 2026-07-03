@@ -357,6 +357,54 @@
 		"stepReview": "Review",
 		"stepDone": "Done"
 	},
+	"nba": {
+		"sectionTitle": "Suggested next step",
+		"cta": "Continue",
+		"default": {
+			"title": "Your next step",
+			"description": "Continue your career journey with KaziSpace."
+		},
+		"complete_profile": {
+			"title": "Complete your profile",
+			"description": "Answer a few questions so we can recommend the best next step for you."
+		},
+		"start_interview": {
+			"title": "Take a mock interview",
+			"description": "Practice for your target role and get AI feedback on your answers."
+		},
+		"view_job_recommendations": {
+			"title": "View matching jobs",
+			"description": "See roles picked for your profile and choose where to start preparing."
+		},
+		"start_job_focused_preparation": {
+			"title": "Prepare for your target job",
+			"description": "You've seen matching roles — start CV or interview prep for your pick."
+		},
+		"continue_highest_leverage_preparation": {
+			"title": "Update your CV",
+			"description": "Polish your resume for your target role while momentum is high."
+		},
+		"return_via_new_job_opportunity": {
+			"title": "See new job matches",
+			"description": "Fresh roles match your profile — start with the top pick."
+		},
+		"upgrade_to_unlock_more": {
+			"title": "Unlock more relevant jobs",
+			"description": "Upgrade to Pro for AI prep on every matching role."
+		},
+		"use_pro_to_accelerate_results": {
+			"title": "Keep growing with Pro",
+			"description": "Use your Pro tools to move faster toward your career goal."
+		},
+		"edit_cv": {
+			"title": "Build your CV",
+			"description": "Create or update your resume with the CV Builder."
+		},
+		"pay_upgrade": {
+			"title": "Upgrade your plan",
+			"description": "Unlock Pro features to accelerate your job search."
+		}
+	},
 	"interview": {
 		"title": "Mock Interview Practice",
 		"subtitle": "Answer 3 questions and get AI feedback on clarity, relevance, and confidence.",

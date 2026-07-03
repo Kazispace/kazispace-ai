@@ -357,6 +357,54 @@
 		"stepReview": "Tekshirish",
 		"stepDone": "Tayyor"
 	},
+	"nba": {
+		"sectionTitle": "Tavsiya etilgan qadam",
+		"cta": "Davom etish",
+		"default": {
+			"title": "Keyingi qadamingiz",
+			"description": "KaziSpace bilan martaba yo'lingizni davom eting."
+		},
+		"complete_profile": {
+			"title": "Profilni to'ldiring",
+			"description": "Bir nechta savolga javob bering — eng yaxshi keyingi qadamni tavsiya qilamiz."
+		},
+		"start_interview": {
+			"title": "Sinov suhbatidan o'ting",
+			"description": "Maqsadli lavozimga tayyorlaning va javoblaringizni baholang."
+		},
+		"view_job_recommendations": {
+			"title": "Mos vakansiyalarni ko'ring",
+			"description": "Profilingiz uchun tanlangan lavozimlarni oching va tayyorgarlikni boshlang."
+		},
+		"start_job_focused_preparation": {
+			"title": "Tanlangan ishga tayyorlaning",
+			"description": "Rezyume yoki suhbat tayyorgarligini boshlang."
+		},
+		"continue_highest_leverage_preparation": {
+			"title": "Rezyumeni yangilang",
+			"description": "Maqsadli lavozim uchun rezyumeni yaxshilang."
+		},
+		"return_via_new_job_opportunity": {
+			"title": "Yangi vakansiyalarni ko'ring",
+			"description": "Yangi mos lavozimlar paydo bo'ldi — eng yaxshisidan boshlang."
+		},
+		"upgrade_to_unlock_more": {
+			"title": "Ko'proq vakansiya oching",
+			"description": "Har bir lavozim uchun AI tayyorgarlik uchun Pro-ga o'ting."
+		},
+		"use_pro_to_accelerate_results": {
+			"title": "Pro bilan o'sishni davom eting",
+			"description": "Maqsadingizga tezroq yetish uchun Pro vositalaridan foydalaning."
+		},
+		"edit_cv": {
+			"title": "Rezyume yarating",
+			"description": "CV konstruktorida rezyumeni yarating yoki yangilang."
+		},
+		"pay_upgrade": {
+			"title": "Tarifni yangilang",
+			"description": "Ish qidiruvini tezlashtirish uchun Pro imkoniyatlarini oching."
+		}
+	},
 	"interview": {
 		"title": "Sinov suhbati",
 		"subtitle": "3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.",
