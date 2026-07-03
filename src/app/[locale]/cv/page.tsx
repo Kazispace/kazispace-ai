@@ -100,7 +100,7 @@ function CvPageContent({ locale }: { locale: string }) {
               <h1 className="text-lg font-bold text-kazi-navy mt-1">{t("title")}</h1>
               <p className="text-xs text-gray-500">{subtitle}</p>
             </div>
-            {CV_AGENT_HUB_ENABLED && (
+            {CV_AGENT_HUB_ENABLED && !needsLogin && (
               <Button
                 size="sm"
                 variant="outline"

@@ -40,7 +40,11 @@ export function CvPipelineSteps({ pipelineState, isWorking }: CvPipelineStepsPro
           const showPulse = isCurrent && isWorking;
 
           return (
-            <li key={stepId} className="flex items-center gap-1">
+            <li
+              key={stepId}
+              className="flex items-center gap-1"
+              aria-current={isCurrent ? 'step' : undefined}
+            >
               {index > 0 && (
                 <span
                   className={cn(
