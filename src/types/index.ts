@@ -209,6 +209,11 @@ export type { MatchAnalysisScores as JobMatchScores } from './api-schema';
 // CV Builder (KAZI-23 / API §6)
 export type { CvChatRequest, CvChatResponse, CvDiffChange, CvDiffPayload } from './api-schema';
 
+export type {
+  NextBestActionItem,
+  NextBestActionResponse,
+} from './nba';
+
 export interface CvChatMessage {
   id: string;
   role: 'user' | 'assistant';
