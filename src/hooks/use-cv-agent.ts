@@ -2,29 +2,32 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { activateAgent, getActiveAgent, sendAgentChat } from '@/lib/agent-api';
+import { activateAgent, getActiveAgent, parseAgentReply, sendAgentChat } from '@/lib/agent-api';
 import { isAgentBlocked, isPaywallError } from '@/lib/api-errors';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
 import {
-  extractCvButtonsFromAgent,
+  extractCvMetaButtons,
   extractCvPreviewFromAgent,
   extractCvReplyFromAgent,
   patchDiffFromAgentMeta,
+  resolveAgentMeta,
   type CvPreviewContent,
 } from '@/lib/cv-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
 import type { ActivateAgentResponse, AgentChatResponse, CvChatMessage, CvDiffPayload } from '@/types';
+import type { ChatNextAction } from '@/types/chat-envelope';
 
 function nextId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function applyAgentMetaSideEffects(
-  data: Pick<AgentChatResponse, 'meta'>,
+  data: Pick<AgentChatResponse, 'meta' | 'response'>,
   openPaywall: (code: string) => void
 ): boolean {
-  const errorCode = data.meta?.error_code;
+  const meta = resolveAgentMeta(data);
+  const errorCode = meta?.error_code;
   if (errorCode && isPaywallError({ errorCode })) {
     openPaywall(errorCode);
     return true;
@@ -47,6 +50,7 @@ export function useCvAgent(
   const [messages, setMessages] = useState<CvChatMessage[]>([]);
   const [preview, setPreview] = useState<CvPreviewContent | null>(null);
   const [diff, setDiff] = useState<CvDiffPayload | null>(null);
+  const [nextActions, setNextActions] = useState<ChatNextAction[]>([]);
   const [quickReplies, setQuickReplies] = useState<string[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(enabled);
@@ -54,6 +58,17 @@ export function useCvAgent(
   const [error, setError] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
+
+  const applyCtaState = useCallback((data: AgentChatResponse | ActivateAgentResponse) => {
+    const { nextActions: actions } = parseAgentReply(data as AgentChatResponse);
+    if (actions.length > 0) {
+      setNextActions(actions);
+    }
+    const buttons = extractCvMetaButtons(data);
+    if (buttons.length > 0) {
+      setQuickReplies(buttons);
+    }
+  }, []);
 
   const applyResponse = useCallback(
     (data: AgentChatResponse, options?: { skipReply?: boolean }) => {
@@ -73,15 +88,12 @@ export function useCvAgent(
         setPreview(nextPreview);
       }
       patchDiffFromAgentMeta(data, setDiff);
-      const buttons = extractCvButtonsFromAgent(data);
-      if (buttons.length > 0) {
-        setQuickReplies(buttons);
-      }
+      applyCtaState(data);
       if (data.session_id) {
         setSessionId(data.session_id);
       }
     },
-    [openPaywall]
+    [applyCtaState, openPaywall]
   );
 
   const applyActivateResponse = useCallback(
@@ -92,15 +104,9 @@ export function useCvAgent(
         setPreview(nextPreview);
       }
       patchDiffFromAgentMeta(data, setDiff);
-      const buttons = extractCvButtonsFromAgent({
-        response: { next_actions: data.response?.next_actions },
-        meta: data.meta,
-      });
-      if (buttons.length > 0) {
-        setQuickReplies(buttons);
-      }
+      applyCtaState(data);
     },
-    [openPaywall]
+    [applyCtaState, openPaywall]
   );
 
   const handleApiError = useCallback(
@@ -209,6 +215,7 @@ export function useCvAgent(
       setMessages([]);
       setPreview(null);
       setDiff(null);
+      setNextActions([]);
       setQuickReplies([]);
       setSessionId(null);
       return;
@@ -216,6 +223,7 @@ export function useCvAgent(
     setMessages([]);
     setPreview(null);
     setDiff(null);
+    setNextActions([]);
     setQuickReplies([]);
     setSessionId(null);
     setError(null);
@@ -231,6 +239,7 @@ export function useCvAgent(
       }
       setIsSending(true);
       setError(null);
+      setNextActions([]);
       setQuickReplies([]);
       if (options?.showUserBubble !== false) {
         setMessages((prev) => [
@@ -269,7 +278,7 @@ export function useCvAgent(
   );
 
   const confirmCv = useCallback(
-    () => sendAgentMessage('confirm', { showUserBubble: false }),
+    () => sendAgentMessage('__action:accept_cv', { showUserBubble: false }),
     [sendAgentMessage]
   );
 
@@ -285,6 +294,7 @@ export function useCvAgent(
     messages,
     preview,
     diff,
+    nextActions,
     quickReplies,
     isLoading,
     isSending,

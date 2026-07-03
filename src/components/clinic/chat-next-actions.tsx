@@ -23,6 +23,7 @@ const KNOWN_ACTION_TYPES = [
   'job_search',
   'edit_cv',
   'cv_builder',
+  'unlock_pro',
 ] as const;
 
 type KnownActionType = (typeof KNOWN_ACTION_TYPES)[number];

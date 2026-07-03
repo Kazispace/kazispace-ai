@@ -6,6 +6,8 @@ export type LocalizedLabel = string | Partial<Record<SupportedLocale, string>>;
 export interface ChatNextAction {
   type: string;
   label?: LocalizedLabel;
+  /** Agent CTA payload (e.g. role label or `__action:regenerate`). */
+  payload?: string;
 }
 
 export interface ChatJobCard {

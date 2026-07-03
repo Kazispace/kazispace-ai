@@ -1,6 +1,7 @@
 import { apiRequest } from '@/lib/api-client';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import type {
+  ActivateAgentResponse,
   AgentChatMeta,
   AgentChatResponse,
   ApiResponse,
@@ -87,9 +88,21 @@ export function extractCvDiff(data: CvChatResponse): CvDiffPayload | null {
   return normalizeCvDiff(data.diff);
 }
 
-function agentMeta(data: AgentChatResponse): Record<string, unknown> | undefined {
-  const meta = data.meta;
-  return meta && typeof meta === 'object' ? (meta as Record<string, unknown>) : undefined;
+function agentMeta(data: AgentChatResponse | ActivateAgentResponse): Record<string, unknown> | undefined {
+  const nested = data.response?.meta;
+  const top = data.meta;
+  const merged =
+    top || nested
+      ? ({ ...(nested ?? {}), ...(top ?? {}) } as Record<string, unknown>)
+      : undefined;
+  return merged;
+}
+
+/** Merge top-level and `response.meta` (Agent Hub chat returns meta nested). */
+export function resolveAgentMeta(
+  data: Pick<AgentChatResponse, 'meta' | 'response'> | Pick<ActivateAgentResponse, 'meta' | 'response'>
+): AgentChatMeta | undefined {
+  return agentMeta(data as AgentChatResponse) as AgentChatMeta | undefined;
 }
 
 export function extractCvReplyFromAgent(data: AgentChatResponse): string {
@@ -100,13 +113,15 @@ export function extractCvReplyFromAgent(data: AgentChatResponse): string {
 }
 
 export function extractCvPreviewFromAgent(
-  data: AgentChatResponse
+  data: AgentChatResponse | ActivateAgentResponse
 ): CvPreviewContent | null {
-  const meta = agentMeta(data);
+  const meta = agentMeta(data as AgentChatResponse);
   const markdown =
     typeof meta?.cv_preview_markdown === 'string'
       ? meta.cv_preview_markdown
-      : undefined;
+      : typeof meta?.cv_content === 'string'
+        ? meta.cv_content
+        : undefined;
   if (markdown) {
     return { format: 'markdown', content: markdown };
   }
@@ -119,28 +134,28 @@ export function extractCvDiffFromAgent(data: AgentChatResponse): CvDiffPayload |
 
 /** Update diff only when agent meta includes an explicit `diff` key (null clears the panel). */
 export function patchDiffFromAgentMeta(
-  data: { meta?: AgentChatMeta | null },
+  data: Pick<AgentChatResponse, 'meta' | 'response'> | Pick<ActivateAgentResponse, 'meta' | 'response'>,
   setDiff: (diff: CvDiffPayload | null) => void
 ): void {
-  const meta = data.meta;
+  const meta = resolveAgentMeta(data);
   if (!meta || !Object.prototype.hasOwnProperty.call(meta, 'diff')) {
     return;
   }
   setDiff(normalizeCvDiff(meta.diff));
 }
 
-export function extractCvButtonsFromAgent(data: AgentChatResponse): string[] {
-  const meta = agentMeta(data);
+/** Legacy meta.buttons only; structured CTAs come from `response.next_actions`. */
+export function extractCvMetaButtons(data: AgentChatResponse | ActivateAgentResponse): string[] {
+  const meta = agentMeta(data as AgentChatResponse);
   if (Array.isArray(meta?.buttons)) {
     return meta.buttons.filter((b): b is string => typeof b === 'string');
   }
-  const envelope = parseAssistantEnvelope(data);
-  return envelope.nextActions
-    .map((action) => {
-      if (typeof action.label === 'string') return action.label;
-      return action.type;
-    })
-    .filter(Boolean);
+  return [];
+}
+
+/** @deprecated Use extractCvMetaButtons + parseAgentReply next_actions */
+export function extractCvButtonsFromAgent(data: AgentChatResponse): string[] {
+  return extractCvMetaButtons(data);
 }
 
 /** Normalize API diff to KAZI-35 shape; accepts legacy section objects during transition. */

@@ -413,6 +413,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           router.push(`/${locale}/jobs`);
           return;
         case "upgrade_pro":
+        case "unlock_pro":
           openPaywall("PRO_FEATURE_LOCKED");
           return;
         case "return_to_clinic":
