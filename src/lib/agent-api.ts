@@ -104,10 +104,16 @@ function mockActivate(
           { type: 'developer', label: 'Software Engineer' },
           { type: 'manager', label: 'Product Manager' },
         ],
+        ...(options?.job_id
+          ? {
+              meta: {
+                cv_preview_markdown:
+                  '# Alex Developer\n\n## Summary\nJob-tailored CV draft for your target role.',
+                diff: mockCvBuilderDiff('job'),
+              },
+            }
+          : {}),
       },
-      ...(options?.job_id
-        ? { meta: { diff: mockCvBuilderDiff('job') } }
-        : {}),
     };
   }
 
@@ -211,7 +217,8 @@ export async function sendAgentChat(
       const cvState = sessionId ? mockCvBuilderBySession.get(sessionId) : undefined;
       const hasJobContext = Boolean(cvState?.jobId);
 
-      let meta: AgentChatResponse['meta'];
+      let meta: NonNullable<AgentChatResponse['response']>['meta'];
+      let nextActions: ChatNextAction[] | undefined;
       if (isAcceptCv) {
         meta = {
           cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
@@ -222,17 +229,31 @@ export async function sendAgentChat(
           cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
           diff: hasJobContext ? mockCvBuilderDiff('job') : null,
         };
+        if (hasJobContext) {
+          nextActions = [
+            { type: 'accept_cv', label: 'Accept CV' },
+            { type: 'regenerate', label: 'Regenerate' },
+          ];
+        }
       } else if (isRegenerate) {
         meta = {
           cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
           diff: mockCvBuilderDiff('regen'),
         };
+        nextActions = [
+          { type: 'accept_cv', label: 'Accept CV' },
+          { type: 'regenerate', label: 'Regenerate' },
+        ];
       } else if (hasJobContext) {
         meta = {
           cv_preview_markdown:
             '# Alex Developer\n\n## Summary\nJob-tailored CV draft for your target role.\n\n## Skills\nReact, TypeScript, Python',
           diff: mockCvBuilderDiff('job'),
         };
+        nextActions = [
+          { type: 'accept_cv', label: 'Accept CV' },
+          { type: 'regenerate', label: 'Regenerate' },
+        ];
       } else {
         meta = {
           cv_preview_markdown:
@@ -256,8 +277,9 @@ export async function sendAgentChat(
                     ? 'Regenerated job-specific edits.'
                     : 'Updated your CV preview.'
             }`,
+            meta,
+            ...(nextActions ? { next_actions: nextActions } : {}),
           },
-          meta,
         },
       };
     }
