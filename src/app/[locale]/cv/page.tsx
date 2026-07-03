@@ -13,6 +13,7 @@ import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
 import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
+import { CvPipelineSteps } from "@/components/cv/cv-pipeline-steps";
 import { Button } from "@/components/ui/button";
 import { CV_AGENT_HUB_ENABLED } from "@/lib/cv-agent-config";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
@@ -53,6 +54,9 @@ function CvPageContent({ locale }: { locale: string }) {
   const nextActions = CV_AGENT_HUB_ENABLED ? agentSession.nextActions : [];
   const showProfileGate =
     CV_AGENT_HUB_ENABLED && agentSession.needsProfile === true;
+  const pipelineState = CV_AGENT_HUB_ENABLED ? agentSession.pipelineState : null;
+  const showPipelineSteps =
+    CV_AGENT_HUB_ENABLED && !needsLogin && !needsOnboarding && !showProfileGate;
   const canChat = CV_AGENT_HUB_ENABLED
     ? agentSession.isSessionReady
     : !isLoading && !needsOnboarding && !error;
@@ -85,16 +89,36 @@ function CvPageContent({ locale }: { locale: string }) {
       <Header locale={locale} />
       <main className="pt-16 flex-1 flex flex-col lg:flex-row max-w-6xl mx-auto w-full">
         <section className="flex-1 flex flex-col min-w-0 min-h-[50vh] lg:min-h-[calc(100vh-4rem)]">
-          <div className="px-4 py-3 border-b border-gray-200 bg-white">
-            <Link
-              href={`/${locale}/mine`}
-              className="text-xs text-kazi-orange font-medium"
-            >
-              {t("backToMine")}
-            </Link>
-            <h1 className="text-lg font-bold text-kazi-navy mt-1">{t("title")}</h1>
-            <p className="text-xs text-gray-500">{subtitle}</p>
+          <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <Link
+                href={`/${locale}/mine`}
+                className="text-xs text-kazi-orange font-medium"
+              >
+                {t("backToMine")}
+              </Link>
+              <h1 className="text-lg font-bold text-kazi-navy mt-1">{t("title")}</h1>
+              <p className="text-xs text-gray-500">{subtitle}</p>
+            </div>
+            {CV_AGENT_HUB_ENABLED && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+                disabled={isLoading || isSending}
+                onClick={() => void agentSession.restart()}
+              >
+                {t("newCv")}
+              </Button>
+            )}
           </div>
+
+          {showPipelineSteps && (
+            <CvPipelineSteps
+              pipelineState={pipelineState}
+              isWorking={isSending}
+            />
+          )}
 
           {needsLogin ? (
             <div className="flex-1 flex items-center justify-center p-6">

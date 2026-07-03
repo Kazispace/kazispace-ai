@@ -348,7 +348,14 @@
 		"diffRemoved": "Removed",
 		"diffModified": "Modified",
 		"confirmChanges": "Accept changes",
-		"regenerate": "Regenerate"
+		"regenerate": "Regenerate",
+		"newCv": "New CV",
+		"pipelineAria": "CV builder progress",
+		"stepIntake": "Intake",
+		"stepAnalyze": "Analyze",
+		"stepGenerate": "Generate",
+		"stepReview": "Review",
+		"stepDone": "Done"
 	},
 	"interview": {
 		"title": "Mock Interview Practice",

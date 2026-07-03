@@ -348,7 +348,14 @@
 		"diffRemoved": "Olib tashlandi",
 		"diffModified": "O‘zgartirildi",
 		"confirmChanges": "Qabul qilish",
-		"regenerate": "Qayta yaratish"
+		"regenerate": "Qayta yaratish",
+		"newCv": "Yangi rezyume",
+		"pipelineAria": "Rezyume yaratish jarayoni",
+		"stepIntake": "Ma'lumot",
+		"stepAnalyze": "Tahlil",
+		"stepGenerate": "Yaratish",
+		"stepReview": "Tekshirish",
+		"stepDone": "Tayyor"
 	},
 	"interview": {
 		"title": "Sinov suhbati",

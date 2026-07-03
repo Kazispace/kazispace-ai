@@ -348,7 +348,14 @@
 		"diffRemoved": "Удалено",
 		"diffModified": "Изменено",
 		"confirmChanges": "Принять изменения",
-		"regenerate": "Перегенерировать"
+		"regenerate": "Перегенерировать",
+		"newCv": "Новое резюме",
+		"pipelineAria": "Прогресс создания резюме",
+		"stepIntake": "Сбор данных",
+		"stepAnalyze": "Анализ",
+		"stepGenerate": "Генерация",
+		"stepReview": "Проверка",
+		"stepDone": "Готово"
 	},
 	"interview": {
 		"title": "Пробное интервью",

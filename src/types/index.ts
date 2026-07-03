@@ -166,6 +166,7 @@ export interface AgentChatMeta {
   cv_preview_markdown?: string;
   cv_content?: string;
   diff?: unknown | null;
+  pipeline_state?: string;
   buttons?: string[];
   error_code?: string;
   paywall_source?: string;

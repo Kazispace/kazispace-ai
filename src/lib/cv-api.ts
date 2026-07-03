@@ -132,6 +132,30 @@ export function extractCvDiffFromAgent(data: AgentChatResponse): CvDiffPayload |
   return normalizeCvDiff(agentMeta(data)?.diff);
 }
 
+export function extractPipelineState(
+  data:
+    | Pick<AgentChatResponse, 'meta' | 'response'>
+    | Pick<ActivateAgentResponse, 'meta' | 'response'>
+): string | null {
+  const raw = resolveAgentMeta(data)?.pipeline_state;
+  return typeof raw === 'string' ? raw : null;
+}
+
+/** Update pipeline_state when agent meta includes an explicit key. */
+export function patchPipelineStateFromMeta(
+  data:
+    | Pick<AgentChatResponse, 'meta' | 'response'>
+    | Pick<ActivateAgentResponse, 'meta' | 'response'>,
+  setPipelineState: (state: string | null) => void
+): void {
+  const meta = resolveAgentMeta(data);
+  if (!meta || !Object.prototype.hasOwnProperty.call(meta, 'pipeline_state')) {
+    return;
+  }
+  const raw = meta.pipeline_state;
+  setPipelineState(typeof raw === 'string' ? raw : null);
+}
+
 /** Update diff only when agent meta includes an explicit `diff` key (null clears the panel). */
 export function patchDiffFromAgentMeta(
   data: Pick<AgentChatResponse, 'meta' | 'response'> | Pick<ActivateAgentResponse, 'meta' | 'response'>,
