@@ -67,11 +67,12 @@ function CvPageContent({ locale }: { locale: string }) {
         router,
         openPaywall,
         sendPayload: (payload) => void sendMessage(payload),
-        confirmCv: () => void confirmCv(),
+        intakeConfirm: () => void agentSession.intakeConfirm(),
+        acceptCv: () => void confirmCv(),
         regenerateCv: () => void regenerateCv(),
       });
     },
-    [confirmCv, locale, openPaywall, regenerateCv, router, sendMessage]
+    [agentSession.intakeConfirm, confirmCv, locale, openPaywall, regenerateCv, router, sendMessage]
   );
 
   const subtitle = useMemo(

@@ -205,15 +205,22 @@ export async function sendAgentChat(
     if (agentId === CV_BUILDER_AGENT_ID) {
       const isRegenerate =
         message === '__action:regenerate' || message.toLowerCase() === 'regenerate';
-      const isConfirm = message === 'confirm';
+      const isIntakeConfirm =
+        message === '__action:confirm' || message === 'confirm';
+      const isAcceptCv = message === '__action:accept_cv';
       const cvState = sessionId ? mockCvBuilderBySession.get(sessionId) : undefined;
       const hasJobContext = Boolean(cvState?.jobId);
 
       let meta: AgentChatResponse['meta'];
-      if (isConfirm) {
+      if (isAcceptCv) {
         meta = {
           cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
           diff: null,
+        };
+      } else if (isIntakeConfirm) {
+        meta = {
+          cv_preview_markdown: MOCK_CV_PREVIEW_SAVED,
+          diff: hasJobContext ? mockCvBuilderDiff('job') : null,
         };
       } else if (isRegenerate) {
         meta = {
@@ -241,11 +248,13 @@ export async function sendAgentChat(
           message_id: `mock_${Date.now()}`,
           response: {
             text: `${emoji} (Mock) ${
-              isConfirm
-                ? 'CV saved.'
-                : isRegenerate
-                  ? 'Regenerated job-specific edits.'
-                  : 'Updated your CV preview.'
+              isAcceptCv
+                ? 'CV accepted.'
+                : isIntakeConfirm
+                  ? 'CV draft generated.'
+                  : isRegenerate
+                    ? 'Regenerated job-specific edits.'
+                    : 'Updated your CV preview.'
             }`,
           },
           meta,
