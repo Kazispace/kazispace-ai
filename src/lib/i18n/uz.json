@@ -395,6 +395,14 @@
 		"use_pro_to_accelerate_results": {
 			"title": "Pro bilan o'sishni davom eting",
 			"description": "Maqsadingizga tezroq yetish uchun Pro vositalaridan foydalaning."
+		},
+		"edit_cv": {
+			"title": "Rezyume yarating",
+			"description": "CV konstruktorida rezyumeni yarating yoki yangilang."
+		},
+		"pay_upgrade": {
+			"title": "Tarifni yangilang",
+			"description": "Ish qidiruvini tezlashtirish uchun Pro imkoniyatlarini oching."
 		}
 	},
 	"interview": {

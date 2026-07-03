@@ -395,6 +395,14 @@
 		"use_pro_to_accelerate_results": {
 			"title": "Keep growing with Pro",
 			"description": "Use your Pro tools to move faster toward your career goal."
+		},
+		"edit_cv": {
+			"title": "Build your CV",
+			"description": "Create or update your resume with the CV Builder."
+		},
+		"pay_upgrade": {
+			"title": "Upgrade your plan",
+			"description": "Unlock Pro features to accelerate your job search."
 		}
 	},
 	"interview": {

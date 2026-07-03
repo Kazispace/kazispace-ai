@@ -85,7 +85,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     sendMessage: sendAgentMessage,
   } = useAgentChat(activeAgentId, agentSessionId);
 
-  const { nba: nbaResponse } = useNbaAction();
+  const { nba: nbaResponse, isLoading: nbaLoading } = useNbaAction();
 
   const loadHistoryRef = useRef(loadHistory);
   loadHistoryRef.current = loadHistory;
@@ -494,6 +494,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             onAgentSelect={handleAgentSelect}
             onQuickPrompt={handleQuickPrompt}
             nbaAction={nbaResponse?.next_best_action ?? null}
+            nbaLoading={nbaLoading}
           />
         ) : (
           messages.map((msg) => {

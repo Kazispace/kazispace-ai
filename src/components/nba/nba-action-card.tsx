@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useMessages, useTranslations } from 'next-intl';
 import {
   Briefcase,
   FileText,
@@ -35,6 +35,26 @@ function actionI18nKey(actionType: string): string {
   return actionType.replace(/[^a-z0-9_]/gi, '_');
 }
 
+type NbaMessages = Record<string, { title?: string; description?: string } | string>;
+
+function resolveNbaCopy(
+  messages: NbaMessages,
+  t: ReturnType<typeof useTranslations<'nba'>>,
+  actionKey: string,
+  field: 'title' | 'description',
+  apiFallback: string
+): string {
+  const actionEntry = messages[actionKey];
+  if (actionEntry && typeof actionEntry === 'object' && actionEntry[field]) {
+    return t(`${actionKey}.${field}` as 'complete_profile.title');
+  }
+  const defaultEntry = messages.default;
+  if (defaultEntry && typeof defaultEntry === 'object' && defaultEntry[field]) {
+    return t(`default.${field}` as 'default.title');
+  }
+  return apiFallback || t(`default.${field}` as 'default.title');
+}
+
 interface NbaActionCardProps {
   locale: string;
   action: NextBestActionItem;
@@ -43,12 +63,19 @@ interface NbaActionCardProps {
 
 export function NbaActionCard({ locale, action, className }: NbaActionCardProps) {
   const t = useTranslations('nba');
+  const messages = (useMessages().nba ?? {}) as NbaMessages;
   const key = actionI18nKey(action.action_type);
   const Icon = ACTION_ICONS[action.action_type] ?? Sparkles;
   const href = resolveNbaHref(locale, action.redirect_url, action.action_type);
 
-  const title = t(`${key}.title` as 'complete_profile.title');
-  const description = t(`${key}.description` as 'complete_profile.description');
+  const title = resolveNbaCopy(messages, t, key, 'title', action.title);
+  const description = resolveNbaCopy(
+    messages,
+    t,
+    key,
+    'description',
+    action.description
+  );
 
   return (
     <div

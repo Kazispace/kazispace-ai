@@ -7,6 +7,7 @@ import { AGENT_REGISTRY } from "@/lib/agents/registry";
 import { AgentCard } from "./agent-card";
 import { AGENT_NAME } from "@/lib/constants";
 import { NbaActionCard } from "@/components/nba/nba-action-card";
+import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
 import type { NextBestActionItem } from "@/types";
 
 const ENGLISH_LEVELS = [
@@ -23,6 +24,7 @@ interface WelcomeViewProps {
   onAgentSelect: (agentId: string) => void;
   onQuickPrompt: (text: string) => void;
   nbaAction?: NextBestActionItem | null;
+  nbaLoading?: boolean;
 }
 
 export function WelcomeView({
@@ -33,6 +35,7 @@ export function WelcomeView({
   onAgentSelect,
   onQuickPrompt,
   nbaAction,
+  nbaLoading,
 }: WelcomeViewProps) {
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
@@ -52,7 +55,9 @@ export function WelcomeView({
         <p className="text-sm text-muted-foreground mt-2">{t("welcome.prompt")}</p>
       </div>
 
-      {isLoggedIn && nbaAction ? (
+      {isLoggedIn && nbaLoading ? (
+        <NbaActionCardSkeleton className="w-full mb-6" />
+      ) : isLoggedIn && nbaAction ? (
         <NbaActionCard
           locale={locale}
           action={nbaAction}

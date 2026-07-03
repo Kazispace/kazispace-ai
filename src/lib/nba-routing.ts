@@ -1,5 +1,5 @@
 const REDIRECT_TO_SEGMENT: Record<string, string> = {
-  '/onboarding': 'profile',
+  '/onboarding': 'chat',
   '/interview/sessions/new': 'interview',
   '/job-recommendations': 'jobs',
   '/cv/documents': 'cv',
@@ -7,7 +7,7 @@ const REDIRECT_TO_SEGMENT: Record<string, string> = {
 };
 
 const ACTION_TO_SEGMENT: Record<string, string> = {
-  complete_profile: 'profile',
+  complete_profile: 'chat',
   start_interview: 'interview',
   view_job_recommendations: 'jobs',
   start_job_focused_preparation: 'jobs',
