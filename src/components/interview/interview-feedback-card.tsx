@@ -131,7 +131,20 @@ export function InterviewFeedbackCard({
         </section>
       )}
 
-      {feedback.sample_better_answer && (
+      {feedback.weakness_tags && feedback.weakness_tags.length > 0 && (
+        <section className="mb-3">
+          <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">
+            {t('weaknessTags')}
+          </h4>
+          <ul className="text-sm text-gray-800 list-disc pl-4 space-y-1">
+            {feedback.weakness_tags.map((tag) => (
+              <li key={`${tag.tag}-${tag.question_index ?? 0}`}>{tag.label}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {feedback.sample_better_answer && feedback.tier !== 'free' && (
         <section className="mb-3">
           <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">
             {t('sampleAnswer')}

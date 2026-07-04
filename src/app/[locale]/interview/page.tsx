@@ -32,12 +32,13 @@ function InterviewPageContent({ locale }: { locale: string }) {
   const {
     phase,
     messages,
-    targetRole,
+    displayRole,
     questionIndex,
     questionCount,
     feedback,
     diagnosisCtas,
     prepCard,
+    prepAckRequired,
     jobContext,
     isStarting,
     isAckingPrep,
@@ -72,13 +73,13 @@ function InterviewPageContent({ locale }: { locale: string }) {
           showToast(t("drillComingSoon"), "info");
           break;
         case "retry_full":
-          retrySession();
+          retrySession(cta.job_id ?? jobId);
           break;
         default:
           break;
       }
     },
-    [retrySession, showToast, t]
+    [jobId, retrySession, showToast, t]
   );
 
   const showInput = phase === "interview" && !needsLogin;
@@ -131,13 +132,18 @@ function InterviewPageContent({ locale }: { locale: string }) {
               />
             )}
           </>
-        ) : phase === "prep_review" && prepCard ? (
+        ) : phase === "prep_review" && (prepCard || prepAckRequired) ? (
           <>
             {subtitle && (
               <p className="text-center text-xs text-gray-500 px-4 pt-2">{subtitle}</p>
             )}
             <InterviewPrepCard
-              prep={prepCard}
+              prep={
+                prepCard ?? {
+                  focus_areas: [],
+                  sample_questions: [],
+                }
+              }
               jobContext={jobContext}
               locale={locale}
               jobId={jobId}
@@ -157,7 +163,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
                   {t("backToMine")}
                 </Link>
                 <h1 className="text-lg font-bold text-kazi-navy mt-1">
-                  {targetRole ? `🎤 ${targetRole}` : t("title")}
+                  {displayRole ? `🎤 ${displayRole}` : t("title")}
                 </h1>
                 {phase === "interview" && (
                   <p className="text-xs text-gray-500">
@@ -207,7 +213,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
 
               {phase === "feedback_ready" && feedback && (
                 <InterviewFeedbackCard
-                  targetRole={targetRole}
+                  targetRole={displayRole}
                   feedback={feedback}
                   ctas={diagnosisCtas}
                   locale={locale}

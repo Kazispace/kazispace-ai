@@ -34,13 +34,27 @@ type SessionBootstrap = {
   target_role?: string;
 };
 
+type CreateSessionPayload = CreateInterviewSessionResponse & {
+  prep_ack_required?: boolean;
+  target_role?: string;
+};
+
+function prepCardHasContent(card?: InterviewPrepCard | null): boolean {
+  if (!card) return false;
+  return Boolean(
+    (card.focus_areas?.length ?? 0) > 0 ||
+      (card.sample_questions?.length ?? 0) > 0 ||
+      card.estimated_duration_min != null
+  );
+}
+
 function needsPrepGate(data: {
   prep_ack_required?: boolean;
   prep_card?: InterviewPrepCard | null;
 }): boolean {
   if (data.prep_ack_required === true) return true;
   if (data.prep_ack_required === false) return false;
-  return Boolean(data.prep_card && Object.keys(data.prep_card).length > 0);
+  return prepCardHasContent(data.prep_card);
 }
 
 function isProfileGateError(code?: string): boolean {
@@ -69,17 +83,28 @@ export function useInterview(jobId?: string | null) {
   const [feedback, setFeedback] = useState<InterviewFeedbackSummary | null>(null);
   const [diagnosisCtas, setDiagnosisCtas] = useState<InterviewCta[]>([]);
   const [prepCard, setPrepCard] = useState<InterviewPrepCard | null>(null);
+  const [prepAckRequired, setPrepAckRequired] = useState(false);
   const [jobContext, setJobContext] = useState<InterviewJobContext | null>(null);
-  const [isStarting, setIsStarting] = useState(Boolean(jobId));
+  const [isStarting, setIsStarting] = useState(false);
   const [isAckingPrep, setIsAckingPrep] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isCheckingFeedback, setIsCheckingFeedback] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const runIdRef = useRef(0);
   const pendingStartRef = useRef<SessionBootstrap | null>(null);
-  const jobAutoStartRef = useRef(false);
+  const lastAutoStartedJobIdRef = useRef<string | null>(null);
+  const jobStartInFlightRef = useRef(false);
 
-  const isStale = useCallback((runId: number) => runId !== runIdRef.current, []);
+  const finishIfStale = useCallback((runId: number) => {
+    if (runId !== runIdRef.current) {
+      setIsStarting(false);
+      setIsAckingPrep(false);
+      setIsSending(false);
+      jobStartInFlightRef.current = false;
+      return true;
+    }
+    return false;
+  }, []);
 
   const stopPolling = useCallback(() => {
     if (pollRef.current) {
@@ -113,13 +138,10 @@ export function useInterview(jobId?: string | null) {
 
   const pollFeedback = useCallback(
     async (runId: number) => {
-      if (!sessionId || isStale(runId)) return;
+      if (!sessionId) return;
       setIsCheckingFeedback(true);
       const res = await getInterviewSession(sessionId);
-      if (isStale(runId)) {
-        setIsCheckingFeedback(false);
-        return;
-      }
+      if (finishIfStale(runId)) return;
       setIsCheckingFeedback(false);
 
       if (!res.success || !res.data) return;
@@ -157,7 +179,7 @@ export function useInterview(jobId?: string | null) {
         data.message ?? 'Could not load feedback. Please try again.'
       );
     },
-    [appendMessage, isStale, sessionId, stopPolling]
+    [appendMessage, finishIfStale, sessionId, stopPolling]
   );
 
   const startPolling = useCallback(
@@ -183,7 +205,7 @@ export function useInterview(jobId?: string | null) {
 
   const beginInterview = useCallback(
     (data: SessionBootstrap, runId: number) => {
-      if (isStale(runId)) return;
+      if (finishIfStale(runId)) return;
 
       setSessionId(data.session_id);
       setQuestionCount(data.question_count ?? 3);
@@ -192,6 +214,7 @@ export function useInterview(jobId?: string | null) {
       if (data.target_role) setTargetRole(data.target_role);
       setPhase('interview');
       setPrepCard(null);
+      setPrepAckRequired(false);
 
       if (data.language_notice) {
         appendMessage('assistant', data.language_notice);
@@ -205,37 +228,78 @@ export function useInterview(jobId?: string | null) {
       }
       setIsStarting(false);
       setIsAckingPrep(false);
+      jobStartInFlightRef.current = false;
     },
-    [appendMessage, isStale, showQuestion]
+    [appendMessage, finishIfStale, showQuestion]
   );
 
+  const storePendingBootstrap = useCallback((data: CreateSessionPayload) => {
+    pendingStartRef.current = {
+      session_id: data.session_id,
+      question_count: data.question_count,
+      question_index: data.question_index,
+      question: data.question,
+      language_notice: data.language_notice,
+      target_role: data.target_role,
+    };
+    setSessionId(data.session_id);
+  }, []);
+
   const enterPrepReview = useCallback(
-    (data: CreateInterviewSessionResponse & { prep_ack_required?: boolean }, runId: number) => {
-      if (isStale(runId)) return;
-      pendingStartRef.current = {
-        session_id: data.session_id,
-        question_count: data.question_count,
-        question_index: data.question_index,
-        question: data.question,
-        language_notice: data.language_notice,
-        target_role: (data as { target_role?: string }).target_role,
-      };
+    (data: CreateSessionPayload, runId: number) => {
+      if (finishIfStale(runId)) return;
+      storePendingBootstrap(data);
       setPrepCard(data.prep_card ?? null);
-      setSessionId(data.session_id);
-      if ((data as { target_role?: string }).target_role) {
-        setTargetRole((data as { target_role?: string }).target_role ?? null);
-      }
+      setPrepAckRequired(Boolean(data.prep_ack_required));
+      if (data.target_role) setTargetRole(data.target_role);
       setPhase('prep_review');
       setIsStarting(false);
+      jobStartInFlightRef.current = false;
     },
-    [isStale]
+    [finishIfStale, storePendingBootstrap]
+  );
+
+  const autoAckPrepAndBegin = useCallback(
+    async (data: CreateSessionPayload, runId: number, action: PrepAckAction = 'skip') => {
+      storePendingBootstrap(data);
+      setIsAckingPrep(true);
+      const res = await ackInterviewPrep(data.session_id, { action });
+      if (finishIfStale(runId)) return;
+
+      if (!res.success || !res.data) {
+        showToast(res.error ?? 'Failed to start interview', 'error');
+        setIsAckingPrep(false);
+        setIsStarting(false);
+        setPhase('role_select');
+        jobStartInFlightRef.current = false;
+        return;
+      }
+
+      beginInterview(
+        {
+          session_id: res.data.session_id,
+          question_count: data.question_count,
+          question_index: data.question_index ?? 1,
+          question: res.data.question,
+          language_notice: data.language_notice,
+          target_role: data.target_role,
+        },
+        runId
+      );
+      pendingStartRef.current = null;
+    },
+    [beginInterview, finishIfStale, showToast, storePendingBootstrap]
   );
 
   const handleCreateResponse = useCallback(
-    (data: CreateInterviewSessionResponse & { prep_ack_required?: boolean; target_role?: string }, runId: number) => {
+    async (data: CreateSessionPayload, runId: number) => {
       if (data.target_role) setTargetRole(data.target_role);
 
       if (needsPrepGate(data)) {
+        if (data.prep_ack_required && !prepCardHasContent(data.prep_card)) {
+          await autoAckPrepAndBegin(data, runId, 'skip');
+          return;
+        }
         enterPrepReview(data, runId);
         return;
       }
@@ -252,7 +316,7 @@ export function useInterview(jobId?: string | null) {
         runId
       );
     },
-    [beginInterview, enterPrepReview]
+    [autoAckPrepAndBegin, beginInterview, enterPrepReview]
   );
 
   const startSession = useCallback(
@@ -265,6 +329,7 @@ export function useInterview(jobId?: string | null) {
       setFeedback(null);
       setDiagnosisCtas([]);
       setPrepCard(null);
+      setPrepAckRequired(false);
       pendingStartRef.current = null;
 
       const res = await createInterviewSession({
@@ -275,7 +340,7 @@ export function useInterview(jobId?: string | null) {
         job_id: jobId ?? undefined,
       });
 
-      if (isStale(runId)) return;
+      if (finishIfStale(runId)) return;
 
       if (!res.success || !res.data) {
         if (isProfileGateError(res.errorCode)) {
@@ -283,53 +348,67 @@ export function useInterview(jobId?: string | null) {
         } else {
           showToast(res.error ?? 'Failed to start interview', 'error');
         }
-        setPhase(jobId ? 'role_select' : 'role_select');
+        setPhase('role_select');
         setIsStarting(false);
         return;
       }
 
-      handleCreateResponse(res.data, runId);
+      await handleCreateResponse(res.data, runId);
     },
-    [handleCreateResponse, isLoggedIn, isStale, isStarting, jobId, showToast]
+    [finishIfStale, handleCreateResponse, isLoggedIn, isStarting, jobId, showToast]
   );
 
-  const startJobSession = useCallback(async () => {
-    if (!isLoggedIn || !jobId || isStarting) return;
-    const runId = ++runIdRef.current;
-    setIsStarting(true);
-    setMessages([]);
-    setFeedback(null);
-    setDiagnosisCtas([]);
-    setPrepCard(null);
-    pendingStartRef.current = null;
+  const startJobSession = useCallback(
+    async (overrideJobId?: string | null) => {
+      const effectiveJobId = overrideJobId ?? jobId;
+      if (!isLoggedIn || !effectiveJobId || jobStartInFlightRef.current) return;
 
-    const res = await createInterviewSession({
-      target_role: '',
-      interview_level: DEFAULT_INTERVIEW_LEVEL,
-      source_channel: 'web',
-      answer_mode: 'text',
-      job_id: jobId,
-    });
+      jobStartInFlightRef.current = true;
+      const runId = ++runIdRef.current;
+      setIsStarting(true);
+      setPhase('role_select');
+      setMessages([]);
+      setFeedback(null);
+      setDiagnosisCtas([]);
+      setPrepCard(null);
+      setPrepAckRequired(false);
+      pendingStartRef.current = null;
 
-    if (isStale(runId)) return;
+      const res = await createInterviewSession({
+        target_role: '',
+        interview_level: DEFAULT_INTERVIEW_LEVEL,
+        source_channel: 'web',
+        answer_mode: 'text',
+        job_id: effectiveJobId,
+      });
 
-    if (!res.success || !res.data) {
-      if (isProfileGateError(res.errorCode)) {
-        showToast(res.error ?? 'Complete your profile in chat first', 'error');
-      } else {
-        showToast(res.error ?? 'Failed to start interview', 'error');
+      if (finishIfStale(runId)) return;
+
+      if (!res.success || !res.data) {
+        if (isProfileGateError(res.errorCode)) {
+          showToast(res.error ?? 'Complete your profile in chat first', 'error');
+        } else {
+          showToast(res.error ?? 'Failed to start interview', 'error');
+        }
+        setPhase('role_select');
+        setIsStarting(false);
+        jobStartInFlightRef.current = false;
+        return;
       }
-      setIsStarting(false);
-      return;
-    }
 
-    handleCreateResponse(res.data, runId);
-  }, [handleCreateResponse, isLoggedIn, isStale, isStarting, jobId, showToast]);
+      await handleCreateResponse(res.data, runId);
+    },
+    [finishIfStale, handleCreateResponse, isLoggedIn, jobId, showToast]
+  );
 
   useEffect(() => {
-    if (!jobId || !isLoggedIn || jobAutoStartRef.current) return;
-    jobAutoStartRef.current = true;
-    void startJobSession();
+    if (!jobId || !isLoggedIn) {
+      lastAutoStartedJobIdRef.current = null;
+      return;
+    }
+    if (lastAutoStartedJobIdRef.current === jobId) return;
+    lastAutoStartedJobIdRef.current = jobId;
+    void startJobSession(jobId);
   }, [jobId, isLoggedIn, startJobSession]);
 
   const ackPrep = useCallback(
@@ -341,7 +420,7 @@ export function useInterview(jobId?: string | null) {
 
       const res = await ackInterviewPrep(sid, { action });
 
-      if (isStale(runId)) return;
+      if (finishIfStale(runId)) return;
 
       if (!res.success || !res.data) {
         showToast(res.error ?? 'Failed to start interview', 'error');
@@ -363,7 +442,7 @@ export function useInterview(jobId?: string | null) {
       );
       pendingStartRef.current = null;
     },
-    [beginInterview, isAckingPrep, isStale, sessionId, showToast]
+    [beginInterview, finishIfStale, isAckingPrep, sessionId, showToast]
   );
 
   const submitAnswer = useCallback(
@@ -378,7 +457,7 @@ export function useInterview(jobId?: string | null) {
         answer_text: text.trim(),
       });
 
-      if (isStale(runId)) return;
+      if (finishIfStale(runId)) return;
 
       if (!res.success || !res.data) {
         showToast(res.error ?? 'Failed to submit answer', 'error');
@@ -408,8 +487,8 @@ export function useInterview(jobId?: string | null) {
     [
       appendMessage,
       currentQuestion,
+      finishIfStale,
       isSending,
-      isStale,
       questionCount,
       questionIndex,
       sessionId,
@@ -422,6 +501,7 @@ export function useInterview(jobId?: string | null) {
   const reset = useCallback(() => {
     runIdRef.current += 1;
     stopPolling();
+    jobStartInFlightRef.current = false;
     setPhase('role_select');
     setMessages([]);
     setSessionId(null);
@@ -432,49 +512,63 @@ export function useInterview(jobId?: string | null) {
     setFeedback(null);
     setDiagnosisCtas([]);
     setPrepCard(null);
+    setPrepAckRequired(false);
     pendingStartRef.current = null;
     setIsStarting(false);
     setIsAckingPrep(false);
     setIsSending(false);
     setIsCheckingFeedback(false);
     if (jobId) {
-      void startJobSession();
+      lastAutoStartedJobIdRef.current = null;
+      void startJobSession(jobId);
     }
   }, [jobId, startJobSession, stopPolling]);
 
-  const retrySession = useCallback(() => {
-    runIdRef.current += 1;
-    stopPolling();
-    setMessages([]);
-    setSessionId(null);
-    setQuestionIndex(1);
-    setQuestionCount(3);
-    setCurrentQuestion(null);
-    setFeedback(null);
-    setDiagnosisCtas([]);
-    setPrepCard(null);
-    pendingStartRef.current = null;
-    setIsSending(false);
-    setIsCheckingFeedback(false);
-    if (jobId) {
-      void startJobSession();
-    } else {
-      setPhase('role_select');
-      setTargetRole(null);
-      setIsStarting(false);
-    }
-  }, [jobId, startJobSession, stopPolling]);
+  const retrySession = useCallback(
+    (overrideJobId?: string | null) => {
+      runIdRef.current += 1;
+      stopPolling();
+      jobStartInFlightRef.current = false;
+      setMessages([]);
+      setSessionId(null);
+      setQuestionIndex(1);
+      setQuestionCount(3);
+      setCurrentQuestion(null);
+      setFeedback(null);
+      setDiagnosisCtas([]);
+      setPrepCard(null);
+      setPrepAckRequired(false);
+      pendingStartRef.current = null;
+      setIsSending(false);
+      setIsCheckingFeedback(false);
+
+      const effectiveJobId = overrideJobId ?? jobId;
+      if (effectiveJobId) {
+        lastAutoStartedJobIdRef.current = null;
+        void startJobSession(effectiveJobId);
+      } else {
+        setPhase('role_select');
+        setTargetRole(null);
+        setIsStarting(false);
+      }
+    },
+    [jobId, startJobSession, stopPolling]
+  );
 
   const checkFeedbackNow = useCallback(() => {
     void pollFeedback(runIdRef.current);
   }, [pollFeedback]);
+
+  const displayRole = jobContext?.title ?? targetRole;
 
   return {
     phase,
     messages,
     sessionId,
     targetRole,
+    displayRole,
     prepCard,
+    prepAckRequired,
     jobContext,
     questionIndex,
     questionCount,
