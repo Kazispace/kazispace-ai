@@ -4,6 +4,8 @@ import type {
   CreateInterviewSessionRequest,
   CreateInterviewSessionResponse,
   InterviewSessionDetail,
+  PrepAckRequest,
+  PrepAckResponse,
   SubmitInterviewAnswerRequest,
   SubmitInterviewAnswerResponse,
 } from '@/types';
@@ -15,6 +17,19 @@ export async function createInterviewSession(
     method: 'POST',
     body: JSON.stringify(body),
   });
+}
+
+export async function ackInterviewPrep(
+  sessionId: string,
+  body: PrepAckRequest
+): Promise<ApiResponse<PrepAckResponse>> {
+  return apiRequest<PrepAckResponse>(
+    `/api/v1/interview/sessions/${encodeURIComponent(sessionId)}/prep_ack`,
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }
+  );
 }
 
 export async function submitInterviewAnswer(

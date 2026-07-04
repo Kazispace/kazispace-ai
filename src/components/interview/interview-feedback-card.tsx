@@ -4,13 +4,16 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
-import type { InterviewFeedbackSummary } from '@/types';
+import { getInterviewCtaHref, sortInterviewCtas } from '@/lib/interview-cta';
+import type { InterviewCta, InterviewFeedbackSummary } from '@/types';
 
 interface InterviewFeedbackCardProps {
   targetRole: string | null;
   feedback: InterviewFeedbackSummary;
+  ctas: InterviewCta[];
   locale: string;
   jobId?: string | null;
+  onCtaAction: (cta: InterviewCta) => void;
   onPracticeAgain: () => void;
 }
 
@@ -25,15 +28,38 @@ function stars(value: number) {
   return '★'.repeat(n) + '☆'.repeat(5 - n);
 }
 
+function defaultCtaLabel(
+  t: ReturnType<typeof useTranslations<'interview'>>,
+  ctaType: InterviewCta['cta_type']
+): string {
+  switch (ctaType) {
+    case 'weakness_drill':
+      return t('cta.weaknessDrill');
+    case 'retry_full':
+      return t('practiceAgain');
+    case 'edit_cv':
+      return t('buildCv');
+    case 'view_jobs':
+      return t('cta.viewJobs');
+    case 'back_to_clinic':
+      return t('cta.backToClinic');
+    default:
+      return t('cta.continue');
+  }
+}
+
 export function InterviewFeedbackCard({
   targetRole,
   feedback,
+  ctas,
   locale,
   jobId,
+  onCtaAction,
   onPracticeAgain,
 }: InterviewFeedbackCardProps) {
   const t = useTranslations('interview');
   const scores = feedback.scores ?? {};
+  const showScores = feedback.tier !== 'free';
 
   const dimensions: Array<{ key: keyof NonNullable<InterviewFeedbackSummary['scores']>; label: string }> = [
     { key: 'clarity', label: t('scores.clarity') },
@@ -41,27 +67,34 @@ export function InterviewFeedbackCard({
     { key: 'confidence', label: t('scores.confidence') },
   ];
 
+  const sortedCtas =
+    ctas.length > 0
+      ? sortInterviewCtas(ctas)
+      : null;
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 max-w-xl self-start">
       <h3 className="font-semibold text-kazi-orange mb-4">
         {t('feedbackTitle', { role: targetRole ?? '' })}
       </h3>
 
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {dimensions.map(({ key, label }) => {
-          const val = scores[key] ?? 0;
-          return (
-            <div
-              key={key}
-              className="bg-gray-50 border border-gray-100 rounded-lg p-2 text-center"
-            >
-              <p className="text-[10px] uppercase tracking-wide text-gray-500">{label}</p>
-              <p className={`text-lg font-bold ${scoreTone(val)}`}>{val}/5</p>
-              <p className="text-xs text-amber-500">{stars(val)}</p>
-            </div>
-          );
-        })}
-      </div>
+      {showScores && (
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {dimensions.map(({ key, label }) => {
+            const val = scores[key] ?? 0;
+            return (
+              <div
+                key={key}
+                className="bg-gray-50 border border-gray-100 rounded-lg p-2 text-center"
+              >
+                <p className="text-[10px] uppercase tracking-wide text-gray-500">{label}</p>
+                <p className={`text-lg font-bold ${scoreTone(val)}`}>{val}/5</p>
+                <p className="text-xs text-amber-500">{stars(val)}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {feedback.overall_summary && (
         <section className="mb-3">
@@ -121,20 +154,53 @@ export function InterviewFeedbackCard({
       )}
 
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={onPracticeAgain}>
-          {t('practiceAgain')}
-        </Button>
-        <Button size="sm" variant="outline" asChild>
-          <Link
-            href={
-              jobId
-                ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
-                : `/${locale}/cv`
+        {sortedCtas ? (
+          sortedCtas.map((cta) => {
+            const label = cta.label?.trim() || defaultCtaLabel(t, cta.cta_type);
+            const href = getInterviewCtaHref(locale, cta, jobId);
+
+            if (href) {
+              return (
+                <Button
+                  key={`${cta.cta_type}-${label}`}
+                  size="sm"
+                  variant={cta.primary ? 'default' : 'outline'}
+                  asChild
+                >
+                  <Link href={href}>{label}</Link>
+                </Button>
+              );
             }
-          >
-            {t('buildCv')}
-          </Link>
-        </Button>
+
+            return (
+              <Button
+                key={`${cta.cta_type}-${label}`}
+                size="sm"
+                variant={cta.primary ? 'default' : 'outline'}
+                onClick={() => onCtaAction(cta)}
+              >
+                {label}
+              </Button>
+            );
+          })
+        ) : (
+          <>
+            <Button size="sm" onClick={onPracticeAgain}>
+              {t('practiceAgain')}
+            </Button>
+            <Button size="sm" variant="outline" asChild>
+              <Link
+                href={
+                  jobId
+                    ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
+                    : `/${locale}/cv`
+                }
+              >
+                {t('buildCv')}
+              </Link>
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );
