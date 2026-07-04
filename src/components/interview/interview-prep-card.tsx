@@ -1,20 +1,37 @@
 'use client';
 
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Clock, Target } from 'lucide-react';
+import { Briefcase, Clock, Target } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { InterviewPrepCard as PrepCardData } from '@/types/api-schema';
+import type { InterviewJobContext, InterviewPrepCard as PrepCardData } from '@/types';
 
 interface InterviewPrepCardProps {
   prep: PrepCardData;
+  jobContext?: InterviewJobContext | null;
+  locale: string;
+  jobId?: string | null;
   onStart: () => void;
+  onSkip: () => void;
   disabled?: boolean;
 }
 
-export function InterviewPrepCard({ prep, onStart, disabled }: InterviewPrepCardProps) {
+export function InterviewPrepCard({
+  prep,
+  jobContext,
+  locale,
+  jobId,
+  onStart,
+  onSkip,
+  disabled,
+}: InterviewPrepCardProps) {
   const t = useTranslations('interview');
+
+  const cvHref = jobId
+    ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
+    : `/${locale}/cv`;
 
   return (
     <div className="flex-1 flex flex-col p-4 gap-4 max-w-lg mx-auto w-full">
@@ -22,6 +39,15 @@ export function InterviewPrepCard({ prep, onStart, disabled }: InterviewPrepCard
         <CardContent className="p-5 space-y-4">
           <div>
             <h2 className="text-lg font-bold text-kazi-navy">{t('prepTitle')}</h2>
+            {jobContext && (
+              <div className="flex items-start gap-2 mt-2 text-sm text-gray-700">
+                <Briefcase className="w-4 h-4 shrink-0 mt-0.5 text-kazi-orange" />
+                <div>
+                  <p className="font-medium text-kazi-navy">{jobContext.title}</p>
+                  <p className="text-gray-500">{jobContext.company}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {prep.estimated_duration_min != null && (
@@ -61,9 +87,22 @@ export function InterviewPrepCard({ prep, onStart, disabled }: InterviewPrepCard
             </div>
           )}
 
-          <Button className="w-full" onClick={onStart} disabled={disabled}>
-            {t('startInterview')}
-          </Button>
+          <div className="flex flex-col gap-2 pt-1">
+            <Button className="w-full" onClick={onStart} disabled={disabled}>
+              {t('startInterview')}
+            </Button>
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={onSkip}
+              disabled={disabled}
+            >
+              {t('skipPrep')}
+            </Button>
+            <Button className="w-full" variant="secondary" asChild>
+              <Link href={cvHref}>{t('optimizeCv')}</Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

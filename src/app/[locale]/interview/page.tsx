@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -15,6 +15,8 @@ import { InterviewProgress } from "@/components/interview/interview-progress";
 import { InterviewFeedbackCard } from "@/components/interview/interview-feedback-card";
 import { Button } from "@/components/ui/button";
 import { useInterview } from "@/hooks/use-interview";
+import type { InterviewCta } from "@/types";
+import { useUIStore } from "@/lib/store";
 
 interface InterviewPageProps {
   params: { locale: string };
@@ -25,40 +27,84 @@ function InterviewPageContent({ locale }: { locale: string }) {
   const searchParams = useSearchParams();
   const jobId = searchParams.get("job_id");
   const t = useTranslations("interview");
+  const showToast = useUIStore((s) => s.showToast);
 
   const {
     phase,
     messages,
-    targetRole,
+    displayRole,
     questionIndex,
     questionCount,
     feedback,
+    diagnosisCtas,
     prepCard,
+    prepAckRequired,
+    jobContext,
     isStarting,
+    isAckingPrep,
     isSending,
     isCheckingFeedback,
     needsLogin,
+    isJobMode,
     startSession,
-    beginInterviewFromPrep,
+    startJobSession,
+    ackPrep,
     submitAnswer,
     reset,
+    retrySession,
     checkFeedbackNow,
   } = useInterview(jobId);
 
-  const subtitle = useMemo(
-    () => (jobId ? t("subtitleWithJob", { jobId }) : null),
-    [jobId, t]
+  const subtitle = useMemo(() => {
+    if (jobContext) {
+      return t("subtitleWithJobDetail", {
+        title: jobContext.title,
+        company: jobContext.company,
+      });
+    }
+    if (jobId) return t("subtitleWithJob", { jobId });
+    return null;
+  }, [jobContext, jobId, t]);
+
+  const handleCtaAction = useCallback(
+    (cta: InterviewCta) => {
+      switch (cta.cta_type) {
+        case "weakness_drill":
+          showToast(t("drillComingSoon"), "info");
+          break;
+        case "retry_full":
+          retrySession(cta.job_id ?? jobId);
+          break;
+        default:
+          break;
+      }
+    },
+    [jobId, retrySession, showToast, t]
   );
 
-  const showInput =
-    phase === "interview" && !needsLogin;
+  const showInput = phase === "interview" && !needsLogin;
   const showProgress = phase === "interview" && !needsLogin;
+  const prepBusy = isStarting || isAckingPrep;
+
+  const showJobBootstrapping =
+    isJobMode &&
+    needsLogin === false &&
+    (phase === "role_select" || (phase === "prep_review" && !prepCard)) &&
+    isStarting;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
       <Header locale={locale} />
       <main className="pt-16 flex-1 flex flex-col max-w-3xl mx-auto w-full">
-        {phase === "role_select" ? (
+        {showJobBootstrapping ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3">
+            <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+            <p className="text-sm text-gray-600">{t("sessionLoading")}</p>
+            {subtitle && (
+              <p className="text-center text-xs text-gray-500 px-4">{subtitle}</p>
+            )}
+          </div>
+        ) : phase === "role_select" ? (
           <>
             {subtitle && (
               <p className="text-center text-xs text-gray-500 px-4 pt-2">{subtitle}</p>
@@ -72,6 +118,13 @@ function InterviewPageContent({ locale }: { locale: string }) {
                   </Button>
                 </div>
               </div>
+            ) : isJobMode ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center max-w-sm mx-auto">
+                <p className="text-sm text-gray-700">{t("startFailed")}</p>
+                <Button size="sm" onClick={() => void startJobSession()}>
+                  {t("retryStart")}
+                </Button>
+              </div>
             ) : (
               <InterviewRolePicker
                 onSelect={(role) => void startSession(role)}
@@ -79,15 +132,24 @@ function InterviewPageContent({ locale }: { locale: string }) {
               />
             )}
           </>
-        ) : phase === "prep_review" && prepCard ? (
+        ) : phase === "prep_review" && (prepCard || prepAckRequired) ? (
           <>
             {subtitle && (
               <p className="text-center text-xs text-gray-500 px-4 pt-2">{subtitle}</p>
             )}
             <InterviewPrepCard
-              prep={prepCard}
-              onStart={beginInterviewFromPrep}
-              disabled={isStarting}
+              prep={
+                prepCard ?? {
+                  focus_areas: [],
+                  sample_questions: [],
+                }
+              }
+              jobContext={jobContext}
+              locale={locale}
+              jobId={jobId}
+              onStart={() => void ackPrep("start")}
+              onSkip={() => void ackPrep("skip")}
+              disabled={prepBusy}
             />
           </>
         ) : (
@@ -101,7 +163,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
                   {t("backToMine")}
                 </Link>
                 <h1 className="text-lg font-bold text-kazi-navy mt-1">
-                  {targetRole ? `🎤 ${targetRole}` : t("title")}
+                  {displayRole ? `🎤 ${displayRole}` : t("title")}
                 </h1>
                 {phase === "interview" && (
                   <p className="text-xs text-gray-500">
@@ -151,11 +213,13 @@ function InterviewPageContent({ locale }: { locale: string }) {
 
               {phase === "feedback_ready" && feedback && (
                 <InterviewFeedbackCard
-                  targetRole={targetRole}
+                  targetRole={displayRole}
                   feedback={feedback}
+                  ctas={diagnosisCtas}
                   locale={locale}
                   jobId={jobId}
-                  onPracticeAgain={reset}
+                  onCtaAction={handleCtaAction}
+                  onPracticeAgain={retrySession}
                 />
               )}
 

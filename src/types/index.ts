@@ -248,6 +248,22 @@ export interface CreateInterviewSessionRequest {
 }
 
 export type { CreateInterviewSessionResponse, InterviewPrepCard } from './api-schema';
+export type {
+  InterviewCta,
+  InterviewCtaType,
+  InterviewJobContext,
+  InterviewWeaknessTag,
+  PrepAckAction,
+  PrepAckRequest,
+  PrepAckResponse,
+} from './interview-contract';
+
+export interface CreateInterviewSessionResponseExtended {
+  prep_ack_required?: boolean;
+  mode?: string;
+  job_id?: string | null;
+  target_role?: string;
+}
 
 export interface SubmitInterviewAnswerRequest {
   question_id: string;
@@ -272,6 +288,8 @@ export interface InterviewFeedbackSummary {
   improvements?: string[];
   sample_better_answer?: string;
   next_step?: string;
+  weakness_tags?: import('./interview-contract').InterviewWeaknessTag[];
+  tier?: 'free' | 'pro';
 }
 
 export interface InterviewSessionDetail {
@@ -280,6 +298,10 @@ export interface InterviewSessionDetail {
   target_role?: string;
   feedback_summary?: InterviewFeedbackSummary;
   message?: string;
+  ctas?: import('./interview-contract').InterviewCta[];
+  job_id?: string | null;
+  prep_ack_required?: boolean;
+  prep_card?: import('./api-schema').InterviewPrepCard | null;
 }
 
 export interface InterviewMessage {

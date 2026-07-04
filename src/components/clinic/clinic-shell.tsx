@@ -30,6 +30,10 @@ import {
   CV_BUILDER_AGENT_ID,
   isCvBuilderAgent,
 } from "@/lib/cv-agent-config";
+import {
+  isMockInterviewAgent,
+  MOCK_INTERVIEW_AGENT_ID,
+} from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
@@ -134,8 +138,22 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     [locale, router]
   );
 
+  const routeInterviewPage = useCallback(
+    (targetJobId?: string | null) => {
+      const query = targetJobId
+        ? `?job_id=${encodeURIComponent(targetJobId)}`
+        : '';
+      router.push(`/${locale}/interview${query}`);
+    },
+    [locale, router]
+  );
+
   const shouldOpenCvBuilderPage = useCallback((agentId: string) => {
     return isCvBuilderAgent(agentId);
+  }, []);
+
+  const shouldOpenInterviewPage = useCallback((agentId: string) => {
+    return isMockInterviewAgent(agentId);
   }, []);
 
   const inputPlaceholder = isAgentMode
@@ -187,10 +205,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     const initAgent = async () => {
       const pending = consumePendingTmaAction();
       if (pending?.type === 'activate_agent') {
-        if (
-          pending.agentId === CV_BUILDER_AGENT_ID
-        ) {
+        if (pending.agentId === CV_BUILDER_AGENT_ID) {
           routeCvBuilderPage();
+          return;
+        }
+        if (pending.agentId === MOCK_INTERVIEW_AGENT_ID) {
+          routeInterviewPage();
           return;
         }
         if (AGENT_REGISTRY.some((a) => a.agentId === pending.agentId)) {
@@ -217,7 +237,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           pending.type === 'profile' ||
           pending.type === 'job' ||
           pending.type === 'cv' ||
-          pending.type === 'cv_job')
+          pending.type === 'cv_job' ||
+          pending.type === 'interview' ||
+          pending.type === 'interview_job')
       ) {
         router.push(routeForTmaAction(locale, pending));
         return;
@@ -226,6 +248,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
       if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
         routeCvBuilderPage();
+        return;
+      }
+      if (deepLinkAgent && shouldOpenInterviewPage(deepLinkAgent)) {
+        routeInterviewPage();
         return;
       }
       if (
@@ -249,7 +275,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     locale,
     router,
     routeCvBuilderPage,
+    routeInterviewPage,
     shouldOpenCvBuilderPage,
+    shouldOpenInterviewPage,
   ]);
 
   useEffect(() => {
@@ -282,6 +310,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           routeCvBuilderPage();
           return;
         }
+        if (shouldOpenInterviewPage(agentFromUrl)) {
+          routeInterviewPage();
+          return;
+        }
         void switchToAgentRef.current(agentFromUrl);
       }
     };
@@ -292,7 +324,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     isLoggedIn,
     loadHistory,
     routeCvBuilderPage,
+    routeInterviewPage,
     shouldOpenCvBuilderPage,
+    shouldOpenInterviewPage,
   ]);
 
   useEffect(() => {
@@ -381,6 +415,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       routeCvBuilderPage();
       return;
     }
+    if (isMockInterviewAgent(agentId)) {
+      routeInterviewPage();
+      return;
+    }
     const result = await switchToAgent(agentId);
     if (result && !result.ok) {
       showToast(result.error ?? tClinic("activateFailed"), "error");
@@ -423,7 +461,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           void handleBackToClinic();
           return;
         case "mock_interview":
-          void handleAgentSelect("mock_interview");
+          routeInterviewPage();
           return;
         case "job_search":
           void handleAgentSelect("job_search");
@@ -439,7 +477,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage]
+    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage, routeInterviewPage]
   );
 
   const handleJobCardClick = useCallback(
