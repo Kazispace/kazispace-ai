@@ -473,6 +473,80 @@
 				"title": "Қашықтан әкімші",
 				"desc": "Ұйымдастыру, қашықтан құралдар, коммуникация"
 			}
+		},
+		"irp": {
+			"loadingProfile": "Сұхбат профилі жүктелуде…",
+			"provisionalBanner": "Уақытша профиль — ресми IRP үшін тағы {remaining} жаттығу аяқтаңыз.",
+			"featureDisabled": "Сұхбат профилі әлі қосылмаған.",
+			"profileTitle": "Сұхбатқа дайындық профилі",
+			"levelUnknown": "Үдерісте",
+			"trainingRounds": "Аяқталған жаттығулар: {count}",
+			"levelProgress": "Келесі деңгейге прогресс",
+			"dimensionsTitle": "Алты өлшем",
+			"strengths": "Күшті жақтары",
+			"improvements": "Назар аудару",
+			"provisionalBannerShort": "3 жаттығу аяқталғанша бағалар уақытша.",
+			"dimensions": {
+				"content_quality": "Мазмұн сапасы",
+				"expression_logic": "Логика және сөйлеу",
+				"language_ability": "Тіл дағдылары",
+				"behavioral_presence": "Мінез-құлық",
+				"stress_handling": "Стресске төзімділік",
+				"industry_depth": "Сала тереңдігі"
+			},
+			"cta": {
+				"startTraining": "Жаттығуды бастау",
+				"readinessCheck": "Дайындықты тексеру",
+				"growthHistory": "Өсу тарихы",
+				"editCv": "Түйіндеме жасау",
+				"viewJobs": "Жұмыс орындары",
+				"continue": "Жалғастыру"
+			},
+			"readiness": {
+				"title": "Жұмыс сұхбатына дайындық",
+				"pageTitle": "Сұхбатқа дайындық",
+				"miniTitle": "Бұл рөлге дайындық",
+				"loading": "Дайындық есептелуде…",
+				"viewDetails": "Толығырақ",
+				"noProfile": "Дайындықты көру үшін кем дегенде бір жаттығу аяқтаңыз.",
+				"startTraining": "Жаттығуды бастау",
+				"gapTitle": "Бос орындар талдауы",
+				"impact": "{points} әсер ұпайы",
+				"lockedGaps": "PRO-да тағы {count} бос орын",
+				"freeLimit": "Бүгінгі тегін тексеру қолданылды. PRO — шексіз тексеру.",
+				"trainingPlan": "Ұсынылған жаттығу",
+				"trainingItem": "{type} · {rounds} раунд",
+				"practiceForJob": "Бұл жұмысқа жаттығу",
+				"refresh": "Жаңарту",
+				"back": "← Сұхбатқа оралу",
+				"backToInterview": "Сұхбатқа оралу",
+				"jobRequired": "Дайындықты тексеру үшін жұмыс орнын таңдаңыз.",
+				"tier": {
+					"large_gap": "Үлкен алшақтық — маңызды дайындық керек",
+					"needs_prep": "Дайындық қажет",
+					"competitive": "Бәсекеге қабілетті",
+					"strong": "Күшті сәйкестік",
+					"dominant": "Жеткілікті дайын"
+				}
+			},
+			"growth": {
+				"pageTitle": "Өсу тарихы",
+				"subtitle": "Сұхбат деңгейінің өсуін бақылаңыз.",
+				"back": "← Сұхбатқа оралу",
+				"backToInterview": "Сұхбатқа оралу",
+				"retry": "Қайталау",
+				"empty": "Тарих жоқ — жаттығудан бастаңыз.",
+				"levelCurve": "Деңгей қисығы",
+				"levelCurveHint": "Әр жаттығудан кейінгі деңгей",
+				"levelScore": "Деңгей {level} · {score} ұпай",
+				"badges": "Белгілер",
+				"proHint": "PRO — жылу картасы және белгілер."
+			},
+			"diagnosis": {
+				"title": "Профиль жаңартуы",
+				"updating": "Сұхбат профилі жаңартылуда…",
+				"deltaHint": "Осы сессиядан кейінгі өзгерістер"
+			}
 		}
 	},
 	"tma": {

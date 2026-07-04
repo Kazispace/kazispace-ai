@@ -473,6 +473,80 @@
 				"title": "Masofaviy administrator",
 				"desc": "Tashkillashtirish, masofaviy vositalar, muloqot"
 			}
+		},
+		"irp": {
+			"loadingProfile": "Suhbat profili yuklanmoqda…",
+			"provisionalBanner": "Vaqtinchalik profil — rasmiy IRP uchun yana {remaining} mashq tugating.",
+			"featureDisabled": "Suhbat profili hali yoqilmagan.",
+			"profileTitle": "Suhbatga tayyorgarlik profili",
+			"levelUnknown": "Jarayonda",
+			"trainingRounds": "Tugallangan mashqlar: {count}",
+			"levelProgress": "Keyingi darajaga progress",
+			"dimensionsTitle": "Olti o'lchov",
+			"strengths": "Kuchli tomonlar",
+			"improvements": "E'tibor qaratish",
+			"provisionalBannerShort": "3 mashq tugamaguncha baholar vaqtinchalik.",
+			"dimensions": {
+				"content_quality": "Kontent sifati",
+				"expression_logic": "Ifoda va mantiq",
+				"language_ability": "Til ko'nikmalari",
+				"behavioral_presence": "Xulq-atvor",
+				"stress_handling": "Stressga chidamlilik",
+				"industry_depth": "Soha chuqurligi"
+			},
+			"cta": {
+				"startTraining": "Mashqni boshlash",
+				"readinessCheck": "Tayyorgarlikni tekshirish",
+				"growthHistory": "O'sish tarixi",
+				"editCv": "Rezyume yaratish",
+				"viewJobs": "Ish o'rinlari",
+				"continue": "Davom etish"
+			},
+			"readiness": {
+				"title": "Ish suhbatiga tayyorgarlik",
+				"pageTitle": "Suhbat tayyorgarligi",
+				"miniTitle": "Bu rol uchun tayyorgarlik",
+				"loading": "Tayyorgarlik hisoblanmoqda…",
+				"viewDetails": "Batafsil",
+				"noProfile": "Tayyorgarlikni ko'rish uchun kamida bir mashq tugating.",
+				"startTraining": "Mashqni boshlash",
+				"gapTitle": "Bo'shliqlar tahlili",
+				"impact": "{points} ta'sir balli",
+				"lockedGaps": "PRO da yana {count} bo'shliq",
+				"freeLimit": "Bugungi bepul tekshiruv ishlatildi. PRO — cheksiz tekshiruv.",
+				"trainingPlan": "Tavsiya etilgan mashq",
+				"trainingItem": "{type} · {rounds} raund",
+				"practiceForJob": "Bu ish uchun mashq",
+				"refresh": "Yangilash",
+				"back": "← Suhbatga qaytish",
+				"backToInterview": "Suhbatga qaytish",
+				"jobRequired": "Tayyorgarlikni tekshirish uchun ish tanlang.",
+				"tier": {
+					"large_gap": "Katta farq — jiddiy tayyorgarlik kerak",
+					"needs_prep": "Tayyorgarlik kerak",
+					"competitive": "Raqobatbardosh",
+					"strong": "Kuchli moslik",
+					"dominant": "Yaxshi tayyor"
+				}
+			},
+			"growth": {
+				"pageTitle": "O'sish tarixi",
+				"subtitle": "Suhbat darajangiz o'sishini kuzating.",
+				"back": "← Suhbatga qaytish",
+				"backToInterview": "Suhbatga qaytish",
+				"retry": "Qayta urinish",
+				"empty": "Tarix yo'q — mashqdan boshlang.",
+				"levelCurve": "Daraja egri chizig'i",
+				"levelCurveHint": "Har mashqdan keyingi daraja",
+				"levelScore": "Daraja {level} · {score} ball",
+				"badges": "Nishonlar",
+				"proHint": "PRO — issiqlik xaritasi va nishonlar."
+			},
+			"diagnosis": {
+				"title": "Profil yangilanishi",
+				"updating": "Suhbat profili yangilanmoqda…",
+				"deltaHint": "Ushbu sessiyadan keyingi o'zgarishlar"
+			}
 		}
 	},
 	"tma": {

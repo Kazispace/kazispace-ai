@@ -309,3 +309,24 @@ export interface InterviewMessage {
   role: 'user' | 'assistant';
   content: string;
 }
+
+export type {
+  InterviewProfile,
+  InterviewProfileStatus,
+  InterviewReadinessCheckRequest,
+  InterviewReadinessResult,
+  InterviewReadinessSummary,
+  InterviewScoringMethod,
+  IrpCtaHint,
+  IrpCtaType,
+  IrpDimensionKey,
+  IrpDimensionScore,
+  IrpDimensions,
+  IrpProfileHistory,
+  IrpProfileHistoryItem,
+  IrpProfileTags,
+  ReadinessGapItem,
+  ReadinessTier,
+} from './interview-profile';
+
+export { IRP_DIMENSION_ORDER } from './interview-profile';
