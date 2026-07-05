@@ -21,9 +21,17 @@ interface IrpProfileHomeProps {
 
 function defaultCtaLabel(
   t: ReturnType<typeof useTranslations<'interview.irp'>>,
-  ctaType: IrpCtaHint['cta_type']
+  cta: IrpCtaHint
 ): string {
-  switch (ctaType) {
+  if (
+    cta.cta_type === 'start_training' &&
+    cta.formal_rounds_remaining != null &&
+    cta.formal_rounds_remaining > 0
+  ) {
+    return t('provisionalBanner', { remaining: cta.formal_rounds_remaining });
+  }
+
+  switch (cta.cta_type) {
     case 'start_training':
       return t('cta.startTraining');
     case 'readiness_check':
@@ -153,7 +161,7 @@ export function IrpProfileHome({
 
           <div className="flex flex-col gap-2 pt-1">
             {ctas.map((cta) => {
-              const label = cta.label?.trim() || defaultCtaLabel(t, cta.cta_type);
+              const label = cta.label?.trim() || defaultCtaLabel(t, cta);
               const href = getIrpCtaHref(locale, cta, profile.target_job_id);
 
               if (cta.cta_type === 'start_training') {
