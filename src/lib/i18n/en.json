@@ -518,6 +518,7 @@
 				"impact": "{points} impact points",
 				"lockedGaps": "+{count} more gaps on PRO",
 				"freeLimit": "Daily free readiness check used. Upgrade to PRO for unlimited checks and full gap analysis.",
+				"freeLimitBlocked": "You've used today's free readiness check. Try again tomorrow or upgrade to PRO.",
 				"upgradePro": "Upgrade to PRO",
 				"trainingPlan": "Recommended training",
 				"trainingItem": "{type} · {rounds} rounds",

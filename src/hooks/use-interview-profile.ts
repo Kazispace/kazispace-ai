@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { IRP_PROFILE_ENABLED } from '@/lib/constants';
-import { ReadinessCheckLimitError } from '@/lib/interview-readiness-errors';
+import { ReadinessCheckLimitError, isReadinessCheckLimitError } from '@/lib/interview-readiness-errors';
 import {
   getInterviewProfile,
   getInterviewProfileHistory,
@@ -19,8 +19,7 @@ import type {
 
 const PROFILE_KEY = ['interview-profile'] as const;
 const HISTORY_KEY = ['interview-profile-history'] as const;
-const readinessKey = (jobId: string, source?: ReadinessCheckSource) =>
-  ['interview-readiness', jobId, source ?? null] as const;
+const readinessKey = (jobId: string) => ['interview-readiness', jobId] as const;
 
 async function runReadinessCheck(
   jobId: string,
@@ -141,12 +140,12 @@ export function useInterviewReadiness(
     IRP_PROFILE_ENABLED && (options?.enabled ?? true) && Boolean(jobId);
 
   const query = useQuery({
-    queryKey: jobId ? readinessKey(jobId, source) : (['interview-readiness', 'disabled'] as const),
+    queryKey: jobId ? readinessKey(jobId) : (['interview-readiness', 'disabled'] as const),
     queryFn: async (): Promise<InterviewReadinessResult> => runReadinessCheck(jobId!, source),
     enabled: queryEnabled,
     staleTime: 60_000,
     retry: (failureCount, error) =>
-      failureCount < 1 && !(error instanceof ReadinessCheckLimitError),
+      failureCount < 1 && !isReadinessCheckLimitError(error),
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
@@ -155,7 +154,7 @@ export function useInterviewReadiness(
     readinessResult: query.data ?? null,
     isReadinessLoading: queryEnabled && query.isLoading,
     readinessError: query.error instanceof Error ? query.error.message : null,
-    isReadinessLimitError: query.error instanceof ReadinessCheckLimitError,
+    isReadinessLimitError: isReadinessCheckLimitError(query.error),
     refetchReadiness: query.refetch,
   };
 }

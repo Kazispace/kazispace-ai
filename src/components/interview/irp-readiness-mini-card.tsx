@@ -47,7 +47,7 @@ export function IrpReadinessMiniCard({ jobId, locale }: IrpReadinessMiniCardProp
           <p className="text-xs text-red-600">{readinessError}</p>
         )}
         {isReadinessLimitError && (
-          <p className="text-xs text-gray-600">{t('readiness.freeLimit')}</p>
+          <p className="text-xs text-gray-600">{t('readiness.freeLimitBlocked')}</p>
         )}
         {!isReadinessLoading && !readinessError && score != null && (
           <div className="flex items-center justify-between gap-3">

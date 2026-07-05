@@ -518,6 +518,7 @@
 				"impact": "{points} ta'sir balli",
 				"lockedGaps": "PRO da yana {count} bo'shliq",
 				"freeLimit": "Bugungi bepul tekshiruv ishlatildi. PRO — cheksiz tekshiruv.",
+				"freeLimitBlocked": "Bugungi bepul tekshiruv tugadi. Ertaga qayta urinib ko'ring yoki PRO ga o'ting.",
 				"upgradePro": "PRO ga o'tish",
 				"trainingPlan": "Tavsiya etilgan mashq",
 				"trainingItem": "{type} · {rounds} raund",

@@ -76,7 +76,7 @@ function ReadinessPageContent({ locale }: { locale: string }) {
       {jobId && readinessError && !isReadinessLoading && isReadinessLimitError && (
         <Card>
           <CardContent className="p-5 text-center space-y-3">
-            <p className="text-sm text-gray-700">{t("readiness.freeLimit")}</p>
+            <p className="text-sm text-gray-700">{t("readiness.freeLimitBlocked")}</p>
             <div className="flex flex-wrap gap-2 justify-center">
               <Button size="sm" asChild>
                 <Link href={`/${locale}/subscription`}>{t("readiness.upgradePro")}</Link>

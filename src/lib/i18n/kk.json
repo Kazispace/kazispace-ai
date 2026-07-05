@@ -518,6 +518,7 @@
 				"impact": "{points} әсер ұпайы",
 				"lockedGaps": "PRO-да тағы {count} бос орын",
 				"freeLimit": "Бүгінгі тегін тексеру қолданылды. PRO — шексіз тексеру.",
+				"freeLimitBlocked": "Бүгінгі тегін тексеру таусылды. Ертең қайта көріңіз немесе PRO-ға өтіңіз.",
 				"upgradePro": "PRO-ға өту",
 				"trainingPlan": "Ұсынылған жаттығу",
 				"trainingItem": "{type} · {rounds} раунд",
