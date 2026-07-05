@@ -1,4 +1,5 @@
 import { apiRequest } from '@/lib/api-client';
+import { normalizeIrpCtaHints } from '@/lib/interview-irp-cta';
 import type {
   ApiResponse,
   InterviewProfile,
@@ -7,8 +8,22 @@ import type {
   IrpProfileHistory,
 } from '@/types';
 
+function normalizeInterviewProfile(profile: InterviewProfile): InterviewProfile {
+  return {
+    ...profile,
+    cta_hints: normalizeIrpCtaHints(profile.cta_hints, {
+      targetJobId: profile.target_job_id,
+      profileStatus: profile.profile_status,
+    }),
+  };
+}
+
 export async function getInterviewProfile(): Promise<ApiResponse<InterviewProfile>> {
-  return apiRequest<InterviewProfile>('/api/v1/interview/profile');
+  const res = await apiRequest<InterviewProfile>('/api/v1/interview/profile');
+  if (res.success && res.data) {
+    return { ...res, data: normalizeInterviewProfile(res.data) };
+  }
+  return res;
 }
 
 export async function getInterviewProfileHistory(params?: {
