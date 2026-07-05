@@ -35,6 +35,8 @@ export interface IrpCtaHint {
   label: string;
   primary?: boolean;
   job_id?: string | null;
+  /** From BE legacy `complete_N_more_rounds_for_formal` hint. */
+  formal_rounds_remaining?: number;
 }
 
 export interface IrpStrengthTag {

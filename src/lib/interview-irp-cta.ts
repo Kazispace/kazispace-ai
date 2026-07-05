@@ -66,10 +66,30 @@ function mapLegacyCtaString(
       cta_type: 'start_training',
       label: '',
       primary: true,
+      formal_rounds_remaining: Number(provisional[1]),
     };
   }
 
   return null;
+}
+
+function upsertCtaHint(out: IrpCtaHint[], hint: IrpCtaHint): void {
+  const idx = out.findIndex((h) => h.cta_type === hint.cta_type);
+  if (idx < 0) {
+    out.push(hint);
+    return;
+  }
+  const existing = out[idx];
+  if (hint.primary && !existing.primary) {
+    out[idx] = {
+      ...existing,
+      ...hint,
+      primary: true,
+      job_id: hint.job_id ?? existing.job_id,
+      formal_rounds_remaining:
+        hint.formal_rounds_remaining ?? existing.formal_rounds_remaining,
+    };
+  }
 }
 
 /** Normalize BE string[] or §7.7 objects into typed CTAs for profile home. */
@@ -80,13 +100,11 @@ export function normalizeIrpCtaHints(
     profileStatus?: InterviewProfileStatus;
   }
 ): IrpCtaHint[] {
-  if (!Array.isArray(raw) || raw.length === 0) return [];
-
+  const rawList = Array.isArray(raw) ? raw : [];
   const targetJobId = options?.targetJobId ?? null;
-  const seen = new Set<IrpCtaType>();
   const out: IrpCtaHint[] = [];
 
-  for (const item of raw) {
+  for (const item of rawList) {
     let hint: IrpCtaHint | null = null;
 
     if (typeof item === 'string') {
@@ -98,14 +116,13 @@ export function normalizeIrpCtaHints(
       };
     }
 
-    if (!hint || seen.has(hint.cta_type)) continue;
-    seen.add(hint.cta_type);
-    out.push(hint);
+    if (!hint) continue;
+    upsertCtaHint(out, hint);
   }
 
   if (
     options?.profileStatus === 'formal' &&
-    !seen.has('growth_history')
+    !out.some((h) => h.cta_type === 'growth_history')
   ) {
     out.push({ cta_type: 'growth_history', label: '', primary: false });
   }

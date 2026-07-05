@@ -8,6 +8,7 @@ import type {
   IrpProfileHistory,
 } from '@/types';
 
+/** Sole profile+cta_hints entry — no other API returns InterviewProfile today. */
 function normalizeInterviewProfile(profile: InterviewProfile): InterviewProfile {
   return {
     ...profile,
