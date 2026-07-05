@@ -229,6 +229,7 @@
 		"cta": {
 			"edit_cv": "Rezyumeni yaxshilash",
 			"start_interview": "Suhbat mashqi",
+			"assess_readiness": "Suhbatga tayyorgarlikni baholash",
 			"unlock_pro": "Pro bilan ochish"
 		}
 	},
@@ -517,6 +518,7 @@
 				"impact": "{points} ta'sir balli",
 				"lockedGaps": "PRO da yana {count} bo'shliq",
 				"freeLimit": "Bugungi bepul tekshiruv ishlatildi. PRO — cheksiz tekshiruv.",
+				"upgradePro": "PRO ga o'tish",
 				"trainingPlan": "Tavsiya etilgan mashq",
 				"trainingItem": "{type} · {rounds} raund",
 				"practiceForJob": "Bu ish uchun mashq",

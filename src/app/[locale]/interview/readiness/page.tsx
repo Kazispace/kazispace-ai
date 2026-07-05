@@ -9,10 +9,12 @@ import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { IrpReadinessPanel } from "@/components/interview/irp-readiness-panel";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { IRP_PROFILE_ENABLED } from "@/lib/constants";
 import { useInterviewReadiness } from "@/hooks/use-interview-profile";
 import { useBilling } from "@/hooks/use-billing";
 import { isProPlan } from "@/lib/api-mappers";
+import { parseReadinessCheckSource } from "@/types";
 
 interface ReadinessPageProps {
   params: { locale: string };
@@ -22,10 +24,16 @@ function ReadinessPageContent({ locale }: { locale: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const jobId = searchParams.get("job_id");
+  const readinessSource = parseReadinessCheckSource(searchParams.get("source"));
   const t = useTranslations("interview.irp");
 
-  const { readinessResult, isReadinessLoading, readinessError, refetchReadiness } =
-    useInterviewReadiness(jobId, { enabled: IRP_PROFILE_ENABLED });
+  const {
+    readinessResult,
+    isReadinessLoading,
+    readinessError,
+    isReadinessLimitError,
+    refetchReadiness,
+  } = useInterviewReadiness(jobId, { enabled: IRP_PROFILE_ENABLED, source: readinessSource });
 
   const { plan } = useBilling();
   const isProUser = isProPlan(plan);
@@ -65,7 +73,23 @@ function ReadinessPageContent({ locale }: { locale: string }) {
         </div>
       )}
 
-      {jobId && readinessError && !isReadinessLoading && (
+      {jobId && readinessError && !isReadinessLoading && isReadinessLimitError && (
+        <Card>
+          <CardContent className="p-5 text-center space-y-3">
+            <p className="text-sm text-gray-700">{t("readiness.freeLimit")}</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button size="sm" asChild>
+                <Link href={`/${locale}/subscription`}>{t("readiness.upgradePro")}</Link>
+              </Button>
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/${locale}/jobs`}>{t("cta.viewJobs")}</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {jobId && readinessError && !isReadinessLoading && !isReadinessLimitError && (
         <div className="bg-white border border-gray-200 rounded-xl p-5 text-center space-y-3">
           <p className="text-sm text-red-600">{readinessError}</p>
           <Button size="sm" onClick={() => void refetchReadiness()} disabled={isReadinessLoading}>

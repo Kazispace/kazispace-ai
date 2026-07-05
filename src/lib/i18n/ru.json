@@ -229,6 +229,7 @@
 		"cta": {
 			"edit_cv": "Улучшить резюме",
 			"start_interview": "Тренировка интервью",
+			"assess_readiness": "Оценить готовность к интервью",
 			"unlock_pro": "Открыть с Pro"
 		}
 	},
@@ -517,6 +518,7 @@
 				"impact": "{points} баллов влияния",
 				"lockedGaps": "Ещё {count} пробелов в PRO",
 				"freeLimit": "Бесплатная проверка на сегодня использована. PRO — безлимит и полный анализ.",
+				"upgradePro": "Перейти на PRO",
 				"trainingPlan": "Рекомендуемая тренировка",
 				"trainingItem": "{type} · {rounds} раундов",
 				"practiceForJob": "Тренировка под вакансию",

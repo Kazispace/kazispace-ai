@@ -123,9 +123,12 @@ export function IrpReadinessPanel({
         )}
 
         {showFreeLimit && (
-          <p className="text-xs text-gray-600 bg-orange-50 border border-orange-100 rounded-lg p-3">
-            {t('readiness.freeLimit')}
-          </p>
+          <div className="text-xs text-gray-600 bg-orange-50 border border-orange-100 rounded-lg p-3 space-y-2">
+            <p>{t('readiness.freeLimit')}</p>
+            <Button size="sm" variant="outline" asChild>
+              <Link href={`/${locale}/subscription`}>{t('readiness.upgradePro')}</Link>
+            </Button>
+          </div>
         )}
 
         {isPro && result.recommended_training && result.recommended_training.length > 0 && (
@@ -154,7 +157,7 @@ export function IrpReadinessPanel({
               </Link>
             </Button>
           )}
-          {onRetry && (
+          {onRetry && !showFreeLimit && (
             <Button size="sm" variant="outline" onClick={onRetry} disabled={isLoading}>
               {t('readiness.refresh')}
             </Button>

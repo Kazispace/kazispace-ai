@@ -4,16 +4,42 @@ import { useCallback } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { IRP_PROFILE_ENABLED } from '@/lib/constants';
+import { ReadinessCheckLimitError } from '@/lib/interview-readiness-errors';
 import {
   getInterviewProfile,
   getInterviewProfileHistory,
   postInterviewReadinessCheck,
 } from '@/lib/interview-profile-api';
-import type { InterviewProfile, InterviewReadinessResult, IrpProfileHistory } from '@/types';
+import type {
+  InterviewProfile,
+  InterviewReadinessResult,
+  IrpProfileHistory,
+  ReadinessCheckSource,
+} from '@/types';
 
 const PROFILE_KEY = ['interview-profile'] as const;
 const HISTORY_KEY = ['interview-profile-history'] as const;
-const readinessKey = (jobId: string) => ['interview-readiness', jobId] as const;
+const readinessKey = (jobId: string, source?: ReadinessCheckSource) =>
+  ['interview-readiness', jobId, source ?? null] as const;
+
+async function runReadinessCheck(
+  jobId: string,
+  source?: ReadinessCheckSource
+): Promise<InterviewReadinessResult> {
+  const res = await postInterviewReadinessCheck({
+    job_id: jobId,
+    ...(source ? { source } : {}),
+  });
+  if (!res.success || !res.data) {
+    if (res.errorCode === 'READINESS_CHECK_LIMIT') {
+      throw new ReadinessCheckLimitError(
+        res.error ?? 'Daily free readiness check limit reached'
+      );
+    }
+    throw new Error(res.error ?? 'Failed to check readiness');
+  }
+  return res.data;
+}
 
 async function fetchProfile(): Promise<InterviewProfile> {
   const res = await getInterviewProfile();
@@ -51,13 +77,10 @@ export function useInterviewProfile(options?: { enabled?: boolean }) {
   });
 
   const readinessMutation = useMutation({
-    mutationFn: async (jobId: string): Promise<InterviewReadinessResult> => {
-      const res = await postInterviewReadinessCheck({ job_id: jobId });
-      if (!res.success || !res.data) {
-        throw new Error(res.error ?? 'Failed to check readiness');
-      }
-      return res.data;
-    },
+    mutationFn: async (params: {
+      jobId: string;
+      source?: ReadinessCheckSource;
+    }): Promise<InterviewReadinessResult> => runReadinessCheck(params.jobId, params.source),
   });
 
   const loadProfile = useCallback(async () => {
@@ -76,7 +99,8 @@ export function useInterviewProfile(options?: { enabled?: boolean }) {
   }, [queryClient]);
 
   const checkReadiness = useCallback(
-    async (jobId: string) => readinessMutation.mutateAsync(jobId),
+    async (jobId: string, source?: ReadinessCheckSource) =>
+      readinessMutation.mutateAsync({ jobId, source }),
     [readinessMutation]
   );
 
@@ -108,22 +132,21 @@ export function useInterviewProfile(options?: { enabled?: boolean }) {
 }
 
 /** Cached readiness check — dedupes mini-card / page remounts for the same job. */
-export function useInterviewReadiness(jobId: string | null, options?: { enabled?: boolean }) {
+export function useInterviewReadiness(
+  jobId: string | null,
+  options?: { enabled?: boolean; source?: ReadinessCheckSource }
+) {
+  const source = options?.source;
   const queryEnabled =
     IRP_PROFILE_ENABLED && (options?.enabled ?? true) && Boolean(jobId);
 
   const query = useQuery({
-    queryKey: jobId ? readinessKey(jobId) : (['interview-readiness', 'disabled'] as const),
-    queryFn: async (): Promise<InterviewReadinessResult> => {
-      const res = await postInterviewReadinessCheck({ job_id: jobId! });
-      if (!res.success || !res.data) {
-        throw new Error(res.error ?? 'Failed to check readiness');
-      }
-      return res.data;
-    },
+    queryKey: jobId ? readinessKey(jobId, source) : (['interview-readiness', 'disabled'] as const),
+    queryFn: async (): Promise<InterviewReadinessResult> => runReadinessCheck(jobId!, source),
     enabled: queryEnabled,
     staleTime: 60_000,
-    retry: 1,
+    retry: (failureCount, error) =>
+      failureCount < 1 && !(error instanceof ReadinessCheckLimitError),
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
@@ -132,6 +155,7 @@ export function useInterviewReadiness(jobId: string | null, options?: { enabled?
     readinessResult: query.data ?? null,
     isReadinessLoading: queryEnabled && query.isLoading,
     readinessError: query.error instanceof Error ? query.error.message : null,
+    isReadinessLimitError: query.error instanceof ReadinessCheckLimitError,
     refetchReadiness: query.refetch,
   };
 }

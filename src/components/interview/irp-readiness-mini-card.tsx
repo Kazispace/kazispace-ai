@@ -31,10 +31,11 @@ function tierTone(tier?: ReadinessTier | null) {
 
 export function IrpReadinessMiniCard({ jobId, locale }: IrpReadinessMiniCardProps) {
   const t = useTranslations('interview.irp');
-  const { readinessResult, isReadinessLoading, readinessError } = useInterviewReadiness(jobId);
+  const { readinessResult, isReadinessLoading, readinessError, isReadinessLimitError } =
+    useInterviewReadiness(jobId, { source: 'interview_prep' });
 
   const score = clampPct(readinessResult?.readiness_score_pct);
-  const detailHref = `/${locale}/interview/readiness?job_id=${encodeURIComponent(jobId)}`;
+  const detailHref = `/${locale}/interview/readiness?job_id=${encodeURIComponent(jobId)}&source=interview_prep`;
 
   return (
     <Card className="border-kazi-orange/20 bg-orange-50/50">
@@ -42,8 +43,11 @@ export function IrpReadinessMiniCard({ jobId, locale }: IrpReadinessMiniCardProp
         {isReadinessLoading && (
           <p className="text-xs text-gray-600">{t('readiness.loading')}</p>
         )}
-        {readinessError && (
+        {readinessError && !isReadinessLimitError && (
           <p className="text-xs text-red-600">{readinessError}</p>
+        )}
+        {isReadinessLimitError && (
+          <p className="text-xs text-gray-600">{t('readiness.freeLimit')}</p>
         )}
         {!isReadinessLoading && !readinessError && score != null && (
           <div className="flex items-center justify-between gap-3">

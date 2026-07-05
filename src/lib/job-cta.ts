@@ -1,7 +1,10 @@
+import type { ReadinessCheckSource } from '@/types';
+
 export type JobPrimaryCta =
   | 'complete_profile'
   | 'edit_cv'
   | 'start_interview'
+  | 'assess_readiness'
   | 'unlock_pro';
 
 export function isJobPrimaryCta(value: string | undefined): value is JobPrimaryCta {
@@ -9,6 +12,7 @@ export function isJobPrimaryCta(value: string | undefined): value is JobPrimaryC
     value === 'complete_profile' ||
     value === 'edit_cv' ||
     value === 'start_interview' ||
+    value === 'assess_readiness' ||
     value === 'unlock_pro'
   );
 }
@@ -17,11 +21,9 @@ export function isJobPrimaryCta(value: string | undefined): value is JobPrimaryC
 export function getJobCtaHref(
   locale: string,
   cta: string,
-  jobId?: string
+  jobId?: string,
+  options?: { readinessSource?: ReadinessCheckSource }
 ): string | null {
-  const withJobId = (base: string) =>
-    jobId ? `${base}&job_id=${encodeURIComponent(jobId)}` : base;
-
   switch (cta) {
     case 'complete_profile':
       return `/${locale}/chat`;
@@ -33,6 +35,13 @@ export function getJobCtaHref(
       return jobId
         ? `/${locale}/interview?job_id=${encodeURIComponent(jobId)}`
         : `/${locale}/interview`;
+    case 'assess_readiness': {
+      if (!jobId) return `/${locale}/interview/readiness`;
+      const params = new URLSearchParams({ job_id: jobId });
+      const source = options?.readinessSource ?? 'job_search_detail';
+      params.set('source', source);
+      return `/${locale}/interview/readiness?${params.toString()}`;
+    }
     case 'unlock_pro':
       return null;
     default:

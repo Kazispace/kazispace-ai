@@ -139,6 +139,29 @@ export interface InterviewReadinessSummary {
 
 export interface InterviewReadinessCheckRequest {
   job_id: string;
+  source?: ReadinessCheckSource;
+}
+
+export type ReadinessCheckSource =
+  | 'job_search_detail'
+  | 'job_search_list'
+  | 'profile_home'
+  | 'interview_prep';
+
+const READINESS_CHECK_SOURCES: ReadinessCheckSource[] = [
+  'job_search_detail',
+  'job_search_list',
+  'profile_home',
+  'interview_prep',
+];
+
+export function parseReadinessCheckSource(
+  value: string | null | undefined
+): ReadinessCheckSource | undefined {
+  if (!value) return undefined;
+  return READINESS_CHECK_SOURCES.includes(value as ReadinessCheckSource)
+    ? (value as ReadinessCheckSource)
+    : undefined;
 }
 
 export const IRP_DIMENSION_ORDER: IrpDimensionKey[] = [

@@ -229,6 +229,7 @@
 		"cta": {
 			"edit_cv": "Improve CV",
 			"start_interview": "Practice interview",
+			"assess_readiness": "Check interview readiness",
 			"unlock_pro": "Unlock with Pro"
 		}
 	},
@@ -517,6 +518,7 @@
 				"impact": "{points} impact points",
 				"lockedGaps": "+{count} more gaps on PRO",
 				"freeLimit": "Daily free readiness check used. Upgrade to PRO for unlimited checks and full gap analysis.",
+				"upgradePro": "Upgrade to PRO",
 				"trainingPlan": "Recommended training",
 				"trainingItem": "{type} · {rounds} rounds",
 				"practiceForJob": "Practice for this job",

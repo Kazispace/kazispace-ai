@@ -229,6 +229,7 @@
 		"cta": {
 			"edit_cv": "Түйіндемені жақсарту",
 			"start_interview": "Сұхбатты жаттығу",
+			"assess_readiness": "Сұхбатқа дайындықты бағалау",
 			"unlock_pro": "Pro арқылы ашу"
 		}
 	},
@@ -517,6 +518,7 @@
 				"impact": "{points} әсер ұпайы",
 				"lockedGaps": "PRO-да тағы {count} бос орын",
 				"freeLimit": "Бүгінгі тегін тексеру қолданылды. PRO — шексіз тексеру.",
+				"upgradePro": "PRO-ға өту",
 				"trainingPlan": "Ұсынылған жаттығу",
 				"trainingItem": "{type} · {rounds} раунд",
 				"practiceForJob": "Бұл жұмысқа жаттығу",
