@@ -39,7 +39,12 @@ export default function JobsPage({ params }: JobsPageProps) {
       openPaywall("PRO_FEATURE_LOCKED");
       return;
     }
-    const href = getJobCtaHref(locale, cta, jobId);
+    const href = getJobCtaHref(
+      locale,
+      cta,
+      jobId,
+      cta === 'assess_readiness' ? { readinessSource: 'job_search_list' } : undefined
+    );
     if (href) router.push(href);
   };
 

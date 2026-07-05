@@ -325,8 +325,9 @@ export type {
   IrpProfileHistory,
   IrpProfileHistoryItem,
   IrpProfileTags,
+  ReadinessCheckSource,
   ReadinessGapItem,
   ReadinessTier,
 } from './interview-profile';
 
-export { IRP_DIMENSION_ORDER } from './interview-profile';
+export { IRP_DIMENSION_ORDER, parseReadinessCheckSource } from './interview-profile';

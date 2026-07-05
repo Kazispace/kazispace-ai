@@ -16,6 +16,7 @@ export type JobPrimaryCtaValue =
   | 'complete_profile'
   | 'edit_cv'
   | 'start_interview'
+  | 'assess_readiness'
   | 'unlock_pro';
 
 export type JobMatchLevel = 'excellent' | 'good' | 'fair';
