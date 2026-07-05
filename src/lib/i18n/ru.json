@@ -476,6 +476,9 @@
 		},
 		"irp": {
 			"loadingProfile": "Загружаем профиль интервью…",
+			"profileLoadFailed": "Не удалось загрузить профиль интервью.",
+			"profileRetry": "Повторить",
+			"provisionalShort": "предварительно",
 			"provisionalBanner": "Предварительный профиль — пройдите ещё {remaining} тренировок для формального IRP.",
 			"featureDisabled": "Профиль интервью пока недоступен.",
 			"profileTitle": "Профиль готовности к интервью",
@@ -540,6 +543,9 @@
 				"levelCurve": "Кривая уровня",
 				"levelCurveHint": "Уровень после каждой тренировки",
 				"levelScore": "Уровень {level} · {score} баллов",
+				"roundLabel": "Р{n}",
+				"recentRounds": "Недавние тренировки",
+				"chartNeedsMore": "Пройдите 3+ раунда, чтобы увидеть кривую уровня.",
 				"badges": "Значки",
 				"proHint": "PRO — тепловая карта и значки."
 			},

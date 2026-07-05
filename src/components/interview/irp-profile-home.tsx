@@ -53,6 +53,11 @@ export function IrpProfileHome({
       : [{ cta_type: 'start_training' as const, label: t('cta.startTraining'), primary: true }];
 
   const showTagDetails = isPro && profile.tags;
+  const isProvisional = profile.profile_status === 'provisional';
+  const progressPct =
+    profile.level_progress_pct != null
+      ? Math.max(0, Math.min(100, profile.level_progress_pct))
+      : null;
 
   return (
     <div className="flex-1 flex flex-col p-4 gap-4 max-w-lg mx-auto w-full">
@@ -73,16 +78,25 @@ export function IrpProfileHome({
                 </p>
               </div>
             </div>
-            {profile.level_progress_pct != null && (
-              <div className="mt-3">
+            {progressPct != null && (
+              <div className={`mt-3 ${isProvisional ? 'opacity-60' : ''}`}>
                 <div className="flex justify-between text-[10px] text-gray-500 mb-1">
-                  <span>{t('levelProgress')}</span>
-                  <span>{profile.level_progress_pct}%</span>
+                  <span>
+                    {t('levelProgress')}
+                    {isProvisional && (
+                      <span className="ml-1 text-amber-600">({t('provisionalShort')})</span>
+                    )}
+                  </span>
+                  <span>{progressPct}%</span>
                 </div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-1.5 bg-gray-100 rounded-full overflow-hidden ${
+                    isProvisional ? 'border border-dashed border-gray-300' : ''
+                  }`}
+                >
                   <div
-                    className="h-full bg-kazi-orange rounded-full"
-                    style={{ width: `${profile.level_progress_pct}%` }}
+                    className={`h-full rounded-full ${isProvisional ? 'bg-gray-400' : 'bg-kazi-orange'}`}
+                    style={{ width: `${progressPct}%` }}
                   />
                 </div>
               </div>

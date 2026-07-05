@@ -1,11 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { useInterviewProfile } from '@/hooks/use-interview-profile';
+import { useInterviewReadiness } from '@/hooks/use-interview-profile';
 import type { ReadinessTier } from '@/types';
 
 interface IrpReadinessMiniCardProps {
@@ -31,13 +30,7 @@ function tierTone(tier?: ReadinessTier | null) {
 
 export function IrpReadinessMiniCard({ jobId, locale }: IrpReadinessMiniCardProps) {
   const t = useTranslations('interview.irp');
-  // Mini card only runs readiness-check mutation; skip profile query fetch.
-  const { checkReadiness, readinessResult, isReadinessLoading, readinessError } =
-    useInterviewProfile({ enabled: false });
-
-  useEffect(() => {
-    void checkReadiness(jobId);
-  }, [checkReadiness, jobId]);
+  const { readinessResult, isReadinessLoading, readinessError } = useInterviewReadiness(jobId);
 
   const score = readinessResult?.readiness_score_pct;
   const detailHref = `/${locale}/interview/readiness?job_id=${encodeURIComponent(jobId)}`;

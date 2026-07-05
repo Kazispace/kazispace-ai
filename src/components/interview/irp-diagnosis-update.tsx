@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 
 import { IrpDimensionBars } from '@/components/interview/irp-dimension-bars';
 import { useInterviewProfile } from '@/hooks/use-interview-profile';
-import type { InterviewProfile } from '@/types';
 
 interface IrpDiagnosisUpdateProps {
   enabled: boolean;
@@ -20,7 +19,6 @@ export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisU
   const { profile, loadProfileFresh, profileStatus } = useInterviewProfile({
     enabled,
   });
-  const [polledProfile, setPolledProfile] = useState<InterviewProfile | null>(null);
   const [isPolling, setIsPolling] = useState(false);
   const attemptsRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -30,7 +28,6 @@ export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisU
 
     attemptsRef.current = 0;
     setIsPolling(true);
-    setPolledProfile(null);
 
     const poll = async () => {
       attemptsRef.current += 1;
@@ -47,7 +44,6 @@ export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisU
             : hasDelta;
 
         if (updated || attemptsRef.current >= MAX_POLL_ATTEMPTS) {
-          setPolledProfile(next);
           setIsPolling(false);
           return;
         }
@@ -68,12 +64,11 @@ export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisU
     };
   }, [baselineUpdatedAt, enabled, loadProfileFresh]);
 
-  const displayProfile = polledProfile ?? profile;
-  const status = displayProfile?.profile_status ?? profileStatus;
+  const status = profile?.profile_status ?? profileStatus;
 
   if (!enabled) return null;
 
-  if (isPolling && !displayProfile?.dimensions) {
+  if (isPolling && !profile?.dimensions) {
     return (
       <div className="bg-white border border-gray-200 rounded-xl p-4 max-w-xl self-start">
         <p className="text-xs text-gray-500">{t('diagnosis.updating')}</p>
@@ -81,9 +76,9 @@ export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisU
     );
   }
 
-  if (!displayProfile?.dimensions) return null;
+  if (!profile?.dimensions) return null;
 
-  const hasDeltas = Object.values(displayProfile.dimensions).some(
+  const hasDeltas = Object.values(profile.dimensions).some(
     (d) => d?.delta_last_round != null && d.delta_last_round !== 0
   );
 
@@ -101,7 +96,7 @@ export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisU
         )}
       </div>
       <IrpDimensionBars
-        dimensions={displayProfile.dimensions}
+        dimensions={profile.dimensions}
         profileStatus={status ?? 'formal'}
         showDelta
         compact

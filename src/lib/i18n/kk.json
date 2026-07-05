@@ -476,6 +476,9 @@
 		},
 		"irp": {
 			"loadingProfile": "Сұхбат профилі жүктелуде…",
+			"profileLoadFailed": "Сұхбат профилін жүктеу сәтсіз.",
+			"profileRetry": "Қайталау",
+			"provisionalShort": "уақытша",
 			"provisionalBanner": "Уақытша профиль — ресми IRP үшін тағы {remaining} жаттығу аяқтаңыз.",
 			"featureDisabled": "Сұхбат профилі әлі қосылмаған.",
 			"profileTitle": "Сұхбатқа дайындық профилі",
@@ -540,6 +543,9 @@
 				"levelCurve": "Деңгей қисығы",
 				"levelCurveHint": "Әр жаттығудан кейінгі деңгей",
 				"levelScore": "Деңгей {level} · {score} ұпай",
+				"roundLabel": "Р{n}",
+				"recentRounds": "Соңғы жаттығулар",
+				"chartNeedsMore": "3+ раундтан кейін деңгей қисығын көресіз.",
 				"badges": "Белгілер",
 				"proHint": "PRO — жылу картасы және белгілер."
 			},

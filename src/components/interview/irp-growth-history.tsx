@@ -58,68 +58,99 @@ export function IrpGrowthHistory({ items, badges = [], isPro = false }: IrpGrowt
     );
   }
 
+  const sortedItems = [...items].sort((a, b) => b.version - a.version);
+  const showChart = points.length >= 3;
+
   return (
     <div className="space-y-4">
       <Card>
         <CardContent className="p-5 space-y-4">
-          <div>
-            <h3 className="text-sm font-semibold text-kazi-navy">{t('growth.levelCurve')}</h3>
-            <p className="text-xs text-gray-500">{t('growth.levelCurveHint')}</p>
-          </div>
-          <svg
-            viewBox={`0 0 ${width} ${height}`}
-            className="w-full max-w-md mx-auto"
-            role="img"
-            aria-label={t('growth.levelCurve')}
-          >
-            {[1, 2, 3, 4, 5].map((lvl) => {
-              const y = padding.top + innerH - (lvl / maxLevel) * innerH;
-              return (
-                <g key={lvl}>
-                  <line
-                    x1={padding.left}
-                    y1={y}
-                    x2={width - padding.right}
-                    y2={y}
-                    stroke="#e5e7eb"
-                    strokeWidth="1"
-                  />
-                  <text x={4} y={y + 4} fontSize="9" fill="#9ca3af">
-                    L{lvl}
-                  </text>
-                </g>
-              );
-            })}
-            {pathD && (
-              <>
-                <path d={pathD} fill="none" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" />
-                {points.map((p, i) => {
-                  const x =
-                    padding.left +
-                    (points.length === 1 ? innerW / 2 : (i / (points.length - 1)) * innerW);
-                  const y = padding.top + innerH - (p.level / maxLevel) * innerH;
-                  return <circle key={p.version} cx={x} cy={y} r="4" fill="#f97316" />;
+          {showChart ? (
+            <>
+              <div>
+                <h3 className="text-sm font-semibold text-kazi-navy">{t('growth.levelCurve')}</h3>
+                <p className="text-xs text-gray-500">{t('growth.levelCurveHint')}</p>
+              </div>
+              <svg
+                viewBox={`0 0 ${width} ${height}`}
+                className="w-full max-w-md mx-auto"
+                role="img"
+                aria-label={t('growth.levelCurve')}
+              >
+                {[1, 2, 3, 4, 5].map((lvl) => {
+                  const y = padding.top + innerH - (lvl / maxLevel) * innerH;
+                  return (
+                    <g key={lvl}>
+                      <line
+                        x1={padding.left}
+                        y1={y}
+                        x2={width - padding.right}
+                        y2={y}
+                        stroke="#e5e7eb"
+                        strokeWidth="1"
+                      />
+                      <text x={4} y={y + 4} fontSize="9" fill="#9ca3af">
+                        L{lvl}
+                      </text>
+                    </g>
+                  );
                 })}
-              </>
-            )}
-          </svg>
-          <ul className="space-y-2 max-h-48 overflow-y-auto">
-            {[...items]
-              .sort((a, b) => b.version - a.version)
-              .map((item) => (
-                <li
-                  key={item.version}
-                  className="flex items-center justify-between text-xs bg-gray-50 border border-gray-100 rounded-lg px-3 py-2"
-                >
-                  <span className="text-gray-600">v{item.version}</span>
-                  <span className="font-medium text-kazi-navy">
-                    {t('growth.levelScore', {
-                      level: item.level ?? '—',
-                      score: item.composite_score?.toFixed(1) ?? '—',
+                {pathD && (
+                  <>
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke="#f97316"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                    />
+                    {points.map((p, i) => {
+                      const x =
+                        padding.left +
+                        (points.length === 1 ? innerW / 2 : (i / (points.length - 1)) * innerW);
+                      const y = padding.top + innerH - (p.level / maxLevel) * innerH;
+                      return (
+                        <g key={p.version}>
+                          <circle cx={x} cy={y} r="4" fill="#f97316" />
+                          <text
+                            x={x}
+                            y={height - 4}
+                            fontSize="8"
+                            fill="#9ca3af"
+                            textAnchor="middle"
+                          >
+                            {t('growth.roundLabel', { n: i + 1 })}
+                          </text>
+                        </g>
+                      );
                     })}
-                  </span>
-                </li>
-              ))}
+                  </>
+                )}
+              </svg>
+            </>
+          ) : (
+            <div>
+              <h3 className="text-sm font-semibold text-kazi-navy">{t('growth.recentRounds')}</h3>
+              <p className="text-xs text-gray-500">{t('growth.chartNeedsMore')}</p>
+            </div>
+          )}
+          <ul className="space-y-2 max-h-48 overflow-y-auto">
+            {sortedItems.map((item, index) => (
+              <li
+                key={item.version}
+                className="flex items-center justify-between text-xs bg-gray-50 border border-gray-100 rounded-lg px-3 py-2"
+              >
+                <span className="text-gray-600">
+                  {t('growth.roundLabel', { n: sortedItems.length - index })}
+                </span>
+                <span className="font-medium text-kazi-navy">
+                  {t('growth.levelScore', {
+                    level: item.level ?? '—',
+                    score: item.composite_score?.toFixed(1) ?? '—',
+                  })}
+                </span>
+              </li>
+            ))}
           </ul>
         </CardContent>
       </Card>

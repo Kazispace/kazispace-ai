@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -68,6 +68,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
     profileStatus,
     isProfileLoading,
     profileError,
+    refetchProfile,
   } = useInterviewProfile({ enabled: !needsLogin });
 
   const { plan } = useBilling();
@@ -104,10 +105,13 @@ function InterviewPageContent({ locale }: { locale: string }) {
 
   const isProUser = isProPlan(plan);
 
+  const prevPhaseRef = useRef(phase);
+
   useEffect(() => {
-    if (phase === "feedback_pending" && profile?.updated_at) {
-      setProfileBaselineUpdatedAt((prev) => prev ?? profile.updated_at ?? null);
+    if (phase === "feedback_pending" && prevPhaseRef.current !== "feedback_pending") {
+      setProfileBaselineUpdatedAt(profile?.updated_at ?? null);
     }
+    prevPhaseRef.current = phase;
   }, [phase, profile?.updated_at]);
 
   const subtitle = useMemo(() => {
@@ -143,6 +147,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
 
   const handleReset = useCallback(() => {
     setTrainingRequested(false);
+    setProfileBaselineUpdatedAt(null);
     reset();
   }, [reset]);
 
@@ -156,25 +161,11 @@ function InterviewPageContent({ locale }: { locale: string }) {
     (phase === "role_select" || (phase === "prep_review" && !prepCard)) &&
     isStarting;
 
-  const showProfileHomeLoading =
-    irpEnabled &&
-    !jobId &&
-    !needsLogin &&
-    !profileError &&
-    !trainingRequested &&
-    isProfileLoading &&
-    phase === "role_select";
-
   return (
     <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
       <Header locale={locale} />
       <main className="pt-16 flex-1 flex flex-col max-w-3xl mx-auto w-full">
-        {showProfileHomeLoading ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3">
-            <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
-            <p className="text-sm text-gray-600">{t("irp.loadingProfile")}</p>
-          </div>
-        ) : showProfileHome && profile ? (
+        {showProfileHome && profile ? (
           <IrpProfileHome
             profile={profile}
             locale={locale}
@@ -199,6 +190,19 @@ function InterviewPageContent({ locale }: { locale: string }) {
                 {t("irp.provisionalBanner", {
                   remaining: Math.max(0, 3 - (profile?.total_training_rounds ?? 0)),
                 })}
+              </p>
+            )}
+            {irpEnabled && profileError && !jobId && (
+              <div className="mx-4 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-center space-y-2">
+                <p className="text-xs text-red-700">{t("irp.profileLoadFailed")}</p>
+                <Button size="sm" variant="outline" onClick={() => void refetchProfile()}>
+                  {t("irp.profileRetry")}
+                </Button>
+              </div>
+            )}
+            {irpEnabled && isProfileLoading && !jobId && !profileError && (
+              <p className="text-center text-xs text-gray-500 px-4 pt-2">
+                {t("irp.loadingProfile")}
               </p>
             )}
             {needsLogin ? (

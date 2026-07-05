@@ -476,6 +476,9 @@
 		},
 		"irp": {
 			"loadingProfile": "Suhbat profili yuklanmoqda…",
+			"profileLoadFailed": "Suhbat profilini yuklab bo'lmadi.",
+			"profileRetry": "Qayta urinish",
+			"provisionalShort": "vaqtinchalik",
 			"provisionalBanner": "Vaqtinchalik profil — rasmiy IRP uchun yana {remaining} mashq tugating.",
 			"featureDisabled": "Suhbat profili hali yoqilmagan.",
 			"profileTitle": "Suhbatga tayyorgarlik profili",
@@ -540,6 +543,9 @@
 				"levelCurve": "Daraja egri chizig'i",
 				"levelCurveHint": "Har mashqdan keyingi daraja",
 				"levelScore": "Daraja {level} · {score} ball",
+				"roundLabel": "R{n}",
+				"recentRounds": "So'nggi mashqlar",
+				"chartNeedsMore": "3+ raunddan keyin daraja egri chizig'ini ko'rasiz.",
 				"badges": "Nishonlar",
 				"proHint": "PRO — issiqlik xaritasi va nishonlar."
 			},

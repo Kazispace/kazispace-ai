@@ -476,6 +476,9 @@
 		},
 		"irp": {
 			"loadingProfile": "Loading your interview profile…",
+			"profileLoadFailed": "Could not load your interview profile.",
+			"profileRetry": "Try again",
+			"provisionalShort": "provisional",
 			"provisionalBanner": "Provisional profile — complete {remaining} more training round(s) for a formal IRP.",
 			"featureDisabled": "Interview profile is not enabled yet.",
 			"profileTitle": "Interview readiness profile",
@@ -540,6 +543,9 @@
 				"levelCurve": "Level curve",
 				"levelCurveHint": "Level after each training session",
 				"levelScore": "Level {level} · {score} pts",
+				"roundLabel": "R{n}",
+				"recentRounds": "Recent training rounds",
+				"chartNeedsMore": "Complete 3+ rounds to see the level curve.",
 				"badges": "Badges",
 				"proHint": "Upgrade to PRO for heatmap and badges."
 			},

@@ -13,6 +13,7 @@ import type { InterviewProfile, InterviewReadinessResult, IrpProfileHistory } fr
 
 const PROFILE_KEY = ['interview-profile'] as const;
 const HISTORY_KEY = ['interview-profile-history'] as const;
+const readinessKey = (jobId: string) => ['interview-readiness', jobId] as const;
 
 async function fetchProfile(): Promise<InterviewProfile> {
   const res = await getInterviewProfile();
@@ -102,5 +103,33 @@ export function useInterviewProfile(options?: { enabled?: boolean }) {
     loadHistory,
     checkReadiness,
     refreshProfile,
+    refetchProfile: profileQuery.refetch,
+  };
+}
+
+/** Cached readiness check — dedupes mini-card / page remounts for the same job. */
+export function useInterviewReadiness(jobId: string | null, options?: { enabled?: boolean }) {
+  const queryEnabled =
+    IRP_PROFILE_ENABLED && (options?.enabled ?? true) && Boolean(jobId);
+
+  const query = useQuery({
+    queryKey: readinessKey(jobId ?? ''),
+    queryFn: async (): Promise<InterviewReadinessResult> => {
+      const res = await postInterviewReadinessCheck({ job_id: jobId! });
+      if (!res.success || !res.data) {
+        throw new Error(res.error ?? 'Failed to check readiness');
+      }
+      return res.data;
+    },
+    enabled: queryEnabled,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  return {
+    readinessResult: query.data ?? null,
+    isReadinessLoading: queryEnabled && query.isLoading,
+    readinessError: query.error instanceof Error ? query.error.message : null,
+    refetchReadiness: query.refetch,
   };
 }

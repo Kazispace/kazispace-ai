@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -10,7 +10,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { IrpReadinessPanel } from "@/components/interview/irp-readiness-panel";
 import { Button } from "@/components/ui/button";
 import { IRP_PROFILE_ENABLED } from "@/lib/constants";
-import { useInterviewProfile } from "@/hooks/use-interview-profile";
+import { useInterviewReadiness } from "@/hooks/use-interview-profile";
 import { useBilling } from "@/hooks/use-billing";
 import { isProPlan } from "@/lib/api-mappers";
 
@@ -24,24 +24,11 @@ function ReadinessPageContent({ locale }: { locale: string }) {
   const jobId = searchParams.get("job_id");
   const t = useTranslations("interview.irp");
 
-  const {
-    checkReadiness,
-    readinessResult,
-    isReadinessLoading,
-    readinessError,
-    irpEnabled,
-  } = useInterviewProfile({ enabled: IRP_PROFILE_ENABLED });
+  const { readinessResult, isReadinessLoading, readinessError, refetchReadiness } =
+    useInterviewReadiness(jobId, { enabled: IRP_PROFILE_ENABLED });
 
   const { plan } = useBilling();
   const isProUser = isProPlan(plan);
-
-  const runCheck = useCallback(() => {
-    if (jobId) void checkReadiness(jobId);
-  }, [checkReadiness, jobId]);
-
-  useEffect(() => {
-    if (irpEnabled && jobId) runCheck();
-  }, [irpEnabled, jobId, runCheck]);
 
   if (!IRP_PROFILE_ENABLED) {
     return (
@@ -81,7 +68,7 @@ function ReadinessPageContent({ locale }: { locale: string }) {
       {jobId && readinessError && !isReadinessLoading && (
         <div className="bg-white border border-gray-200 rounded-xl p-5 text-center space-y-3">
           <p className="text-sm text-red-600">{readinessError}</p>
-          <Button size="sm" onClick={runCheck} disabled={isReadinessLoading}>
+          <Button size="sm" onClick={() => void refetchReadiness()} disabled={isReadinessLoading}>
             {t("readiness.retry")}
           </Button>
         </div>
@@ -92,7 +79,7 @@ function ReadinessPageContent({ locale }: { locale: string }) {
           result={readinessResult}
           locale={locale}
           jobId={jobId}
-          onRetry={runCheck}
+          onRetry={() => void refetchReadiness()}
           isLoading={isReadinessLoading}
           isPro={isProUser}
         />
