@@ -31,6 +31,7 @@ function tierTone(tier?: ReadinessTier | null) {
 
 export function IrpReadinessMiniCard({ jobId, locale }: IrpReadinessMiniCardProps) {
   const t = useTranslations('interview.irp');
+  // Mini card only runs readiness-check mutation; skip profile query fetch.
   const { checkReadiness, readinessResult, isReadinessLoading, readinessError } =
     useInterviewProfile({ enabled: false });
 

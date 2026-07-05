@@ -518,6 +518,7 @@
 				"trainingItem": "{type} · {rounds} раундов",
 				"practiceForJob": "Тренировка под вакансию",
 				"refresh": "Обновить",
+				"retry": "Повторить",
 				"back": "← Назад к интервью",
 				"backToInterview": "Назад к интервью",
 				"jobRequired": "Выберите вакансию для проверки готовности.",

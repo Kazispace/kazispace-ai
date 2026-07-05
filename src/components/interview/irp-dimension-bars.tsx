@@ -37,21 +37,27 @@ export function IrpDimensionBars({
 }: IrpDimensionBarsProps) {
   const t = useTranslations('interview.irp');
 
-  const isMuted = profileStatus === 'provisional' || profileStatus === 'empty';
+  const isProvisional = profileStatus === 'provisional';
+  const isEmpty = profileStatus === 'empty';
 
   return (
-    <div className={compact ? 'space-y-2' : 'space-y-3'}>
+    <div
+      className={`${compact ? 'space-y-2' : 'space-y-3'} ${isProvisional ? 'opacity-60' : ''}`}
+    >
       {IRP_DIMENSION_ORDER.map((key) => {
         const dim = dimensions?.[key];
         const score = dim?.score ?? 0;
         const label = dim?.label ?? t(`dimensions.${key}`);
         const delta = dim?.delta_last_round;
+        const showScore = !isEmpty;
 
         return (
           <div key={key}>
             <div className="flex items-center justify-between gap-2 mb-1">
               <span
-                className={`text-xs font-medium ${isMuted ? 'text-gray-400' : 'text-gray-700'}`}
+                className={`text-xs font-medium ${
+                  isEmpty || isProvisional ? 'text-gray-400' : 'text-gray-700'
+                }`}
               >
                 {label}
               </span>
@@ -62,18 +68,32 @@ export function IrpDimensionBars({
                   </span>
                 )}
                 <span
-                  className={`text-xs tabular-nums ${isMuted ? 'text-gray-400' : 'text-kazi-navy font-semibold'}`}
+                  className={`text-xs tabular-nums ${
+                    isEmpty
+                      ? 'text-gray-400'
+                      : isProvisional
+                        ? 'text-gray-500 font-medium'
+                        : 'text-kazi-navy font-semibold'
+                  }`}
                 >
-                  {isMuted ? '—' : score}
+                  {showScore ? score : '—'}
                 </span>
               </div>
             </div>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
-                  isMuted ? 'bg-gray-300' : barTone(score)
+                  isEmpty
+                    ? 'bg-gray-300'
+                    : isProvisional
+                      ? 'bg-gray-400'
+                      : barTone(score)
                 }`}
-                style={{ width: isMuted ? '0%' : `${Math.min(100, Math.max(0, score))}%` }}
+                style={{
+                  width: showScore
+                    ? `${Math.min(100, Math.max(0, score))}%`
+                    : '0%',
+                }}
               />
             </div>
           </div>

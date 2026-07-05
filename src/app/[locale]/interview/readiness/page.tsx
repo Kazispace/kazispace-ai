@@ -11,6 +11,8 @@ import { IrpReadinessPanel } from "@/components/interview/irp-readiness-panel";
 import { Button } from "@/components/ui/button";
 import { IRP_PROFILE_ENABLED } from "@/lib/constants";
 import { useInterviewProfile } from "@/hooks/use-interview-profile";
+import { useBilling } from "@/hooks/use-billing";
+import { isProPlan } from "@/lib/api-mappers";
 
 interface ReadinessPageProps {
   params: { locale: string };
@@ -29,6 +31,9 @@ function ReadinessPageContent({ locale }: { locale: string }) {
     readinessError,
     irpEnabled,
   } = useInterviewProfile({ enabled: IRP_PROFILE_ENABLED });
+
+  const { plan } = useBilling();
+  const isProUser = isProPlan(plan);
 
   const runCheck = useCallback(() => {
     if (jobId) void checkReadiness(jobId);
@@ -76,8 +81,8 @@ function ReadinessPageContent({ locale }: { locale: string }) {
       {jobId && readinessError && !isReadinessLoading && (
         <div className="bg-white border border-gray-200 rounded-xl p-5 text-center space-y-3">
           <p className="text-sm text-red-600">{readinessError}</p>
-          <Button size="sm" onClick={runCheck}>
-            {t("readiness.refresh")}
+          <Button size="sm" onClick={runCheck} disabled={isReadinessLoading}>
+            {t("readiness.retry")}
           </Button>
         </div>
       )}
@@ -89,6 +94,7 @@ function ReadinessPageContent({ locale }: { locale: string }) {
           jobId={jobId}
           onRetry={runCheck}
           isLoading={isReadinessLoading}
+          isPro={isProUser}
         />
       )}
 

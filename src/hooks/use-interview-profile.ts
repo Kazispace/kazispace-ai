@@ -63,6 +63,13 @@ export function useInterviewProfile(options?: { enabled?: boolean }) {
     return queryClient.fetchQuery({ queryKey: PROFILE_KEY, queryFn: fetchProfile });
   }, [queryClient]);
 
+  /** Bypass TanStack Query staleTime — for post-diagnosis polling. */
+  const loadProfileFresh = useCallback(async () => {
+    const data = await fetchProfile();
+    queryClient.setQueryData(PROFILE_KEY, data);
+    return data;
+  }, [queryClient]);
+
   const loadHistory = useCallback(async () => {
     return queryClient.fetchQuery({ queryKey: HISTORY_KEY, queryFn: () => fetchHistory() });
   }, [queryClient]);
@@ -80,7 +87,8 @@ export function useInterviewProfile(options?: { enabled?: boolean }) {
     irpEnabled: IRP_PROFILE_ENABLED,
     profile: profileQuery.data ?? null,
     profileStatus: profileQuery.data?.profile_status ?? null,
-    isProfileLoading: enabled && profileQuery.isLoading,
+    isProfileLoading:
+      enabled && !profileQuery.data && (profileQuery.isLoading || profileQuery.isFetching),
     profileError: profileQuery.error instanceof Error ? profileQuery.error.message : null,
     history: historyQuery.data ?? null,
     isHistoryLoading: historyQuery.isFetching,
@@ -90,6 +98,7 @@ export function useInterviewProfile(options?: { enabled?: boolean }) {
     readinessError:
       readinessMutation.error instanceof Error ? readinessMutation.error.message : null,
     loadProfile,
+    loadProfileFresh,
     loadHistory,
     checkReadiness,
     refreshProfile,

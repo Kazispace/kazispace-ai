@@ -19,6 +19,8 @@ import { IrpDiagnosisUpdate } from "@/components/interview/irp-diagnosis-update"
 import { Button } from "@/components/ui/button";
 import { useInterview } from "@/hooks/use-interview";
 import { useInterviewProfile } from "@/hooks/use-interview-profile";
+import { useBilling } from "@/hooks/use-billing";
+import { isProPlan } from "@/lib/api-mappers";
 import { hasFormalIrp, resolveInterviewEntry } from "@/lib/interview-irp-entry";
 import type { InterviewCta } from "@/types";
 import { useUIStore } from "@/lib/store";
@@ -68,6 +70,8 @@ function InterviewPageContent({ locale }: { locale: string }) {
     profileError,
   } = useInterviewProfile({ enabled: !needsLogin });
 
+  const { plan } = useBilling();
+
   const [trainingRequested, setTrainingRequested] = useState(false);
   const [profileBaselineUpdatedAt, setProfileBaselineUpdatedAt] = useState<string | null>(
     null
@@ -98,11 +102,11 @@ function InterviewPageContent({ locale }: { locale: string }) {
     Boolean(jobId) &&
     (prepCard || prepAckRequired);
 
-  const isProTier = feedback?.tier === "pro";
+  const isProUser = isProPlan(plan);
 
   useEffect(() => {
     if (phase === "feedback_pending" && profile?.updated_at) {
-      setProfileBaselineUpdatedAt(profile.updated_at);
+      setProfileBaselineUpdatedAt((prev) => prev ?? profile.updated_at ?? null);
     }
   }, [phase, profile?.updated_at]);
 
@@ -156,7 +160,8 @@ function InterviewPageContent({ locale }: { locale: string }) {
     irpEnabled &&
     !jobId &&
     !needsLogin &&
-    entryRoute === "profile_home" &&
+    !profileError &&
+    !trainingRequested &&
     isProfileLoading &&
     phase === "role_select";
 
@@ -174,7 +179,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
             profile={profile}
             locale={locale}
             onStartTraining={handleStartTraining}
-            isPro={isProTier}
+            isPro={isProUser}
           />
         ) : showJobBootstrapping ? (
           <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3">

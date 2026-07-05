@@ -10,6 +10,8 @@ import { IrpGrowthHistory } from "@/components/interview/irp-growth-history";
 import { Button } from "@/components/ui/button";
 import { IRP_PROFILE_ENABLED } from "@/lib/constants";
 import { useInterviewProfile } from "@/hooks/use-interview-profile";
+import { useBilling } from "@/hooks/use-billing";
+import { isProPlan } from "@/lib/api-mappers";
 
 interface GrowthPageProps {
   params: { locale: string };
@@ -19,6 +21,9 @@ function GrowthPageContent({ locale }: { locale: string }) {
   const t = useTranslations("interview.irp");
   const { loadHistory, history, isHistoryLoading, historyError, irpEnabled } =
     useInterviewProfile({ enabled: IRP_PROFILE_ENABLED });
+
+  const { plan } = useBilling();
+  const isProUser = isProPlan(plan);
 
   useEffect(() => {
     if (irpEnabled) void loadHistory();
@@ -61,7 +66,7 @@ function GrowthPageContent({ locale }: { locale: string }) {
       )}
 
       {history && !isHistoryLoading && (
-        <IrpGrowthHistory items={history.items} badges={history.badges} />
+        <IrpGrowthHistory items={history.items} badges={history.badges} isPro={isProUser} />
       )}
 
       <Button size="sm" variant="outline" className="self-start" asChild>

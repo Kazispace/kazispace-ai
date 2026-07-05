@@ -518,6 +518,7 @@
 				"trainingItem": "{type} · {rounds} rounds",
 				"practiceForJob": "Practice for this job",
 				"refresh": "Refresh",
+				"retry": "Try again",
 				"back": "← Back to interview",
 				"backToInterview": "Back to interview",
 				"jobRequired": "Select a job to check your interview readiness.",

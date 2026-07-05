@@ -17,7 +17,7 @@ const POLL_INTERVAL_MS = 2000;
 
 export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisUpdateProps) {
   const t = useTranslations('interview.irp');
-  const { profile, loadProfile, refreshProfile, profileStatus } = useInterviewProfile({
+  const { profile, loadProfileFresh, profileStatus } = useInterviewProfile({
     enabled,
   });
   const [polledProfile, setPolledProfile] = useState<InterviewProfile | null>(null);
@@ -35,7 +35,7 @@ export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisU
     const poll = async () => {
       attemptsRef.current += 1;
       try {
-        const next = await loadProfile();
+        const next = await loadProfileFresh();
         const hasDelta =
           next.dimensions &&
           Object.values(next.dimensions).some(
@@ -44,7 +44,7 @@ export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisU
         const updated =
           baselineUpdatedAt != null
             ? next.updated_at != null && next.updated_at !== baselineUpdatedAt
-            : next.profile_status !== 'empty' || hasDelta;
+            : hasDelta;
 
         if (updated || attemptsRef.current >= MAX_POLL_ATTEMPTS) {
           setPolledProfile(next);
@@ -66,13 +66,7 @@ export function IrpDiagnosisUpdate({ enabled, baselineUpdatedAt }: IrpDiagnosisU
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [baselineUpdatedAt, enabled, loadProfile]);
-
-  useEffect(() => {
-    return () => {
-      void refreshProfile();
-    };
-  }, [refreshProfile]);
+  }, [baselineUpdatedAt, enabled, loadProfileFresh]);
 
   const displayProfile = polledProfile ?? profile;
   const status = displayProfile?.profile_status ?? profileStatus;
