@@ -318,7 +318,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
                     locale={locale}
                     jobId={jobId}
                     onCtaAction={handleCtaAction}
-                    onPracticeAgain={retrySession}
+                    onPracticeAgain={() => retrySession()}
                   />
                   <IrpDiagnosisUpdate
                     enabled={irpEnabled}

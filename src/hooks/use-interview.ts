@@ -100,6 +100,7 @@ export function useInterview(jobId?: string | null) {
       setIsStarting(false);
       setIsAckingPrep(false);
       setIsSending(false);
+      setIsCheckingFeedback(false);
       jobStartInFlightRef.current = false;
       return true;
     }
@@ -542,7 +543,10 @@ export function useInterview(jobId?: string | null) {
       setIsSending(false);
       setIsCheckingFeedback(false);
 
-      const effectiveJobId = overrideJobId ?? jobId;
+      const effectiveJobId =
+        typeof overrideJobId === 'string' && overrideJobId.length > 0
+          ? overrideJobId
+          : jobId;
       if (effectiveJobId) {
         lastAutoStartedJobIdRef.current = null;
         void startJobSession(effectiveJobId);

@@ -198,7 +198,7 @@ export function InterviewFeedbackCard({
           })
         ) : (
           <>
-            <Button size="sm" onClick={onPracticeAgain}>
+            <Button size="sm" onClick={() => onPracticeAgain()}>
               {t('practiceAgain')}
             </Button>
             <Button size="sm" variant="outline" asChild>
