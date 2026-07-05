@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { useInterviewReadiness } from '@/hooks/use-interview-profile';
+import { clampPct } from '@/lib/interview-irp-utils';
 import type { ReadinessTier } from '@/types';
 
 interface IrpReadinessMiniCardProps {
@@ -32,7 +33,7 @@ export function IrpReadinessMiniCard({ jobId, locale }: IrpReadinessMiniCardProp
   const t = useTranslations('interview.irp');
   const { readinessResult, isReadinessLoading, readinessError } = useInterviewReadiness(jobId);
 
-  const score = readinessResult?.readiness_score_pct;
+  const score = clampPct(readinessResult?.readiness_score_pct);
   const detailHref = `/${locale}/interview/readiness?job_id=${encodeURIComponent(jobId)}`;
 
   return (

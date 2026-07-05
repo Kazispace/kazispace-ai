@@ -7,6 +7,7 @@ import { TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { getIrpCtaHref, sortIrpCtas } from '@/lib/interview-irp-cta';
+import { clampPct } from '@/lib/interview-irp-utils';
 import { IrpDimensionBars } from '@/components/interview/irp-dimension-bars';
 import type { InterviewProfile, IrpCtaHint } from '@/types';
 
@@ -54,10 +55,7 @@ export function IrpProfileHome({
 
   const showTagDetails = isPro && profile.tags;
   const isProvisional = profile.profile_status === 'provisional';
-  const progressPct =
-    profile.level_progress_pct != null
-      ? Math.max(0, Math.min(100, profile.level_progress_pct))
-      : null;
+  const progressPct = clampPct(profile.level_progress_pct);
 
   return (
     <div className="flex-1 flex flex-col p-4 gap-4 max-w-lg mx-auto w-full">

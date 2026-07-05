@@ -161,6 +161,9 @@ function InterviewPageContent({ locale }: { locale: string }) {
     (phase === "role_select" || (phase === "prep_review" && !prepCard)) &&
     isStarting;
 
+  const awaitingProfileEntry =
+    irpEnabled && !jobId && !profileError && isProfileLoading && !trainingRequested;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
       <Header locale={locale} />
@@ -224,7 +227,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
             ) : (
               <InterviewRolePicker
                 onSelect={(role) => void startSession(role)}
-                disabled={isStarting}
+                disabled={isStarting || awaitingProfileEntry}
               />
             )}
           </>

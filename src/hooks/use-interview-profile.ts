@@ -113,7 +113,7 @@ export function useInterviewReadiness(jobId: string | null, options?: { enabled?
     IRP_PROFILE_ENABLED && (options?.enabled ?? true) && Boolean(jobId);
 
   const query = useQuery({
-    queryKey: readinessKey(jobId ?? ''),
+    queryKey: jobId ? readinessKey(jobId) : (['interview-readiness', 'disabled'] as const),
     queryFn: async (): Promise<InterviewReadinessResult> => {
       const res = await postInterviewReadinessCheck({ job_id: jobId! });
       if (!res.success || !res.data) {
@@ -124,6 +124,8 @@ export function useInterviewReadiness(jobId: string | null, options?: { enabled?
     enabled: queryEnabled,
     staleTime: 60_000,
     retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   return {
@@ -131,5 +133,25 @@ export function useInterviewReadiness(jobId: string | null, options?: { enabled?
     isReadinessLoading: queryEnabled && query.isLoading,
     readinessError: query.error instanceof Error ? query.error.message : null,
     refetchReadiness: query.refetch,
+  };
+}
+
+/** Growth history — enabled query so errors surface in UI. */
+export function useInterviewProfileHistory(options?: { enabled?: boolean }) {
+  const enabled = IRP_PROFILE_ENABLED && (options?.enabled ?? true);
+
+  const query = useQuery({
+    queryKey: HISTORY_KEY,
+    queryFn: () => fetchHistory(),
+    enabled,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  return {
+    history: query.data ?? null,
+    isHistoryLoading: enabled && query.isLoading,
+    historyError: query.error instanceof Error ? query.error.message : null,
+    refetchHistory: query.refetch,
   };
 }

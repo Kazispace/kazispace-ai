@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
@@ -9,7 +9,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { IrpGrowthHistory } from "@/components/interview/irp-growth-history";
 import { Button } from "@/components/ui/button";
 import { IRP_PROFILE_ENABLED } from "@/lib/constants";
-import { useInterviewProfile } from "@/hooks/use-interview-profile";
+import { useInterviewProfileHistory } from "@/hooks/use-interview-profile";
 import { useBilling } from "@/hooks/use-billing";
 import { isProPlan } from "@/lib/api-mappers";
 
@@ -19,15 +19,11 @@ interface GrowthPageProps {
 
 function GrowthPageContent({ locale }: { locale: string }) {
   const t = useTranslations("interview.irp");
-  const { loadHistory, history, isHistoryLoading, historyError, irpEnabled } =
-    useInterviewProfile({ enabled: IRP_PROFILE_ENABLED });
+  const { history, isHistoryLoading, historyError, refetchHistory } =
+    useInterviewProfileHistory({ enabled: IRP_PROFILE_ENABLED });
 
   const { plan } = useBilling();
   const isProUser = isProPlan(plan);
-
-  useEffect(() => {
-    if (irpEnabled) void loadHistory();
-  }, [irpEnabled, loadHistory]);
 
   if (!IRP_PROFILE_ENABLED) {
     return (
@@ -59,13 +55,13 @@ function GrowthPageContent({ locale }: { locale: string }) {
       {historyError && !isHistoryLoading && (
         <div className="bg-white border border-gray-200 rounded-xl p-5 text-center space-y-3">
           <p className="text-sm text-red-600">{historyError}</p>
-          <Button size="sm" onClick={() => void loadHistory()}>
+          <Button size="sm" onClick={() => void refetchHistory()}>
             {t("growth.retry")}
           </Button>
         </div>
       )}
 
-      {history && !isHistoryLoading && (
+      {history && !isHistoryLoading && !historyError && (
         <IrpGrowthHistory items={history.items} badges={history.badges} isPro={isProUser} />
       )}
 

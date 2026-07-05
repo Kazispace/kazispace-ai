@@ -6,6 +6,7 @@ import { Target } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { clampPct } from '@/lib/interview-irp-utils';
 import type { InterviewReadinessResult, ReadinessTier } from '@/types';
 
 interface IrpReadinessPanelProps {
@@ -43,7 +44,7 @@ export function IrpReadinessPanel({
 }: IrpReadinessPanelProps) {
   const t = useTranslations('interview.irp');
 
-  const score = result.readiness_score_pct;
+  const score = clampPct(result.readiness_score_pct);
   const gaps = result.gap_analysis ?? [];
   const visibleGaps = isPro ? gaps : gaps.slice(0, 1);
   const lockedGapCount = isPro ? 0 : Math.max(0, gaps.length - visibleGaps.length);
