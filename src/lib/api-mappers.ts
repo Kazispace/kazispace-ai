@@ -47,6 +47,12 @@ export function planBadgeKey(plan: CurrentPlan | null): 'freeTrialBadge' | 'proB
   return 'freeTrialBadge';
 }
 
+/** Pro / Sprint subscribers see full IRP detail (gap list, tags, badges). */
+export function isProPlan(plan: CurrentPlan | null): boolean {
+  const planType = plan?.plan_type ?? '';
+  return planType.includes('pro') || planType.startsWith('sprint');
+}
+
 /** CIS phone prefixes supported by backend OTP */
 export const SUPPORTED_PHONE_PATTERN = /^\+(7|998|86)\d{8,12}$/;
 

@@ -473,6 +473,87 @@
 				"title": "Remote Admin Assistant",
 				"desc": "Organization, remote tools, communication"
 			}
+		},
+		"irp": {
+			"loadingProfile": "Loading your interview profile…",
+			"profileLoadFailed": "Could not load your interview profile.",
+			"profileRetry": "Try again",
+			"provisionalShort": "provisional",
+			"provisionalBanner": "Provisional profile — complete {remaining} more training round(s) for a formal IRP.",
+			"featureDisabled": "Interview profile is not enabled yet.",
+			"profileTitle": "Interview readiness profile",
+			"levelUnknown": "In progress",
+			"trainingRounds": "{count} training rounds completed",
+			"levelProgress": "Progress to next level",
+			"dimensionsTitle": "Six dimensions",
+			"strengths": "Strengths",
+			"improvements": "Focus areas",
+			"provisionalBannerShort": "Scores are provisional until you complete 3 training rounds.",
+			"dimensions": {
+				"content_quality": "Content quality",
+				"expression_logic": "Expression & logic",
+				"language_ability": "Language ability",
+				"behavioral_presence": "Behavioral presence",
+				"stress_handling": "Stress handling",
+				"industry_depth": "Industry depth"
+			},
+			"cta": {
+				"startTraining": "Start training",
+				"readinessCheck": "Check job readiness",
+				"growthHistory": "Growth history",
+				"editCv": "Build my CV",
+				"viewJobs": "View jobs",
+				"continue": "Continue"
+			},
+			"readiness": {
+				"title": "Job interview readiness",
+				"pageTitle": "Interview readiness",
+				"miniTitle": "Your readiness for this role",
+				"loading": "Calculating readiness…",
+				"viewDetails": "View details",
+				"noProfile": "Complete at least one training round to see readiness.",
+				"startTraining": "Start training",
+				"gapTitle": "Gap analysis",
+				"impact": "{points} impact points",
+				"lockedGaps": "+{count} more gaps on PRO",
+				"freeLimit": "Daily free readiness check used. Upgrade to PRO for unlimited checks and full gap analysis.",
+				"trainingPlan": "Recommended training",
+				"trainingItem": "{type} · {rounds} rounds",
+				"practiceForJob": "Practice for this job",
+				"refresh": "Refresh",
+				"retry": "Try again",
+				"back": "← Back to interview",
+				"backToInterview": "Back to interview",
+				"jobRequired": "Select a job to check your interview readiness.",
+				"tier": {
+					"large_gap": "Large gap — significant preparation needed",
+					"needs_prep": "Needs preparation",
+					"competitive": "Competitive candidate",
+					"strong": "Strong match",
+					"dominant": "Dominant — well prepared"
+				}
+			},
+			"growth": {
+				"pageTitle": "Growth history",
+				"subtitle": "Track how your interview level evolves over time.",
+				"back": "← Back to interview",
+				"backToInterview": "Back to interview",
+				"retry": "Try again",
+				"empty": "No history yet — complete a training round to start tracking.",
+				"levelCurve": "Level curve",
+				"levelCurveHint": "Level after each training session",
+				"levelScore": "Level {level} · {score} pts",
+				"roundLabel": "R{n}",
+				"recentRounds": "Recent training rounds",
+				"chartNeedsMore": "Complete 3+ rounds to see the level curve.",
+				"badges": "Badges",
+				"proHint": "Upgrade to PRO for heatmap and badges."
+			},
+			"diagnosis": {
+				"title": "Profile update",
+				"updating": "Updating your interview profile…",
+				"deltaHint": "Changes from this session"
+			}
 		}
 	},
 	"tma": {

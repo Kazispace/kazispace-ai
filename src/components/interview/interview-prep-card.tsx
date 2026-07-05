@@ -16,6 +16,7 @@ interface InterviewPrepCardProps {
   onStart: () => void;
   onSkip: () => void;
   disabled?: boolean;
+  embedded?: boolean;
 }
 
 export function InterviewPrepCard({
@@ -26,6 +27,7 @@ export function InterviewPrepCard({
   onStart,
   onSkip,
   disabled,
+  embedded,
 }: InterviewPrepCardProps) {
   const t = useTranslations('interview');
 
@@ -34,7 +36,13 @@ export function InterviewPrepCard({
     : `/${locale}/cv`;
 
   return (
-    <div className="flex-1 flex flex-col p-4 gap-4 max-w-lg mx-auto w-full">
+    <div
+      className={
+        embedded
+          ? 'w-full'
+          : 'flex-1 flex flex-col p-4 gap-4 max-w-lg mx-auto w-full'
+      }
+    >
       <Card>
         <CardContent className="p-5 space-y-4">
           <div>
