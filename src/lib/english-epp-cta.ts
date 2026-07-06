@@ -47,14 +47,13 @@ function upsertEnglishCtaHint(out: EnglishCtaHint[], hint: EnglishCtaHint): void
     return;
   }
   const existing = out[idx];
-  if (hint.primary && !existing.primary) {
-    out[idx] = {
-      ...existing,
-      ...hint,
-      primary: true,
-      scenario_id: hint.scenario_id ?? existing.scenario_id,
-    };
-  }
+  out[idx] = {
+    ...existing,
+    ...hint,
+    primary: Boolean(hint.primary || existing.primary),
+    label: hint.label?.trim() ? hint.label : existing.label,
+    scenario_id: hint.scenario_id ?? existing.scenario_id,
+  };
 }
 
 export function normalizeEnglishCtaHints(

@@ -26,6 +26,7 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
   const queryClient = useQueryClient();
   const recorder = useAudioRecorder();
   const startAttemptedRef = useRef(false);
+  const allItemsSubmittedRef = useRef(false);
   const [itemIndex, setItemIndex] = useState(0);
   const [writingText, setWritingText] = useState('');
   const [textFallback, setTextFallback] = useState('');
@@ -37,6 +38,7 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
     startQuickAssessment,
     submitItem,
     completeAssessment,
+    retryCompleteAssessment,
     resetAssessment,
     result,
     phase,
@@ -94,6 +96,7 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
         return;
       }
 
+      allItemsSubmittedRef.current = true;
       setStep('scoring');
       await completeAssessment();
       await invalidateEnglishEppCaches(queryClient);
@@ -104,8 +107,30 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
     }
   };
 
+  const handleRetryComplete = async () => {
+    setSubmitError(null);
+    setStep('scoring');
+    try {
+      await retryCompleteAssessment();
+      await invalidateEnglishEppCaches(queryClient);
+      setStep('aha');
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t('submitFailed'));
+      setStep('error');
+    }
+  };
+
+  const handleRetry = () => {
+    if (allItemsSubmittedRef.current) {
+      void handleRetryComplete();
+      return;
+    }
+    void handleNext();
+  };
+
   const handleRetryStart = () => {
     startAttemptedRef.current = false;
+    allItemsSubmittedRef.current = false;
     resetAssessment();
     setStep('items');
     setSubmitError(null);
@@ -144,7 +169,7 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center">
         <p className="text-sm text-red-600">{submitError ?? error ?? t('submitFailed')}</p>
-        <Button size="sm" onClick={() => void handleNext()}>
+        <Button size="sm" onClick={handleRetry}>
           {t('retry')}
         </Button>
       </div>
@@ -211,6 +236,9 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
                 </div>
                 {recorder.blob && (
                   <p className="text-xs text-green-600">{t('recordingReady')}</p>
+                )}
+                {recorder.micError && (
+                  <p className="text-xs text-red-600">{t('micDenied')}</p>
                 )}
                 <textarea
                   className="w-full text-sm border border-gray-200 rounded-lg p-3 min-h-[80px]"

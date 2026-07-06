@@ -30,7 +30,9 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
     session,
     startTraining,
     submitResponse,
+    retryPollFeedback,
     resetTraining,
+    audioPosted,
     phase,
     error,
     isCreating,
@@ -68,6 +70,20 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : t('submitFailed'));
     }
+  };
+
+  const handleRetry = async () => {
+    if (audioPosted) {
+      setSubmitError(null);
+      try {
+        await retryPollFeedback();
+        await invalidateEnglishEppCaches(queryClient);
+      } catch (err) {
+        setSubmitError(err instanceof Error ? err.message : t('submitFailed'));
+      }
+      return;
+    }
+    await handleSubmit();
   };
 
   const handleRetryStart = () => {
@@ -142,7 +158,7 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center">
         <p className="text-sm text-red-600">{submitError ?? error ?? t('submitFailed')}</p>
-        <Button size="sm" onClick={() => void handleSubmit()}>
+        <Button size="sm" onClick={() => void handleRetry()}>
           {t('retry')}
         </Button>
       </div>
@@ -171,6 +187,9 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
             )}
           </div>
           {recorder.blob && <p className="text-xs text-green-600">{t('recordingReady')}</p>}
+          {recorder.micError && (
+            <p className="text-xs text-red-600">{t('micDenied')}</p>
+          )}
           {(submitError || error) && (
             <p className="text-xs text-red-600">{submitError ?? error}</p>
           )}

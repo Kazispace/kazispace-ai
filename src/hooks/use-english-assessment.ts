@@ -146,6 +146,28 @@ export function useEnglishAssessment() {
     setResult(null);
   }, []);
 
+  const retryCompleteAssessment = useCallback(async () => {
+    if (!session?.session_id) {
+      throw new Error('No active assessment session');
+    }
+    setPhase('scoring');
+    setError(null);
+    try {
+      const res = await completeEnglishAssessment(session.session_id);
+      if (!res.success || !res.data) {
+        throw new Error(res.error ?? 'Failed to complete assessment');
+      }
+      setResult(res.data);
+      setPhase('done');
+      return res.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Assessment failed';
+      setError(message);
+      setPhase('error');
+      throw err;
+    }
+  }, [session?.session_id]);
+
   return {
     session,
     phase,
@@ -154,6 +176,7 @@ export function useEnglishAssessment() {
     startQuickAssessment,
     submitItem,
     completeAssessment,
+    retryCompleteAssessment,
     resetAssessment,
     isCreating: startMutation.isPending || phase === 'creating',
     isScoring: phase === 'scoring' || phase === 'completing',

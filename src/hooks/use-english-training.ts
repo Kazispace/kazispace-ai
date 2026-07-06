@@ -44,6 +44,7 @@ export function useEnglishTraining() {
   const [session, setSession] = useState<EnglishTrainingSession | null>(null);
   const [phase, setPhase] = useState<TrainingFlowPhase>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [audioPosted, setAudioPosted] = useState(false);
 
   const startMutation = useMutation({
     mutationFn: async (scenarioId: string) => {
@@ -90,6 +91,7 @@ export function useEnglishTraining() {
         if (!res.success) {
           throw new Error(res.error ?? 'Failed to submit response');
         }
+        setAudioPosted(true);
         const completed = await pollTrainingUntilComplete(session.session_id);
         setSession(completed);
         setPhase('done');
@@ -108,7 +110,27 @@ export function useEnglishTraining() {
     setSession(null);
     setPhase('idle');
     setError(null);
+    setAudioPosted(false);
   }, []);
+
+  const retryPollFeedback = useCallback(async () => {
+    if (!session?.session_id) {
+      throw new Error('No active training session');
+    }
+    setError(null);
+    setPhase('scoring');
+    try {
+      const completed = await pollTrainingUntilComplete(session.session_id);
+      setSession(completed);
+      setPhase('done');
+      return completed;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Training failed';
+      setError(message);
+      setPhase('error');
+      throw err;
+    }
+  }, [session?.session_id]);
 
   return {
     session,
@@ -116,7 +138,9 @@ export function useEnglishTraining() {
     error,
     startTraining,
     submitResponse,
+    retryPollFeedback,
     resetTraining,
+    audioPosted,
     isCreating: startMutation.isPending || phase === 'creating',
     isScoring: phase === 'scoring',
   };
