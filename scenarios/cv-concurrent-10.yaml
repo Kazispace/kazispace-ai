@@ -1,0 +1,174 @@
+scenario: cv_builder_concurrent_10
+api_base: https://bot.kazispace.ai
+agent_id: cv_builder
+
+users:
+  - id: U01
+    phone: "+77015551234"
+    device_id: stress-u01
+    profile:
+      name: Aizhan
+      role: Data Analyst
+      company: Kaspi Bank
+      skills: [Python, SQL]
+      fingerprint: Kaspi-Aizhan-01
+    script:
+      - "Hi, my name is Aizhan. I want a Data Analyst role. Reference: Kaspi-Aizhan-01."
+      - "I worked at Kaspi Bank for 2 years using Python and SQL for reporting."
+      - "Please generate my CV now. Reference: Kaspi-Aizhan-01."
+    assert:
+      must_contain: [Aizhan, "Data Analyst", Kaspi, Python, Kaspi-Aizhan-01]
+      must_not_contain: []
+
+  - id: U02
+    phone: "+77015551235"
+    device_id: stress-u02
+    profile:
+      name: Bekzat
+      role: Frontend Developer
+      company: Chocofamily
+      skills: [React, TypeScript]
+      fingerprint: Choco-Bekzat-02
+    script:
+      - "Hello, I'm Bekzat, looking for a Frontend Developer role. Reference: Choco-Bekzat-02."
+      - "I was at Chocofamily for 3 years building React and TypeScript applications."
+      - "Generate my resume please. Reference: Choco-Bekzat-02."
+    assert:
+      must_contain: [Bekzat, "Frontend Developer", Chocofamily, React, Choco-Bekzat-02]
+      must_not_contain: []
+
+  - id: U03
+    phone: "+77015551236"
+    device_id: stress-u03
+    profile:
+      name: Dilnoza
+      role: Accountant
+      company: Halyk Bank
+      skills: [Excel, 1C]
+      fingerprint: Halyk-Dilnoza-03
+    script:
+      - "My name is Dilnoza. I need an Accountant CV. Reference: Halyk-Dilnoza-03."
+      - "I worked at Halyk Bank with Excel and 1C accounting systems."
+      - "Please create my CV. Reference: Halyk-Dilnoza-03."
+    assert:
+      must_contain: [Dilnoza, Accountant, Halyk, Excel, Halyk-Dilnoza-03]
+      must_not_contain: []
+
+  - id: U04
+    phone: "+77015551237"
+    device_id: stress-u04
+    profile:
+      name: Erlan
+      role: DevOps Engineer
+      company: Beeline KZ
+      skills: [Docker, AWS]
+      fingerprint: Beeline-Erlan-04
+    script:
+      - "I'm Erlan, targeting DevOps Engineer roles. Reference: Beeline-Erlan-04."
+      - "At Beeline KZ I managed Docker pipelines and AWS infrastructure."
+      - "Generate my CV. Reference: Beeline-Erlan-04."
+    assert:
+      must_contain: [Erlan, DevOps, Beeline, Docker, Beeline-Erlan-04]
+      must_not_contain: []
+
+  - id: U05
+    phone: "+77015551238"
+    device_id: stress-u05
+    profile:
+      name: Gulnara
+      role: HR Specialist
+      company: KMG
+      skills: [Recruitment, HRIS]
+      fingerprint: KMG-Gulnara-05
+    script:
+      - "Hello, Gulnara here. I want an HR Specialist resume. Reference: KMG-Gulnara-05."
+      - "I worked at KMG on recruitment and HRIS implementation."
+      - "Please generate my CV. Reference: KMG-Gulnara-05."
+    assert:
+      must_contain: [Gulnara, HR, KMG, Recruitment, KMG-Gulnara-05]
+      must_not_contain: []
+
+  - id: U06
+    phone: "+77015551239"
+    device_id: stress-u06
+    profile:
+      name: Nursultan
+      role: Backend Developer
+      company: Kaspi Tech
+      skills: [Go, PostgreSQL]
+      fingerprint: KaspiTech-Nurs-06
+    script:
+      - "I'm Nursultan, Backend Developer. Reference: KaspiTech-Nurs-06."
+      - "At Kaspi Tech I built Go microservices with PostgreSQL."
+      - "Create my CV. Reference: KaspiTech-Nurs-06."
+    assert:
+      must_contain: [Nursultan, Backend, "Kaspi Tech", Go, KaspiTech-Nurs-06]
+      must_not_contain: []
+
+  - id: U07
+    phone: "+77015551240"
+    device_id: stress-u07
+    profile:
+      name: Madina
+      role: UX Designer
+      company: Arbuz.kz
+      skills: [Figma, "User Research"]
+      fingerprint: Arbuz-Madina-07
+    script:
+      - "Madina here, UX Designer job search. Reference: Arbuz-Madina-07."
+      - "At Arbuz.kz I led Figma design and user research."
+      - "Generate my resume. Reference: Arbuz-Madina-07."
+    assert:
+      must_contain: [Madina, UX, Arbuz, Figma, Arbuz-Madina-07]
+      must_not_contain: []
+
+  - id: U08
+    phone: "+77015551241"
+    device_id: stress-u08
+    profile:
+      name: Timur
+      role: Sales Manager
+      company: BI Group
+      skills: [CRM, "B2B Sales"]
+      fingerprint: BIG-Timur-08
+    script:
+      - "Timur, Sales Manager. Reference: BIG-Timur-08."
+      - "At BI Group I managed CRM and B2B sales pipelines."
+      - "Please build my CV. Reference: BIG-Timur-08."
+    assert:
+      must_contain: [Timur, Sales, "BI Group", CRM, BIG-Timur-08]
+      must_not_contain: []
+
+  - id: U09
+    phone: "+77015551242"
+    device_id: stress-u09
+    profile:
+      name: Aigerim
+      role: Marketing Manager
+      company: Freedom Finance
+      skills: [SEO, SMM]
+      fingerprint: Freedom-Aigerim-09
+    script:
+      - "Aigerim, Marketing Manager. Reference: Freedom-Aigerim-09."
+      - "At Freedom Finance I ran SEO and SMM campaigns."
+      - "Generate my CV. Reference: Freedom-Aigerim-09."
+    assert:
+      must_contain: [Aigerim, Marketing, Freedom, SEO, Freedom-Aigerim-09]
+      must_not_contain: []
+
+  - id: U10
+    phone: "+77015551243"
+    device_id: stress-u10
+    profile:
+      name: Sanzhar
+      role: QA Engineer
+      company: Kolesa.kz
+      skills: [Selenium, "API Testing"]
+      fingerprint: Kolesa-Sanzhar-10
+    script:
+      - "Sanzhar, QA Engineer. Reference: Kolesa-Sanzhar-10."
+      - "At Kolesa.kz I did Selenium and API testing."
+      - "Create my CV. Reference: Kolesa-Sanzhar-10."
+    assert:
+      must_contain: [Sanzhar, QA, Kolesa, Selenium, Kolesa-Sanzhar-10]
+      must_not_contain: []

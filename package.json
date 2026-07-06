@@ -1,0 +1,22 @@
+{
+  "name": "kazi-test",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KaziSpace test suite: Function, Stress, and Monkey testing",
+  "type": "module",
+  "scripts": {
+    "test:function": "tsx scripts/function-test.ts",
+    "test:stress": "tsx scripts/stress-test.ts",
+    "test:monkey": "tsx scripts/monkey-test.ts",
+    "test:all": "npm run test:function && npm run test:stress && npm run test:monkey"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.12",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "yaml": "^2.5.0"
+  }
+}

@@ -1,0 +1,60 @@
+name: kazi-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  function-and-monkey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Function Test
+        run: npm run test:function
+        env:
+          KAZI_API_BASE_URL: https://bot.kazispace.ai
+          KAZI_TEST_PHONE: "+77015551234"
+
+      - name: Monkey Test
+        run: npm run test:monkey
+        env:
+          KAZI_API_BASE_URL: https://bot.kazispace.ai
+          MONKEY_DURATION_SEC: "30"
+
+  stress-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Stress Test (10 users)
+        run: npm run test:stress
+        env:
+          KAZI_API_BASE_URL: https://bot.kazispace.ai
+          STRESS_USER_COUNT: "10"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stress-reports
+          path: reports/
