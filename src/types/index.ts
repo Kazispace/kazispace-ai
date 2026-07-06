@@ -331,3 +331,37 @@ export type {
 } from './interview-profile';
 
 export { IRP_DIMENSION_ORDER, parseReadinessCheckSource } from './interview-profile';
+
+export type {
+  EnglishAssessmentCompleteResult,
+  EnglishAssessmentItem,
+  EnglishAssessmentSession,
+  EnglishAssessmentVariant,
+  EnglishCareerGoal,
+  EnglishCtaHint,
+  EnglishCtaType,
+  EnglishDimensionKey,
+  EnglishDimensionScore,
+  EnglishDimensions,
+  EnglishOnboardingRequest,
+  EnglishProfile,
+  EnglishProfileDelta,
+  EnglishProfileHistory,
+  EnglishProfileHistoryItem,
+  EnglishProfileStatus,
+  EnglishProfileTags,
+  EnglishProficiencySummary,
+  EnglishSampleJobMatch,
+  EnglishSampleJobPreview,
+  EnglishSampleJobs,
+  EnglishSampleJobUnlock,
+  EnglishSelfAssessedBand,
+  EnglishSessionStatus,
+  EnglishTrainingFeedback,
+  EnglishTrainingSession,
+} from './english-profile';
+
+export {
+  DEFAULT_ENGLISH_SCENARIO_ID,
+  ENGLISH_DIMENSION_ORDER,
+} from './english-profile';

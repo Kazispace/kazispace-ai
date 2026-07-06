@@ -256,6 +256,7 @@
 			"upgrade_pro": "Pro-ға көшу",
 			"return_to_clinic": "Клиникаға оралу",
 			"mock_interview": "Сұхбат жаттығу",
+			"english_tutor": "Ағылшын практикасы",
 			"complete_profile": "Профильді толықтыру",
 			"job_search": "Жұмыс іздеу сарапшысы",
 			"edit_cv": "Түйіндемені жақсарту",
@@ -557,6 +558,116 @@
 				"updating": "Сұхбат профилі жаңартылуда…",
 				"deltaHint": "Осы сессиядан кейінгі өзгерістер"
 			}
+		}
+	},
+	"english": {
+		"loading": "Жүктелуде…",
+		"retry": "Қайталау",
+		"featureDisabled": "Ағылшын паспорты әлі қосылмаған.",
+		"backToClinic": "Клиникаға",
+		"onboarding": {
+			"title": "Мансаптық ағылшын паспорты",
+			"subtitle": "Екі сұрақ және ~5 минуттық тест.",
+			"goalQuestion": "Ағылшынды мансапта не үшін қолданасыз?",
+			"levelQuestion": "Ағылшын деңгейіңізді қалай бағалайсыз?",
+			"quickCta": "Жылдам тест (~5 мин)",
+			"goals": {
+				"better_job": "Жақсырақ жұмыс табу",
+				"promotion": "Жоғарылау немесе рөл ауыстыру",
+				"interview_english": "Ағылшын сұхбатынан өту",
+				"prove_ability": "Нақты деңгейді дәлелдеу",
+				"long_term_growth": "Ұзақ мерзімді өсу"
+			},
+			"bands": {
+				"beginner": "Бастапқы",
+				"elementary": "Элементарлы",
+				"intermediate": "Орта",
+				"advanced": "Жоғары"
+			}
+		},
+		"passport": {
+			"title": "Ағылшын паспорты",
+			"levelUnknown": "Процесте",
+			"trainingSessions": "{count} жаттығу",
+			"levelProgress": "Ағымдағы деңгейдегі прогресс",
+			"levelLocked": "Деңгей L{level} бекітілді. Нақты баллды көтеру үшін жаттығыңыз.",
+			"dimensionsTitle": "Төрт өлшем",
+			"backToClinic": "Клиникаға",
+			"dimensions": {
+				"speaking": "Сөйлеу",
+				"writing": "Жазу",
+				"listening": "Тыңдау",
+				"reading": "Оқу"
+			},
+			"cta": {
+				"startTraining": "Жаттығуды бастау",
+				"retakeAssessment": "Қайта тест",
+				"viewHistory": "Өсу тарихы",
+				"viewSampleJobs": "Үлгі лауазымдар",
+				"continue": "Жалғастыру"
+			}
+		},
+		"assessment": {
+			"title": "Жылдам тест",
+			"back": "← Ағылшынға",
+			"progress": "Қадам {current} / {total}",
+			"startRecording": "Жазуды бастау",
+			"stopRecording": "Тоқтату",
+			"recordingReady": "Жазба дайын",
+			"recordingRequired": "Аудио жазыңыз немесе мәтін енгізіңіз",
+			"textFallbackPlaceholder": "Микрофон жұмыс істемесе мәтін",
+			"writingPlaceholder": "80–100 сөз жазыңыз…",
+			"next": "Келесі",
+			"finish": "Тестті аяқтау",
+			"scoring": "Жауаптар талдануда…",
+			"submitFailed": "Жіберу сәтсіз. Қайталаңыз.",
+			"ahaTitle": "Сіздің ағылшын деңгейіңіз",
+			"quickDisclaimer": "Сөйлеу + жазу бойынша. Толық тест нақтырақ.",
+			"startTraining": "Speaking жаттығу",
+			"viewPassport": "Паспортты көру"
+		},
+		"training": {
+			"title": "Жұмыс speaking",
+			"back": "← Паспортқа",
+			"scenarioHint": "Өзін-өзі таныстыру + жоба (5–8 мин)",
+			"prompt": "Өзіңізді таныстырып, жақындағы жобаны ағылшынша сипаттаңыз.",
+			"startRecording": "Жазуды бастау",
+			"stopRecording": "Тоқтату",
+			"recordingReady": "Жазба дайын",
+			"recordingRequired": "Алдымен жауап жазыңыз",
+			"audioRequired": "Speaking үшін аудио керек",
+			"textFallbackPlaceholder": "Қосымша транскрипт",
+			"submit": "Жіберу",
+			"scoring": "Кері байланыс…",
+			"submitFailed": "Жіберу сәтсіз.",
+			"feedbackTitle": "Кері байланыс",
+			"speakingDelta": "Сөйлеу +{delta} осы сессияда",
+			"backToPassport": "Паспортқа"
+		},
+		"aha": {
+			"eligibleJobs": "Қазір өтініш бере алатын лауазымдар",
+			"eligibleCount": "{count} рөл (үлгі)",
+			"previewDisclaimer": "Тестке дейінгі превью.",
+			"matchEligible": "сәйкес",
+			"matchBorderline": "шекарада",
+			"matchGap": "айырмашылық",
+			"jobRequirement": "L{required} керек · Сіз L{user} · {match}",
+			"unlockPreview": "Жаттығумен ашылады",
+			"levelsNeeded": "+{n} деңгей"
+		},
+		"growth": {
+			"featureDisabled": "Ағылшын паспорты әлі қосылмаған.",
+			"pageTitle": "Өсу тарихы",
+			"subtitle": "Паспорт деңгейінің өзгеруі.",
+			"back": "← Паспортқа",
+			"backToPassport": "Паспортқа",
+			"retry": "Қайталау",
+			"empty": "Тарих үшін бірінші жаттығуды аяқтаңыз.",
+			"levelCurve": "Деңгей тарихы",
+			"levelCurveHint": "Тесттер мен жаттығулардан кейін",
+			"levelScore": "L{level} · {score}",
+			"eventLabel": "Оқиға {n} · {type}",
+			"maxLevelHint": "L{max} дейін"
 		}
 	},
 	"tma": {

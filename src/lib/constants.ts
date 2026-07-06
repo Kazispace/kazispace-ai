@@ -16,6 +16,7 @@ export const ROUTES = {
   LEDGER: '/ledger',
   CV: '/cv',
   INTERVIEW: '/interview',
+  ENGLISH: '/english',
   TMA_LAUNCH: '/tma/launch',
 } as const;
 
@@ -42,3 +43,7 @@ export const AGENT_NAME = 'Serík';
 /** Phase 1.5 IRP — off until KAZI-58 staging (API §7.7). */
 export const IRP_PROFILE_ENABLED =
   process.env.NEXT_PUBLIC_IRP_PROFILE_ENABLED === 'true';
+
+/** Phase 1 EPP — off until KAZI-64 staging (API §14). */
+export const EPP_PROFILE_ENABLED =
+  process.env.NEXT_PUBLIC_EPP_PROFILE_ENABLED === 'true';

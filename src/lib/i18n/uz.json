@@ -256,6 +256,7 @@
 			"upgrade_pro": "Pro ga o'tish",
 			"return_to_clinic": "Klinikaga qaytish",
 			"mock_interview": "Suhbat mashqi",
+			"english_tutor": "Ingliz amaliyoti",
 			"complete_profile": "Profilni to'ldirish",
 			"job_search": "Ish qidirish mutaxassisi",
 			"edit_cv": "Rezyumeni yaxshilash",
@@ -557,6 +558,116 @@
 				"updating": "Suhbat profili yangilanmoqda…",
 				"deltaHint": "Ushbu sessiyadan keyingi o'zgarishlar"
 			}
+		}
+	},
+	"english": {
+		"loading": "Yuklanmoqda…",
+		"retry": "Qayta urinish",
+		"featureDisabled": "Ingliz pasporti hali yoqilmagan.",
+		"backToClinic": "Klinikaga",
+		"onboarding": {
+			"title": "Karyera ingliz pasporti",
+			"subtitle": "Ikki savol va ~5 daqiqalik test.",
+			"goalQuestion": "Ingliz tilini karyerada nima uchun ishlatasiz?",
+			"levelQuestion": "Ingliz darajangizni qanday baholaysiz?",
+			"quickCta": "Tezkor test (~5 daq)",
+			"goals": {
+				"better_job": "Yaxshiroq ish topish",
+				"promotion": "Ko'tarilish yoki rol o'zgarishi",
+				"interview_english": "Ingliz suhbatidan o'tish",
+				"prove_ability": "Haqiqiy darajani isbotlash",
+				"long_term_growth": "Uzoq muddatli o'sish"
+			},
+			"bands": {
+				"beginner": "Boshlang'ich",
+				"elementary": "Elementar",
+				"intermediate": "O'rta",
+				"advanced": "Yuqori"
+			}
+		},
+		"passport": {
+			"title": "Ingliz pasporti",
+			"levelUnknown": "Jarayonda",
+			"trainingSessions": "{count} mashq",
+			"levelProgress": "Joriy darajadagi progress",
+			"levelLocked": "Daraja L{level} qulflangan. Haqiqiy ballni oshirish uchun mashq qiling.",
+			"dimensionsTitle": "To'rt o'lchov",
+			"backToClinic": "Klinikaga",
+			"dimensions": {
+				"speaking": "Gapirish",
+				"writing": "Yozish",
+				"listening": "Tinglash",
+				"reading": "O'qish"
+			},
+			"cta": {
+				"startTraining": "Mashqni boshlash",
+				"retakeAssessment": "Qayta test",
+				"viewHistory": "O'sish tarixi",
+				"viewSampleJobs": "Namuna lavozimlar",
+				"continue": "Davom etish"
+			}
+		},
+		"assessment": {
+			"title": "Tezkor test",
+			"back": "← Inglizga",
+			"progress": "Qadam {current} / {total}",
+			"startRecording": "Yozishni boshlash",
+			"stopRecording": "To'xtatish",
+			"recordingReady": "Yozuv tayyor",
+			"recordingRequired": "Audio yozing yoki matn kiriting",
+			"textFallbackPlaceholder": "Mikrofon ishlamasa matn",
+			"writingPlaceholder": "80–100 so'z yozing…",
+			"next": "Keyingi",
+			"finish": "Testni tugatish",
+			"scoring": "Javoblar tahlil qilinmoqda…",
+			"submitFailed": "Yuborish muvaffaqiyatsiz.",
+			"ahaTitle": "Ingliz darajangiz",
+			"quickDisclaimer": "Gapirish + yozish bo'yicha. To'liq test aniqroq.",
+			"startTraining": "Speaking mashqi",
+			"viewPassport": "Pasportni ko'rish"
+		},
+		"training": {
+			"title": "Ish speaking",
+			"back": "← Pasportga",
+			"scenarioHint": "O'zini tanishtirish + loyiha (5–8 daq)",
+			"prompt": "O'zingizni tanishtiring va yaqinda loyihani inglizcha tasvirlang.",
+			"startRecording": "Yozishni boshlash",
+			"stopRecording": "To'xtatish",
+			"recordingReady": "Yozuv tayyor",
+			"recordingRequired": "Avval javob yozing",
+			"audioRequired": "Speaking uchun audio kerak",
+			"textFallbackPlaceholder": "Ixtiyoriy transkript",
+			"submit": "Yuborish",
+			"scoring": "Fikr-mulohaza…",
+			"submitFailed": "Yuborish muvaffaqiyatsiz.",
+			"feedbackTitle": "Sessiya fikri",
+			"speakingDelta": "Gapirish +{delta} bu sessiyada",
+			"backToPassport": "Pasportga"
+		},
+		"aha": {
+			"eligibleJobs": "Hozir ariza bera oladigan lavozimlar",
+			"eligibleCount": "{count} rol (namuna)",
+			"previewDisclaimer": "Testdan oldin preview.",
+			"matchEligible": "mos",
+			"matchBorderline": "chegarada",
+			"matchGap": "farq",
+			"jobRequirement": "L{required} kerak · Siz L{user} · {match}",
+			"unlockPreview": "Mashq bilan ochiladi",
+			"levelsNeeded": "+{n} daraja"
+		},
+		"growth": {
+			"featureDisabled": "Ingliz pasporti hali yoqilmagan.",
+			"pageTitle": "O'sish tarixi",
+			"subtitle": "Pasport darajasining o'zgarishi.",
+			"back": "← Pasportga",
+			"backToPassport": "Pasportga",
+			"retry": "Qayta urinish",
+			"empty": "Tarix uchun birinchi mashqni tugating.",
+			"levelCurve": "Daraja tarixi",
+			"levelCurveHint": "Testlar va mashqlardan keyin",
+			"levelScore": "L{level} · {score}",
+			"eventLabel": "Hodisa {n} · {type}",
+			"maxLevelHint": "L{max} gacha"
 		}
 	},
 	"tma": {
