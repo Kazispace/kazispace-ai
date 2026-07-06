@@ -2,7 +2,8 @@
 /**
  * Stress Test — N users run CV builder scripts concurrently with per-user assertions.
  */
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   activateAgent,
   loginWithOtp,
@@ -14,7 +15,9 @@ import { buildCrossUserBlocklist, loadStressScenario } from '../src/scenario-loa
 import { buildReport, writeReport } from '../src/reporters/markdown.js';
 import type { AuthSession, ScriptedUser, StepResult, TestCaseResult, UserRunResult } from '../src/types.js';
 
-const SCENARIO_PATH = process.env.STRESS_SCENARIO ?? join(process.cwd(), 'scenarios/cv-concurrent-10.yaml');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const SCENARIO_PATH =
+  process.env.STRESS_SCENARIO ?? join(__dirname, 'scenarios/cv-concurrent-10.yaml');
 const MAX_USERS = Number(process.env.STRESS_USER_COUNT ?? '10');
 const MAX_STEP_LATENCY_MS = Number(process.env.STRESS_MAX_LATENCY_MS ?? '90000');
 

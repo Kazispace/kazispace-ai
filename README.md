@@ -39,12 +39,12 @@ Reports are written to `reports/` as JSON + Markdown.
 | `KAZI_OTP_MOCK_CODE` | `123456` | Fallback OTP when mock mode omits `_mock_code` |
 | `KAZI_TEST_PHONE` | `+77015551234` | Phone for function/monkey tests |
 | `STRESS_USER_COUNT` | `10` | Concurrent users in stress test |
-| `STRESS_SCENARIO` | `scenarios/cv-concurrent-10.yaml` | Scenario file path |
+| `STRESS_SCENARIO` | `stress-test/scenarios/cv-concurrent-10.yaml` | Scenario file path |
 | `MONKEY_DURATION_SEC` | `45` | Monkey test duration |
 
 ## Stress Test: Golden Profile Design
 
-Each of the 10 users in `scenarios/cv-concurrent-10.yaml` has:
+Each of the 10 users in `stress-test/scenarios/cv-concurrent-10.yaml` has:
 
 - **Unique persona** — name, role, company, skills
 - **Fingerprint** — e.g. `Kaspi-Aizhan-01` embedded in messages
@@ -85,14 +85,19 @@ Randomly exercises:
 
 ```
 kazi-test/
-├── scenarios/           # YAML conversation scripts + assertions
-├── scripts/             # Test runners
-├── src/
-│   ├── api-client.ts    # HTTP helpers
-│   ├── auth.ts          # OTP login, agent helpers
-│   ├── assertions.ts    # must_contain / must_not_contain engine
+├── function-test/       # Function / smoke tests
+│   └── run.ts
+├── stress-test/         # Concurrent load + golden-profile assertions
+│   ├── run.ts
+│   └── scenarios/
+├── monkey-test/         # Random API fuzzing
+│   └── run.ts
+├── src/                 # Shared helpers
+│   ├── api-client.ts
+│   ├── auth.ts
+│   ├── assertions.ts
 │   ├── scenario-loader.ts
-│   └── reporters/       # JSON + Markdown reports
+│   └── reporters/
 └── reports/             # Generated output (gitignored)
 ```
 

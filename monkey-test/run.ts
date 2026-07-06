@@ -2,7 +2,6 @@
 /**
  * Monkey Test — random API interactions to surface crashes, 5xx, and validation gaps.
  */
-import { join } from 'node:path';
 import { apiFetch } from '../src/api-client.js';
 import { loginWithOtp } from '../src/auth.js';
 import { buildReport, writeReport } from '../src/reporters/markdown.js';

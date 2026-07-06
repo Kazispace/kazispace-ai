@@ -2,7 +2,6 @@
 /**
  * Function Test — smoke + critical user journeys against KaziSpace API.
  */
-import { join } from 'node:path';
 import {
   activateAgent,
   getBillingSummary,
