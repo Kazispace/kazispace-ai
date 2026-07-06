@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useQueryClient } from '@tanstack/react-query';
@@ -8,8 +8,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EppSampleJobsPanel } from '@/components/english/epp-sample-jobs-panel';
+import { useAudioRecorder } from '@/hooks/use-audio-recorder';
 import { useEnglishAssessment } from '@/hooks/use-english-assessment';
-import { invalidateEnglishProfile } from '@/hooks/use-english-profile';
+import { invalidateEnglishEppCaches } from '@/hooks/use-english-profile';
 import type { EnglishAssessmentItem, EnglishOnboardingRequest } from '@/types';
 
 interface EppAssessmentFlowProps {
@@ -17,49 +18,14 @@ interface EppAssessmentFlowProps {
   onboarding?: EnglishOnboardingRequest;
 }
 
-type Step = 'items' | 'scoring' | 'aha';
-
-function useAudioRecorder() {
-  const [isRecording, setIsRecording] = useState(false);
-  const [blob, setBlob] = useState<Blob | null>(null);
-  const mediaRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-
-  const start = useCallback(async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const recorder = new MediaRecorder(stream);
-    chunksRef.current = [];
-    recorder.ondataavailable = (e) => {
-      if (e.data.size > 0) chunksRef.current.push(e.data);
-    };
-    recorder.onstop = () => {
-      setBlob(new Blob(chunksRef.current, { type: 'audio/webm' }));
-      stream.getTracks().forEach((t) => t.stop());
-    };
-    mediaRef.current = recorder;
-    recorder.start();
-    setIsRecording(true);
-    setBlob(null);
-  }, []);
-
-  const stop = useCallback(() => {
-    mediaRef.current?.stop();
-    setIsRecording(false);
-  }, []);
-
-  const reset = useCallback(() => {
-    setBlob(null);
-    setIsRecording(false);
-  }, []);
-
-  return { isRecording, blob, start, stop, reset };
-}
+type Step = 'items' | 'scoring' | 'aha' | 'error';
 
 export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps) {
   const t = useTranslations('english.assessment');
   const router = useRouter();
   const queryClient = useQueryClient();
   const recorder = useAudioRecorder();
+  const startAttemptedRef = useRef(false);
   const [itemIndex, setItemIndex] = useState(0);
   const [writingText, setWritingText] = useState('');
   const [textFallback, setTextFallback] = useState('');
@@ -71,17 +37,23 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
     startQuickAssessment,
     submitItem,
     completeAssessment,
+    resetAssessment,
     result,
+    phase,
     isCreating,
     isScoring,
     error,
   } = useEnglishAssessment();
 
   useEffect(() => {
-    if (!session && !isCreating) {
-      void startQuickAssessment(onboarding);
+    if (session || isCreating || phase === 'error' || startAttemptedRef.current) {
+      return;
     }
-  }, [session, isCreating, onboarding, startQuickAssessment]);
+    startAttemptedRef.current = true;
+    void startQuickAssessment(onboarding).catch(() => {
+      startAttemptedRef.current = false;
+    });
+  }, [session, isCreating, phase, onboarding, startQuickAssessment]);
 
   const items = session?.items ?? [];
   const current: EnglishAssessmentItem | undefined = items[itemIndex];
@@ -92,27 +64,29 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
     setSubmitError(null);
     try {
       if (current.type === 'speaking') {
-        const audio = recorder.blob;
-        if (!audio && !textFallback.trim()) {
+        if (!recorder.blob) {
           setSubmitError(t('recordingRequired'));
           return;
         }
-        if (audio) {
-          await submitItem({
-            item_index: current.index,
-            type: 'speaking',
-            audio,
-            transcript: textFallback.trim() || undefined,
-          });
-        }
+        await submitItem({
+          item_index: current.index,
+          type: 'speaking',
+          audio: recorder.blob,
+          transcript: textFallback.trim() || undefined,
+        });
         recorder.reset();
         setTextFallback('');
       } else {
+        if (!writingText.trim()) {
+          setSubmitError(t('recordingRequired'));
+          return;
+        }
         await submitItem({
           item_index: current.index,
           type: 'writing',
           text: writingText,
         });
+        setWritingText('');
       }
 
       if (itemIndex + 1 < items.length) {
@@ -122,17 +96,37 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
 
       setStep('scoring');
       await completeAssessment();
-      await invalidateEnglishProfile(queryClient);
+      await invalidateEnglishEppCaches(queryClient);
       setStep('aha');
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : t('submitFailed'));
+      setStep('error');
     }
   };
 
-  if (isCreating || !session) {
+  const handleRetryStart = () => {
+    startAttemptedRef.current = false;
+    resetAssessment();
+    setStep('items');
+    setSubmitError(null);
+    setItemIndex(0);
+  };
+
+  if (isCreating || (!session && phase !== 'error')) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (phase === 'error' && !session) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center">
+        <p className="text-sm text-red-600">{error ?? submitError ?? t('submitFailed')}</p>
+        <Button size="sm" onClick={handleRetryStart}>
+          {t('retry')}
+        </Button>
       </div>
     );
   }
@@ -142,6 +136,17 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3">
         <div className="w-10 h-10 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
         <p className="text-sm text-gray-600">{t('scoring')}</p>
+      </div>
+    );
+  }
+
+  if (step === 'error') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center">
+        <p className="text-sm text-red-600">{submitError ?? error ?? t('submitFailed')}</p>
+        <Button size="sm" onClick={() => void handleNext()}>
+          {t('retry')}
+        </Button>
       </div>
     );
   }

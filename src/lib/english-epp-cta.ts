@@ -40,9 +40,31 @@ export function getEnglishCtaHref(
   }
 }
 
+function upsertEnglishCtaHint(out: EnglishCtaHint[], hint: EnglishCtaHint): void {
+  const idx = out.findIndex((h) => h.cta_type === hint.cta_type);
+  if (idx < 0) {
+    out.push(hint);
+    return;
+  }
+  const existing = out[idx];
+  if (hint.primary && !existing.primary) {
+    out[idx] = {
+      ...existing,
+      ...hint,
+      primary: true,
+      scenario_id: hint.scenario_id ?? existing.scenario_id,
+    };
+  }
+}
+
 export function normalizeEnglishCtaHints(
   hints: EnglishCtaHint[] | undefined | null
 ): EnglishCtaHint[] {
   if (!hints?.length) return [];
-  return hints.filter((h) => isEnglishCtaType(h.cta_type));
+  const out: EnglishCtaHint[] = [];
+  for (const hint of hints) {
+    if (!isEnglishCtaType(hint.cta_type)) continue;
+    upsertEnglishCtaHint(out, hint);
+  }
+  return out;
 }

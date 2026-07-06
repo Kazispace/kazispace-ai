@@ -621,6 +621,7 @@
 			"finish": "Finish assessment",
 			"scoring": "Analyzing your answers…",
 			"submitFailed": "Could not submit. Try again.",
+			"retry": "Try again",
 			"ahaTitle": "Your English level",
 			"quickDisclaimer": "Based on speaking + writing. A full test improves accuracy.",
 			"startTraining": "Start speaking practice",
@@ -640,6 +641,7 @@
 			"submit": "Submit answer",
 			"scoring": "Getting feedback…",
 			"submitFailed": "Could not submit. Try again.",
+			"retry": "Try again",
 			"feedbackTitle": "Session feedback",
 			"speakingDelta": "Speaking +{delta} this session",
 			"backToPassport": "Back to passport"

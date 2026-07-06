@@ -57,16 +57,13 @@ export function useEnglishProfile(options?: { enabled?: boolean }) {
       }
       return res.data;
     },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: PROFILE_KEY });
+    },
   });
 
-  const loadProfileFresh = useCallback(async () => {
-    const data = await fetchProfile();
-    queryClient.setQueryData(PROFILE_KEY, data);
-    return data;
-  }, [queryClient]);
-
   const refreshProfile = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: PROFILE_KEY });
+    await invalidateEnglishEppCaches(queryClient);
   }, [queryClient]);
 
   const submitOnboarding = useCallback(
@@ -81,7 +78,6 @@ export function useEnglishProfile(options?: { enabled?: boolean }) {
     isProfileLoading:
       enabled && !profileQuery.data && (profileQuery.isLoading || profileQuery.isFetching),
     profileError: profileQuery.error instanceof Error ? profileQuery.error.message : null,
-    loadProfileFresh,
     refreshProfile,
     refetchProfile: profileQuery.refetch,
     submitOnboarding,
@@ -140,6 +136,17 @@ export function useEnglishSampleJobs(
   };
 }
 
+export function invalidateEnglishEppCaches(
+  queryClient: ReturnType<typeof useQueryClient>
+) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: PROFILE_KEY }),
+    queryClient.invalidateQueries({ queryKey: HISTORY_KEY }),
+    queryClient.invalidateQueries({ queryKey: SAMPLE_JOBS_KEY }),
+  ]);
+}
+
+/** @deprecated Use invalidateEnglishEppCaches */
 export function invalidateEnglishProfile(queryClient: ReturnType<typeof useQueryClient>) {
-  return queryClient.invalidateQueries({ queryKey: PROFILE_KEY });
+  return invalidateEnglishEppCaches(queryClient);
 }

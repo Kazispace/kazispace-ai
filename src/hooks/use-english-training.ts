@@ -29,7 +29,10 @@ async function pollTrainingUntilComplete(
     if (!res.success || !res.data) {
       throw new Error(res.error ?? 'Failed to poll training session');
     }
-    if (res.data.status === 'completed' || res.data.status === 'failed') {
+    if (res.data.status === 'failed') {
+      throw new Error('Training scoring failed');
+    }
+    if (res.data.status === 'completed') {
       return res.data;
     }
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
@@ -82,15 +85,21 @@ export function useEnglishTraining() {
       }
       setError(null);
       setPhase('scoring');
-      const res = await submitEnglishTrainingAudioItem(session.session_id, params);
-      if (!res.success) {
+      try {
+        const res = await submitEnglishTrainingAudioItem(session.session_id, params);
+        if (!res.success) {
+          throw new Error(res.error ?? 'Failed to submit response');
+        }
+        const completed = await pollTrainingUntilComplete(session.session_id);
+        setSession(completed);
+        setPhase('done');
+        return completed;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Training failed';
+        setError(message);
         setPhase('error');
-        throw new Error(res.error ?? 'Failed to submit response');
+        throw err;
       }
-      const completed = await pollTrainingUntilComplete(session.session_id);
-      setSession(completed);
-      setPhase('done');
-      return completed;
     },
     [session?.session_id]
   );

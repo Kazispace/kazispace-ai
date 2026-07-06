@@ -13,6 +13,29 @@ import type {
   EnglishTrainingSession,
 } from '@/types';
 
+function parseEnglishFormError(errorData: Record<string, unknown>, status: number) {
+  const detail = errorData.detail;
+  const detailMessage =
+    typeof detail === 'object' && detail !== null
+      ? (detail as { message?: string }).message
+      : undefined;
+  const errorCode =
+    (typeof detail === 'object' && detail !== null
+      ? (detail as { error_code?: string }).error_code
+      : undefined) ??
+    (errorData.error_code as string | undefined) ??
+    (typeof errorData.error === 'string' ? errorData.error : undefined);
+
+  return {
+    error:
+      detailMessage ||
+      (errorData.message as string | undefined) ||
+      (errorData.error as string | undefined) ||
+      `HTTP ${status}`,
+    errorCode,
+  };
+}
+
 async function englishJsonRequest<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -167,10 +190,8 @@ export async function submitEnglishAssessmentAudioItem(
     const response = await fetch(url, { method: 'POST', headers, body: form });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errorData.message || errorData.error || `HTTP ${response.status}`,
-      };
+      const { error, errorCode } = parseEnglishFormError(errorData, response.status);
+      return { success: false, error, errorCode };
     }
     return { success: true, data: { ok: true } };
   } catch (error) {
@@ -259,10 +280,8 @@ export async function submitEnglishTrainingAudioItem(
     const response = await fetch(url, { method: 'POST', headers, body: form });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: errorData.message || errorData.error || `HTTP ${response.status}`,
-      };
+      const { error, errorCode } = parseEnglishFormError(errorData, response.status);
+      return { success: false, error, errorCode };
     }
     return { success: true, data: { ok: true } };
   } catch (error) {

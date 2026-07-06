@@ -112,7 +112,7 @@ export function EppPassportHome({ profile, locale }: EppPassportHomeProps) {
           <div className="flex flex-col gap-2">
             {ctas.map((cta) => (
               <Button
-                key={cta.cta_type}
+                key={`${cta.cta_type}-${cta.scenario_id ?? ''}-${cta.label}`}
                 variant={cta.primary ? 'default' : 'secondary'}
                 className="w-full"
                 onClick={() => handleCta(cta)}

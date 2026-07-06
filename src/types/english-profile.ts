@@ -147,6 +147,8 @@ export interface EnglishProfileDelta {
 export interface EnglishTrainingSession {
   session_id: string;
   status: EnglishSessionStatus;
+  prompt?: string;
+  items?: EnglishAssessmentItem[];
   feedback?: EnglishTrainingFeedback;
   profile_delta?: EnglishProfileDelta;
   profile?: EnglishProfile;

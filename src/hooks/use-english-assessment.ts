@@ -25,18 +25,20 @@ export type AssessmentFlowPhase =
   | 'done'
   | 'error';
 
-async function pollAssessmentUntilSettled(
-  sessionId: string,
-  maxAttempts = 20,
-  intervalMs = 1500
-): Promise<EnglishAssessmentSession> {
+async function pollUntilNotScoring(sessionId: string): Promise<void> {
+  const maxAttempts = 20;
+  const intervalMs = 1500;
+
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const res = await getEnglishAssessmentSession(sessionId);
     if (!res.success || !res.data) {
       throw new Error(res.error ?? 'Failed to poll assessment session');
     }
-    if (res.data.status === 'completed' || res.data.status === 'failed') {
-      return res.data;
+    if (res.data.status === 'failed') {
+      throw new Error('Assessment scoring failed');
+    }
+    if (res.data.status !== 'scoring') {
+      return;
     }
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
@@ -120,7 +122,7 @@ export function useEnglishAssessment() {
     setPhase('scoring');
     setError(null);
     try {
-      await pollAssessmentUntilSettled(session.session_id, 1, 0);
+      await pollUntilNotScoring(session.session_id);
       setPhase('completing');
       const res = await completeEnglishAssessment(session.session_id);
       if (!res.success || !res.data) {

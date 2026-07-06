@@ -621,6 +621,7 @@
 			"finish": "Testni tugatish",
 			"scoring": "Javoblar tahlil qilinmoqda…",
 			"submitFailed": "Yuborish muvaffaqiyatsiz.",
+			"retry": "Qayta urinish",
 			"ahaTitle": "Ingliz darajangiz",
 			"quickDisclaimer": "Gapirish + yozish bo'yicha. To'liq test aniqroq.",
 			"startTraining": "Speaking mashqi",
@@ -640,6 +641,7 @@
 			"submit": "Yuborish",
 			"scoring": "Fikr-mulohaza…",
 			"submitFailed": "Yuborish muvaffaqiyatsiz.",
+			"retry": "Qayta urinish",
 			"feedbackTitle": "Sessiya fikri",
 			"speakingDelta": "Gapirish +{delta} bu sessiyada",
 			"backToPassport": "Pasportga"

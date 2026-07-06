@@ -621,6 +621,7 @@
 			"finish": "Тестті аяқтау",
 			"scoring": "Жауаптар талдануда…",
 			"submitFailed": "Жіберу сәтсіз. Қайталаңыз.",
+			"retry": "Қайталау",
 			"ahaTitle": "Сіздің ағылшын деңгейіңіз",
 			"quickDisclaimer": "Сөйлеу + жазу бойынша. Толық тест нақтырақ.",
 			"startTraining": "Speaking жаттығу",
@@ -640,6 +641,7 @@
 			"submit": "Жіберу",
 			"scoring": "Кері байланыс…",
 			"submitFailed": "Жіберу сәтсіз.",
+			"retry": "Қайталау",
 			"feedbackTitle": "Кері байланыс",
 			"speakingDelta": "Сөйлеу +{delta} осы сессияда",
 			"backToPassport": "Паспортқа"
