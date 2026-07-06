@@ -256,6 +256,7 @@
 			"upgrade_pro": "Перейти на Pro",
 			"return_to_clinic": "Вернуться в клинику",
 			"mock_interview": "Тренировка собеседования",
+			"english_tutor": "Практика английского",
 			"complete_profile": "Заполнить профиль",
 			"job_search": "Эксперт по поиску работы",
 			"edit_cv": "Улучшить резюме",
@@ -557,6 +558,120 @@
 				"updating": "Обновляем профиль интервью…",
 				"deltaHint": "Изменения после этой сессии"
 			}
+		}
+	},
+	"english": {
+		"loading": "Загрузка…",
+		"retry": "Повторить",
+		"featureDisabled": "Паспорт английского пока недоступен.",
+		"backToClinic": "В клинику",
+		"onboarding": {
+			"title": "Паспорт английского для карьеры",
+			"subtitle": "Два вопроса и быстрый тест ~5 минут.",
+			"goalQuestion": "Зачем вам английский в карьере?",
+			"levelQuestion": "Как вы оцениваете свой английский?",
+			"quickCta": "Быстрый тест (~5 мин)",
+			"goals": {
+				"better_job": "Найти лучшую работу",
+				"promotion": "Повышение или смена роли",
+				"interview_english": "Пройти интервью на английском",
+				"prove_ability": "Подтвердить реальный уровень",
+				"long_term_growth": "Долгосрочный рост"
+			},
+			"bands": {
+				"beginner": "Начальный — сложно общаться",
+				"elementary": "Элементарный — быт OK, на работе трудно",
+				"intermediate": "Средний — работаю, но не бегло",
+				"advanced": "Продвинутый — уверенно, хочу polish"
+			}
+		},
+		"passport": {
+			"title": "Паспорт английского",
+			"levelUnknown": "В процессе",
+			"trainingSessions": "{count} тренировок",
+			"levelProgress": "Прогресс в текущем уровне",
+			"levelLocked": "Уровень зафиксирован на L{level}. Тренируйтесь, чтобы поднять реальный балл.",
+			"dimensionsTitle": "Четыре измерения",
+			"backToClinic": "В клинику",
+			"dimensions": {
+				"speaking": "Говорение",
+				"writing": "Письмо",
+				"listening": "Аудирование",
+				"reading": "Чтение"
+			},
+			"cta": {
+				"startTraining": "Начать тренировку",
+				"retakeAssessment": "Пересдать тест",
+				"viewHistory": "История роста",
+				"viewSampleJobs": "Примеры вакансий",
+				"continue": "Продолжить"
+			}
+		},
+		"assessment": {
+			"title": "Быстрый тест",
+			"back": "← К английскому",
+			"progress": "Шаг {current} из {total}",
+			"startRecording": "Начать запись",
+			"stopRecording": "Стоп",
+			"recordingReady": "Запись готова",
+			"recordingRequired": "Запишите аудио или введите текст",
+			"micDenied": "Доступ к микрофону запрещён. Введите текст ниже или разрешите микрофон в настройках браузера.",
+			"textFallbackPlaceholder": "Опционально: текст, если микрофон не работает",
+			"writingPlaceholder": "Напишите 80–100 слов…",
+			"next": "Далее",
+			"finish": "Завершить тест",
+			"scoring": "Анализируем ответы…",
+			"submitFailed": "Не удалось отправить. Повторите.",
+			"retry": "Повторить",
+			"ahaTitle": "Ваш уровень английского",
+			"quickDisclaimer": "По говорению и письму. Полный тест точнее.",
+			"startTraining": "Начать speaking-практику",
+			"viewPassport": "Открыть паспорт"
+		},
+		"training": {
+			"title": "Рабочий speaking",
+			"back": "← К паспорту",
+			"scenarioHint": "Самопрезентация + проект (5–8 мин)",
+			"prompt": "Представьтесь и опишите недавний проект на английском.",
+			"startRecording": "Начать запись",
+			"stopRecording": "Стоп",
+			"recordingReady": "Запись готова",
+			"recordingRequired": "Сначала запишите ответ",
+			"micDenied": "Доступ к микрофону запрещён. Разрешите микрофон в настройках браузера и попробуйте снова.",
+			"audioRequired": "Для speaking нужна аудиозапись",
+			"textFallbackPlaceholder": "Опциональный транскрипт",
+			"submit": "Отправить",
+			"scoring": "Получаем обратную связь…",
+			"submitFailed": "Не удалось отправить.",
+			"retry": "Повторить",
+			"feedbackTitle": "Обратная связь",
+			"speakingDelta": "Говорение +{delta} за сессию",
+			"backToPassport": "К паспорту"
+		},
+		"aha": {
+			"eligibleJobs": "Вакансии, на которые вы можете претендовать",
+			"eligibleCount": "{count} ролей по уровню (пример)",
+			"previewDisclaimer": "Превью до теста — пройдите оценку для точного уровня.",
+			"matchEligible": "подходит",
+			"matchBorderline": "на грани",
+			"matchGap": "разрыв",
+			"jobRequirement": "Нужен L{required} · У вас L{user} · {match}",
+			"unlockPreview": "Откроется с практикой",
+			"levelsNeeded": "+{n} уровней"
+		},
+		"growth": {
+			"featureDisabled": "Паспорт английского пока недоступен.",
+			"pageTitle": "История роста",
+			"subtitle": "Как меняется уровень паспорта.",
+			"back": "← К паспорту",
+			"backToPassport": "К паспорту",
+			"retry": "Повторить",
+			"empty": "Пройдите первую тренировку, чтобы увидеть историю.",
+			"levelCurve": "История уровня",
+			"levelCurveHint": "После тестов и тренировок",
+			"levelScore": "L{level} · {score} composite",
+			"eventLabel": "Событие {n} · {type}",
+			"maxLevelHint": "Шкала до L{max}"
 		}
 	},
 	"tma": {

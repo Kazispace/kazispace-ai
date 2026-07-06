@@ -256,6 +256,7 @@
 			"upgrade_pro": "Upgrade to Pro",
 			"return_to_clinic": "Back to clinic",
 			"mock_interview": "Practice interview",
+			"english_tutor": "Practice English",
 			"complete_profile": "Complete profile",
 			"job_search": "Talk to job search expert",
 			"edit_cv": "Improve CV",
@@ -557,6 +558,120 @@
 				"updating": "Updating your interview profile…",
 				"deltaHint": "Changes from this session"
 			}
+		}
+	},
+	"english": {
+		"loading": "Loading…",
+		"retry": "Try again",
+		"featureDisabled": "English passport is not enabled yet.",
+		"backToClinic": "Back to clinic",
+		"onboarding": {
+			"title": "English career passport",
+			"subtitle": "Two quick questions, then a 5-minute assessment.",
+			"goalQuestion": "What's your main career goal with English?",
+			"levelQuestion": "How would you rate your English today?",
+			"quickCta": "Quick test (~5 min)",
+			"goals": {
+				"better_job": "Find a better job",
+				"promotion": "Promotion or role change",
+				"interview_english": "Pass an English interview",
+				"prove_ability": "Prove my real level",
+				"long_term_growth": "Long-term growth"
+			},
+			"bands": {
+				"beginner": "Beginner — basic communication is hard",
+				"elementary": "Elementary — daily chat OK, work is tough",
+				"intermediate": "Intermediate — can work, not fluent",
+				"advanced": "Advanced — comfortable at work, want polish"
+			}
+		},
+		"passport": {
+			"title": "English proficiency passport",
+			"levelUnknown": "In progress",
+			"trainingSessions": "{count} training sessions",
+			"levelProgress": "Progress in current level",
+			"levelLocked": "Level locked at L{level}. Keep training to raise your real score.",
+			"dimensionsTitle": "Four dimensions",
+			"backToClinic": "Back to clinic",
+			"dimensions": {
+				"speaking": "Speaking",
+				"writing": "Writing",
+				"listening": "Listening",
+				"reading": "Reading"
+			},
+			"cta": {
+				"startTraining": "Start today's training",
+				"retakeAssessment": "Retake assessment",
+				"viewHistory": "Growth history",
+				"viewSampleJobs": "View sample jobs",
+				"continue": "Continue"
+			}
+		},
+		"assessment": {
+			"title": "Quick assessment",
+			"back": "← Back to English",
+			"progress": "Step {current} of {total}",
+			"startRecording": "Start recording",
+			"stopRecording": "Stop",
+			"recordingReady": "Recording ready",
+			"recordingRequired": "Record audio or type a short answer",
+			"micDenied": "Microphone access was denied. Use the text field below or allow mic in browser settings.",
+			"textFallbackPlaceholder": "Optional: type what you said (if mic fails)",
+			"writingPlaceholder": "Write 80–100 words in English…",
+			"next": "Next",
+			"finish": "Finish assessment",
+			"scoring": "Analyzing your answers…",
+			"submitFailed": "Could not submit. Try again.",
+			"retry": "Try again",
+			"ahaTitle": "Your English level",
+			"quickDisclaimer": "Based on speaking + writing. A full test improves accuracy.",
+			"startTraining": "Start speaking practice",
+			"viewPassport": "View passport"
+		},
+		"training": {
+			"title": "Workplace speaking",
+			"back": "← Back to passport",
+			"scenarioHint": "Practice intro + project story (5–8 min)",
+			"prompt": "Introduce yourself and describe a recent project in English.",
+			"startRecording": "Start recording",
+			"stopRecording": "Stop",
+			"recordingReady": "Recording ready",
+			"recordingRequired": "Record your answer first",
+			"micDenied": "Microphone access was denied. Allow mic in browser settings and try again.",
+			"audioRequired": "Audio upload is required for speaking practice",
+			"textFallbackPlaceholder": "Optional transcript if mic fails",
+			"submit": "Submit answer",
+			"scoring": "Getting feedback…",
+			"submitFailed": "Could not submit. Try again.",
+			"retry": "Try again",
+			"feedbackTitle": "Session feedback",
+			"speakingDelta": "Speaking +{delta} this session",
+			"backToPassport": "Back to passport"
+		},
+		"aha": {
+			"eligibleJobs": "Jobs you could apply for now",
+			"eligibleCount": "{count} roles match your level (sample)",
+			"previewDisclaimer": "Preview before assessment — complete the test for your real level.",
+			"matchEligible": "eligible",
+			"matchBorderline": "borderline",
+			"matchGap": "gap",
+			"jobRequirement": "Requires L{required} · You L{user} · {match}",
+			"unlockPreview": "Unlock with more practice",
+			"levelsNeeded": "+{n} levels"
+		},
+		"growth": {
+			"featureDisabled": "English passport is not enabled yet.",
+			"pageTitle": "Growth history",
+			"subtitle": "How your English passport level changes over time.",
+			"back": "← Back to passport",
+			"backToPassport": "Back to passport",
+			"retry": "Try again",
+			"empty": "Complete your first training to see history here.",
+			"levelCurve": "Level history",
+			"levelCurveHint": "After each assessment or training",
+			"levelScore": "L{level} · {score} composite",
+			"eventLabel": "Event {n} · {type}",
+			"maxLevelHint": "Scale up to L{max}"
 		}
 	},
 	"tma": {

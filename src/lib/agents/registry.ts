@@ -78,7 +78,30 @@ export const AGENT_REGISTRY: AgentRegistryEntry[] = [
       en: 'Which role are you preparing for?',
       ru: 'Расскажи, на какую позицию готовишься',
       kk: 'Қай рөлге дайындалып жатырсыз?',
-      uz: 'Qaysi rolga tayyorgarlik ko\'ryapsiz?',
+      uz: "Qaysi rolga tayyorgarlik ko'ryapsiz?",
+    },
+  },
+  {
+    agentId: 'english_tutor',
+    emoji: '🗣️',
+    status: 'available',
+    name: {
+      en: 'English Coach',
+      ru: 'Тренер по английскому',
+      kk: 'Ағылшын жаттықтырушысы',
+      uz: 'Ingliz murabbiyi',
+    },
+    description: {
+      en: 'Career English passport & workplace practice',
+      ru: 'Паспорт английского и практика для работы',
+      kk: 'Мансаптық ағылшын паспорты мен практика',
+      uz: 'Karyera ingliz pasporti va amaliyot',
+    },
+    promptHint: {
+      en: 'Practice English for your career goals',
+      ru: 'Потренируй английский для карьеры',
+      kk: 'Мансап үшін ағылшын жаттығыңыз',
+      uz: 'Karyera uchun ingliz mashq qiling',
     },
   },
   {
@@ -131,6 +154,12 @@ export const AGENT_QUICK_REPLIES: Record<
     ru: ['Поведенческие вопросы', 'Техническое интервью', 'Практика английского'],
     kk: ['Мінез-құлық сұрақтары', 'Техникалық сұхбат', 'Ағылшын практикасы'],
     uz: ['Xulq-atvor savollari', 'Texnik suhbat', 'Ingliz amaliyoti'],
+  },
+  english_tutor: {
+    en: ['Quick 5-min test', 'Workplace speaking', 'View my passport'],
+    ru: ['Быстрый тест 5 мин', 'Рабочий разговор', 'Мой паспорт'],
+    kk: ['5 минуттық тест', 'Жұмыс сөйлесуі', 'Паспортым'],
+    uz: ['5 daqiqalik test', 'Ish suhbati', 'Pasportim'],
   },
   cv_builder: {
     en: ['Add work experience', 'Tailor for a job', 'Improve summary'],

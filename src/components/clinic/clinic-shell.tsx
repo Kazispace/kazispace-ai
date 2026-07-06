@@ -31,6 +31,10 @@ import {
   isCvBuilderAgent,
 } from "@/lib/cv-agent-config";
 import {
+  ENGLISH_TUTOR_AGENT_ID,
+  isEnglishTutorAgent,
+} from "@/lib/english-tutor-config";
+import {
   isMockInterviewAgent,
   MOCK_INTERVIEW_AGENT_ID,
 } from "@/lib/mock-interview-config";
@@ -148,12 +152,20 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     [locale, router]
   );
 
+  const routeEnglishPage = useCallback(() => {
+    router.push(`/${locale}/english`);
+  }, [locale, router]);
+
   const shouldOpenCvBuilderPage = useCallback((agentId: string) => {
     return isCvBuilderAgent(agentId);
   }, []);
 
   const shouldOpenInterviewPage = useCallback((agentId: string) => {
     return isMockInterviewAgent(agentId);
+  }, []);
+
+  const shouldOpenEnglishPage = useCallback((agentId: string) => {
+    return isEnglishTutorAgent(agentId);
   }, []);
 
   const inputPlaceholder = isAgentMode
@@ -213,6 +225,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           routeInterviewPage();
           return;
         }
+        if (pending.agentId === ENGLISH_TUTOR_AGENT_ID) {
+          routeEnglishPage();
+          return;
+        }
         if (AGENT_REGISTRY.some((a) => a.agentId === pending.agentId)) {
           await switchToAgentRef.current(pending.agentId);
           return;
@@ -254,6 +270,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         routeInterviewPage();
         return;
       }
+      if (deepLinkAgent && shouldOpenEnglishPage(deepLinkAgent)) {
+        routeEnglishPage();
+        return;
+      }
       if (
         deepLinkAgent &&
         AGENT_REGISTRY.some((a) => a.agentId === deepLinkAgent)
@@ -276,8 +296,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     router,
     routeCvBuilderPage,
     routeInterviewPage,
+    routeEnglishPage,
     shouldOpenCvBuilderPage,
     shouldOpenInterviewPage,
+    shouldOpenEnglishPage,
   ]);
 
   useEffect(() => {
@@ -314,6 +336,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           routeInterviewPage();
           return;
         }
+        if (shouldOpenEnglishPage(agentFromUrl)) {
+          routeEnglishPage();
+          return;
+        }
         void switchToAgentRef.current(agentFromUrl);
       }
     };
@@ -325,8 +351,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     loadHistory,
     routeCvBuilderPage,
     routeInterviewPage,
+    routeEnglishPage,
     shouldOpenCvBuilderPage,
     shouldOpenInterviewPage,
+    shouldOpenEnglishPage,
   ]);
 
   useEffect(() => {
@@ -419,6 +447,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       routeInterviewPage();
       return;
     }
+    if (isEnglishTutorAgent(agentId)) {
+      routeEnglishPage();
+      return;
+    }
     const result = await switchToAgent(agentId);
     if (result && !result.ok) {
       showToast(result.error ?? tClinic("activateFailed"), "error");
@@ -463,6 +495,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         case "mock_interview":
           routeInterviewPage();
           return;
+        case "english_tutor":
+          routeEnglishPage();
+          return;
         case "job_search":
           void handleAgentSelect("job_search");
           return;
@@ -477,7 +512,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage, routeInterviewPage]
+    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage, routeInterviewPage, routeEnglishPage]
   );
 
   const handleJobCardClick = useCallback(
