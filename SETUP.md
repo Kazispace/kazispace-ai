@@ -1,28 +1,18 @@
-# Repository bootstrap
+# Bootstrap
 
-The Cloud Agent token cannot create new repositories under the `Kazispace` org. Use one of the options below.
+Standalone repo: **https://github.com/Kazispace/kazispace-test**
 
-## Option A — Org admin creates empty repo (recommended)
-
-1. Create **public** repo: `https://github.com/Kazispace/kazi-test`
-2. From this branch (root = kazi-test contents):
+Org admin: create an empty public repo named `kazispace-test`, then push:
 
 ```bash
-git clone -b cursor/kazi-test-repo-30c2 https://github.com/Kazispace/kazispace-ai.git kazi-test-import
-cd kazi-test-import
-git remote set-url origin https://github.com/Kazispace/kazi-test.git
-git push -u origin cursor/kazi-test-repo-30c2:main
+git clone -b cursor/kazispace-test-30c2 https://github.com/Kazispace/kazispace-ai.git kazispace-test-import
+cd kazispace-test-import
+git remote set-url origin https://github.com/Kazispace/kazispace-test.git
+git push -u origin HEAD:main
 ```
 
-## Option B — GitHub CLI (org admin)
+Or with GitHub CLI (org admin):
 
 ```bash
-gh repo create Kazispace/kazi-test --public --description "KaziSpace test suite"
-cd kazi-test   # this repo root
-git remote add origin https://github.com/Kazispace/kazi-test.git
-git push -u origin main
+gh repo create Kazispace/kazispace-test --public --description "KaziSpace Function, Stress, and Monkey tests"
 ```
-
-## Option C — Keep on kazispace-ai branch
-
-Use branch `cursor/kazi-test-repo-30c2` as the canonical source until the standalone repo exists.

@@ -1,4 +1,4 @@
-# kazi-test
+# kazispace-test
 
 Test suite for [KaziSpace](https://kazispace.ai) — **Function Test**, **Stress Test**, and **Monkey Test**.
 
@@ -15,8 +15,8 @@ Targets the KaziSpace Bot API (`https://bot.kazispace.ai`) and validates both **
 ## Quick Start
 
 ```bash
-git clone https://github.com/Kazispace/kazi-test.git
-cd kazi-test
+git clone https://github.com/Kazispace/kazispace-test.git
+cd kazispace-test
 npm install
 cp .env.example .env
 
@@ -84,7 +84,7 @@ Randomly exercises:
 ## Project Structure
 
 ```
-kazi-test/
+kazispace-test/
 ├── function-test/       # Function / smoke tests
 │   └── run.ts
 ├── stress-test/         # Concurrent load + golden-profile assertions

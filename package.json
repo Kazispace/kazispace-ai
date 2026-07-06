@@ -1,5 +1,5 @@
 {
-  "name": "kazi-test",
+  "name": "kazispace-test",
   "version": "0.1.0",
   "private": true,
   "description": "KaziSpace test suite: Function, Stress, and Monkey testing",
