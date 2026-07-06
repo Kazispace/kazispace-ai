@@ -6,4 +6,5 @@
   NODE_VERSION = "20"
   NPM_FLAGS = "--no-optional"
   NEXT_PUBLIC_IRP_PROFILE_ENABLED = "true"
+  NEXT_PUBLIC_EPP_PROFILE_ENABLED = "true"
 
