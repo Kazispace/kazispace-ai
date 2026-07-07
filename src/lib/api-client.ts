@@ -137,14 +137,14 @@ export async function getMe(): Promise<ApiResponse<User>> {
 }
 
 export interface PatchMeBody {
-  primary_country?: string;
-  primary_locale?: string;
-  career_goal?: string;
-  target_role?: string;
-  english_level?: string;
-  current_status?: string;
-  education_text?: string;
-  experience_text?: string;
+  primary_country?: string | null;
+  primary_locale?: string | null;
+  career_goal?: string | null;
+  target_role?: string | null;
+  english_level?: string | null;
+  current_status?: string | null;
+  education_text?: string | null;
+  experience_text?: string | null;
 }
 
 export async function patchMe(body: PatchMeBody): Promise<ApiResponse<User>> {

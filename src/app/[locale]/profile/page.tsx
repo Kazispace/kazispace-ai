@@ -56,29 +56,29 @@ function formFromUser(user: User): ProfileForm {
   };
 }
 
-function buildPatchBody(form: ProfileForm): PatchMeBody {
+function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody {
   const body: PatchMeBody = {};
 
-  if (form.country === "KZ" || form.country === "UZ") {
-    body.primary_country = form.country;
+  if (current.country !== initial.country) {
+    body.primary_country = current.country || null;
   }
-  if (form.careerGoal.trim()) {
-    body.career_goal = form.careerGoal.trim();
+  if (current.careerGoal !== initial.careerGoal) {
+    body.career_goal = current.careerGoal.trim() || null;
   }
-  if (form.targetRole.trim()) {
-    body.target_role = form.targetRole.trim();
+  if (current.targetRole !== initial.targetRole) {
+    body.target_role = current.targetRole.trim() || null;
   }
-  if (form.englishLevel) {
-    body.english_level = form.englishLevel;
+  if (current.englishLevel !== initial.englishLevel) {
+    body.english_level = current.englishLevel || null;
   }
-  if (form.currentStatus) {
-    body.current_status = form.currentStatus;
+  if (current.currentStatus !== initial.currentStatus) {
+    body.current_status = current.currentStatus || null;
   }
-  if (form.education.trim()) {
-    body.education_text = form.education.trim();
+  if (current.education !== initial.education) {
+    body.education_text = current.education.trim() || null;
   }
-  if (form.experience.trim()) {
-    body.experience_text = form.experience.trim();
+  if (current.experience !== initial.experience) {
+    body.experience_text = current.experience.trim() || null;
   }
 
   return body;
@@ -92,8 +92,17 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const { isLoggedIn, token, updateUser } = useAuthStore();
 
   const [form, setForm] = useState<ProfileForm>(EMPTY_FORM);
+  const [initialForm, setInitialForm] = useState<ProfileForm>(EMPTY_FORM);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  const applyLoadedUser = (user: User) => {
+    const loaded = formFromUser(user);
+    updateUser(user);
+    setUserInfo(user);
+    setForm(loaded);
+    setInitialForm(loaded);
+  };
 
   useEffect(() => {
     if (!isLoggedIn || !token) {
@@ -107,12 +116,13 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       const res = await getMe();
       if (cancelled) return;
       if (res.success && res.data) {
-        updateUser(res.data);
-        setForm(formFromUser(res.data));
+        applyLoadedUser(res.data);
       } else {
         const cached = useAuthStore.getState().user;
         if (cached) {
-          setForm(formFromUser(cached));
+          const loaded = formFromUser(cached);
+          setForm(loaded);
+          setInitialForm(loaded);
         }
       }
       setIsLoading(false);
@@ -130,7 +140,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       return;
     }
 
-    const body = buildPatchBody(form);
+    const body = buildPatchBody(initialForm, form);
     if (Object.keys(body).length === 0) {
       showToast(t("saveNothing"), "info");
       return;
@@ -145,8 +155,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       return;
     }
 
-    updateUser(res.data);
-    setUserInfo(res.data);
+    applyLoadedUser(res.data);
     showToast(t("saveSuccess"), "info");
     router.push(`/${locale}/mine`);
   };
