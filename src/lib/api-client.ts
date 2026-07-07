@@ -49,8 +49,13 @@ export async function apiRequest<T>(
 
   Object.assign(headers, getTmaClientHeaders());
 
-  const languagePreference = localeOverride ?? getActiveLanguagePreference();
+  const languagePreference =
+    localeOverride ??
+    getActiveLanguagePreference(
+      typeof window !== 'undefined' ? window.location.pathname : undefined
+    );
   headers['Accept-Language'] = languagePreference;
+  // TODO(KAZI-74): remove X-Locale after backend reads X-Language-Preference only
   headers['X-Language-Preference'] = languagePreference;
   headers['X-Locale'] = languagePreference;
 
@@ -208,12 +213,17 @@ export async function sendChatMessage(
   text: string,
   locale?: string
 ): Promise<ApiResponse<ClinicChatResponse>> {
-  const languagePreference = locale ?? getActiveLanguagePreference();
+  const languagePreference =
+    locale ??
+    getActiveLanguagePreference(
+      typeof window !== 'undefined' ? window.location.pathname : undefined
+    );
   return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
     body: JSON.stringify({
       session_id: sessionId,
       content: text,
+      // TODO(KAZI-74): remove locale after backend reads language_preference only
       locale: languagePreference,
       language_preference: languagePreference,
     }),

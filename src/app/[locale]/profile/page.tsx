@@ -17,8 +17,8 @@ import {
 import {
   LOCALE_LABELS,
   readLanguagePreference,
-  setManualLocaleOverride,
   switchLocalePath,
+  syncProfileLanguageCookie,
 } from "@/lib/locale";
 import { isSupportedLocale, type SupportedLocale } from "@/lib/constants";
 import { useAuthStore, useUIStore } from "@/lib/store";
@@ -262,8 +262,8 @@ function ProfilePageContent({ locale }: { locale: string }) {
               variant="outline"
               className="shrink-0"
               onClick={() => {
-                setManualLocaleOverride(loadedPreference);
-                router.push(switchLocalePath(pathname, loadedPreference));
+                syncProfileLanguageCookie(loadedPreference);
+                window.location.assign(switchLocalePath(pathname, loadedPreference));
               }}
             >
               {t("preferenceMismatchAction", { lang: LOCALE_LABELS[loadedPreference] })}

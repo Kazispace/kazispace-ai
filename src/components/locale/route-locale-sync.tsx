@@ -1,42 +1,44 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { useAuthStore } from "@/lib/store";
 import {
-  getManualLocaleOverride,
+  hasManualLocaleOverride,
   readLanguagePreference,
+  syncProfileLanguageCookie,
   switchLocalePath,
 } from "@/lib/locale";
 import { isSupportedLocale } from "@/lib/constants";
 
 /**
- * When profile Language Preference differs from URL segment, align the route
- * unless the user has explicitly picked a UI language (manual override).
+ * Mirror profile Language Preference into a cookie for middleware redirects.
+ * If URL still mismatches after cookie sync, hard-navigate once (avoids hydration flash).
  */
 export function RouteLocaleSync() {
-  const router = useRouter();
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
-  const syncedRef = useRef<string | null>(null);
+  const handledRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (getManualLocaleOverride()) return;
+    if (hasManualLocaleOverride()) return;
 
     const preference = readLanguagePreference(user?.primaryLocale);
     if (!preference) return;
+
+    syncProfileLanguageCookie(preference);
 
     const segment = pathname.split("/").filter(Boolean)[0];
     const routeLocale = segment && isSupportedLocale(segment) ? segment : null;
     if (!routeLocale || routeLocale === preference) return;
 
     const key = `${pathname}:${preference}`;
-    if (syncedRef.current === key) return;
-    syncedRef.current = key;
+    if (handledRef.current === key) return;
+    handledRef.current = key;
 
-    router.replace(switchLocalePath(pathname, preference));
-  }, [pathname, router, user?.primaryLocale]);
+    window.location.replace(switchLocalePath(pathname, preference));
+  }, [pathname, user?.primaryLocale]);
 
   return null;
 }

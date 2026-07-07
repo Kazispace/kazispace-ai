@@ -3,6 +3,7 @@ import type { User, ChatMessage, CreditBalance } from '@/types';
 import { setAuthToken, clearAuthToken, setUserInfo } from './auth';
 import { clearBillingCache } from './billing-cache';
 import { clearMockAgentSessions } from './agent-api';
+import { clearLocaleCookies } from './locale';
 
 // ---- Auth Store ----
 interface AuthStore {
@@ -25,6 +26,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   },
   logout: () => {
     clearAuthToken();
+    clearLocaleCookies();
     clearBillingCache();
     useAgentStore.getState().reset();
     set({ token: null, user: null, isLoggedIn: false });

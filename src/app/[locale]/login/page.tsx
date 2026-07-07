@@ -10,8 +10,10 @@ import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
 import { isValidOtpPhone } from "@/lib/api-mappers";
 import { setAuthToken } from "@/lib/auth";
 import {
-  resolveUiLocale,
+  resolvePostLoginLocale,
   switchLocalePath,
+  syncProfileLanguageCookie,
+  readLanguagePreference,
 } from "@/lib/locale";
 import { useAuthStore } from "@/lib/store";
 
@@ -82,11 +84,13 @@ export default function LoginPage({ params }: LoginPageProps) {
 
         const search = new URLSearchParams(window.location.search);
         const redirect = search.get("redirect");
-        const targetLocale = resolveUiLocale({
-          urlLocale: locale,
+        const targetLocale = resolvePostLoginLocale({
           languagePreference: user.primaryLocale,
           phone: normalizedPhone,
         });
+        syncProfileLanguageCookie(
+          readLanguagePreference(user.primaryLocale) ?? targetLocale
+        );
         const destination =
           redirect && redirect.startsWith("/")
             ? switchLocalePath(redirect, targetLocale)
