@@ -17,6 +17,7 @@ import { getMe } from "@/lib/api-client";
 import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, User } from "lucide-react";
 import { NbaActionCard } from "@/components/nba/nba-action-card";
 import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
+import { LocaleSwitcher } from "@/components/locale/locale-switcher";
 
 interface MinePageProps {
   params: { locale: string };
@@ -232,7 +233,7 @@ export default function MinePage({ params }: MinePageProps) {
                   <Globe className="w-5 h-5 text-muted" />
                   <span className="font-medium">{t("interfaceLanguageLabel")}</span>
                 </div>
-                <span className="text-sm text-muted uppercase">{locale}</span>
+                <LocaleSwitcher locale={locale} />
               </CardContent>
             </Card>
             <button onClick={handleLogout} className="w-full">

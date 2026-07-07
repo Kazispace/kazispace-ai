@@ -27,6 +27,7 @@
 		"logoutConfirmContent": "Вы уверены, что хотите выйти из KaziSpace?",
 		"logoutToast": "Вы успешно вышли из системы",
 		"langChangedToast": "Язык изменен на: {lang}",
+		"langChangeFailedToast": "Язык интерфейса изменён, но синхронизация с сервером не удалась",
 		"confirmOk": "ОК",
 		"confirmCancel": "Отмена",
 		
@@ -112,6 +113,7 @@
 		"countries": {
 			"kz": "Казахстан (KZ)",
 			"uz": "Узбекистан (UZ)",
+			"cn": "Китай (CN)",
 			"other": "Другая страна"
 		},
 		"goals": {

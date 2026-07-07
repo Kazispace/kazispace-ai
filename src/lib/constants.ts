@@ -1,7 +1,12 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://bot.kazispace.ai';
 
-export const SUPPORTED_LOCALES = ['en', 'ru', 'kk', 'uz'] as const;
+/** MVP UI locales — Global South + Chinese (SDD §11) */
+export const SUPPORTED_LOCALES = ['en', 'ru', 'kk', 'uz', 'zh'] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+
+export function isSupportedLocale(value: string): value is SupportedLocale {
+  return (SUPPORTED_LOCALES as readonly string[]).includes(value);
+}
 /** CIS / Kazakhstan primary market — SDD §11 */
 export const DEFAULT_LOCALE: SupportedLocale = 'ru';
 

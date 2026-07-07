@@ -27,6 +27,7 @@
 		"logoutConfirmContent": "KaziSpace tizimidan chiqishni tasdiqlaysizmi?",
 		"logoutToast": "Tizimdan muvaffaqiyatli chiqdingiz",
 		"langChangedToast": "Til o'zgartirildi: {lang}",
+		"langChangeFailedToast": "Interfeys tili o'zgartirildi, lekin serverga sinxronlash muvaffaqiyatsiz",
 		"confirmOk": "OK",
 		"confirmCancel": "Bekor qilish",
 		
@@ -112,6 +113,7 @@
 		"countries": {
 			"kz": "Qozogʻiston (KZ)",
 			"uz": "Oʻzbekiston (UZ)",
+			"cn": "Xitoy (CN)",
 			"other": "Boshqa mamlakat"
 		},
 		"goals": {

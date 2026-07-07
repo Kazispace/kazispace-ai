@@ -30,7 +30,7 @@ function normalizeHistoryMessage(
   };
 }
 
-export function useClinicChat() {
+export function useClinicChat(locale?: string) {
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const {
     messages,
@@ -116,7 +116,7 @@ export function useClinicChat() {
       });
       setStreaming(true);
 
-      const res = await sendChatMessage(sessionId, text);
+      const res = await sendChatMessage(sessionId, text, locale);
       setSending(false);
       setStreaming(false);
 
@@ -145,7 +145,7 @@ export function useClinicChat() {
         ...(routedToAgent ? { routedToAgent } : {}),
       };
     },
-    [addMessage, setSending, setStreaming, updateMessage, removeMessage, handleApiFailure]
+    [addMessage, setSending, setStreaming, updateMessage, removeMessage, handleApiFailure, locale]
   );
 
   const markStreamComplete = useCallback(

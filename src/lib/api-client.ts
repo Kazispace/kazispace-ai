@@ -1,5 +1,6 @@
 import { API_BASE_URL } from './constants';
 import { getAuthToken, getDeviceId, clearAuthToken } from './auth';
+import { getActiveRequestLocale } from './locale';
 import { mapUserFromApi } from './api-mappers';
 import { parseAssistantEnvelope } from './chat-envelope';
 import { isReferralDismissed } from './referral-dismiss';
@@ -19,10 +20,16 @@ import type {
   TelegramWebappResponse,
 } from '@/types';
 
+export type ApiRequestOptions = RequestInit & {
+  /** Explicit UI locale for headers; avoids SSR defaulting to `ru`. */
+  locale?: string;
+};
+
 export async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
+  const { locale: localeOverride, ...fetchOptions } = options;
   const url = `${API_BASE_URL}${endpoint}`;
   const token = getAuthToken();
   const deviceId = getDeviceId();
@@ -32,8 +39,8 @@ export async function apiRequest<T>(
     'X-Device-ID': deviceId,
   };
 
-  if (options.headers) {
-    Object.assign(headers, options.headers as Record<string, string>);
+  if (fetchOptions.headers) {
+    Object.assign(headers, fetchOptions.headers as Record<string, string>);
   }
 
   if (token) {
@@ -42,8 +49,12 @@ export async function apiRequest<T>(
 
   Object.assign(headers, getTmaClientHeaders());
 
+  const requestLocale = localeOverride ?? getActiveRequestLocale();
+  headers['Accept-Language'] = requestLocale;
+  headers['X-Locale'] = requestLocale;
+
   try {
-    const response = await fetch(url, { ...options, headers });
+    const response = await fetch(url, { ...fetchOptions, headers });
 
     if (response.status === 401) {
       clearAuthToken();
@@ -192,12 +203,17 @@ export interface ClinicChatResponse {
 
 export async function sendChatMessage(
   sessionId: string,
-  text: string
+  text: string,
+  locale?: string
 ): Promise<ApiResponse<ClinicChatResponse>> {
-  // Backend WebChatRequest: { session_id, content } — not `text`
+  const activeLocale = locale ?? getActiveRequestLocale();
   return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
-    body: JSON.stringify({ session_id: sessionId, content: text }),
+    body: JSON.stringify({
+      session_id: sessionId,
+      content: text,
+      locale: activeLocale,
+    }),
   });
 }
 

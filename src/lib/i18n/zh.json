@@ -1,0 +1,150 @@
+{
+	"login": {
+		"title": "登录",
+		"phoneLabel": "手机号",
+		"phonePlaceholder": "+8613800138000",
+		"phoneHint": "支持哈萨克斯坦 (+7)、乌兹别克斯坦 (+998)、中国 (+86)",
+		"phoneInvalid": "请输入以 +7、+998 或 +86 开头的有效手机号",
+		"sendCode": "发送验证码",
+		"sending": "发送中…",
+		"otpLabel": "验证码",
+		"otpPlaceholder": "000000",
+		"verify": "验证",
+		"verifying": "验证中…",
+		"back": "← 返回",
+		"sessionExpiredTitle": "会话已过期",
+		"sessionExpiredContent": "您的登录已过期，请重新登录。",
+		"reLogin": "重新登录",
+		"cancel": "取消"
+	},
+	"mine": {
+		"title": "个人中心",
+		"editProfileTitle": "编辑资料",
+		"editProfileContent": "正在打开资料编辑页…",
+		"upgradePlanToast": "正在打开订阅与套餐…",
+		"tgLinkingToast": "正在连接 Telegram…",
+		"logoutConfirmTitle": "退出登录",
+		"logoutConfirmContent": "确定要退出 KaziSpace 吗？",
+		"logoutToast": "已成功退出",
+		"langChangedToast": "语言已切换为：{lang}",
+		"langChangeFailedToast": "界面语言已切换，但同步到服务器失败，请稍后重试",
+		"confirmOk": "确定",
+		"confirmCancel": "取消",
+		"freeTrialBadge": "免费试用",
+		"proBadge": "Pro 会员",
+		"sprintBadge": "冲刺进行中",
+		"buyCreditsLabel": "购买积分",
+		"cvCreditsLabel": "简历积分",
+		"mockInterviewsLabel": "模拟面试",
+		"streakLabel": "连续天数",
+		"streakUnit": "天",
+		"upgradeButton": "升级套餐 / 购买积分",
+		"jobPrepGroupTitle": "求职与学习",
+		"cvRepoLabel": "我的简历库",
+		"cvRepoValue": "2 份草稿",
+		"interviewRecordsLabel": "模拟面试记录",
+		"interviewRecordsValue": "已完成 3 次",
+		"dailyTasksLabel": "每日职业任务",
+		"dailyTasksValue": "1 项待办",
+		"profilePreferencesGroupTitle": "资料与偏好",
+		"targetRoleLabel": "目标岗位与级别",
+		"sprintPlanLabel": "职业冲刺计划",
+		"sprintPlanValue": "每天 30 分钟",
+		"bindTelegramLabel": "绑定 Telegram",
+		"tgUnlinked": "未绑定",
+		"tgLinked": "已绑定",
+		"billingServicesGroupTitle": "账单与服务",
+		"subscriptionPlansLabel": "订阅套餐",
+		"creditsLedgerLabel": "积分明细",
+		"systemSettingsGroupTitle": "系统设置",
+		"interfaceLanguageLabel": "界面语言",
+		"hapticFeedbackLabel": "触觉反馈",
+		"logoutLabel": "退出登录",
+		"cvLoading": "正在打开简历库…",
+		"interviewLoading": "正在打开面试记录…",
+		"sprintLoading": "正在打开每日任务…",
+		"profileRoleLoading": "正在加载目标岗位…",
+		"profileGoalsLoading": "正在加载求职目标…",
+		"billingLoading": "正在打开订阅…",
+		"ledgerLoading": "正在加载积分记录…"
+	},
+	"profile": {
+		"title": "编辑资料",
+		"displayNameLabel": "显示名称",
+		"displayNamePlaceholder": "输入昵称",
+		"countryLabel": "国家 / 地区",
+		"careerGoalLabel": "职业目标",
+		"targetRoleLabel": "目标岗位",
+		"targetRolePlaceholder": "例如：高级软件工程师",
+		"englishLevelLabel": "英语水平",
+		"currentStatusLabel": "当前状态",
+		"educationLabel": "教育背景",
+		"educationPlaceholder": "学校、专业、学历…",
+		"experienceLabel": "工作经历",
+		"experiencePlaceholder": "公司、岗位、主要成就…",
+		"saveButton": "保存更改",
+		"cancelButton": "取消",
+		"saveSuccess": "资料已更新",
+		"saveFailed": "保存失败，请重试",
+		"saveNothing": "请至少修改一个字段后再保存",
+		"saving": "保存中…",
+		"loginRequired": "请先登录以编辑资料",
+		"signIn": "登录",
+		"displayNameReadOnly": "显示名称由账号渠道管理",
+		"countryUnset": "选择国家",
+		"careerGoalUnset": "选择目标（可选）",
+		"englishLevelUnset": "选择水平（可选）",
+		"englishLevels": {
+			"beginner": "初级",
+			"intermediate": "中级",
+			"advanced": "高级",
+			"fluent": "流利"
+		},
+		"confirmText": "确认",
+		"cancelText": "取消",
+		"countries": {
+			"kz": "哈萨克斯坦 (KZ)",
+			"uz": "乌兹别克斯坦 (UZ)",
+			"cn": "中国 (CN)",
+			"other": "其他国家"
+		},
+		"goals": {
+			"better_job": "寻找更好的工作",
+			"interview_prep": "面试准备",
+			"cv_build": "制作专业简历"
+		},
+		"statuses": {
+			"student": "学生",
+			"employed": "在职",
+			"job_seeker": "求职中"
+		}
+	},
+	"nav": {
+		"home": "首页",
+		"chat": "对话",
+		"jobs": "岗位",
+		"profile": "我的"
+	},
+	"chat": {
+		"title": "{name} · AI 职业伙伴",
+		"backToClinic": "← 返回门诊",
+		"welcome": {
+			"greeting": "👋 你好！我是 {name}，你的 AI 职业伙伴。",
+			"prompt": "说说你的职业问题，或选择一位专家：",
+			"title": "欢迎使用 KaziSpace",
+			"desc": "中亚地区的 AI 职业伙伴"
+		},
+		"input": {
+			"placeholder": "和我聊聊你的职业问题…"
+		},
+		"retry": "重试"
+	},
+	"errors": {
+		"network": "网络错误，请重试。",
+		"profileIncomplete": "请先完善资料以使用此功能。"
+	},
+	"clinic": {
+		"backToClinic": "返回门诊",
+		"switchAgent": "切换专家"
+	}
+}

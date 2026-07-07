@@ -9,6 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
 import { isValidOtpPhone } from "@/lib/api-mappers";
 import { setAuthToken } from "@/lib/auth";
+import {
+  resolveUiLocale,
+  switchLocalePath,
+} from "@/lib/locale";
 import { useAuthStore } from "@/lib/store";
 
 interface LoginPageProps {
@@ -73,12 +77,21 @@ export default function LoginPage({ params }: LoginPageProps) {
         const { token, user: otpUser } = result.data;
         setAuthToken(token);
         const me = await getMe();
-        useAuthStore
-          .getState()
-          .login(token, me.success && me.data ? me.data : otpUser);
+        const user = me.success && me.data ? me.data : otpUser;
+        useAuthStore.getState().login(token, user);
+
         const search = new URLSearchParams(window.location.search);
         const redirect = search.get("redirect");
-        router.push(redirect && redirect.startsWith("/") ? redirect : `/${locale}/chat`);
+        const targetLocale = resolveUiLocale({
+          urlLocale: locale,
+          primaryLocale: user.primaryLocale,
+          phone: normalizedPhone,
+        });
+        const destination =
+          redirect && redirect.startsWith("/")
+            ? switchLocalePath(redirect, targetLocale)
+            : `/${targetLocale}/chat`;
+        router.push(destination);
       } else {
         setError(result.error || "Invalid code");
       }

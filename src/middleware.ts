@@ -4,6 +4,7 @@ import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   STORAGE_KEYS,
+  isSupportedLocale,
 } from "./lib/constants";
 
 const intlMiddleware = createMiddleware({
@@ -17,7 +18,7 @@ const PUBLIC_PATH_SEGMENTS = new Set(["login", "chat", "tma"]);
 function stripLocale(pathname: string): { locale: string; path: string } {
   const segments = pathname.split("/").filter(Boolean);
   const first = segments[0];
-  if (SUPPORTED_LOCALES.includes(first as (typeof SUPPORTED_LOCALES)[number])) {
+  if (isSupportedLocale(first)) {
     const rest = segments.slice(1);
     return {
       locale: first,
@@ -35,7 +36,18 @@ function isPublicPath(path: string): boolean {
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const preferred = request.cookies.get(STORAGE_KEYS.PREFERRED_LOCALE)?.value;
   const { locale, path } = stripLocale(pathname);
+
+  // Manual locale override (settings) wins over URL segment — SDD §11.2
+  if (preferred && isSupportedLocale(preferred) && preferred !== locale) {
+    const redirectUrl = new URL(
+      `/${preferred}${path === "/" ? "" : path}`,
+      request.url
+    );
+    redirectUrl.search = request.nextUrl.search;
+    return NextResponse.redirect(redirectUrl);
+  }
 
   if (!isPublicPath(path)) {
     const token = request.cookies.get(STORAGE_KEYS.AUTH_COOKIE)?.value;
