@@ -90,7 +90,22 @@
 		"experiencePlaceholder": "Компания, лауазым, негізгі жетістіктер...",
 		"saveButton": "Өзгерістерді сақтау",
 		"cancelButton": "Бас тарту",
-		"saveSuccess": "Мансап профилі сәтті жаңартылды (демо)",
+		"saveSuccess": "Мансап профилі сәтті жаңартылды",
+		"saveFailed": "Профильді сақтау мүмкін болмады. Қайталап көріңіз.",
+		"saveNothing": "Сақтамас бұрын кем дегенде бір өрісті өзгертіңіз",
+		"saving": "Сақталуда…",
+		"loginRequired": "Профильді өңдеу үшін кіріңіз",
+		"signIn": "Кіру",
+		"displayNameReadOnly": "Аты тіркелгі арнасы арқылы басқарылады",
+		"countryUnset": "Мемлекетті таңдаңыз",
+		"careerGoalUnset": "Мақсатты таңдаңыз (міндетті емес)",
+		"englishLevelUnset": "Деңгейді таңдаңыз (міндетті емес)",
+		"englishLevels": {
+			"beginner": "Бастапқы",
+			"intermediate": "Орташа",
+			"advanced": "Жоғары",
+			"fluent": "Еркін"
+		},
 		"confirmText": "Дайын",
 		"cancelText": "Бас тарту",
 		

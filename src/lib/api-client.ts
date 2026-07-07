@@ -136,6 +136,28 @@ export async function getMe(): Promise<ApiResponse<User>> {
   return { success: true, data: mapUserFromApi(res.data) };
 }
 
+export interface PatchMeBody {
+  primary_country?: string;
+  primary_locale?: string;
+  career_goal?: string;
+  target_role?: string;
+  english_level?: string;
+  current_status?: string;
+  education_text?: string;
+  experience_text?: string;
+}
+
+export async function patchMe(body: PatchMeBody): Promise<ApiResponse<User>> {
+  const res = await apiRequest<Record<string, unknown>>('/api/v1/me', {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+  if (!res.success || !res.data) {
+    return { success: false, error: res.error, errorCode: res.errorCode };
+  }
+  return { success: true, data: mapUserFromApi(res.data) };
+}
+
 export async function authTelegramWebapp(
   initData: string
 ): Promise<ApiResponse<TelegramWebappResponse>> {

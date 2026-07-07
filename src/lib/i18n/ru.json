@@ -90,7 +90,22 @@
 		"experiencePlaceholder": "Укажите компании, должности, достижения...",
 		"saveButton": "Сохранить изменения",
 		"cancelButton": "Отмена",
-		"saveSuccess": "Профиль успешно обновлен (демо)",
+		"saveSuccess": "Профиль успешно обновлен",
+		"saveFailed": "Не удалось сохранить профиль. Попробуйте снова.",
+		"saveNothing": "Измените хотя бы одно поле перед сохранением",
+		"saving": "Сохранение…",
+		"loginRequired": "Войдите, чтобы редактировать профиль",
+		"signIn": "Войти",
+		"displayNameReadOnly": "Имя управляется каналом вашей учетной записи",
+		"countryUnset": "Выберите страну",
+		"careerGoalUnset": "Выберите цель (необязательно)",
+		"englishLevelUnset": "Выберите уровень (необязательно)",
+		"englishLevels": {
+			"beginner": "Начальный",
+			"intermediate": "Средний",
+			"advanced": "Продвинутый",
+			"fluent": "Свободный"
+		},
 		"confirmText": "Готово",
 		"cancelText": "Отмена",
 		

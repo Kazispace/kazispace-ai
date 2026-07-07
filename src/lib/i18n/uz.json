@@ -90,7 +90,22 @@
 		"experiencePlaceholder": "Kompaniya, lavozim, asosiy yutuqlar...",
 		"saveButton": "O'zgarishlarni saqlash",
 		"cancelButton": "Bekor qilish",
-		"saveSuccess": "Profil muvaffaqiyatli yangilandi (demo)",
+		"saveSuccess": "Profil muvaffaqiyatli yangilandi",
+		"saveFailed": "Profilni saqlab bo'lmadi. Qayta urinib ko'ring.",
+		"saveNothing": "Saqlashdan oldin kamida bitta maydonni o'zgartiring",
+		"saving": "Saqlanmoqda…",
+		"loginRequired": "Profilni tahrirlash uchun tizimga kiring",
+		"signIn": "Kirish",
+		"displayNameReadOnly": "Ism hisob kanali orqali boshqariladi",
+		"countryUnset": "Mamlakatni tanlang",
+		"careerGoalUnset": "Maqsadni tanlang (ixtiyoriy)",
+		"englishLevelUnset": "Darajani tanlang (ixtiyoriy)",
+		"englishLevels": {
+			"beginner": "Boshlang'ich",
+			"intermediate": "O'rta",
+			"advanced": "Yuqori",
+			"fluent": "Erkin"
+		},
 		"confirmText": "Tasdiqlash",
 		"cancelText": "Bekor qilish",
 		
