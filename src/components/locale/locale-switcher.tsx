@@ -39,17 +39,24 @@ export function LocaleSwitcher({ locale, variant = "row" }: LocaleSwitcherProps)
     setIsSaving(true);
     setManualLocaleOverride(next);
 
+    let syncFailed = false;
     if (isLoggedIn) {
       const res = await patchMe({ primary_locale: next });
       if (res.success && res.data) {
         updateUser(res.data);
         setUserInfo(res.data);
+      } else {
+        syncFailed = true;
       }
     }
 
     setIsSaving(false);
     setIsOpen(false);
-    showToast(t("langChangedToast", { lang: LOCALE_LABELS[next] }), "info");
+    if (syncFailed) {
+      showToast(t("langChangeFailedToast"), "error");
+    } else {
+      showToast(t("langChangedToast", { lang: LOCALE_LABELS[next] }), "info");
+    }
     router.push(switchLocalePath(pathname, next));
   };
 

@@ -27,6 +27,7 @@
 		"logoutConfirmContent": "KaziSpace tizimidan chiqishni tasdiqlaysizmi?",
 		"logoutToast": "Tizimdan muvaffaqiyatli chiqdingiz",
 		"langChangedToast": "Til o'zgartirildi: {lang}",
+		"langChangeFailedToast": "Interfeys tili o'zgartirildi, lekin serverga sinxronlash muvaffaqiyatsiz",
 		"confirmOk": "OK",
 		"confirmCancel": "Bekor qilish",
 		

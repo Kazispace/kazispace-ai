@@ -1,5 +1,6 @@
 import { getRequestConfig } from 'next-intl/server';
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '../constants';
+import { mergeMessages } from './merge-messages';
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const locale = (await requestLocale) ?? DEFAULT_LOCALE;
@@ -10,7 +11,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
   const localeMessages = (await import(`./${locale}.json`)).default;
   return {
     locale,
-    messages: { ...enMessages, ...localeMessages },
+    messages: mergeMessages(enMessages, localeMessages) as typeof enMessages,
   };
 });
 

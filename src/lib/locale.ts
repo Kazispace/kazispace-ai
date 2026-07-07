@@ -42,9 +42,14 @@ export function inferCountryFromPhone(phone: string): string {
 
 /** Manual UI choice — overrides phone / profile / browser detection. */
 export function getManualLocaleOverride(): SupportedLocale | null {
+  const fromCookie = getLocaleCookie();
+  if (fromCookie) return fromCookie;
   if (typeof window === 'undefined') return null;
   const stored = localStorage.getItem(STORAGE_KEYS.PREFERRED_LOCALE);
-  return stored && isSupportedLocale(stored) ? stored : null;
+  if (stored && isSupportedLocale(stored)) {
+    return stored;
+  }
+  return null;
 }
 
 export function setManualLocaleOverride(locale: SupportedLocale): void {
@@ -66,13 +71,8 @@ export function getLocaleCookie(): SupportedLocale | null {
 }
 
 /**
- * Resolve UI locale priority (SDD §11.2):
- * 1. Manual override (settings)
- * 2. URL segment
- * 3. Backend primary_locale
- * 4. Phone prefix
- * 5. Browser language
- * 6. Default ru
+ * Resolve UI locale priority (SDD §11.2). Client-only — reads cookie/localStorage.
+ * For post-login redirect, omit `urlLocale` so profile/phone beat the login page segment.
  */
 export function resolveUiLocale(params: {
   urlLocale?: string;
