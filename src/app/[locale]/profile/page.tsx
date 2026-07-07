@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import {
   formatMissingFieldFallback,
   isKnownMissingMinimumField,
 } from "@/lib/profile-completion";
+import { inferLocaleFromCountry, normalizeLocaleTag, switchLocalePath } from "@/lib/locale";
+import { isSupportedLocale, type SupportedLocale } from "@/lib/constants";
 import { useAuthStore, useUIStore } from "@/lib/store";
 import type { ProfileCompletion, User } from "@/types";
 
@@ -73,6 +75,10 @@ function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody
       current.country === "KZ" || current.country === "UZ" || current.country === "CN"
         ? current.country
         : null;
+    const inferredLocale = inferLocaleFromCountry(current.country);
+    if (inferredLocale) {
+      body.primary_locale = inferredLocale;
+    }
   }
   if (current.careerGoal !== initial.careerGoal) {
     body.career_goal = current.careerGoal.trim() || null;
@@ -113,6 +119,7 @@ function missingFieldLabel(
 function ProfilePageContent({ locale }: { locale: string }) {
   const t = useTranslations("profile");
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const showToast = useUIStore((s) => s.showToast);
   const { isLoggedIn, token, updateUser } = useAuthStore();
@@ -123,6 +130,9 @@ function ProfilePageContent({ locale }: { locale: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const returnToCv = searchParams.get("return") === "cv";
+  const suggestedLocale = inferLocaleFromCountry(form.country);
+  const localeMismatch =
+    suggestedLocale && isSupportedLocale(locale) && suggestedLocale !== locale;
 
   const applyLoadedUser = (user: User) => {
     const loaded = formFromUser(user);
@@ -186,11 +196,17 @@ function ProfilePageContent({ locale }: { locale: string }) {
 
     applyLoadedUser(res.data);
     showToast(t("saveSuccess"), "info");
+
+    const nextLocale: SupportedLocale =
+      normalizeLocaleTag(res.data.primaryLocale) ??
+      inferLocaleFromCountry(res.data.country) ??
+      (isSupportedLocale(locale) ? locale : "en");
+
     if (returnToCv && canEnterCvBuilder(res.data)) {
-      router.push(`/${locale}/cv`);
+      router.push(`/${nextLocale}/cv`);
       return;
     }
-    router.push(`/${locale}/mine`);
+    router.push(switchLocalePath(`/${locale}/mine`, nextLocale));
   };
 
   if (!isLoggedIn) {
@@ -226,6 +242,20 @@ function ProfilePageContent({ locale }: { locale: string }) {
           <p className="text-sm text-gray-600 mb-4 leading-relaxed">
             {returnToCv ? t("gateContextCv") : t("gateContextGeneral")}
           </p>
+        )}
+        {localeMismatch && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 mb-4 flex items-center justify-between gap-3">
+            <p className="text-xs text-blue-900">{t("localeMismatchHint")}</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => router.push(switchLocalePath(pathname, suggestedLocale))}
+            >
+              {t("localeMismatchAction")}
+            </Button>
+          </div>
         )}
         {profileCompletion &&
           !profileCompletion.minimumComplete &&

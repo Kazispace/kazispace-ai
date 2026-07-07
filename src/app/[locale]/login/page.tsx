@@ -85,6 +85,7 @@ export default function LoginPage({ params }: LoginPageProps) {
         const targetLocale = resolveUiLocale({
           urlLocale: locale,
           primaryLocale: user.primaryLocale,
+          country: user.country,
           phone: normalizedPhone,
         });
         const destination =
