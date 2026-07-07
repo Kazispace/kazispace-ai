@@ -115,6 +115,8 @@
 		"completionBannerHint": "Fill in the items below to unlock CV Builder and personalized recommendations.",
 		"gateContextCv": "Complete the fields below to continue building your CV.",
 		"gateContextGeneral": "A complete profile helps us recommend jobs and tailor your prep plan.",
+		"preferenceMismatchHint": "Your profile language preference is {lang}. Switch the interface to match?",
+		"preferenceMismatchAction": "Switch to {lang}",
 		"missingFields": {
 			"primary_country": "Country / region",
 			"primary_locale": "App language (change in Mine → Language)",

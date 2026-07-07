@@ -108,6 +108,8 @@
 		"completionBannerHint": "补全以下项目即可解锁简历与推荐。",
 		"gateContextCv": "补全下方信息后即可继续编辑简历。",
 		"gateContextGeneral": "完善资料有助于岗位匹配与备考规划。",
+		"preferenceMismatchHint": "资料语言偏好为 {lang}，与当前界面不一致。",
+		"preferenceMismatchAction": "切换到 {lang}",
 		"missingFields": {
 			"primary_country": "国家 / 地区",
 			"primary_locale": "应用语言（我的 → 语言）",

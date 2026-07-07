@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 
+import { LocaleSwitcher } from "@/components/locale/locale-switcher";
 import { useUIStore } from "@/lib/store";
 
 interface HeaderProps {
@@ -48,6 +49,7 @@ export function Header({ locale }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
+          <LocaleSwitcher locale={locale} variant="header" />
           <Link
             href={`/${locale}/mine`}
             className="text-sm font-medium text-white/75 hover:text-kazi-orange transition-colors"

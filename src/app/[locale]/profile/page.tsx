@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,13 @@ import {
   formatMissingFieldFallback,
   isKnownMissingMinimumField,
 } from "@/lib/profile-completion";
+import {
+  LOCALE_LABELS,
+  readLanguagePreference,
+  switchLocalePath,
+  syncProfileLanguageCookie,
+} from "@/lib/locale";
+import { isSupportedLocale, type SupportedLocale } from "@/lib/constants";
 import { useAuthStore, useUIStore } from "@/lib/store";
 import type { ProfileCompletion, User } from "@/types";
 
@@ -113,6 +120,7 @@ function missingFieldLabel(
 function ProfilePageContent({ locale }: { locale: string }) {
   const t = useTranslations("profile");
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const showToast = useUIStore((s) => s.showToast);
   const { isLoggedIn, token, updateUser } = useAuthStore();
@@ -120,9 +128,13 @@ function ProfilePageContent({ locale }: { locale: string }) {
   const [form, setForm] = useState<ProfileForm>(EMPTY_FORM);
   const [initialForm, setInitialForm] = useState<ProfileForm>(EMPTY_FORM);
   const [profileCompletion, setProfileCompletion] = useState<ProfileCompletion | null>(null);
+  const [loadedPreference, setLoadedPreference] = useState<SupportedLocale | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const returnToCv = searchParams.get("return") === "cv";
+  const routeLocale = isSupportedLocale(locale) ? locale : null;
+  const preferenceMismatch =
+    loadedPreference && routeLocale && loadedPreference !== routeLocale;
 
   const applyLoadedUser = (user: User) => {
     const loaded = formFromUser(user);
@@ -131,6 +143,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
     setForm(loaded);
     setInitialForm(loaded);
     setProfileCompletion(user.profileCompletion ?? null);
+    setLoadedPreference(readLanguagePreference(user.primaryLocale));
   };
 
   useEffect(() => {
@@ -186,11 +199,22 @@ function ProfilePageContent({ locale }: { locale: string }) {
 
     applyLoadedUser(res.data);
     showToast(t("saveSuccess"), "info");
+
+    const preference =
+      readLanguagePreference(res.data.primaryLocale) ??
+      (isSupportedLocale(locale) ? locale : "en");
+    const nextRoute = preference;
+
     if (returnToCv && canEnterCvBuilder(res.data)) {
-      router.push(`/${locale}/cv`);
+      router.push(`/${nextRoute}/cv`);
       return;
     }
-    router.push(`/${locale}/mine`);
+    router.push(
+      switchLocalePath(
+        `/${isSupportedLocale(locale) ? locale : preference}/mine`,
+        nextRoute
+      )
+    );
   };
 
   if (!isLoggedIn) {
@@ -226,6 +250,25 @@ function ProfilePageContent({ locale }: { locale: string }) {
           <p className="text-sm text-gray-600 mb-4 leading-relaxed">
             {returnToCv ? t("gateContextCv") : t("gateContextGeneral")}
           </p>
+        )}
+        {preferenceMismatch && loadedPreference && (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 mb-4 flex items-center justify-between gap-3">
+            <p className="text-xs text-blue-900">
+              {t("preferenceMismatchHint", { lang: LOCALE_LABELS[loadedPreference] })}
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => {
+                syncProfileLanguageCookie(loadedPreference);
+                window.location.assign(switchLocalePath(pathname, loadedPreference));
+              }}
+            >
+              {t("preferenceMismatchAction", { lang: LOCALE_LABELS[loadedPreference] })}
+            </Button>
+          </div>
         )}
         {profileCompletion &&
           !profileCompletion.minimumComplete &&

@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { RouteLocaleSync } from "@/components/locale/route-locale-sync";
 import { ToastHost } from "@/components/ui/toast";
 import { PaywallModal } from "@/components/billing/paywall-modal";
 import { DEFAULT_LOCALE } from "@/lib/constants";
@@ -14,6 +15,7 @@ export function AppChrome() {
   const pathname = usePathname();
   return (
     <>
+      <RouteLocaleSync />
       <ToastHost />
       <PaywallModal locale={localeFromPathname(pathname)} />
     </>

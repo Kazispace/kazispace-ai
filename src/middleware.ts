@@ -5,6 +5,7 @@ import {
   SUPPORTED_LOCALES,
   STORAGE_KEYS,
   isSupportedLocale,
+  type SupportedLocale,
 } from "./lib/constants";
 
 const intlMiddleware = createMiddleware({
@@ -34,15 +35,29 @@ function isPublicPath(path: string): boolean {
   return segment ? PUBLIC_PATH_SEGMENTS.has(segment) : false;
 }
 
+function resolveMiddlewareRouteLocale(request: NextRequest): SupportedLocale | null {
+  const manualFlag =
+    request.cookies.get(STORAGE_KEYS.LOCALE_MANUAL)?.value === "1";
+  const preferred = request.cookies.get(STORAGE_KEYS.PREFERRED_LOCALE)?.value;
+  const profileLang = request.cookies.get(STORAGE_KEYS.PROFILE_LANGUAGE)?.value;
+
+  if (manualFlag && preferred && isSupportedLocale(preferred)) {
+    return preferred;
+  }
+  if (profileLang && isSupportedLocale(profileLang)) {
+    return profileLang;
+  }
+  return null;
+}
+
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const preferred = request.cookies.get(STORAGE_KEYS.PREFERRED_LOCALE)?.value;
   const { locale, path } = stripLocale(pathname);
 
-  // Manual locale override (settings) wins over URL segment — SDD §11.2
-  if (preferred && isSupportedLocale(preferred) && preferred !== locale) {
+  const targetLocale = resolveMiddlewareRouteLocale(request);
+  if (targetLocale && targetLocale !== locale) {
     const redirectUrl = new URL(
-      `/${preferred}${path === "/" ? "" : path}`,
+      `/${targetLocale}${path === "/" ? "" : path}`,
       request.url
     );
     redirectUrl.search = request.nextUrl.search;

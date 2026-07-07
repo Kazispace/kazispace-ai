@@ -14,6 +14,7 @@ import { useBilling } from "@/hooks/use-billing";
 import { useNbaAction } from "@/hooks/use-nba-action";
 import { planBadgeKey } from "@/lib/api-mappers";
 import { getMe } from "@/lib/api-client";
+import { syncUserLanguageCookies } from "@/lib/locale";
 import { resolveMineNbaAction } from "@/lib/nba-display";
 import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, User } from "lucide-react";
 import { NbaActionCard } from "@/components/nba/nba-action-card";
@@ -41,6 +42,7 @@ export default function MinePage({ params }: MinePageProps) {
     getMe().then((res) => {
       if (res.success && res.data) {
         useAuthStore.getState().login(token, res.data);
+        syncUserLanguageCookies(res.data);
       }
     });
   }, [isLoggedIn, token]);
