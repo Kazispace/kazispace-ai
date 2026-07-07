@@ -15,7 +15,14 @@ export const LOCALE_LABELS: Record<SupportedLocale, string> = {
   zh: '中文',
 };
 
-/** Normalize BCP-47 tags (`zh-CN`, `kz`) to supported locale codes. */
+/** Profile `primary_locale` — SDD Language Preference (DB column name transitional). */
+export function readLanguagePreference(
+  value: string | null | undefined
+): SupportedLocale | null {
+  return normalizeLocaleTag(value);
+}
+
+/** Normalize BCP-47 tags (`zh-CN`, `kz`) to supported language codes. */
 export function normalizeLocaleTag(
   tag: string | null | undefined
 ): SupportedLocale | null {
@@ -25,14 +32,17 @@ export function normalizeLocaleTag(
   return isSupportedLocale(base) ? base : null;
 }
 
-/** Infer UI locale from CIS / China phone prefixes (registration signal). */
-export function inferLocaleFromPhone(phone: string): SupportedLocale {
+/** Infer language from CIS / China phone prefixes — registration signal only. */
+export function inferLanguagePreferenceFromPhone(phone: string): SupportedLocale {
   const normalized = phone.replace(/\s/g, '');
   if (normalized.startsWith('+86')) return 'zh';
   if (normalized.startsWith('+998')) return 'uz';
   if (normalized.startsWith('+7')) return 'ru';
   return DEFAULT_LOCALE;
 }
+
+/** @deprecated Use inferLanguagePreferenceFromPhone */
+export const inferLocaleFromPhone = inferLanguagePreferenceFromPhone;
 
 export function inferCountryFromPhone(phone: string): string {
   const normalized = phone.replace(/\s/g, '');
@@ -42,18 +52,7 @@ export function inferCountryFromPhone(phone: string): string {
   return 'KZ';
 }
 
-/** Map profile country to default UI locale (explicit country beats phone prefix). */
-export function inferLocaleFromCountry(
-  country: string | null | undefined
-): SupportedLocale | null {
-  const upper = (country ?? '').toUpperCase();
-  if (upper === 'CN') return 'zh';
-  if (upper === 'UZ') return 'uz';
-  if (upper === 'KZ') return 'kk';
-  return null;
-}
-
-/** Manual UI choice — overrides phone / profile / browser detection. */
+/** Explicit UI language picker — highest priority (SDD §11.2-A #1). */
 export function getManualLocaleOverride(): SupportedLocale | null {
   const fromCookie = getLocaleCookie();
   if (fromCookie) return fromCookie;
@@ -83,32 +82,32 @@ export function getLocaleCookie(): SupportedLocale | null {
   return value && isSupportedLocale(value) ? value : null;
 }
 
-/**
- * Resolve UI locale priority (SDD §11.2). Client-only — reads cookie/localStorage.
- * For post-login redirect, omit `urlLocale` so profile/phone beat the login page segment.
- */
-export function resolveUiLocale(params: {
-  urlLocale?: string;
-  primaryLocale?: string | null;
-  country?: string | null;
+export type LanguagePreferenceParams = {
+  /** Profile `language_preference` / `primary_locale` */
+  languagePreference?: string | null;
   phone?: string | null;
   browserLocale?: string | null;
-}): SupportedLocale {
-  const manual = getManualLocaleOverride();
-  if (manual) return manual;
+  /** When true, skip manual UI override (for nested resolution). */
+  ignoreManual?: boolean;
+};
 
-  if (params.urlLocale && isSupportedLocale(params.urlLocale)) {
-    return params.urlLocale;
+/**
+ * Language Preference — SDD §11.2-A (UI copy + agent/chat reply language).
+ * 1. Manual UI picker  2. Profile  3. Phone  4. Browser  5. default `ru`
+ */
+export function resolveLanguagePreference(
+  params: LanguagePreferenceParams = {}
+): SupportedLocale {
+  if (!params.ignoreManual) {
+    const manual = getManualLocaleOverride();
+    if (manual) return manual;
   }
 
-  const fromProfile = normalizeLocaleTag(params.primaryLocale);
+  const fromProfile = readLanguagePreference(params.languagePreference);
   if (fromProfile) return fromProfile;
 
-  const fromCountry = inferLocaleFromCountry(params.country);
-  if (fromCountry) return fromCountry;
-
   if (params.phone) {
-    return inferLocaleFromPhone(params.phone);
+    return inferLanguagePreferenceFromPhone(params.phone);
   }
 
   const fromBrowser = normalizeLocaleTag(
@@ -118,6 +117,38 @@ export function resolveUiLocale(params: {
   if (fromBrowser) return fromBrowser;
 
   return DEFAULT_LOCALE;
+}
+
+export type RouteLocaleParams = LanguagePreferenceParams & {
+  urlLocale?: string;
+};
+
+/**
+ * UI route segment `/[locale]/…` — SDD §11.2-B.
+ * 1. Manual cookie  2. Language Preference  3. URL segment  4. default
+ */
+export function resolveRouteLocale(params: RouteLocaleParams = {}): SupportedLocale {
+  const manual = getManualLocaleOverride();
+  if (manual) return manual;
+
+  const fromPreference = resolveLanguagePreference({
+    ...params,
+    ignoreManual: true,
+  });
+  if (readLanguagePreference(params.languagePreference) || params.phone) {
+    return fromPreference;
+  }
+
+  if (params.urlLocale && isSupportedLocale(params.urlLocale)) {
+    return params.urlLocale;
+  }
+
+  return fromPreference;
+}
+
+/** Post-login / boot redirect target locale. */
+export function resolveUiLocale(params: RouteLocaleParams): SupportedLocale {
+  return resolveRouteLocale(params);
 }
 
 export function switchLocalePath(pathname: string, newLocale: SupportedLocale): string {
@@ -130,26 +161,24 @@ export function switchLocalePath(pathname: string, newLocale: SupportedLocale): 
   return `/${segments.join('/')}`;
 }
 
-function localeFromStoredUser(): SupportedLocale | null {
-  if (typeof window === 'undefined') return null;
-  const user = getUserInfo<User>();
-  if (!user) return null;
-  // Profile country is an explicit user choice — beats phone-inherited primary_locale.
-  const fromCountry = inferLocaleFromCountry(user.country);
-  if (fromCountry) return fromCountry;
-  const fromProfile = normalizeLocaleTag(user.primaryLocale);
-  if (fromProfile) return fromProfile;
-  return null;
+function languagePreferenceParamsFromUser(
+  user: User | null | undefined
+): LanguagePreferenceParams {
+  if (!user) return {};
+  return {
+    languagePreference: user.primaryLocale,
+    phone: user.phone,
+  };
 }
 
-/** Current UI locale for API calls (URL path is source when no manual override). */
-export function getActiveRequestLocale(pathname?: string): SupportedLocale {
-  const manual = getManualLocaleOverride();
-  if (manual) return manual;
+/** Language Preference for API headers / chat body (SDD §11.4). */
+export function getActiveLanguagePreference(pathname?: string): SupportedLocale {
+  const user = getUserInfo<User>();
+  const resolved = resolveLanguagePreference(languagePreferenceParamsFromUser(user));
 
-  // Logged-in profile/country beats URL for API language headers (chat, agents).
-  const fromUser = localeFromStoredUser();
-  if (fromUser) return fromUser;
+  if (user?.primaryLocale || user?.phone) {
+    return resolved;
+  }
 
   if (pathname) {
     const segment = pathname.split('/').filter(Boolean)[0];
@@ -159,5 +188,9 @@ export function getActiveRequestLocale(pathname?: string): SupportedLocale {
     const segment = window.location.pathname.split('/').filter(Boolean)[0];
     if (segment && isSupportedLocale(segment)) return segment;
   }
-  return DEFAULT_LOCALE;
+
+  return resolved;
 }
+
+/** @deprecated Use getActiveLanguagePreference */
+export const getActiveRequestLocale = getActiveLanguagePreference;

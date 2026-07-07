@@ -115,8 +115,8 @@
 		"completionBannerHint": "Quyidagi maydonlarni to'ldiring — rezyume konstruktori va shaxsiy tavsiyalar ochiladi.",
 		"gateContextCv": "Rezyumeni davom ettirish uchun quyidagi maydonlarni to'ldiring.",
 		"gateContextGeneral": "To'liq profil ish va tayyorgarlik tavsiyalarini yaxshilaydi.",
-		"localeMismatchHint": "Mamlakat — Xitoy. Xitoy tiliga o'tishni xohlaysizmi?",
-		"localeMismatchAction": "中文",
+		"preferenceMismatchHint": "Profil til afzalligi: {lang}. Interfeysni moslashtirasizmi?",
+		"preferenceMismatchAction": "{lang} ga o'tish",
 		"missingFields": {
 			"primary_country": "Mamlakat / mintaqa",
 			"primary_locale": "Ilova tili («Mening» → Til)",

@@ -1,6 +1,6 @@
 import { API_BASE_URL } from './constants';
 import { getAuthToken, getDeviceId, clearAuthToken } from './auth';
-import { getActiveRequestLocale } from './locale';
+import { getActiveLanguagePreference } from './locale';
 import { mapUserFromApi } from './api-mappers';
 import { parseAssistantEnvelope } from './chat-envelope';
 import { isReferralDismissed } from './referral-dismiss';
@@ -21,7 +21,7 @@ import type {
 } from '@/types';
 
 export type ApiRequestOptions = RequestInit & {
-  /** Explicit UI locale for headers; avoids SSR defaulting to `ru`. */
+  /** Explicit Language Preference for headers; avoids SSR defaulting to `ru`. */
   locale?: string;
 };
 
@@ -49,9 +49,10 @@ export async function apiRequest<T>(
 
   Object.assign(headers, getTmaClientHeaders());
 
-  const requestLocale = localeOverride ?? getActiveRequestLocale();
-  headers['Accept-Language'] = requestLocale;
-  headers['X-Locale'] = requestLocale;
+  const languagePreference = localeOverride ?? getActiveLanguagePreference();
+  headers['Accept-Language'] = languagePreference;
+  headers['X-Language-Preference'] = languagePreference;
+  headers['X-Locale'] = languagePreference;
 
   try {
     const response = await fetch(url, { ...fetchOptions, headers });
@@ -207,13 +208,14 @@ export async function sendChatMessage(
   text: string,
   locale?: string
 ): Promise<ApiResponse<ClinicChatResponse>> {
-  const activeLocale = locale ?? getActiveRequestLocale();
+  const languagePreference = locale ?? getActiveLanguagePreference();
   return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
     body: JSON.stringify({
       session_id: sessionId,
       content: text,
-      locale: activeLocale,
+      locale: languagePreference,
+      language_preference: languagePreference,
     }),
   });
 }

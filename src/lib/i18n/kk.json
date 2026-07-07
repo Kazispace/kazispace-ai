@@ -115,8 +115,8 @@
 		"completionBannerHint": "Төмендегі өрістерді толтырыңыз — резюме конструкторы мен жеке ұсыныстар ашылады.",
 		"gateContextCv": "Резюмені жалғастыру үшін төмендегі өрістерді толтырыңыз.",
 		"gateContextGeneral": "Толық профиль жұмыс пен дайындық ұсыныстарын жақсартады.",
-		"localeMismatchHint": "Ел — Қытай. Қытай тіліне ауыстыру керек пе?",
-		"localeMismatchAction": "中文",
+		"preferenceMismatchHint": "Профильдегі тіл таңдауы: {lang}. Интерфейсті ауыстыру керек пе?",
+		"preferenceMismatchAction": "{lang} тіліне өту",
 		"missingFields": {
 			"primary_country": "Ел / аймақ",
 			"primary_locale": "Қолданба тілі («Менің» → Тіл)",

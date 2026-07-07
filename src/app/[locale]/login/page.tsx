@@ -84,8 +84,7 @@ export default function LoginPage({ params }: LoginPageProps) {
         const redirect = search.get("redirect");
         const targetLocale = resolveUiLocale({
           urlLocale: locale,
-          primaryLocale: user.primaryLocale,
-          country: user.country,
+          languagePreference: user.primaryLocale,
           phone: normalizedPhone,
         });
         const destination =

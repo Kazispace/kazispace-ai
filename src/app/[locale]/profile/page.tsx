@@ -14,7 +14,12 @@ import {
   formatMissingFieldFallback,
   isKnownMissingMinimumField,
 } from "@/lib/profile-completion";
-import { inferLocaleFromCountry, normalizeLocaleTag, switchLocalePath } from "@/lib/locale";
+import {
+  LOCALE_LABELS,
+  readLanguagePreference,
+  setManualLocaleOverride,
+  switchLocalePath,
+} from "@/lib/locale";
 import { isSupportedLocale, type SupportedLocale } from "@/lib/constants";
 import { useAuthStore, useUIStore } from "@/lib/store";
 import type { ProfileCompletion, User } from "@/types";
@@ -75,10 +80,6 @@ function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody
       current.country === "KZ" || current.country === "UZ" || current.country === "CN"
         ? current.country
         : null;
-    const inferredLocale = inferLocaleFromCountry(current.country);
-    if (inferredLocale) {
-      body.primary_locale = inferredLocale;
-    }
   }
   if (current.careerGoal !== initial.careerGoal) {
     body.career_goal = current.careerGoal.trim() || null;
@@ -127,12 +128,13 @@ function ProfilePageContent({ locale }: { locale: string }) {
   const [form, setForm] = useState<ProfileForm>(EMPTY_FORM);
   const [initialForm, setInitialForm] = useState<ProfileForm>(EMPTY_FORM);
   const [profileCompletion, setProfileCompletion] = useState<ProfileCompletion | null>(null);
+  const [loadedPreference, setLoadedPreference] = useState<SupportedLocale | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const returnToCv = searchParams.get("return") === "cv";
-  const suggestedLocale = inferLocaleFromCountry(form.country);
-  const localeMismatch =
-    suggestedLocale && isSupportedLocale(locale) && suggestedLocale !== locale;
+  const routeLocale = isSupportedLocale(locale) ? locale : null;
+  const preferenceMismatch =
+    loadedPreference && routeLocale && loadedPreference !== routeLocale;
 
   const applyLoadedUser = (user: User) => {
     const loaded = formFromUser(user);
@@ -141,6 +143,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
     setForm(loaded);
     setInitialForm(loaded);
     setProfileCompletion(user.profileCompletion ?? null);
+    setLoadedPreference(readLanguagePreference(user.primaryLocale));
   };
 
   useEffect(() => {
@@ -197,16 +200,21 @@ function ProfilePageContent({ locale }: { locale: string }) {
     applyLoadedUser(res.data);
     showToast(t("saveSuccess"), "info");
 
-    const nextLocale: SupportedLocale =
-      normalizeLocaleTag(res.data.primaryLocale) ??
-      inferLocaleFromCountry(res.data.country) ??
+    const preference =
+      readLanguagePreference(res.data.primaryLocale) ??
       (isSupportedLocale(locale) ? locale : "en");
+    const nextRoute = preference;
 
     if (returnToCv && canEnterCvBuilder(res.data)) {
-      router.push(`/${nextLocale}/cv`);
+      router.push(`/${nextRoute}/cv`);
       return;
     }
-    router.push(switchLocalePath(`/${locale}/mine`, nextLocale));
+    router.push(
+      switchLocalePath(
+        `/${isSupportedLocale(locale) ? locale : preference}/mine`,
+        nextRoute
+      )
+    );
   };
 
   if (!isLoggedIn) {
@@ -243,17 +251,22 @@ function ProfilePageContent({ locale }: { locale: string }) {
             {returnToCv ? t("gateContextCv") : t("gateContextGeneral")}
           </p>
         )}
-        {localeMismatch && (
+        {preferenceMismatch && loadedPreference && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 mb-4 flex items-center justify-between gap-3">
-            <p className="text-xs text-blue-900">{t("localeMismatchHint")}</p>
+            <p className="text-xs text-blue-900">
+              {t("preferenceMismatchHint", { lang: LOCALE_LABELS[loadedPreference] })}
+            </p>
             <Button
               type="button"
               size="sm"
               variant="outline"
               className="shrink-0"
-              onClick={() => router.push(switchLocalePath(pathname, suggestedLocale))}
+              onClick={() => {
+                setManualLocaleOverride(loadedPreference);
+                router.push(switchLocalePath(pathname, loadedPreference));
+              }}
             >
-              {t("localeMismatchAction")}
+              {t("preferenceMismatchAction", { lang: LOCALE_LABELS[loadedPreference] })}
             </Button>
           </div>
         )}
