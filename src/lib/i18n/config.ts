@@ -3,9 +3,14 @@ import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '../constants';
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const locale = (await requestLocale) ?? DEFAULT_LOCALE;
+  const enMessages = (await import('./en.json')).default;
+  if (locale === 'en') {
+    return { locale, messages: enMessages };
+  }
+  const localeMessages = (await import(`./${locale}.json`)).default;
   return {
     locale,
-    messages: (await import(`./${locale}.json`)).default,
+    messages: { ...enMessages, ...localeMessages },
   };
 });
 

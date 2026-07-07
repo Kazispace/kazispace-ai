@@ -13,6 +13,7 @@ export function mapUserFromApi(raw: Record<string, unknown>): User {
     email: raw.email as string | undefined,
     phone: raw.phone as string | undefined,
     country: (raw.primary_country ?? profile.country) as string | undefined,
+    primaryLocale: (raw.primary_locale ?? profile.primary_locale) as string | undefined,
     careerGoal: profile.career_goal as string | undefined,
     targetRole: profile.target_role as string | undefined,
     englishLevel: profile.english_level as string | undefined,

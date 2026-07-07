@@ -7,6 +7,7 @@ export interface User {
   email?: string;
   phone?: string;
   country?: string;
+  primaryLocale?: string;
   careerGoal?: string;
   targetRole?: string;
   englishLevel?: string;

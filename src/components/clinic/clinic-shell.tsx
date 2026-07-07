@@ -65,7 +65,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     retryMessage,
     markStreamComplete,
     dismissMessageReferral,
-  } = useClinicChat();
+  } = useClinicChat(locale);
 
   const {
     activeAgentId,

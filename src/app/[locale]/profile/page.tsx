@@ -40,7 +40,7 @@ const EMPTY_FORM: ProfileForm = {
 
 function countryFromApi(value?: string): string {
   const upper = (value ?? "").toUpperCase();
-  return upper === "KZ" || upper === "UZ" ? upper : "";
+  return upper === "KZ" || upper === "UZ" || upper === "CN" ? upper : "";
 }
 
 function formFromUser(user: User): ProfileForm {
@@ -60,7 +60,10 @@ function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody
   const body: PatchMeBody = {};
 
   if (current.country !== initial.country) {
-    body.primary_country = current.country || null;
+    body.primary_country =
+      current.country === "KZ" || current.country === "UZ" || current.country === "CN"
+        ? current.country
+        : null;
   }
   if (current.careerGoal !== initial.careerGoal) {
     body.career_goal = current.careerGoal.trim() || null;
@@ -210,6 +213,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
                   <option value="">{t("countryUnset")}</option>
                   <option value="KZ">{t("countries.kz")}</option>
                   <option value="UZ">{t("countries.uz")}</option>
+                  <option value="CN">{t("countries.cn")}</option>
                 </select>
               </div>
               <div>

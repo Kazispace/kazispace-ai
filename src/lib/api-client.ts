@@ -1,5 +1,6 @@
 import { API_BASE_URL } from './constants';
 import { getAuthToken, getDeviceId, clearAuthToken } from './auth';
+import { getActiveRequestLocale } from './locale';
 import { mapUserFromApi } from './api-mappers';
 import { parseAssistantEnvelope } from './chat-envelope';
 import { isReferralDismissed } from './referral-dismiss';
@@ -41,6 +42,10 @@ export async function apiRequest<T>(
   }
 
   Object.assign(headers, getTmaClientHeaders());
+
+  const requestLocale = getActiveRequestLocale();
+  headers['Accept-Language'] = requestLocale;
+  headers['X-Locale'] = requestLocale;
 
   try {
     const response = await fetch(url, { ...options, headers });
@@ -192,12 +197,17 @@ export interface ClinicChatResponse {
 
 export async function sendChatMessage(
   sessionId: string,
-  text: string
+  text: string,
+  locale?: string
 ): Promise<ApiResponse<ClinicChatResponse>> {
-  // Backend WebChatRequest: { session_id, content } — not `text`
+  const activeLocale = locale ?? getActiveRequestLocale();
   return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
-    body: JSON.stringify({ session_id: sessionId, content: text }),
+    body: JSON.stringify({
+      session_id: sessionId,
+      content: text,
+      locale: activeLocale,
+    }),
   });
 }
 

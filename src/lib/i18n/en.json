@@ -112,6 +112,7 @@
 		"countries": {
 			"kz": "Kazakhstan (KZ)",
 			"uz": "Uzbekistan (UZ)",
+			"cn": "China (CN)",
 			"other": "Other Country"
 		},
 		"goals": {

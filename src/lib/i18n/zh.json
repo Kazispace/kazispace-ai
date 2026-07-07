@@ -1,0 +1,144 @@
+{
+	"login": {
+		"title": "登录",
+		"phoneLabel": "手机号",
+		"phonePlaceholder": "+8613800138000",
+		"phoneHint": "支持哈萨克斯坦 (+7)、乌兹别克斯坦 (+998)、中国 (+86)",
+		"phoneInvalid": "请输入以 +7、+998 或 +86 开头的有效手机号",
+		"sendCode": "发送验证码",
+		"sending": "发送中…",
+		"otpLabel": "验证码",
+		"otpPlaceholder": "000000",
+		"verify": "验证",
+		"verifying": "验证中…",
+		"back": "← 返回",
+		"sessionExpiredTitle": "会话已过期",
+		"sessionExpiredContent": "您的登录已过期，请重新登录。",
+		"reLogin": "重新登录",
+		"cancel": "取消"
+	},
+	"mine": {
+		"title": "个人中心",
+		"editProfileTitle": "编辑资料",
+		"editProfileContent": "Navigating to career profile edit page.",
+		"upgradePlanToast": "Launching billing and package subscriptions...",
+		"tgLinkingToast": "Connecting Telegram Bot...",
+		"logoutConfirmTitle": "Logout Confirmation",
+		"logoutConfirmContent": "确定要退出 KaziSpace 吗？",
+		"logoutToast": "Successfully logged out",
+		"langChangedToast": "语言已切换为：{lang}",
+		"confirmOk": "OK",
+		"confirmCancel": "Cancel",
+		"freeTrialBadge": "Free Trial",
+		"proBadge": "Pro Plan",
+		"sprintBadge": "Sprint Active",
+		"buyCreditsLabel": "Buy Credits",
+		"cvCreditsLabel": "CV Credits",
+		"mockInterviewsLabel": "Mock Prep",
+		"streakLabel": "Streak Days",
+		"streakUnit": "days",
+		"upgradeButton": "升级套餐 / 购买积分",
+		"jobPrepGroupTitle": "Prep & Learn",
+		"cvRepoLabel": "My Resume Repo",
+		"cvRepoValue": "2 Drafts",
+		"interviewRecordsLabel": "Mock Interview Records",
+		"interviewRecordsValue": "3 Completed",
+		"dailyTasksLabel": "Daily Career Tasks",
+		"dailyTasksValue": "1 Todo",
+		"profilePreferencesGroupTitle": "Profile & Preferences",
+		"targetRoleLabel": "Target Role & Level",
+		"sprintPlanLabel": "Career Sprint Plan",
+		"sprintPlanValue": "30 mins/day",
+		"bindTelegramLabel": "Link Telegram Account",
+		"tgUnlinked": "Unlinked",
+		"tgLinked": "Linked",
+		"billingServicesGroupTitle": "Billing & Services",
+		"subscriptionPlansLabel": "Subscription Plans",
+		"creditsLedgerLabel": "Credits Ledger",
+		"systemSettingsGroupTitle": "系统设置",
+		"interfaceLanguageLabel": "界面语言",
+		"hapticFeedbackLabel": "Haptic Feedback",
+		"logoutLabel": "退出登录",
+		"cvLoading": "Navigating to resume repository...",
+		"interviewLoading": "Opening interview records...",
+		"sprintLoading": "Opening daily sprint tasks...",
+		"profileRoleLoading": "Loading target role preferences...",
+		"profileGoalsLoading": "Loading preparation goal settings...",
+		"billingLoading": "Opening subscription checkout...",
+		"ledgerLoading": "Retrieving credit audit logs..."
+	},
+	"profile": {
+		"title": "编辑资料",
+		"displayNameLabel": "Display Name",
+		"displayNamePlaceholder": "Enter your nickname/name",
+		"countryLabel": "国家 / 地区",
+		"careerGoalLabel": "Career Goal",
+		"targetRoleLabel": "Target Role",
+		"targetRolePlaceholder": "e.g. Senior Software Engineer",
+		"englishLevelLabel": "English Level",
+		"currentStatusLabel": "Current Status",
+		"educationLabel": "Education",
+		"educationPlaceholder": "Describe your school, degree, major...",
+		"experienceLabel": "Work Experience",
+		"experiencePlaceholder": "Describe your companies, roles, achievements...",
+		"saveButton": "保存更改",
+		"cancelButton": "取消",
+		"saveSuccess": "资料已更新",
+		"saveFailed": "Could not save profile. Please try again.",
+		"saveNothing": "Change at least one field before saving",
+		"saving": "Saving…",
+		"loginRequired": "Sign in to edit your profile",
+		"signIn": "Sign in",
+		"displayNameReadOnly": "Display name is managed by your account channel",
+		"countryUnset": "Select country",
+		"careerGoalUnset": "Select a goal (optional)",
+		"englishLevelUnset": "Select level (optional)",
+		"englishLevels": {
+			"beginner": "Beginner",
+			"intermediate": "Intermediate",
+			"advanced": "Advanced",
+			"fluent": "Fluent"
+		},
+		"confirmText": "Confirm",
+		"cancelText": "Cancel",
+		"countries": {
+			"kz": "哈萨克斯坦 (KZ)",
+			"uz": "乌兹别克斯坦 (UZ)",
+			"cn": "中国 (CN)",
+			"other": "其他国家"
+		},
+		"goals": {
+			"better_job": "Find a Better Job",
+			"interview_prep": "Prep Mock Interviews",
+			"cv_build": "Build Professional CV"
+		},
+		"statuses": {
+			"student": "Student",
+			"employed": "Employed",
+			"job_seeker": "Job Seeker"
+		}
+	},
+	"nav": {
+		"chat": "对话",
+		"mine": "我的",
+		"jobs": "岗位"
+	},
+	"chat": {
+		"placeholder": {
+			"clinic": "问我职业相关问题…",
+			"agent": "向 {agentName} 提问…"
+		},
+		"welcome": {
+			"greeting": "你好！我是 Serík，你的 AI 职业伙伴。",
+			"prompt": "说说你的职业问题，或选择一位专家："
+		}
+	},
+	"errors": {
+		"network": "网络错误，请重试。",
+		"profileIncomplete": "请先完善资料以使用此功能。"
+	},
+	"clinic": {
+		"backToClinic": "返回门诊",
+		"switchAgent": "切换专家"
+	}
+}
