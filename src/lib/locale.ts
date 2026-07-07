@@ -4,6 +4,8 @@ import {
   isSupportedLocale,
   type SupportedLocale,
 } from './constants';
+import { getUserInfo } from './auth';
+import type { User } from '@/types';
 
 export const LOCALE_LABELS: Record<SupportedLocale, string> = {
   en: 'English',
@@ -38,6 +40,17 @@ export function inferCountryFromPhone(phone: string): string {
   if (normalized.startsWith('+998')) return 'UZ';
   if (normalized.startsWith('+7')) return 'KZ';
   return 'KZ';
+}
+
+/** Map profile country to default UI locale (explicit country beats phone prefix). */
+export function inferLocaleFromCountry(
+  country: string | null | undefined
+): SupportedLocale | null {
+  const upper = (country ?? '').toUpperCase();
+  if (upper === 'CN') return 'zh';
+  if (upper === 'UZ') return 'uz';
+  if (upper === 'KZ') return 'kk';
+  return null;
 }
 
 /** Manual UI choice — overrides phone / profile / browser detection. */
@@ -77,6 +90,7 @@ export function getLocaleCookie(): SupportedLocale | null {
 export function resolveUiLocale(params: {
   urlLocale?: string;
   primaryLocale?: string | null;
+  country?: string | null;
   phone?: string | null;
   browserLocale?: string | null;
 }): SupportedLocale {
@@ -89,6 +103,9 @@ export function resolveUiLocale(params: {
 
   const fromProfile = normalizeLocaleTag(params.primaryLocale);
   if (fromProfile) return fromProfile;
+
+  const fromCountry = inferLocaleFromCountry(params.country);
+  if (fromCountry) return fromCountry;
 
   if (params.phone) {
     return inferLocaleFromPhone(params.phone);
@@ -113,10 +130,27 @@ export function switchLocalePath(pathname: string, newLocale: SupportedLocale): 
   return `/${segments.join('/')}`;
 }
 
+function localeFromStoredUser(): SupportedLocale | null {
+  if (typeof window === 'undefined') return null;
+  const user = getUserInfo<User>();
+  if (!user) return null;
+  // Profile country is an explicit user choice — beats phone-inherited primary_locale.
+  const fromCountry = inferLocaleFromCountry(user.country);
+  if (fromCountry) return fromCountry;
+  const fromProfile = normalizeLocaleTag(user.primaryLocale);
+  if (fromProfile) return fromProfile;
+  return null;
+}
+
 /** Current UI locale for API calls (URL path is source when no manual override). */
 export function getActiveRequestLocale(pathname?: string): SupportedLocale {
   const manual = getManualLocaleOverride();
   if (manual) return manual;
+
+  // Logged-in profile/country beats URL for API language headers (chat, agents).
+  const fromUser = localeFromStoredUser();
+  if (fromUser) return fromUser;
+
   if (pathname) {
     const segment = pathname.split('/').filter(Boolean)[0];
     if (segment && isSupportedLocale(segment)) return segment;

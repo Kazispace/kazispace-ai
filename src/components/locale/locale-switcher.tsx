@@ -16,7 +16,7 @@ import { ChevronDown } from "lucide-react";
 
 interface LocaleSwitcherProps {
   locale: string;
-  variant?: "row" | "compact";
+  variant?: "row" | "compact" | "header";
 }
 
 export function LocaleSwitcher({ locale, variant = "row" }: LocaleSwitcherProps) {
@@ -59,6 +59,25 @@ export function LocaleSwitcher({ locale, variant = "row" }: LocaleSwitcherProps)
     }
     router.push(switchLocalePath(pathname, next));
   };
+
+  if (variant === "header") {
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen((v) => !v)}
+          disabled={isSaving}
+          className="flex items-center gap-1 text-sm text-white/80 hover:text-kazi-orange transition-colors"
+        >
+          {LOCALE_LABELS[current]}
+          <ChevronDown className="w-4 h-4" />
+        </button>
+        {isOpen && (
+          <LocaleMenu current={current} onSelect={(l) => void handleSelect(l)} onClose={() => setIsOpen(false)} />
+        )}
+      </div>
+    );
+  }
 
   if (variant === "compact") {
     return (
