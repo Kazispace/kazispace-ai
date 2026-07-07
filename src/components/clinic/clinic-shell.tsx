@@ -42,6 +42,7 @@ import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
+import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { API_BASE_URL } from "@/lib/constants";
 
 interface ClinicShellProps {
@@ -506,7 +507,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           routeCvBuilderPage();
           return;
         case "complete_profile":
-          router.push(`/${locale}/profile`);
+          router.push(getCompleteProfileHref(locale, { returnToCv: true }));
           return;
         default:
           return;

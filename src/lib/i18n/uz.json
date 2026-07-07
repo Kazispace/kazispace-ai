@@ -101,6 +101,28 @@
 		"countryUnset": "Mamlakatni tanlang",
 		"careerGoalUnset": "Maqsadni tanlang (ixtiyoriy)",
 		"englishLevelUnset": "Darajani tanlang (ixtiyoriy)",
+		"weeklyHoursLabel": "Haftalik tayyorgarlik soatlari",
+		"weeklyHoursUnset": "Soatlar sonini tanlang",
+		"weeklyHoursHint": "Tanlangan diapazonning yuqori chegarasi saqlanadi.",
+		"weeklyHoursOptions": {
+			"five": "5 soatgacha",
+			"ten": "5–10 soat",
+			"fifteen": "10–15 soat",
+			"twenty": "15–20 soat",
+			"thirty": "20+ soat"
+		},
+		"completionBannerTitle": "Bir nechta asosiy maydonlar to'ldirilmagan",
+		"completionBannerHint": "Quyidagi maydonlarni to'ldiring — rezyume konstruktori va shaxsiy tavsiyalar ochiladi.",
+		"gateContextCv": "Rezyumeni davom ettirish uchun quyidagi maydonlarni to'ldiring.",
+		"gateContextGeneral": "To'liq profil ish va tayyorgarlik tavsiyalarini yaxshilaydi.",
+		"missingFields": {
+			"primary_country": "Mamlakat / mintaqa",
+			"primary_locale": "Ilova tili («Mening» → Til)",
+			"career_goal": "Karyera maqsadi",
+			"target_role": "Maqsadli lavozim",
+			"english_level": "Ingliz tili darajasi",
+			"weekly_hours_budget": "Haftalik tayyorgarlik soatlari"
+		},
 		"englishLevels": {
 			"beginner": "Boshlang'ich",
 			"intermediate": "O'rta",

@@ -1,16 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getMe, patchMe, type PatchMeBody } from "@/lib/api-client";
 import { setUserInfo } from "@/lib/auth";
+import { canEnterCvBuilder } from "@/lib/nba-display";
+import {
+  formatMissingFieldFallback,
+  isKnownMissingMinimumField,
+} from "@/lib/profile-completion";
 import { useAuthStore, useUIStore } from "@/lib/store";
-import type { User } from "@/types";
+import type { ProfileCompletion, User } from "@/types";
 
 interface ProfilePageProps {
   params: { locale: string };
@@ -22,6 +27,7 @@ type ProfileForm = {
   careerGoal: string;
   targetRole: string;
   englishLevel: string;
+  weeklyHoursBudget: string;
   currentStatus: string;
   education: string;
   experience: string;
@@ -33,6 +39,7 @@ const EMPTY_FORM: ProfileForm = {
   careerGoal: "",
   targetRole: "",
   englishLevel: "",
+  weeklyHoursBudget: "",
   currentStatus: "student",
   education: "",
   experience: "",
@@ -50,6 +57,8 @@ function formFromUser(user: User): ProfileForm {
     careerGoal: user.careerGoal ?? "",
     targetRole: user.targetRole ?? "",
     englishLevel: user.englishLevel ?? "",
+    weeklyHoursBudget:
+      user.weeklyHoursBudget != null ? String(user.weeklyHoursBudget) : "",
     currentStatus: user.currentStatus ?? "student",
     education: user.education ?? "",
     experience: user.experience ?? "",
@@ -74,6 +83,10 @@ function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody
   if (current.englishLevel !== initial.englishLevel) {
     body.english_level = current.englishLevel || null;
   }
+  if (current.weeklyHoursBudget !== initial.weeklyHoursBudget) {
+    const parsed = current.weeklyHoursBudget.trim();
+    body.weekly_hours_budget = parsed ? Number(parsed) : null;
+  }
   if (current.currentStatus !== initial.currentStatus) {
     body.current_status = current.currentStatus || null;
   }
@@ -87,17 +100,29 @@ function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody
   return body;
 }
 
-export default function ProfilePage({ params }: ProfilePageProps) {
+function missingFieldLabel(
+  field: string,
+  t: ReturnType<typeof useTranslations<"profile">>
+): string {
+  if (isKnownMissingMinimumField(field)) {
+    return t(`missingFields.${field}`);
+  }
+  return formatMissingFieldFallback(field);
+}
+
+function ProfilePageContent({ locale }: { locale: string }) {
   const t = useTranslations("profile");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const showToast = useUIStore((s) => s.showToast);
-  const { locale } = params;
   const { isLoggedIn, token, updateUser } = useAuthStore();
 
   const [form, setForm] = useState<ProfileForm>(EMPTY_FORM);
   const [initialForm, setInitialForm] = useState<ProfileForm>(EMPTY_FORM);
+  const [profileCompletion, setProfileCompletion] = useState<ProfileCompletion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const returnToCv = searchParams.get("return") === "cv";
 
   const applyLoadedUser = (user: User) => {
     const loaded = formFromUser(user);
@@ -105,6 +130,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     setUserInfo(user);
     setForm(loaded);
     setInitialForm(loaded);
+    setProfileCompletion(user.profileCompletion ?? null);
   };
 
   useEffect(() => {
@@ -160,6 +186,10 @@ export default function ProfilePage({ params }: ProfilePageProps) {
 
     applyLoadedUser(res.data);
     showToast(t("saveSuccess"), "info");
+    if (returnToCv && canEnterCvBuilder(res.data)) {
+      router.push(`/${locale}/cv`);
+      return;
+    }
     router.push(`/${locale}/mine`);
   };
 
@@ -190,7 +220,28 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header locale={locale} />
       <main className="pt-20 px-4 max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold text-kazi-navy mb-6">{t("title")}</h1>
+        <h1 className="text-2xl font-bold text-kazi-navy mb-2">{t("title")}</h1>
+        {(returnToCv ||
+          (profileCompletion && !profileCompletion.minimumComplete)) && (
+          <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+            {returnToCv ? t("gateContextCv") : t("gateContextGeneral")}
+          </p>
+        )}
+        {profileCompletion &&
+          !profileCompletion.minimumComplete &&
+          profileCompletion.missingMinimum.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 mb-4">
+              <p className="text-sm font-medium text-amber-900">
+                {t("completionBannerTitle")}
+              </p>
+              <p className="text-xs text-amber-800 mt-1">{t("completionBannerHint")}</p>
+              <ul className="text-xs text-amber-900 mt-2 list-disc pl-4 space-y-0.5">
+                {profileCompletion.missingMinimum.map((field) => (
+                  <li key={field}>{missingFieldLabel(field, t)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         <form onSubmit={(e) => void handleSave(e)} className="space-y-4">
           <Card>
             <CardContent className="p-4 space-y-4">
@@ -259,6 +310,24 @@ export default function ProfilePage({ params }: ProfilePageProps) {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  {t("weeklyHoursLabel")}
+                </label>
+                <select
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  value={form.weeklyHoursBudget}
+                  onChange={(e) => setForm({ ...form, weeklyHoursBudget: e.target.value })}
+                >
+                  <option value="">{t("weeklyHoursUnset")}</option>
+                  <option value="5">{t("weeklyHoursOptions.five")}</option>
+                  <option value="10">{t("weeklyHoursOptions.ten")}</option>
+                  <option value="15">{t("weeklyHoursOptions.fifteen")}</option>
+                  <option value="20">{t("weeklyHoursOptions.twenty")}</option>
+                  <option value="30">{t("weeklyHoursOptions.thirty")}</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">{t("weeklyHoursHint")}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   {t("currentStatusLabel")}
                 </label>
                 <select
@@ -312,5 +381,23 @@ export default function ProfilePage({ params }: ProfilePageProps) {
         </form>
       </main>
     </div>
+  );
+}
+
+export default function ProfilePage({ params }: ProfilePageProps) {
+  const { locale } = params;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 pb-20">
+          <Header locale={locale} />
+          <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
+            <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+          </main>
+        </div>
+      }
+    >
+      <ProfilePageContent locale={locale} />
+    </Suspense>
   );
 }
