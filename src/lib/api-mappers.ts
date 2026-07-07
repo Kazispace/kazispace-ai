@@ -17,8 +17,8 @@ export function mapUserFromApi(raw: Record<string, unknown>): User {
     targetRole: profile.target_role as string | undefined,
     englishLevel: profile.english_level as string | undefined,
     currentStatus: profile.current_status as string | undefined,
-    education: profile.education as string | undefined,
-    experience: profile.experience as string | undefined,
+    education: (profile.education_text ?? profile.education) as string | undefined,
+    experience: (profile.experience_text ?? profile.experience) as string | undefined,
     createdAt: String(raw.first_value_at ?? raw.created_at ?? ''),
     updatedAt: String(raw.hook_state_updated_at ?? raw.updated_at ?? ''),
   };

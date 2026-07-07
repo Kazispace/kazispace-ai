@@ -90,7 +90,22 @@
 		"experiencePlaceholder": "Describe your companies, roles, achievements...",
 		"saveButton": "Save Changes",
 		"cancelButton": "Cancel",
-		"saveSuccess": "Profile updated successfully (Mock)",
+		"saveSuccess": "Profile updated successfully",
+		"saveFailed": "Could not save profile. Please try again.",
+		"saveNothing": "Change at least one field before saving",
+		"saving": "Saving…",
+		"loginRequired": "Sign in to edit your profile",
+		"signIn": "Sign in",
+		"displayNameReadOnly": "Display name is managed by your account channel",
+		"countryUnset": "Select country",
+		"careerGoalUnset": "Select a goal (optional)",
+		"englishLevelUnset": "Select level (optional)",
+		"englishLevels": {
+			"beginner": "Beginner",
+			"intermediate": "Intermediate",
+			"advanced": "Advanced",
+			"fluent": "Fluent"
+		},
 		"confirmText": "Confirm",
 		"cancelText": "Cancel",
 		
