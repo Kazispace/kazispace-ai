@@ -101,6 +101,25 @@
 		"countryUnset": "Выберите страну",
 		"careerGoalUnset": "Выберите цель (необязательно)",
 		"englishLevelUnset": "Выберите уровень (необязательно)",
+		"weeklyHoursLabel": "Часов в неделю на подготовку",
+		"weeklyHoursUnset": "Выберите количество часов",
+		"weeklyHoursOptions": {
+			"five": "До 5 часов",
+			"ten": "5–10 часов",
+			"fifteen": "10–15 часов",
+			"twenty": "15–20 часов",
+			"thirty": "20+ часов"
+		},
+		"completionBannerTitle": "Не хватает нескольких базовых полей",
+		"completionBannerHint": "Заполните пункты ниже, чтобы открыть конструктор резюме и персональные рекомендации.",
+		"missingFields": {
+			"primary_country": "Страна / регион",
+			"primary_locale": "Язык приложения (в разделе «Моё» → Язык)",
+			"career_goal": "Карьерная цель",
+			"target_role": "Целевая должность",
+			"english_level": "Уровень английского",
+			"weekly_hours_budget": "Часов в неделю на подготовку"
+		},
 		"englishLevels": {
 			"beginner": "Начальный",
 			"intermediate": "Средний",

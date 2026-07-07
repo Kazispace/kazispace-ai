@@ -14,6 +14,7 @@ import { useBilling } from "@/hooks/use-billing";
 import { useNbaAction } from "@/hooks/use-nba-action";
 import { planBadgeKey } from "@/lib/api-mappers";
 import { getMe } from "@/lib/api-client";
+import { resolveMineNbaAction } from "@/lib/nba-display";
 import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, User } from "lucide-react";
 import { NbaActionCard } from "@/components/nba/nba-action-card";
 import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
@@ -85,7 +86,7 @@ export default function MinePage({ params }: MinePageProps) {
         ) : isLoggedIn && nbaResponse?.next_best_action ? (
           <NbaActionCard
             locale={locale}
-            action={nbaResponse.next_best_action}
+            action={resolveMineNbaAction(nbaResponse.next_best_action, user)}
           />
         ) : null}
 

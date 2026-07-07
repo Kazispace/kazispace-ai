@@ -1,5 +1,19 @@
-import type { CreditBalance, User } from '@/types';
+import type { CreditBalance, ProfileCompletion, User } from '@/types';
 import type { BillingSummary, CurrentPlan } from '@/types';
+
+function mapProfileCompletion(raw: Record<string, unknown>): ProfileCompletion | undefined {
+  const block = raw.profile_completion as Record<string, unknown> | undefined;
+  if (!block) return undefined;
+  return {
+    minimumComplete: Boolean(block.minimum_complete),
+    missingMinimum: Array.isArray(block.missing_minimum)
+      ? (block.missing_minimum as string[])
+      : [],
+    overallPct: Number(block.overall_pct ?? 0),
+    minimumFieldsCompleted: Number(block.minimum_fields_completed ?? 0),
+    minimumFieldsTotal: Number(block.minimum_fields_total ?? 0),
+  };
+}
 
 export function mapUserFromApi(raw: Record<string, unknown>): User {
   const profile = (raw.profile ?? {}) as Record<string, unknown>;
@@ -17,9 +31,11 @@ export function mapUserFromApi(raw: Record<string, unknown>): User {
     careerGoal: profile.career_goal as string | undefined,
     targetRole: profile.target_role as string | undefined,
     englishLevel: profile.english_level as string | undefined,
+    weeklyHoursBudget: profile.weekly_hours_budget as number | null | undefined,
     currentStatus: profile.current_status as string | undefined,
     education: (profile.education_text ?? profile.education) as string | undefined,
     experience: (profile.experience_text ?? profile.experience) as string | undefined,
+    profileCompletion: mapProfileCompletion(raw),
     createdAt: String(raw.first_value_at ?? raw.created_at ?? ''),
     updatedAt: String(raw.hook_state_updated_at ?? raw.updated_at ?? ''),
   };

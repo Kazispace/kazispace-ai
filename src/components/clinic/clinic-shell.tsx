@@ -506,7 +506,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           routeCvBuilderPage();
           return;
         case "complete_profile":
-          router.push(`/${locale}/profile`);
+          router.push(`/${locale}/profile?return=cv`);
           return;
         default:
           return;

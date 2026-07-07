@@ -94,6 +94,25 @@
 		"countryUnset": "选择国家",
 		"careerGoalUnset": "选择目标（可选）",
 		"englishLevelUnset": "选择水平（可选）",
+		"weeklyHoursLabel": "每周求职/学习投入时间",
+		"weeklyHoursUnset": "选择每周小时数",
+		"weeklyHoursOptions": {
+			"five": "5 小时以内",
+			"ten": "5–10 小时",
+			"fifteen": "10–15 小时",
+			"twenty": "15–20 小时",
+			"thirty": "20 小时以上"
+		},
+		"completionBannerTitle": "还有几项基础信息未填写",
+		"completionBannerHint": "补全以下项目即可解锁简历编辑器和个性化推荐。",
+		"missingFields": {
+			"primary_country": "国家 / 地区",
+			"primary_locale": "应用语言（在「我的」→ 语言中设置）",
+			"career_goal": "职业目标",
+			"target_role": "目标岗位",
+			"english_level": "英语水平",
+			"weekly_hours_budget": "每周投入时间"
+		},
 		"englishLevels": {
 			"beginner": "初级",
 			"intermediate": "中级",

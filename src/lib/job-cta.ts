@@ -26,7 +26,7 @@ export function getJobCtaHref(
 ): string | null {
   switch (cta) {
     case 'complete_profile':
-      return `/${locale}/chat`;
+      return `/${locale}/profile`;
     case 'edit_cv':
       return jobId
         ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`

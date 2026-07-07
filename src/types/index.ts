@@ -1,6 +1,14 @@
 // User types
 // API path types: run `npm run gen:api` → src/types/api.generated.ts (from docs/openapi.json)
 
+export interface ProfileCompletion {
+  minimumComplete: boolean;
+  missingMinimum: string[];
+  overallPct: number;
+  minimumFieldsCompleted: number;
+  minimumFieldsTotal: number;
+}
+
 export interface User {
   id: string;
   displayName: string;
@@ -11,9 +19,11 @@ export interface User {
   careerGoal?: string;
   targetRole?: string;
   englishLevel?: string;
+  weeklyHoursBudget?: number | null;
   currentStatus?: string;
   education?: string;
   experience?: string;
+  profileCompletion?: ProfileCompletion;
   createdAt: string;
   updatedAt: string;
 }

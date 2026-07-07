@@ -101,6 +101,25 @@
 		"countryUnset": "Select country",
 		"careerGoalUnset": "Select a goal (optional)",
 		"englishLevelUnset": "Select level (optional)",
+		"weeklyHoursLabel": "Weekly study / job-prep hours",
+		"weeklyHoursUnset": "Select hours per week",
+		"weeklyHoursOptions": {
+			"five": "Up to 5 hours",
+			"ten": "5–10 hours",
+			"fifteen": "10–15 hours",
+			"twenty": "15–20 hours",
+			"thirty": "20+ hours"
+		},
+		"completionBannerTitle": "A few basics are still missing",
+		"completionBannerHint": "Fill in the items below to unlock CV Builder and personalized recommendations.",
+		"missingFields": {
+			"primary_country": "Country / region",
+			"primary_locale": "App language (change in Mine → Language)",
+			"career_goal": "Career goal",
+			"target_role": "Target role",
+			"english_level": "English level",
+			"weekly_hours_budget": "Weekly hours budget"
+		},
 		"englishLevels": {
 			"beginner": "Beginner",
 			"intermediate": "Intermediate",

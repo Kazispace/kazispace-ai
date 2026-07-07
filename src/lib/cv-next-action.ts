@@ -41,7 +41,7 @@ export function handleCvNextAction(
       deps.openPaywall('PRO_FEATURE_LOCKED');
       return;
     case 'complete_profile':
-      deps.router.push(`/${deps.locale}/profile`);
+      deps.router.push(`/${deps.locale}/profile?return=cv`);
       return;
     case 'return_to_clinic':
       deps.router.push(`/${deps.locale}/chat`);

@@ -153,6 +153,7 @@ export interface PatchMeBody {
   career_goal?: string | null;
   target_role?: string | null;
   english_level?: string | null;
+  weekly_hours_budget?: number | null;
   current_status?: string | null;
   education_text?: string | null;
   experience_text?: string | null;

@@ -7,7 +7,7 @@ const REDIRECT_TO_SEGMENT: Record<string, string> = {
 };
 
 const ACTION_TO_SEGMENT: Record<string, string> = {
-  complete_profile: 'chat',
+  complete_profile: 'profile',
   start_interview: 'interview',
   view_job_recommendations: 'jobs',
   start_job_focused_preparation: 'jobs',
