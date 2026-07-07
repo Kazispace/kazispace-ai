@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getMe, patchMe, type PatchMeBody } from "@/lib/api-client";
 import { setUserInfo } from "@/lib/auth";
-import { isClinicReady } from "@/lib/nba-display";
+import { canEnterCvBuilder } from "@/lib/nba-display";
+import {
+  formatMissingFieldFallback,
+  isKnownMissingMinimumField,
+} from "@/lib/profile-completion";
 import { useAuthStore, useUIStore } from "@/lib/store";
 import type { ProfileCompletion, User } from "@/types";
 
@@ -96,6 +100,16 @@ function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody
   return body;
 }
 
+function missingFieldLabel(
+  field: string,
+  t: ReturnType<typeof useTranslations<"profile">>
+): string {
+  if (isKnownMissingMinimumField(field)) {
+    return t(`missingFields.${field}`);
+  }
+  return formatMissingFieldFallback(field);
+}
+
 function ProfilePageContent({ locale }: { locale: string }) {
   const t = useTranslations("profile");
   const router = useRouter();
@@ -172,7 +186,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
 
     applyLoadedUser(res.data);
     showToast(t("saveSuccess"), "info");
-    if (returnToCv && isClinicReady(res.data)) {
+    if (returnToCv && canEnterCvBuilder(res.data)) {
       router.push(`/${locale}/cv`);
       return;
     }
@@ -206,7 +220,13 @@ function ProfilePageContent({ locale }: { locale: string }) {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header locale={locale} />
       <main className="pt-20 px-4 max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold text-kazi-navy mb-6">{t("title")}</h1>
+        <h1 className="text-2xl font-bold text-kazi-navy mb-2">{t("title")}</h1>
+        {(returnToCv ||
+          (profileCompletion && !profileCompletion.minimumComplete)) && (
+          <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+            {returnToCv ? t("gateContextCv") : t("gateContextGeneral")}
+          </p>
+        )}
         {profileCompletion &&
           !profileCompletion.minimumComplete &&
           profileCompletion.missingMinimum.length > 0 && (
@@ -217,7 +237,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
               <p className="text-xs text-amber-800 mt-1">{t("completionBannerHint")}</p>
               <ul className="text-xs text-amber-900 mt-2 list-disc pl-4 space-y-0.5">
                 {profileCompletion.missingMinimum.map((field) => (
-                  <li key={field}>{t(`missingFields.${field}` as "missingFields.primary_country")}</li>
+                  <li key={field}>{missingFieldLabel(field, t)}</li>
                 ))}
               </ul>
             </div>
@@ -304,6 +324,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
                   <option value="20">{t("weeklyHoursOptions.twenty")}</option>
                   <option value="30">{t("weeklyHoursOptions.thirty")}</option>
                 </select>
+                <p className="text-xs text-gray-500 mt-1">{t("weeklyHoursHint")}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">
@@ -364,15 +385,19 @@ function ProfilePageContent({ locale }: { locale: string }) {
 }
 
 export default function ProfilePage({ params }: ProfilePageProps) {
+  const { locale } = params;
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+        <div className="min-h-screen bg-gray-50 pb-20">
+          <Header locale={locale} />
+          <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
+            <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+          </main>
         </div>
       }
     >
-      <ProfilePageContent locale={params.locale} />
+      <ProfilePageContent locale={locale} />
     </Suspense>
   );
 }

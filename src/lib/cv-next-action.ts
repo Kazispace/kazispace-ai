@@ -1,6 +1,7 @@
-import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { getCompleteProfileHref } from '@/lib/profile-routing';
 
 import { resolveActionLabel } from '@/lib/chat-envelope';
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import type { ChatNextAction } from '@/types/chat-envelope';
 
 const ROUTED_ACTION_TYPES = new Set([
@@ -41,7 +42,7 @@ export function handleCvNextAction(
       deps.openPaywall('PRO_FEATURE_LOCKED');
       return;
     case 'complete_profile':
-      deps.router.push(`/${deps.locale}/profile?return=cv`);
+      deps.router.push(getCompleteProfileHref(deps.locale, { returnToCv: true }));
       return;
     case 'return_to_clinic':
       deps.router.push(`/${deps.locale}/chat`);

@@ -1,3 +1,4 @@
+import { getCompleteProfileHref } from '@/lib/profile-routing';
 import type { ReadinessCheckSource } from '@/types';
 
 export type JobPrimaryCta =
@@ -26,7 +27,7 @@ export function getJobCtaHref(
 ): string | null {
   switch (cta) {
     case 'complete_profile':
-      return `/${locale}/profile`;
+      return getCompleteProfileHref(locale);
     case 'edit_cv':
       return jobId
         ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`

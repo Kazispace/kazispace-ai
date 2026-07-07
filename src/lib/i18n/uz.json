@@ -103,6 +103,7 @@
 		"englishLevelUnset": "Darajani tanlang (ixtiyoriy)",
 		"weeklyHoursLabel": "Haftalik tayyorgarlik soatlari",
 		"weeklyHoursUnset": "Soatlar sonini tanlang",
+		"weeklyHoursHint": "Tanlangan diapazonning yuqori chegarasi saqlanadi.",
 		"weeklyHoursOptions": {
 			"five": "5 soatgacha",
 			"ten": "5–10 soat",
@@ -112,6 +113,8 @@
 		},
 		"completionBannerTitle": "Bir nechta asosiy maydonlar to'ldirilmagan",
 		"completionBannerHint": "Quyidagi maydonlarni to'ldiring — rezyume konstruktori va shaxsiy tavsiyalar ochiladi.",
+		"gateContextCv": "Rezyumeni davom ettirish uchun quyidagi maydonlarni to'ldiring.",
+		"gateContextGeneral": "To'liq profil ish va tayyorgarlik tavsiyalarini yaxshilaydi.",
 		"missingFields": {
 			"primary_country": "Mamlakat / mintaqa",
 			"primary_locale": "Ilova tili («Mening» → Til)",

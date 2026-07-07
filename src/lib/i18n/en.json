@@ -103,6 +103,7 @@
 		"englishLevelUnset": "Select level (optional)",
 		"weeklyHoursLabel": "Weekly study / job-prep hours",
 		"weeklyHoursUnset": "Select hours per week",
+		"weeklyHoursHint": "Saved as the top of your selected weekly range.",
 		"weeklyHoursOptions": {
 			"five": "Up to 5 hours",
 			"ten": "5–10 hours",
@@ -112,6 +113,8 @@
 		},
 		"completionBannerTitle": "A few basics are still missing",
 		"completionBannerHint": "Fill in the items below to unlock CV Builder and personalized recommendations.",
+		"gateContextCv": "Complete the fields below to continue building your CV.",
+		"gateContextGeneral": "A complete profile helps us recommend jobs and tailor your prep plan.",
 		"missingFields": {
 			"primary_country": "Country / region",
 			"primary_locale": "App language (change in Mine → Language)",
