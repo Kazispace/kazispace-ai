@@ -60,35 +60,34 @@ export default function MinePage({ params }: MinePageProps) {
       <Header locale={locale} />
 
       <main className="pt-20 px-4 max-w-lg mx-auto space-y-6">
-        {/* User Card */}
-        <Card className="bg-gradient-to-br from-navy to-navy-2 border-0 overflow-hidden">
-          <CardContent className="px-5 pt-4 pb-7">
-            <Link
-              href={`/${locale}/chat`}
-              className="inline-flex items-center text-sm text-kazi-orange/90 hover:text-kazi-orange font-medium transition-colors"
-            >
-              {tChat("backToClinic")}
-            </Link>
-
-            <div className="mt-5 flex flex-col items-center gap-3 text-center">
-              <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-orange to-amber-500 flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-orange/20 ring-4 ring-white/10">
-                {displayInitial}
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-xl font-bold text-white tracking-tight">
-                  {displayName}
-                </h2>
-                <Badge variant="secondary" className="bg-white/10 text-white/90 border-0">
-                  {t(badgeKey)}
-                </Badge>
-              </div>
+        {/* User Card — compact hero (~25% of prior stacked layout) */}
+        <Card className="bg-gradient-to-br from-navy to-navy-2 border-0">
+          <CardContent className="px-4 py-2.5">
+            <div className="flex items-center justify-between gap-2 text-xs leading-none mb-2">
+              <Link
+                href={`/${locale}/chat`}
+                className="text-kazi-orange/90 hover:text-kazi-orange font-medium transition-colors shrink-0"
+              >
+                {tChat("backToClinic")}
+              </Link>
               <Link
                 href={`/${locale}/profile`}
-                className="mt-1 inline-flex items-center gap-0.5 text-sm text-white/55 hover:text-white/85 transition-colors"
+                className="inline-flex items-center gap-0.5 text-white/50 hover:text-white/80 transition-colors shrink-0"
               >
                 {t("editProfileTitle")}
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </Link>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-orange to-amber-500 flex items-center justify-center text-base font-bold text-white">
+                {displayInitial}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-semibold text-white truncate leading-tight">
+                  {displayName}
+                </h2>
+                <p className="text-xs text-white/60 mt-0.5 truncate">{t(badgeKey)}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
