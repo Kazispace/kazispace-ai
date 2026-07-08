@@ -9,9 +9,11 @@ import { useUIStore } from "@/lib/store";
 
 interface BottomNavProps {
   locale: string;
+  /** Map current pathname → nav href to highlight (e.g. /profile → /mine tab). */
+  activeAliases?: Record<string, string>;
 }
 
-export function BottomNav({ locale }: BottomNavProps) {
+export function BottomNav({ locale, activeAliases }: BottomNavProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
@@ -25,13 +27,21 @@ export function BottomNav({ locale }: BottomNavProps) {
     { href: `/${locale}/mine`, icon: User, label: t("profile"), matchPrefix: false },
   ];
 
+  const isNavItemActive = (
+    item: (typeof navItems)[number]
+  ): boolean => {
+    const aliasTarget = activeAliases?.[pathname];
+    if (aliasTarget === item.href) return true;
+    return item.matchPrefix
+      ? pathname.startsWith(item.href)
+      : pathname === item.href;
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden safe-area-inset">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
-          const isActive = item.matchPrefix
-            ? pathname.startsWith(item.href)
-            : pathname === item.href;
+          const isActive = isNavItemActive(item);
           return (
             <Link
               key={item.href}
