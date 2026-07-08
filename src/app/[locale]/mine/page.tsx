@@ -27,6 +27,7 @@ interface MinePageProps {
 
 export default function MinePage({ params }: MinePageProps) {
   const t = useTranslations("mine");
+  const tChat = useTranslations("chat");
   const router = useRouter();
   const { locale } = params;
   const { user, logout, token, isLoggedIn } = useAuthStore();
@@ -59,6 +60,13 @@ export default function MinePage({ params }: MinePageProps) {
       <Header locale={locale} />
 
       <main className="pt-20 px-4 max-w-lg mx-auto space-y-6">
+        <Link
+          href={`/${locale}/chat`}
+          className="text-sm text-kazi-orange font-medium inline-block"
+        >
+          {tChat("backToClinic")}
+        </Link>
+
         {/* User Card */}
         <Card className="bg-gradient-to-br from-navy to-navy-2 border-0">
           <CardContent className="p-6">
