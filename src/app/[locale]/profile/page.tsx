@@ -1,9 +1,11 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Header } from "@/components/layout/header";
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,8 +119,25 @@ function missingFieldLabel(
   return formatMissingFieldFallback(field);
 }
 
+function ProfilePageShell({
+  locale,
+  children,
+}: {
+  locale: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <Header locale={locale} />
+      {children}
+      <BottomNav locale={locale} />
+    </div>
+  );
+}
+
 function ProfilePageContent({ locale }: { locale: string }) {
   const t = useTranslations("profile");
+  const tChat = useTranslations("chat");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -217,33 +236,46 @@ function ProfilePageContent({ locale }: { locale: string }) {
     );
   };
 
+  const handleCancel = () => {
+    router.push(`/${locale}/chat`);
+  };
+
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
-        <Header locale={locale} />
+      <ProfilePageShell locale={locale}>
         <main className="pt-20 px-4 max-w-lg mx-auto text-center space-y-4">
+          <Link
+            href={`/${locale}/chat`}
+            className="text-sm text-kazi-orange font-medium inline-block mb-4"
+          >
+            {tChat("backToClinic")}
+          </Link>
           <p className="text-sm text-gray-600">{t("loginRequired")}</p>
           <Button onClick={() => router.push(`/${locale}/login`)}>{t("signIn")}</Button>
         </main>
-      </div>
+      </ProfilePageShell>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
-        <Header locale={locale} />
+      <ProfilePageShell locale={locale}>
         <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
           <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
         </main>
-      </div>
+      </ProfilePageShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Header locale={locale} />
+    <ProfilePageShell locale={locale}>
       <main className="pt-20 px-4 max-w-lg mx-auto">
+        <Link
+          href={`/${locale}/chat`}
+          className="text-sm text-kazi-orange font-medium mb-4 inline-block"
+        >
+          {tChat("backToClinic")}
+        </Link>
         <h1 className="text-2xl font-bold text-kazi-navy mb-2">{t("title")}</h1>
         {(returnToCv ||
           (profileCompletion && !profileCompletion.minimumComplete)) && (
@@ -412,7 +444,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => router.back()}
+              onClick={handleCancel}
               disabled={isSaving}
             >
               {t("cancelButton")}
@@ -423,7 +455,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
           </div>
         </form>
       </main>
-    </div>
+    </ProfilePageShell>
   );
 }
 
@@ -432,12 +464,11 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 pb-20">
-          <Header locale={locale} />
+        <ProfilePageShell locale={locale}>
           <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
             <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
           </main>
-        </div>
+        </ProfilePageShell>
       }
     >
       <ProfilePageContent locale={locale} />
