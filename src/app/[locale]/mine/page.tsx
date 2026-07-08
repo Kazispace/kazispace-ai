@@ -62,7 +62,7 @@ export default function MinePage({ params }: MinePageProps) {
       <main className="pt-20 px-4 max-w-lg mx-auto space-y-6">
         <Link
           href={`/${locale}/chat`}
-          className="text-sm text-kazi-orange font-medium inline-block"
+          className="text-sm text-kazi-orange font-medium inline-block mb-4"
         >
           {tChat("backToClinic")}
         </Link>
