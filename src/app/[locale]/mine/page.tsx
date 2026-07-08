@@ -60,32 +60,34 @@ export default function MinePage({ params }: MinePageProps) {
       <Header locale={locale} />
 
       <main className="pt-20 px-4 max-w-lg mx-auto space-y-6">
-        <Link
-          href={`/${locale}/chat`}
-          className="text-sm text-kazi-orange font-medium inline-block mb-4"
-        >
-          {tChat("backToClinic")}
-        </Link>
-
         {/* User Card */}
-        <Card className="bg-gradient-to-br from-navy to-navy-2 border-0">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange to-amber-500 flex items-center justify-center text-2xl font-bold text-white">
+        <Card className="bg-gradient-to-br from-navy to-navy-2 border-0 overflow-hidden">
+          <CardContent className="px-5 pt-4 pb-7">
+            <Link
+              href={`/${locale}/chat`}
+              className="inline-flex items-center text-sm text-kazi-orange/90 hover:text-kazi-orange font-medium transition-colors"
+            >
+              {tChat("backToClinic")}
+            </Link>
+
+            <div className="mt-5 flex flex-col items-center gap-3 text-center">
+              <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-orange to-amber-500 flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-orange/20 ring-4 ring-white/10">
                 {displayInitial}
               </div>
-              <div className="flex-1">
-                <h2 className="text-xl font-bold text-white">
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold text-white tracking-tight">
                   {displayName}
                 </h2>
-                <Badge variant="secondary" className="mt-1">
+                <Badge variant="secondary" className="bg-white/10 text-white/90 border-0">
                   {t(badgeKey)}
                 </Badge>
               </div>
-              <Link href={`/${locale}/profile`}>
-                <Button variant="ghost" size="icon" className="text-white/70">
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
+              <Link
+                href={`/${locale}/profile`}
+                className="mt-1 inline-flex items-center gap-0.5 text-sm text-white/55 hover:text-white/85 transition-colors"
+              >
+                {t("editProfileTitle")}
+                <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
           </CardContent>
