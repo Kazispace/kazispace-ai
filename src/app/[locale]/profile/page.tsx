@@ -130,7 +130,10 @@ function ProfilePageShell({
     <div className="min-h-screen bg-gray-50 pb-20">
       <Header locale={locale} />
       {children}
-      <BottomNav locale={locale} />
+      <BottomNav
+        locale={locale}
+        activeAliases={{ [`/${locale}/profile`]: `/${locale}/mine` }}
+      />
     </div>
   );
 }
@@ -237,7 +240,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
   };
 
   const handleCancel = () => {
-    router.push(`/${locale}/chat`);
+    router.replace(`/${locale}/chat`);
   };
 
   if (!isLoggedIn) {
