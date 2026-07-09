@@ -1,10 +1,11 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Download, FileText, Loader2, Sparkles } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { MarkdownContent } from '@/components/clinic/markdown-content';
+import { Button } from '@/components/ui/button';
 import type { CvPreviewContent } from '@/lib/cv-api';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +19,6 @@ interface CvPreviewPaneProps {
   className?: string;
 }
 
-/** Coze "预览与调试" right panel. */
 export function CvPreviewPane({
   preview,
   isLoading,
@@ -33,56 +33,47 @@ export function CvPreviewPane({
   return (
     <aside
       className={cn(
-        'flex flex-col min-h-0 min-w-0 bg-workspace-panel',
-        'lg:w-[min(400px,36vw)] lg:shrink-0 lg:border-l lg:border-workspace-border',
+        'flex flex-col min-h-0 min-w-0 bg-[#ECEEF2]',
+        'lg:w-[min(440px,40vw)] lg:shrink-0 lg:border-l lg:border-gray-200/80',
         className
       )}
     >
-      <div className="shrink-0 px-4 py-3 border-b border-workspace-border bg-workspace-header flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <Sparkles className="h-4 w-4 text-kazi-orange shrink-0" aria-hidden />
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-workspace-text truncate">
-              {t('previewDebugTitle')}
-            </h2>
-            <p className="text-[11px] text-workspace-muted truncate">{t('previewSubtitle')}</p>
-          </div>
+      <div className="shrink-0 px-4 h-12 flex items-center justify-between bg-white border-b border-gray-200/80">
+        <div>
+          <h2 className="text-sm font-semibold text-kazi-navy">{t('previewTitle')}</h2>
         </div>
         {canDownload && onDownload ? (
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant="outline"
             disabled={isExporting}
             onClick={onDownload}
-            title={t('downloadPdf')}
-            className={cn(
-              'hidden lg:flex items-center gap-1 h-7 px-2.5 rounded-lg text-xs font-medium shrink-0',
-              'bg-kazi-orange/10 text-kazi-orange hover:bg-kazi-orange/15',
-              'disabled:opacity-50 transition-colors'
-            )}
+            className="hidden lg:inline-flex h-8 gap-1.5 text-xs"
           >
             {isExporting ? (
-              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <Download className="h-3 w-3" aria-hidden />
+              <Download className="h-3.5 w-3.5" />
             )}
             PDF
-          </button>
+          </Button>
         ) : null}
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 p-4">
+      <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 text-kazi-orange animate-spin mb-3" aria-hidden />
-            <p className="text-xs text-workspace-muted">{t('previewLoading')}</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="h-7 w-7 text-kazi-orange animate-spin mb-3" />
+            <p className="text-sm text-gray-500">{t('previewLoading')}</p>
           </div>
         ) : preview ? (
-          <article
+          <div
             className={cn(
-              'rounded-[10px] border border-slate-300 bg-white',
-              'px-5 py-6 shadow-sm',
-              'prose prose-sm max-w-none text-gray-800',
-              'prose-headings:text-kazi-navy'
+              'mx-auto max-w-[480px] min-h-[640px] bg-white',
+              'shadow-[0_2px_16px_rgba(13,27,42,0.08)] rounded-sm',
+              'px-8 py-10 sm:px-10 sm:py-12',
+              'prose prose-sm sm:prose-base max-w-none text-gray-800',
+              'prose-headings:text-kazi-navy prose-headings:font-semibold'
             )}
           >
             {preview.format === 'html' ? (
@@ -90,29 +81,24 @@ export function CvPreviewPane({
             ) : (
               <MarkdownContent content={preview.content} />
             )}
-          </article>
+          </div>
         ) : canDownload ? (
           <EmptyState
             message={t('previewPendingDownload')}
             action={
               onDownload ? (
-                <button
-                  type="button"
+                <Button
+                  className="mt-5 gap-2"
                   disabled={isExporting}
                   onClick={onDownload}
-                  className={cn(
-                    'mt-4 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg text-sm font-medium',
-                    'bg-kazi-orange hover:bg-kazi-orange/90 text-white shadow-sm',
-                    'disabled:opacity-50 transition-colors'
-                  )}
                 >
                   {isExporting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Download className="h-4 w-4" aria-hidden />
+                    <Download className="h-4 w-4" />
                   )}
                   {isExporting ? t('exportingPdf') : t('downloadPdf')}
-                </button>
+                </Button>
               ) : null
             }
           />
@@ -124,24 +110,19 @@ export function CvPreviewPane({
       {footer}
 
       {canDownload && onDownload ? (
-        <div className="lg:hidden shrink-0 p-3 border-t border-workspace-border bg-white safe-area-pb">
-          <button
-            type="button"
+        <div className="lg:hidden shrink-0 p-4 bg-white border-t border-gray-200/80 safe-area-pb">
+          <Button
+            className="w-full h-11 gap-2"
             disabled={isExporting}
             onClick={onDownload}
-            className={cn(
-              'w-full h-11 flex items-center justify-center gap-2 rounded-xl text-sm font-medium',
-              'bg-kazi-orange hover:bg-kazi-orange/90 text-white shadow-sm',
-              'disabled:opacity-50 transition-colors'
-            )}
           >
             {isExporting ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Download className="h-4 w-4" aria-hidden />
+              <Download className="h-4 w-4" />
             )}
             {isExporting ? t('exportingPdf') : t('downloadPdf')}
-          </button>
+          </Button>
         </div>
       ) : null}
     </aside>
@@ -158,14 +139,10 @@ function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-[10px] border border-dashed border-workspace-border bg-workspace-header">
-      <div className="h-12 w-12 rounded-2xl bg-workspace-hover flex items-center justify-center mb-3">
-        <FileText className="h-6 w-6 text-workspace-muted" aria-hidden />
-      </div>
-      <p className="text-sm text-workspace-text max-w-[240px]">{message}</p>
-      {hint ? (
-        <p className="text-xs text-workspace-muted mt-2 max-w-[260px]">{hint}</p>
-      ) : null}
+    <div className="mx-auto max-w-[480px] flex flex-col items-center justify-center py-24 px-6 text-center">
+      <div className="h-14 w-11 rounded border-2 border-gray-200 bg-white shadow-sm mb-4" aria-hidden />
+      <p className="text-sm text-gray-700">{message}</p>
+      {hint ? <p className="text-xs text-gray-500 mt-2 max-w-xs">{hint}</p> : null}
       {action}
     </div>
   );

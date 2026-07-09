@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type RefObject } from "react";
 import { Loader2, Paperclip, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Button } from "@/components/ui/button";
 import { CV_UPLOAD_ACCEPT } from "@/lib/cv-input-api";
 import { cn } from "@/lib/utils";
 
@@ -13,18 +14,20 @@ interface CvChatInputProps {
   disabled?: boolean;
   isUploading?: boolean;
   placeholder?: string;
+  fileInputRef?: RefObject<HTMLInputElement>;
 }
 
-/** Coze-style floating composer at bottom of chat. */
 export function CvChatInput({
   onSend,
   onUpload,
   disabled,
   isUploading,
   placeholder,
+  fileInputRef: externalFileRef,
 }: CvChatInputProps) {
   const t = useTranslations("cv");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const internalFileRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = externalFileRef ?? internalFileRef;
   const [message, setMessage] = useState("");
   const inputDisabled = disabled || isUploading;
 
@@ -52,45 +55,32 @@ export function CvChatInput({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="shrink-0 px-4 py-3 bg-gradient-to-t from-workspace-bg via-workspace-bg to-transparent"
-    >
-      <div
-        className={cn(
-          "flex items-end gap-2 rounded-2xl border border-workspace-border bg-white",
-          "px-3 py-2 shadow-md shadow-black/5",
-          "focus-within:border-kazi-orange/40 focus-within:ring-2 focus-within:ring-kazi-orange/10",
-          "transition-all"
-        )}
+    <form onSubmit={handleSubmit} className="flex gap-2 p-4 bg-white border-t border-gray-200/80 items-end">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={CV_UPLOAD_ACCEPT}
+        className="hidden"
+        onChange={handleFileChange}
+        aria-hidden
+        tabIndex={-1}
+      />
+      <Button
+        type="button"
+        size="icon"
+        variant="outline"
+        className="h-12 w-12 shrink-0 rounded-full"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={inputDisabled}
+        aria-label={t("uploadResume")}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept={CV_UPLOAD_ACCEPT}
-          className="hidden"
-          onChange={handleFileChange}
-          aria-hidden
-          tabIndex={-1}
-        />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={inputDisabled}
-          aria-label={t("uploadResume")}
-          title={t("uploadResume")}
-          className={cn(
-            "shrink-0 h-9 w-9 flex items-center justify-center rounded-xl",
-            "text-workspace-muted hover:text-kazi-orange hover:bg-workspace-hover",
-            "disabled:opacity-40 transition-colors"
-          )}
-        >
-          {isUploading ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <Paperclip className="h-5 w-5" />
-          )}
-        </button>
+        {isUploading ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : (
+          <Paperclip className="w-5 h-5" />
+        )}
+      </Button>
+      <div className="flex-1 relative">
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -101,29 +91,21 @@ export function CvChatInput({
           disabled={inputDisabled}
           rows={1}
           className={cn(
-            "flex-1 resize-none bg-transparent py-2 text-sm text-workspace-text",
-            "placeholder:text-workspace-muted focus:outline-none",
+            "w-full resize-none rounded-[24px] border border-gray-200 bg-gray-50 px-4 py-3 text-sm",
+            "focus:outline-none focus:border-kazi-orange focus:bg-white transition-colors",
             "disabled:opacity-50 disabled:cursor-not-allowed max-h-32"
           )}
-          style={{ minHeight: "36px" }}
+          style={{ minHeight: "48px" }}
         />
-        <button
-          type="submit"
-          disabled={!message.trim() || inputDisabled}
-          aria-label="Send"
-          className={cn(
-            "shrink-0 h-9 w-9 flex items-center justify-center rounded-xl",
-            "bg-kazi-orange text-white shadow-sm",
-            "hover:bg-kazi-orange/90 disabled:opacity-30 disabled:cursor-not-allowed",
-            "transition-colors"
-          )}
-        >
-          <Send className="h-4 w-4" />
-        </button>
       </div>
-      <p className="text-[10px] text-workspace-muted text-center mt-2">
-        {t("composerHint")}
-      </p>
+      <Button
+        type="submit"
+        size="icon"
+        disabled={!message.trim() || inputDisabled}
+        className="h-12 w-12 shrink-0"
+      >
+        <Send className="w-5 h-5" />
+      </Button>
     </form>
   );
 }
