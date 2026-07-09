@@ -102,6 +102,9 @@ export function resolveCvUploadErrorMessage(
   if (errorCode === 'PROXY_UNAVAILABLE' || errorCode === 'PROXY_PAYLOAD_TOO_LARGE') {
     return t('uploadErrorNetwork');
   }
+  if (errorCode === 'SERVER_ERROR' || (error?.startsWith('HTTP 5') ?? false)) {
+    return t('uploadErrorServer');
+  }
   if (errorCode === 'AGENT_NOT_ACTIVE') {
     return error ?? t('uploadErrorAgentNotActive');
   }
@@ -181,7 +184,9 @@ async function postCvUpload(
           ? 'PROXY_UNAVAILABLE'
           : response.status === 413
             ? 'PROXY_PAYLOAD_TOO_LARGE'
-            : errorCode;
+            : response.status >= 500
+              ? 'SERVER_ERROR'
+              : errorCode;
       return {
         success: false,
         error,
