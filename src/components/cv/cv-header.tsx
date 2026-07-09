@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 
 interface CvHeaderProps {
   locale: string;
+  subtitle?: string;
   canDownload?: boolean;
   isExporting?: boolean;
   onDownload?: () => void;
@@ -23,6 +24,7 @@ interface CvHeaderProps {
 
 export function CvHeader({
   locale,
+  subtitle,
   canDownload,
   isExporting,
   onDownload,
@@ -57,7 +59,7 @@ export function CvHeader({
 
         <div className="min-w-0 flex-1">
           <h1 className="text-sm font-semibold text-white truncate">{t('title')}</h1>
-          <p className="text-xs text-white/50 truncate">{t('subtitle')}</p>
+          <p className="text-xs text-white/50 truncate">{subtitle ?? t('subtitle')}</p>
         </div>
 
         {showPipeline ? (

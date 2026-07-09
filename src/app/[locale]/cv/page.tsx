@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
@@ -17,7 +17,7 @@ import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
 import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
 import { CvSessionSidebar } from "@/components/cv/cv-session-sidebar";
 import { CvNewSessionDialog } from "@/components/cv/cv-new-session-dialog";
-import { CvWorkspaceTabs, type CvWorkspaceTab } from "@/components/cv/cv-workspace-tabs";
+import { CvWorkspaceTabs, type CvWorkspaceTab, CV_CHAT_PANEL_ID, CV_RESUME_PANEL_ID } from "@/components/cv/cv-workspace-tabs";
 import { Button } from "@/components/ui/button";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
@@ -80,9 +80,14 @@ function CvPageContent({ locale }: { locale: string }) {
     !needsLogin && !needsOnboarding && !showProfileGate;
   const showPipelineSteps = showWorkspace && !isReadOnly;
   const canDownloadCv = documentId != null;
-  const resumeReady = canDownloadCv || preview != null;
+  const resumeHasPreview = preview != null;
   const inputDisabled =
     !isSessionReady || isSending || isUploading || isExporting;
+
+  const headerSubtitle = useMemo(
+    () => (jobId ? t("subtitleWithJob", { jobId }) : t("subtitle")),
+    [jobId, t]
+  );
 
   useEffect(() => {
     if (canDownloadCv) {
@@ -130,10 +135,6 @@ function CvPageContent({ locale }: { locale: string }) {
     setNewSessionDialogOpen(true);
   }, [isLoading, isSending]);
 
-  const handleDownload = useCallback(() => {
-    void exportCvPdf();
-  }, [exportCvPdf]);
-
   const previewFooter = (
     <>
       {parsedSections && !isReadOnly ? (
@@ -176,9 +177,10 @@ function CvPageContent({ locale }: { locale: string }) {
     <div className="h-[100dvh] flex flex-col bg-gray-bg overflow-hidden">
       <CvHeader
         locale={locale}
+        subtitle={headerSubtitle}
         canDownload={canDownloadCv}
         isExporting={isExporting}
-        onDownload={handleDownload}
+        onDownload={() => void exportCvPdf()}
         onNewSession={requestNewSession}
         actionsDisabled={isLoading || isSending}
         pipelineState={pipelineState}
@@ -189,7 +191,8 @@ function CvPageContent({ locale }: { locale: string }) {
       <CvWorkspaceTabs
         active={mobileTab}
         onChange={setMobileTab}
-        resumeReady={resumeReady}
+        resumeDownloadReady={canDownloadCv}
+        resumeHasPreview={resumeHasPreview && !canDownloadCv}
       />
 
       <div className="flex-1 flex min-h-0">
@@ -205,6 +208,9 @@ function CvPageContent({ locale }: { locale: string }) {
 
         <div className="flex-1 flex min-w-0 min-h-0">
           <section
+            id={CV_CHAT_PANEL_ID}
+            role="tabpanel"
+            aria-labelledby="cv-tab-chat"
             className={cn(
               "flex-1 flex flex-col min-w-0 min-h-0 bg-gray-bg",
               mobileTab !== "chat" && "hidden lg:flex"
@@ -300,7 +306,9 @@ function CvPageContent({ locale }: { locale: string }) {
             isLoading={isLoading && !preview && !canDownloadCv}
             canDownload={canDownloadCv}
             isExporting={isExporting}
-            onDownload={handleDownload}
+            onDownload={() => void exportCvPdf()}
+            jobSubtitle={jobId ? headerSubtitle : undefined}
+            panelId={CV_RESUME_PANEL_ID}
             footer={previewFooter}
             className={cn(
               mobileTab !== "resume" && "hidden lg:flex",

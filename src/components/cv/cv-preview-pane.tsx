@@ -16,6 +16,8 @@ interface CvPreviewPaneProps {
   canDownload?: boolean;
   isExporting?: boolean;
   onDownload?: () => void;
+  jobSubtitle?: string;
+  panelId?: string;
   className?: string;
 }
 
@@ -26,12 +28,17 @@ export function CvPreviewPane({
   canDownload,
   isExporting,
   onDownload,
+  jobSubtitle,
+  panelId,
   className,
 }: CvPreviewPaneProps) {
   const t = useTranslations('cv');
 
   return (
     <aside
+      id={panelId}
+      role="tabpanel"
+      aria-labelledby={panelId ? 'cv-tab-resume' : undefined}
       className={cn(
         'flex flex-col min-h-0 min-w-0 bg-[#ECEEF2]',
         'lg:w-[min(440px,40vw)] lg:shrink-0 lg:border-l lg:border-gray-200/80',
@@ -39,24 +46,20 @@ export function CvPreviewPane({
       )}
     >
       <div className="shrink-0 px-4 h-12 flex items-center justify-between bg-white border-b border-gray-200/80">
-        <div>
+        <div className="min-w-0">
           <h2 className="text-sm font-semibold text-kazi-navy">{t('previewTitle')}</h2>
+          {jobSubtitle ? (
+            <p className="text-[11px] text-gray-500 truncate">{jobSubtitle}</p>
+          ) : null}
         </div>
         {canDownload && onDownload ? (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={isExporting}
-            onClick={onDownload}
+          <DownloadPdfButton
+            isExporting={isExporting}
+            onDownload={onDownload}
             className="hidden lg:inline-flex h-8 gap-1.5 text-xs"
-          >
-            {isExporting ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Download className="h-3.5 w-3.5" />
-            )}
-            PDF
-          </Button>
+            variant="outline"
+            label="PDF"
+          />
         ) : null}
       </div>
 
@@ -87,18 +90,12 @@ export function CvPreviewPane({
             message={t('previewPendingDownload')}
             action={
               onDownload ? (
-                <Button
+                <DownloadPdfButton
+                  isExporting={isExporting}
+                  onDownload={onDownload}
                   className="mt-5 gap-2"
-                  disabled={isExporting}
-                  onClick={onDownload}
-                >
-                  {isExporting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  {isExporting ? t('exportingPdf') : t('downloadPdf')}
-                </Button>
+                  label={t('downloadPdf')}
+                />
               ) : null
             }
           />
@@ -111,21 +108,47 @@ export function CvPreviewPane({
 
       {canDownload && onDownload ? (
         <div className="lg:hidden shrink-0 p-4 bg-white border-t border-gray-200/80 safe-area-pb">
-          <Button
+          <DownloadPdfButton
+            isExporting={isExporting}
+            onDownload={onDownload}
             className="w-full h-11 gap-2"
-            disabled={isExporting}
-            onClick={onDownload}
-          >
-            {isExporting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            {isExporting ? t('exportingPdf') : t('downloadPdf')}
-          </Button>
+            label={t('downloadPdf')}
+          />
         </div>
       ) : null}
     </aside>
+  );
+}
+
+function DownloadPdfButton({
+  isExporting,
+  onDownload,
+  label,
+  className,
+  variant = 'default',
+}: {
+  isExporting?: boolean;
+  onDownload: () => void;
+  label: string;
+  className?: string;
+  variant?: 'default' | 'outline';
+}) {
+  const t = useTranslations('cv');
+
+  return (
+    <Button
+      variant={variant}
+      disabled={isExporting}
+      onClick={onDownload}
+      className={className}
+    >
+      {isExporting ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Download className="h-4 w-4" />
+      )}
+      {isExporting ? t('exportingPdf') : label}
+    </Button>
   );
 }
 

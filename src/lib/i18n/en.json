@@ -431,8 +431,6 @@
 		"uploadErrorServer": "Server error while processing your resume. Please try again in a moment.",
 		"downloadPdf": "Download PDF",
 		"downloadPdfShort": "Download resume",
-		"cvReadyTitle": "Your resume is ready",
-		"cvReadyHint": "Preview on the right — tap the orange button to save PDF.",
 		"exportingPdf": "Preparing PDF…",
 		"exportErrorGeneric": "Failed to download PDF.",
 		"exportErrorNotFound": "CV document not found. Generate your CV first.",
