@@ -1,8 +1,8 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { AgentSessionSummary } from "@/types";
 
@@ -37,22 +37,40 @@ export function CvSessionSidebar({
   return (
     <aside
       className={cn(
-        "w-64 shrink-0 border-r border-gray-200 bg-white flex flex-col min-h-[calc(100vh-4rem)]",
+        "w-56 shrink-0 flex flex-col min-h-0",
+        "bg-workspace-sidebar border-r border-workspace-border",
         className
       )}
     >
-      <div className="p-3 border-b border-gray-100 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-kazi-navy">{t("sessionsTitle")}</h2>
-        <Button size="sm" variant="outline" disabled={disabled} onClick={onNew}>
-          {t("newCv")}
-        </Button>
+      <div className="h-9 px-3 flex items-center justify-between gap-2 border-b border-workspace-border shrink-0">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-workspace-muted">
+          {t("sessionsTitle")}
+        </span>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={onNew}
+          title={t("newCv")}
+          aria-label={t("newCv")}
+          className={cn(
+            "h-6 w-6 flex items-center justify-center rounded",
+            "text-workspace-muted hover:text-workspace-text hover:bg-workspace-hover",
+            "disabled:opacity-50 transition-colors"
+          )}
+        >
+          <Plus className="h-3.5 w-3.5" aria-hidden />
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
+      <div className="flex-1 overflow-y-auto py-1 min-h-0">
         {isLoading && sessions.length === 0 ? (
-          <p className="text-xs text-gray-500 px-2 py-4 text-center">{t("sessionsLoading")}</p>
+          <p className="text-[11px] text-workspace-muted px-3 py-4 text-center">
+            {t("sessionsLoading")}
+          </p>
         ) : sessions.length === 0 ? (
-          <p className="text-xs text-gray-500 px-2 py-4 text-center">{t("sessionsEmpty")}</p>
+          <p className="text-[11px] text-workspace-muted px-3 py-4 text-center">
+            {t("sessionsEmpty")}
+          </p>
         ) : (
           sessions.map((session) => {
             const isActive = session.session_id === activeSessionId;
@@ -63,23 +81,16 @@ export function CvSessionSidebar({
                 disabled={disabled}
                 onClick={() => onSelect(session.session_id)}
                 className={cn(
-                  "w-full text-left rounded-lg px-3 py-2 transition-colors",
+                  "w-full text-left px-2 py-1.5 mx-1 rounded-sm transition-colors",
+                  "max-w-[calc(100%-8px)]",
                   isActive
-                    ? "bg-orange-50 border border-orange-200"
-                    : "hover:bg-gray-50 border border-transparent"
+                    ? "bg-workspace-active text-workspace-text"
+                    : "text-workspace-muted hover:bg-workspace-hover hover:text-workspace-text"
                 )}
               >
-                <p className="text-sm font-medium text-kazi-navy truncate">{session.title}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                  {isActive ? (
-                    <span className="text-kazi-orange font-medium">{t("sessionCurrent")}</span>
-                  ) : (
-                    <span>
-                      {session.status === "active"
-                        ? t("sessionActive")
-                        : t("sessionEnded")}
-                    </span>
-                  )}
+                <p className="text-[13px] truncate leading-tight">{session.title}</p>
+                <p className="text-[10px] mt-0.5 opacity-70 flex items-center gap-1">
+                  {isActive ? t("sessionCurrent") : session.status === "active" ? t("sessionActive") : t("sessionEnded")}
                   {session.updated_at ? (
                     <>
                       <span aria-hidden>·</span>

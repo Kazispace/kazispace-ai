@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import type { CvDiffChange, CvDiffPayload } from '@/types/api-schema';
 
 interface CvDiffPanelProps {
@@ -10,6 +11,7 @@ interface CvDiffPanelProps {
   onConfirm: () => void;
   onRegenerate: () => void;
   disabled?: boolean;
+  theme?: 'default' | 'workspace';
 }
 
 function StringDiffList({
@@ -79,8 +81,9 @@ function ModifiedDiffList({
   );
 }
 
-export function CvDiffPanel({ diff, onConfirm, onRegenerate, disabled }: CvDiffPanelProps) {
+export function CvDiffPanel({ diff, onConfirm, onRegenerate, disabled, theme = 'default' }: CvDiffPanelProps) {
   const t = useTranslations('cv');
+  const isWorkspace = theme === 'workspace';
   const hasChanges =
     (diff.added?.length ?? 0) > 0 ||
     (diff.removed?.length ?? 0) > 0 ||
@@ -89,10 +92,26 @@ export function CvDiffPanel({ diff, onConfirm, onRegenerate, disabled }: CvDiffP
   if (!hasChanges) return null;
 
   return (
-    <div className="border-t border-gray-200 bg-gray-50 p-4 space-y-4">
+    <div
+      className={cn(
+        'p-4 space-y-4 border-t',
+        isWorkspace
+          ? 'border-workspace-border bg-workspace-header'
+          : 'border-gray-200 bg-gray-50'
+      )}
+    >
       <div>
-        <h2 className="font-semibold text-kazi-navy text-sm">{t('diffTitle')}</h2>
-        <p className="text-xs text-gray-500 mt-0.5">{t('diffSubtitle')}</p>
+        <h2
+          className={cn(
+            'font-semibold text-sm',
+            isWorkspace ? 'text-workspace-text' : 'text-kazi-navy'
+          )}
+        >
+          {t('diffTitle')}
+        </h2>
+        <p className={cn('text-xs mt-0.5', isWorkspace ? 'text-workspace-muted' : 'text-gray-500')}>
+          {t('diffSubtitle')}
+        </p>
       </div>
 
       <StringDiffList title={t('diffAdded')} items={diff.added} variant="added" />

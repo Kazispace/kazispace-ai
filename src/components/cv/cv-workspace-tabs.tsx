@@ -14,7 +14,7 @@ interface CvWorkspaceTabsProps {
   className?: string;
 }
 
-/** Mobile-only: switch between resume document and chat. */
+/** Mobile activity rail — Cursor/VS Code style vertical panel switcher. */
 export function CvWorkspaceTabs({
   active,
   onChange,
@@ -24,17 +24,18 @@ export function CvWorkspaceTabs({
   const t = useTranslations('cv');
 
   const tabs: { id: CvWorkspaceTab; label: string; icon: typeof FileText }[] = [
-    { id: 'resume', label: t('tabResume'), icon: FileText },
     { id: 'chat', label: t('tabChat'), icon: MessageSquare },
+    { id: 'resume', label: t('tabResume'), icon: FileText },
   ];
 
   return (
-    <div
+    <nav
       className={cn(
-        'lg:hidden flex p-1 mx-4 mt-3 mb-1 bg-gray-100 rounded-xl border border-gray-200/80',
+        'lg:hidden w-12 shrink-0 flex flex-col items-center gap-1 py-2',
+        'bg-workspace-sidebar border-r border-workspace-border',
         className
       )}
-      role="tablist"
+      aria-label={t('workspacePanels')}
     >
       {tabs.map(({ id, label, icon: Icon }) => {
         const selected = active === id;
@@ -42,24 +43,27 @@ export function CvWorkspaceTabs({
           <button
             key={id}
             type="button"
-            role="tab"
-            aria-selected={selected}
+            title={label}
+            aria-label={label}
+            aria-current={selected ? 'page' : undefined}
             onClick={() => onChange(id)}
             className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors',
+              'relative flex flex-col items-center justify-center w-10 h-10 rounded-md transition-colors',
               selected
-                ? 'bg-white text-kazi-navy shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-workspace-text bg-workspace-active'
+                : 'text-workspace-muted hover:text-workspace-text hover:bg-workspace-hover'
             )}
           >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden />
-            <span>{label}</span>
+            <Icon className="h-[18px] w-[18px]" aria-hidden />
             {id === 'resume' && resumeReady ? (
-              <span className="h-2 w-2 rounded-full bg-kazi-orange shrink-0" aria-hidden />
+              <span
+                className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-kazi-orange"
+                aria-hidden
+              />
             ) : null}
           </button>
         );
       })}
-    </div>
+    </nav>
   );
 }

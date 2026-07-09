@@ -1,11 +1,10 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { Download } from 'lucide-react';
+import { Download, FileText, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { MarkdownContent } from '@/components/clinic/markdown-content';
-import { Button } from '@/components/ui/button';
 import type { CvPreviewContent } from '@/lib/cv-api';
 import { cn } from '@/lib/utils';
 
@@ -16,8 +15,6 @@ interface CvPreviewPaneProps {
   canDownload?: boolean;
   isExporting?: boolean;
   onDownload?: () => void;
-  /** Full-height mobile resume tab (sticky download at bottom). */
-  mobileFullBleed?: boolean;
   className?: string;
 }
 
@@ -28,7 +25,6 @@ export function CvPreviewPane({
   canDownload,
   isExporting,
   onDownload,
-  mobileFullBleed = false,
   className,
 }: CvPreviewPaneProps) {
   const t = useTranslations('cv');
@@ -36,88 +32,149 @@ export function CvPreviewPane({
   return (
     <aside
       className={cn(
-        'bg-slate-100 flex flex-col min-h-0',
-        mobileFullBleed
-          ? 'flex-1 w-full lg:w-[min(440px,40vw)] lg:shrink-0 lg:border-l lg:border-gray-200'
-          : 'hidden lg:flex w-full lg:w-[min(440px,40vw)] shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200',
+        'flex flex-col min-h-0 min-w-0',
+        'bg-workspace-panel border-l border-workspace-border',
+        'lg:w-[min(420px,38vw)] lg:shrink-0',
         className
       )}
     >
-      <div className="hidden lg:block px-4 py-3 bg-white border-b border-gray-100">
-        <h2 className="font-semibold text-kazi-navy text-sm">{t('previewTitle')}</h2>
-        <p className="text-xs text-gray-500 mt-0.5">{t('previewSubtitle')}</p>
+      {/* Editor tab strip — Cursor-style */}
+      <div className="h-9 shrink-0 flex items-stretch bg-workspace-header border-b border-workspace-border">
+        <div
+          className={cn(
+            'flex items-center gap-1.5 px-3 text-[11px] border-r border-workspace-border',
+            'bg-workspace-panel text-workspace-text'
+          )}
+        >
+          <FileText className="h-3 w-3 text-workspace-muted shrink-0" aria-hidden />
+          <span className="truncate">resume.md</span>
+          {canDownload ? (
+            <span className="h-1.5 w-1.5 rounded-full bg-kazi-orange shrink-0" aria-hidden />
+          ) : null}
+        </div>
+        <div className="flex-1" />
+        {canDownload && onDownload ? (
+          <button
+            type="button"
+            disabled={isExporting}
+            onClick={onDownload}
+            title={t('downloadPdf')}
+            className={cn(
+              'hidden lg:flex items-center gap-1 px-2.5 text-[11px]',
+              'text-workspace-muted hover:text-workspace-text hover:bg-workspace-hover',
+              'disabled:opacity-50 transition-colors'
+            )}
+          >
+            {isExporting ? (
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+            ) : (
+              <Download className="h-3 w-3" aria-hidden />
+            )}
+            <span>{isExporting ? t('exportingPdf') : 'PDF'}</span>
+          </button>
+        ) : null}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 lg:p-4 min-h-0">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {isLoading ? (
-          <p className="text-sm text-gray-500 text-center py-12">{t('previewLoading')}</p>
+          <p className="text-xs text-workspace-muted text-center py-16 px-4">
+            {t('previewLoading')}
+          </p>
         ) : preview ? (
-          <article className="mx-auto max-w-lg bg-white rounded-xl shadow-md border border-gray-200/80 px-5 py-6 sm:px-8 sm:py-8">
-            <div className="prose prose-sm sm:prose-base max-w-none text-gray-800 prose-headings:text-kazi-navy">
+          <div className="p-4">
+            <article
+              className={cn(
+                'mx-auto max-w-none rounded-sm border border-workspace-border',
+                'bg-[#1a1a1a] px-5 py-6 text-workspace-text',
+                'prose prose-sm prose-invert max-w-none',
+                'prose-headings:text-workspace-text prose-p:text-workspace-text/90',
+                'prose-strong:text-workspace-text prose-li:text-workspace-text/90'
+              )}
+            >
               {preview.format === 'html' ? (
                 <div dangerouslySetInnerHTML={{ __html: preview.content }} />
               ) : (
                 <MarkdownContent content={preview.content} />
               )}
-            </div>
-          </article>
+            </article>
+          </div>
         ) : canDownload ? (
-          <div className="mx-auto max-w-lg bg-white rounded-xl shadow-md border border-dashed border-gray-300 px-6 py-12 text-center">
-            <FileTextPlaceholder />
-            <p className="text-sm text-gray-600 mt-4">{t('previewPendingDownload')}</p>
-          </div>
+          <EmptyState
+            message={t('previewPendingDownload')}
+            action={
+              onDownload ? (
+                <button
+                  type="button"
+                  disabled={isExporting}
+                  onClick={onDownload}
+                  className={cn(
+                    'mt-4 inline-flex items-center gap-1.5 h-8 px-3 rounded text-xs font-medium',
+                    'bg-kazi-orange hover:bg-kazi-orange/90 text-white',
+                    'disabled:opacity-50 transition-colors'
+                  )}
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" aria-hidden />
+                  )}
+                  {isExporting ? t('exportingPdf') : t('downloadPdf')}
+                </button>
+              ) : null
+            }
+          />
         ) : (
-          <div className="mx-auto max-w-sm text-center py-16 px-4">
-            <FileTextPlaceholder muted />
-            <p className="text-sm text-gray-500 mt-4">{t('previewEmpty')}</p>
-            <p className="text-xs text-gray-400 mt-2">{t('previewEmptyHint')}</p>
-          </div>
+          <EmptyState
+            message={t('previewEmpty')}
+            hint={t('previewEmptyHint')}
+          />
         )}
       </div>
 
       {footer}
 
       {canDownload && onDownload ? (
-        <div className="shrink-0 p-4 bg-white border-t border-gray-200 lg:hidden safe-area-pb">
-          <Button
-            size="lg"
-            className="w-full h-12 text-base bg-kazi-orange hover:bg-kazi-orange/90 text-white shadow-md"
+        <div className="lg:hidden shrink-0 p-3 border-t border-workspace-border bg-workspace-header safe-area-pb">
+          <button
+            type="button"
             disabled={isExporting}
             onClick={onDownload}
+            className={cn(
+              'w-full h-10 flex items-center justify-center gap-2 rounded text-sm font-medium',
+              'bg-kazi-orange hover:bg-kazi-orange/90 text-white',
+              'disabled:opacity-50 transition-colors'
+            )}
           >
-            <Download className="h-5 w-5 mr-2" aria-hidden />
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              <Download className="h-4 w-4" aria-hidden />
+            )}
             {isExporting ? t('exportingPdf') : t('downloadPdf')}
-          </Button>
-        </div>
-      ) : null}
-
-      {canDownload && onDownload ? (
-        <div className="hidden lg:block shrink-0 p-4 bg-white border-t border-gray-100">
-          <Button
-            size="sm"
-            className="w-full bg-kazi-orange hover:bg-kazi-orange/90 text-white"
-            disabled={isExporting}
-            onClick={onDownload}
-          >
-            <Download className="h-4 w-4 mr-2" aria-hidden />
-            {isExporting ? t('exportingPdf') : t('downloadPdf')}
-          </Button>
+          </button>
         </div>
       ) : null}
     </aside>
   );
 }
 
-function FileTextPlaceholder({ muted }: { muted?: boolean }) {
+function EmptyState({
+  message,
+  hint,
+  action,
+}: {
+  message: string;
+  hint?: string;
+  action?: ReactNode;
+}) {
   return (
-    <div
-      className={cn(
-        'mx-auto h-16 w-12 rounded-lg border-2 flex items-end justify-center pb-2',
-        muted ? 'border-gray-200 text-gray-300' : 'border-kazi-orange/40 text-kazi-orange/60'
-      )}
-      aria-hidden
-    >
-      <div className={cn('h-1 w-6 rounded', muted ? 'bg-gray-200' : 'bg-kazi-orange/30')} />
+    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+      <FileText className="h-8 w-8 text-workspace-muted/40 mb-3" aria-hidden />
+      <p className="text-xs text-workspace-muted max-w-[220px]">{message}</p>
+      {hint ? (
+        <p className="text-[10px] text-workspace-muted/70 mt-2 max-w-[240px]">{hint}</p>
+      ) : null}
+      {action}
     </div>
   );
 }
