@@ -421,6 +421,7 @@
 		"exportErrorGeneric": "Failed to download PDF.",
 		"exportErrorNotFound": "CV document not found. Generate your CV first.",
 		"exportErrorUnavailable": "PDF export is not available on the server yet.",
+		"exportErrorTimeout": "PDF export timed out — please try again.",
 		"parsedSectionKeys": {
 			"target_role": "Target role",
 			"skills": "Skills",

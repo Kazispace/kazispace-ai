@@ -224,6 +224,7 @@
 		"exportErrorGeneric": "PDF 下载失败。",
 		"exportErrorNotFound": "未找到简历文档，请先生成简历。",
 		"exportErrorUnavailable": "服务器暂不支持 PDF 导出。",
+		"exportErrorTimeout": "PDF 导出超时，请重试。",
 		"parsedSectionKeys": {
 			"target_role": "目标岗位",
 			"skills": "技能",

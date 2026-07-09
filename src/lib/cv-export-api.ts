@@ -25,8 +25,18 @@ function buildExportHeaders(locale?: string): Record<string, string> {
 
 function parseContentDispositionFilename(header: string | null): string | null {
   if (!header) return null;
-  const match = header.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i);
-  return match?.[1]?.trim() ?? null;
+  const starMatch = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (starMatch?.[1]) {
+    try {
+      return decodeURIComponent(starMatch[1].trim());
+    } catch {
+      // fall through to basic filename
+    }
+  }
+  const basicMatch = header.match(/filename="([^"]+)"/i);
+  if (basicMatch?.[1]) return basicMatch[1].trim();
+  const unquotedMatch = header.match(/filename=([^;]+)/i);
+  return unquotedMatch?.[1]?.trim().replace(/^"|"$/g, '') ?? null;
 }
 
 export function triggerBlobDownload(blob: Blob, filename: string): void {
@@ -38,7 +48,7 @@ export function triggerBlobDownload(blob: Blob, filename: string): void {
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function parseExportError(
@@ -75,6 +85,9 @@ export function resolveCvExportErrorMessage(
   if (errorCode === 'INTERNAL_SERVER_ERROR' || error?.includes('WeasyPrint')) {
     return t('exportErrorUnavailable');
   }
+  if (errorCode === 'TIMEOUT' || errorCode === 'NETWORK_ERROR') {
+    return t('exportErrorTimeout');
+  }
   return error ?? t('exportErrorGeneric');
 }
 
@@ -83,10 +96,14 @@ export async function exportCvDocumentPdf(
   docId: number,
   locale?: string
 ): Promise<ApiResponse<{ filename: string }>> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60_000);
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/v1/cv/documents/${docId}/export`, {
       method: 'POST',
       headers: buildExportHeaders(locale),
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -102,10 +119,17 @@ export async function exportCvDocumentPdf(
     triggerBlobDownload(blob, filename);
     return { success: true, data: { filename } };
   } catch (err) {
+    const aborted = err instanceof Error && err.name === 'AbortError';
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Network error',
-      errorCode: 'NETWORK_ERROR',
+      error: aborted
+        ? 'PDF export timed out'
+        : err instanceof Error
+          ? err.message
+          : 'Network error',
+      errorCode: aborted ? 'TIMEOUT' : 'NETWORK_ERROR',
     };
+  } finally {
+    clearTimeout(timeout);
   }
 }

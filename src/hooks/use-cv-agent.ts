@@ -207,6 +207,20 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     [applyCtaState, openPaywall]
   );
 
+  /** Idempotent activate to sync meta (document_id, preview) after history-only loads. */
+  const syncActivateMeta = useCallback(
+    async (gen: number) => {
+      const res = await activateAgent(CV_BUILDER_AGENT_ID, locale, undefined, {
+        job_id: jobId ?? undefined,
+      });
+      if (gen !== activateGenRef.current) return;
+      if (res.success && res.data) {
+        applyActivateResponse(res.data);
+      }
+    },
+    [applyActivateResponse, jobId, locale]
+  );
+
   const handleApiError = useCallback(
     (res: { error?: string; errorCode?: string }) => {
       if (res.errorCode === 'ONBOARDING_INCOMPLETE') {
@@ -257,6 +271,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         setSessionId(sid);
         setSessionResumed(true);
         await loadSessionMessages(sid, gen, handoff?.greeting);
+        await syncActivateMeta(gen);
         finishSessionLoad(gen);
         void refreshSessions();
         return;
@@ -266,6 +281,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     if (handoffSessionId) {
       setSessionId(handoffSessionId);
       await loadSessionMessages(handoffSessionId, gen, handoff?.greeting);
+      await syncActivateMeta(gen);
       finishSessionLoad(gen);
       void refreshSessions();
       return;
@@ -303,6 +319,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     loadSessionMessages,
     locale,
     refreshSessions,
+    syncActivateMeta,
   ]);
 
   useEffect(() => {
@@ -357,16 +374,17 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setNextActions([]);
       setQuickReplies([]);
       setParsedSections(null);
-    setDocumentId(null);
+      setDocumentId(null);
 
       const entry = sessions.find((s) => s.session_id === sid);
       setIsReadOnly(entry?.status === 'exited');
       setSessionResumed(false);
 
       await loadSessionMessages(sid, gen);
+      await syncActivateMeta(gen);
       finishSessionLoad(gen);
     },
-    [enabled, finishSessionLoad, isLoggedIn, loadSessionMessages, sessionId, sessions]
+    [enabled, finishSessionLoad, isLoggedIn, loadSessionMessages, sessionId, sessions, syncActivateMeta]
   );
 
   const sendAgentMessage = useCallback(
@@ -438,7 +456,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   );
 
   const exportCvPdf = useCallback(async () => {
-    if (!enabled || !isLoggedIn || isReadOnly || isSending || isExporting) {
+    if (!enabled || !isLoggedIn || isSending || isExporting) {
       return { ok: false as const };
     }
 
@@ -447,20 +465,21 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     }
 
     setIsExporting(true);
-    const res = await exportCvDocumentPdf(documentId, locale);
-    if (!res.success) {
-      showToast(resolveCvExportErrorMessage(res.error, res.errorCode, t), 'error');
+    try {
+      const res = await exportCvDocumentPdf(documentId, locale);
+      if (!res.success) {
+        showToast(resolveCvExportErrorMessage(res.error, res.errorCode, t), 'error');
+        return { ok: false as const, error: res.error };
+      }
+      return { ok: true as const };
+    } finally {
       setIsExporting(false);
-      return { ok: false as const, error: res.error };
     }
-    setIsExporting(false);
-    return { ok: true as const };
   }, [
     documentId,
     enabled,
     isExporting,
     isLoggedIn,
-    isReadOnly,
     isSending,
     locale,
     sendAgentMessage,

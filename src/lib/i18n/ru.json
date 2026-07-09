@@ -421,6 +421,7 @@
 		"exportErrorGeneric": "Не удалось скачать PDF.",
 		"exportErrorNotFound": "Документ резюме не найден. Сначала сгенерируйте резюме.",
 		"exportErrorUnavailable": "Экспорт PDF на сервере пока недоступен.",
+		"exportErrorTimeout": "Превышено время ожидания экспорта PDF — повторите попытку.",
 		"parsedSectionKeys": {
 			"target_role": "Целевая роль",
 			"skills": "Навыки",
