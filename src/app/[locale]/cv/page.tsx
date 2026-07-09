@@ -17,6 +17,7 @@ import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
 import { CvPipelineSteps } from "@/components/cv/cv-pipeline-steps";
 import { CvSessionSidebar } from "@/components/cv/cv-session-sidebar";
 import { CvNewSessionDialog } from "@/components/cv/cv-new-session-dialog";
+import { CvReadyBar } from "@/components/cv/cv-ready-bar";
 import { Button } from "@/components/ui/button";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
@@ -111,10 +112,15 @@ function CvPageContent({ locale }: { locale: string }) {
     setNewSessionDialogOpen(true);
   }, [isLoading, isSending]);
 
+  const canDownloadCv = documentId != null;
+  const handleDownload = useCallback(() => {
+    void exportCvPdf();
+  }, [exportCvPdf]);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0 flex flex-col">
       <Header locale={locale} />
-      <main className="pt-16 flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full">
+      <main className="pt-16 flex-1 flex flex-col-reverse lg:flex-row max-w-7xl mx-auto w-full">
         {!needsLogin && !needsOnboarding && !showProfileGate && (
           <CvSessionSidebar
             sessions={sessions}
@@ -140,15 +146,27 @@ function CvPageContent({ locale }: { locale: string }) {
               <p className="text-xs text-gray-500">{subtitle}</p>
             </div>
             {!needsLogin && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="shrink-0 lg:hidden"
-                disabled={isLoading || isSending}
-                onClick={requestNewSession}
-              >
-                {t("newCv")}
-              </Button>
+              <div className="flex shrink-0 gap-2">
+                {canDownloadCv ? (
+                  <Button
+                    size="sm"
+                    className="bg-kazi-orange hover:bg-kazi-orange/90 text-white"
+                    disabled={isExporting || isSending}
+                    onClick={handleDownload}
+                  >
+                    {isExporting ? t("exportingPdf") : t("downloadPdfShort")}
+                  </Button>
+                ) : null}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 lg:hidden"
+                  disabled={isLoading || isSending}
+                  onClick={requestNewSession}
+                >
+                  {t("newCv")}
+                </Button>
+              </div>
             )}
           </div>
 
@@ -188,14 +206,32 @@ function CvPageContent({ locale }: { locale: string }) {
             </div>
           ) : (
             <>
+              {canDownloadCv ? (
+                <CvReadyBar
+                  onDownload={handleDownload}
+                  disabled={isSending || isUploading}
+                  isExporting={isExporting}
+                />
+              ) : null}
               {sessionResumed && !isReadOnly && (
                 <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-900 text-center">
                   {t("sessionResumedBanner")}
                 </div>
               )}
               {isReadOnly && (
-                <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 text-xs text-amber-900 text-center">
-                  {t("readOnlyBanner")}
+                <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span>{t("readOnlyBanner")}</span>
+                  {canDownloadCv ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs border-amber-300 text-amber-900"
+                      disabled={isExporting}
+                      onClick={handleDownload}
+                    >
+                      {isExporting ? t("exportingPdf") : t("downloadPdfShort")}
+                    </Button>
+                  ) : null}
                 </div>
               )}
               <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg">
@@ -263,22 +299,12 @@ function CvPageContent({ locale }: { locale: string }) {
         {!needsLogin && !needsOnboarding && !showProfileGate && (
           <CvPreviewPane
             preview={preview}
-            isLoading={isLoading && !preview}
+            isLoading={isLoading && !preview && !canDownloadCv}
+            canDownload={canDownloadCv}
+            isExporting={isExporting}
+            onDownload={handleDownload}
             footer={
               <>
-                {documentId && preview ? (
-                  <div className="px-4 py-3 border-t border-gray-100 bg-white">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full"
-                      disabled={isSending || isUploading || isExporting}
-                      onClick={() => void exportCvPdf()}
-                    >
-                      {isExporting ? t("exportingPdf") : t("downloadPdf")}
-                    </Button>
-                  </div>
-                ) : null}
                 {parsedSections && !isReadOnly ? (
                   <CvParsedHints
                     sections={parsedSections}
