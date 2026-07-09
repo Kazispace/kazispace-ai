@@ -170,5 +170,23 @@
 	"clinic": {
 		"backToClinic": "返回门诊",
 		"switchAgent": "切换专家"
+	},
+	"cv": {
+		"uploadResume": "上传简历",
+		"uploading": "正在上传简历…",
+		"parsedHintsTitle": "从简历解析",
+		"uploadErrorAgentNotActive": "请先进入简历助手再上传。",
+		"uploadErrorFormat": "请使用 PDF 或 DOCX 文件。",
+		"uploadErrorSize": "文件大小不能超过 10MB。",
+		"uploadErrorValidation": "文件无效，请上传 10MB 以内的 PDF 或 DOCX。",
+		"uploadErrorGeneric": "简历上传失败。",
+		"parsedSectionKeys": {
+			"target_role": "目标岗位",
+			"skills": "技能",
+			"experience": "工作经历",
+			"education": "教育背景",
+			"summary": "个人摘要",
+			"contact": "联系方式"
+		}
 	}
 }
