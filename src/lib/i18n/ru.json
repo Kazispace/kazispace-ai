@@ -416,6 +416,11 @@
 		"uploadErrorNetwork": "Ошибка загрузки — проверьте соединение и повторите. Парсинг может занять до минуты.",
 		"uploadErrorBackendNotReady": "Загрузка резюме на сервере пока недоступна. Повторите после обновления бэкенда.",
 		"uploadErrorServer": "Ошибка сервера при обработке резюме. Повторите попытку чуть позже.",
+		"downloadPdf": "Скачать PDF",
+		"exportingPdf": "Подготовка PDF…",
+		"exportErrorGeneric": "Не удалось скачать PDF.",
+		"exportErrorNotFound": "Документ резюме не найден. Сначала сгенерируйте резюме.",
+		"exportErrorUnavailable": "Экспорт PDF на сервере пока недоступен.",
 		"parsedSectionKeys": {
 			"target_role": "Целевая роль",
 			"skills": "Навыки",

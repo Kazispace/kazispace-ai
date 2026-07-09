@@ -180,6 +180,7 @@ export interface DeactivateAgentResponse {
 export interface AgentChatMeta {
   cv_preview_markdown?: string;
   cv_content?: string;
+  document_id?: number | string | null;
   diff?: unknown | null;
   pipeline_state?: string;
   buttons?: string[];

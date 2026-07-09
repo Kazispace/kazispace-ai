@@ -416,6 +416,11 @@
 		"uploadErrorNetwork": "Upload failed — check your connection and try again. Parsing can take up to a minute.",
 		"uploadErrorBackendNotReady": "Resume upload is not available on the server yet. Please try again after the backend is updated.",
 		"uploadErrorServer": "Server error while processing your resume. Please try again in a moment.",
+		"downloadPdf": "Download PDF",
+		"exportingPdf": "Preparing PDF…",
+		"exportErrorGeneric": "Failed to download PDF.",
+		"exportErrorNotFound": "CV document not found. Generate your CV first.",
+		"exportErrorUnavailable": "PDF export is not available on the server yet.",
 		"parsedSectionKeys": {
 			"target_role": "Target role",
 			"skills": "Skills",

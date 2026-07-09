@@ -45,6 +45,7 @@ function CvPageContent({ locale }: { locale: string }) {
     isLoading,
     isSending,
     isUploading,
+    isExporting,
     error,
     needsLogin,
     needsOnboarding,
@@ -55,6 +56,7 @@ function CvPageContent({ locale }: { locale: string }) {
     isReadOnly,
     sessionResumed,
     parsedSections,
+    documentId,
     sessions,
     sessionsLoading,
     sessionId,
@@ -63,6 +65,7 @@ function CvPageContent({ locale }: { locale: string }) {
     uploadResume,
     confirmCv,
     regenerateCv,
+    exportCvPdf,
     selectSession,
     refreshSessions,
     restart,
@@ -86,9 +89,10 @@ function CvPageContent({ locale }: { locale: string }) {
         intakeConfirm: () => void agentSession.intakeConfirm(),
         acceptCv: () => void confirmCv(),
         regenerateCv: () => void regenerateCv(),
+        exportCv: () => void exportCvPdf(),
       });
     },
-    [agentSession.intakeConfirm, confirmCv, locale, openPaywall, regenerateCv, router, sendPayload]
+    [agentSession.intakeConfirm, confirmCv, exportCvPdf, locale, openPaywall, regenerateCv, router, sendPayload]
   );
 
   const subtitle = useMemo(
@@ -220,14 +224,14 @@ function CvPageContent({ locale }: { locale: string }) {
                         actions={routedActions}
                         locale={locale}
                         onAction={handleCvAction}
-                        disabled={!isSessionReady || isSending}
+                        disabled={!isSessionReady || isSending || isExporting}
                       />
                     </div>
                   )}
                   {pickerActions.length > 0 && (
                     <QuickReplies
                       options={pickerActions.map((a) => quickReplyLabel(a, locale))}
-                      disabled={!isSessionReady || isSending}
+                      disabled={!isSessionReady || isSending || isExporting}
                       onSelect={(text) => {
                         const action = pickerActions.find(
                           (a) => quickReplyLabel(a, locale) === text
@@ -239,14 +243,14 @@ function CvPageContent({ locale }: { locale: string }) {
                   {quickReplies.length > 0 && (
                     <QuickReplies
                       options={quickReplies}
-                      disabled={!isSessionReady || isSending}
+                      disabled={!isSessionReady || isSending || isExporting}
                       onSelect={(text) => void sendMessage(text)}
                     />
                   )}
                   <CvChatInput
                     onSend={(text) => void sendMessage(text)}
                     onUpload={(file) => void uploadResume(file)}
-                    disabled={!isSessionReady || isSending}
+                    disabled={!isSessionReady || isSending || isUploading || isExporting}
                     isUploading={isUploading}
                     placeholder={t("inputPlaceholder")}
                   />
@@ -262,6 +266,19 @@ function CvPageContent({ locale }: { locale: string }) {
             isLoading={isLoading && !preview}
             footer={
               <>
+                {documentId && preview && !isReadOnly ? (
+                  <div className="px-4 py-3 border-t border-gray-100 bg-white">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      disabled={isSending || isUploading || isExporting}
+                      onClick={() => void exportCvPdf()}
+                    >
+                      {isExporting ? t("exportingPdf") : t("downloadPdf")}
+                    </Button>
+                  </div>
+                ) : null}
                 {parsedSections && !isReadOnly ? (
                   <CvParsedHints
                     sections={parsedSections}
