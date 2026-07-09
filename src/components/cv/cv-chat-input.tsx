@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowUp, Loader2, Paperclip } from "lucide-react";
+import { Loader2, Paperclip, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { CV_UPLOAD_ACCEPT } from "@/lib/cv-input-api";
@@ -15,6 +15,7 @@ interface CvChatInputProps {
   placeholder?: string;
 }
 
+/** Coze-style floating composer at bottom of chat. */
 export function CvChatInput({
   onSend,
   onUpload,
@@ -53,12 +54,14 @@ export function CvChatInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className="shrink-0 p-3 border-t border-workspace-border bg-workspace-sidebar"
+      className="shrink-0 px-4 py-3 bg-gradient-to-t from-workspace-bg via-workspace-bg to-transparent"
     >
       <div
         className={cn(
-          "flex items-end gap-2 rounded-lg border border-workspace-border bg-workspace-input",
-          "focus-within:border-workspace-accent/60 transition-colors"
+          "flex items-end gap-2 rounded-2xl border border-workspace-border bg-white",
+          "px-3 py-2 shadow-md shadow-black/5",
+          "focus-within:border-kazi-orange/40 focus-within:ring-2 focus-within:ring-kazi-orange/10",
+          "transition-all"
         )}
       >
         <input
@@ -77,15 +80,15 @@ export function CvChatInput({
           aria-label={t("uploadResume")}
           title={t("uploadResume")}
           className={cn(
-            "shrink-0 m-1.5 h-7 w-7 flex items-center justify-center rounded",
-            "text-workspace-muted hover:text-workspace-text hover:bg-workspace-hover",
+            "shrink-0 h-9 w-9 flex items-center justify-center rounded-xl",
+            "text-workspace-muted hover:text-kazi-orange hover:bg-workspace-hover",
             "disabled:opacity-40 transition-colors"
           )}
         >
           {isUploading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin" />
           ) : (
-            <Paperclip className="h-4 w-4" />
+            <Paperclip className="h-5 w-5" />
           )}
         </button>
         <textarea
@@ -98,9 +101,9 @@ export function CvChatInput({
           disabled={inputDisabled}
           rows={1}
           className={cn(
-            "flex-1 resize-none bg-transparent py-2.5 pr-1 text-[13px] text-workspace-text",
+            "flex-1 resize-none bg-transparent py-2 text-sm text-workspace-text",
             "placeholder:text-workspace-muted focus:outline-none",
-            "disabled:opacity-50 disabled:cursor-not-allowed max-h-28"
+            "disabled:opacity-50 disabled:cursor-not-allowed max-h-32"
           )}
           style={{ minHeight: "36px" }}
         />
@@ -109,15 +112,18 @@ export function CvChatInput({
           disabled={!message.trim() || inputDisabled}
           aria-label="Send"
           className={cn(
-            "shrink-0 m-1.5 h-7 w-7 flex items-center justify-center rounded",
-            "bg-workspace-accent text-white",
-            "hover:bg-workspace-accent/90 disabled:opacity-30 disabled:cursor-not-allowed",
+            "shrink-0 h-9 w-9 flex items-center justify-center rounded-xl",
+            "bg-kazi-orange text-white shadow-sm",
+            "hover:bg-kazi-orange/90 disabled:opacity-30 disabled:cursor-not-allowed",
             "transition-colors"
           )}
         >
-          <ArrowUp className="h-4 w-4" />
+          <Send className="h-4 w-4" />
         </button>
       </div>
+      <p className="text-[10px] text-workspace-muted text-center mt-2">
+        {t("composerHint")}
+      </p>
     </form>
   );
 }

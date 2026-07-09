@@ -14,7 +14,7 @@ interface CvWorkspaceTabsProps {
   className?: string;
 }
 
-/** Mobile activity rail — Cursor/VS Code style vertical panel switcher. */
+/** Mobile top tabs — Coze H5 style segmented control. */
 export function CvWorkspaceTabs({
   active,
   onChange,
@@ -29,41 +29,40 @@ export function CvWorkspaceTabs({
   ];
 
   return (
-    <nav
+    <div
       className={cn(
-        'lg:hidden w-12 shrink-0 flex flex-col items-center gap-1 py-2',
-        'bg-workspace-sidebar border-r border-workspace-border',
+        'lg:hidden shrink-0 px-3 py-2 bg-white border-b border-workspace-border',
         className
       )}
+      role="tablist"
       aria-label={t('workspacePanels')}
     >
-      {tabs.map(({ id, label, icon: Icon }) => {
-        const selected = active === id;
-        return (
-          <button
-            key={id}
-            type="button"
-            title={label}
-            aria-label={label}
-            aria-current={selected ? 'page' : undefined}
-            onClick={() => onChange(id)}
-            className={cn(
-              'relative flex flex-col items-center justify-center w-10 h-10 rounded-md transition-colors',
-              selected
-                ? 'text-workspace-text bg-workspace-active'
-                : 'text-workspace-muted hover:text-workspace-text hover:bg-workspace-hover'
-            )}
-          >
-            <Icon className="h-[18px] w-[18px]" aria-hidden />
-            {id === 'resume' && resumeReady ? (
-              <span
-                className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-kazi-orange"
-                aria-hidden
-              />
-            ) : null}
-          </button>
-        );
-      })}
-    </nav>
+      <div className="flex p-1 rounded-xl bg-workspace-bg border border-workspace-border">
+        {tabs.map(({ id, label, icon: Icon }) => {
+          const selected = active === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => onChange(id)}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-all',
+                selected
+                  ? 'bg-white text-workspace-text shadow-sm'
+                  : 'text-workspace-muted hover:text-workspace-text'
+              )}
+            >
+              <Icon className="h-4 w-4 shrink-0" aria-hidden />
+              <span>{label}</span>
+              {id === 'resume' && resumeReady ? (
+                <span className="h-1.5 w-1.5 rounded-full bg-kazi-orange shrink-0" aria-hidden />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

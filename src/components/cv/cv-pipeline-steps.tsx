@@ -23,15 +23,15 @@ const STEP_I18N_KEY: Record<CvPipelineStepId, string> = {
   done: 'stepDone',
 };
 
-/** Compact status strip — Cursor status-bar style. */
+/** Coze-style horizontal step pills. */
 export function CvPipelineSteps({ pipelineState, isWorking }: CvPipelineStepsProps) {
   const t = useTranslations('cv');
   const currentStep = resolveCvPipelineStep(pipelineState);
   const currentIndex = cvPipelineStepIndex(currentStep);
 
   return (
-    <div
-      className="flex items-center gap-0.5 overflow-x-auto max-w-full"
+    <ol
+      className="flex items-center gap-1.5 overflow-x-auto max-w-full"
       aria-label={t('pipelineAria')}
     >
       {CV_PIPELINE_STEP_ORDER.map((stepId, index) => {
@@ -40,27 +40,41 @@ export function CvPipelineSteps({ pipelineState, isWorking }: CvPipelineStepsPro
         const showPulse = isCurrent && isWorking;
 
         return (
-          <span key={stepId} className="flex items-center gap-0.5 shrink-0">
+          <li key={stepId} className="flex items-center gap-1.5 shrink-0">
             {index > 0 ? (
-              <span className="text-workspace-muted/40 text-[10px]" aria-hidden>
-                ›
-              </span>
+              <span
+                className={cn(
+                  'w-4 h-px shrink-0',
+                  isComplete ? 'bg-kazi-orange/60' : 'bg-workspace-border'
+                )}
+                aria-hidden
+              />
             ) : null}
             <span
               className={cn(
-                'text-[10px] whitespace-nowrap transition-colors',
-                isComplete && 'text-workspace-muted',
-                isCurrent && 'text-workspace-accent',
-                !isComplete && !isCurrent && 'text-workspace-muted/50',
+                'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
+                isComplete && 'bg-kazi-orange/10 text-kazi-orange',
+                isCurrent && 'bg-kazi-orange text-white shadow-sm',
+                !isComplete && !isCurrent && 'bg-workspace-hover text-workspace-muted',
                 showPulse && 'animate-pulse'
               )}
               aria-current={isCurrent ? 'step' : undefined}
             >
+              <span
+                className={cn(
+                  'flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold',
+                  isComplete && 'bg-kazi-orange/20 text-kazi-orange',
+                  isCurrent && !isComplete && 'bg-white/25 text-white',
+                  !isComplete && !isCurrent && 'bg-workspace-border text-workspace-muted'
+                )}
+              >
+                {isComplete ? '✓' : index + 1}
+              </span>
               {t(STEP_I18N_KEY[stepId])}
             </span>
-          </span>
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }

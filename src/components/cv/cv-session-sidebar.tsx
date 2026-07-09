@@ -23,6 +23,7 @@ function formatSessionTime(iso?: string | null): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+/** Coze-style left conversation list. */
 export function CvSessionSidebar({
   sessions,
   activeSessionId,
@@ -37,15 +38,12 @@ export function CvSessionSidebar({
   return (
     <aside
       className={cn(
-        "w-56 shrink-0 flex flex-col min-h-0",
-        "bg-workspace-sidebar border-r border-workspace-border",
+        "w-60 shrink-0 flex flex-col min-h-0 bg-workspace-sidebar border-r border-workspace-border",
         className
       )}
     >
-      <div className="h-9 px-3 flex items-center justify-between gap-2 border-b border-workspace-border shrink-0">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-workspace-muted">
-          {t("sessionsTitle")}
-        </span>
+      <div className="px-4 py-3 flex items-center justify-between gap-2 border-b border-workspace-border shrink-0">
+        <span className="text-sm font-medium text-workspace-text">{t("sessionsTitle")}</span>
         <button
           type="button"
           disabled={disabled}
@@ -53,22 +51,22 @@ export function CvSessionSidebar({
           title={t("newCv")}
           aria-label={t("newCv")}
           className={cn(
-            "h-6 w-6 flex items-center justify-center rounded",
-            "text-workspace-muted hover:text-workspace-text hover:bg-workspace-hover",
+            "h-7 w-7 flex items-center justify-center rounded-lg",
+            "text-workspace-muted hover:text-kazi-orange hover:bg-workspace-active",
             "disabled:opacity-50 transition-colors"
           )}
         >
-          <Plus className="h-3.5 w-3.5" aria-hidden />
+          <Plus className="h-4 w-4" aria-hidden />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-1 min-h-0">
+      <div className="flex-1 overflow-y-auto p-2 min-h-0 space-y-0.5">
         {isLoading && sessions.length === 0 ? (
-          <p className="text-[11px] text-workspace-muted px-3 py-4 text-center">
+          <p className="text-xs text-workspace-muted px-2 py-6 text-center">
             {t("sessionsLoading")}
           </p>
         ) : sessions.length === 0 ? (
-          <p className="text-[11px] text-workspace-muted px-3 py-4 text-center">
+          <p className="text-xs text-workspace-muted px-2 py-6 text-center">
             {t("sessionsEmpty")}
           </p>
         ) : (
@@ -81,16 +79,21 @@ export function CvSessionSidebar({
                 disabled={disabled}
                 onClick={() => onSelect(session.session_id)}
                 className={cn(
-                  "w-full text-left px-2 py-1.5 mx-1 rounded-sm transition-colors",
-                  "max-w-[calc(100%-8px)]",
+                  "w-full text-left rounded-xl px-3 py-2.5 transition-colors border",
                   isActive
-                    ? "bg-workspace-active text-workspace-text"
-                    : "text-workspace-muted hover:bg-workspace-hover hover:text-workspace-text"
+                    ? "bg-workspace-active border-kazi-orange/20 text-workspace-text"
+                    : "border-transparent text-workspace-text hover:bg-workspace-hover"
                 )}
               >
-                <p className="text-[13px] truncate leading-tight">{session.title}</p>
-                <p className="text-[10px] mt-0.5 opacity-70 flex items-center gap-1">
-                  {isActive ? t("sessionCurrent") : session.status === "active" ? t("sessionActive") : t("sessionEnded")}
+                <p className="text-sm font-medium truncate leading-snug">{session.title}</p>
+                <p className="text-[11px] text-workspace-muted mt-1 flex items-center gap-1">
+                  {isActive ? (
+                    <span className="text-kazi-orange font-medium">{t("sessionCurrent")}</span>
+                  ) : session.status === "active" ? (
+                    t("sessionActive")
+                  ) : (
+                    t("sessionEnded")
+                  )}
                   {session.updated_at ? (
                     <>
                       <span aria-hidden>·</span>

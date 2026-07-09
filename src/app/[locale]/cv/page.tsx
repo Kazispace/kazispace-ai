@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { CvAgentWelcome } from "@/components/cv/cv-agent-welcome";
 import { CvChatInput } from "@/components/cv/cv-chat-input";
 import { CvParsedHints } from "@/components/cv/cv-parsed-hints";
 import { MessageBubble } from "@/components/clinic/message-bubble";
@@ -136,7 +137,7 @@ function CvPageContent({ locale }: { locale: string }) {
       {parsedSections && !isReadOnly ? (
         <CvParsedHints
           sections={parsedSections}
-          className="px-4 py-3 border-t border-workspace-border bg-workspace-header text-workspace-text"
+          className="px-4 py-3 border-t border-workspace-border bg-workspace-header"
           theme="workspace"
         />
       ) : null}
@@ -172,7 +173,7 @@ function CvPageContent({ locale }: { locale: string }) {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-workspace-bg text-workspace-text overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-workspace-bg overflow-hidden">
       <CvWorkspaceTitlebar
         locale={locale}
         canDownload={canDownloadCv}
@@ -187,6 +188,12 @@ function CvPageContent({ locale }: { locale: string }) {
         }
       />
 
+      <CvWorkspaceTabs
+        active={mobileTab}
+        onChange={setMobileTab}
+        resumeReady={resumeReady}
+      />
+
       <div className="flex-1 flex min-h-0">
         <CvSessionSidebar
           sessions={sessions}
@@ -198,54 +205,57 @@ function CvPageContent({ locale }: { locale: string }) {
           className="hidden lg:flex"
         />
 
-        <CvWorkspaceTabs
-          active={mobileTab}
-          onChange={setMobileTab}
-          resumeReady={resumeReady}
-        />
-
         <div className="flex-1 flex min-w-0 min-h-0">
           <section
             className={cn(
-              "flex-1 flex flex-col min-w-0 min-h-0 bg-workspace-bg",
+              "flex-1 flex flex-col min-w-0 min-h-0",
               mobileTab !== "chat" && "hidden lg:flex"
             )}
           >
             {sessionResumed && !isReadOnly ? (
-              <p className="px-3 py-1.5 text-[11px] text-workspace-accent bg-workspace-accent/10 border-b border-workspace-border text-center">
+              <p className="px-4 py-2 text-xs text-kazi-orange bg-workspace-active border-b border-workspace-border text-center">
                 {t("sessionResumedBanner")}
               </p>
             ) : null}
             {isReadOnly ? (
-              <p className="px-3 py-1.5 text-[11px] text-amber-400/90 bg-amber-950/30 border-b border-workspace-border text-center">
+              <p className="px-4 py-2 text-xs text-amber-700 bg-amber-50 border-b border-amber-100 text-center">
                 {t("readOnlyBanner")}
               </p>
             ) : null}
 
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4 min-h-0">
-              {error ? (
-                <p className="text-xs text-red-400 text-center">{error}</p>
-              ) : null}
-              {messages.map((msg) => (
-                <MessageBubble
-                  key={msg.id}
-                  role={msg.role}
-                  content={msg.content}
-                  variant="agent"
-                  surface="workspace"
-                />
-              ))}
-              {isLoading && messages.length === 0 ? (
-                <p className="text-xs text-workspace-muted text-center py-12">
-                  {t("sessionLoading")}
-                </p>
-              ) : null}
+            {showPipelineSteps ? (
+              <div className="lg:hidden px-4 py-2 border-b border-workspace-border bg-white overflow-x-auto">
+                <CvPipelineSteps pipelineState={pipelineState} isWorking={isSending} />
+              </div>
+            ) : null}
+
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="max-w-2xl mx-auto w-full px-4 py-4 flex flex-col gap-4 min-h-full">
+                {error ? (
+                  <p className="text-sm text-red-500 text-center">{error}</p>
+                ) : null}
+                {isLoading && messages.length === 0 ? (
+                  <p className="text-sm text-workspace-muted text-center py-12">
+                    {t("sessionLoading")}
+                  </p>
+                ) : messages.length === 0 ? (
+                  <CvAgentWelcome />
+                ) : null}
+                {messages.map((msg) => (
+                  <MessageBubble
+                    key={msg.id}
+                    role={msg.role}
+                    content={msg.content}
+                    variant="agent"
+                  />
+                ))}
+              </div>
             </div>
 
             {!isReadOnly ? (
-              <>
+              <div className="shrink-0 max-w-2xl mx-auto w-full">
                 {routedActions.length > 0 ? (
-                  <div className="px-3 pb-2 shrink-0">
+                  <div className="px-4 pb-2">
                     <ChatNextActions
                       actions={routedActions}
                       locale={locale}
@@ -289,7 +299,7 @@ function CvPageContent({ locale }: { locale: string }) {
                   isUploading={isUploading}
                   placeholder={t("inputPlaceholder")}
                 />
-              </>
+              </div>
             ) : null}
           </section>
 
