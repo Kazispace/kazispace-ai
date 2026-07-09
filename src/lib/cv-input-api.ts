@@ -99,6 +99,9 @@ export function resolveCvUploadErrorMessage(
   if (errorCode === 'NETWORK_ERROR' || isNetworkErrorMessage(error)) {
     return t('uploadErrorNetwork');
   }
+  if (errorCode === 'PROXY_UNAVAILABLE' || errorCode === 'PROXY_PAYLOAD_TOO_LARGE') {
+    return t('uploadErrorNetwork');
+  }
   if (errorCode === 'AGENT_NOT_ACTIVE') {
     return error ?? t('uploadErrorAgentNotActive');
   }
@@ -173,10 +176,16 @@ async function postCvUpload(
         unknown
       >;
       const { error, errorCode } = parseFormError(errorData, response.status);
+      const mappedCode =
+        response.status === 404
+          ? 'PROXY_UNAVAILABLE'
+          : response.status === 413
+            ? 'PROXY_PAYLOAD_TOO_LARGE'
+            : errorCode;
       return {
         success: false,
         error,
-        errorCode: response.status === 404 ? 'PROXY_UNAVAILABLE' : errorCode,
+        errorCode: mappedCode,
       };
     }
     const data = (await response.json()) as CvFileUploadResponse;
@@ -188,6 +197,14 @@ async function postCvUpload(
       errorCode: 'NETWORK_ERROR',
     };
   }
+}
+
+function shouldFallbackToDirectUpload(errorCode?: string): boolean {
+  return (
+    errorCode === 'PROXY_UNAVAILABLE' ||
+    errorCode === 'NETWORK_ERROR' ||
+    errorCode === 'PROXY_PAYLOAD_TOO_LARGE'
+  );
 }
 
 export async function uploadCvResumeFile(
@@ -238,7 +255,6 @@ export async function uploadCvResumeFile(
     };
   }
 
-  const form = buildUploadForm(file);
   const headers = buildUploadHeaders(locale);
   const targets = resolveUploadTargets(file);
 
@@ -248,10 +264,10 @@ export async function uploadCvResumeFile(
   };
 
   for (const url of targets) {
-    const res = await postCvUpload(url, form, headers);
+    const res = await postCvUpload(url, buildUploadForm(file), headers);
     if (res.success) return res;
     last = res;
-    if (res.errorCode !== 'PROXY_UNAVAILABLE' && res.errorCode !== 'NETWORK_ERROR') {
+    if (!shouldFallbackToDirectUpload(res.errorCode)) {
       return res;
     }
   }
