@@ -71,6 +71,7 @@ export function hydrateCvMetaFromAgentHistory(
     setPipelineState: (state: string | null) => void;
     setPreview: (preview: CvPreviewContent | null) => void;
     setDiff: (diff: CvDiffPayload | null) => void;
+    setParsedSections?: (sections: Record<string, string> | null) => void;
   }
 ): void {
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -89,6 +90,10 @@ export function hydrateCvMetaFromAgentHistory(
     const preview = extractCvPreviewFromAgent(envelope);
     if (preview) handlers.setPreview(preview);
     patchDiffFromAgentMeta(envelope, handlers.setDiff);
+    const sections = extractCvParsedSections(envelope);
+    if (sections && handlers.setParsedSections) {
+      handlers.setParsedSections(sections);
+    }
     return;
   }
 }
@@ -184,4 +189,15 @@ export function normalizeCvDiff(raw: unknown): CvDiffPayload | null {
   const hasContent = added.length > 0 || removed.length > 0 || modified.length > 0;
 
   return hasContent ? { added, removed, modified } : null;
+}
+
+export function extractCvParsedSections(
+  data: Pick<AgentChatResponse, 'meta' | 'response'> | Pick<ActivateAgentResponse, 'meta' | 'response'>
+): Record<string, string> | null {
+  const sections = resolveAgentMeta(data)?.analysis?.cv_analysis?.parsed_sections;
+  if (!sections || typeof sections !== 'object') return null;
+  const entries = Object.entries(sections).filter(
+    ([, value]) => typeof value === 'string' && value.trim().length > 0
+  );
+  return entries.length > 0 ? Object.fromEntries(entries) : null;
 }

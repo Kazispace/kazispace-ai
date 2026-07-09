@@ -7,7 +7,8 @@ import { useTranslations } from "next-intl";
 
 import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
-import { ChatInput } from "@/components/chat/chat-input";
+import { CvChatInput } from "@/components/cv/cv-chat-input";
+import { CvParsedHints } from "@/components/cv/cv-parsed-hints";
 import { MessageBubble } from "@/components/clinic/message-bubble";
 import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { QuickReplies } from "@/components/clinic/quick-replies";
@@ -43,6 +44,7 @@ function CvPageContent({ locale }: { locale: string }) {
     quickReplies,
     isLoading,
     isSending,
+    isUploading,
     error,
     needsLogin,
     needsOnboarding,
@@ -52,10 +54,13 @@ function CvPageContent({ locale }: { locale: string }) {
     isSessionReady,
     isReadOnly,
     sessionResumed,
+    parsedSections,
     sessions,
     sessionsLoading,
     sessionId,
     sendMessage,
+    sendPayload,
+    uploadResume,
     confirmCv,
     regenerateCv,
     selectSession,
@@ -76,13 +81,14 @@ function CvPageContent({ locale }: { locale: string }) {
         locale,
         router,
         openPaywall,
-        sendPayload: (payload) => void sendMessage(payload),
+        sendPayload: (payload, showUserBubble) =>
+          void sendPayload(payload, { showUserBubble }),
         intakeConfirm: () => void agentSession.intakeConfirm(),
         acceptCv: () => void confirmCv(),
         regenerateCv: () => void regenerateCv(),
       });
     },
-    [agentSession.intakeConfirm, confirmCv, locale, openPaywall, regenerateCv, router, sendMessage]
+    [agentSession.intakeConfirm, confirmCv, locale, openPaywall, regenerateCv, router, sendPayload]
   );
 
   const subtitle = useMemo(
@@ -237,9 +243,11 @@ function CvPageContent({ locale }: { locale: string }) {
                       onSelect={(text) => void sendMessage(text)}
                     />
                   )}
-                  <ChatInput
+                  <CvChatInput
                     onSend={(text) => void sendMessage(text)}
+                    onUpload={(file) => void uploadResume(file)}
                     disabled={!isSessionReady || isSending}
+                    isUploading={isUploading}
                     placeholder={t("inputPlaceholder")}
                   />
                 </>
@@ -253,14 +261,22 @@ function CvPageContent({ locale }: { locale: string }) {
             preview={preview}
             isLoading={isLoading && !preview}
             footer={
-              diff && !isReadOnly ? (
-                <CvDiffPanel
-                  diff={diff}
-                  onConfirm={() => void confirmCv()}
-                  onRegenerate={() => void regenerateCv()}
-                  disabled={isSending}
-                />
-              ) : null
+              <>
+                {parsedSections && !isReadOnly ? (
+                  <CvParsedHints
+                    sections={parsedSections}
+                    className="px-4 py-3 border-t border-gray-100 bg-gray-50"
+                  />
+                ) : null}
+                {diff && !isReadOnly ? (
+                  <CvDiffPanel
+                    diff={diff}
+                    onConfirm={() => void confirmCv()}
+                    onRegenerate={() => void regenerateCv()}
+                    disabled={isSending || isUploading}
+                  />
+                ) : null}
+              </>
             }
           />
         )}

@@ -185,6 +185,14 @@ export interface AgentChatMeta {
   buttons?: string[];
   error_code?: string;
   paywall_source?: string;
+  event?: string;
+  analysis?: {
+    cv_analysis?: {
+      parsed_sections?: Record<string, string>;
+      parsed?: boolean;
+      skipped?: boolean;
+    };
+  };
 }
 
 export interface AgentChatResponse {
