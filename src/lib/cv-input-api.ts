@@ -6,6 +6,8 @@ import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import type { AgentChatResponse, ApiResponse } from '@/types';
 
 export const CV_UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+/** Netlify serverless body limit ~6MB — use direct BE for larger files. */
+export const CV_UPLOAD_PROXY_MAX_BYTES = 5 * 1024 * 1024;
 export const CV_UPLOAD_ACCEPT =
   '.pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
@@ -13,6 +15,14 @@ const CV_UPLOAD_MIME_TYPES = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ]);
+
+const NETWORK_ERROR_PATTERNS = [
+  'load failed',
+  'failed to fetch',
+  'networkerror',
+  'network error',
+  'the operation was aborted',
+];
 
 export interface CvFileUploadResponse {
   input_id: number;
@@ -31,10 +41,12 @@ function parseFormError(
 ): { error: string; errorCode?: string } {
   const detail = errorData.detail;
   const detailMessage =
-    typeof detail === 'object' && detail !== null
-      ? (detail as { message?: string; error_code?: string }).message ??
-        (detail as { error_code?: string }).error_code
-      : undefined;
+    typeof detail === 'string'
+      ? detail
+      : typeof detail === 'object' && detail !== null
+        ? (detail as { message?: string; error_code?: string }).message ??
+          (detail as { error_code?: string }).error_code
+        : undefined;
   const errorCode =
     (typeof detail === 'object' && detail !== null
       ? (detail as { error_code?: string }).error_code
@@ -63,6 +75,136 @@ export function validateCvUploadFile(file: File): CvUploadValidationCode | null 
     return 'FILE_TOO_LARGE';
   }
   return null;
+}
+
+function isLegacyFileModeRejection(error?: string): boolean {
+  if (!error) return false;
+  return error.includes("input_mode must be") && !error.includes("'file'");
+}
+
+function isNetworkErrorMessage(error?: string): boolean {
+  if (!error) return false;
+  const lower = error.toLowerCase();
+  return NETWORK_ERROR_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
+export function resolveCvUploadErrorMessage(
+  error: string | undefined,
+  errorCode: string | undefined,
+  t: (key: string) => string
+): string {
+  if (isLegacyFileModeRejection(error)) {
+    return t('uploadErrorBackendNotReady');
+  }
+  if (errorCode === 'NETWORK_ERROR' || isNetworkErrorMessage(error)) {
+    return t('uploadErrorNetwork');
+  }
+  if (errorCode === 'PROXY_UNAVAILABLE' || errorCode === 'PROXY_PAYLOAD_TOO_LARGE') {
+    return t('uploadErrorNetwork');
+  }
+  if (errorCode === 'AGENT_NOT_ACTIVE') {
+    return error ?? t('uploadErrorAgentNotActive');
+  }
+  if (errorCode === 'UNSUPPORTED_FORMAT') {
+    return t('uploadErrorFormat');
+  }
+  if (errorCode === 'FILE_TOO_LARGE') {
+    return t('uploadErrorSize');
+  }
+  if (errorCode === 'VALIDATION_ERROR') {
+    return error && !error.includes('input_mode must') ? error : t('uploadErrorValidation');
+  }
+  return error ?? t('uploadErrorGeneric');
+}
+
+function buildUploadForm(file: File): FormData {
+  const form = new FormData();
+  form.append('source_channel', 'web');
+  form.append('input_mode', 'file');
+  form.append('context_module', 'cv_builder');
+  form.append('device_id', getDeviceId());
+  form.append('file', file, file.name);
+  return form;
+}
+
+function buildUploadHeaders(locale?: string): Record<string, string> {
+  const languagePreference =
+    locale ??
+    getActiveLanguagePreference(
+      typeof window !== 'undefined' ? window.location.pathname : undefined
+    );
+
+  const headers: Record<string, string> = {
+    'X-Device-ID': getDeviceId(),
+    'Accept-Language': languagePreference,
+    'X-Language-Preference': languagePreference,
+    'X-Locale': languagePreference,
+    ...getTmaClientHeaders(),
+  };
+  const token = getAuthToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+}
+
+function resolveUploadTargets(file: File): string[] {
+  if (typeof window === 'undefined') {
+    return [`${API_BASE_URL}/api/v1/inputs`];
+  }
+
+  const direct = `${API_BASE_URL}/api/v1/inputs`;
+  const proxy = '/api/cv/upload';
+
+  // Large files: skip Netlify proxy body limit.
+  if (file.size > CV_UPLOAD_PROXY_MAX_BYTES) {
+    return [direct];
+  }
+
+  // Same-origin proxy avoids Safari CORS / Netlify preview origin issues.
+  return [proxy, direct];
+}
+
+async function postCvUpload(
+  url: string,
+  form: FormData,
+  headers: Record<string, string>
+): Promise<ApiResponse<CvFileUploadResponse>> {
+  try {
+    const response = await fetch(url, { method: 'POST', headers, body: form });
+    if (!response.ok) {
+      const errorData = (await response.json().catch(() => ({}))) as Record<
+        string,
+        unknown
+      >;
+      const { error, errorCode } = parseFormError(errorData, response.status);
+      const mappedCode =
+        response.status === 404
+          ? 'PROXY_UNAVAILABLE'
+          : response.status === 413
+            ? 'PROXY_PAYLOAD_TOO_LARGE'
+            : errorCode;
+      return {
+        success: false,
+        error,
+        errorCode: mappedCode,
+      };
+    }
+    const data = (await response.json()) as CvFileUploadResponse;
+    return { success: true, data };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Network error',
+      errorCode: 'NETWORK_ERROR',
+    };
+  }
+}
+
+function shouldFallbackToDirectUpload(errorCode?: string): boolean {
+  return (
+    errorCode === 'PROXY_UNAVAILABLE' ||
+    errorCode === 'NETWORK_ERROR' ||
+    errorCode === 'PROXY_PAYLOAD_TOO_LARGE'
+  );
 }
 
 export async function uploadCvResumeFile(
@@ -113,42 +255,22 @@ export async function uploadCvResumeFile(
     };
   }
 
-  const url = `${API_BASE_URL}/api/v1/inputs`;
-  const token = getAuthToken();
-  const form = new FormData();
-  form.append('source_channel', 'web');
-  form.append('input_mode', 'file');
-  form.append('context_module', 'cv_builder');
-  form.append('file', file, file.name);
+  const headers = buildUploadHeaders(locale);
+  const targets = resolveUploadTargets(file);
 
-  const languagePreference =
-    locale ??
-    getActiveLanguagePreference(
-      typeof window !== 'undefined' ? window.location.pathname : undefined
-    );
-
-  const headers: Record<string, string> = {
-    'X-Device-ID': getDeviceId(),
-    'Accept-Language': languagePreference,
-    'X-Language-Preference': languagePreference,
-    'X-Locale': languagePreference,
-    ...getTmaClientHeaders(),
+  let last: ApiResponse<CvFileUploadResponse> = {
+    success: false,
+    errorCode: 'NETWORK_ERROR',
   };
-  if (token) headers.Authorization = `Bearer ${token}`;
 
-  try {
-    const response = await fetch(url, { method: 'POST', headers, body: form });
-    if (!response.ok) {
-      const errorData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
-      const { error, errorCode } = parseFormError(errorData, response.status);
-      return { success: false, error, errorCode };
+  for (const url of targets) {
+    const res = await postCvUpload(url, buildUploadForm(file), headers);
+    if (res.success) return res;
+    last = res;
+    if (!shouldFallbackToDirectUpload(res.errorCode)) {
+      return res;
     }
-    const data = (await response.json()) as CvFileUploadResponse;
-    return { success: true, data };
-  } catch (err) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : 'Network error',
-    };
   }
+
+  return last;
 }

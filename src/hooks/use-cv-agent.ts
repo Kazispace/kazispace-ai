@@ -26,7 +26,7 @@ import {
   extractCvParsedSections,
   type CvPreviewContent,
 } from '@/lib/cv-api';
-import { uploadCvResumeFile } from '@/lib/cv-input-api';
+import { uploadCvResumeFile, resolveCvUploadErrorMessage } from '@/lib/cv-input-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
 import type {
   ActivateAgentResponse,
@@ -445,17 +445,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
           }
           return prev;
         });
-        if (res.errorCode === 'AGENT_NOT_ACTIVE') {
-          showToast(res.error ?? t('uploadErrorAgentNotActive'), 'error');
-        } else if (res.errorCode === 'UNSUPPORTED_FORMAT') {
-          showToast(t('uploadErrorFormat'), 'error');
-        } else if (res.errorCode === 'FILE_TOO_LARGE') {
-          showToast(t('uploadErrorSize'), 'error');
-        } else if (res.errorCode === 'VALIDATION_ERROR') {
-          showToast(res.error ?? t('uploadErrorValidation'), 'error');
-        } else {
-          showToast(res.error ?? t('uploadErrorGeneric'), 'error');
-        }
+        showToast(resolveCvUploadErrorMessage(res.error, res.errorCode, t), 'error');
         setIsUploading(false);
         return { ok: false as const, error: res.error };
       }

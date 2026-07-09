@@ -180,6 +180,8 @@
 		"uploadErrorSize": "文件大小不能超过 10MB。",
 		"uploadErrorValidation": "文件无效，请上传 10MB 以内的 PDF 或 DOCX。",
 		"uploadErrorGeneric": "简历上传失败。",
+		"uploadErrorNetwork": "上传失败，请检查网络后重试。解析可能需要一分钟。",
+		"uploadErrorBackendNotReady": "服务器尚未支持简历上传，请等待后端更新后重试。",
 		"parsedSectionKeys": {
 			"target_role": "目标岗位",
 			"skills": "技能",
