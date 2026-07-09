@@ -70,12 +70,16 @@ export function CvSessionSidebar({
                 )}
               >
                 <p className="text-sm font-medium text-kazi-navy truncate">{session.title}</p>
-                <p className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5">
-                  <span>
-                    {session.status === "active"
-                      ? t("sessionActive")
-                      : t("sessionEnded")}
-                  </span>
+                <p className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                  {isActive ? (
+                    <span className="text-kazi-orange font-medium">{t("sessionCurrent")}</span>
+                  ) : (
+                    <span>
+                      {session.status === "active"
+                        ? t("sessionActive")
+                        : t("sessionEnded")}
+                    </span>
+                  )}
                   {session.updated_at ? (
                     <>
                       <span aria-hidden>·</span>
