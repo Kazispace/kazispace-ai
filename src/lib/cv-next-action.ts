@@ -63,10 +63,6 @@ export function handleCvNextAction(
       }
       return;
     default:
-      if (action.payload?.startsWith('__action:')) {
-        deps.sendPayload(action.payload, false);
-        return;
-      }
       if (action.payload) {
         deps.sendPayload(action.payload);
         return;

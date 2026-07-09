@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   activateAgent,
   deactivateAgent,
@@ -57,6 +58,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const enabled = options?.enabled !== false;
   const params = useParams();
   const locale = typeof params.locale === 'string' ? params.locale : 'en';
+  const t = useTranslations('cv');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const openPaywall = useUIStore((s) => s.openPaywall);
@@ -112,6 +114,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
           setPipelineState,
           setPreview,
           setDiff,
+          setParsedSections,
         });
         if (hist.data.pipeline_state) {
           setPipelineState(hist.data.pipeline_state);
@@ -443,11 +446,15 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
           return prev;
         });
         if (res.errorCode === 'AGENT_NOT_ACTIVE') {
-          showToast(res.error ?? 'Activate CV Builder before uploading.', 'error');
+          showToast(res.error ?? t('uploadErrorAgentNotActive'), 'error');
+        } else if (res.errorCode === 'UNSUPPORTED_FORMAT') {
+          showToast(t('uploadErrorFormat'), 'error');
+        } else if (res.errorCode === 'FILE_TOO_LARGE') {
+          showToast(t('uploadErrorSize'), 'error');
         } else if (res.errorCode === 'VALIDATION_ERROR') {
-          showToast(res.error ?? 'Invalid file. Use PDF or DOCX under 10MB.', 'error');
+          showToast(res.error ?? t('uploadErrorValidation'), 'error');
         } else {
-          showToast(res.error ?? 'Failed to upload resume', 'error');
+          showToast(res.error ?? t('uploadErrorGeneric'), 'error');
         }
         setIsUploading(false);
         return { ok: false as const, error: res.error };
@@ -474,6 +481,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       refreshSessions,
       sessionId,
       showToast,
+      t,
     ]
   );
 

@@ -71,6 +71,7 @@ export function hydrateCvMetaFromAgentHistory(
     setPipelineState: (state: string | null) => void;
     setPreview: (preview: CvPreviewContent | null) => void;
     setDiff: (diff: CvDiffPayload | null) => void;
+    setParsedSections?: (sections: Record<string, string> | null) => void;
   }
 ): void {
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -89,6 +90,10 @@ export function hydrateCvMetaFromAgentHistory(
     const preview = extractCvPreviewFromAgent(envelope);
     if (preview) handlers.setPreview(preview);
     patchDiffFromAgentMeta(envelope, handlers.setDiff);
+    const sections = extractCvParsedSections(envelope);
+    if (sections && handlers.setParsedSections) {
+      handlers.setParsedSections(sections);
+    }
     return;
   }
 }

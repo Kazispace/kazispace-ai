@@ -50,15 +50,17 @@ function parseFormError(
   };
 }
 
-export function validateCvUploadFile(file: File): string | null {
+export type CvUploadValidationCode = 'UNSUPPORTED_FORMAT' | 'FILE_TOO_LARGE';
+
+export function validateCvUploadFile(file: File): CvUploadValidationCode | null {
   const ext = file.name.split('.').pop()?.toLowerCase();
   const mimeOk = CV_UPLOAD_MIME_TYPES.has(file.type);
   const extOk = ext === 'pdf' || ext === 'docx';
   if (!mimeOk && !extOk) {
-    return 'VALIDATION_ERROR';
+    return 'UNSUPPORTED_FORMAT';
   }
   if (file.size > CV_UPLOAD_MAX_BYTES) {
-    return 'VALIDATION_ERROR';
+    return 'FILE_TOO_LARGE';
   }
   return null;
 }
@@ -69,7 +71,7 @@ export async function uploadCvResumeFile(
 ): Promise<ApiResponse<CvFileUploadResponse>> {
   const validationCode = validateCvUploadFile(file);
   if (validationCode) {
-    return { success: false, error: validationCode, errorCode: validationCode };
+    return { success: false, errorCode: validationCode };
   }
 
   if (process.env.NEXT_PUBLIC_AGENT_API_MOCK === 'true') {
