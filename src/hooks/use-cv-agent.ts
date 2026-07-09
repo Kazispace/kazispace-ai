@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
   activateAgent,
+  deactivateAgent,
   fetchAgentMessages,
   fetchAgentSessions,
   getActiveAgent,
@@ -263,6 +264,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setSessionId(session_id);
     if (resumed) {
       await loadSessionMessages(session_id, gen);
+      applyActivateResponse(res.data);
     } else {
       setMessages([{ id: nextId('cv'), role: 'assistant', content: greeting }]);
       applyActivateResponse(res.data);
@@ -420,6 +422,13 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setNextActions([]);
       setQuickReplies([]);
       setSessionId(null);
+
+      const deact = await deactivateAgent(CV_BUILDER_AGENT_ID, locale);
+      if (gen !== activateGenRef.current) return;
+      if (!deact.success) {
+        showToast(deact.error ?? 'Failed to reset CV session', 'error');
+        return;
+      }
 
       const res = await activateAgent(CV_BUILDER_AGENT_ID, locale, undefined, {
         job_id: jobId ?? undefined,

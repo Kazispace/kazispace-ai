@@ -20,12 +20,14 @@ export function readCachedMasterSessionId(): string | null {
 export function cacheMasterSessionId(sessionId: string): void {
   if (typeof window === 'undefined') return;
   sessionStorage.setItem(STORAGE_KEYS.MASTER_SESSION, sessionId);
+  // Mirror for legacy getSessionId() callers; cleared together on logout.
   localStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
 }
 
 export function clearMasterSession(): void {
   if (typeof window === 'undefined') return;
   sessionStorage.removeItem(STORAGE_KEYS.MASTER_SESSION);
+  localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
 }
 
 export async function fetchDefaultChatSession(): Promise<ApiResponse<DefaultChatSession>> {
