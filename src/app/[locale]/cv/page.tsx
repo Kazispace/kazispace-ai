@@ -1,26 +1,28 @@
 "use client";
 
-import { Suspense, useCallback, useMemo, useState } from "react";
-import Link from "next/link";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { CvAgentWelcome } from "@/components/cv/cv-agent-welcome";
 import { CvChatInput } from "@/components/cv/cv-chat-input";
+import { CvHeader } from "@/components/cv/cv-header";
 import { CvParsedHints } from "@/components/cv/cv-parsed-hints";
 import { MessageBubble } from "@/components/clinic/message-bubble";
 import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
 import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
-import { CvPipelineSteps } from "@/components/cv/cv-pipeline-steps";
 import { CvSessionSidebar } from "@/components/cv/cv-session-sidebar";
 import { CvNewSessionDialog } from "@/components/cv/cv-new-session-dialog";
+import { CvWorkspaceTabs, type CvWorkspaceTab, CV_CHAT_PANEL_ID, CV_RESUME_PANEL_ID } from "@/components/cv/cv-workspace-tabs";
 import { Button } from "@/components/ui/button";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
 import { useUIStore } from "@/lib/store";
+import { cn } from "@/lib/utils";
 import type { ChatNextAction } from "@/types/chat-envelope";
 
 interface CvPageProps {
@@ -33,7 +35,9 @@ function CvPageContent({ locale }: { locale: string }) {
   const jobId = searchParams.get("job_id");
   const t = useTranslations("cv");
   const openPaywall = useUIStore((s) => s.openPaywall);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newSessionDialogOpen, setNewSessionDialogOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<CvWorkspaceTab>("chat");
 
   const agentSession = useCvAgent(jobId);
 
@@ -72,8 +76,24 @@ function CvPageContent({ locale }: { locale: string }) {
   } = agentSession;
 
   const showProfileGate = needsProfile === true;
-  const showPipelineSteps =
-    !needsLogin && !needsOnboarding && !showProfileGate && !isReadOnly;
+  const showWorkspace =
+    !needsLogin && !needsOnboarding && !showProfileGate;
+  const showPipelineSteps = showWorkspace && !isReadOnly;
+  const canDownloadCv = documentId != null;
+  const resumeHasPreview = preview != null;
+  const inputDisabled =
+    !isSessionReady || isSending || isUploading || isExporting;
+
+  const headerSubtitle = useMemo(
+    () => (jobId ? t("subtitleWithJob", { jobId }) : t("subtitle")),
+    [jobId, t]
+  );
+
+  useEffect(() => {
+    if (canDownloadCv) {
+      setMobileTab("resume");
+    }
+  }, [canDownloadCv]);
 
   const routedActions = nextActions.filter((a) => isRoutedCvAction(a.type));
   const pickerActions = nextActions.filter((a) => !isRoutedCvAction(a.type));
@@ -92,12 +112,16 @@ function CvPageContent({ locale }: { locale: string }) {
         exportCv: () => void exportCvPdf(),
       });
     },
-    [agentSession.intakeConfirm, confirmCv, exportCvPdf, locale, openPaywall, regenerateCv, router, sendPayload]
-  );
-
-  const subtitle = useMemo(
-    () => (jobId ? t("subtitleWithJob", { jobId }) : t("subtitle")),
-    [jobId, t]
+    [
+      agentSession.intakeConfirm,
+      confirmCv,
+      exportCvPdf,
+      locale,
+      openPaywall,
+      regenerateCv,
+      router,
+      sendPayload,
+    ]
   );
 
   const handleRestart = useCallback(async () => {
@@ -111,97 +135,114 @@ function CvPageContent({ locale }: { locale: string }) {
     setNewSessionDialogOpen(true);
   }, [isLoading, isSending]);
 
-  return (
-    <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0 flex flex-col">
-      <Header locale={locale} />
-      <main className="pt-16 flex-1 flex flex-col lg:flex-row max-w-7xl mx-auto w-full">
-        {!needsLogin && !needsOnboarding && !showProfileGate && (
-          <CvSessionSidebar
-            sessions={sessions}
-            activeSessionId={sessionId}
-            isLoading={sessionsLoading}
-            onSelect={(id) => void selectSession(id)}
-            onNew={requestNewSession}
-            disabled={isSending || isLoading}
-            className="hidden lg:flex"
+  const previewFooter = (
+    <>
+      {parsedSections && !isReadOnly ? (
+        <CvParsedHints
+          sections={parsedSections}
+          className="px-4 py-3 border-t border-gray-200/80 bg-white"
+        />
+      ) : null}
+      {diff && !isReadOnly ? (
+        <CvDiffPanel
+          diff={diff}
+          onConfirm={() => void confirmCv()}
+          onRegenerate={() => void regenerateCv()}
+          disabled={isSending || isUploading}
+        />
+      ) : null}
+    </>
+  );
+
+  if (!showWorkspace) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0 flex flex-col">
+        <Header locale={locale} />
+        <main className="pt-16 flex-1 flex flex-col">
+          <GateScreen
+            needsLogin={needsLogin}
+            needsOnboarding={needsOnboarding}
+            showProfileGate={showProfileGate}
+            locale={locale}
+            router={router}
+            t={t}
           />
-        )}
+        </main>
+        <BottomNav locale={locale} />
+      </div>
+    );
+  }
 
-        <section className="flex-1 flex flex-col min-w-0 min-h-[50vh] lg:min-h-[calc(100vh-4rem)]">
-          <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <Link
-                href={`/${locale}/mine`}
-                className="text-xs text-kazi-orange font-medium"
-              >
-                {t("backToMine")}
-              </Link>
-              <h1 className="text-lg font-bold text-kazi-navy mt-1">{t("title")}</h1>
-              <p className="text-xs text-gray-500">{subtitle}</p>
-            </div>
-            {!needsLogin && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="shrink-0 lg:hidden"
-                disabled={isLoading || isSending}
-                onClick={requestNewSession}
-              >
-                {t("newCv")}
-              </Button>
+  return (
+    <div className="h-[100dvh] flex flex-col bg-gray-bg overflow-hidden">
+      <CvHeader
+        locale={locale}
+        subtitle={headerSubtitle}
+        canDownload={canDownloadCv}
+        isExporting={isExporting}
+        onDownload={() => void exportCvPdf()}
+        onNewSession={requestNewSession}
+        actionsDisabled={isLoading || isSending}
+        pipelineState={pipelineState}
+        isWorking={isSending}
+        showPipeline={showPipelineSteps}
+      />
+
+      <CvWorkspaceTabs
+        active={mobileTab}
+        onChange={setMobileTab}
+        resumeDownloadReady={canDownloadCv}
+        resumeHasPreview={resumeHasPreview && !canDownloadCv}
+      />
+
+      <div className="flex-1 flex min-h-0">
+        <CvSessionSidebar
+          sessions={sessions}
+          activeSessionId={sessionId}
+          isLoading={sessionsLoading}
+          onSelect={(id) => void selectSession(id)}
+          onNew={requestNewSession}
+          disabled={isSending || isLoading}
+          className="hidden lg:flex"
+        />
+
+        <div className="flex-1 flex min-w-0 min-h-0">
+          <section
+            id={CV_CHAT_PANEL_ID}
+            role="tabpanel"
+            aria-labelledby="cv-tab-chat"
+            className={cn(
+              "flex-1 flex flex-col min-w-0 min-h-0 bg-gray-bg",
+              mobileTab !== "chat" && "hidden lg:flex"
             )}
-          </div>
+          >
+            {sessionResumed && !isReadOnly ? (
+              <p className="px-4 py-2 text-xs text-kazi-orange bg-orange-50 border-b border-orange-100 text-center">
+                {t("sessionResumedBanner")}
+              </p>
+            ) : null}
+            {isReadOnly ? (
+              <p className="px-4 py-2 text-xs text-amber-800 bg-amber-50 border-b border-amber-100 text-center">
+                {t("readOnlyBanner")}
+              </p>
+            ) : null}
 
-          {showPipelineSteps && (
-            <CvPipelineSteps
-              pipelineState={pipelineState}
-              isWorking={isSending}
-            />
-          )}
-
-          {needsLogin ? (
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">
-                <p className="text-sm text-gray-700 mb-4">{t("loginBanner")}</p>
-                <Button size="sm" onClick={() => router.push(`/${locale}/login`)}>
-                  {t("signIn")}
-                </Button>
-              </div>
-            </div>
-          ) : needsOnboarding ? (
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">
-                <p className="text-sm text-gray-700 mb-4">{t("onboardingBanner")}</p>
-                <Button size="sm" onClick={() => router.push(`/${locale}/chat`)}>
-                  {t("completeProfile")}
-                </Button>
-              </div>
-            </div>
-          ) : showProfileGate ? (
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">
-                <p className="text-sm text-gray-700 mb-4">{t("profileBanner")}</p>
-                <Button size="sm" onClick={() => router.push(`/${locale}/profile`)}>
-                  {t("goToProfile")}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              {sessionResumed && !isReadOnly && (
-                <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-900 text-center">
-                  {t("sessionResumedBanner")}
-                </div>
-              )}
-              {isReadOnly && (
-                <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 text-xs text-amber-900 text-center">
-                  {t("readOnlyBanner")}
-                </div>
-              )}
-              <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg">
-                {error && (
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <div className="max-w-3xl mx-auto w-full px-4 py-4 flex flex-col gap-3 min-h-full">
+                {error ? (
                   <p className="text-sm text-red-500 text-center">{error}</p>
-                )}
+                ) : null}
+                {isLoading && messages.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-12">
+                    {t("sessionLoading")}
+                  </p>
+                ) : messages.length === 0 ? (
+                  <CvAgentWelcome
+                    disabled={inputDisabled}
+                    onPrompt={(text) => void sendMessage(text)}
+                    onUploadClick={() => fileInputRef.current?.click()}
+                  />
+                ) : null}
                 {messages.map((msg) => (
                   <MessageBubble
                     key={msg.id}
@@ -210,95 +251,73 @@ function CvPageContent({ locale }: { locale: string }) {
                     variant="agent"
                   />
                 ))}
-                {isLoading && messages.length === 0 && (
-                  <p className="text-sm text-gray-500 text-center py-8">
-                    {t("sessionLoading")}
-                  </p>
-                )}
               </div>
-              {!isReadOnly && (
-                <>
-                  {routedActions.length > 0 && (
-                    <div className="px-4 pb-2 bg-gray-bg">
-                      <ChatNextActions
-                        actions={routedActions}
-                        locale={locale}
-                        onAction={handleCvAction}
-                        disabled={!isSessionReady || isSending || isExporting}
-                      />
-                    </div>
-                  )}
-                  {pickerActions.length > 0 && (
-                    <QuickReplies
-                      options={pickerActions.map((a) => quickReplyLabel(a, locale))}
-                      disabled={!isSessionReady || isSending || isExporting}
-                      onSelect={(text) => {
-                        const action = pickerActions.find(
-                          (a) => quickReplyLabel(a, locale) === text
-                        );
-                        if (action) handleCvAction(action);
-                      }}
+            </div>
+
+            {!isReadOnly ? (
+              <div className="shrink-0 border-t border-gray-200/80 bg-white">
+                {routedActions.length > 0 ? (
+                  <div className="max-w-3xl mx-auto px-4 pt-2">
+                    <ChatNextActions
+                      actions={routedActions}
+                      locale={locale}
+                      onAction={handleCvAction}
+                      disabled={inputDisabled}
                     />
-                  )}
-                  {quickReplies.length > 0 && (
-                    <QuickReplies
-                      options={quickReplies}
-                      disabled={!isSessionReady || isSending || isExporting}
-                      onSelect={(text) => void sendMessage(text)}
-                    />
-                  )}
+                  </div>
+                ) : null}
+                {pickerActions.length > 0 ? (
+                  <QuickReplies
+                    options={pickerActions.map((a) =>
+                      quickReplyLabel(a, locale)
+                    )}
+                    disabled={inputDisabled}
+                    onSelect={(text) => {
+                      const action = pickerActions.find(
+                        (a) => quickReplyLabel(a, locale) === text
+                      );
+                      if (action) handleCvAction(action);
+                    }}
+                  />
+                ) : null}
+                {quickReplies.length > 0 ? (
+                  <QuickReplies
+                    options={quickReplies}
+                    disabled={inputDisabled}
+                    onSelect={(text) => void sendMessage(text)}
+                  />
+                ) : null}
+                <div className="max-w-3xl mx-auto">
                   <CvChatInput
+                    fileInputRef={fileInputRef}
                     onSend={(text) => void sendMessage(text)}
                     onUpload={(file) => void uploadResume(file)}
-                    disabled={!isSessionReady || isSending || isUploading || isExporting}
+                    disabled={inputDisabled}
                     isUploading={isUploading}
                     placeholder={t("inputPlaceholder")}
                   />
-                </>
-              )}
-            </>
-          )}
-        </section>
+                </div>
+              </div>
+            ) : null}
+          </section>
 
-        {!needsLogin && !needsOnboarding && !showProfileGate && (
           <CvPreviewPane
             preview={preview}
-            isLoading={isLoading && !preview}
-            footer={
-              <>
-                {documentId && preview ? (
-                  <div className="px-4 py-3 border-t border-gray-100 bg-white">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full"
-                      disabled={isSending || isUploading || isExporting}
-                      onClick={() => void exportCvPdf()}
-                    >
-                      {isExporting ? t("exportingPdf") : t("downloadPdf")}
-                    </Button>
-                  </div>
-                ) : null}
-                {parsedSections && !isReadOnly ? (
-                  <CvParsedHints
-                    sections={parsedSections}
-                    className="px-4 py-3 border-t border-gray-100 bg-gray-50"
-                  />
-                ) : null}
-                {diff && !isReadOnly ? (
-                  <CvDiffPanel
-                    diff={diff}
-                    onConfirm={() => void confirmCv()}
-                    onRegenerate={() => void regenerateCv()}
-                    disabled={isSending || isUploading}
-                  />
-                ) : null}
-              </>
-            }
+            isLoading={isLoading && !preview && !canDownloadCv}
+            canDownload={canDownloadCv}
+            isExporting={isExporting}
+            onDownload={() => void exportCvPdf()}
+            jobSubtitle={jobId ? headerSubtitle : undefined}
+            panelId={CV_RESUME_PANEL_ID}
+            footer={previewFooter}
+            className={cn(
+              mobileTab !== "resume" && "hidden lg:flex",
+              mobileTab === "resume" && "flex flex-1 lg:flex-none"
+            )}
           />
-        )}
-      </main>
-      <BottomNav locale={locale} />
+        </div>
+      </div>
+
       <CvNewSessionDialog
         open={newSessionDialogOpen}
         onConfirm={() => void handleRestart()}
@@ -308,12 +327,49 @@ function CvPageContent({ locale }: { locale: string }) {
   );
 }
 
+function GateScreen({
+  needsLogin,
+  needsOnboarding,
+  showProfileGate,
+  locale,
+  router,
+  t,
+}: {
+  needsLogin: boolean;
+  needsOnboarding: boolean;
+  showProfileGate: boolean;
+  locale: string;
+  router: ReturnType<typeof useRouter>;
+  t: ReturnType<typeof useTranslations<"cv">>;
+}) {
+  const banner = needsLogin
+    ? { text: t("loginBanner"), href: `/${locale}/login`, cta: t("signIn") }
+    : needsOnboarding
+      ? { text: t("onboardingBanner"), href: `/${locale}/chat`, cta: t("completeProfile") }
+      : showProfileGate
+        ? { text: t("profileBanner"), href: `/${locale}/profile`, cta: t("goToProfile") }
+        : null;
+
+  if (!banner) return null;
+
+  return (
+    <div className="flex-1 flex items-center justify-center p-6">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center max-w-sm w-full">
+        <p className="text-sm text-gray-700 mb-5">{banner.text}</p>
+        <Button className="w-full" onClick={() => router.push(banner.href)}>
+          {banner.cta}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function CvPage({ params }: CvPageProps) {
   const t = useTranslations("cv");
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center text-gray-500">
+        <div className="h-[100dvh] flex items-center justify-center bg-gray-bg text-gray-500 text-sm">
           {t("sessionLoading")}
         </div>
       }

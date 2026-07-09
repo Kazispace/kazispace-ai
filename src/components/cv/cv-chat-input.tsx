@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type RefObject } from "react";
 import { Loader2, Paperclip, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -14,6 +14,7 @@ interface CvChatInputProps {
   disabled?: boolean;
   isUploading?: boolean;
   placeholder?: string;
+  fileInputRef?: RefObject<HTMLInputElement>;
 }
 
 export function CvChatInput({
@@ -22,9 +23,11 @@ export function CvChatInput({
   disabled,
   isUploading,
   placeholder,
+  fileInputRef: externalFileRef,
 }: CvChatInputProps) {
   const t = useTranslations("cv");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const internalFileRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = externalFileRef ?? internalFileRef;
   const [message, setMessage] = useState("");
   const inputDisabled = disabled || isUploading;
 
@@ -52,7 +55,7 @@ export function CvChatInput({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2 p-4 bg-white border-t items-end">
+    <form onSubmit={handleSubmit} className="flex gap-2 p-4 bg-white border-t border-gray-200/80 items-end">
       <input
         ref={fileInputRef}
         type="file"
@@ -70,7 +73,6 @@ export function CvChatInput({
         onClick={() => fileInputRef.current?.click()}
         disabled={inputDisabled}
         aria-label={t("uploadResume")}
-        title={t("uploadResume")}
       >
         {isUploading ? (
           <Loader2 className="w-5 h-5 animate-spin" />
@@ -91,8 +93,7 @@ export function CvChatInput({
           className={cn(
             "w-full resize-none rounded-[24px] border border-gray-200 bg-gray-50 px-4 py-3 text-sm",
             "focus:outline-none focus:border-kazi-orange focus:bg-white transition-colors",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-            "max-h-32"
+            "disabled:opacity-50 disabled:cursor-not-allowed max-h-32"
           )}
           style={{ minHeight: "48px" }}
         />
