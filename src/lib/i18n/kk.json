@@ -416,6 +416,12 @@
 		"uploadErrorNetwork": "Жүктеу сәтсіз — байланысты тексеріп, қайталаңыз. Парсинг бір минутқа дейін созылуы мүмкін.",
 		"uploadErrorBackendNotReady": "Серверде түйіндеме жүктеу әлі қолжетімсіз. Бэкенд жаңартылғаннан кейін қайталаңыз.",
 		"uploadErrorServer": "Түйіндемені өңдеу кезінде сервер қатесі. Сәл кейін қайталаңыз.",
+		"downloadPdf": "PDF жүктеу",
+		"exportingPdf": "PDF дайындалуда…",
+		"exportErrorGeneric": "PDF жүктеу сәтсіз аяқталды.",
+		"exportErrorNotFound": "Түйіндеме табылмады. Алдымен түйіндеме жасаңыз.",
+		"exportErrorUnavailable": "Серверде PDF экспорты әлі қолжетімсіз.",
+		"exportErrorTimeout": "PDF экспорты уақыты асып кетті — қайталаңыз.",
 		"parsedSectionKeys": {
 			"target_role": "Мақсатты лауазым",
 			"skills": "Дағдылар",

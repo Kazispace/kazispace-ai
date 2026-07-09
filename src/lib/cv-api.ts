@@ -72,6 +72,7 @@ export function hydrateCvMetaFromAgentHistory(
     setPreview: (preview: CvPreviewContent | null) => void;
     setDiff: (diff: CvDiffPayload | null) => void;
     setParsedSections?: (sections: Record<string, string> | null) => void;
+    setDocumentId?: (id: number | null) => void;
   }
 ): void {
   for (let i = messages.length - 1; i >= 0; i--) {
@@ -90,6 +91,9 @@ export function hydrateCvMetaFromAgentHistory(
     const preview = extractCvPreviewFromAgent(envelope);
     if (preview) handlers.setPreview(preview);
     patchDiffFromAgentMeta(envelope, handlers.setDiff);
+    if (handlers.setDocumentId) {
+      patchDocumentIdFromMeta(envelope, handlers.setDocumentId);
+    }
     const sections = extractCvParsedSections(envelope);
     if (sections && handlers.setParsedSections) {
       handlers.setParsedSections(sections);
@@ -200,4 +204,25 @@ export function extractCvParsedSections(
     ([, value]) => typeof value === 'string' && value.trim().length > 0
   );
   return entries.length > 0 ? Object.fromEntries(entries) : null;
+}
+
+export function extractCvDocumentId(
+  data: Pick<AgentChatResponse, 'meta' | 'response'> | Pick<ActivateAgentResponse, 'meta' | 'response'>
+): number | null {
+  const raw = resolveAgentMeta(data)?.document_id;
+  if (typeof raw === 'number' && Number.isFinite(raw) && raw > 0) return raw;
+  if (typeof raw === 'string' && /^\d+$/.test(raw.trim())) return Number(raw);
+  return null;
+}
+
+/** Update document_id when agent meta includes an explicit key. */
+export function patchDocumentIdFromMeta(
+  data: Pick<AgentChatResponse, 'meta' | 'response'> | Pick<ActivateAgentResponse, 'meta' | 'response'>,
+  setDocumentId: (id: number | null) => void
+): void {
+  const meta = resolveAgentMeta(data);
+  if (!meta || !Object.prototype.hasOwnProperty.call(meta, 'document_id')) {
+    return;
+  }
+  setDocumentId(extractCvDocumentId(data));
 }

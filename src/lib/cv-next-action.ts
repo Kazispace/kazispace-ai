@@ -13,6 +13,7 @@ const ROUTED_ACTION_TYPES = new Set([
   'accept_cv',
   'confirm',
   'generate_now',
+  'export',
 ]);
 
 export function isRoutedCvAction(type: string): boolean {
@@ -35,6 +36,7 @@ export function handleCvNextAction(
     intakeConfirm: () => void;
     acceptCv: () => void;
     regenerateCv: () => void;
+    exportCv: () => void;
   }
 ): void {
   switch (action.type) {
@@ -61,6 +63,9 @@ export function handleCvNextAction(
       if (action.payload) {
         deps.sendPayload(action.payload, false);
       }
+      return;
+    case 'export':
+      deps.exportCv();
       return;
     default:
       if (action.payload) {

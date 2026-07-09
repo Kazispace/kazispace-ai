@@ -22,11 +22,13 @@ import {
   hydrateCvMetaFromAgentHistory,
   patchDiffFromAgentMeta,
   patchPipelineStateFromMeta,
+  patchDocumentIdFromMeta,
   resolveAgentMeta,
   extractCvParsedSections,
   type CvPreviewContent,
 } from '@/lib/cv-api';
 import { uploadCvResumeFile, resolveCvUploadErrorMessage } from '@/lib/cv-input-api';
+import { exportCvDocumentPdf, resolveCvExportErrorMessage } from '@/lib/cv-export-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
 import { normalizeCvSessions } from '@/lib/cv-sessions';
 import type {
@@ -78,7 +80,9 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const [isLoading, setIsLoading] = useState(enabled);
   const [isSending, setIsSending] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [parsedSections, setParsedSections] = useState<Record<string, string> | null>(null);
+  const [documentId, setDocumentId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
@@ -117,6 +121,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
           setPreview,
           setDiff,
           setParsedSections,
+          setDocumentId,
         });
         if (hist.data.pipeline_state) {
           setPipelineState(hist.data.pipeline_state);
@@ -176,6 +181,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       }
       patchDiffFromAgentMeta(data, setDiff);
       patchPipelineStateFromMeta(data, setPipelineState);
+      patchDocumentIdFromMeta(data, setDocumentId);
       applyCtaState(data);
       const sections = extractCvParsedSections(data);
       if (sections) setParsedSections(sections);
@@ -195,9 +201,24 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       }
       patchDiffFromAgentMeta(data, setDiff);
       patchPipelineStateFromMeta(data, setPipelineState);
+      patchDocumentIdFromMeta(data, setDocumentId);
       applyCtaState(data);
     },
     [applyCtaState, openPaywall]
+  );
+
+  /** Idempotent activate to sync meta (document_id, preview) after history-only loads. */
+  const syncActivateMeta = useCallback(
+    async (gen: number) => {
+      const res = await activateAgent(CV_BUILDER_AGENT_ID, locale, undefined, {
+        job_id: jobId ?? undefined,
+      });
+      if (gen !== activateGenRef.current) return;
+      if (res.success && res.data) {
+        applyActivateResponse(res.data);
+      }
+    },
+    [applyActivateResponse, jobId, locale]
   );
 
   const handleApiError = useCallback(
@@ -232,6 +253,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setIsReadOnly(false);
     setSessionResumed(false);
     setParsedSections(null);
+    setDocumentId(null);
     setSessionId(null);
 
     const handoff = consumeCvAgentHandoff();
@@ -249,6 +271,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         setSessionId(sid);
         setSessionResumed(true);
         await loadSessionMessages(sid, gen, handoff?.greeting);
+        await syncActivateMeta(gen);
         finishSessionLoad(gen);
         void refreshSessions();
         return;
@@ -258,6 +281,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     if (handoffSessionId) {
       setSessionId(handoffSessionId);
       await loadSessionMessages(handoffSessionId, gen, handoff?.greeting);
+      await syncActivateMeta(gen);
       finishSessionLoad(gen);
       void refreshSessions();
       return;
@@ -295,6 +319,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     loadSessionMessages,
     locale,
     refreshSessions,
+    syncActivateMeta,
   ]);
 
   useEffect(() => {
@@ -315,6 +340,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setIsReadOnly(false);
       setSessionResumed(false);
       setParsedSections(null);
+    setDocumentId(null);
       return;
     }
     setMessages([]);
@@ -330,6 +356,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setIsReadOnly(false);
     setSessionResumed(false);
     setParsedSections(null);
+    setDocumentId(null);
     void startSession();
   }, [enabled, isLoggedIn, jobId, startSession]);
 
@@ -347,15 +374,17 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setNextActions([]);
       setQuickReplies([]);
       setParsedSections(null);
+      setDocumentId(null);
 
       const entry = sessions.find((s) => s.session_id === sid);
       setIsReadOnly(entry?.status === 'exited');
       setSessionResumed(false);
 
       await loadSessionMessages(sid, gen);
+      await syncActivateMeta(gen);
       finishSessionLoad(gen);
     },
-    [enabled, finishSessionLoad, isLoggedIn, loadSessionMessages, sessionId, sessions]
+    [enabled, finishSessionLoad, isLoggedIn, loadSessionMessages, sessionId, sessions, syncActivateMeta]
   );
 
   const sendAgentMessage = useCallback(
@@ -425,6 +454,38 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     () => sendAgentMessage('__action:regenerate', { showUserBubble: false }),
     [sendAgentMessage]
   );
+
+  const exportCvPdf = useCallback(async () => {
+    if (!enabled || !isLoggedIn || isSending || isExporting) {
+      return { ok: false as const };
+    }
+
+    if (!documentId) {
+      return sendAgentMessage('__action:export', { showUserBubble: false });
+    }
+
+    setIsExporting(true);
+    try {
+      const res = await exportCvDocumentPdf(documentId, locale);
+      if (!res.success) {
+        showToast(resolveCvExportErrorMessage(res.error, res.errorCode, t), 'error');
+        return { ok: false as const, error: res.error };
+      }
+      return { ok: true as const };
+    } finally {
+      setIsExporting(false);
+    }
+  }, [
+    documentId,
+    enabled,
+    isExporting,
+    isLoggedIn,
+    isSending,
+    locale,
+    sendAgentMessage,
+    showToast,
+    t,
+  ]);
 
   const uploadResume = useCallback(
     async (file: File) => {
@@ -502,6 +563,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setQuickReplies([]);
       setSessionId(null);
       setParsedSections(null);
+    setDocumentId(null);
 
       const deact = await deactivateAgent(CV_BUILDER_AGENT_ID, locale);
       if (gen !== activateGenRef.current) return;
@@ -550,7 +612,8 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     !needsOnboarding &&
     !error &&
     !isReadOnly &&
-    !isUploading;
+    !isUploading &&
+    !isExporting;
 
   return {
     messages,
@@ -560,12 +623,14 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     nextActions,
     quickReplies,
     parsedSections,
+    documentId,
     sessions,
     sessionsLoading,
     sessionId,
     isLoading,
     isSending,
     isUploading,
+    isExporting,
     error,
     needsLogin: !isLoggedIn,
     needsOnboarding,
@@ -579,6 +644,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     acceptCv,
     confirmCv,
     regenerateCv,
+    exportCvPdf,
     uploadResume,
     selectSession,
     refreshSessions,
