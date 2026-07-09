@@ -22,8 +22,10 @@ import {
   patchDiffFromAgentMeta,
   patchPipelineStateFromMeta,
   resolveAgentMeta,
+  extractCvParsedSections,
   type CvPreviewContent,
 } from '@/lib/cv-api';
+import { uploadCvResumeFile } from '@/lib/cv-input-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
 import type {
   ActivateAgentResponse,
@@ -72,6 +74,8 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(enabled);
   const [isSending, setIsSending] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [parsedSections, setParsedSections] = useState<Record<string, string> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
@@ -168,6 +172,8 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       patchDiffFromAgentMeta(data, setDiff);
       patchPipelineStateFromMeta(data, setPipelineState);
       applyCtaState(data);
+      const sections = extractCvParsedSections(data);
+      if (sections) setParsedSections(sections);
       if (data.session_id) {
         setSessionId(data.session_id);
       }
@@ -219,6 +225,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setNeedsOnboarding(false);
     setNeedsProfile(false);
     setIsReadOnly(false);
+    setParsedSections(null);
     setSessionId(null);
 
     const handoff = consumeCvAgentHandoff();
@@ -298,6 +305,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setSessionId(null);
       setSessions([]);
       setIsReadOnly(false);
+      setParsedSections(null);
       return;
     }
     setMessages([]);
@@ -311,6 +319,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setNeedsOnboarding(false);
     setNeedsProfile(false);
     setIsReadOnly(false);
+    setParsedSections(null);
     void startSession();
   }, [enabled, isLoggedIn, jobId, startSession]);
 
@@ -327,6 +336,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setPipelineState(null);
       setNextActions([]);
       setQuickReplies([]);
+      setParsedSections(null);
 
       const entry = sessions.find((s) => s.session_id === sid);
       setIsReadOnly(entry?.status === 'exited');
@@ -405,6 +415,68 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     [sendAgentMessage]
   );
 
+  const uploadResume = useCallback(
+    async (file: File) => {
+      if (!enabled || !isLoggedIn || !sessionId || isReadOnly || isSending || isUploading) {
+        return { ok: false as const };
+      }
+
+      setIsUploading(true);
+      setError(null);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId('user'),
+          role: 'user',
+          content: `📎 ${file.name}`,
+        },
+      ]);
+
+      const res = await uploadCvResumeFile(file, locale);
+      if (!res.success || !res.data) {
+        setMessages((prev) => {
+          if (prev.length === 0) return prev;
+          const last = prev[prev.length - 1];
+          if (last.role === 'user' && last.content === `📎 ${file.name}`) {
+            return prev.slice(0, -1);
+          }
+          return prev;
+        });
+        if (res.errorCode === 'AGENT_NOT_ACTIVE') {
+          showToast(res.error ?? 'Activate CV Builder before uploading.', 'error');
+        } else if (res.errorCode === 'VALIDATION_ERROR') {
+          showToast(res.error ?? 'Invalid file. Use PDF or DOCX under 10MB.', 'error');
+        } else {
+          showToast(res.error ?? 'Failed to upload resume', 'error');
+        }
+        setIsUploading(false);
+        return { ok: false as const, error: res.error };
+      }
+
+      const agentPayload: AgentChatResponse = {
+        agent_id: res.data.agent_id,
+        response: res.data.response,
+        meta: res.data.response.meta,
+      };
+      applyResponse(agentPayload);
+      void refreshSessions();
+      setIsUploading(false);
+      return { ok: true as const };
+    },
+    [
+      applyResponse,
+      enabled,
+      isLoggedIn,
+      isReadOnly,
+      isSending,
+      isUploading,
+      locale,
+      refreshSessions,
+      sessionId,
+      showToast,
+    ]
+  );
+
   const restartSession = useCallback(async () => {
     if (!enabled || !isLoggedIn || isSending || isLoading) return;
     const gen = ++activateGenRef.current;
@@ -422,6 +494,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setNextActions([]);
       setQuickReplies([]);
       setSessionId(null);
+      setParsedSections(null);
 
       const deact = await deactivateAgent(CV_BUILDER_AGENT_ID, locale);
       if (gen !== activateGenRef.current) return;
@@ -469,7 +542,8 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     !needsProfile &&
     !needsOnboarding &&
     !error &&
-    !isReadOnly;
+    !isReadOnly &&
+    !isUploading;
 
   return {
     messages,
@@ -478,11 +552,13 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     pipelineState,
     nextActions,
     quickReplies,
+    parsedSections,
     sessions,
     sessionsLoading,
     sessionId,
     isLoading,
     isSending,
+    isUploading,
     error,
     needsLogin: !isLoggedIn,
     needsOnboarding,
@@ -490,10 +566,12 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     isSessionReady,
     isReadOnly,
     sendMessage,
+    sendPayload: sendAgentMessage,
     intakeConfirm,
     acceptCv,
     confirmCv,
     regenerateCv,
+    uploadResume,
     selectSession,
     refreshSessions,
     restart: restartSession,

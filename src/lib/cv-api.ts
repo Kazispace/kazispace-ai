@@ -185,3 +185,14 @@ export function normalizeCvDiff(raw: unknown): CvDiffPayload | null {
 
   return hasContent ? { added, removed, modified } : null;
 }
+
+export function extractCvParsedSections(
+  data: Pick<AgentChatResponse, 'meta' | 'response'> | Pick<ActivateAgentResponse, 'meta' | 'response'>
+): Record<string, string> | null {
+  const sections = resolveAgentMeta(data)?.analysis?.cv_analysis?.parsed_sections;
+  if (!sections || typeof sections !== 'object') return null;
+  const entries = Object.entries(sections).filter(
+    ([, value]) => typeof value === 'string' && value.trim().length > 0
+  );
+  return entries.length > 0 ? Object.fromEntries(entries) : null;
+}
