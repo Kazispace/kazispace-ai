@@ -407,6 +407,7 @@
 		"uploadErrorSize": "Файл көлемі 10 МБ-тан аспауы керек.",
 		"uploadErrorValidation": "Жарамсыз файл. PDF немесе DOCX, 10 МБ-қа дейін.",
 		"uploadErrorGeneric": "Түйіндемені жүктеу сәтсіз аяқталды.",
+		"uploadErrorBackendNotReady": "Серверде түйіндеме жүктеу әлі қолжетімсіз. Бэкенд жаңартылғаннан кейін қайталаңыз.",
 		"parsedSectionKeys": {
 			"target_role": "Мақсатты лауазым",
 			"skills": "Дағдылар",

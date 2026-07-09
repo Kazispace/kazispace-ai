@@ -407,6 +407,7 @@
 		"uploadErrorSize": "Размер файла не более 10 МБ.",
 		"uploadErrorValidation": "Неверный файл. PDF или DOCX до 10 МБ.",
 		"uploadErrorGeneric": "Не удалось загрузить резюме.",
+		"uploadErrorBackendNotReady": "Загрузка резюме на сервере пока недоступна. Повторите после обновления бэкенда.",
 		"parsedSectionKeys": {
 			"target_role": "Целевая роль",
 			"skills": "Навыки",

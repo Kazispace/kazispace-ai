@@ -65,6 +65,34 @@ export function validateCvUploadFile(file: File): CvUploadValidationCode | null 
   return null;
 }
 
+function isLegacyFileModeRejection(error?: string): boolean {
+  if (!error) return false;
+  return error.includes("input_mode must be") && !error.includes("'file'");
+}
+
+export function resolveCvUploadErrorMessage(
+  error: string | undefined,
+  errorCode: string | undefined,
+  t: (key: string) => string
+): string {
+  if (isLegacyFileModeRejection(error)) {
+    return t('uploadErrorBackendNotReady');
+  }
+  if (errorCode === 'AGENT_NOT_ACTIVE') {
+    return error ?? t('uploadErrorAgentNotActive');
+  }
+  if (errorCode === 'UNSUPPORTED_FORMAT') {
+    return t('uploadErrorFormat');
+  }
+  if (errorCode === 'FILE_TOO_LARGE') {
+    return t('uploadErrorSize');
+  }
+  if (errorCode === 'VALIDATION_ERROR') {
+    return error && !error.includes('input_mode must') ? error : t('uploadErrorValidation');
+  }
+  return error ?? t('uploadErrorGeneric');
+}
+
 export async function uploadCvResumeFile(
   file: File,
   locale?: string
@@ -113,12 +141,16 @@ export async function uploadCvResumeFile(
     };
   }
 
-  const url = `${API_BASE_URL}/api/v1/inputs`;
+  const url =
+    typeof window !== 'undefined'
+      ? '/api/cv/upload'
+      : `${API_BASE_URL}/api/v1/inputs`;
   const token = getAuthToken();
   const form = new FormData();
   form.append('source_channel', 'web');
   form.append('input_mode', 'file');
   form.append('context_module', 'cv_builder');
+  form.append('device_id', getDeviceId());
   form.append('file', file, file.name);
 
   const languagePreference =

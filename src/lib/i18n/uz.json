@@ -407,6 +407,7 @@
 		"uploadErrorSize": "Fayl hajmi 10 MB dan oshmasin.",
 		"uploadErrorValidation": "Noto'g'ri fayl. PDF yoki DOCX, 10 MB gacha.",
 		"uploadErrorGeneric": "Rezyumeni yuklab bo'lmadi.",
+		"uploadErrorBackendNotReady": "Serverda rezyume yuklash hali mavjud emas. Backend yangilangach qayta urinib ko'ring.",
 		"parsedSectionKeys": {
 			"target_role": "Maqsadli lavozim",
 			"skills": "Ko'nikmalar",
