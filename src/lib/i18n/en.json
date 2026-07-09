@@ -407,6 +407,8 @@
 		"uploadErrorSize": "File must be 10MB or smaller.",
 		"uploadErrorValidation": "Invalid file. Use PDF or DOCX under 10MB.",
 		"uploadErrorGeneric": "Failed to upload resume.",
+		"uploadErrorNetwork": "Upload failed — check your connection and try again. Parsing can take up to a minute.",
+		"uploadErrorBackendNotReady": "Resume upload is not available on the server yet. Please try again after the backend is updated.",
 		"parsedSectionKeys": {
 			"target_role": "Target role",
 			"skills": "Skills",
