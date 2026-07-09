@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useMemo } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -15,6 +15,7 @@ import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
 import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
 import { CvPipelineSteps } from "@/components/cv/cv-pipeline-steps";
 import { CvSessionSidebar } from "@/components/cv/cv-session-sidebar";
+import { CvNewSessionDialog } from "@/components/cv/cv-new-session-dialog";
 import { Button } from "@/components/ui/button";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
@@ -31,6 +32,7 @@ function CvPageContent({ locale }: { locale: string }) {
   const jobId = searchParams.get("job_id");
   const t = useTranslations("cv");
   const openPaywall = useUIStore((s) => s.openPaywall);
+  const [newSessionDialogOpen, setNewSessionDialogOpen] = useState(false);
 
   const agentSession = useCvAgent(jobId);
 
@@ -49,6 +51,7 @@ function CvPageContent({ locale }: { locale: string }) {
     nextActions,
     isSessionReady,
     isReadOnly,
+    sessionResumed,
     sessions,
     sessionsLoading,
     sessionId,
@@ -88,9 +91,15 @@ function CvPageContent({ locale }: { locale: string }) {
   );
 
   const handleRestart = useCallback(async () => {
+    setNewSessionDialogOpen(false);
     await restart();
     await refreshSessions();
   }, [refreshSessions, restart]);
+
+  const requestNewSession = useCallback(() => {
+    if (isLoading || isSending) return;
+    setNewSessionDialogOpen(true);
+  }, [isLoading, isSending]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0 flex flex-col">
@@ -102,7 +111,7 @@ function CvPageContent({ locale }: { locale: string }) {
             activeSessionId={sessionId}
             isLoading={sessionsLoading}
             onSelect={(id) => void selectSession(id)}
-            onNew={() => void handleRestart()}
+            onNew={requestNewSession}
             disabled={isSending || isLoading}
             className="hidden lg:flex"
           />
@@ -126,7 +135,7 @@ function CvPageContent({ locale }: { locale: string }) {
                 variant="outline"
                 className="shrink-0 lg:hidden"
                 disabled={isLoading || isSending}
-                onClick={() => void handleRestart()}
+                onClick={requestNewSession}
               >
                 {t("newCv")}
               </Button>
@@ -169,6 +178,11 @@ function CvPageContent({ locale }: { locale: string }) {
             </div>
           ) : (
             <>
+              {sessionResumed && !isReadOnly && (
+                <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 text-xs text-blue-900 text-center">
+                  {t("sessionResumedBanner")}
+                </div>
+              )}
               {isReadOnly && (
                 <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 text-xs text-amber-900 text-center">
                   {t("readOnlyBanner")}
@@ -252,6 +266,11 @@ function CvPageContent({ locale }: { locale: string }) {
         )}
       </main>
       <BottomNav locale={locale} />
+      <CvNewSessionDialog
+        open={newSessionDialogOpen}
+        onConfirm={() => void handleRestart()}
+        onCancel={() => setNewSessionDialogOpen(false)}
+      />
     </div>
   );
 }

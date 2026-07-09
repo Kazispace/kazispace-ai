@@ -25,6 +25,7 @@ import {
   type CvPreviewContent,
 } from '@/lib/cv-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
+import { normalizeCvSessions } from '@/lib/cv-sessions';
 import type {
   ActivateAgentResponse,
   AgentChatResponse,
@@ -75,6 +76,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const [error, setError] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
+  const [sessionResumed, setSessionResumed] = useState(false);
 
   const finishSessionLoad = useCallback((gen: number) => {
     if (gen === activateGenRef.current) {
@@ -132,7 +134,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setSessionsLoading(true);
     const res = await fetchAgentSessions(CV_BUILDER_AGENT_ID);
     if (res.success && res.data) {
-      setSessions(res.data.sessions);
+      setSessions(normalizeCvSessions(res.data.sessions));
     }
     setSessionsLoading(false);
   }, [enabled, isLoggedIn]);
@@ -219,6 +221,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setNeedsOnboarding(false);
     setNeedsProfile(false);
     setIsReadOnly(false);
+    setSessionResumed(false);
     setSessionId(null);
 
     const handoff = consumeCvAgentHandoff();
@@ -234,6 +237,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       ) {
         const sid = activeRes.data.session_id;
         setSessionId(sid);
+        setSessionResumed(true);
         await loadSessionMessages(sid, gen, handoff?.greeting);
         finishSessionLoad(gen);
         void refreshSessions();
@@ -262,6 +266,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
     const { session_id, greeting, resumed } = res.data;
     setSessionId(session_id);
+    setSessionResumed(Boolean(resumed));
     if (resumed) {
       await loadSessionMessages(session_id, gen);
       applyActivateResponse(res.data);
@@ -298,6 +303,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setSessionId(null);
       setSessions([]);
       setIsReadOnly(false);
+      setSessionResumed(false);
       return;
     }
     setMessages([]);
@@ -311,6 +317,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setNeedsOnboarding(false);
     setNeedsProfile(false);
     setIsReadOnly(false);
+    setSessionResumed(false);
     void startSession();
   }, [enabled, isLoggedIn, jobId, startSession]);
 
@@ -330,6 +337,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
       const entry = sessions.find((s) => s.session_id === sid);
       setIsReadOnly(entry?.status === 'exited');
+      setSessionResumed(false);
 
       await loadSessionMessages(sid, gen);
       finishSessionLoad(gen);
@@ -411,6 +419,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setIsLoading(true);
     setError(null);
     setIsReadOnly(false);
+    setSessionResumed(false);
 
     try {
       setNeedsOnboarding(false);
@@ -489,6 +498,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     needsProfile,
     isSessionReady,
     isReadOnly,
+    sessionResumed,
     sendMessage,
     intakeConfirm,
     acceptCv,
