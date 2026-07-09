@@ -9,7 +9,7 @@ import {
   parseClinicReply,
 } from '@/lib/api-client';
 import { isPaywallError, isProfileIncomplete } from '@/lib/api-errors';
-import { getSessionId } from '@/lib/auth';
+import { ensureMasterSession } from '@/lib/master-session';
 import type { ChatMessage } from '@/types';
 
 function normalizeHistoryMessage(
@@ -63,7 +63,7 @@ export function useClinicChat(locale?: string) {
   const loadHistory = useCallback(async () => {
     setIsHistoryLoading(true);
     try {
-      const sessionId = getSessionId();
+      const sessionId = await ensureMasterSession();
       const res = await fetchChatHistory(sessionId);
       if (!res.success || !res.data) return;
 
@@ -87,7 +87,7 @@ export function useClinicChat(locale?: string) {
 
   const sendMessage = useCallback(
     async (text: string, options?: { retryMessageId?: string }) => {
-      const sessionId = getSessionId();
+      const sessionId = await ensureMasterSession();
       const userMsgId = options?.retryMessageId ?? `user_${Date.now()}`;
 
       if (options?.retryMessageId) {

@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { RouteLocaleSync } from "@/components/locale/route-locale-sync";
+import { MasterSessionSync } from "@/components/master-session-sync";
 import { ToastHost } from "@/components/ui/toast";
 import { PaywallModal } from "@/components/billing/paywall-modal";
 import { DEFAULT_LOCALE } from "@/lib/constants";
@@ -16,6 +17,7 @@ export function AppChrome() {
   return (
     <>
       <RouteLocaleSync />
+      <MasterSessionSync />
       <ToastHost />
       <PaywallModal locale={localeFromPathname(pathname)} />
     </>

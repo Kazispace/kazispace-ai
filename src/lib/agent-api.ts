@@ -17,6 +17,8 @@ import {
 } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { apiRequest } from '@/lib/api-client';
+import { getAuthToken } from '@/lib/auth';
+import { ensureMasterSession } from '@/lib/master-session';
 
 const mockSessions = new Map<string, ActiveAgentState>();
 
@@ -145,6 +147,12 @@ export function clearMockAgentSessions(): void {
   mockCvBuilderBySession.clear();
 }
 
+export type ActivateAgentOptions = {
+  job_id?: string;
+  master_session_id?: string;
+  force_new_session?: boolean;
+};
+
 export async function getActiveAgent(): Promise<ApiResponse<ActiveAgentState>> {
   const res = await apiRequest<ActiveAgentState>('/api/v1/agents/active');
   if (res.success) return res;
@@ -158,11 +166,17 @@ export async function activateAgent(
   agentId: string,
   locale: string,
   handoffMessage?: string,
-  options?: { job_id?: string }
+  options?: ActivateAgentOptions
 ): Promise<ApiResponse<ActivateAgentResponse>> {
-  const body: Record<string, string> = {};
+  const masterSessionId =
+    options?.master_session_id ??
+    (getAuthToken() ? await ensureMasterSession() : undefined);
+
+  const body: Record<string, string | boolean> = {};
   if (handoffMessage) body.handoff_message = handoffMessage;
   if (options?.job_id) body.job_id = options.job_id;
+  if (masterSessionId) body.master_session_id = masterSessionId;
+  if (options?.force_new_session) body.force_new_session = true;
 
   const res = await apiRequest<ActivateAgentResponse>(
     `/api/v1/agents/${agentId}/activate`,
@@ -173,7 +187,14 @@ export async function activateAgent(
   );
   if (res.success) return res;
   if (useMockFallback(res.error)) {
-    return { success: true, data: mockActivate(agentId, locale, handoffMessage, options) };
+    return {
+      success: true,
+      data: {
+        ...mockActivate(agentId, locale, handoffMessage, options),
+        master_session_id: masterSessionId,
+        resumed: false,
+      },
+    };
   }
   return res;
 }

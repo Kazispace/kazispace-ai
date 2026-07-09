@@ -141,13 +141,17 @@ export interface TelegramWebappResponse {
 export interface ActiveAgentState {
   active_agent: string | null;
   session_id: string | null;
+  master_session_id?: string | null;
   activated_at?: string;
   context_module?: string | null;
+  resumed?: boolean;
 }
 
 export interface ActivateAgentResponse {
   agent_id: string;
   session_id: string;
+  master_session_id?: string;
+  resumed?: boolean;
   greeting: string;
   next_actions?: ChatNextAction[];
   response?: {
