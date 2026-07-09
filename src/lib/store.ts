@@ -4,6 +4,7 @@ import { setAuthToken, clearAuthToken, setUserInfo } from './auth';
 import { clearBillingCache } from './billing-cache';
 import { clearMockAgentSessions } from './agent-api';
 import { clearLocaleCookies } from './locale';
+import { clearMasterSession } from './master-session';
 
 // ---- Auth Store ----
 interface AuthStore {
@@ -26,6 +27,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   },
   logout: () => {
     clearAuthToken();
+    clearMasterSession();
     clearLocaleCookies();
     clearBillingCache();
     useAgentStore.getState().reset();

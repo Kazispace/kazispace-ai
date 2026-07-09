@@ -26,10 +26,15 @@ export function getDeviceId(): string {
 }
 
 /**
- * Chat session ID (Master Session)
+ * Chat session ID (Master Session).
+ * Logged-in: prefer cached canonical id (see master-session.ts); guest: local UUID.
  */
 export function getSessionId(): string {
   if (typeof window === 'undefined') return '';
+  if (getAuthToken()) {
+    const master = sessionStorage.getItem(STORAGE_KEYS.MASTER_SESSION);
+    if (master) return master;
+  }
   let sessionId = localStorage.getItem(STORAGE_KEYS.SESSION_ID);
   if (!sessionId) {
     sessionId = crypto.randomUUID();

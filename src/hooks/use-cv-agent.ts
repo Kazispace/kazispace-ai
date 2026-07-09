@@ -260,10 +260,15 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       return;
     }
 
-    const { session_id, greeting } = res.data;
+    const { session_id, greeting, resumed } = res.data;
     setSessionId(session_id);
-    setMessages([{ id: nextId('cv'), role: 'assistant', content: greeting }]);
-    applyActivateResponse(res.data);
+    if (resumed) {
+      await loadSessionMessages(session_id, gen);
+      applyActivateResponse(res.data);
+    } else {
+      setMessages([{ id: nextId('cv'), role: 'assistant', content: greeting }]);
+      applyActivateResponse(res.data);
+    }
     finishSessionLoad(gen);
     void refreshSessions();
   }, [
@@ -408,13 +413,6 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setIsReadOnly(false);
 
     try {
-      const deact = await deactivateAgent(CV_BUILDER_AGENT_ID, locale);
-      if (gen !== activateGenRef.current) return;
-      if (!deact.success) {
-        showToast(deact.error ?? 'Failed to reset CV session', 'error');
-        return;
-      }
-
       setNeedsOnboarding(false);
       setNeedsProfile(false);
       setMessages([]);
@@ -425,8 +423,16 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setQuickReplies([]);
       setSessionId(null);
 
+      const deact = await deactivateAgent(CV_BUILDER_AGENT_ID, locale);
+      if (gen !== activateGenRef.current) return;
+      if (!deact.success) {
+        showToast(deact.error ?? 'Failed to reset CV session', 'error');
+        return;
+      }
+
       const res = await activateAgent(CV_BUILDER_AGENT_ID, locale, undefined, {
         job_id: jobId ?? undefined,
+        force_new_session: true,
       });
       if (gen !== activateGenRef.current) return;
 

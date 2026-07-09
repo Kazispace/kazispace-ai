@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { authTelegramWebapp, getMe } from '@/lib/api-client';
 import { setAuthToken, getAuthToken } from '@/lib/auth';
+import { syncMasterSession } from '@/lib/master-session';
 import { captureStartParamFromContext } from '@/lib/tma-routing';
 import {
   applyTelegramTheme,
@@ -29,6 +30,7 @@ async function authenticateWithInitData(): Promise<boolean> {
   const me = await getMe();
   if (me.success && me.data) {
     useAuthStore.getState().login(token, me.data);
+    await syncMasterSession();
     return true;
   }
 

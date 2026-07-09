@@ -41,6 +41,8 @@ export const STORAGE_KEYS = {
   /** Profile `primary_locale` mirrored for middleware route redirect. */
   PROFILE_LANGUAGE: 'kazi_profile_language',
   SESSION_ID: 'kazi_chat_session_id',
+  /** Canonical master session from GET /chat/sessions/default (logged-in). */
+  MASTER_SESSION: 'kazi_master_session_id',
   ENGLISH_LEVEL: 'kazi_english_level',
   REFERRAL_DISMISSED: 'kazi_referral_dismissed',
   TMA_PENDING_ACTION: 'kazi_tma_pending_action',

@@ -15,6 +15,7 @@ import {
   syncProfileLanguageCookie,
   readLanguagePreference,
 } from "@/lib/locale";
+import { syncMasterSession } from "@/lib/master-session";
 import { useAuthStore } from "@/lib/store";
 
 interface LoginPageProps {
@@ -81,6 +82,7 @@ export default function LoginPage({ params }: LoginPageProps) {
         const me = await getMe();
         const user = me.success && me.data ? me.data : otpUser;
         useAuthStore.getState().login(token, user);
+        await syncMasterSession();
 
         const search = new URLSearchParams(window.location.search);
         const redirect = search.get("redirect");
