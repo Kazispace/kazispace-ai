@@ -4,6 +4,7 @@ import { isCvBuilderAgent } from '@/lib/cv-agent-config';
 import { setCvAgentHandoff } from '@/lib/cv-agent-handoff';
 import { isEnglishTutorAgent } from '@/lib/english-tutor-config';
 import { isMockInterviewAgent } from '@/lib/mock-interview-config';
+import { isDedicatedHubAgent } from '@/lib/agent-layer';
 import { AGENT_REGISTRY } from '@/lib/agents/registry';
 import { useAgentStore } from '@/lib/store';
 import type { AgentChatResponse } from '@/types';
@@ -91,6 +92,8 @@ export type FollowEscalationDeps = {
   routeCvBuilderPage: () => void;
   routeInterviewPage: () => void;
   routeEnglishPage: () => void;
+  /** Leave a dedicated hub page after activating an in-clinic expert. */
+  routeToClinic?: () => void;
 };
 
 /**
@@ -108,6 +111,7 @@ export async function followAgentEscalation(
     routeCvBuilderPage,
     routeInterviewPage,
     routeEnglishPage,
+    routeToClinic,
   } = deps;
 
   const current = useAgentStore.getState().activeAgentId;
@@ -116,16 +120,20 @@ export async function followAgentEscalation(
   }
 
   if (isCvBuilderAgent(targetAgentId) || isMockInterviewAgent(targetAgentId) || isEnglishTutorAgent(targetAgentId)) {
-    return activateDedicatedHubAgent(targetAgentId, locale, {
+    const result = await activateDedicatedHubAgent(targetAgentId, locale, {
       routeCvBuilderPage,
       routeInterviewPage,
       routeEnglishPage,
     });
+    return result;
   }
 
   const result = await activateAgentWithoutPrecheck(targetAgentId);
   if (!result?.ok) {
     return { ok: false, error: result?.error };
+  }
+  if (routeToClinic && !isDedicatedHubAgent(targetAgentId)) {
+    routeToClinic();
   }
   return { ok: true };
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
 import { publishActiveAgentSync } from '@/lib/active-agent-sync';
@@ -14,8 +14,13 @@ import {
   sendAgentChat,
 } from '@/lib/agent-api';
 import { isAgentBlocked, isPaywallError } from '@/lib/api-errors';
+import {
+  followAgentEscalation,
+  parseAgentEscalation,
+} from '@/lib/agent-escalation';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
+import { useAgentSwitch } from '@/hooks/use-agent-switch';
 import {
   extractCvMetaButtons,
   extractCvPreviewFromAgent,
@@ -61,12 +66,27 @@ function applyAgentMetaSideEffects(
 export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean }) {
   const enabled = options?.enabled !== false;
   const params = useParams();
+  const router = useRouter();
   const locale = typeof params.locale === 'string' ? params.locale : 'en';
   const t = useTranslations('cv');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const openPaywall = useUIStore((s) => s.openPaywall);
   const activateGenRef = useRef(0);
+
+  const hubRoutes = useMemo(
+    () => ({
+      routeCvBuilderPage: () => {
+        const qs = jobId ? `?job_id=${encodeURIComponent(jobId)}` : '';
+        router.push(`/${locale}/cv${qs}`);
+      },
+      routeInterviewPage: () => router.push(`/${locale}/interview`),
+      routeEnglishPage: () => router.push(`/${locale}/english`),
+    }),
+    [jobId, locale, router]
+  );
+
+  const { activateAgentWithoutPrecheck } = useAgentSwitch(locale, hubRoutes);
 
   const [messages, setMessages] = useState<CvChatMessage[]>([]);
   const [preview, setPreview] = useState<CvPreviewContent | null>(null);
@@ -431,12 +451,42 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         setIsSending(false);
         return { ok: false as const, error: res.error };
       }
+
       applyResponse(res.data);
       setIsSending(false);
       void refreshSessions();
+
+      const escalation = parseAgentEscalation(res.data);
+      if (escalation) {
+        const follow = await followAgentEscalation(escalation, {
+          locale,
+          activateAgentWithoutPrecheck,
+          routeToClinic: () => router.replace(`/${locale}/chat`),
+          ...hubRoutes,
+        });
+        if (!follow.ok) {
+          showToast(follow.error ?? 'Failed to switch expert', 'error');
+          return { ok: false as const, error: follow.error };
+        }
+        return { ok: true as const, escalated: true as const };
+      }
+
       return { ok: true as const };
     },
-    [applyResponse, enabled, isReadOnly, isSending, openPaywall, refreshSessions, sessionId, showToast]
+    [
+      activateAgentWithoutPrecheck,
+      applyResponse,
+      enabled,
+      hubRoutes,
+      isReadOnly,
+      isSending,
+      locale,
+      openPaywall,
+      refreshSessions,
+      router,
+      sessionId,
+      showToast,
+    ]
   );
 
   const sendMessage = useCallback(

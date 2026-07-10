@@ -306,6 +306,27 @@ export async function sendAgentChat(
     }
 
     if (agentId === CV_BUILDER_AGENT_ID) {
+      const wantsJobSearch =
+        /推荐工作|找工作|job search|find (me )?(a )?job|recommend.*job/.test(
+          message.toLowerCase()
+        );
+      if (wantsJobSearch) {
+        return {
+          success: true,
+          data: {
+            agent_id: agentId,
+            exited: true,
+            exited_agent: agentId,
+            exit_reason: 'escalated',
+            suggested_next_steps: ['job_search'],
+            message_id: `mock_${Date.now()}`,
+            response: {
+              text: `${emoji} Sure — let's return to clinic and open job search.`,
+            },
+          },
+        };
+      }
+
       const isRegenerate =
         message === '__action:regenerate' || message.toLowerCase() === 'regenerate';
       const isIntakeConfirm =
