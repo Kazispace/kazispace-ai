@@ -31,7 +31,7 @@ import {
 import { uploadCvResumeFile, resolveCvUploadErrorMessage } from '@/lib/cv-input-api';
 import { exportCvDocumentPdf, resolveCvExportErrorMessage } from '@/lib/cv-export-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
-import { normalizeCvSessions } from '@/lib/cv-sessions';
+import { normalizeAgentSessions, isAgentSessionReadOnly } from '@/lib/agent-sessions';
 import type {
   ActivateAgentResponse,
   AgentChatResponse,
@@ -147,7 +147,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setSessionsLoading(true);
     const res = await fetchAgentSessions(CV_BUILDER_AGENT_ID);
     if (res.success && res.data) {
-      setSessions(normalizeCvSessions(res.data.sessions));
+      setSessions(normalizeAgentSessions(res.data.sessions));
     }
     setSessionsLoading(false);
   }, [enabled, isLoggedIn]);
@@ -383,7 +383,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setDocumentId(null);
 
       const entry = sessions.find((s) => s.session_id === sid);
-      setIsReadOnly(entry?.status === 'exited');
+      setIsReadOnly(isAgentSessionReadOnly(entry?.status));
       setSessionResumed(false);
 
       await loadSessionMessages(sid, gen);

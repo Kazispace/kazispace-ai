@@ -5,21 +5,9 @@ import { fetchAgentMessages, parseAgentReply, sendAgentChat } from '@/lib/agent-
 import { parseAgentEscalation } from '@/lib/agent-escalation';
 import { parsePendingTransition } from '@/lib/agent-pending-transition';
 import { useAgentStore } from '@/lib/store';
+import { mapAgentHistoryToChatMessages } from '@/lib/agent-sessions';
+import type { RawAgentHistoryMessage } from '@/lib/agent-sessions';
 import type { ChatMessage } from '@/types';
-
-function normalizeAgentMessage(
-  raw: Record<string, unknown>,
-  sessionId: string
-): ChatMessage {
-  const roleRaw = (raw.role as string) ?? 'assistant';
-  return {
-    id: (raw.id as string) ?? (raw.message_id as string) ?? crypto.randomUUID(),
-    role: roleRaw === 'user' ? 'user' : 'assistant',
-    content: (raw.content as string) ?? (raw.text as string) ?? '',
-    timestamp: (raw.created_at as string) ?? new Date().toISOString(),
-    sessionId,
-  };
-}
 
 export function useAgentChat(agentId: string | null, sessionId: string | null) {
   const {
@@ -45,8 +33,9 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
     if (list.length > 0) {
       setAgentMessages(
         agentId,
-        list.map((m) =>
-          normalizeAgentMessage(m as unknown as Record<string, unknown>, sessionId)
+        mapAgentHistoryToChatMessages(
+          list as RawAgentHistoryMessage[],
+          sessionId
         )
       );
     }

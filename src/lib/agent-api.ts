@@ -410,18 +410,34 @@ export async function fetchAgentSessions(
   if (res.success) return res;
   if (useMockFallback(res.error)) {
     const active = getMockActive();
-    const sessions = Array.from(mockSessions.entries()).map(([id, state]) => ({
-      session_id: id,
-      agent_id: state.active_agent ?? agentId,
-      status: 'active' as const,
-      pipeline_state: 'intake',
-      title: 'Mock CV session',
-      updated_at: state.activated_at ?? new Date().toISOString(),
-    }));
-    if (active.session_id && active.active_agent === agentId) {
-      return { success: true, data: { sessions } };
-    }
-    return { success: true, data: { sessions: [] } };
+    const now = Date.now();
+    const mockRows = [
+      {
+        session_id: active.session_id ?? `mock_sess_${now}`,
+        agent_id: agentId,
+        status: 'active' as const,
+        pipeline_state: 'intake',
+        title: 'Current session',
+        updated_at: active.activated_at ?? new Date().toISOString(),
+      },
+      {
+        session_id: `mock_sess_exited_${agentId}`,
+        agent_id: agentId,
+        status: 'exited' as const,
+        pipeline_state: 'generated',
+        title: 'Previous session (ended)',
+        updated_at: new Date(now - 86400000 * 2).toISOString(),
+      },
+      {
+        session_id: `mock_sess_archived_${agentId}`,
+        agent_id: agentId,
+        status: 'archived' as const,
+        pipeline_state: 'generated',
+        title: 'Archived session',
+        updated_at: new Date(now - 86400000 * 14).toISOString(),
+      },
+    ];
+    return { success: true, data: { sessions: mockRows } };
   }
   return res;
 }

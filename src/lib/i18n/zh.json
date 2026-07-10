@@ -167,6 +167,21 @@
 		"network": "网络错误，请重试。",
 		"profileIncomplete": "请先完善资料以使用此功能。"
 	},
+	"agentSessions": {
+		"sessionHistory": "会话历史",
+		"sessionHistoryFor": "{agentName} 会话",
+		"closeHistory": "关闭历史",
+		"newSession": "新建会话",
+		"sessionsLoading": "加载会话中…",
+		"sessionsEmpty": "暂无历史会话",
+		"sessionActive": "进行中",
+		"sessionExited": "已结束",
+		"sessionArchived": "已归档",
+		"sessionCurrent": "当前",
+		"readOnlyBanner": "此会话仅可查看。返回当前会话以继续对话。",
+		"sessionLoadFailed": "无法加载会话",
+		"sessionSwitching": "正在加载会话…"
+	},
 	"clinic": {
 		"backToClinic": "返回门诊",
 		"switchAgent": "切换专家",
@@ -223,11 +238,6 @@
 		"newCvConfirmAction": "新建会话",
 		"newCvConfirmCancel": "继续当前",
 		"sessionsTitle": "我的简历",
-		"sessionsLoading": "正在加载会话…",
-		"sessionsEmpty": "暂无历史会话",
-		"sessionActive": "进行中",
-		"sessionEnded": "已结束",
-		"sessionCurrent": "当前",
 		"sessionResumedBanner": "已恢复你上次的简历会话。",
 		"readOnlyBanner": "此会话已结束。请新建简历以继续编辑。",
 		"uploadResume": "上传简历",

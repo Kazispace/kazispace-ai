@@ -322,6 +322,21 @@
 	"errors": {
 		"profileIncomplete": "Жеке мүмкіндіктер үшін мансап профилін толықтырыңыз — мұнда сөйлесуді жалғастыра аласыз."
 	},
+	"agentSessions": {
+		"sessionHistory": "Сессия тарихы",
+		"sessionHistoryFor": "{agentName} сессиялары",
+		"closeHistory": "Тарихты жабу",
+		"newSession": "Жаңа сессия",
+		"sessionsLoading": "Сессиялар жүктелуде…",
+		"sessionsEmpty": "Алдыңғы сессиялар жоқ",
+		"sessionActive": "Белсенді",
+		"sessionExited": "Аяқталған",
+		"sessionArchived": "Мұрағат",
+		"sessionCurrent": "Ағымдағы",
+		"readOnlyBanner": "Бұл сессия тек оқуға арналған. Чатты жалғастыру үшін ағымдағы сессияға оралыңыз.",
+		"sessionLoadFailed": "Сессияны жүктеу сәтсіз",
+		"sessionSwitching": "Сессия жүктелуде…"
+	},
 	"clinic": {
 		"comingSoon": "Жақында",
 		"openAgent": "Ашу",
@@ -420,11 +435,6 @@
 		"newCvConfirmAction": "Жаңа сессия",
 		"newCvConfirmCancel": "Ағымдағыны қалдыру",
 		"sessionsTitle": "Түйіндемелер",
-		"sessionsLoading": "Сессиялар жүктелуде…",
-		"sessionsEmpty": "Алдыңғы сессиялар жоқ",
-		"sessionActive": "Белсенді",
-		"sessionEnded": "Аяқталған",
-		"sessionCurrent": "Ағымдағы",
 		"sessionResumedBanner": "Алдыңғы түйіндеме сессиясы жалғастырылды.",
 		"readOnlyBanner": "Бұл сессия аяқталды. Жалғастыру үшін жаңа түйіндеме жасаңыз.",
 		"uploadResume": "Түйіндеме жүктеу",

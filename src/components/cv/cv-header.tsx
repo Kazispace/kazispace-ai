@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronLeft, Download, FileText, Loader2, Plus } from 'lucide-react';
+import { ChevronLeft, Download, FileText, History, Loader2, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ interface CvHeaderProps {
   isExporting?: boolean;
   onDownload?: () => void;
   onNewSession?: () => void;
+  onOpenHistory?: () => void;
   actionsDisabled?: boolean;
   pipelineState?: string | null;
   isWorking?: boolean;
@@ -29,6 +30,7 @@ export function CvHeader({
   isExporting,
   onDownload,
   onNewSession,
+  onOpenHistory,
   actionsDisabled,
   pipelineState,
   isWorking,
@@ -36,6 +38,7 @@ export function CvHeader({
   className,
 }: CvHeaderProps) {
   const t = useTranslations('cv');
+  const tSessions = useTranslations('agentSessions');
 
   return (
     <header
@@ -71,6 +74,18 @@ export function CvHeader({
         ) : null}
 
         <div className="flex items-center gap-2 shrink-0">
+          {onOpenHistory ? (
+            <Button
+              size="icon"
+              variant="ghost"
+              disabled={actionsDisabled}
+              onClick={onOpenHistory}
+              className="h-9 w-9 text-white/70 hover:text-white hover:bg-white/10"
+              aria-label={tSessions('sessionHistory')}
+            >
+              <History className="h-4 w-4" />
+            </Button>
+          ) : null}
           {canDownload && onDownload ? (
             <Button
               size="sm"

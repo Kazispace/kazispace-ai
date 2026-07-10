@@ -42,6 +42,15 @@ import {
   MOCK_INTERVIEW_AGENT_ID,
 } from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
+import { AgentSessionPanel } from "@/components/agent/agent-session-panel";
+import { useAgentSessionList } from "@/hooks/use-agent-session-list";
+import { activateAgent, fetchAgentMessages } from "@/lib/agent-api";
+import {
+  isAgentSessionReadOnly,
+  mapAgentHistoryToChatMessages,
+} from "@/lib/agent-sessions";
+import { publishActiveAgentSync } from "@/lib/active-agent-sync";
+import { deactivateToClinic } from "@/lib/deactivate-to-clinic";
 import { followAgentEscalation } from "@/lib/agent-escalation";
 import { toPendingAgentSwitch } from "@/lib/agent-pending-transition";
 import { getAgentHubPath, hasStickyActiveAgent, isDedicatedHubAgent } from "@/lib/agent-layer";
@@ -60,6 +69,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
   const tReferral = useTranslations("referral");
+  const tSessions = useTranslations("agentSessions");
 
   const routeCvBuilderPage = useCallback(
     (targetJobId?: string | null) => {
@@ -198,7 +208,141 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   } | null>(null);
   const [layerReady, setLayerReady] = useState(false);
   const [switchConfirming, setSwitchConfirming] = useState(false);
+  const [sessionPanelOpen, setSessionPanelOpen] = useState(false);
+  const [historyReadOnly, setHistoryReadOnly] = useState(false);
+  const [isSwitchingSession, setIsSwitchingSession] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sessionHistoryTriggerRef = useRef<HTMLElement | null>(null);
+  const manualSessionSelectRef = useRef(false);
+  const sessionSwitchGenRef = useRef(0);
+
+  const {
+    sessions: agentSessions,
+    isLoading: agentSessionsLoading,
+    refresh: refreshAgentSessions,
+  } = useAgentSessionList(activeAgentId, isLoggedIn && !!activeAgentId);
+
+  const setAgentMessages = useAgentStore((s) => s.setAgentMessages);
+  const setActiveAgent = useAgentStore((s) => s.setActiveAgent);
+
+  const handleAgentSessionSelect = useCallback(
+    async (sessionId: string) => {
+      if (!activeAgentId || sessionId === agentSessionId) return;
+
+      const entry = agentSessions.find((s) => s.session_id === sessionId);
+      setHistoryReadOnly(isAgentSessionReadOnly(entry?.status));
+
+      const gen = ++sessionSwitchGenRef.current;
+      setIsSwitchingSession(true);
+      manualSessionSelectRef.current = true;
+      setActiveAgent(activeAgentId, sessionId);
+
+      const hist = await fetchAgentMessages(sessionId);
+      if (gen !== sessionSwitchGenRef.current) return;
+
+      if (!hist.success || !hist.data) {
+        showToast(tSessions("sessionLoadFailed"), "error");
+        setIsSwitchingSession(false);
+        return;
+      }
+
+      setAgentMessages(
+        activeAgentId,
+        mapAgentHistoryToChatMessages(hist.data.messages, sessionId)
+      );
+      setIsSwitchingSession(false);
+    },
+    [
+      activeAgentId,
+      agentSessionId,
+      agentSessions,
+      setActiveAgent,
+      setAgentMessages,
+      showToast,
+      tSessions,
+    ]
+  );
+
+  const handleAgentNewSession = useCallback(async () => {
+    if (
+      !activeAgentId ||
+      isAgentSending ||
+      isSwitching ||
+      isSwitchingSession
+    ) {
+      return;
+    }
+
+    setSessionPanelOpen(false);
+    setHistoryReadOnly(false);
+
+    const gen = ++sessionSwitchGenRef.current;
+    setIsSwitchingSession(true);
+
+    const deact = await deactivateToClinic(locale, {
+      agentId: activeAgentId,
+      skipBroadcast: true,
+    });
+    if (gen !== sessionSwitchGenRef.current) return;
+    if (!deact.ok) {
+      showToast(deact.error ?? tClinic("activateFailed"), "error");
+      setIsSwitchingSession(false);
+      return;
+    }
+
+    const res = await activateAgent(activeAgentId, locale, undefined, {
+      force_new_session: true,
+    });
+    if (gen !== sessionSwitchGenRef.current) return;
+
+    if (!res.success || !res.data) {
+      showToast(res.error ?? tClinic("activateFailed"), "error");
+      setIsSwitchingSession(false);
+      return;
+    }
+
+    const { agent_id, session_id, greeting } = res.data;
+    manualSessionSelectRef.current = true;
+    setActiveAgent(agent_id, session_id);
+    setAgentMessages(agent_id, [
+      {
+        id: `greeting_${Date.now()}`,
+        role: "assistant",
+        content: greeting,
+        timestamp: new Date().toISOString(),
+        sessionId: session_id,
+      },
+    ]);
+    publishActiveAgentSync({
+      type: "activated",
+      agentId: agent_id,
+      sessionId: session_id,
+    });
+    void refreshAgentSessions();
+    setIsSwitchingSession(false);
+  }, [
+    activeAgentId,
+    isAgentSending,
+    isSwitching,
+    isSwitchingSession,
+    locale,
+    refreshAgentSessions,
+    setActiveAgent,
+    setAgentMessages,
+    showToast,
+    tClinic,
+  ]);
+
+  useEffect(() => {
+    if (sessionPanelOpen) {
+      void refreshAgentSessions();
+    }
+  }, [sessionPanelOpen, refreshAgentSessions]);
+
+  useEffect(() => {
+    setSessionPanelOpen(false);
+    setHistoryReadOnly(false);
+  }, [activeAgentId]);
 
   const activeEntry = AGENT_REGISTRY.find((a) => a.agentId === activeAgentId);
   const isAgentMode = !!activeAgentId && !!activeEntry;
@@ -389,6 +533,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   useEffect(() => {
     if (activeAgentId && agentSessionId) {
+      if (manualSessionSelectRef.current) {
+        manualSessionSelectRef.current = false;
+        return;
+      }
       loadAgentHistory();
     }
   }, [activeAgentId, agentSessionId, loadAgentHistory]);
@@ -643,7 +791,37 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         agentEmoji={activeEntry?.emoji}
         isOnline={isOnline}
         onBackToClinic={isAgentMode ? handleBackToClinic : undefined}
+        onOpenSessionHistory={
+          isAgentMode && isLoggedIn
+            ? () => {
+                sessionHistoryTriggerRef.current =
+                  document.activeElement as HTMLElement | null;
+                setSessionPanelOpen(true);
+              }
+            : undefined
+        }
       />
+
+      {isAgentMode && isLoggedIn ? (
+        <AgentSessionPanel
+          open={sessionPanelOpen}
+          onClose={() => setSessionPanelOpen(false)}
+          title={
+            activeEntry
+              ? tSessions("sessionHistoryFor", {
+                  agentName: getAgentLabel(activeEntry, locale, "name"),
+                })
+              : tSessions("sessionHistory")
+          }
+          sessions={agentSessions}
+          activeSessionId={agentSessionId}
+          isLoading={agentSessionsLoading}
+          disabled={isSending || isSwitching || isSwitchingSession}
+          onSelect={(id) => void handleAgentSessionSelect(id)}
+          onNew={() => void handleAgentNewSession()}
+          returnFocusRef={sessionHistoryTriggerRef}
+        />
+      ) : null}
 
       {!isLoggedIn && (
         <div className="bg-orange-50 border-b border-orange-100 px-4 py-2 flex items-center justify-between gap-3 shrink-0">
@@ -667,6 +845,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         />
       ) : null}
 
+      {isAgentMode && historyReadOnly ? (
+        <p className="px-4 py-2 text-xs text-amber-800 bg-amber-50 border-b border-amber-100 text-center shrink-0">
+          {tSessions("readOnlyBanner")}
+        </p>
+      ) : null}
+
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg">
         {!layerReady && isLoggedIn ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
@@ -684,6 +868,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             nbaAction={nbaResponse?.next_best_action ?? null}
             nbaLoading={nbaLoading}
           />
+        ) : isSwitchingSession ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
+            <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+            <p className="text-sm">{tSessions("sessionSwitching")}</p>
+          </div>
         ) : (
           messages.map((msg) => {
             const referralEntry =
@@ -769,7 +958,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       <ChatInput
         onSend={handleSend}
-        disabled={isSending || isSwitching}
+          disabled={isSending || isSwitching || (isAgentMode && historyReadOnly) || isSwitchingSession}
         placeholder={inputPlaceholder}
         showAgentButton={isLoggedIn}
         onOpenAgents={() => setSwitcherOpen(true)}

@@ -15,7 +15,7 @@ import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
 import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
-import { CvSessionSidebar } from "@/components/cv/cv-session-sidebar";
+import { AgentSessionPanel } from "@/components/agent/agent-session-panel";
 import { CvNewSessionDialog } from "@/components/cv/cv-new-session-dialog";
 import { CvWorkspaceTabs, type CvWorkspaceTab, CV_CHAT_PANEL_ID, CV_RESUME_PANEL_ID } from "@/components/cv/cv-workspace-tabs";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ function CvPageContent({ locale }: { locale: string }) {
   const openPaywall = useUIStore((s) => s.openPaywall);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newSessionDialogOpen, setNewSessionDialogOpen] = useState(false);
+  const [sessionPanelOpen, setSessionPanelOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<CvWorkspaceTab>("chat");
 
   const agentSession = useCvAgent(jobId);
@@ -98,6 +99,12 @@ function CvPageContent({ locale }: { locale: string }) {
       setMobileTab("resume");
     }
   }, [canDownloadCv]);
+
+  useEffect(() => {
+    if (sessionPanelOpen) {
+      void refreshSessions();
+    }
+  }, [sessionPanelOpen, refreshSessions]);
 
   const routedActions = nextActions.filter((a) => isRoutedCvAction(a.type));
   const pickerActions = nextActions.filter((a) => !isRoutedCvAction(a.type));
@@ -178,7 +185,7 @@ function CvPageContent({ locale }: { locale: string }) {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gray-bg overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-gray-bg overflow-hidden relative">
       <CvHeader
         locale={locale}
         subtitle={headerSubtitle}
@@ -186,10 +193,25 @@ function CvPageContent({ locale }: { locale: string }) {
         isExporting={isExporting}
         onDownload={() => void exportCvPdf()}
         onNewSession={requestNewSession}
+        onOpenHistory={() => setSessionPanelOpen(true)}
         actionsDisabled={isLoading || isSending}
         pipelineState={pipelineState}
         isWorking={isSending}
         showPipeline={showPipelineSteps}
+      />
+
+      <AgentSessionPanel
+        open={sessionPanelOpen}
+        onClose={() => setSessionPanelOpen(false)}
+        title={t("sessionsTitle")}
+        sessions={sessions}
+        activeSessionId={sessionId}
+        isLoading={sessionsLoading}
+        disabled={isSending || isLoading}
+        onSelect={(id) => void selectSession(id)}
+        onNew={requestNewSession}
+        newLabel={t("newCv")}
+        topOffset="var(--cv-header-offset, 0px)"
       />
 
       <CvWorkspaceTabs
@@ -199,17 +221,7 @@ function CvPageContent({ locale }: { locale: string }) {
         resumeHasPreview={resumeHasPreview && !canDownloadCv}
       />
 
-      <div className="flex-1 flex min-h-0">
-        <CvSessionSidebar
-          sessions={sessions}
-          activeSessionId={sessionId}
-          isLoading={sessionsLoading}
-          onSelect={(id) => void selectSession(id)}
-          onNew={requestNewSession}
-          disabled={isSending || isLoading}
-          className="hidden lg:flex"
-        />
-
+      <div className="flex-1 flex min-h-0 relative">
         <div className="flex-1 flex min-w-0 min-h-0">
           <section
             id={CV_CHAT_PANEL_ID}
