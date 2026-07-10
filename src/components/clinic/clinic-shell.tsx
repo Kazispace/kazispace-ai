@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -39,7 +40,7 @@ import {
   MOCK_INTERVIEW_AGENT_ID,
 } from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
-import { getAgentHubPath, hasStickyActiveAgent } from "@/lib/agent-layer";
+import { getAgentHubPath, hasStickyActiveAgent, isDedicatedHubAgent } from "@/lib/agent-layer";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -299,10 +300,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       const active = await fetchActiveAgentRef.current();
       if (hasStickyActiveAgent(active)) {
-        const hubPath = getAgentHubPath(locale, active.active_agent);
-        if (hubPath) {
-          router.replace(hubPath);
-          return;
+        if (isDedicatedHubAgent(active.active_agent)) {
+          const hubPath = getAgentHubPath(locale, active.active_agent);
+          if (hubPath) {
+            router.replace(hubPath);
+            return;
+          }
         }
         await resumeActiveAgentSilentlyRef.current(
           active.active_agent,
@@ -605,7 +608,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg">
         {!layerReady && isLoggedIn ? (
-          <p className="text-sm text-gray-500 text-center py-12">{tClinic("layerResolving")}</p>
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
+            <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+            <p className="text-sm">{tClinic("layerResolving")}</p>
+          </div>
         ) : showWelcome ? (
           <WelcomeView
             locale={locale}

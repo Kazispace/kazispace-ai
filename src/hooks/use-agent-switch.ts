@@ -106,15 +106,8 @@ export function useAgentSwitch(locale: string) {
     if (!res.success || !res.data?.active_agent || !res.data.session_id) {
       return null;
     }
-    const { active_agent: agentId, session_id: sessionId } = res.data;
-    setActiveAgent(agentId, sessionId);
-
-    const existing = useAgentStore.getState().getAgentMessages(agentId);
-    if (existing.length === 0) {
-      await hydrateAgentMessagesFromSession(agentId, sessionId, setAgentMessages);
-    }
     return res.data;
-  }, [setActiveAgent, setAgentMessages]);
+  }, []);
 
   /** Silent restore for v1.3 sticky routing — no overlay, no activate call. */
   const resumeActiveAgentSilently = useCallback(
