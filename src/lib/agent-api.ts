@@ -16,6 +16,7 @@ import {
   getAgentLabel,
 } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
 import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
 import { apiRequest } from '@/lib/api-client';
 import { getAuthToken } from '@/lib/auth';
@@ -232,6 +233,26 @@ export async function deactivateAgent(
   return res;
 }
 
+function mockAgentEscalationResponse(
+  agentId: string,
+  emoji: string,
+  targetAgentId: string,
+  text: string
+): ApiResponse<AgentChatResponse> {
+  return {
+    success: true,
+    data: {
+      agent_id: agentId,
+      exited: true,
+      exited_agent: agentId,
+      exit_reason: 'escalated',
+      suggested_next_steps: [targetAgentId],
+      message_id: `mock_${Date.now()}`,
+      response: { text: `${emoji} ${text}` },
+    },
+  };
+}
+
 export async function sendAgentChat(
   agentId: string,
   message: string,
@@ -306,6 +327,41 @@ export async function sendAgentChat(
     }
 
     if (agentId === CV_BUILDER_AGENT_ID) {
+      const lower = message.toLowerCase();
+      const wantsJobSearch =
+        /推荐工作|找工作|job search|find (me )?(a )?job|recommend.*job/.test(
+          lower
+        );
+      const wantsInterview =
+        /面试|mock interview|practice interview|模拟面试/.test(lower);
+      const wantsEnglish =
+        /英语|english tutor|learn english|练英语|英语口语/.test(lower);
+
+      if (wantsJobSearch) {
+        return mockAgentEscalationResponse(
+          agentId,
+          emoji,
+          'job_search',
+          "Sure — let's return to clinic and open job search."
+        );
+      }
+      if (wantsInterview) {
+        return mockAgentEscalationResponse(
+          agentId,
+          emoji,
+          MOCK_INTERVIEW_AGENT_ID,
+          "Returning to clinic to open Mock Interview."
+        );
+      }
+      if (wantsEnglish) {
+        return mockAgentEscalationResponse(
+          agentId,
+          emoji,
+          ENGLISH_TUTOR_AGENT_ID,
+          "Returning to clinic to open English Tutor."
+        );
+      }
+
       const isRegenerate =
         message === '__action:regenerate' || message.toLowerCase() === 'regenerate';
       const isIntakeConfirm =

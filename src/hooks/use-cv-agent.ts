@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
 import { publishActiveAgentSync } from '@/lib/active-agent-sync';
@@ -14,8 +14,16 @@ import {
   sendAgentChat,
 } from '@/lib/agent-api';
 import { isAgentBlocked, isPaywallError } from '@/lib/api-errors';
-import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import {
+  followAgentEscalation,
+  parseAgentEscalation,
+} from '@/lib/agent-escalation';
+import { isDedicatedHubAgent } from '@/lib/agent-layer';
+import { isEnglishTutorAgent } from '@/lib/english-tutor-config';
+import { isMockInterviewAgent } from '@/lib/mock-interview-config';
+import { CV_BUILDER_AGENT_ID, isCvBuilderAgent } from '@/lib/cv-agent-config';
 import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
+import { useAgentSwitch } from '@/hooks/use-agent-switch';
 import {
   extractCvMetaButtons,
   extractCvPreviewFromAgent,
@@ -58,15 +66,39 @@ function applyAgentMetaSideEffects(
   return false;
 }
 
+export type CvAgentSendResult =
+  | { ok: true; escalated?: true }
+  | { ok: false; error?: string };
+
 export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean }) {
   const enabled = options?.enabled !== false;
   const params = useParams();
+  const router = useRouter();
   const locale = typeof params.locale === 'string' ? params.locale : 'en';
   const t = useTranslations('cv');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const openPaywall = useUIStore((s) => s.openPaywall);
   const activateGenRef = useRef(0);
+
+  const hubRoutes = useMemo(
+    () => ({
+      routeCvBuilderPage: () => {
+        const qs = jobId ? `?job_id=${encodeURIComponent(jobId)}` : '';
+        router.replace(`/${locale}/cv${qs}`);
+      },
+      routeInterviewPage: () => router.replace(`/${locale}/interview`),
+      routeEnglishPage: () => router.replace(`/${locale}/english`),
+    }),
+    [jobId, locale, router]
+  );
+
+  const routeToClinic = useCallback(
+    () => router.replace(`/${locale}/chat`),
+    [locale, router]
+  );
+
+  const { activateAgentWithoutPrecheck } = useAgentSwitch(locale, hubRoutes);
 
   const [messages, setMessages] = useState<CvChatMessage[]>([]);
   const [preview, setPreview] = useState<CvPreviewContent | null>(null);
@@ -87,6 +119,9 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const [error, setError] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
+  const [escalationRecoveryTarget, setEscalationRecoveryTarget] = useState<
+    string | null
+  >(null);
   const [sessionResumed, setSessionResumed] = useState(false);
 
   const finishSessionLoad = useCallback((gen: number) => {
@@ -394,7 +429,10 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   );
 
   const sendAgentMessage = useCallback(
-    async (text: string, options?: { showUserBubble?: boolean }) => {
+    async (
+      text: string,
+      options?: { showUserBubble?: boolean }
+    ): Promise<CvAgentSendResult> => {
       if (!text.trim() || isSending || !enabled || !sessionId || isReadOnly) {
         return { ok: false as const };
       }
@@ -431,16 +469,73 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         setIsSending(false);
         return { ok: false as const, error: res.error };
       }
+
+      const escalation = parseAgentEscalation(res.data);
+      if (escalation) {
+        setEscalationRecoveryTarget(null);
+        setIsReadOnly(true);
+        showToast(t('escalationSwitching'), 'info');
+
+        const follow = await followAgentEscalation(escalation, {
+          locale,
+          activateAgentWithoutPrecheck,
+          routeToClinic,
+          ...hubRoutes,
+        });
+
+        if (!follow.ok) {
+          applyResponse(res.data);
+          setIsSending(false);
+          showToast(follow.error ?? t('escalationFailed'), 'error');
+          return { ok: false as const, error: follow.error };
+        }
+
+        // Safety net if router navigation did not unmount this page.
+        if (!isDedicatedHubAgent(escalation.targetAgentId)) {
+          routeToClinic();
+        }
+        setEscalationRecoveryTarget(escalation.targetAgentId);
+        setIsSending(false);
+        return { ok: true as const, escalated: true as const };
+      }
+
       applyResponse(res.data);
       setIsSending(false);
       void refreshSessions();
       return { ok: true as const };
     },
-    [applyResponse, enabled, isReadOnly, isSending, openPaywall, refreshSessions, sessionId, showToast]
+    [
+      activateAgentWithoutPrecheck,
+      applyResponse,
+      enabled,
+      hubRoutes,
+      isReadOnly,
+      isSending,
+      locale,
+      openPaywall,
+      refreshSessions,
+      routeToClinic,
+      sessionId,
+      showToast,
+      t,
+    ]
   );
 
+  const continueEscalationRecovery = useCallback(() => {
+    if (!escalationRecoveryTarget) return;
+    if (isCvBuilderAgent(escalationRecoveryTarget)) {
+      hubRoutes.routeCvBuilderPage();
+    } else if (isMockInterviewAgent(escalationRecoveryTarget)) {
+      hubRoutes.routeInterviewPage();
+    } else if (isEnglishTutorAgent(escalationRecoveryTarget)) {
+      hubRoutes.routeEnglishPage();
+    } else {
+      routeToClinic();
+    }
+  }, [escalationRecoveryTarget, hubRoutes, routeToClinic]);
+
   const sendMessage = useCallback(
-    (text: string) => sendAgentMessage(text),
+    (text: string): Promise<CvAgentSendResult> => sendAgentMessage(text),
     [sendAgentMessage]
   );
 
@@ -652,6 +747,8 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     isSessionReady,
     isReadOnly,
     sessionResumed,
+    escalationRecoveryTarget,
+    continueEscalationRecovery,
     sendMessage,
     sendPayload: sendAgentMessage,
     intakeConfirm,
