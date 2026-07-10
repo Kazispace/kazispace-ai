@@ -1,0 +1,58 @@
+import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
+import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
+import type { AgentSurfaceId } from '@/lib/agent-transition/types';
+
+const HUB_AGENT_TO_SURFACE: Record<string, AgentSurfaceId> = {
+  [CV_BUILDER_AGENT_ID]: 'cv',
+  [MOCK_INTERVIEW_AGENT_ID]: 'interview',
+  [ENGLISH_TUTOR_AGENT_ID]: 'english',
+};
+
+const SURFACE_TO_HUB_AGENT: Partial<Record<AgentSurfaceId, string>> = {
+  cv: CV_BUILDER_AGENT_ID,
+  interview: MOCK_INTERVIEW_AGENT_ID,
+  english: ENGLISH_TUTOR_AGENT_ID,
+};
+
+const SURFACE_PATH: Record<AgentSurfaceId, (locale: string) => string> = {
+  clinic: (locale) => `/${locale}/chat`,
+  cv: (locale) => `/${locale}/cv`,
+  interview: (locale) => `/${locale}/interview`,
+  english: (locale) => `/${locale}/english`,
+};
+
+const PATH_SEGMENT_TO_SURFACE: Record<string, AgentSurfaceId> = {
+  chat: 'clinic',
+  cv: 'cv',
+  interview: 'interview',
+  english: 'english',
+};
+
+export function isDedicatedHubAgent(agentId: string): boolean {
+  return agentId in HUB_AGENT_TO_SURFACE;
+}
+
+export function resolveSurfaceForAgent(agentId: string): AgentSurfaceId {
+  return HUB_AGENT_TO_SURFACE[agentId] ?? 'clinic';
+}
+
+export function getSurfacePath(locale: string, surfaceId: AgentSurfaceId): string {
+  return SURFACE_PATH[surfaceId](locale);
+}
+
+export function getAgentHubPath(locale: string, agentId: string): string | null {
+  const surface = HUB_AGENT_TO_SURFACE[agentId];
+  return surface ? getSurfacePath(locale, surface) : null;
+}
+
+export function resolveSurfaceFromPathname(pathname: string): AgentSurfaceId {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length < 2) return 'clinic';
+  return PATH_SEGMENT_TO_SURFACE[segments[1]] ?? 'clinic';
+}
+
+export function getDedicatedHubAgentFromPathname(pathname: string): string | null {
+  const surface = resolveSurfaceFromPathname(pathname);
+  return SURFACE_TO_HUB_AGENT[surface] ?? null;
+}

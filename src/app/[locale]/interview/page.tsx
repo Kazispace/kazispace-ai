@@ -8,6 +8,11 @@ import { useTranslations } from "next-intl";
 import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { ChatInput } from "@/components/chat/chat-input";
+import {
+  AgentTransitionProvider,
+  useAgentTransition,
+} from "@/components/agent-transition/agent-transition-provider";
+import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
 import { MessageBubble } from "@/components/clinic/message-bubble";
 import { InterviewRolePicker } from "@/components/interview/interview-role-picker";
 import { InterviewPrepCard } from "@/components/interview/interview-prep-card";
@@ -25,7 +30,7 @@ import { useBilling } from "@/hooks/use-billing";
 import { isProPlan } from "@/lib/api-mappers";
 import { hasFormalIrp, resolveInterviewEntry } from "@/lib/interview-irp-entry";
 import type { InterviewCta } from "@/types";
-import { useUIStore } from "@/lib/store";
+import { useUIStore, useAuthStore } from "@/lib/store";
 
 interface InterviewPageProps {
   params: { locale: string };
@@ -37,6 +42,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
   const jobId = searchParams.get("job_id");
   const t = useTranslations("interview");
   const showToast = useUIStore((s) => s.showToast);
+  const { openSwitcher } = useAgentTransition();
 
   const {
     phase,
@@ -171,6 +177,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
   return (
     <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
       <Header locale={locale} />
+      {!needsLogin ? <HubLayerBar locale={locale} /> : null}
       <main className="pt-16 flex-1 flex flex-col max-w-3xl mx-auto w-full">
         {showProfileHome && profile ? (
           <IrpProfileHome
@@ -350,6 +357,8 @@ function InterviewPageContent({ locale }: { locale: string }) {
                 onSend={(text) => void submitAnswer(text)}
                 disabled={isSending}
                 placeholder={t("inputPlaceholder")}
+                showAgentButton
+                onOpenAgents={openSwitcher}
               />
             )}
           </>
@@ -362,15 +371,24 @@ function InterviewPageContent({ locale }: { locale: string }) {
 
 export default function InterviewPage({ params }: InterviewPageProps) {
   const t = useTranslations("interview");
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center text-gray-500">
-          {t("loading")}
-        </div>
-      }
+    <AgentTransitionProvider
+      locale={params.locale}
+      fromSurface="interview"
+      hubAgentId={MOCK_INTERVIEW_AGENT_ID}
+      isLoggedIn={isLoggedIn}
     >
-      <InterviewPageContent locale={params.locale} />
-    </Suspense>
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex items-center justify-center text-gray-500">
+            {t("loading")}
+          </div>
+        }
+      >
+        <InterviewPageContent locale={params.locale} />
+      </Suspense>
+    </AgentTransitionProvider>
   );
 }

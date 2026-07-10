@@ -2,6 +2,8 @@
 
 import { Suspense } from "react";
 import { BackToClinicButton } from "@/components/clinic/back-to-clinic-button";
+import { AgentTransitionProvider } from "@/components/agent-transition/agent-transition-provider";
+import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
 import { ENGLISH_TUTOR_AGENT_ID } from "@/lib/english-tutor-config";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -15,6 +17,7 @@ import { EppPassportSkeleton } from "@/components/english/epp-passport-skeleton"
 import { EPP_PROFILE_ENABLED } from "@/lib/constants";
 import { useEnglishProfile } from "@/hooks/use-english-profile";
 import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
+import { useAuthStore } from "@/lib/store";
 import type { EnglishOnboardingRequest } from "@/types";
 
 interface EnglishPageProps {
@@ -82,21 +85,33 @@ function EnglishPageContent({ locale }: { locale: string }) {
 
 export default function EnglishPage({ params }: EnglishPageProps) {
   const t = useTranslations("english");
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
-      <Header locale={params.locale} />
-      <main className="pt-16 flex-1 flex flex-col">
-        <Suspense
-          fallback={
-            <div className="flex-1 flex items-center justify-center text-gray-500">
-              {t("loading")}
-            </div>
-          }
-        >
-          <EnglishPageContent locale={params.locale} />
-        </Suspense>
-      </main>
-      <BottomNav locale={params.locale} />
-    </div>
+    <AgentTransitionProvider
+      locale={params.locale}
+      fromSurface="english"
+      hubAgentId={ENGLISH_TUTOR_AGENT_ID}
+      isLoggedIn={isLoggedIn}
+    >
+      <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
+        <Header locale={params.locale} />
+        {EPP_PROFILE_ENABLED && isLoggedIn ? (
+          <HubLayerBar locale={params.locale} />
+        ) : null}
+        <main className="pt-16 flex-1 flex flex-col">
+          <Suspense
+            fallback={
+              <div className="flex-1 flex items-center justify-center text-gray-500">
+                {t("loading")}
+              </div>
+            }
+          >
+            <EnglishPageContent locale={params.locale} />
+          </Suspense>
+        </main>
+        <BottomNav locale={params.locale} />
+      </div>
+    </AgentTransitionProvider>
   );
 }
