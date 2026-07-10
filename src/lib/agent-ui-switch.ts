@@ -1,5 +1,4 @@
 import { getActiveAgent } from '@/lib/agent-api';
-import { isDedicatedHubAgent } from '@/lib/agent-layer';
 import { useAgentStore } from '@/lib/store';
 
 export type PendingAgentSwitch = {
@@ -21,8 +20,4 @@ export function needsExplicitSwitchConfirm(
   targetAgentId: string
 ): boolean {
   return Boolean(currentAgentId && currentAgentId !== targetAgentId);
-}
-
-export function isHubAgentTarget(agentId: string): boolean {
-  return isDedicatedHubAgent(agentId);
 }

@@ -13,10 +13,10 @@ import {
 import { publishActiveAgentSync } from '@/lib/active-agent-sync';
 import { isAgentSwitchRequiresClinic } from '@/lib/api-errors';
 import {
-  isHubAgentTarget,
   needsExplicitSwitchConfirm,
   resolveServerActiveAgentId,
 } from '@/lib/agent-ui-switch';
+import { isDedicatedHubAgent } from '@/lib/agent-layer';
 import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
 import { AGENT_REGISTRY, getAgentStatusBadge } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
@@ -29,6 +29,12 @@ const FADE_IN_MS = 700;
 export type AgentSwitchResult =
   | { ok: true; resumed?: boolean; hub?: boolean }
   | { ok: false; error?: string; needsConfirm?: boolean };
+
+type PerformAgentSwitchOptions = {
+  triggerMessage?: string;
+  /** Caller-resolved active agent — avoids a second GET /agents/active. */
+  knownActiveAgentId?: string | null;
+};
 
 function mapHistoryToAgentMessages(
   agentId: string,
@@ -135,7 +141,11 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
 
   /** Path B execute: deactivate current (if any) then activate target — no precheck. */
   const performAgentSwitch = useCallback(
-    async (agentId: string, triggerMessage?: string): Promise<AgentSwitchResult> => {
+    async (
+      agentId: string,
+      options?: PerformAgentSwitchOptions
+    ): Promise<AgentSwitchResult> => {
+      const triggerMessage = options?.triggerMessage;
       const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
       if (!entry || entry.status === 'coming_soon') {
         showToast('Coming soon', 'info');
@@ -147,7 +157,10 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
       await sleep(FADE_OUT_MS);
 
       try {
-        const currentActive = await resolveServerActiveAgentId();
+        const currentActive =
+          options && 'knownActiveAgentId' in options
+            ? (options.knownActiveAgentId ?? null)
+            : await resolveServerActiveAgentId();
         if (currentActive && currentActive !== agentId) {
           const deact = await deactivateToClinic(locale, {
             agentId: currentActive,
@@ -183,7 +196,7 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
           }
         }
 
-        if (isHubAgentTarget(agentId) && hubRoutes) {
+        if (isDedicatedHubAgent(agentId) && hubRoutes) {
           const hub = await activateDedicatedHubAgent(agentId, locale, hubRoutes);
           if (!hub.ok) {
             if (hub.errorCode && isAgentSwitchRequiresClinic(hub)) {
@@ -286,17 +299,20 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
       if (needsExplicitSwitchConfirm(current, agentId)) {
         return queueSwitchConfirm(current!, agentId);
       }
-      return performAgentSwitch(agentId, triggerMessage);
+      return performAgentSwitch(agentId, {
+        triggerMessage,
+        knownActiveAgentId: current,
+      });
     },
     [performAgentSwitch, queueSwitchConfirm, showToast]
   );
 
   const confirmPendingAgentSwitch = useCallback(async () => {
-    const pending = useAgentStore.getState().pendingAgentSwitch;
-    if (!pending) return { ok: false as const };
+    if (!pendingAgentSwitch) return { ok: false as const };
+    const { fromAgentId, toAgentId } = pendingAgentSwitch;
     setPendingAgentSwitch(null);
-    return performAgentSwitch(pending.toAgentId);
-  }, [performAgentSwitch, setPendingAgentSwitch]);
+    return performAgentSwitch(toAgentId, { knownActiveAgentId: fromAgentId });
+  }, [pendingAgentSwitch, performAgentSwitch, setPendingAgentSwitch]);
 
   const cancelPendingAgentSwitch = useCallback(() => {
     setPendingAgentSwitch(null);
@@ -433,7 +449,8 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
     statusBadge,
     fetchActiveAgent,
     resumeActiveAgentSilently,
-    switchToAgent: performAgentSwitch,
+    /** Path A / post-confirm only — bypasses Path B precheck dialog. */
+    activateAgentWithoutPrecheck: performAgentSwitch,
     requestAgentSwitch,
     confirmPendingAgentSwitch,
     cancelPendingAgentSwitch,

@@ -113,7 +113,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     statusBadge,
     fetchActiveAgent,
     resumeActiveAgentSilently,
-    switchToAgent,
+    activateAgentWithoutPrecheck,
     requestAgentSwitch,
     pendingAgentSwitch,
     confirmPendingAgentSwitch,
@@ -122,12 +122,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     exitToClinic,
   } = useAgentSwitch(locale, hubRoutes);
 
-  const switchToAgentRef = useRef(switchToAgent);
   const requestAgentSwitchRef = useRef(requestAgentSwitch);
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
   const resumeActiveAgentSilentlyRef = useRef(resumeActiveAgentSilently);
   const exitToClinicRef = useRef(exitToClinic);
-  switchToAgentRef.current = switchToAgent;
   requestAgentSwitchRef.current = requestAgentSwitch;
   fetchActiveAgentRef.current = fetchActiveAgent;
   resumeActiveAgentSilentlyRef.current = resumeActiveAgentSilently;
@@ -466,7 +464,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       if (result?.ok && result.escalation) {
         const follow = await followAgentEscalation(result.escalation, {
           locale,
-          switchToAgent,
+          activateAgentWithoutPrecheck,
           routeCvBuilderPage,
           routeInterviewPage,
           routeEnglishPage,

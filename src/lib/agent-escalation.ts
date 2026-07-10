@@ -84,7 +84,8 @@ export async function activateDedicatedHubAgent(
 
 export type FollowEscalationDeps = {
   locale: string;
-  switchToAgent: (
+  /** Path A auto-chain — intentionally skips Path B confirm (user NL intent). */
+  activateAgentWithoutPrecheck: (
     agentId: string
   ) => Promise<{ ok: boolean; error?: string } | undefined>;
   routeCvBuilderPage: () => void;
@@ -94,15 +95,20 @@ export type FollowEscalationDeps = {
 
 /**
  * Path A (KAZI-121): after NL escalation exit, auto-activate the suggested expert.
- * Does not flash clinic history — uses agent switch overlay or hub navigation.
+ * Skips Path B confirm — user already expressed cross-domain intent in chat.
  */
 export async function followAgentEscalation(
   escalation: AgentEscalation,
   deps: FollowEscalationDeps
 ): Promise<{ ok: boolean; error?: string }> {
   const { targetAgentId, exitedAgent } = escalation;
-  const { locale, switchToAgent, routeCvBuilderPage, routeInterviewPage, routeEnglishPage } =
-    deps;
+  const {
+    locale,
+    activateAgentWithoutPrecheck,
+    routeCvBuilderPage,
+    routeInterviewPage,
+    routeEnglishPage,
+  } = deps;
 
   const current = useAgentStore.getState().activeAgentId;
   if (!current || current === exitedAgent) {
@@ -117,7 +123,7 @@ export async function followAgentEscalation(
     });
   }
 
-  const result = await switchToAgent(targetAgentId);
+  const result = await activateAgentWithoutPrecheck(targetAgentId);
   if (!result?.ok) {
     return { ok: false, error: result?.error };
   }
