@@ -42,6 +42,10 @@ import {
   MOCK_INTERVIEW_AGENT_ID,
 } from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
+import { AgentSessionPanel } from "@/components/agent/agent-session-panel";
+import { useAgentSessionList } from "@/hooks/use-agent-session-list";
+import { fetchAgentMessages } from "@/lib/agent-api";
+import { isAgentSessionReadOnly } from "@/lib/agent-sessions";
 import { followAgentEscalation } from "@/lib/agent-escalation";
 import { toPendingAgentSwitch } from "@/lib/agent-pending-transition";
 import { getAgentHubPath, hasStickyActiveAgent, isDedicatedHubAgent } from "@/lib/agent-layer";
@@ -60,6 +64,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
   const tReferral = useTranslations("referral");
+  const tSessions = useTranslations("agentSessions");
 
   const routeCvBuilderPage = useCallback(
     (targetJobId?: string | null) => {
@@ -198,7 +203,55 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   } | null>(null);
   const [layerReady, setLayerReady] = useState(false);
   const [switchConfirming, setSwitchConfirming] = useState(false);
+  const [sessionPanelOpen, setSessionPanelOpen] = useState(false);
+  const [historyReadOnly, setHistoryReadOnly] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const {
+    sessions: agentSessions,
+    isLoading: agentSessionsLoading,
+  } = useAgentSessionList(activeAgentId, isLoggedIn && !!activeAgentId);
+
+  const setAgentMessages = useAgentStore((s) => s.setAgentMessages);
+  const setActiveAgent = useAgentStore((s) => s.setActiveAgent);
+
+  const handleAgentSessionSelect = useCallback(
+    async (sessionId: string) => {
+      if (!activeAgentId) return;
+      const entry = agentSessions.find((s) => s.session_id === sessionId);
+      setHistoryReadOnly(isAgentSessionReadOnly(entry?.status));
+
+      const hist = await fetchAgentMessages(sessionId);
+      if (!hist.success || !hist.data) {
+        showToast(tSessions("sessionLoadFailed"), "error");
+        return;
+      }
+      setActiveAgent(activeAgentId, sessionId);
+      setAgentMessages(
+        activeAgentId,
+        hist.data.messages.map((m, i) => ({
+          id: m.id ?? `hist_${i}`,
+          role: m.role as "user" | "assistant",
+          content: m.content,
+          timestamp: new Date().toISOString(),
+          sessionId,
+        }))
+      );
+    },
+    [
+      activeAgentId,
+      agentSessions,
+      setActiveAgent,
+      setAgentMessages,
+      showToast,
+      tSessions,
+    ]
+  );
+
+  useEffect(() => {
+    setSessionPanelOpen(false);
+    setHistoryReadOnly(false);
+  }, [activeAgentId]);
 
   const activeEntry = AGENT_REGISTRY.find((a) => a.agentId === activeAgentId);
   const isAgentMode = !!activeAgentId && !!activeEntry;
@@ -643,7 +696,29 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         agentEmoji={activeEntry?.emoji}
         isOnline={isOnline}
         onBackToClinic={isAgentMode ? handleBackToClinic : undefined}
+        onOpenSessionHistory={
+          isAgentMode && isLoggedIn ? () => setSessionPanelOpen(true) : undefined
+        }
       />
+
+      {isAgentMode && isLoggedIn ? (
+        <AgentSessionPanel
+          open={sessionPanelOpen}
+          onClose={() => setSessionPanelOpen(false)}
+          title={
+            activeEntry
+              ? tSessions("sessionHistoryFor", {
+                  agentName: getAgentLabel(activeEntry, locale, "name"),
+                })
+              : tSessions("sessionHistory")
+          }
+          sessions={agentSessions}
+          activeSessionId={agentSessionId}
+          isLoading={agentSessionsLoading}
+          disabled={isSending || isSwitching}
+          onSelect={(id) => void handleAgentSessionSelect(id)}
+        />
+      ) : null}
 
       {!isLoggedIn && (
         <div className="bg-orange-50 border-b border-orange-100 px-4 py-2 flex items-center justify-between gap-3 shrink-0">
@@ -665,6 +740,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           statusDetail={isAgentMode ? statusBadge : null}
           onClinicClick={isAgentMode ? handleBackToClinic : undefined}
         />
+      ) : null}
+
+      {isAgentMode && historyReadOnly ? (
+        <p className="px-4 py-2 text-xs text-amber-800 bg-amber-50 border-b border-amber-100 text-center shrink-0">
+          {tSessions("readOnlyBanner")}
+        </p>
       ) : null}
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg">
@@ -769,7 +850,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       <ChatInput
         onSend={handleSend}
-        disabled={isSending || isSwitching}
+        disabled={isSending || isSwitching || (isAgentMode && historyReadOnly)}
         placeholder={inputPlaceholder}
         showAgentButton={isLoggedIn}
         onOpenAgents={() => setSwitcherOpen(true)}

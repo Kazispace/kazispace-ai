@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { History } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ interface ChatHeaderProps {
   agentEmoji?: string;
   isOnline?: boolean;
   onBackToClinic?: () => void;
+  onOpenSessionHistory?: () => void;
 }
 
 export function ChatHeader({
@@ -24,8 +26,10 @@ export function ChatHeader({
   agentEmoji,
   isOnline = true,
   onBackToClinic,
+  onOpenSessionHistory,
 }: ChatHeaderProps) {
   const t = useTranslations("chat");
+  const tSessions = useTranslations("agentSessions");
   const tNav = useTranslations("nav");
   const tTma = useTranslations("tma");
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
@@ -71,6 +75,19 @@ export function ChatHeader({
           </div>
         </div>
       </div>
+
+      {mode === "agent" && onOpenSessionHistory ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-white/70 hover:text-white shrink-0"
+          onClick={onOpenSessionHistory}
+          aria-label={tSessions("sessionHistory")}
+        >
+          <History className="h-4 w-4" />
+        </Button>
+      ) : null}
 
       <Link href={`/${locale}/mine`} className="shrink-0">
         <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">

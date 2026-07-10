@@ -322,6 +322,20 @@
 	"errors": {
 		"profileIncomplete": "Добавьте данные профиля для персонализации — здесь можно продолжать общаться."
 	},
+	"agentSessions": {
+		"sessionHistory": "История сессий",
+		"sessionHistoryFor": "Сессии: {agentName}",
+		"closeHistory": "Закрыть историю",
+		"newSession": "Новая сессия",
+		"sessionsLoading": "Загрузка сессий…",
+		"sessionsEmpty": "Прошлых сессий пока нет",
+		"sessionActive": "Активна",
+		"sessionExited": "Завершена",
+		"sessionArchived": "В архиве",
+		"sessionCurrent": "Текущая",
+		"readOnlyBanner": "Эта сессия только для просмотра. Вернитесь к текущей, чтобы продолжить диалог.",
+		"sessionLoadFailed": "Не удалось загрузить сессию"
+	},
 	"clinic": {
 		"comingSoon": "Скоро",
 		"openAgent": "Открыть",
@@ -420,10 +434,12 @@
 		"newCvConfirmAction": "Новая сессия",
 		"newCvConfirmCancel": "Оставить текущую",
 		"sessionsTitle": "Ваши резюме",
+		"sessionHistory": "История сессий",
 		"sessionsLoading": "Загрузка сессий…",
 		"sessionsEmpty": "Пока нет прошлых сессий",
 		"sessionActive": "Активна",
 		"sessionEnded": "Завершена",
+		"sessionArchived": "В архиве",
 		"sessionCurrent": "Текущая",
 		"sessionResumedBanner": "Продолжаем предыдущую сессию резюме.",
 		"readOnlyBanner": "Сессия завершена. Создайте новое резюме, чтобы продолжить.",

@@ -322,6 +322,20 @@
 	"errors": {
 		"profileIncomplete": "Add a few profile details to unlock personalized features — you can keep chatting here."
 	},
+	"agentSessions": {
+		"sessionHistory": "Session history",
+		"sessionHistoryFor": "{agentName} sessions",
+		"closeHistory": "Close history",
+		"newSession": "New session",
+		"sessionsLoading": "Loading sessions…",
+		"sessionsEmpty": "No past sessions yet",
+		"sessionActive": "Active",
+		"sessionExited": "Ended",
+		"sessionArchived": "Archived",
+		"sessionCurrent": "Current",
+		"readOnlyBanner": "This session is read-only. Return to your current session to continue chatting.",
+		"sessionLoadFailed": "Could not load session history"
+	},
 	"clinic": {
 		"comingSoon": "Coming soon",
 		"openAgent": "Open",
@@ -420,10 +434,12 @@
 		"newCvConfirmAction": "Start new session",
 		"newCvConfirmCancel": "Keep current",
 		"sessionsTitle": "Your CVs",
+		"sessionHistory": "Session history",
 		"sessionsLoading": "Loading sessions…",
 		"sessionsEmpty": "No past sessions yet",
 		"sessionActive": "Active",
 		"sessionEnded": "Ended",
+		"sessionArchived": "Archived",
 		"sessionCurrent": "Current",
 		"sessionResumedBanner": "Resumed your previous CV session.",
 		"readOnlyBanner": "This session has ended. Start a new CV to continue editing.",
