@@ -464,6 +464,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     if (isAgentMode) {
       const result = await sendAgentMessage(text);
       if (result?.ok && result.pendingTransition) {
+        if (pendingAgentSwitch) return;
+        if (result.assistantPlaceholderId && activeAgentId) {
+          useAgentStore
+            .getState()
+            .removeAgentMessage(activeAgentId, result.assistantPlaceholderId);
+        }
         setPendingAgentSwitch(
           toPendingAgentSwitch(result.pendingTransition, result.triggerMessage)
         );

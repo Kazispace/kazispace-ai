@@ -94,11 +94,12 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
       const pendingTransition = parsePendingTransition(res.data);
 
       if (pendingTransition) {
-        useAgentStore.getState().removeAgentMessage(agentId, assistantId);
         return {
           ok: true as const,
           pendingTransition,
+          /** Sync Path C: handoff text is this send's user input, not `trigger_message_id`. */
           triggerMessage: text,
+          assistantPlaceholderId: assistantId,
         };
       }
 
