@@ -334,7 +334,8 @@
 		"sessionArchived": "Archived",
 		"sessionCurrent": "Current",
 		"readOnlyBanner": "This session is read-only. Return to your current session to continue chatting.",
-		"sessionLoadFailed": "Could not load session history"
+		"sessionLoadFailed": "Could not load session history",
+		"sessionSwitching": "Loading session…"
 	},
 	"clinic": {
 		"comingSoon": "Coming soon",
@@ -434,13 +435,6 @@
 		"newCvConfirmAction": "Start new session",
 		"newCvConfirmCancel": "Keep current",
 		"sessionsTitle": "Your CVs",
-		"sessionHistory": "Session history",
-		"sessionsLoading": "Loading sessions…",
-		"sessionsEmpty": "No past sessions yet",
-		"sessionActive": "Active",
-		"sessionEnded": "Ended",
-		"sessionArchived": "Archived",
-		"sessionCurrent": "Current",
 		"sessionResumedBanner": "Resumed your previous CV session.",
 		"readOnlyBanner": "This session has ended. Start a new CV to continue editing.",
 		"uploadResume": "Upload resume",

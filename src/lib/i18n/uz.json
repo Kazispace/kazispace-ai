@@ -334,7 +334,8 @@
 		"sessionArchived": "Arxiv",
 		"sessionCurrent": "Joriy",
 		"readOnlyBanner": "Bu sessiya faqat ko'rish uchun. Suhbatni davom ettirish uchun joriy sessiyaga qayting.",
-		"sessionLoadFailed": "Sessiyani yuklab bo'lmadi"
+		"sessionLoadFailed": "Sessiyani yuklab bo'lmadi",
+		"sessionSwitching": "Sessiya yuklanmoqda…"
 	},
 	"clinic": {
 		"comingSoon": "Tez orada",
@@ -434,11 +435,6 @@
 		"newCvConfirmAction": "Yangi sessiya",
 		"newCvConfirmCancel": "Joriyini saqlash",
 		"sessionsTitle": "Rezyumelaringiz",
-		"sessionsLoading": "Sessiyalar yuklanmoqda…",
-		"sessionsEmpty": "Oldingi sessiyalar yo'q",
-		"sessionActive": "Faol",
-		"sessionEnded": "Tugagan",
-		"sessionCurrent": "Joriy",
 		"sessionResumedBanner": "Oldingi rezyume sessiyasi davom ettirildi.",
 		"readOnlyBanner": "Bu sessiya tugagan. Davom etish uchun yangi rezyume yarating.",
 		"uploadResume": "Rezyume yuklash",

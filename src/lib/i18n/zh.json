@@ -179,7 +179,8 @@
 		"sessionArchived": "已归档",
 		"sessionCurrent": "当前",
 		"readOnlyBanner": "此会话仅可查看。返回当前会话以继续对话。",
-		"sessionLoadFailed": "无法加载会话"
+		"sessionLoadFailed": "无法加载会话",
+		"sessionSwitching": "正在加载会话…"
 	},
 	"clinic": {
 		"backToClinic": "返回门诊",
@@ -237,12 +238,6 @@
 		"newCvConfirmAction": "新建会话",
 		"newCvConfirmCancel": "继续当前",
 		"sessionsTitle": "我的简历",
-		"sessionHistory": "会话历史",
-		"sessionsLoading": "正在加载会话…",
-		"sessionsEmpty": "暂无历史会话",
-		"sessionActive": "进行中",
-		"sessionEnded": "已结束",
-		"sessionCurrent": "当前",
 		"sessionResumedBanner": "已恢复你上次的简历会话。",
 		"readOnlyBanner": "此会话已结束。请新建简历以继续编辑。",
 		"uploadResume": "上传简历",

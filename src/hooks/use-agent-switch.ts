@@ -36,19 +36,8 @@ type PerformAgentSwitchOptions = {
   knownActiveAgentId?: string | null;
 };
 
-function mapHistoryToAgentMessages(
-  agentId: string,
-  sessionId: string,
-  messages: { id?: string; role: string; content: string; timestamp?: string }[]
-) {
-  return messages.map((m, i) => ({
-    id: m.id ?? `hist_${i}`,
-    role: m.role as ChatMessage['role'],
-    content: m.content,
-    timestamp: m.timestamp ?? new Date().toISOString(),
-    sessionId,
-  }));
-}
+import { mapAgentHistoryToChatMessages } from '@/lib/agent-sessions';
+import type { RawAgentHistoryMessage } from '@/lib/agent-sessions';
 
 async function hydrateAgentMessagesFromSession(
   agentId: string,
@@ -59,7 +48,10 @@ async function hydrateAgentMessagesFromSession(
   if (!hist.success || !hist.data?.messages?.length) return false;
   setAgentMessages(
     agentId,
-    mapHistoryToAgentMessages(agentId, sessionId, hist.data.messages)
+    mapAgentHistoryToChatMessages(
+      hist.data.messages as RawAgentHistoryMessage[],
+      sessionId
+    )
   );
   return true;
 }

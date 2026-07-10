@@ -38,6 +38,7 @@ export function CvHeader({
   className,
 }: CvHeaderProps) {
   const t = useTranslations('cv');
+  const tSessions = useTranslations('agentSessions');
 
   return (
     <header
@@ -80,7 +81,7 @@ export function CvHeader({
               disabled={actionsDisabled}
               onClick={onOpenHistory}
               className="h-9 w-9 text-white/70 hover:text-white hover:bg-white/10"
-              aria-label={t('sessionHistory')}
+              aria-label={tSessions('sessionHistory')}
             >
               <History className="h-4 w-4" />
             </Button>

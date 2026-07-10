@@ -436,7 +436,7 @@ export async function fetchAgentSessions(
         title: 'Archived session',
         updated_at: new Date(now - 86400000 * 14).toISOString(),
       },
-    ].filter((row) => row.agent_id === agentId);
+    ];
     return { success: true, data: { sessions: mockRows } };
   }
   return res;

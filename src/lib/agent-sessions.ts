@@ -1,4 +1,37 @@
-import type { AgentSessionSummary } from '@/types';
+import type { AgentSessionSummary, ChatMessage } from '@/types';
+
+export type RawAgentHistoryMessage = {
+  id?: string;
+  message_id?: string;
+  role?: string;
+  content?: string;
+  text?: string;
+  timestamp?: string;
+  created_at?: string;
+};
+
+/** Map API history rows to chat messages; unknown roles become assistant. */
+export function mapAgentHistoryToChatMessages(
+  messages: RawAgentHistoryMessage[],
+  sessionId: string
+): ChatMessage[] {
+  return messages.map((raw, i) => {
+    const roleRaw = raw.role ?? 'assistant';
+    const role: ChatMessage['role'] =
+      roleRaw === 'user'
+        ? 'user'
+        : roleRaw === 'system'
+          ? 'system'
+          : 'assistant';
+    return {
+      id: raw.id ?? raw.message_id ?? `hist_${i}`,
+      role,
+      content: raw.content ?? raw.text ?? '',
+      timestamp: raw.timestamp ?? raw.created_at ?? new Date().toISOString(),
+      sessionId,
+    };
+  });
+}
 
 /** Stable ordering: active first, then most recently updated. */
 export function sortAgentSessions(

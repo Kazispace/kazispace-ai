@@ -100,6 +100,12 @@ function CvPageContent({ locale }: { locale: string }) {
     }
   }, [canDownloadCv]);
 
+  useEffect(() => {
+    if (sessionPanelOpen) {
+      void refreshSessions();
+    }
+  }, [sessionPanelOpen, refreshSessions]);
+
   const routedActions = nextActions.filter((a) => isRoutedCvAction(a.type));
   const pickerActions = nextActions.filter((a) => !isRoutedCvAction(a.type));
 
@@ -205,7 +211,7 @@ function CvPageContent({ locale }: { locale: string }) {
         onSelect={(id) => void selectSession(id)}
         onNew={requestNewSession}
         newLabel={t("newCv")}
-        className="lg:top-[var(--cv-header-offset,0px)]"
+        topOffset="var(--cv-header-offset, 0px)"
       />
 
       <CvWorkspaceTabs

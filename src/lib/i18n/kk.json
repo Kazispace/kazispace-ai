@@ -334,7 +334,8 @@
 		"sessionArchived": "Мұрағат",
 		"sessionCurrent": "Ағымдағы",
 		"readOnlyBanner": "Бұл сессия тек оқуға арналған. Чатты жалғастыру үшін ағымдағы сессияға оралыңыз.",
-		"sessionLoadFailed": "Сессияны жүктеу сәтсіз"
+		"sessionLoadFailed": "Сессияны жүктеу сәтсіз",
+		"sessionSwitching": "Сессия жүктелуде…"
 	},
 	"clinic": {
 		"comingSoon": "Жақында",
@@ -434,11 +435,6 @@
 		"newCvConfirmAction": "Жаңа сессия",
 		"newCvConfirmCancel": "Ағымдағыны қалдыру",
 		"sessionsTitle": "Түйіндемелер",
-		"sessionsLoading": "Сессиялар жүктелуде…",
-		"sessionsEmpty": "Алдыңғы сессиялар жоқ",
-		"sessionActive": "Белсенді",
-		"sessionEnded": "Аяқталған",
-		"sessionCurrent": "Ағымдағы",
 		"sessionResumedBanner": "Алдыңғы түйіндеме сессиясы жалғастырылды.",
 		"readOnlyBanner": "Бұл сессия аяқталды. Жалғастыру үшін жаңа түйіндеме жасаңыз.",
 		"uploadResume": "Түйіндеме жүктеу",

@@ -1,12 +1,16 @@
 'use client';
 
 import { Plus, X } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { AgentSessionList } from '@/components/agent/agent-session-list';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { AgentSessionSummary } from '@/types';
+
+const FOCUSABLE =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 interface AgentSessionPanelProps {
   open: boolean;
@@ -19,6 +23,9 @@ interface AgentSessionPanelProps {
   onSelect: (sessionId: string) => void;
   onNew?: () => void;
   newLabel?: string;
+  /** Desktop top offset when panel is `lg:absolute` (e.g. below a sticky header). */
+  topOffset?: string;
+  returnFocusRef?: React.RefObject<HTMLElement | null>;
   className?: string;
 }
 
@@ -33,9 +40,54 @@ export function AgentSessionPanel({
   onSelect,
   onNew,
   newLabel,
+  topOffset,
+  returnFocusRef,
   className,
 }: AgentSessionPanelProps) {
   const t = useTranslations('agentSessions');
+  const panelRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    previousFocusRef.current =
+      returnFocusRef?.current ??
+      (document.activeElement as HTMLElement | null);
+    closeButtonRef.current?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !panelRef.current) return;
+
+      const focusables = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)
+      ).filter((el) => !el.hasAttribute('disabled'));
+      if (focusables.length === 0) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      const restore = returnFocusRef?.current ?? previousFocusRef.current;
+      restore?.focus();
+    };
+  }, [open, onClose, returnFocusRef]);
 
   if (!open) return null;
 
@@ -48,11 +100,16 @@ export function AgentSessionPanel({
         onClick={onClose}
       />
       <aside
+        ref={panelRef}
         className={cn(
           'fixed z-50 top-0 right-0 h-full w-[min(100%,280px)] flex flex-col bg-white shadow-xl border-l border-gray-200/80',
-          'lg:absolute lg:top-0 lg:right-0 lg:h-full lg:shadow-none',
+          'lg:absolute lg:right-0 lg:h-full lg:shadow-none',
+          topOffset ? 'lg:top-[var(--panel-top)]' : 'lg:top-0',
           className
         )}
+        style={
+          topOffset ? { ['--panel-top' as string]: topOffset } : undefined
+        }
         role="dialog"
         aria-modal="true"
         aria-labelledby="agent-session-panel-title"
@@ -78,6 +135,7 @@ export function AgentSessionPanel({
               </Button>
             ) : null}
             <Button
+              ref={closeButtonRef}
               size="icon"
               variant="ghost"
               className="h-8 w-8 text-gray-500"
