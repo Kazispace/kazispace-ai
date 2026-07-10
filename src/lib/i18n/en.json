@@ -355,7 +355,11 @@
 		"layerClinic": "Clinic",
 		"layerClinicActive": "General career coaching with Serík",
 		"layerAgentActive": "Expert session in progress",
-		"layerResolving": "Restoring your session…"
+		"layerResolving": "Restoring your session…",
+		"switchConfirmTitle": "Switch expert?",
+		"switchConfirmBody": "You're currently with {currentName}. Leave and open {targetName}?",
+		"switchConfirmAction": "Switch to {targetName}",
+		"switchConfirmCancel": "Stay here"
 	},
 	"subscription": {
 		"title": "Upgrade to PRO / Sprint",

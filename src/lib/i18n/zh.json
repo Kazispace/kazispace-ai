@@ -174,7 +174,11 @@
 		"layerClinic": "门诊",
 		"layerClinicActive": "与 Serík 进行通用职业辅导",
 		"layerAgentActive": "专家会话进行中",
-		"layerResolving": "正在恢复你的会话…"
+		"layerResolving": "正在恢复你的会话…",
+		"switchConfirmTitle": "切换专家？",
+		"switchConfirmBody": "你正在与 {currentName} 对话。要离开并打开 {targetName} 吗？",
+		"switchConfirmAction": "切换到 {targetName}",
+		"switchConfirmCancel": "留在这里"
 	},
 	"cv": {
 		"title": "简历助手",
