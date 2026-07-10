@@ -15,6 +15,7 @@ import { AgentSwitcher } from "./agent-switcher";
 import { ReferralPrompt } from "./referral-prompt";
 import { ChatInput } from "@/components/chat/chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
+import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useNbaAction } from "@/hooks/use-nba-action";
@@ -40,6 +41,7 @@ import {
   MOCK_INTERVIEW_AGENT_ID,
 } from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
+import { followAgentEscalation } from "@/lib/agent-escalation";
 import { getAgentHubPath, hasStickyActiveAgent, isDedicatedHubAgent } from "@/lib/agent-layer";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
@@ -106,6 +108,30 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const loadAgentHistoryRef = useRef(loadAgentHistory);
   loadAgentHistoryRef.current = loadAgentHistory;
+
+  const reconcileActiveAgentLayer = useCallback(async () => {
+    const active = await fetchActiveAgentRef.current();
+    if (hasStickyActiveAgent(active)) {
+      if (isDedicatedHubAgent(active.active_agent)) {
+        const hubPath = getAgentHubPath(locale, active.active_agent);
+        if (hubPath) {
+          router.replace(hubPath);
+          return;
+        }
+      }
+      await resumeActiveAgentSilentlyRef.current(
+        active.active_agent,
+        active.session_id
+      );
+      skipHistoryLoad();
+      setLayerReady(true);
+      return;
+    }
+
+    useAgentStore.getState().setActiveAgent(null, null);
+    await loadHistoryRef.current();
+    setLayerReady(true);
+  }, [locale, router, skipHistoryLoad]);
 
   const switcherOpen = useAgentStore((s) => s.switcherOpen);
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
@@ -340,6 +366,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     skipHistoryLoad,
   ]);
 
+  useActiveAgentSync(isLoggedIn && layerReady, async () => {
+    await reconcileActiveAgentLayer();
+  });
+
   useEffect(() => {
     if (activeAgentId && agentSessionId) {
       loadAgentHistory();
@@ -416,6 +446,19 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     if (isAgentMode) {
       const result = await sendAgentMessage(text);
+      if (result?.ok && result.escalation) {
+        const follow = await followAgentEscalation(result.escalation, {
+          locale,
+          switchToAgent,
+          routeCvBuilderPage,
+          routeInterviewPage,
+          routeEnglishPage,
+        });
+        if (!follow.ok) {
+          showToast(follow.error ?? tClinic("activateFailed"), "error");
+        }
+        return;
+      }
       if (result && !result.ok) {
         if (result.error?.includes("500")) {
           showToast(tClinic("agentErrorFallback"), "error");

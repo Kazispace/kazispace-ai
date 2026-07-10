@@ -21,6 +21,8 @@ import { CvWorkspaceTabs, type CvWorkspaceTab, CV_CHAT_PANEL_ID, CV_RESUME_PANEL
 import { Button } from "@/components/ui/button";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
+import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
+import { CV_BUILDER_AGENT_ID } from "@/lib/cv-agent-config";
 import { useUIStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import type { ChatNextAction } from "@/types/chat-envelope";
@@ -74,6 +76,8 @@ function CvPageContent({ locale }: { locale: string }) {
     refreshSessions,
     restart,
   } = agentSession;
+
+  useHubActiveAgentSync(locale, CV_BUILDER_AGENT_ID, !needsLogin);
 
   const showProfileGate = needsProfile === true;
   const showWorkspace =

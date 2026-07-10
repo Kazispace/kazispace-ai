@@ -1,6 +1,7 @@
 'use client';
 
-import Link from 'next/link';
+import { BackToClinicButton } from '@/components/clinic/back-to-clinic-button';
+import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { TrendingUp } from 'lucide-react';
@@ -124,9 +125,15 @@ export function EppPassportHome({ profile, locale }: EppPassportHomeProps) {
         </CardContent>
       </Card>
 
-      <Button size="sm" variant="outline" className="self-start" asChild>
-        <Link href={`/${locale}/chat`}>{t('backToClinic')}</Link>
-      </Button>
+      <BackToClinicButton
+        size="sm"
+        variant="outline"
+        className="self-start"
+        locale={locale}
+        agentId={ENGLISH_TUTOR_AGENT_ID}
+      >
+        {t('backToClinic')}
+      </BackToClinicButton>
     </div>
   );
 }

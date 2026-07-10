@@ -3,10 +3,11 @@
 import { useCallback } from 'react';
 import {
   activateAgent,
-  deactivateAgent,
   fetchAgentMessages,
   getActiveAgent,
 } from '@/lib/agent-api';
+import { publishActiveAgentSync } from '@/lib/active-agent-sync';
+import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
 import { AGENT_REGISTRY, getAgentStatusBadge } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
 import { useAgentStore, useUIStore } from '@/lib/store';
@@ -138,8 +139,10 @@ export function useAgentSwitch(locale: string) {
       try {
         const currentActive = useAgentStore.getState().activeAgentId;
         if (currentActive && currentActive !== agentId) {
-          await deactivateAgent(currentActive, locale);
-          setActiveAgent(null, null);
+          await deactivateToClinic(locale, {
+            agentId: currentActive,
+            skipBroadcast: true,
+          });
         }
 
         if (currentActive === agentId) {
@@ -156,6 +159,11 @@ export function useAgentSwitch(locale: string) {
               await hydrateAgentMessagesFromSession(agentId, sid, setAgentMessages);
             }
             pushAgentHistory(agentId);
+            publishActiveAgentSync({
+              type: 'activated',
+              agentId,
+              sessionId: sid,
+            });
             await sleep(FADE_IN_MS);
             return { ok: true as const, resumed: true as const };
           }
@@ -203,6 +211,11 @@ export function useAgentSwitch(locale: string) {
         }
 
         pushAgentHistory(agent_id);
+        publishActiveAgentSync({
+          type: 'activated',
+          agentId: agent_id,
+          sessionId: session_id,
+        });
         await sleep(FADE_IN_MS);
         return { ok: true as const, resumed: Boolean(resumed) };
       } catch {
@@ -249,6 +262,11 @@ export function useAgentSwitch(locale: string) {
           },
         ]);
         pushAgentHistory(agentId);
+        publishActiveAgentSync({
+          type: 'activated',
+          agentId,
+          sessionId,
+        });
         await sleep(FADE_IN_MS);
         return { ok: true as const };
       } catch {
@@ -270,21 +288,28 @@ export function useAgentSwitch(locale: string) {
 
   const exitToClinic = useCallback(
     async (options?: { skipHistory?: boolean }) => {
-      if (!activeAgentId) return { ok: true as const };
+      const currentAgentId = useAgentStore.getState().activeAgentId;
+      if (!currentAgentId) {
+        const activeRes = await getActiveAgent();
+        if (!activeRes.data?.active_agent) {
+          return { ok: true as const };
+        }
+      }
 
       setSwitching(true);
       await sleep(FADE_OUT_MS);
 
       try {
-        const res = await deactivateAgent(activeAgentId, locale);
-        if (!res.success || !res.data) {
-          showToast(res.error ?? 'Failed to return to clinic', 'error');
+        const result = await deactivateToClinic(locale, {
+          agentId: currentAgentId ?? undefined,
+        });
+        if (!result.ok) {
+          showToast(result.error ?? 'Failed to return to clinic', 'error');
           return { ok: false as const };
         }
 
-        setActiveAgent(null, null);
-        if (res.data.return_message) {
-          showToast(res.data.return_message, 'info');
+        if (result.returnMessage) {
+          showToast(result.returnMessage, 'info');
         }
         if (!options?.skipHistory) {
           clearAgentHistory();
@@ -298,7 +323,7 @@ export function useAgentSwitch(locale: string) {
         setSwitching(false);
       }
     },
-    [activeAgentId, locale, setSwitching, setActiveAgent, showToast]
+    [locale, setSwitching, showToast]
   );
 
   const statusBadge =
