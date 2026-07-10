@@ -169,7 +169,12 @@
 	},
 	"clinic": {
 		"backToClinic": "返回门诊",
-		"switchAgent": "切换专家"
+		"switchAgent": "切换专家",
+		"layerAria": "当前工作区层级",
+		"layerClinic": "门诊",
+		"layerClinicActive": "与 Serík 进行通用职业辅导",
+		"layerAgentActive": "专家会话进行中",
+		"layerResolving": "正在恢复你的会话…"
 	},
 	"cv": {
 		"title": "简历助手",

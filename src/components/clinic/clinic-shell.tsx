@@ -8,7 +8,7 @@ import { ChatHeader } from "./chat-header";
 import { WelcomeView } from "./welcome-view";
 import { MessageBubble } from "./message-bubble";
 import { SwitchingOverlay } from "./switching-overlay";
-import { AgentStatusBar } from "./agent-status-bar";
+import { LayerIndicator } from "./layer-indicator";
 import { QuickReplies } from "./quick-replies";
 import { AgentSwitcher } from "./agent-switcher";
 import { ReferralPrompt } from "./referral-prompt";
@@ -39,6 +39,7 @@ import {
   MOCK_INTERVIEW_AGENT_ID,
 } from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
+import { getAgentHubPath, hasStickyActiveAgent } from "@/lib/agent-layer";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     isSwitching,
     statusBadge,
     fetchActiveAgent,
+    resumeActiveAgentSilently,
     switchToAgent,
     syncActiveAgentFromGateway,
     exitToClinic,
@@ -81,9 +83,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const switchToAgentRef = useRef(switchToAgent);
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
+  const resumeActiveAgentSilentlyRef = useRef(resumeActiveAgentSilently);
   const exitToClinicRef = useRef(exitToClinic);
   switchToAgentRef.current = switchToAgent;
   fetchActiveAgentRef.current = fetchActiveAgent;
+  resumeActiveAgentSilentlyRef.current = resumeActiveAgentSilently;
   exitToClinicRef.current = exitToClinic;
 
   const {
@@ -125,6 +129,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     agentId: string;
     reason: string;
   } | null>(null);
+  const [layerReady, setLayerReady] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeEntry = AGENT_REGISTRY.find((a) => a.agentId === activeAgentId);
@@ -181,15 +186,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   useEffect(() => {
     setEnglishLevelState(getEnglishLevel());
     clearExpiredReferralDismissals();
-    if (isLoggedIn) {
-      loadHistory();
-    } else {
-      skipHistoryLoad();
-    }
     fetch(`${API_BASE_URL}/health`, { signal: AbortSignal.timeout(5000) })
       .then((r) => setIsOnline(r.ok))
       .catch(() => setIsOnline(false));
-  }, [isLoggedIn, loadHistory, skipHistoryLoad]);
+  }, []);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -212,10 +212,19 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   }, [isLoggedIn, locale, tReferral]);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      skipHistoryLoad();
+      useAgentStore.getState().setActiveAgent(null, null);
+      setLayerReady(true);
+      return;
+    }
     if (isTelegramMiniApp && !tmaInitComplete) return;
 
-    const initAgent = async () => {
+    let cancelled = false;
+
+    const bootstrapClinicLayer = async () => {
+      setLayerReady(false);
+
       const pending = consumePendingTmaAction();
       if (pending?.type === 'activate_agent') {
         if (pending.agentId === CV_BUILDER_AGENT_ID) {
@@ -232,6 +241,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         }
         if (AGENT_REGISTRY.some((a) => a.agentId === pending.agentId)) {
           await switchToAgentRef.current(pending.agentId);
+          if (!cancelled) setLayerReady(true);
           return;
         }
       }
@@ -241,7 +251,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           if (result?.reloadClinic && isLoggedIn) {
             await loadHistoryRef.current();
           }
+        } else {
+          await loadHistoryRef.current();
         }
+        if (!cancelled) setLayerReady(true);
         return;
       }
       if (pending?.type === 'subscription') {
@@ -280,15 +293,35 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         AGENT_REGISTRY.some((a) => a.agentId === deepLinkAgent)
       ) {
         await switchToAgentRef.current(deepLinkAgent);
+        if (!cancelled) setLayerReady(true);
         return;
       }
+
       const active = await fetchActiveAgentRef.current();
-      if (active?.active_agent && active.session_id) {
-        await loadAgentHistoryRef.current();
+      if (hasStickyActiveAgent(active)) {
+        const hubPath = getAgentHubPath(locale, active.active_agent);
+        if (hubPath) {
+          router.replace(hubPath);
+          return;
+        }
+        await resumeActiveAgentSilentlyRef.current(
+          active.active_agent,
+          active.session_id
+        );
+        skipHistoryLoad();
+      } else {
+        useAgentStore.getState().setActiveAgent(null, null);
+        await loadHistoryRef.current();
       }
+
+      if (!cancelled) setLayerReady(true);
     };
 
-    void initAgent();
+    void bootstrapClinicLayer();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     isLoggedIn,
     isTelegramMiniApp,
@@ -301,6 +334,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     shouldOpenCvBuilderPage,
     shouldOpenInterviewPage,
     shouldOpenEnglishPage,
+    skipHistoryLoad,
   ]);
 
   useEffect(() => {
@@ -528,7 +562,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   );
 
   const showWelcome =
-    !isSwitching && !isAgentMode && !isHistoryLoading && clinicMessages.length === 0;
+    layerReady &&
+    !isSwitching &&
+    !isAgentMode &&
+    !isHistoryLoading &&
+    clinicMessages.length === 0;
 
   return (
     <div className="relative flex flex-col h-screen max-w-[860px] mx-auto bg-white shadow-xl">
@@ -556,10 +594,19 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         </div>
       )}
 
-      {isAgentMode && statusBadge && <AgentStatusBar label={statusBadge} />}
+      {isLoggedIn ? (
+        <LayerIndicator
+          locale={locale}
+          activeAgentId={isAgentMode ? activeAgentId : null}
+          statusDetail={isAgentMode ? statusBadge : null}
+          onClinicClick={isAgentMode ? handleBackToClinic : undefined}
+        />
+      ) : null}
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg">
-        {showWelcome ? (
+        {!layerReady && isLoggedIn ? (
+          <p className="text-sm text-gray-500 text-center py-12">{tClinic("layerResolving")}</p>
+        ) : showWelcome ? (
           <WelcomeView
             locale={locale}
             isLoggedIn={isLoggedIn}

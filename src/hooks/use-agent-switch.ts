@@ -103,10 +103,32 @@ export function useAgentSwitch(locale: string) {
 
   const fetchActiveAgent = useCallback(async () => {
     const res = await getActiveAgent();
-    if (!res.success || !res.data?.active_agent) return null;
-    setActiveAgent(res.data.active_agent, res.data.session_id);
+    if (!res.success || !res.data?.active_agent || !res.data.session_id) {
+      return null;
+    }
+    const { active_agent: agentId, session_id: sessionId } = res.data;
+    setActiveAgent(agentId, sessionId);
+
+    const existing = useAgentStore.getState().getAgentMessages(agentId);
+    if (existing.length === 0) {
+      await hydrateAgentMessagesFromSession(agentId, sessionId, setAgentMessages);
+    }
     return res.data;
-  }, [setActiveAgent]);
+  }, [setActiveAgent, setAgentMessages]);
+
+  /** Silent restore for v1.3 sticky routing — no overlay, no activate call. */
+  const resumeActiveAgentSilently = useCallback(
+    async (agentId: string, sessionId: string) => {
+      setActiveAgent(agentId, sessionId);
+      const existing = useAgentStore.getState().getAgentMessages(agentId);
+      if (existing.length === 0) {
+        await hydrateAgentMessagesFromSession(agentId, sessionId, setAgentMessages);
+      }
+      pushAgentHistory(agentId);
+      return { ok: true as const };
+    },
+    [setActiveAgent, setAgentMessages]
+  );
 
   const switchToAgent = useCallback(
     async (agentId: string, triggerMessage?: string) => {
@@ -295,6 +317,7 @@ export function useAgentSwitch(locale: string) {
     isSwitching,
     statusBadge,
     fetchActiveAgent,
+    resumeActiveAgentSilently,
     switchToAgent,
     syncActiveAgentFromGateway,
     exitToClinic,

@@ -350,7 +350,12 @@
 		"switchHint": "Boshqa mutaxassis tanlansa, sessiya almashtiriladi",
 		"activateFailed": "Mutaxassisni ochib bo'lmadi",
 		"deactivateFailed": "Klinikaga qaytib bo'lmadi",
-		"agentErrorFallback": "Mutaxassis mavjud emas — klinikaga qaytdi"
+		"agentErrorFallback": "Mutaxassis mavjud emas — klinikaga qaytdi",
+		"layerAria": "Joriy ish maydoni qatlami",
+		"layerClinic": "Klinika",
+		"layerClinicActive": "Serík bilan umumiy martaba murabbiyligi",
+		"layerAgentActive": "Mutaxassis sessiyasi faol",
+		"layerResolving": "Sessiyangiz tiklanmoqda…"
 	},
 	"subscription": {
 		"title": "PRO / Sprint yangilash",
