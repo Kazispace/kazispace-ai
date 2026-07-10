@@ -1,12 +1,5 @@
 export type AgentSurfaceId = 'clinic' | 'cv' | 'interview' | 'english';
 
-export type TransitionTrigger =
-  | 'ui'
-  | 'nl_escalation'
-  | 'pending_confirm'
-  | 'deep_link'
-  | 'sync';
-
 export interface NavigationPlan {
   shouldNavigate: boolean;
   href: string | null;

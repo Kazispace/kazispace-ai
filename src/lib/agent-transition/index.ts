@@ -2,7 +2,6 @@ export type {
   AgentSurfaceId,
   AgentSwitchContext,
   NavigationPlan,
-  TransitionTrigger,
 } from '@/lib/agent-transition/types';
 
 export {
@@ -14,4 +13,7 @@ export {
   resolveSurfaceFromPathname,
 } from '@/lib/agent-transition/surfaces';
 
-export { planNavigation } from '@/lib/agent-transition/navigation';
+export {
+  isNavigationPending,
+  planNavigation,
+} from '@/lib/agent-transition/navigation';

@@ -42,6 +42,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
   const jobId = searchParams.get("job_id");
   const t = useTranslations("interview");
   const showToast = useUIStore((s) => s.showToast);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const { openSwitcher } = useAgentTransition();
 
   const {
@@ -177,7 +178,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
   return (
     <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
       <Header locale={locale} />
-      {!needsLogin ? <HubLayerBar locale={locale} /> : null}
+      {isLoggedIn ? <HubLayerBar locale={locale} /> : null}
       <main className="pt-16 flex-1 flex flex-col max-w-3xl mx-auto w-full">
         {showProfileHome && profile ? (
           <IrpProfileHome

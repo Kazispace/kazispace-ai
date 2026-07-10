@@ -96,9 +96,7 @@ export default function EnglishPage({ params }: EnglishPageProps) {
     >
       <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
         <Header locale={params.locale} />
-        {EPP_PROFILE_ENABLED && isLoggedIn ? (
-          <HubLayerBar locale={params.locale} />
-        ) : null}
+        {isLoggedIn ? <HubLayerBar locale={params.locale} /> : null}
         <main className="pt-16 flex-1 flex flex-col">
           <Suspense
             fallback={

@@ -18,11 +18,10 @@ import {
   followAgentEscalation,
   parseAgentEscalation,
 } from '@/lib/agent-escalation';
-import { isDedicatedHubAgent } from '@/lib/agent-layer';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
 import { useAgentTransition } from '@/components/agent-transition/agent-transition-provider';
-import { planNavigation } from '@/lib/agent-transition';
+import { isNavigationPending, planNavigation } from '@/lib/agent-transition';
 import {
   extractCvMetaButtons,
   extractCvPreviewFromAgent,
@@ -469,13 +468,10 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
           return { ok: false as const, error: follow.error };
         }
 
-        if (!isDedicatedHubAgent(escalation.targetAgentId)) {
-          const plan = planNavigation(locale, 'cv', escalation.targetAgentId);
-          if (plan.shouldNavigate && plan.href) {
-            router.replace(plan.href);
-          }
+        const plan = planNavigation(locale, 'cv', escalation.targetAgentId);
+        if (isNavigationPending(plan)) {
+          setEscalationRecoveryTarget(escalation.targetAgentId);
         }
-        setEscalationRecoveryTarget(escalation.targetAgentId);
         setIsSending(false);
         return { ok: true as const, escalated: true as const };
       }
@@ -504,7 +500,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const continueEscalationRecovery = useCallback(() => {
     if (!escalationRecoveryTarget) return;
     const plan = planNavigation(locale, 'cv', escalationRecoveryTarget);
-    if (plan.shouldNavigate && plan.href) {
+    if (isNavigationPending(plan) && plan.href) {
       router.replace(plan.href);
     }
   }, [escalationRecoveryTarget, locale, router]);

@@ -34,3 +34,11 @@ export function planNavigation(
     targetSurface,
   };
 }
+
+/** True when the browser is not yet on the plan's target path (client-only). */
+export function isNavigationPending(plan: NavigationPlan): boolean {
+  if (!plan.shouldNavigate || !plan.href) return false;
+  if (typeof window === 'undefined') return false;
+  const targetPath = plan.href.split('?')[0];
+  return window.location.pathname !== targetPath;
+}
