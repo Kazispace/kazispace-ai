@@ -251,9 +251,33 @@ export async function sendAgentChat(
     const emoji = entry?.emoji ?? '🤖';
 
     if (agentId === 'job_search') {
+      const trimmed = message.trim();
       const lower = message.toLowerCase();
+
+      // Path C: fuzzy bare resume mention → pending_transition (not Path A auto-chain)
+      if (/^简历$|^(cv|resume)$/i.test(trimmed)) {
+        return {
+          success: true,
+          data: {
+            agent_id: agentId,
+            message_id: `mock_${Date.now()}`,
+            pending_transition: {
+              kind: 'switch',
+              from_agent_id: agentId,
+              to_agent_id: CV_BUILDER_AGENT_ID,
+              prompt: 'Leave Job Search and open CV Builder?',
+              trigger_message_id: `mock_${Date.now()}`,
+              confirm_action: { activate_agent: CV_BUILDER_AGENT_ID },
+              cancel_action: { continue_agent: agentId },
+            },
+          },
+        };
+      }
+
       const wantsCv =
-        /简历|resume|cv|搞简历|写简历/.test(message) || lower.includes('resume');
+        /帮我.*简历|搞简历|写简历|optimiz|improve.*resume|modify.*resume|edit.*resume/.test(
+          lower
+        ) || /帮我.*简历|搞简历|写简历/.test(message);
       const wantsInterview =
         /面试|interview|mock interview|practice interview/.test(lower);
       if (wantsCv || wantsInterview) {

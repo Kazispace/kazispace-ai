@@ -204,6 +204,15 @@ export interface AgentChatResponse {
   exited_agent?: string;
   exit_reason?: string;
   suggested_next_steps?: string[];
+  pending_transition?: {
+    kind?: string;
+    from_agent_id?: string;
+    to_agent_id?: string;
+    prompt?: string;
+    trigger_message_id?: string;
+    confirm_action?: { activate_agent?: string };
+    cancel_action?: { continue_agent?: string };
+  };
   response?: {
     text?: string;
     next_actions?: ChatNextAction[];

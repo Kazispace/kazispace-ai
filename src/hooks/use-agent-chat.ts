@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { fetchAgentMessages, parseAgentReply, sendAgentChat } from '@/lib/agent-api';
 import { parseAgentEscalation } from '@/lib/agent-escalation';
+import { parsePendingTransition } from '@/lib/agent-pending-transition';
 import { useAgentStore } from '@/lib/store';
 import type { ChatMessage } from '@/types';
 
@@ -90,6 +91,17 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
 
       const parsed = parseAgentReply(res.data);
       const escalation = parseAgentEscalation(res.data);
+      const pendingTransition = parsePendingTransition(res.data);
+
+      if (pendingTransition) {
+        useAgentStore.getState().removeAgentMessage(agentId, assistantId);
+        return {
+          ok: true as const,
+          pendingTransition,
+          triggerMessage: text,
+        };
+      }
+
       updateAgentMessage(agentId, assistantId, {
         content: parsed.reply || '…',
         ...(parsed.nextActions.length > 0 ? { nextActions: parsed.nextActions } : {}),

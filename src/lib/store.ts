@@ -133,13 +133,21 @@ interface AgentStore {
   agentSessionId: string | null;
   isSwitching: boolean;
   switcherOpen: boolean;
-  pendingAgentSwitch: { fromAgentId: string; toAgentId: string } | null;
+  pendingAgentSwitch: {
+    fromAgentId: string;
+    toAgentId: string;
+    triggerMessage?: string;
+  } | null;
   isAgentSending: boolean;
   isAgentStreaming: boolean;
   agentMessages: Record<string, ChatMessage[]>;
   setSwitcherOpen: (open: boolean) => void;
   setPendingAgentSwitch: (
-    pending: { fromAgentId: string; toAgentId: string } | null
+    pending: {
+      fromAgentId: string;
+      toAgentId: string;
+      triggerMessage?: string;
+    } | null
   ) => void;
   setSwitching: (switching: boolean) => void;
   setActiveAgent: (agentId: string | null, sessionId: string | null) => void;
@@ -147,6 +155,7 @@ interface AgentStore {
   setAgentMessages: (agentId: string, messages: ChatMessage[]) => void;
   addAgentMessage: (agentId: string, message: ChatMessage) => void;
   updateAgentMessage: (agentId: string, id: string, patch: Partial<ChatMessage>) => void;
+  removeAgentMessage: (agentId: string, id: string) => void;
   setAgentSending: (sending: boolean) => void;
   setAgentStreaming: (streaming: boolean) => void;
   reset: () => void;
@@ -157,7 +166,11 @@ const initialAgentState = {
   agentSessionId: null as string | null,
   isSwitching: false,
   switcherOpen: false,
-  pendingAgentSwitch: null as { fromAgentId: string; toAgentId: string } | null,
+  pendingAgentSwitch: null as {
+    fromAgentId: string;
+    toAgentId: string;
+    triggerMessage?: string;
+  } | null,
   isAgentSending: false,
   isAgentStreaming: false,
   agentMessages: {} as Record<string, ChatMessage[]>,
@@ -189,6 +202,13 @@ export const useAgentStore = create<AgentStore>()((set, get) => ({
         [agentId]: (state.agentMessages[agentId] ?? []).map((m) =>
           m.id === id ? { ...m, ...patch } : m
         ),
+      },
+    })),
+  removeAgentMessage: (agentId, id) =>
+    set((state) => ({
+      agentMessages: {
+        ...state.agentMessages,
+        [agentId]: (state.agentMessages[agentId] ?? []).filter((m) => m.id !== id),
       },
     })),
   setAgentSending: (sending) => set({ isAgentSending: sending }),

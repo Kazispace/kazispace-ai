@@ -309,9 +309,12 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
 
   const confirmPendingAgentSwitch = useCallback(async () => {
     if (!pendingAgentSwitch) return { ok: false as const };
-    const { fromAgentId, toAgentId } = pendingAgentSwitch;
+    const { fromAgentId, toAgentId, triggerMessage } = pendingAgentSwitch;
     setPendingAgentSwitch(null);
-    return performAgentSwitch(toAgentId, { knownActiveAgentId: fromAgentId });
+    return performAgentSwitch(toAgentId, {
+      knownActiveAgentId: fromAgentId,
+      triggerMessage,
+    });
   }, [pendingAgentSwitch, performAgentSwitch, setPendingAgentSwitch]);
 
   const cancelPendingAgentSwitch = useCallback(() => {
