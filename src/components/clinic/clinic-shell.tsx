@@ -41,6 +41,7 @@ import {
   MOCK_INTERVIEW_AGENT_ID,
 } from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
+import { followAgentEscalation } from "@/lib/agent-escalation";
 import { getAgentHubPath, hasStickyActiveAgent, isDedicatedHubAgent } from "@/lib/agent-layer";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
@@ -445,6 +446,19 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     if (isAgentMode) {
       const result = await sendAgentMessage(text);
+      if (result?.ok && result.escalation) {
+        const follow = await followAgentEscalation(result.escalation, {
+          locale,
+          switchToAgent,
+          routeCvBuilderPage,
+          routeInterviewPage,
+          routeEnglishPage,
+        });
+        if (!follow.ok) {
+          showToast(follow.error ?? tClinic("activateFailed"), "error");
+        }
+        return;
+      }
       if (result && !result.ok) {
         if (result.error?.includes("500")) {
           showToast(tClinic("agentErrorFallback"), "error");

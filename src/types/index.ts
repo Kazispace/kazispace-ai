@@ -200,6 +200,10 @@ export interface AgentChatResponse {
   message_id?: string;
   agent_id?: string;
   session_id?: string;
+  exited?: boolean;
+  exited_agent?: string;
+  exit_reason?: string;
+  suggested_next_steps?: string[];
   response?: {
     text?: string;
     next_actions?: ChatNextAction[];

@@ -16,6 +16,7 @@ import {
   getAgentLabel,
 } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
 import { apiRequest } from '@/lib/api-client';
 import { getAuthToken } from '@/lib/auth';
 import { ensureMasterSession } from '@/lib/master-session';
@@ -231,6 +232,36 @@ export async function sendAgentChat(
   if (useMockFallback(res.error)) {
     const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
     const emoji = entry?.emoji ?? '🤖';
+
+    if (agentId === 'job_search') {
+      const lower = message.toLowerCase();
+      const wantsCv =
+        /简历|resume|cv|搞简历|写简历/.test(message) || lower.includes('resume');
+      const wantsInterview =
+        /面试|interview|mock interview|practice interview/.test(lower);
+      if (wantsCv || wantsInterview) {
+        const target = wantsCv ? CV_BUILDER_AGENT_ID : MOCK_INTERVIEW_AGENT_ID;
+        const targetEntry = AGENT_REGISTRY.find((a) => a.agentId === target);
+        const targetName = targetEntry
+          ? getAgentLabel(targetEntry, 'en', 'name')
+          : target;
+        return {
+          success: true,
+          data: {
+            agent_id: agentId,
+            exited: true,
+            exited_agent: agentId,
+            exit_reason: 'escalated',
+            suggested_next_steps: [target],
+            message_id: `mock_${Date.now()}`,
+            response: {
+              text: `${emoji} Returning to clinic to open ${targetName}.`,
+            },
+          },
+        };
+      }
+    }
+
     if (agentId === CV_BUILDER_AGENT_ID) {
       const isRegenerate =
         message === '__action:regenerate' || message.toLowerCase() === 'regenerate';
