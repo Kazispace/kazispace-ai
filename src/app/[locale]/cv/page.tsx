@@ -18,13 +18,15 @@ import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
 import { AgentSessionPanel } from "@/components/agent/agent-session-panel";
 import { CvNewSessionDialog } from "@/components/cv/cv-new-session-dialog";
 import { CvWorkspaceTabs, type CvWorkspaceTab, CV_CHAT_PANEL_ID, CV_RESUME_PANEL_ID } from "@/components/cv/cv-workspace-tabs";
+import { AgentTransitionProvider } from "@/components/agent-transition/agent-transition-provider";
+import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
 import { Button } from "@/components/ui/button";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
 import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
 import { CV_BUILDER_AGENT_ID } from "@/lib/cv-agent-config";
 import { AGENT_REGISTRY, getAgentLabel } from "@/lib/agents/registry";
-import { useUIStore } from "@/lib/store";
+import { useAuthStore, useUIStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import type { ChatNextAction } from "@/types/chat-envelope";
 
@@ -210,6 +212,8 @@ function CvPageContent({ locale }: { locale: string }) {
         isWorking={isSending}
         showPipeline={showPipelineSteps}
       />
+
+      <HubLayerBar locale={locale} />
 
       <AgentSessionPanel
         open={sessionPanelOpen}
@@ -407,15 +411,24 @@ function GateScreen({
 
 export default function CvPage({ params }: CvPageProps) {
   const t = useTranslations("cv");
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+
   return (
-    <Suspense
-      fallback={
-        <div className="h-[100dvh] flex items-center justify-center bg-gray-bg text-gray-500 text-sm">
-          {t("sessionLoading")}
-        </div>
-      }
+    <AgentTransitionProvider
+      locale={params.locale}
+      fromSurface="cv"
+      hubAgentId={CV_BUILDER_AGENT_ID}
+      isLoggedIn={isLoggedIn}
     >
-      <CvPageContent locale={params.locale} />
-    </Suspense>
+      <Suspense
+        fallback={
+          <div className="h-[100dvh] flex items-center justify-center bg-gray-bg text-gray-500 text-sm">
+            {t("sessionLoading")}
+          </div>
+        }
+      >
+        <CvPageContent locale={params.locale} />
+      </Suspense>
+    </AgentTransitionProvider>
   );
 }

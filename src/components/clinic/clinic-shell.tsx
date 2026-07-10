@@ -71,6 +71,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const tReferral = useTranslations("referral");
   const tSessions = useTranslations("agentSessions");
 
+  /** TMA / deep-link / routedToAgent — may include ?job_id=; not used by planNavigation SSOT. */
   const routeCvBuilderPage = useCallback(
     (targetJobId?: string | null) => {
       const query = targetJobId
@@ -95,13 +96,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     router.push(`/${locale}/english`);
   }, [locale, router]);
 
-  const hubRoutes = useMemo(
+  const switchContext = useMemo(
     () => ({
-      routeCvBuilderPage: () => routeCvBuilderPage(),
-      routeInterviewPage: () => routeInterviewPage(),
-      routeEnglishPage,
+      fromSurface: "clinic" as const,
+      navigate: (href: string) => router.replace(href),
     }),
-    [routeCvBuilderPage, routeInterviewPage, routeEnglishPage]
+    [router]
   );
 
   const {
@@ -131,7 +131,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     cancelPendingAgentSwitch,
     syncActiveAgentFromGateway,
     exitToClinic,
-  } = useAgentSwitch(locale, hubRoutes);
+  } = useAgentSwitch(locale, switchContext);
 
   const requestAgentSwitchRef = useRef(requestAgentSwitch);
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
@@ -625,11 +625,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       }
       if (result?.ok && result.escalation) {
         const follow = await followAgentEscalation(result.escalation, {
-          locale,
           activateAgentWithoutPrecheck,
-          routeCvBuilderPage,
-          routeInterviewPage,
-          routeEnglishPage,
         });
         if (!follow.ok) {
           showToast(follow.error ?? tClinic("activateFailed"), "error");

@@ -18,12 +18,10 @@ import {
   followAgentEscalation,
   parseAgentEscalation,
 } from '@/lib/agent-escalation';
-import { isDedicatedHubAgent } from '@/lib/agent-layer';
-import { isEnglishTutorAgent } from '@/lib/english-tutor-config';
-import { isMockInterviewAgent } from '@/lib/mock-interview-config';
-import { CV_BUILDER_AGENT_ID, isCvBuilderAgent } from '@/lib/cv-agent-config';
+import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
-import { useAgentSwitch } from '@/hooks/use-agent-switch';
+import { useAgentTransition } from '@/components/agent-transition/agent-transition-provider';
+import { isNavigationPending, planNavigation } from '@/lib/agent-transition';
 import {
   extractCvMetaButtons,
   extractCvPreviewFromAgent,
@@ -81,24 +79,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const openPaywall = useUIStore((s) => s.openPaywall);
   const activateGenRef = useRef(0);
 
-  const hubRoutes = useMemo(
-    () => ({
-      routeCvBuilderPage: () => {
-        const qs = jobId ? `?job_id=${encodeURIComponent(jobId)}` : '';
-        router.replace(`/${locale}/cv${qs}`);
-      },
-      routeInterviewPage: () => router.replace(`/${locale}/interview`),
-      routeEnglishPage: () => router.replace(`/${locale}/english`),
-    }),
-    [jobId, locale, router]
-  );
-
-  const routeToClinic = useCallback(
-    () => router.replace(`/${locale}/chat`),
-    [locale, router]
-  );
-
-  const { activateAgentWithoutPrecheck } = useAgentSwitch(locale, hubRoutes);
+  const { activateAgentWithoutPrecheck } = useAgentTransition();
 
   const [messages, setMessages] = useState<CvChatMessage[]>([]);
   const [preview, setPreview] = useState<CvPreviewContent | null>(null);
@@ -477,10 +458,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         showToast(t('escalationSwitching'), 'info');
 
         const follow = await followAgentEscalation(escalation, {
-          locale,
           activateAgentWithoutPrecheck,
-          routeToClinic,
-          ...hubRoutes,
         });
 
         if (!follow.ok) {
@@ -490,11 +468,10 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
           return { ok: false as const, error: follow.error };
         }
 
-        // Safety net if router navigation did not unmount this page.
-        if (!isDedicatedHubAgent(escalation.targetAgentId)) {
-          routeToClinic();
+        const plan = planNavigation(locale, 'cv', escalation.targetAgentId);
+        if (isNavigationPending(plan)) {
+          setEscalationRecoveryTarget(escalation.targetAgentId);
         }
-        setEscalationRecoveryTarget(escalation.targetAgentId);
         setIsSending(false);
         return { ok: true as const, escalated: true as const };
       }
@@ -508,13 +485,12 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       activateAgentWithoutPrecheck,
       applyResponse,
       enabled,
-      hubRoutes,
       isReadOnly,
       isSending,
       locale,
       openPaywall,
       refreshSessions,
-      routeToClinic,
+      router,
       sessionId,
       showToast,
       t,
@@ -523,16 +499,11 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
   const continueEscalationRecovery = useCallback(() => {
     if (!escalationRecoveryTarget) return;
-    if (isCvBuilderAgent(escalationRecoveryTarget)) {
-      hubRoutes.routeCvBuilderPage();
-    } else if (isMockInterviewAgent(escalationRecoveryTarget)) {
-      hubRoutes.routeInterviewPage();
-    } else if (isEnglishTutorAgent(escalationRecoveryTarget)) {
-      hubRoutes.routeEnglishPage();
-    } else {
-      routeToClinic();
+    const plan = planNavigation(locale, 'cv', escalationRecoveryTarget);
+    if (isNavigationPending(plan) && plan.href) {
+      router.replace(plan.href);
     }
-  }, [escalationRecoveryTarget, hubRoutes, routeToClinic]);
+  }, [escalationRecoveryTarget, locale, router]);
 
   const sendMessage = useCallback(
     (text: string): Promise<CvAgentSendResult> => sendAgentMessage(text),

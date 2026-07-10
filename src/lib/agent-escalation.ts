@@ -2,9 +2,6 @@ import { activateAgent } from '@/lib/agent-api';
 import { publishActiveAgentSync } from '@/lib/active-agent-sync';
 import { isCvBuilderAgent } from '@/lib/cv-agent-config';
 import { setCvAgentHandoff } from '@/lib/cv-agent-handoff';
-import { isEnglishTutorAgent } from '@/lib/english-tutor-config';
-import { isMockInterviewAgent } from '@/lib/mock-interview-config';
-import { isDedicatedHubAgent } from '@/lib/agent-layer';
 import { AGENT_REGISTRY } from '@/lib/agents/registry';
 import { useAgentStore } from '@/lib/store';
 import type { AgentChatResponse } from '@/types';
@@ -47,16 +44,10 @@ export function parseAgentEscalation(
   };
 }
 
-export type HubRouteDeps = {
-  routeCvBuilderPage: () => void;
-  routeInterviewPage: () => void;
-  routeEnglishPage: () => void;
-};
-
-export async function activateDedicatedHubAgent(
+/** Activate hub agent session only — navigation is SSOT in planNavigation. */
+export async function activateHubAgentSession(
   targetAgentId: string,
-  locale: string,
-  routes: HubRouteDeps
+  locale: string
 ): Promise<{ ok: boolean; error?: string; errorCode?: string }> {
   const res = await activateAgent(targetAgentId, locale);
   if (!res.success || !res.data) {
@@ -68,11 +59,6 @@ export async function activateDedicatedHubAgent(
       sessionId: res.data.session_id,
       greeting: res.data.greeting,
     });
-    routes.routeCvBuilderPage();
-  } else if (isMockInterviewAgent(targetAgentId)) {
-    routes.routeInterviewPage();
-  } else if (isEnglishTutorAgent(targetAgentId)) {
-    routes.routeEnglishPage();
   }
 
   publishActiveAgentSync({
@@ -84,56 +70,30 @@ export async function activateDedicatedHubAgent(
 }
 
 export type FollowEscalationDeps = {
-  locale: string;
-  /** Path A auto-chain — intentionally skips Path B confirm (user NL intent). */
+  /** Path A — skips confirm dialog, not activate or 4xx handling. */
   activateAgentWithoutPrecheck: (
     agentId: string
   ) => Promise<{ ok: boolean; error?: string } | undefined>;
-  routeCvBuilderPage: () => void;
-  routeInterviewPage: () => void;
-  routeEnglishPage: () => void;
-  /** Leave a dedicated hub page after activating an in-clinic expert. */
-  routeToClinic?: () => void;
 };
 
 /**
- * Path A (KAZI-121): after NL escalation exit, auto-activate the suggested expert.
- * Skips Path B confirm — user already expressed cross-domain intent in chat.
+ * Path A (KAZI-121): after NL escalation exit, auto-activate via unified Execute.
  */
 export async function followAgentEscalation(
   escalation: AgentEscalation,
   deps: FollowEscalationDeps
 ): Promise<{ ok: boolean; error?: string }> {
   const { targetAgentId, exitedAgent } = escalation;
-  const {
-    locale,
-    activateAgentWithoutPrecheck,
-    routeCvBuilderPage,
-    routeInterviewPage,
-    routeEnglishPage,
-    routeToClinic,
-  } = deps;
+  const { activateAgentWithoutPrecheck } = deps;
 
   const current = useAgentStore.getState().activeAgentId;
   if (!current || current === exitedAgent) {
     useAgentStore.getState().setActiveAgent(null, null);
   }
 
-  if (isCvBuilderAgent(targetAgentId) || isMockInterviewAgent(targetAgentId) || isEnglishTutorAgent(targetAgentId)) {
-    const result = await activateDedicatedHubAgent(targetAgentId, locale, {
-      routeCvBuilderPage,
-      routeInterviewPage,
-      routeEnglishPage,
-    });
-    return result;
-  }
-
   const result = await activateAgentWithoutPrecheck(targetAgentId);
   if (!result?.ok) {
     return { ok: false, error: result?.error };
-  }
-  if (routeToClinic && !isDedicatedHubAgent(targetAgentId)) {
-    routeToClinic();
   }
   return { ok: true };
 }

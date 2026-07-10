@@ -6,10 +6,8 @@ import {
   fetchAgentMessages,
   getActiveAgent,
 } from '@/lib/agent-api';
-import {
-  activateDedicatedHubAgent,
-  type HubRouteDeps,
-} from '@/lib/agent-escalation';
+import { activateHubAgentSession } from '@/lib/agent-escalation';
+import { planNavigation, type AgentSwitchContext } from '@/lib/agent-transition';
 import { publishActiveAgentSync } from '@/lib/active-agent-sync';
 import { isAgentSwitchRequiresClinic } from '@/lib/api-errors';
 import {
@@ -101,7 +99,9 @@ export function clearReferralFromUrl(): void {
   window.history.replaceState(window.history.state, '', url.toString());
 }
 
-export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
+export type { AgentSwitchContext };
+
+export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
   const {
     activeAgentId,
     agentSessionId,
@@ -114,6 +114,17 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
     setPendingAgentSwitch,
   } = useAgentStore();
   const showToast = useUIStore((s) => s.showToast);
+
+  const applyTransitionNavigation = useCallback(
+    (targetAgentId: string) => {
+      if (!context) return;
+      const plan = planNavigation(locale, context.fromSurface, targetAgentId);
+      if (plan.shouldNavigate && plan.href) {
+        context.navigate(plan.href);
+      }
+    },
+    [context, locale]
+  );
 
   const fetchActiveAgent = useCallback(async () => {
     const res = await getActiveAgent();
@@ -188,8 +199,8 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
           }
         }
 
-        if (isDedicatedHubAgent(agentId) && hubRoutes) {
-          const hub = await activateDedicatedHubAgent(agentId, locale, hubRoutes);
+        if (isDedicatedHubAgent(agentId)) {
+          const hub = await activateHubAgentSession(agentId, locale);
           if (!hub.ok) {
             if (hub.errorCode && isAgentSwitchRequiresClinic(hub)) {
               const active = await resolveServerActiveAgentId();
@@ -200,6 +211,7 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
             showToast(hub.error ?? 'Failed to activate expert', 'error');
             return { ok: false, error: hub.error };
           }
+          applyTransitionNavigation(agentId);
           await sleep(FADE_IN_MS);
           return { ok: true, hub: true };
         }
@@ -257,6 +269,7 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
           agentId: agent_id,
           sessionId: session_id,
         });
+        applyTransitionNavigation(agent_id);
         await sleep(FADE_IN_MS);
         return { ok: true, resumed: Boolean(resumed) };
       } catch {
@@ -268,7 +281,8 @@ export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
     },
     [
       locale,
-      hubRoutes,
+      context,
+      applyTransitionNavigation,
       setSwitching,
       setSwitcherOpen,
       setActiveAgent,
