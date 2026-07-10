@@ -14,14 +14,14 @@ interface HubLayerBarProps {
 /** Hub manual Path B entry — Layer breadcrumb + Switcher (+). */
 export function HubLayerBar({ locale }: HubLayerBarProps) {
   const t = useTranslations('clinic');
-  const { activeAgentId, isSwitching, statusBadge, openSwitcher, returnToClinic } =
+  const { layerAgentId, isSwitching, statusBadge, openSwitcher, returnToClinic } =
     useAgentTransition();
 
   return (
     <div className="shrink-0 flex items-stretch bg-white border-b border-gray-200/80">
       <LayerIndicator
         locale={locale}
-        activeAgentId={activeAgentId}
+        activeAgentId={layerAgentId}
         statusDetail={statusBadge}
         onClinicClick={() => void returnToClinic()}
         className="flex-1 border-b-0 min-w-0"

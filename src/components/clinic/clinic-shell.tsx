@@ -71,6 +71,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const tReferral = useTranslations("referral");
   const tSessions = useTranslations("agentSessions");
 
+  /** TMA / deep-link / routedToAgent — may include ?job_id=; not used by planNavigation SSOT. */
   const routeCvBuilderPage = useCallback(
     (targetJobId?: string | null) => {
       const query = targetJobId

@@ -19,7 +19,10 @@ import { planNavigation, type AgentSurfaceId } from '@/lib/agent-transition';
 import { useAgentStore, useUIStore } from '@/lib/store';
 
 type AgentTransitionContextValue = {
+  /** Server/store active agent — null when no session. */
   activeAgentId: string | null;
+  /** Layer breadcrumb agent — falls back to hub surface agent. */
+  layerAgentId: string;
   isSwitching: boolean;
   statusBadge: string | null | undefined;
   openSwitcher: () => void;
@@ -86,7 +89,7 @@ export function AgentTransitionProvider({
     exitToClinic,
   } = useAgentSwitch(locale, switchContext);
 
-  const displayActiveAgentId = activeAgentId ?? hubAgentId;
+  const layerAgentId = activeAgentId ?? hubAgentId;
 
   const returnToClinic = useCallback(async () => {
     const result = await exitToClinic();
@@ -119,7 +122,8 @@ export function AgentTransitionProvider({
 
   const value = useMemo(
     (): AgentTransitionContextValue => ({
-      activeAgentId: displayActiveAgentId,
+      activeAgentId,
+      layerAgentId,
       isSwitching,
       statusBadge,
       openSwitcher: () => setSwitcherOpen(true),
@@ -129,7 +133,8 @@ export function AgentTransitionProvider({
     }),
     [
       activateAgentWithoutPrecheck,
-      displayActiveAgentId,
+      activeAgentId,
+      layerAgentId,
       isSwitching,
       requestAgentSwitch,
       returnToClinic,
@@ -150,7 +155,7 @@ export function AgentTransitionProvider({
         locale={locale}
         isLoggedIn={isLoggedIn}
         open={switcherOpen}
-        activeAgentId={displayActiveAgentId}
+        activeAgentId={activeAgentId}
         onClose={() => setSwitcherOpen(false)}
         onSelect={(agentId) => void handleAgentSelect(agentId)}
       />
