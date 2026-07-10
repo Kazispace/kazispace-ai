@@ -23,6 +23,7 @@ import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-
 import { useCvAgent } from "@/hooks/use-cv-agent";
 import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
 import { CV_BUILDER_AGENT_ID } from "@/lib/cv-agent-config";
+import { AGENT_REGISTRY, getAgentLabel } from "@/lib/agents/registry";
 import { useUIStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import type { ChatNextAction } from "@/types/chat-envelope";
@@ -62,6 +63,8 @@ function CvPageContent({ locale }: { locale: string }) {
     isSessionReady,
     isReadOnly,
     sessionResumed,
+    escalationRecoveryTarget,
+    continueEscalationRecovery,
     parsedSections,
     documentId,
     sessions,
@@ -93,6 +96,14 @@ function CvPageContent({ locale }: { locale: string }) {
     () => (jobId ? t("subtitleWithJob", { jobId }) : t("subtitle")),
     [jobId, t]
   );
+
+  const escalationRecoveryAgentName = useMemo(() => {
+    if (!escalationRecoveryTarget) return null;
+    const entry = AGENT_REGISTRY.find(
+      (a) => a.agentId === escalationRecoveryTarget
+    );
+    return entry ? getAgentLabel(entry, locale, "name") : escalationRecoveryTarget;
+  }, [escalationRecoveryTarget, locale]);
 
   useEffect(() => {
     if (canDownloadCv) {
@@ -237,7 +248,21 @@ function CvPageContent({ locale }: { locale: string }) {
                 {t("sessionResumedBanner")}
               </p>
             ) : null}
-            {isReadOnly ? (
+            {escalationRecoveryTarget && escalationRecoveryAgentName ? (
+              <div className="px-4 py-2 text-xs text-amber-900 bg-amber-50 border-b border-amber-100 text-center flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+                <span>{t("escalationRecoveryHint")}</span>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-7 text-xs"
+                  onClick={continueEscalationRecovery}
+                >
+                  {t("escalationRecoveryAction", {
+                    agentName: escalationRecoveryAgentName,
+                  })}
+                </Button>
+              </div>
+            ) : isReadOnly ? (
               <p className="px-4 py-2 text-xs text-amber-800 bg-amber-50 border-b border-amber-100 text-center">
                 {t("readOnlyBanner")}
               </p>
