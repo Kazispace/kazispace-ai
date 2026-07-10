@@ -6,7 +6,17 @@ import {
   fetchAgentMessages,
   getActiveAgent,
 } from '@/lib/agent-api';
+import {
+  activateDedicatedHubAgent,
+  type HubRouteDeps,
+} from '@/lib/agent-escalation';
 import { publishActiveAgentSync } from '@/lib/active-agent-sync';
+import { isAgentSwitchRequiresClinic } from '@/lib/api-errors';
+import {
+  isHubAgentTarget,
+  needsExplicitSwitchConfirm,
+  resolveServerActiveAgentId,
+} from '@/lib/agent-ui-switch';
 import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
 import { AGENT_REGISTRY, getAgentStatusBadge } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
@@ -15,6 +25,10 @@ import type { ChatMessage } from '@/types';
 
 const FADE_OUT_MS = 300;
 const FADE_IN_MS = 700;
+
+export type AgentSwitchResult =
+  | { ok: true; resumed?: boolean; hub?: boolean }
+  | { ok: false; error?: string; needsConfirm?: boolean };
 
 function mapHistoryToAgentMessages(
   agentId: string,
@@ -89,16 +103,17 @@ export function clearReferralFromUrl(): void {
   window.history.replaceState(window.history.state, '', url.toString());
 }
 
-export function useAgentSwitch(locale: string) {
+export function useAgentSwitch(locale: string, hubRoutes?: HubRouteDeps) {
   const {
     activeAgentId,
     agentSessionId,
     isSwitching,
+    pendingAgentSwitch,
     setSwitching,
     setActiveAgent,
     setAgentMessages,
-    addAgentMessage,
     setSwitcherOpen,
+    setPendingAgentSwitch,
   } = useAgentStore();
   const showToast = useUIStore((s) => s.showToast);
 
@@ -110,26 +125,21 @@ export function useAgentSwitch(locale: string) {
     return res.data;
   }, []);
 
-  /** Silent restore for v1.3 sticky routing — no overlay, no activate call. */
-  const resumeActiveAgentSilently = useCallback(
-    async (agentId: string, sessionId: string) => {
-      setActiveAgent(agentId, sessionId);
-      const existing = useAgentStore.getState().getAgentMessages(agentId);
-      if (existing.length === 0) {
-        await hydrateAgentMessagesFromSession(agentId, sessionId, setAgentMessages);
-      }
-      pushAgentHistory(agentId);
-      return { ok: true as const };
+  const queueSwitchConfirm = useCallback(
+    (fromAgentId: string, toAgentId: string): AgentSwitchResult => {
+      setPendingAgentSwitch({ fromAgentId, toAgentId });
+      return { ok: false, needsConfirm: true };
     },
-    [setActiveAgent, setAgentMessages]
+    [setPendingAgentSwitch]
   );
 
-  const switchToAgent = useCallback(
-    async (agentId: string, triggerMessage?: string) => {
+  /** Path B execute: deactivate current (if any) then activate target — no precheck. */
+  const performAgentSwitch = useCallback(
+    async (agentId: string, triggerMessage?: string): Promise<AgentSwitchResult> => {
       const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
       if (!entry || entry.status === 'coming_soon') {
         showToast('Coming soon', 'info');
-        return { ok: false as const };
+        return { ok: false };
       }
 
       setSwitching(true);
@@ -137,12 +147,16 @@ export function useAgentSwitch(locale: string) {
       await sleep(FADE_OUT_MS);
 
       try {
-        const currentActive = useAgentStore.getState().activeAgentId;
+        const currentActive = await resolveServerActiveAgentId();
         if (currentActive && currentActive !== agentId) {
-          await deactivateToClinic(locale, {
+          const deact = await deactivateToClinic(locale, {
             agentId: currentActive,
             skipBroadcast: true,
           });
+          if (!deact.ok) {
+            showToast(deact.error ?? 'Failed to return to clinic', 'error');
+            return { ok: false, error: deact.error };
+          }
         }
 
         if (currentActive === agentId) {
@@ -165,14 +179,36 @@ export function useAgentSwitch(locale: string) {
               sessionId: sid,
             });
             await sleep(FADE_IN_MS);
-            return { ok: true as const, resumed: true as const };
+            return { ok: true, resumed: true };
           }
+        }
+
+        if (isHubAgentTarget(agentId) && hubRoutes) {
+          const hub = await activateDedicatedHubAgent(agentId, locale, hubRoutes);
+          if (!hub.ok) {
+            if (hub.errorCode && isAgentSwitchRequiresClinic(hub)) {
+              const active = await resolveServerActiveAgentId();
+              if (active && active !== agentId) {
+                return queueSwitchConfirm(active, agentId);
+              }
+            }
+            showToast(hub.error ?? 'Failed to activate expert', 'error');
+            return { ok: false, error: hub.error };
+          }
+          await sleep(FADE_IN_MS);
+          return { ok: true, hub: true };
         }
 
         const res = await activateAgent(agentId, locale, triggerMessage);
         if (!res.success || !res.data) {
+          if (isAgentSwitchRequiresClinic(res)) {
+            const active = await resolveServerActiveAgentId();
+            if (active && active !== agentId) {
+              return queueSwitchConfirm(active, agentId);
+            }
+          }
           showToast(res.error ?? 'Failed to activate expert', 'error');
-          return { ok: false as const, error: res.error };
+          return { ok: false, error: res.error };
         }
 
         const { session_id, greeting, agent_id, resumed } = res.data;
@@ -217,15 +253,67 @@ export function useAgentSwitch(locale: string) {
           sessionId: session_id,
         });
         await sleep(FADE_IN_MS);
-        return { ok: true as const, resumed: Boolean(resumed) };
+        return { ok: true, resumed: Boolean(resumed) };
       } catch {
         showToast('Failed to activate expert', 'error');
-        return { ok: false as const };
+        return { ok: false };
       } finally {
         setSwitching(false);
       }
     },
-    [locale, setSwitching, setSwitcherOpen, setActiveAgent, setAgentMessages, showToast]
+    [
+      locale,
+      hubRoutes,
+      setSwitching,
+      setSwitcherOpen,
+      setActiveAgent,
+      setAgentMessages,
+      showToast,
+      queueSwitchConfirm,
+    ]
+  );
+
+  /** Path B precheck — explicit UI switch (cards, +, referrals). */
+  const requestAgentSwitch = useCallback(
+    async (agentId: string, triggerMessage?: string): Promise<AgentSwitchResult> => {
+      const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
+      if (!entry || entry.status === 'coming_soon') {
+        showToast('Coming soon', 'info');
+        return { ok: false };
+      }
+
+      const current = await resolveServerActiveAgentId();
+      if (needsExplicitSwitchConfirm(current, agentId)) {
+        return queueSwitchConfirm(current!, agentId);
+      }
+      return performAgentSwitch(agentId, triggerMessage);
+    },
+    [performAgentSwitch, queueSwitchConfirm, showToast]
+  );
+
+  const confirmPendingAgentSwitch = useCallback(async () => {
+    const pending = useAgentStore.getState().pendingAgentSwitch;
+    if (!pending) return { ok: false as const };
+    setPendingAgentSwitch(null);
+    return performAgentSwitch(pending.toAgentId);
+  }, [performAgentSwitch, setPendingAgentSwitch]);
+
+  const cancelPendingAgentSwitch = useCallback(() => {
+    setPendingAgentSwitch(null);
+  }, [setPendingAgentSwitch]);
+
+  /** Silent restore for v1.3 sticky routing — no overlay, no activate call. */
+  const resumeActiveAgentSilently = useCallback(
+    async (agentId: string, sessionId: string) => {
+      setActiveAgent(agentId, sessionId);
+      const existing = useAgentStore.getState().getAgentMessages(agentId);
+      if (existing.length === 0) {
+        await hydrateAgentMessagesFromSession(agentId, sessionId, setAgentMessages);
+      }
+      pushAgentHistory(agentId);
+      return { ok: true as const };
+    },
+    [setActiveAgent, setAgentMessages]
   );
 
   const syncActiveAgentFromGateway = useCallback(
@@ -247,6 +335,13 @@ export function useAgentSwitch(locale: string) {
         } else if (!sessionId) {
           const activateRes = await activateAgent(agentId, locale);
           if (!activateRes.success || !activateRes.data) {
+            if (isAgentSwitchRequiresClinic(activateRes)) {
+              const active = await resolveServerActiveAgentId();
+              if (active && active !== agentId) {
+                queueSwitchConfirm(active, agentId);
+                return { ok: false as const, needsConfirm: true as const };
+              }
+            }
             showToast(activateRes.error ?? 'Failed to activate expert', 'error');
             return { ok: false as const, error: activateRes.error };
           }
@@ -283,6 +378,7 @@ export function useAgentSwitch(locale: string) {
       setActiveAgent,
       setAgentMessages,
       showToast,
+      queueSwitchConfirm,
     ]
   );
 
@@ -333,10 +429,14 @@ export function useAgentSwitch(locale: string) {
     activeAgentId,
     agentSessionId,
     isSwitching,
+    pendingAgentSwitch,
     statusBadge,
     fetchActiveAgent,
     resumeActiveAgentSilently,
-    switchToAgent,
+    switchToAgent: performAgentSwitch,
+    requestAgentSwitch,
+    confirmPendingAgentSwitch,
+    cancelPendingAgentSwitch,
     syncActiveAgentFromGateway,
     exitToClinic,
   };

@@ -355,7 +355,11 @@
 		"layerClinic": "Klinika",
 		"layerClinicActive": "Serík bilan umumiy martaba murabbiyligi",
 		"layerAgentActive": "Mutaxassis sessiyasi faol",
-		"layerResolving": "Sessiyangiz tiklanmoqda…"
+		"layerResolving": "Sessiyangiz tiklanmoqda…",
+		"switchConfirmTitle": "Mutaxassisni almashtirasizmi?",
+		"switchConfirmBody": "Hozir {currentName} faol. Chiqib, {targetName} ochilsinmi?",
+		"switchConfirmAction": "{targetName} ga o'tish",
+		"switchConfirmCancel": "Shu yerda qolish"
 	},
 	"subscription": {
 		"title": "PRO / Sprint yangilash",

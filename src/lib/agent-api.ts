@@ -187,6 +187,20 @@ export async function activateAgent(
     }
   );
   if (res.success) return res;
+
+  const mockActive = getMockActive();
+  if (
+    mockActive.active_agent &&
+    mockActive.active_agent !== agentId &&
+    (useMockFallback(res.error) || process.env.NEXT_PUBLIC_AGENT_API_MOCK === 'true')
+  ) {
+    return {
+      success: false,
+      error: `Return to clinic (${mockActive.active_agent}) before activating ${agentId}.`,
+      errorCode: 'AGENT_SWITCH_REQUIRES_CLINIC',
+    };
+  }
+
   if (useMockFallback(res.error)) {
     return {
       success: true,

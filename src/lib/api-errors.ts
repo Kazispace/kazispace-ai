@@ -22,3 +22,7 @@ export function isPaywallError(res: ErrorLike): boolean {
 export function isAgentBlocked(res: ErrorLike): boolean {
   return res.errorCode === 'AGENT_BLOCKED';
 }
+
+export function isAgentSwitchRequiresClinic(res: ErrorLike): boolean {
+  return res.errorCode === 'AGENT_SWITCH_REQUIRES_CLINIC';
+}

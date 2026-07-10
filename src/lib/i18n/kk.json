@@ -355,7 +355,11 @@
 		"layerClinic": "Кеңес",
 		"layerClinicActive": "Serík-пен жалпы мансаптық коучинг",
 		"layerAgentActive": "Маман сессиясы белсенді",
-		"layerResolving": "Сессияңыз қалпына келтірілуде…"
+		"layerResolving": "Сессияңыз қалпына келтірілуде…",
+		"switchConfirmTitle": "Маман ауыстыру керек пе?",
+		"switchConfirmBody": "Қазір {currentName} белсенді. Шығып, {targetName} ашу керек пе?",
+		"switchConfirmAction": "{targetName} ашу",
+		"switchConfirmCancel": "Қалу"
 	},
 	"subscription": {
 		"title": "PRO / Sprint жаңарту",

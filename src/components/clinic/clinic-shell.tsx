@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { WelcomeView } from "./welcome-view";
 import { MessageBubble } from "./message-bubble";
 import { SwitchingOverlay } from "./switching-overlay";
 import { LayerIndicator } from "./layer-indicator";
+import { AgentSwitchDialog } from "./agent-switch-dialog";
 import { QuickReplies } from "./quick-replies";
 import { AgentSwitcher } from "./agent-switcher";
 import { ReferralPrompt } from "./referral-prompt";
@@ -59,6 +60,39 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const tClinic = useTranslations("clinic");
   const tReferral = useTranslations("referral");
 
+  const routeCvBuilderPage = useCallback(
+    (targetJobId?: string | null) => {
+      const query = targetJobId
+        ? `?job_id=${encodeURIComponent(targetJobId)}`
+        : "";
+      router.push(`/${locale}/cv${query}`);
+    },
+    [locale, router]
+  );
+
+  const routeInterviewPage = useCallback(
+    (targetJobId?: string | null) => {
+      const query = targetJobId
+        ? `?job_id=${encodeURIComponent(targetJobId)}`
+        : "";
+      router.push(`/${locale}/interview${query}`);
+    },
+    [locale, router]
+  );
+
+  const routeEnglishPage = useCallback(() => {
+    router.push(`/${locale}/english`);
+  }, [locale, router]);
+
+  const hubRoutes = useMemo(
+    () => ({
+      routeCvBuilderPage: () => routeCvBuilderPage(),
+      routeInterviewPage: () => routeInterviewPage(),
+      routeEnglishPage,
+    }),
+    [routeCvBuilderPage, routeInterviewPage, routeEnglishPage]
+  );
+
   const {
     messages: clinicMessages,
     isSending: isClinicSending,
@@ -80,15 +114,21 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     fetchActiveAgent,
     resumeActiveAgentSilently,
     switchToAgent,
+    requestAgentSwitch,
+    pendingAgentSwitch,
+    confirmPendingAgentSwitch,
+    cancelPendingAgentSwitch,
     syncActiveAgentFromGateway,
     exitToClinic,
-  } = useAgentSwitch(locale);
+  } = useAgentSwitch(locale, hubRoutes);
 
   const switchToAgentRef = useRef(switchToAgent);
+  const requestAgentSwitchRef = useRef(requestAgentSwitch);
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
   const resumeActiveAgentSilentlyRef = useRef(resumeActiveAgentSilently);
   const exitToClinicRef = useRef(exitToClinic);
   switchToAgentRef.current = switchToAgent;
+  requestAgentSwitchRef.current = requestAgentSwitch;
   fetchActiveAgentRef.current = fetchActiveAgent;
   resumeActiveAgentSilentlyRef.current = resumeActiveAgentSilently;
   exitToClinicRef.current = exitToClinic;
@@ -157,6 +197,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     reason: string;
   } | null>(null);
   const [layerReady, setLayerReady] = useState(false);
+  const [switchConfirming, setSwitchConfirming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const activeEntry = AGENT_REGISTRY.find((a) => a.agentId === activeAgentId);
@@ -164,30 +205,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const messages = isAgentMode ? agentMessages : clinicMessages;
   const isSending = isAgentMode ? isAgentSending : isClinicSending;
   const isStreaming = isAgentMode ? isAgentStreaming : isClinicStreaming;
-
-  const routeCvBuilderPage = useCallback(
-    (targetJobId?: string | null) => {
-      const query = targetJobId
-        ? `?job_id=${encodeURIComponent(targetJobId)}`
-        : '';
-      router.push(`/${locale}/cv${query}`);
-    },
-    [locale, router]
-  );
-
-  const routeInterviewPage = useCallback(
-    (targetJobId?: string | null) => {
-      const query = targetJobId
-        ? `?job_id=${encodeURIComponent(targetJobId)}`
-        : '';
-      router.push(`/${locale}/interview${query}`);
-    },
-    [locale, router]
-  );
-
-  const routeEnglishPage = useCallback(() => {
-    router.push(`/${locale}/english`);
-  }, [locale, router]);
 
   const shouldOpenCvBuilderPage = useCallback((agentId: string) => {
     return isCvBuilderAgent(agentId);
@@ -267,7 +284,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
         }
         if (AGENT_REGISTRY.some((a) => a.agentId === pending.agentId)) {
-          await switchToAgentRef.current(pending.agentId);
+          await requestAgentSwitchRef.current(pending.agentId);
           if (!cancelled) setLayerReady(true);
           return;
         }
@@ -319,7 +336,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         deepLinkAgent &&
         AGENT_REGISTRY.some((a) => a.agentId === deepLinkAgent)
       ) {
-        await switchToAgentRef.current(deepLinkAgent);
+        await requestAgentSwitchRef.current(deepLinkAgent);
         if (!cancelled) setLayerReady(true);
         return;
       }
@@ -408,7 +425,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           routeEnglishPage();
           return;
         }
-        void switchToAgentRef.current(agentFromUrl);
+        void requestAgentSwitchRef.current(agentFromUrl);
       }
     };
     window.addEventListener("popstate", onPopState);
@@ -431,7 +448,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const handleQuickPrompt = (text: string) => {
     if (text === tClinic("prompts.cvText")) {
-      router.push(`/${locale}/cv`);
+      void handleAgentSelect(CV_BUILDER_AGENT_ID);
       return;
     }
     void handleSend(text);
@@ -520,19 +537,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       router.push(`/${locale}/login`);
       return;
     }
-    if (isCvBuilderAgent(agentId)) {
-      routeCvBuilderPage();
-      return;
-    }
-    if (isMockInterviewAgent(agentId)) {
-      routeInterviewPage();
-      return;
-    }
-    if (isEnglishTutorAgent(agentId)) {
-      routeEnglishPage();
-      return;
-    }
-    const result = await switchToAgent(agentId);
+    const result = await requestAgentSwitch(agentId);
+    if (result && !result.ok && result.needsConfirm) return;
     if (result && !result.ok) {
       showToast(result.error ?? tClinic("activateFailed"), "error");
     }
@@ -574,17 +580,17 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           void handleBackToClinic();
           return;
         case "mock_interview":
-          routeInterviewPage();
+          void handleAgentSelect(MOCK_INTERVIEW_AGENT_ID);
           return;
         case "english_tutor":
-          routeEnglishPage();
+          void handleAgentSelect(ENGLISH_TUTOR_AGENT_ID);
           return;
         case "job_search":
           void handleAgentSelect("job_search");
           return;
         case "edit_cv":
         case "cv_builder":
-          routeCvBuilderPage();
+          void handleAgentSelect(CV_BUILDER_AGENT_ID);
           return;
         case "complete_profile":
           router.push(getCompleteProfileHref(locale, { returnToCv: true }));
@@ -765,6 +771,26 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         onClose={() => setSwitcherOpen(false)}
         onSelect={handleAgentSelect}
       />
+
+      {pendingAgentSwitch ? (
+        <AgentSwitchDialog
+          locale={locale}
+          fromAgentId={pendingAgentSwitch.fromAgentId}
+          toAgentId={pendingAgentSwitch.toAgentId}
+          isConfirming={switchConfirming}
+          onCancel={cancelPendingAgentSwitch}
+          onConfirm={() => {
+            setSwitchConfirming(true);
+            void confirmPendingAgentSwitch()
+              .then((result) => {
+                if (result && !result.ok) {
+                  showToast(result.error ?? tClinic("activateFailed"), "error");
+                }
+              })
+              .finally(() => setSwitchConfirming(false));
+          }}
+        />
+      ) : null}
     </div>
   );
 }

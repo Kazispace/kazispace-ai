@@ -133,10 +133,14 @@ interface AgentStore {
   agentSessionId: string | null;
   isSwitching: boolean;
   switcherOpen: boolean;
+  pendingAgentSwitch: { fromAgentId: string; toAgentId: string } | null;
   isAgentSending: boolean;
   isAgentStreaming: boolean;
   agentMessages: Record<string, ChatMessage[]>;
   setSwitcherOpen: (open: boolean) => void;
+  setPendingAgentSwitch: (
+    pending: { fromAgentId: string; toAgentId: string } | null
+  ) => void;
   setSwitching: (switching: boolean) => void;
   setActiveAgent: (agentId: string | null, sessionId: string | null) => void;
   getAgentMessages: (agentId: string) => ChatMessage[];
@@ -153,6 +157,7 @@ const initialAgentState = {
   agentSessionId: null as string | null,
   isSwitching: false,
   switcherOpen: false,
+  pendingAgentSwitch: null as { fromAgentId: string; toAgentId: string } | null,
   isAgentSending: false,
   isAgentStreaming: false,
   agentMessages: {} as Record<string, ChatMessage[]>,
@@ -161,6 +166,7 @@ const initialAgentState = {
 export const useAgentStore = create<AgentStore>()((set, get) => ({
   ...initialAgentState,
   setSwitcherOpen: (open) => set({ switcherOpen: open }),
+  setPendingAgentSwitch: (pending) => set({ pendingAgentSwitch: pending }),
   setSwitching: (switching) => set({ isSwitching: switching }),
   setActiveAgent: (agentId, sessionId) =>
     set({ activeAgentId: agentId, agentSessionId: sessionId }),

@@ -355,7 +355,11 @@
 		"layerClinic": "Клиника",
 		"layerClinicActive": "Общий карьерный коучинг с Serík",
 		"layerAgentActive": "Сессия с экспертом активна",
-		"layerResolving": "Восстанавливаем вашу сессию…"
+		"layerResolving": "Восстанавливаем вашу сессию…",
+		"switchConfirmTitle": "Сменить эксперта?",
+		"switchConfirmBody": "Сейчас активен {currentName}. Выйти и открыть {targetName}?",
+		"switchConfirmAction": "Перейти к {targetName}",
+		"switchConfirmCancel": "Остаться"
 	},
 	"subscription": {
 		"title": "Перейти на PRO / Sprint",
