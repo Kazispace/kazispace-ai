@@ -350,7 +350,12 @@
 		"switchHint": "Выбор другого эксперта переключит сессию",
 		"activateFailed": "Не удалось открыть эксперта",
 		"deactivateFailed": "Не удалось вернуться в клинику",
-		"agentErrorFallback": "Эксперт недоступен — возврат в клинику"
+		"agentErrorFallback": "Эксперт недоступен — возврат в клинику",
+		"layerAria": "Текущий слой рабочей области",
+		"layerClinic": "Клиника",
+		"layerClinicActive": "Общий карьерный коучинг с Serík",
+		"layerAgentActive": "Сессия с экспертом активна",
+		"layerResolving": "Восстанавливаем вашу сессию…"
 	},
 	"subscription": {
 		"title": "Перейти на PRO / Sprint",

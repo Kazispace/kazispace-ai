@@ -350,7 +350,12 @@
 		"switchHint": "Selecting another expert will switch your session",
 		"activateFailed": "Could not open expert",
 		"deactivateFailed": "Could not return to clinic",
-		"agentErrorFallback": "Expert unavailable — returned to clinic"
+		"agentErrorFallback": "Expert unavailable — returned to clinic",
+		"layerAria": "Current workspace layer",
+		"layerClinic": "Clinic",
+		"layerClinicActive": "General career coaching with Serík",
+		"layerAgentActive": "Expert session in progress",
+		"layerResolving": "Restoring your session…"
 	},
 	"subscription": {
 		"title": "Upgrade to PRO / Sprint",

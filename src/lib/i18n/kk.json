@@ -350,7 +350,12 @@
 		"switchHint": "Басқа маман таңдасаңыз, сессия ауысады",
 		"activateFailed": "Маманды ашу сәтсіз",
 		"deactivateFailed": "Кеңеске оралу сәтсіз",
-		"agentErrorFallback": "Маман қолжетімсіз — кеңеске оралды"
+		"agentErrorFallback": "Маман қолжетімсіз — кеңеске оралды",
+		"layerAria": "Ағымдағы жұмыс аймағы қабаты",
+		"layerClinic": "Кеңес",
+		"layerClinicActive": "Serík-пен жалпы мансаптық коучинг",
+		"layerAgentActive": "Маман сессиясы белсенді",
+		"layerResolving": "Сессияңыз қалпына келтірілуде…"
 	},
 	"subscription": {
 		"title": "PRO / Sprint жаңарту",
