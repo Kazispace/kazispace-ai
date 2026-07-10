@@ -18,10 +18,9 @@ import {
   followAgentEscalation,
   parseAgentEscalation,
 } from '@/lib/agent-escalation';
-import { isDedicatedHubAgent } from '@/lib/agent-layer';
+import { CV_BUILDER_AGENT_ID, isCvBuilderAgent } from '@/lib/cv-agent-config';
 import { isEnglishTutorAgent } from '@/lib/english-tutor-config';
 import { isMockInterviewAgent } from '@/lib/mock-interview-config';
-import { CV_BUILDER_AGENT_ID, isCvBuilderAgent } from '@/lib/cv-agent-config';
 import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
 import { useAgentSwitch } from '@/hooks/use-agent-switch';
 import {
@@ -96,6 +95,21 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const routeToClinic = useCallback(
     () => router.replace(`/${locale}/chat`),
     [locale, router]
+  );
+
+  const navigateToEscalationTarget = useCallback(
+    (targetAgentId: string) => {
+      if (isCvBuilderAgent(targetAgentId)) {
+        hubRoutes.routeCvBuilderPage();
+      } else if (isMockInterviewAgent(targetAgentId)) {
+        hubRoutes.routeInterviewPage();
+      } else if (isEnglishTutorAgent(targetAgentId)) {
+        hubRoutes.routeEnglishPage();
+      } else {
+        routeToClinic();
+      }
+    },
+    [hubRoutes, routeToClinic]
   );
 
   const { activateAgentWithoutPrecheck } = useAgentSwitch(locale, hubRoutes);
@@ -490,10 +504,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
           return { ok: false as const, error: follow.error };
         }
 
-        // Safety net if router navigation did not unmount this page.
-        if (!isDedicatedHubAgent(escalation.targetAgentId)) {
-          routeToClinic();
-        }
+        navigateToEscalationTarget(escalation.targetAgentId);
         setEscalationRecoveryTarget(escalation.targetAgentId);
         setIsSending(false);
         return { ok: true as const, escalated: true as const };
@@ -512,6 +523,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       isReadOnly,
       isSending,
       locale,
+      navigateToEscalationTarget,
       openPaywall,
       refreshSessions,
       routeToClinic,
@@ -523,16 +535,8 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
   const continueEscalationRecovery = useCallback(() => {
     if (!escalationRecoveryTarget) return;
-    if (isCvBuilderAgent(escalationRecoveryTarget)) {
-      hubRoutes.routeCvBuilderPage();
-    } else if (isMockInterviewAgent(escalationRecoveryTarget)) {
-      hubRoutes.routeInterviewPage();
-    } else if (isEnglishTutorAgent(escalationRecoveryTarget)) {
-      hubRoutes.routeEnglishPage();
-    } else {
-      routeToClinic();
-    }
-  }, [escalationRecoveryTarget, hubRoutes, routeToClinic]);
+    navigateToEscalationTarget(escalationRecoveryTarget);
+  }, [escalationRecoveryTarget, navigateToEscalationTarget]);
 
   const sendMessage = useCallback(
     (text: string): Promise<CvAgentSendResult> => sendAgentMessage(text),

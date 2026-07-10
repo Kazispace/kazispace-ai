@@ -27,7 +27,9 @@ export function parseAgentEscalation(
     suggested_next_steps?: string[];
   };
 
-  if (!raw.exited) return null;
+  if (!raw.exited && raw.exit_reason !== 'escalated' && !raw.exited_agent) {
+    return null;
+  }
   const steps = raw.suggested_next_steps;
   if (!Array.isArray(steps) || steps.length === 0) return null;
 
@@ -105,35 +107,23 @@ export async function followAgentEscalation(
   deps: FollowEscalationDeps
 ): Promise<{ ok: boolean; error?: string }> {
   const { targetAgentId, exitedAgent } = escalation;
-  const {
-    locale,
-    activateAgentWithoutPrecheck,
-    routeCvBuilderPage,
-    routeInterviewPage,
-    routeEnglishPage,
-    routeToClinic,
-  } = deps;
+  const { activateAgentWithoutPrecheck, routeToClinic } = deps;
 
   const current = useAgentStore.getState().activeAgentId;
   if (!current || current === exitedAgent) {
     useAgentStore.getState().setActiveAgent(null, null);
   }
 
-  if (isCvBuilderAgent(targetAgentId) || isMockInterviewAgent(targetAgentId) || isEnglishTutorAgent(targetAgentId)) {
-    const result = await activateDedicatedHubAgent(targetAgentId, locale, {
-      routeCvBuilderPage,
-      routeInterviewPage,
-      routeEnglishPage,
-    });
-    return result;
-  }
-
+  // Always use Path B execute — it deactivates the current expert before activate
+  // (required when leaving a dedicated hub while the source session is still sticky).
   const result = await activateAgentWithoutPrecheck(targetAgentId);
   if (!result?.ok) {
     return { ok: false, error: result?.error };
   }
+
   if (routeToClinic && !isDedicatedHubAgent(targetAgentId)) {
     routeToClinic();
   }
+
   return { ok: true };
 }

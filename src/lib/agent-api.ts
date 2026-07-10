@@ -333,7 +333,7 @@ export async function sendAgentChat(
           lower
         );
       const wantsInterview =
-        /面试|mock interview|practice interview|模拟面试/.test(lower);
+        /面试|mock interview|practice interview|模拟面试|练习面试/.test(lower);
       const wantsEnglish =
         /英语|english tutor|learn english|练英语|英语口语/.test(lower);
 
