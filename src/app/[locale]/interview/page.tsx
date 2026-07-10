@@ -18,6 +18,8 @@ import { IrpReadinessMiniCard } from "@/components/interview/irp-readiness-mini-
 import { IrpDiagnosisUpdate } from "@/components/interview/irp-diagnosis-update";
 import { Button } from "@/components/ui/button";
 import { useInterview } from "@/hooks/use-interview";
+import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
+import { MOCK_INTERVIEW_AGENT_ID } from "@/lib/mock-interview-config";
 import { useInterviewProfile } from "@/hooks/use-interview-profile";
 import { useBilling } from "@/hooks/use-billing";
 import { isProPlan } from "@/lib/api-mappers";
@@ -61,6 +63,8 @@ function InterviewPageContent({ locale }: { locale: string }) {
     retrySession,
     checkFeedbackNow,
   } = useInterview(jobId);
+
+  useHubActiveAgentSync(locale, MOCK_INTERVIEW_AGENT_ID, !needsLogin);
 
   const {
     irpEnabled,

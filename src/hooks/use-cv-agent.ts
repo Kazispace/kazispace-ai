@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
+import { publishActiveAgentSync } from '@/lib/active-agent-sync';
 import {
   activateAgent,
-  deactivateAgent,
   fetchAgentMessages,
   fetchAgentSessions,
   getActiveAgent,
@@ -301,6 +302,11 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     const { session_id, greeting, resumed } = res.data;
     setSessionId(session_id);
     setSessionResumed(Boolean(resumed));
+    publishActiveAgentSync({
+      type: 'activated',
+      agentId: CV_BUILDER_AGENT_ID,
+      sessionId: session_id,
+    });
     if (resumed) {
       await loadSessionMessages(session_id, gen);
       applyActivateResponse(res.data);
@@ -565,9 +571,12 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setParsedSections(null);
     setDocumentId(null);
 
-      const deact = await deactivateAgent(CV_BUILDER_AGENT_ID, locale);
+      const deact = await deactivateToClinic(locale, {
+        agentId: CV_BUILDER_AGENT_ID,
+        skipBroadcast: true,
+      });
       if (gen !== activateGenRef.current) return;
-      if (!deact.success) {
+      if (!deact.ok) {
         showToast(deact.error ?? 'Failed to reset CV session', 'error');
         return;
       }
@@ -586,6 +595,11 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       const { session_id, greeting } = res.data;
       setSessionId(session_id);
       setMessages([{ id: nextId('cv'), role: 'assistant', content: greeting }]);
+      publishActiveAgentSync({
+        type: 'activated',
+        agentId: CV_BUILDER_AGENT_ID,
+        sessionId: session_id,
+      });
       applyActivateResponse(res.data);
       void refreshSessions();
     } finally {

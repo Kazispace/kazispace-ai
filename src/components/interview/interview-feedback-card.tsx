@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { BackToClinicButton } from '@/components/clinic/back-to-clinic-button';
+import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
@@ -170,6 +172,21 @@ export function InterviewFeedbackCard({
         {sortedCtas ? (
           sortedCtas.map((cta) => {
             const label = cta.label?.trim() || defaultCtaLabel(t, cta.cta_type);
+
+            if (cta.cta_type === 'back_to_clinic') {
+              return (
+                <BackToClinicButton
+                  key={`${cta.cta_type}-${label}`}
+                  size="sm"
+                  variant={cta.primary ? 'default' : 'outline'}
+                  locale={locale}
+                  agentId={MOCK_INTERVIEW_AGENT_ID}
+                >
+                  {label}
+                </BackToClinicButton>
+              );
+            }
+
             const href = getInterviewCtaHref(locale, cta, jobId);
 
             if (href) {

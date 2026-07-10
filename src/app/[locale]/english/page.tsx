@@ -1,7 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import Link from "next/link";
+import { BackToClinicButton } from "@/components/clinic/back-to-clinic-button";
+import { ENGLISH_TUTOR_AGENT_ID } from "@/lib/english-tutor-config";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
@@ -13,6 +14,7 @@ import { EppPassportHome } from "@/components/english/epp-passport-home";
 import { EppPassportSkeleton } from "@/components/english/epp-passport-skeleton";
 import { EPP_PROFILE_ENABLED } from "@/lib/constants";
 import { useEnglishProfile } from "@/hooks/use-english-profile";
+import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
 import type { EnglishOnboardingRequest } from "@/types";
 
 interface EnglishPageProps {
@@ -33,13 +35,15 @@ function EnglishPageContent({ locale }: { locale: string }) {
     isOnboardingSaving,
   } = useEnglishProfile({ enabled: EPP_PROFILE_ENABLED });
 
+  useHubActiveAgentSync(locale, ENGLISH_TUTOR_AGENT_ID, EPP_PROFILE_ENABLED);
+
   if (!EPP_PROFILE_ENABLED) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4 text-center">
         <p className="text-sm text-gray-600">{t("featureDisabled")}</p>
-        <Button asChild>
-          <Link href={`/${locale}/chat`}>{t("backToClinic")}</Link>
-        </Button>
+        <BackToClinicButton locale={locale} agentId={ENGLISH_TUTOR_AGENT_ID}>
+          {t("backToClinic")}
+        </BackToClinicButton>
       </div>
     );
   }

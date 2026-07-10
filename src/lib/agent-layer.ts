@@ -19,6 +19,19 @@ export function getAgentHubPath(locale: string, agentId: string): string | null 
   return build ? build(locale) : null;
 }
 
+const HUB_SEGMENT_TO_AGENT: Record<string, string> = {
+  cv: CV_BUILDER_AGENT_ID,
+  interview: MOCK_INTERVIEW_AGENT_ID,
+  english: ENGLISH_TUTOR_AGENT_ID,
+};
+
+/** Resolve hub agent from pathname like `/en/cv` or `/ru/interview/growth`. */
+export function getDedicatedHubAgentFromPathname(pathname: string): string | null {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length < 2) return null;
+  return HUB_SEGMENT_TO_AGENT[segments[1]] ?? null;
+}
+
 export function hasStickyActiveAgent(
   state: ActiveAgentState | null | undefined
 ): state is ActiveAgentState & { active_agent: string; session_id: string } {
