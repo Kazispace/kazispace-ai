@@ -12,7 +12,11 @@ export function useDeactivateToClinic(locale: string) {
   const [isDeactivating, setIsDeactivating] = useState(false);
 
   const deactivateAndGo = useCallback(
-    async (options?: { agentId?: string; showReturnMessage?: boolean }) => {
+    async (options?: {
+      agentId?: string;
+      showReturnMessage?: boolean;
+      targetHref?: string;
+    }) => {
       if (isDeactivating) return { ok: false as const };
       setIsDeactivating(true);
       try {
@@ -25,7 +29,7 @@ export function useDeactivateToClinic(locale: string) {
         if (options?.showReturnMessage && result.returnMessage) {
           showToast(result.returnMessage, 'info');
         }
-        router.push(`/${locale}/chat`);
+        router.push(options?.targetHref ?? `/${locale}/chat`);
         return result;
       } finally {
         setIsDeactivating(false);

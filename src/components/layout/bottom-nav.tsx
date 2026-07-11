@@ -5,7 +5,10 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Home, MessageCircle, Briefcase, User, Loader2 } from 'lucide-react';
 
-import { useDeactivateToClinic } from '@/hooks/use-deactivate-to-clinic';
+import {
+  isHubExitDestination,
+  useHubClinicNav,
+} from '@/hooks/use-hub-clinic-nav';
 import { getDedicatedHubAgentFromPathname } from '@/lib/agent-layer';
 import { useUIStore } from '@/lib/store';
 
@@ -18,10 +21,8 @@ interface BottomNavProps {
 export function BottomNav({ locale, activeAliases }: BottomNavProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
-  const tClinic = useTranslations("clinic");
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
-  const showToast = useUIStore((s) => s.showToast);
-  const { deactivateAndGo, isDeactivating } = useDeactivateToClinic(locale);
+  const { handleHubExitClick, isDeactivating } = useHubClinicNav(locale);
   const hubAgentId = getDedicatedHubAgentFromPathname(pathname);
 
   if (isTelegramMiniApp) return null;
@@ -48,49 +49,27 @@ export function BottomNav({ locale, activeAliases }: BottomNavProps) {
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = isNavItemActive(item);
-          const isChatItem = item.href === `/${locale}/chat`;
-          const needsDeactivate = isChatItem && Boolean(hubAgentId);
-
-          if (needsDeactivate) {
-            return (
-              <button
-                key={item.href}
-                type="button"
-                disabled={isDeactivating}
-                onClick={() => {
-                  void deactivateAndGo({ agentId: hubAgentId! }).then((result) => {
-                    if (result && !result.ok) {
-                      showToast(tClinic('deactivateFailed'), 'error');
-                    }
-                  });
-                }}
-                className={`flex flex-col items-center gap-1 px-4 py-2 transition-colors ${
-                  isActive
-                    ? 'text-kazi-orange'
-                    : 'text-gray-500 hover:text-gray-900'
-                }`}
-              >
-                {isDeactivating ? (
-                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden />
-                ) : (
-                  <item.icon className="w-5 h-5" />
-                )}
-                <span className="text-xs font-medium">{item.label}</span>
-              </button>
-            );
-          }
+          const needsHubExit =
+            Boolean(hubAgentId) && isHubExitDestination(item.href, locale);
+          const showSpinner = needsHubExit && isDeactivating;
 
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={(event) => handleHubExitClick(event, item.href)}
+              aria-disabled={needsHubExit && isDeactivating}
               className={`flex flex-col items-center gap-1 px-4 py-2 transition-colors ${
                 isActive
                   ? "text-kazi-orange"
                   : "text-gray-500 hover:text-gray-900"
               }`}
             >
-              <item.icon className="w-5 h-5" />
+              {showSpinner ? (
+                <Loader2 className="w-5 h-5 animate-spin" aria-hidden />
+              ) : (
+                <item.icon className="w-5 h-5" />
+              )}
               <span className="text-xs font-medium">{item.label}</span>
             </Link>
           );
