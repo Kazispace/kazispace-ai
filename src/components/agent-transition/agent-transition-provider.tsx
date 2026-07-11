@@ -15,8 +15,8 @@ import { AgentSwitcher } from '@/components/clinic/agent-switcher';
 import { AgentSwitchDialog } from '@/components/clinic/agent-switch-dialog';
 import { SwitchingOverlay } from '@/components/clinic/switching-overlay';
 import { useAgentSwitch } from '@/hooks/use-agent-switch';
-import { getActiveAgent } from '@/lib/agent-api';
 import { planNavigation, type AgentSurfaceId } from '@/lib/agent-transition';
+import { leaveDedicatedHubForClinic } from '@/lib/leave-dedicated-hub';
 import { useAgentStore, useUIStore } from '@/lib/store';
 
 type AgentTransitionContextValue = {
@@ -87,27 +87,17 @@ export function AgentTransitionProvider({
     confirmPendingAgentSwitch,
     cancelPendingAgentSwitch,
     activateAgentWithoutPrecheck,
-    exitToClinic,
   } = useAgentSwitch(locale, switchContext);
 
   const layerAgentId = activeAgentId ?? hubAgentId;
 
   const returnToClinic = useCallback(async () => {
-    const result = await exitToClinic({ agentId: hubAgentId });
-    if (!result?.ok) {
-      const activeRes = await getActiveAgent();
-      const serverAgent = activeRes.data?.active_agent ?? null;
-      if (serverAgent && serverAgent !== hubAgentId) {
-        showToast(tClinic('deactivateFailed'), 'error');
-        return { ok: false as const };
-      }
-    }
-    const plan = planNavigation(locale, fromSurface, null);
-    if (plan.shouldNavigate && plan.href) {
-      router.replace(plan.href);
-    }
+    const clinicHref =
+      planNavigation(locale, fromSurface, null).href ?? `/${locale}/chat`;
+    leaveDedicatedHubForClinic(locale, hubAgentId);
+    router.replace(clinicHref);
     return { ok: true as const };
-  }, [exitToClinic, fromSurface, hubAgentId, locale, router, showToast, tClinic]);
+  }, [fromSurface, hubAgentId, locale, router]);
 
   const handleAgentSelect = useCallback(
     async (agentId: string) => {

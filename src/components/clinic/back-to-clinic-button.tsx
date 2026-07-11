@@ -31,7 +31,11 @@ export function BackToClinicButton({
       type="button"
       disabled={disabled || isDeactivating}
       onClick={() => {
-        void deactivateAndGo({ agentId, showReturnMessage }).then((result) => {
+        void deactivateAndGo({
+          agentId,
+          showReturnMessage,
+          bestEffort: Boolean(agentId),
+        }).then((result) => {
           if (result && !result.ok) {
             showToast(tClinic('deactivateFailed'), 'error');
           }

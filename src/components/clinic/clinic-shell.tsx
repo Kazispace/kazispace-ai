@@ -178,15 +178,17 @@ export function ClinicShell({ locale }: ClinicShellProps) {
    */
   const stayInClinicForDedicatedHub = useCallback(
     async (hubAgentId: string): Promise<boolean> => {
-      const result = await deactivateToClinic(locale, { agentId: hubAgentId });
+      const result = await deactivateToClinic(locale, {
+        agentId: hubAgentId,
+        bestEffort: true,
+      });
       if (!result.ok) {
-        showToast(tClinic("deactivateFailed"), "error");
         return false;
       }
       await loadHistoryRef.current();
       return true;
     },
-    [locale, showToast, tClinic]
+    [locale]
   );
 
   const reconcileActiveAgentLayer = useCallback(async () => {
