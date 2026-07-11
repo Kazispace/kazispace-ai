@@ -542,8 +542,13 @@
 	"interview": {
 		"title": "Sinov suhbati",
 		"subtitle": "3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.",
-		"intakeWelcome": "Siz bilan **sinov suhbati** o'tkazaman — 3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.\n\n**Qaysi rol?** Quyidagi maydonga rol nomini yozing yoki taklifni tanlang: mijozlarni qo'llab-quvvatlash, IT qo'llab-quvvatlash yoki masofaviy administrator.",
-		"intakePlaceholder": "Rolni yozing (masalan, IT qo'llab-quvvatlash)…",
+		"intakeWelcome": "Siz bilan **sinov suhbati** o'tkazaman — 3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.\n\n**Qaysi rol?** Quyidagi maydonga rol nomini yozing yoki taklif chipini tanlang.",
+		"intakeSuggestions": {
+			"itSupport": "IT qo'llab-quvvatlash",
+			"dataAnalyst": "Ma'lumotlar analitigi",
+			"sales": "Sotuv"
+		},
+		"intakePlaceholder": "Rolni yozing (masalan, ma'lumotlar analitigi)…",
 		"prepPrompt": "Tayyor bo'lsangiz, pastdan **Suhbatni boshlash** yoki **Tayyorgarlikni o'tkazib yuborish** tugmasini bosing.",
 		"workspaceTitle": "Suhbat tarixi",
 		"workspaceHint": "O'tgan hisobotlar va tayyorgarlik tekshiruvlari shu yerda — chatda emas.",
@@ -602,20 +607,6 @@
 			"clarity": "Aniqlik",
 			"relevance": "Muvofiqlik",
 			"confidence": "Ishonch"
-		},
-		"roles": {
-			"csr": {
-				"title": "Mijozlarni qo'llab-quvvatlash mutaxassisi",
-				"desc": "Muloqot, hamdardlik, muammolarni hal qilish"
-			},
-			"it": {
-				"title": "IT qo'llab-quvvatlash",
-				"desc": "Texnik diagnostika, vositalar, jarayonlar"
-			},
-			"admin": {
-				"title": "Masofaviy administrator",
-				"desc": "Tashkillashtirish, masofaviy vositalar, muloqot"
-			}
 		},
 		"irp": {
 			"loadingProfile": "Suhbat profili yuklanmoqda…",
