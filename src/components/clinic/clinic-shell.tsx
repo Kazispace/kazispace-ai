@@ -74,6 +74,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const tReferral = useTranslations("referral");
   const tSessions = useTranslations("agentSessions");
 
+  const switcherOpen = useAgentStore((s) => s.switcherOpen);
+  const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
+  const setPendingAgentSwitch = useAgentStore((s) => s.setPendingAgentSwitch);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const showToast = useUIStore((s) => s.showToast);
+  const openPaywall = useUIStore((s) => s.openPaywall);
+  const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
+  const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
+
   /** TMA / deep-link / routedToAgent — may include ?job_id=; not used by planNavigation SSOT. */
   const routeCvBuilderPage = useCallback(
     (targetJobId?: string | null) => {
@@ -201,15 +210,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     await loadHistoryRef.current();
     setLayerReady(true);
   }, [skipHistoryLoad, stayInClinicForDedicatedHub]);
-
-  const switcherOpen = useAgentStore((s) => s.switcherOpen);
-  const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
-  const setPendingAgentSwitch = useAgentStore((s) => s.setPendingAgentSwitch);
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const showToast = useUIStore((s) => s.showToast);
-  const openPaywall = useUIStore((s) => s.openPaywall);
-  const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
-  const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
 
   const reloadClinicIfNeeded = useCallback(
     async (result?: { reloadClinic?: boolean; ok?: boolean }) => {
