@@ -61,10 +61,11 @@ export function resolveInterviewFeedbackCtas(
   const ctas: InterviewCta[] = [];
   for (let i = 0; i < actions.length; i++) {
     const action = actions[i];
-    if (!isInterviewCtaType(action.type)) continue;
+    const ctaType = action.type;
+    if (!isInterviewCtaType(ctaType)) continue;
     const raw = action as ChatNextAction & { primary?: boolean };
     ctas.push({
-      cta_type: action.type,
+      cta_type: ctaType,
       label: resolveActionLabel(action, locale),
       primary: typeof raw.primary === 'boolean' ? raw.primary : i === 0,
       job_id: action.job_id ?? null,

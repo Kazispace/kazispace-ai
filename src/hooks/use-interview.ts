@@ -31,7 +31,6 @@ import type {
 import type {
   CreateInterviewSessionResponse,
   InterviewCta,
-  InterviewFeedbackSummary,
   InterviewJobContext,
   InterviewMessage,
   InterviewPrepCard,
@@ -118,7 +117,6 @@ export function useInterview(jobId?: string | null) {
   const [questionIndex, setQuestionIndex] = useState(1);
   const [questionCount, setQuestionCount] = useState(3);
   const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestion | null>(null);
-  const [feedback, setFeedback] = useState<InterviewFeedbackSummary | null>(null);
   const [diagnosisCtas, setDiagnosisCtas] = useState<InterviewCta[]>([]);
   const [prepCard, setPrepCard] = useState<InterviewPrepCard | null>(null);
   const [prepAckRequired, setPrepAckRequired] = useState(false);
@@ -322,12 +320,11 @@ export function useInterview(jobId?: string | null) {
 
       if (data.status === 'completed') {
         stopPolling();
-        const { assistant } = handleAgentEnvelope(data);
+        const { assistant } = handleAgentEnvelope({
+          assistant_response: data.assistant_response,
+        });
         const feedbackContent = assistant.content?.trim();
 
-        if (data.feedback_summary) {
-          setFeedback(data.feedback_summary);
-        }
         if (data.target_role) setTargetRole(data.target_role);
         setDiagnosisCtas(resolveInterviewFeedbackCtas(data, locale));
 
@@ -524,7 +521,6 @@ export function useInterview(jobId?: string | null) {
       const runId = ++runIdRef.current;
       setIsStarting(true);
       setTargetRole(role);
-      setFeedback(null);
       setDiagnosisCtas([]);
       setPrepCard(null);
       setPrepAckRequired(false);
@@ -566,7 +562,6 @@ export function useInterview(jobId?: string | null) {
       setIsStarting(true);
       setPhase('role_select');
       setMessages([]);
-      setFeedback(null);
       setDiagnosisCtas([]);
       setPrepCard(null);
       setPrepAckRequired(false);
@@ -745,7 +740,6 @@ export function useInterview(jobId?: string | null) {
     setQuestionIndex(1);
     setQuestionCount(3);
     setCurrentQuestion(null);
-    setFeedback(null);
     setDiagnosisCtas([]);
     setPrepCard(null);
     setPrepAckRequired(false);
@@ -773,7 +767,6 @@ export function useInterview(jobId?: string | null) {
       setQuestionIndex(1);
       setQuestionCount(3);
       setCurrentQuestion(null);
-      setFeedback(null);
       setDiagnosisCtas([]);
       setPrepCard(null);
       setPrepAckRequired(false);
@@ -838,7 +831,6 @@ export function useInterview(jobId?: string | null) {
     questionIndex,
     questionCount,
     currentQuestion,
-    feedback,
     diagnosisCtas,
     isStarting,
     isAckingPrep,
