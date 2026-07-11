@@ -20,6 +20,8 @@ import {
 } from '@/lib/agent-escalation';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
+import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import { buildCvWorkflowFromPipeline } from '@/lib/workflow-catalog';
 import { useAgentTransition } from '@/components/agent-transition/agent-transition-provider';
 import { isNavigationPending, planNavigation } from '@/lib/agent-transition';
 import {
@@ -80,6 +82,29 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const activateGenRef = useRef(0);
 
   const { activateAgentWithoutPrecheck } = useAgentTransition();
+
+  const cvWorkflowLabels = useMemo(
+    () => ({
+      intake: t('workflow.intake'),
+      analyze: t('workflow.analyze'),
+      generate: t('workflow.generate'),
+      review: t('workflow.review'),
+      done: t('workflow.done'),
+    }),
+    [t]
+  );
+
+  const resolveWorkflowFromResponse = useCallback(
+    (data: AgentChatResponse) => {
+      const envelope = parseAssistantEnvelope(data);
+      if (envelope.workflow) return envelope.workflow;
+      const meta = resolveAgentMeta(data);
+      const ps =
+        typeof meta?.pipeline_state === 'string' ? meta.pipeline_state : null;
+      return buildCvWorkflowFromPipeline(ps, cvWorkflowLabels);
+    },
+    [cvWorkflowLabels]
+  );
 
   const [messages, setMessages] = useState<CvChatMessage[]>([]);
   const [preview, setPreview] = useState<CvPreviewContent | null>(null);
@@ -186,9 +211,10 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       if (!options?.skipReply) {
         const reply = extractCvReplyFromAgent(data);
         if (reply) {
+          const workflow = resolveWorkflowFromResponse(data);
           setMessages((prev) => [
             ...prev,
-            { id: nextId('cv'), role: 'assistant', content: reply },
+            { id: nextId('cv'), role: 'assistant', content: reply, workflow },
           ]);
         }
       }
@@ -206,7 +232,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         setSessionId(data.session_id);
       }
     },
-    [applyCtaState, openPaywall]
+    [applyCtaState, openPaywall, resolveWorkflowFromResponse]
   );
 
   const applyActivateResponse = useCallback(
@@ -695,11 +721,17 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     !isUploading &&
     !isExporting;
 
+  const activeWorkflow = useMemo(
+    () => buildCvWorkflowFromPipeline(pipelineState, cvWorkflowLabels),
+    [cvWorkflowLabels, pipelineState]
+  );
+
   return {
     messages,
     preview,
     diff,
     pipelineState,
+    activeWorkflow,
     nextActions,
     quickReplies,
     parsedSections,

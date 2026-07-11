@@ -275,6 +275,13 @@
 		"stepAnalyze": "分析",
 		"stepGenerate": "生成",
 		"stepReview": "审阅",
-		"stepDone": "完成"
+		"stepDone": "完成",
+		"workflow": {
+			"intake": "信息收集",
+			"analyze": "分析",
+			"generate": "生成",
+			"review": "审阅",
+			"done": "完成"
+		}
 	}
 }

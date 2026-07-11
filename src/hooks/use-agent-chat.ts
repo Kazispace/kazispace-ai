@@ -96,6 +96,7 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
         content: parsed.reply || '…',
         ...(parsed.nextActions.length > 0 ? { nextActions: parsed.nextActions } : {}),
         ...(parsed.cards.length > 0 ? { cards: parsed.cards } : {}),
+        ...(parsed.workflow ? { workflow: parsed.workflow } : {}),
       });
       return {
         ok: true as const,

@@ -3,6 +3,23 @@ import type { SupportedLocale } from '@/lib/constants';
 /** API label — plain string or per-locale map (INTEGRATION.md §6). */
 export type LocalizedLabel = string | Partial<Record<SupportedLocale, string>>;
 
+export type WorkflowStepStatus = 'pending' | 'current' | 'done' | 'skipped';
+
+export interface WorkflowStep {
+  id: string;
+  label?: LocalizedLabel;
+  status: WorkflowStepStatus;
+  detail?: LocalizedLabel;
+}
+
+export interface AssistantWorkflow {
+  agent_id: string;
+  pipeline_state: string;
+  steps: WorkflowStep[];
+  /** BE SSOT — FE must not derive when omitted. */
+  progress_pct?: number;
+}
+
 export interface ChatNextAction {
   type: string;
   label?: LocalizedLabel;
@@ -28,4 +45,7 @@ export interface ParsedAssistantEnvelope {
   intent?: string;
   nextActions: ChatNextAction[];
   cards: ChatJobCard[];
+  workflow?: AssistantWorkflow;
+  exited?: boolean;
+  suggestedNextSteps?: string[];
 }

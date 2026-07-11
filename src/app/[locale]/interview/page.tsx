@@ -13,9 +13,10 @@ import {
 } from "@/components/agent-transition/agent-transition-provider";
 import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
 import { HubAgentShell } from "@/components/hub/hub-agent-shell";
+import { AssistantTurn } from "@/components/chat/assistant-turn";
+import { HubWorkflowStrip } from "@/components/hub/hub-workflow-strip";
 import { MessageBubble } from "@/components/clinic/message-bubble";
 import { QuickReplies } from "@/components/clinic/quick-replies";
-import { InterviewProgress } from "@/components/interview/interview-progress";
 import { InterviewFeedbackActions } from "@/components/interview/interview-feedback-actions";
 import { InterviewWorkspace } from "@/components/interview/interview-workspace";
 import { IrpProfileHome } from "@/components/interview/irp-profile-home";
@@ -49,6 +50,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
     phase,
     messages,
     displayRole,
+    activeWorkflow,
     questionIndex,
     questionCount,
     diagnosisCtas,
@@ -188,8 +190,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
     !needsLogin &&
     ((phase === "role_select" && !isJobMode) || phase === "interview");
 
-  const showProgress = phase === "interview" && !needsLogin;
-
   const inputDisabled =
     isStarting ||
     isSending ||
@@ -258,21 +258,33 @@ function InterviewPageContent({ locale }: { locale: string }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg min-h-0">
+      <div className="flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0">
+        <HubWorkflowStrip workflow={activeWorkflow} locale={locale} />
+        <div className="flex-1 p-4 flex flex-col gap-3">
         {showJobBootstrapping && messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12">
             <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
             <p className="text-sm text-gray-600">{t("sessionLoading")}</p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              role={msg.role}
-              content={msg.content}
-              variant="agent"
-            />
-          ))
+          messages.map((msg) =>
+            msg.role === "user" ? (
+              <MessageBubble
+                key={msg.id}
+                role="user"
+                content={msg.content}
+                variant="agent"
+                locale={locale}
+              />
+            ) : (
+              <AssistantTurn
+                key={msg.id}
+                content={msg.content}
+                variant="agent"
+                locale={locale}
+              />
+            )
+          )
         )}
 
         {phase === "feedback_pending" && (
@@ -311,6 +323,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
             </Button>
           </div>
         )}
+        </div>
       </div>
     </>
   );
@@ -368,14 +381,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
         ) : (
           <HubAgentShell
             header={shellHeader}
-            progress={
-              showProgress ? (
-                <InterviewProgress
-                  questionIndex={questionIndex}
-                  questionCount={questionCount}
-                />
-              ) : undefined
-            }
             workspace={!needsLogin ? <InterviewWorkspace locale={locale} /> : undefined}
             composerPrefix={
               phase === "feedback_pending" || quickReplies.length > 0

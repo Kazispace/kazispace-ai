@@ -472,7 +472,14 @@
 		"stepAnalyze": "Tahlil",
 		"stepGenerate": "Yaratish",
 		"stepReview": "Tekshirish",
-		"stepDone": "Tayyor"
+		"stepDone": "Tayyor",
+		"workflow": {
+			"intake": "Ma'lumot",
+			"analyze": "Tahlil",
+			"generate": "Yaratish",
+			"review": "Ko'rib chiqish",
+			"done": "Tayyor"
+		}
 	},
 	"nba": {
 		"sectionTitle": "Tavsiya etilgan qadam",
@@ -526,6 +533,10 @@
 		"workspaceExpand": "Ish maydonini ko'rsatish",
 		"workspaceCollapse": "Ish maydonini yashirish"
 	},
+	"workflow": {
+		"trackAria": "Sessiya progressi",
+		"progressLabel": "Progress"
+	},
 	"interview": {
 		"title": "Sinov suhbati",
 		"subtitle": "3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.",
@@ -536,6 +547,12 @@
 		"workspaceHint": "O'tgan hisobotlar va tayyorgarlik tekshiruvlari shu yerda — chatda emas.",
 		"viewHistory": "O'sish tarixi",
 		"viewReadiness": "Vakansiyaga tayyorgarlik tekshiruvi",
+		"workflow": {
+			"prep": "Tayyorgarlik",
+			"questions": "Savollar",
+			"feedback": "Fikr-mulohaza",
+			"report": "Hisobot"
+		},
 		"subtitleWithJob": "Vakansiyaga tayyorgarlik: {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Suhbat tayyorlanmoqda…",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ackInterviewPrep,
@@ -9,6 +9,7 @@ import {
   submitInterviewAnswer,
 } from '@/lib/interview-api';
 import { formatFeedbackMessage, formatPrepMessage } from '@/lib/interview-message-format';
+import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
 import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/interview-roles';
 import { getJobDetail } from '@/lib/jobs-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
@@ -644,12 +645,31 @@ export function useInterview(jobId?: string | null) {
 
   const displayRole = jobContext?.title ?? targetRole;
 
+  const miWorkflowLabels = useMemo(
+    () => ({
+      prep: t('workflow.prep'),
+      questions: t('workflow.questions'),
+      feedback: t('workflow.feedback'),
+      report: t('workflow.report'),
+      questionDetail: (values: { current: number; total: number }) =>
+        t('questionOf', values),
+    }),
+    [t]
+  );
+
+  const activeWorkflow = useMemo(
+    () =>
+      buildMockInterviewWorkflow(phase, miWorkflowLabels, questionIndex, questionCount),
+    [miWorkflowLabels, phase, questionIndex, questionCount]
+  );
+
   return {
     phase,
     messages,
     sessionId,
     targetRole,
     displayRole,
+    activeWorkflow,
     prepCard,
     prepAckRequired,
     jobContext,

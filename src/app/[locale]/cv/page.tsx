@@ -11,6 +11,8 @@ import { CvChatInput } from "@/components/cv/cv-chat-input";
 import { CvHeader } from "@/components/cv/cv-header";
 import { CvParsedHints } from "@/components/cv/cv-parsed-hints";
 import { MessageBubble } from "@/components/clinic/message-bubble";
+import { AssistantTurn } from "@/components/chat/assistant-turn";
+import { HubWorkflowStrip } from "@/components/hub/hub-workflow-strip";
 import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
@@ -61,6 +63,7 @@ function CvPageContent({ locale }: { locale: string }) {
     needsOnboarding,
     needsProfile,
     pipelineState,
+    activeWorkflow,
     nextActions,
     isSessionReady,
     isReadOnly,
@@ -88,7 +91,8 @@ function CvPageContent({ locale }: { locale: string }) {
   const showProfileGate = needsProfile === true;
   const showWorkspace =
     !needsLogin && !needsOnboarding && !showProfileGate;
-  const showPipelineSteps = showWorkspace && !isReadOnly;
+  const showPipelineSteps = false;
+
   const canDownloadCv = documentId != null;
   const resumeHasPreview = preview != null;
   const inputDisabled =
@@ -272,8 +276,9 @@ function CvPageContent({ locale }: { locale: string }) {
               </p>
             ) : null}
 
-            <div className="flex-1 overflow-y-auto min-h-0">
-              <div className="max-w-3xl mx-auto w-full px-4 py-4 flex flex-col gap-3 min-h-full">
+            <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+              <HubWorkflowStrip workflow={activeWorkflow} locale={locale} />
+              <div className="max-w-3xl mx-auto w-full px-4 py-4 flex flex-col gap-3 min-h-full flex-1">
                 {error ? (
                   <p className="text-sm text-red-500 text-center">{error}</p>
                 ) : null}
@@ -288,14 +293,24 @@ function CvPageContent({ locale }: { locale: string }) {
                     onUploadClick={() => fileInputRef.current?.click()}
                   />
                 ) : null}
-                {messages.map((msg) => (
-                  <MessageBubble
-                    key={msg.id}
-                    role={msg.role}
-                    content={msg.content}
-                    variant="agent"
-                  />
-                ))}
+                {messages.map((msg) =>
+                  msg.role === "user" ? (
+                    <MessageBubble
+                      key={msg.id}
+                      role="user"
+                      content={msg.content}
+                      variant="agent"
+                      locale={locale}
+                    />
+                  ) : (
+                    <AssistantTurn
+                      key={msg.id}
+                      content={msg.content}
+                      variant="agent"
+                      locale={locale}
+                    />
+                  )
+                )}
               </div>
             </div>
 

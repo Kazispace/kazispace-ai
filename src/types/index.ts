@@ -44,7 +44,7 @@ export interface ReferralPayload {
   dismissed?: boolean;
 }
 
-export type { ChatJobCard, ChatNextAction, LocalizedLabel, ParsedAssistantEnvelope } from './chat-envelope';
+export type { ChatJobCard, ChatNextAction, LocalizedLabel, ParsedAssistantEnvelope, AssistantWorkflow, WorkflowStep, WorkflowStepStatus } from './chat-envelope';
 
 export interface ChatMessage {
   id: string;
@@ -57,6 +57,7 @@ export interface ChatMessage {
   referral?: ReferralPayload;
   nextActions?: ChatNextAction[];
   cards?: ChatJobCard[];
+  workflow?: import('./chat-envelope').AssistantWorkflow;
   streamComplete?: boolean;
 }
 
@@ -271,6 +272,7 @@ export interface CvChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  workflow?: import('./chat-envelope').AssistantWorkflow;
 }
 
 // Mock Interview (KAZI-25 / API §7)
@@ -345,6 +347,7 @@ export interface InterviewMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  workflow?: import('./chat-envelope').AssistantWorkflow;
 }
 
 export type {

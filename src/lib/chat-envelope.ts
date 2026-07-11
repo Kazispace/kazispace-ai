@@ -1,9 +1,11 @@
 import type { SupportedLocale } from '@/lib/constants';
 import type {
+  AssistantWorkflow,
   ChatJobCard,
   ChatNextAction,
   LocalizedLabel,
   ParsedAssistantEnvelope,
+  WorkflowStep,
 } from '@/types/chat-envelope';
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
@@ -75,12 +77,11 @@ function normalizeJobCards(raw: unknown): ChatJobCard[] {
 }
 
 /** Resolve CTA label from API envelope (INTEGRATION.md §6). */
-export function resolveActionLabel(
-  action: ChatNextAction,
+export function resolveLocalizedLabel(
+  label: LocalizedLabel | undefined,
   locale: string,
-  fallback?: (type: string) => string | undefined
+  fallback?: string
 ): string {
-  const label = action.label;
   if (typeof label === 'string' && label.trim()) return label;
   if (label && typeof label === 'object') {
     const loc = locale as SupportedLocale;
@@ -88,6 +89,64 @@ export function resolveActionLabel(
       label[loc] ?? label.en ?? Object.values(label).find((v) => typeof v === 'string');
     if (localized) return localized;
   }
+  return fallback ?? '';
+}
+
+function normalizeWorkflowStep(raw: unknown): WorkflowStep | null {
+  const step = asRecord(raw);
+  if (!step || typeof step.id !== 'string') return null;
+  const status = step.status;
+  if (
+    status !== 'pending' &&
+    status !== 'current' &&
+    status !== 'done' &&
+    status !== 'skipped'
+  ) {
+    return null;
+  }
+  const entry: WorkflowStep = { id: step.id, status };
+  if (typeof step.label === 'string' || (step.label && typeof step.label === 'object')) {
+    entry.label = step.label as LocalizedLabel;
+  }
+  if (typeof step.detail === 'string' || (step.detail && typeof step.detail === 'object')) {
+    entry.detail = step.detail as LocalizedLabel;
+  }
+  return entry;
+}
+
+function normalizeWorkflow(raw: unknown): AssistantWorkflow | undefined {
+  const wf = asRecord(raw);
+  if (!wf || typeof wf.agent_id !== 'string' || typeof wf.pipeline_state !== 'string') {
+    return undefined;
+  }
+  if (!Array.isArray(wf.steps) || wf.steps.length === 0) return undefined;
+
+  const steps: WorkflowStep[] = [];
+  for (const item of wf.steps) {
+    const step = normalizeWorkflowStep(item);
+    if (step) steps.push(step);
+  }
+  if (steps.length === 0) return undefined;
+
+  const workflow: AssistantWorkflow = {
+    agent_id: wf.agent_id,
+    pipeline_state: wf.pipeline_state,
+    steps,
+  };
+  if (typeof wf.progress_pct === 'number' && Number.isFinite(wf.progress_pct)) {
+    workflow.progress_pct = Math.max(0, Math.min(100, Math.round(wf.progress_pct)));
+  }
+  return workflow;
+}
+
+/** Resolve CTA label from API envelope (INTEGRATION.md §6). */
+export function resolveActionLabel(
+  action: ChatNextAction,
+  locale: string,
+  fallback?: (type: string) => string | undefined
+): string {
+  const fromLabel = resolveLocalizedLabel(action.label, locale);
+  if (fromLabel) return fromLabel;
   return fallback?.(action.type) ?? action.type;
 }
 
@@ -114,10 +173,28 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
     assistant?.cards ?? response?.cards ?? raw.cards
   );
 
+  const workflow = normalizeWorkflow(
+    assistant?.workflow ?? response?.workflow ?? raw.workflow
+  );
+
+  const suggestedRaw = raw.suggested_next_steps ?? assistant?.suggested_next_steps;
+  // Reserved for post-turn routing (KAZI-129); parsed but not yet rendered in FE.
+  const suggestedNextSteps = Array.isArray(suggestedRaw)
+    ? suggestedRaw.filter((s): s is string => typeof s === 'string')
+    : undefined;
+
   return {
     reply,
-    intent: typeof raw.intent === 'string' ? raw.intent : undefined,
+    intent:
+      typeof raw.intent === 'string'
+        ? raw.intent
+        : typeof assistant?.intent === 'string'
+          ? assistant.intent
+          : undefined,
     nextActions,
     cards: cards.filter((card) => card.type === 'job'),
+    workflow,
+    exited: raw.exited === true,
+    suggestedNextSteps,
   };
 }
