@@ -1,4 +1,9 @@
 import type { AgentSessionSummary, ChatMessage } from '@/types';
+import type {
+  AssistantWorkflow,
+  ChatJobCard,
+  ChatNextAction,
+} from '@/types/chat-envelope';
 
 export type RawAgentHistoryMessage = {
   id?: string;
@@ -8,6 +13,10 @@ export type RawAgentHistoryMessage = {
   text?: string;
   timestamp?: string;
   created_at?: string;
+  next_actions?: ChatNextAction[];
+  cards?: ChatJobCard[];
+  workflow?: AssistantWorkflow;
+  intent?: string;
 };
 
 /** Map API history rows to chat messages; unknown roles become assistant. */
@@ -29,6 +38,14 @@ export function mapAgentHistoryToChatMessages(
       content: raw.content ?? raw.text ?? '',
       timestamp: raw.timestamp ?? raw.created_at ?? new Date().toISOString(),
       sessionId,
+      ...(typeof raw.intent === 'string' ? { intent: raw.intent } : {}),
+      ...(Array.isArray(raw.next_actions) && raw.next_actions.length > 0
+        ? { nextActions: raw.next_actions }
+        : {}),
+      ...(Array.isArray(raw.cards) && raw.cards.length > 0
+        ? { cards: raw.cards }
+        : {}),
+      ...(raw.workflow ? { workflow: raw.workflow } : {}),
     };
   });
 }
@@ -71,4 +88,18 @@ export function normalizeAgentSessions(
 /** v1.3 §4 — exited and archived sessions are view-only in the UI. */
 export function isAgentSessionReadOnly(status?: string | null): boolean {
   return status === 'exited' || status === 'archived';
+}
+
+/** Resolve workflow strip from message history (BE SSOT when replayed). */
+export function resolveWorkflowFromMessages<T = undefined>(
+  messages: Array<{ role: string; workflow?: AssistantWorkflow }>,
+  fallback?: () => T
+): AssistantWorkflow | T | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role === 'assistant' && msg.workflow) {
+      return msg.workflow;
+    }
+  }
+  return fallback ? fallback() : undefined;
 }

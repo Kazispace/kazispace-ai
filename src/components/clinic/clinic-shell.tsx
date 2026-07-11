@@ -48,7 +48,9 @@ import { activateAgent, fetchAgentMessages } from "@/lib/agent-api";
 import {
   isAgentSessionReadOnly,
   mapAgentHistoryToChatMessages,
+  resolveWorkflowFromMessages,
 } from "@/lib/agent-sessions";
+import { HubWorkflowStrip } from "@/components/hub/hub-workflow-strip";
 import { publishActiveAgentSync } from "@/lib/active-agent-sync";
 import { deactivateToClinic } from "@/lib/deactivate-to-clinic";
 import { followAgentEscalation } from "@/lib/agent-escalation";
@@ -347,6 +349,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const activeEntry = AGENT_REGISTRY.find((a) => a.agentId === activeAgentId);
   const isAgentMode = !!activeAgentId && !!activeEntry;
   const messages = isAgentMode ? agentMessages : clinicMessages;
+  const agentActiveWorkflow = useMemo(
+    () => (isAgentMode ? resolveWorkflowFromMessages(messages) : undefined),
+    [isAgentMode, messages]
+  );
   const isSending = isAgentMode ? isAgentSending : isClinicSending;
   const isStreaming = isAgentMode ? isAgentStreaming : isClinicStreaming;
 
@@ -847,7 +853,19 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         </p>
       ) : null}
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg">
+      <div
+        className={`flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0 ${
+          isAgentMode ? "" : "p-4"
+        }`}
+      >
+        {isAgentMode ? (
+          <HubWorkflowStrip workflow={agentActiveWorkflow} locale={locale} />
+        ) : null}
+        <div
+          className={`flex flex-col gap-3 flex-1 min-h-0 ${
+            isAgentMode ? "p-4" : ""
+          }`}
+        >
         {!layerReady && isLoggedIn ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
             <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
@@ -923,6 +941,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           })
         )}
         <div ref={messagesEndRef} />
+        </div>
       </div>
 
       {isAgentMode && quickReplies.length > 0 && (

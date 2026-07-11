@@ -2,46 +2,24 @@ import { activateAgent } from '@/lib/agent-api';
 import { publishActiveAgentSync } from '@/lib/active-agent-sync';
 import { isCvBuilderAgent } from '@/lib/cv-agent-config';
 import { setCvAgentHandoff } from '@/lib/cv-agent-handoff';
-import { AGENT_REGISTRY } from '@/lib/agents/registry';
+import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import {
+  envelopeToEscalation,
+  type AgentEscalation,
+} from '@/lib/handle-agent-envelope';
 import { useAgentStore } from '@/lib/store';
 import type { AgentChatResponse } from '@/types';
 
-export type AgentEscalation = {
-  exitedAgent?: string;
-  exitReason?: string;
-  targetAgentId: string;
-  suggestedNextSteps: string[];
-};
+export type { AgentEscalation };
 
 export function parseAgentEscalation(
   data: AgentChatResponse | undefined
 ): AgentEscalation | null {
   if (!data) return null;
-  const raw = data as AgentChatResponse & {
-    exited?: boolean;
-    exited_agent?: string;
-    exit_reason?: string;
-    suggested_next_steps?: string[];
-  };
-
-  if (!raw.exited) return null;
-  const steps = raw.suggested_next_steps;
-  if (!Array.isArray(steps) || steps.length === 0) return null;
-
-  const targetAgentId = steps.find(
-    (step): step is string => typeof step === 'string' && step.length > 0
+  const envelope = parseAssistantEnvelope(data);
+  return envelopeToEscalation(
+    envelope
   );
-  if (!targetAgentId) return null;
-
-  const known = AGENT_REGISTRY.some((a) => a.agentId === targetAgentId);
-  if (!known) return null;
-
-  return {
-    exitedAgent: raw.exited_agent ?? raw.agent_id ?? undefined,
-    exitReason: raw.exit_reason,
-    targetAgentId,
-    suggestedNextSteps: steps,
-  };
 }
 
 /** Activate hub agent session only — navigation is SSOT in planNavigation. */

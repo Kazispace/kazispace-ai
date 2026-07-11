@@ -25,6 +25,9 @@ export interface ChatNextAction {
   label?: LocalizedLabel;
   /** Agent CTA payload (e.g. role label or `__action:regenerate`). */
   payload?: string;
+  path?: string;
+  job_id?: string;
+  session_id?: string;
 }
 
 export interface ChatJobCard {
@@ -47,5 +50,9 @@ export interface ParsedAssistantEnvelope {
   cards: ChatJobCard[];
   workflow?: AssistantWorkflow;
   exited?: boolean;
+  exitedAgent?: string;
+  exitReason?: string;
   suggestedNextSteps?: string[];
+  /** Domain extension from assistant_response.meta (e.g. interview_session_status). */
+  meta?: Record<string, unknown>;
 }
