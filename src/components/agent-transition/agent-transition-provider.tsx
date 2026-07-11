@@ -31,7 +31,8 @@ type AgentTransitionContextValue = {
   activateAgentWithoutPrecheck: ReturnType<
     typeof useAgentSwitch
   >['activateAgentWithoutPrecheck'];
-  returnToClinic: () => Promise<{ ok: boolean }>;
+  /** Hub → Clinic: navigates immediately; always `{ ok: true }` (deactivate is background). */
+  returnToClinic: () => Promise<{ ok: true }>;
 };
 
 const AgentTransitionContext = createContext<AgentTransitionContextValue | null>(

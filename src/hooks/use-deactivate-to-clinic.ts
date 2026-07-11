@@ -23,8 +23,10 @@ export function useDeactivateToClinic(locale: string) {
       const targetHref = options?.targetHref ?? `/${locale}/chat`;
 
       if (options?.bestEffort && options.agentId) {
+        setIsDeactivating(true);
         leaveDedicatedHubForClinic(locale, options.agentId);
         router.push(targetHref);
+        window.setTimeout(() => setIsDeactivating(false), 400);
         return { ok: true as const, agentId: options.agentId };
       }
 

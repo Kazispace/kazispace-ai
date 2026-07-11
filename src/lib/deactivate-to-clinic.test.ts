@@ -90,4 +90,48 @@ describe('deactivateToClinic', () => {
     expect(result).toEqual({ ok: false, error: 'Internal Server Error' });
     expect(setActiveAgent).not.toHaveBeenCalled();
   });
+
+  it('bestEffort succeeds when deactivate POST succeeds', async () => {
+    deactivateAgent.mockResolvedValue({
+      success: true,
+      data: {
+        deactivated_agent: MOCK_INTERVIEW_AGENT_ID,
+        return_message: 'Welcome back',
+      },
+    });
+
+    const result = await deactivateToClinic('en', {
+      agentId: MOCK_INTERVIEW_AGENT_ID,
+      bestEffort: true,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      agentId: MOCK_INTERVIEW_AGENT_ID,
+      returnMessage: 'Welcome back',
+    });
+    expect(setActiveAgent).toHaveBeenCalledWith(null, null);
+    expect(publishActiveAgentSync).toHaveBeenCalledWith({
+      type: 'deactivated',
+      agentId: MOCK_INTERVIEW_AGENT_ID,
+    });
+  });
+
+  it('returns ok when deactivate fails but server already cleared the agent', async () => {
+    deactivateAgent.mockResolvedValue({
+      success: false,
+      error: 'Conflict',
+    });
+    getActiveAgent.mockResolvedValue({
+      success: true,
+      data: { active_agent: null, session_id: null },
+    });
+
+    const result = await deactivateToClinic('en', {
+      agentId: MOCK_INTERVIEW_AGENT_ID,
+    });
+
+    expect(result).toEqual({ ok: true, agentId: MOCK_INTERVIEW_AGENT_ID });
+    expect(setActiveAgent).toHaveBeenCalledWith(null, null);
+  });
 });
