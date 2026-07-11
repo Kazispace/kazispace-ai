@@ -22,7 +22,7 @@ export function useHubActiveAgentSync(
 
     if (!activeAgent) {
       useAgentStore.getState().setActiveAgent(null, null);
-      router.replace(`/${locale}/chat`);
+      // Scheme A: hub URL is user intent — do not redirect to Clinic on deactivate/sync.
       return;
     }
 

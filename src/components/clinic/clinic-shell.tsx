@@ -55,7 +55,7 @@ import { publishActiveAgentSync } from "@/lib/active-agent-sync";
 import { deactivateToClinic } from "@/lib/deactivate-to-clinic";
 import { followAgentEscalation } from "@/lib/agent-escalation";
 import { toPendingAgentSwitch } from "@/lib/agent-pending-transition";
-import { getAgentHubPath, hasStickyActiveAgent, isDedicatedHubAgent } from "@/lib/agent-layer";
+import { hasStickyActiveAgent, isDedicatedHubAgent } from "@/lib/agent-layer";
 import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -164,12 +164,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const reconcileActiveAgentLayer = useCallback(async () => {
     const active = await fetchActiveAgentRef.current();
     if (hasStickyActiveAgent(active)) {
+      // Scheme A (URL-first): dedicated hubs never auto-resume from Clinic sync.
       if (isDedicatedHubAgent(active.active_agent)) {
-        const hubPath = getAgentHubPath(locale, active.active_agent);
-        if (hubPath) {
-          router.replace(hubPath);
-          return;
-        }
+        useAgentStore.getState().setActiveAgent(null, null);
+        await loadHistoryRef.current();
+        setLayerReady(true);
+        return;
       }
       await resumeActiveAgentSilentlyRef.current(
         active.active_agent,
@@ -183,7 +183,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     useAgentStore.getState().setActiveAgent(null, null);
     await loadHistoryRef.current();
     setLayerReady(true);
-  }, [locale, router, skipHistoryLoad]);
+  }, [skipHistoryLoad]);
 
   const switcherOpen = useAgentStore((s) => s.switcherOpen);
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
@@ -504,17 +504,16 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const active = await fetchActiveAgentRef.current();
       if (hasStickyActiveAgent(active)) {
         if (isDedicatedHubAgent(active.active_agent)) {
-          const hubPath = getAgentHubPath(locale, active.active_agent);
-          if (hubPath) {
-            router.replace(hubPath);
-            return;
-          }
+          // Scheme A: cold /chat entry stays in Clinic — no auto-resume to hub.
+          useAgentStore.getState().setActiveAgent(null, null);
+          await loadHistoryRef.current();
+        } else {
+          await resumeActiveAgentSilentlyRef.current(
+            active.active_agent,
+            active.session_id
+          );
+          skipHistoryLoad();
         }
-        await resumeActiveAgentSilentlyRef.current(
-          active.active_agent,
-          active.session_id
-        );
-        skipHistoryLoad();
       } else {
         useAgentStore.getState().setActiveAgent(null, null);
         await loadHistoryRef.current();
