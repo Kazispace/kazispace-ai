@@ -8,7 +8,19 @@ import { getActiveAgent } from '@/lib/agent-api';
 import { getAgentHubPath } from '@/lib/agent-layer';
 import { useAgentStore } from '@/lib/store';
 
-/** Resync dedicated hub pages when another tab activates/deactivates an expert. */
+/**
+ * Scheme A (URL-first navigation) — hub-side sync rules:
+ *
+ * - URL-first: the current hub pathname is treated as user intent. We never redirect
+ *   away from a dedicated hub URL just because the server has no active_agent (e.g.
+ *   after Clinic deactivated, or cold deep-link to /cv).
+ * - Active-agent-first (runtime only): when another tab activates a *different* expert,
+ *   follow that switch so all tabs stay on the same agent surface.
+ *
+ * Clinic (/chat) uses the complementary rule in clinic-shell: dedicated hub stickies
+ * are deactivated on the server when the user is on Clinic, instead of auto-resuming.
+ * Hub hooks (useCvAgent, useInterview, …) re-activate and resume sessions on hub entry.
+ */
 export function useHubActiveAgentSync(
   locale: string,
   expectedAgentId: string,
@@ -22,7 +34,6 @@ export function useHubActiveAgentSync(
 
     if (!activeAgent) {
       useAgentStore.getState().setActiveAgent(null, null);
-      // Scheme A: hub URL is user intent — do not redirect to Clinic on deactivate/sync.
       return;
     }
 

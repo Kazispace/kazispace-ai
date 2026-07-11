@@ -39,6 +39,8 @@ export async function activateHubAgentSession(
     });
   }
 
+  useAgentStore.getState().setActiveAgent(targetAgentId, res.data.session_id);
+
   publishActiveAgentSync({
     type: 'activated',
     agentId: targetAgentId,

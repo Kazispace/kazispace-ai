@@ -29,11 +29,13 @@ export async function deactivateToClinic(
   const res = await deactivateAgent(agentId, locale);
   if (!res.success || !res.data) {
     const activeRes = await getActiveAgent();
-    if (!activeRes.data?.active_agent) {
+    const serverAgent = activeRes.data?.active_agent ?? null;
+    if (!serverAgent || serverAgent !== agentId) {
       useAgentStore.getState().setActiveAgent(null, null);
       if (!options?.skipBroadcast) {
         publishActiveAgentSync({ type: 'deactivated', agentId });
       }
+      // Return the agent we attempted to exit — callers use this for messaging.
       return { ok: true, agentId };
     }
     return { ok: false, error: res.error };

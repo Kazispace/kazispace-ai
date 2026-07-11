@@ -183,6 +183,12 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
             activeRes.data.session_id
           ) {
             const sid = activeRes.data.session_id;
+            if (isDedicatedHubAgent(agentId)) {
+              setActiveAgent(agentId, sid);
+              applyTransitionNavigation(agentId);
+              await sleep(FADE_IN_MS);
+              return { ok: true, resumed: true, hub: true };
+            }
             setActiveAgent(agentId, sid);
             const existing = useAgentStore.getState().getAgentMessages(agentId);
             if (existing.length === 0) {
@@ -408,9 +414,10 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
   );
 
   const exitToClinic = useCallback(
-    async (options?: { skipHistory?: boolean }) => {
-      const currentAgentId = useAgentStore.getState().activeAgentId;
-      if (!currentAgentId) {
+    async (options?: { skipHistory?: boolean; agentId?: string }) => {
+      const storeAgentId = useAgentStore.getState().activeAgentId;
+      const targetAgentId = storeAgentId ?? options?.agentId ?? null;
+      if (!targetAgentId) {
         const activeRes = await getActiveAgent();
         if (!activeRes.data?.active_agent) {
           return { ok: true as const };
@@ -422,7 +429,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
 
       try {
         const result = await deactivateToClinic(locale, {
-          agentId: currentAgentId ?? undefined,
+          agentId: targetAgentId ?? undefined,
         });
         if (!result.ok) {
           showToast(result.error ?? 'Failed to return to clinic', 'error');
