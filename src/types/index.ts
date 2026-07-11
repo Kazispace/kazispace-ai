@@ -36,7 +36,7 @@ export interface AuthState {
 }
 
 // Chat types
-import type { ChatJobCard, ChatNextAction } from './chat-envelope';
+import type { AssistantWorkflow, ChatJobCard, ChatNextAction } from './chat-envelope';
 
 export interface ReferralPayload {
   agentId: string;
@@ -333,11 +333,20 @@ export interface InterviewFeedbackSummary {
   tier?: 'free' | 'pro';
 }
 
+/** KAZI-135/137 — BE-rendered feedback turn (Chat Envelope SSOT). */
+export interface InterviewAssistantResponse {
+  content?: string;
+  next_actions?: ChatNextAction[];
+  workflow?: AssistantWorkflow;
+  cards?: ChatJobCard[];
+}
+
 export interface InterviewSessionDetail {
   session_id: string;
   status: string;
   target_role?: string;
   feedback_summary?: InterviewFeedbackSummary;
+  assistant_response?: InterviewAssistantResponse;
   message?: string;
   ctas?: import('./interview-contract').InterviewCta[];
   job_id?: string | null;

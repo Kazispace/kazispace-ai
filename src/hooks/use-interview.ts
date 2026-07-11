@@ -17,7 +17,8 @@ import {
   buildAssistantMessageFields,
   handleAgentEnvelope,
 } from '@/lib/handle-agent-envelope';
-import { formatFeedbackMessage, formatPrepMessage } from '@/lib/interview-message-format';
+import { formatPrepMessage } from '@/lib/interview-message-format';
+import { resolveInterviewFeedbackCtas } from '@/lib/interview-cta';
 import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
 import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/mock-interview-config';
 import { getJobDetail } from '@/lib/jobs-api';
@@ -30,7 +31,6 @@ import type {
 import type {
   CreateInterviewSessionResponse,
   InterviewCta,
-  InterviewFeedbackSummary,
   InterviewJobContext,
   InterviewMessage,
   InterviewPrepCard,
@@ -99,26 +99,13 @@ export function useInterview(jobId?: string | null) {
   const t = useTranslations('interview');
   const tHub = useTranslations('hub');
 
-  const formatLabels = useCallback(
+  const prepFormatLabels = useCallback(
     () => ({
       prepTitle: t('prepTitle'),
       prepFocusAreas: t('prepFocusAreas'),
       prepSampleQuestions: t('prepSampleQuestions'),
       prepDuration: (values: { min: number }) => t('prepDuration', values),
       prepPrompt: t('prepPrompt'),
-      feedbackTitle: (values: { role: string }) => t('feedbackTitle', values),
-      feedbackTitleGeneric: t('feedbackTitleGeneric'),
-      overallSummary: t('overallSummary'),
-      strengths: t('strengths'),
-      improvements: t('improvements'),
-      weaknessTags: t('weaknessTags'),
-      sampleAnswer: t('sampleAnswer'),
-      nextStep: t('nextStep'),
-      scores: {
-        clarity: t('scores.clarity'),
-        relevance: t('scores.relevance'),
-        confidence: t('scores.confidence'),
-      },
     }),
     [t]
   );
@@ -130,7 +117,6 @@ export function useInterview(jobId?: string | null) {
   const [questionIndex, setQuestionIndex] = useState(1);
   const [questionCount, setQuestionCount] = useState(3);
   const [currentQuestion, setCurrentQuestion] = useState<InterviewQuestion | null>(null);
-  const [feedback, setFeedback] = useState<InterviewFeedbackSummary | null>(null);
   const [diagnosisCtas, setDiagnosisCtas] = useState<InterviewCta[]>([]);
   const [prepCard, setPrepCard] = useState<InterviewPrepCard | null>(null);
   const [prepAckRequired, setPrepAckRequired] = useState(false);
@@ -332,24 +318,31 @@ export function useInterview(jobId?: string | null) {
         return;
       }
 
-      if (data.status === 'completed' && data.feedback_summary) {
+      if (data.status === 'completed') {
         stopPolling();
-        setFeedback(data.feedback_summary);
-        setDiagnosisCtas(data.ctas ?? []);
+        const { assistant } = handleAgentEnvelope({
+          assistant_response: data.assistant_response,
+        });
+        const feedbackContent = assistant.content?.trim();
+
         if (data.target_role) setTargetRole(data.target_role);
+        setDiagnosisCtas(resolveInterviewFeedbackCtas(data, locale));
+
+        if (feedbackContent) {
+          appendMessage('assistant', feedbackContent, {
+            workflow: assistant.workflow,
+            nextActions: assistant.nextActions,
+            cards: assistant.cards,
+          });
+          setPhase('feedback_ready');
+          return;
+        }
+
+        setPhase('feedback_failed');
         appendMessage(
           'assistant',
-          formatFeedbackMessage(
-            data.feedback_summary,
-            data.target_role ?? targetRole,
-            formatLabels()
-          )
+          data.message ?? t('feedbackContentMissing')
         );
-        setPhase('feedback_ready');
-        return;
-      }
-
-      if (data.status === 'completed') {
         return;
       }
 
@@ -360,7 +353,7 @@ export function useInterview(jobId?: string | null) {
         data.message ?? 'Could not load feedback. Please try again.'
       );
     },
-    [appendMessage, finishIfStale, formatLabels, sessionId, stopPolling, targetRole]
+    [appendMessage, finishIfStale, locale, sessionId, stopPolling, t]
   );
 
   const startPolling = useCallback(
@@ -454,12 +447,12 @@ export function useInterview(jobId?: string | null) {
       setPhase('prep_review');
       appendMessage(
         'assistant',
-        formatPrepMessage(data.prep_card, jobContext, formatLabels())
+        formatPrepMessage(data.prep_card, jobContext, prepFormatLabels())
       );
       setIsStarting(false);
       jobStartInFlightRef.current = false;
     },
-    [appendMessage, finishIfStale, formatLabels, jobContext, storePendingBootstrap]
+    [appendMessage, finishIfStale, jobContext, prepFormatLabels, storePendingBootstrap]
   );
 
   const autoAckPrepAndBegin = useCallback(
@@ -528,7 +521,6 @@ export function useInterview(jobId?: string | null) {
       const runId = ++runIdRef.current;
       setIsStarting(true);
       setTargetRole(role);
-      setFeedback(null);
       setDiagnosisCtas([]);
       setPrepCard(null);
       setPrepAckRequired(false);
@@ -570,7 +562,6 @@ export function useInterview(jobId?: string | null) {
       setIsStarting(true);
       setPhase('role_select');
       setMessages([]);
-      setFeedback(null);
       setDiagnosisCtas([]);
       setPrepCard(null);
       setPrepAckRequired(false);
@@ -749,7 +740,6 @@ export function useInterview(jobId?: string | null) {
     setQuestionIndex(1);
     setQuestionCount(3);
     setCurrentQuestion(null);
-    setFeedback(null);
     setDiagnosisCtas([]);
     setPrepCard(null);
     setPrepAckRequired(false);
@@ -777,7 +767,6 @@ export function useInterview(jobId?: string | null) {
       setQuestionIndex(1);
       setQuestionCount(3);
       setCurrentQuestion(null);
-      setFeedback(null);
       setDiagnosisCtas([]);
       setPrepCard(null);
       setPrepAckRequired(false);
@@ -842,7 +831,6 @@ export function useInterview(jobId?: string | null) {
     questionIndex,
     questionCount,
     currentQuestion,
-    feedback,
     diagnosisCtas,
     isStarting,
     isAckingPrep,

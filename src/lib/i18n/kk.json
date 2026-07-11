@@ -578,6 +578,7 @@
 		"completed": "Аяқталды",
 		"inputPlaceholder": "Жауабыңызды жазыңыз…",
 		"feedbackPending": "Жеке кері байланыс дайындалуда…",
+		"feedbackContentMissing": "Кері байланыс әлі дайын емес. Бір сәттен кейін қайталап көріңіз.",
 		"checkFeedback": "Нәтижені тексеру",
 		"tryAgain": "Қайта көру",
 		"practiceAgain": "Қайта жаттығу",
