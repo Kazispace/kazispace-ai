@@ -19,7 +19,7 @@ import {
 } from '@/lib/handle-agent-envelope';
 import { formatFeedbackMessage, formatPrepMessage } from '@/lib/interview-message-format';
 import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
-import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/interview-roles';
+import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/mock-interview-config';
 import { getJobDetail } from '@/lib/jobs-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
 import type {

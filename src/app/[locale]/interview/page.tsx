@@ -29,7 +29,7 @@ import { useInterviewProfile } from "@/hooks/use-interview-profile";
 import { useBilling } from "@/hooks/use-billing";
 import { isProPlan } from "@/lib/api-mappers";
 import { hasFormalIrp, resolveInterviewEntry } from "@/lib/interview-irp-entry";
-import { INTERVIEW_ROLES } from "@/lib/interview-roles";
+import { INTAKE_SUGGESTION_KEYS } from "@/lib/interview-intake";
 import type { InterviewCta } from "@/types";
 import { useUIStore, useAuthStore } from "@/lib/store";
 
@@ -155,8 +155,8 @@ function InterviewPageContent({ locale }: { locale: string }) {
     reset();
   }, [reset]);
 
-  const roleQuickReplies = useMemo(
-    () => INTERVIEW_ROLES.map((role) => t(role.titleKey)),
+  const intakeQuickReplies = useMemo(
+    () => INTAKE_SUGGESTION_KEYS.map((key) => t(`intakeSuggestions.${key}`)),
     [t]
   );
 
@@ -166,16 +166,15 @@ function InterviewPageContent({ locale }: { locale: string }) {
   );
 
   const quickReplies = useMemo(() => {
-    if (phase === "role_select" && !isJobMode) return roleQuickReplies;
+    if (phase === "role_select" && !isJobMode) return intakeQuickReplies;
     if (phase === "prep_review" && (prepCard || prepAckRequired)) return prepQuickReplies;
     return [];
-  }, [isJobMode, phase, prepAckRequired, prepCard, prepQuickReplies, roleQuickReplies]);
+  }, [intakeQuickReplies, isJobMode, phase, prepAckRequired, prepCard, prepQuickReplies]);
 
   const handleQuickReply = useCallback(
     (text: string) => {
       if (phase === "role_select" && !isJobMode) {
-        const match = INTERVIEW_ROLES.find((role) => t(role.titleKey) === text);
-        void submitIntake(match?.targetRole ?? text);
+        void submitIntake(text);
         return;
       }
       if (phase === "prep_review") {

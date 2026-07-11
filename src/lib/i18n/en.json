@@ -542,8 +542,13 @@
 	"interview": {
 		"title": "Mock Interview Practice",
 		"subtitle": "Answer 3 questions and get AI feedback on clarity, relevance, and confidence.",
-		"intakeWelcome": "I'll run a **mock interview** with you — answer 3 practice questions and get feedback on clarity, relevance, and confidence.\n\n**Which role?** Type any job title in the box below, or tap a suggestion: Customer Support, IT Support, or Remote Admin.",
-		"intakePlaceholder": "Type a role to practice (e.g. IT Support)…",
+		"intakeWelcome": "I'll run a **mock interview** with you — answer 3 practice questions and get feedback on clarity, relevance, and confidence.\n\n**Which role?** Type any job title in the box below, or tap a suggestion chip.",
+		"intakeSuggestions": {
+			"itSupport": "IT Support",
+			"dataAnalyst": "Data Analyst",
+			"sales": "Sales"
+		},
+		"intakePlaceholder": "Type a role to practice (e.g. Data Analyst)…",
 		"prepPrompt": "When you're ready, tap **Start interview** or **Skip prep** below.",
 		"workspaceTitle": "Interview history",
 		"workspaceHint": "Past reports and readiness checks live here — not in the chat.",
@@ -602,20 +607,6 @@
 			"clarity": "Clarity",
 			"relevance": "Relevance",
 			"confidence": "Confidence"
-		},
-		"roles": {
-			"csr": {
-				"title": "Customer Support Representative",
-				"desc": "Communication, empathy, problem-solving"
-			},
-			"it": {
-				"title": "IT Support",
-				"desc": "Technical troubleshooting, tools, processes"
-			},
-			"admin": {
-				"title": "Remote Admin Assistant",
-				"desc": "Organization, remote tools, communication"
-			}
 		},
 		"irp": {
 			"loadingProfile": "Loading your interview profile…",
