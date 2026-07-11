@@ -61,6 +61,7 @@ import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { API_BASE_URL } from "@/lib/constants";
+import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
 
 interface ClinicShellProps {
   locale: string;
@@ -201,6 +202,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     },
     [isLoggedIn, loadHistory]
   );
+
+  const routeToMockInterviewHub = useCallback(async () => {
+    const result = await activateAgentWithoutPrecheck(MOCK_INTERVIEW_AGENT_ID);
+    if (!result.ok) {
+      showToast(result.error ?? tClinic("activateFailed"), "error");
+    }
+  }, [activateAgentWithoutPrecheck, showToast, tClinic]);
 
   const [isOnline, setIsOnline] = useState(false);
   const [englishLevel, setEnglishLevelState] = useState<string | null>(null);
@@ -652,6 +660,25 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     const result = await sendClinicMessage(text);
 
+    if (result.ok) {
+      const assistantMsg = useChatStore
+        .getState()
+        .messages.find((m) => m.id === result.assistantId);
+
+      if (
+        assistantMsg &&
+        shouldClinicReplyRouteToInterviewHub({
+          intent: assistantMsg.intent,
+          nextActions: assistantMsg.nextActions,
+          userText: text,
+        })
+      ) {
+        markStreamComplete(result.assistantId);
+        await routeToMockInterviewHub();
+        return;
+      }
+    }
+
     if (result.ok && result.routedToAgent) {
       if (isCvBuilderAgent(result.routedToAgent.agentId)) {
         const msg = useChatStore
@@ -718,6 +745,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const handleReferralAccept = async (agentId: string, messageId?: string) => {
     if (messageId) dismissMessageReferral(messageId);
     setPendingReferral(null);
+    if (isMockInterviewAgent(agentId)) {
+      await routeToMockInterviewHub();
+      return;
+    }
     await handleAgentSelect(agentId);
   };
 
@@ -742,7 +773,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           void handleBackToClinic();
           return;
         case "mock_interview":
-          void handleAgentSelect(MOCK_INTERVIEW_AGENT_ID);
+        case "open_interview":
+          void routeToMockInterviewHub();
           return;
         case "english_tutor":
           void handleAgentSelect(ENGLISH_TUTOR_AGENT_ID);
@@ -761,7 +793,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage, routeInterviewPage, routeEnglishPage]
+    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage, routeInterviewPage, routeEnglishPage, routeToMockInterviewHub]
   );
 
   const handleJobCardClick = useCallback(

@@ -19,6 +19,7 @@ const KNOWN_ACTION_TYPES = [
   'upgrade_pro',
   'return_to_clinic',
   'mock_interview',
+  'open_interview',
   'english_tutor',
   'complete_profile',
   'job_search',
