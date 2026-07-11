@@ -1,5 +1,6 @@
 'use client';
 
+/** @deprecated KAZI-134 — role cards removed; intake is conversational via HubAgentShell. */
 import { useTranslations } from 'next-intl';
 
 import { INTERVIEW_ROLES } from '@/lib/interview-roles';

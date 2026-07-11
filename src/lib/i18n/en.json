@@ -522,9 +522,20 @@
 			"description": "Unlock Pro features to accelerate your job search."
 		}
 	},
+	"hub": {
+		"workspaceExpand": "Show workspace",
+		"workspaceCollapse": "Hide workspace"
+	},
 	"interview": {
 		"title": "Mock Interview Practice",
 		"subtitle": "Answer 3 questions and get AI feedback on clarity, relevance, and confidence.",
+		"intakeWelcome": "I'll help you practice a mock interview. Which role would you like to practice for? For example: IT Support, Customer Support, or Remote Admin — type a role name or tap a suggestion below.",
+		"intakePlaceholder": "Type a role to practice (e.g. IT Support)…",
+		"prepPrompt": "When you're ready, tap **Start interview** or **Skip prep** below.",
+		"workspaceTitle": "Interview history",
+		"workspaceHint": "Past reports and readiness checks live here — not in the chat.",
+		"viewHistory": "View growth history",
+		"viewReadiness": "Job readiness check",
 		"subtitleWithJob": "Practice for job {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Preparing your interview…",

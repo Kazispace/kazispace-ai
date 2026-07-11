@@ -522,9 +522,20 @@
 			"description": "Ish qidiruvini tezlashtirish uchun Pro imkoniyatlarini oching."
 		}
 	},
+	"hub": {
+		"workspaceExpand": "Ish maydonini ko'rsatish",
+		"workspaceCollapse": "Ish maydonini yashirish"
+	},
 	"interview": {
 		"title": "Sinov suhbati",
 		"subtitle": "3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.",
+		"intakeWelcome": "Sinov suhbatida yordam beraman. Qaysi rol bo'yicha mashq qilamiz? Masalan: IT qo'llab-quvvatlash, mijozlarni qo'llab-quvvatlash yoki masofaviy administrator — rolni yozing yoki pastdagi taklifni tanlang.",
+		"intakePlaceholder": "Rolni yozing (masalan, IT qo'llab-quvvatlash)…",
+		"prepPrompt": "Tayyor bo'lsangiz, pastdan **Suhbatni boshlash** yoki **Tayyorgarlikni o'tkazib yuborish** tugmasini bosing.",
+		"workspaceTitle": "Suhbat tarixi",
+		"workspaceHint": "O'tgan hisobotlar va tayyorgarlik tekshiruvlari shu yerda — chatda emas.",
+		"viewHistory": "O'sish tarixi",
+		"viewReadiness": "Vakansiyaga tayyorgarlik tekshiruvi",
 		"subtitleWithJob": "Vakansiyaga tayyorgarlik: {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Suhbat tayyorlanmoqda…",

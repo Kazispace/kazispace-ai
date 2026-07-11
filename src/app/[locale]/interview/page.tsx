@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
@@ -13,13 +12,13 @@ import {
   useAgentTransition,
 } from "@/components/agent-transition/agent-transition-provider";
 import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
+import { HubAgentShell } from "@/components/hub/hub-agent-shell";
 import { MessageBubble } from "@/components/clinic/message-bubble";
-import { InterviewRolePicker } from "@/components/interview/interview-role-picker";
-import { InterviewPrepCard } from "@/components/interview/interview-prep-card";
+import { QuickReplies } from "@/components/clinic/quick-replies";
 import { InterviewProgress } from "@/components/interview/interview-progress";
-import { InterviewFeedbackCard } from "@/components/interview/interview-feedback-card";
+import { InterviewFeedbackActions } from "@/components/interview/interview-feedback-actions";
+import { InterviewWorkspace } from "@/components/interview/interview-workspace";
 import { IrpProfileHome } from "@/components/interview/irp-profile-home";
-import { IrpReadinessMiniCard } from "@/components/interview/irp-readiness-mini-card";
 import { IrpDiagnosisUpdate } from "@/components/interview/irp-diagnosis-update";
 import { Button } from "@/components/ui/button";
 import { useInterview } from "@/hooks/use-interview";
@@ -29,6 +28,7 @@ import { useInterviewProfile } from "@/hooks/use-interview-profile";
 import { useBilling } from "@/hooks/use-billing";
 import { isProPlan } from "@/lib/api-mappers";
 import { hasFormalIrp, resolveInterviewEntry } from "@/lib/interview-irp-entry";
+import { INTERVIEW_ROLES } from "@/lib/interview-roles";
 import type { InterviewCta } from "@/types";
 import { useUIStore, useAuthStore } from "@/lib/store";
 
@@ -51,7 +51,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
     displayRole,
     questionIndex,
     questionCount,
-    feedback,
     diagnosisCtas,
     prepCard,
     prepAckRequired,
@@ -62,8 +61,8 @@ function InterviewPageContent({ locale }: { locale: string }) {
     isCheckingFeedback,
     needsLogin,
     isJobMode,
-    startSession,
     startJobSession,
+    submitIntake,
     ackPrep,
     submitAnswer,
     reset,
@@ -105,14 +104,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
     phase === "role_select" &&
     !needsLogin &&
     profile != null;
-
-  const showFormalReadinessMini =
-    irpEnabled &&
-    isJobMode &&
-    hasFormalIrp(profileStatus) &&
-    phase === "prep_review" &&
-    Boolean(jobId) &&
-    (prepCard || prepAckRequired);
 
   const isProUser = isProPlan(plan);
 
@@ -162,24 +153,188 @@ function InterviewPageContent({ locale }: { locale: string }) {
     reset();
   }, [reset]);
 
-  const showInput = phase === "interview" && !needsLogin;
+  const roleQuickReplies = useMemo(
+    () => INTERVIEW_ROLES.map((role) => t(role.titleKey)),
+    [t]
+  );
+
+  const prepQuickReplies = useMemo(
+    () => [t("startInterview"), t("skipPrep")],
+    [t]
+  );
+
+  const quickReplies = useMemo(() => {
+    if (phase === "role_select" && !isJobMode) return roleQuickReplies;
+    if (phase === "prep_review" && (prepCard || prepAckRequired)) return prepQuickReplies;
+    return [];
+  }, [isJobMode, phase, prepAckRequired, prepCard, prepQuickReplies, roleQuickReplies]);
+
+  const handleQuickReply = useCallback(
+    (text: string) => {
+      if (phase === "role_select" && !isJobMode) {
+        const match = INTERVIEW_ROLES.find((role) => t(role.titleKey) === text);
+        void submitIntake(match?.targetRole ?? text);
+        return;
+      }
+      if (phase === "prep_review") {
+        if (text === t("startInterview")) void ackPrep("start");
+        else if (text === t("skipPrep")) void ackPrep("skip");
+      }
+    },
+    [ackPrep, isJobMode, phase, submitIntake, t]
+  );
+
+  const showChatInput =
+    !needsLogin &&
+    ((phase === "role_select" && !isJobMode) || phase === "interview");
+
   const showProgress = phase === "interview" && !needsLogin;
-  const prepBusy = isStarting || isAckingPrep;
+
+  const inputDisabled =
+    isStarting ||
+    isSending ||
+    isAckingPrep ||
+    (phase === "role_select" && irpEnabled && isProfileLoading && !jobId);
+
+  const handleSend = useCallback(
+    (text: string) => {
+      if (phase === "role_select") {
+        void submitIntake(text);
+        return;
+      }
+      void submitAnswer(text);
+    },
+    [phase, submitAnswer, submitIntake]
+  );
 
   const showJobBootstrapping =
     isJobMode &&
-    needsLogin === false &&
+    !needsLogin &&
     (phase === "role_select" || (phase === "prep_review" && !prepCard)) &&
     isStarting;
 
-  const awaitingProfileEntry =
-    irpEnabled && !jobId && !profileError && isProfileLoading && !trainingRequested;
+  const shellHeader = (
+    <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between shrink-0">
+      <div>
+        <h1 className="text-lg font-bold text-kazi-navy">
+          {displayRole ? `🎤 ${displayRole}` : t("title")}
+        </h1>
+        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+        {phase === "interview" && (
+          <p className="text-xs text-gray-500">
+            {t("questionOf", { current: questionIndex, total: questionCount })}
+          </p>
+        )}
+        {phase === "feedback_pending" && (
+          <p className="text-xs text-gray-500">{t("completed")}</p>
+        )}
+      </div>
+      {phase !== "role_select" || trainingRequested ? (
+        <Button size="sm" variant="outline" onClick={handleReset}>
+          {t("newInterview")}
+        </Button>
+      ) : null}
+    </div>
+  );
+
+  const chatBody = (
+    <>
+      {irpEnabled && profileStatus === "provisional" && !jobId && phase === "role_select" && (
+        <p className="text-xs text-amber-700 bg-amber-50 border-b border-amber-100 px-4 py-2">
+          {t("irp.provisionalBanner", {
+            remaining: Math.max(0, 3 - (profile?.total_training_rounds ?? 0)),
+          })}
+        </p>
+      )}
+      {irpEnabled && profileError && !jobId && phase === "role_select" && (
+        <div className="mx-4 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-center space-y-2">
+          <p className="text-xs text-red-700">{t("irp.profileLoadFailed")}</p>
+          <Button size="sm" variant="outline" onClick={() => void refetchProfile()}>
+            {t("irp.profileRetry")}
+          </Button>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg min-h-0">
+        {showJobBootstrapping && messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12">
+            <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+            <p className="text-sm text-gray-600">{t("sessionLoading")}</p>
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <MessageBubble
+              key={msg.id}
+              role={msg.role}
+              content={msg.content}
+              variant="agent"
+            />
+          ))
+        )}
+
+        {phase === "feedback_pending" && (
+          <div className="flex items-center gap-2 text-sm text-gray-500 self-start">
+            <div className="w-4 h-4 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin shrink-0" />
+            <span>{t("feedbackPending")}</span>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={checkFeedbackNow}
+              disabled={isCheckingFeedback}
+            >
+              {t("checkFeedback")}
+            </Button>
+          </div>
+        )}
+
+        {phase === "feedback_ready" && (
+          <>
+            <InterviewFeedbackActions
+              ctas={diagnosisCtas}
+              locale={locale}
+              jobId={jobId}
+              onCtaAction={handleCtaAction}
+              onPracticeAgain={() => retrySession()}
+            />
+            <IrpDiagnosisUpdate
+              enabled={irpEnabled}
+              baselineUpdatedAt={profileBaselineUpdatedAt}
+            />
+          </>
+        )}
+
+        {phase === "feedback_failed" && (
+          <Button size="sm" onClick={handleReset} className="self-start">
+            {t("tryAgain")}
+          </Button>
+        )}
+
+        {isJobMode && phase === "role_select" && !isStarting && !needsLogin && (
+          <div className="self-start space-y-2">
+            <p className="text-sm text-gray-700">{t("startFailed")}</p>
+            <Button size="sm" onClick={() => void startJobSession()}>
+              {t("retryStart")}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {quickReplies.length > 0 ? (
+        <QuickReplies
+          options={quickReplies}
+          disabled={inputDisabled}
+          onSelect={handleQuickReply}
+        />
+      ) : null}
+    </>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
       <Header locale={locale} />
       {isLoggedIn ? <HubLayerBar locale={locale} /> : null}
-      <main className="pt-16 flex-1 flex flex-col max-w-3xl mx-auto w-full">
+      <main className="pt-16 flex-1 flex flex-col max-w-5xl mx-auto w-full min-h-0">
         {showProfileHome && profile ? (
           <IrpProfileHome
             profile={profile}
@@ -187,182 +342,45 @@ function InterviewPageContent({ locale }: { locale: string }) {
             onStartTraining={handleStartTraining}
             isPro={isProUser}
           />
-        ) : showJobBootstrapping ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3">
-            <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
-            <p className="text-sm text-gray-600">{t("sessionLoading")}</p>
-            {subtitle && (
-              <p className="text-center text-xs text-gray-500 px-4">{subtitle}</p>
-            )}
-          </div>
-        ) : phase === "role_select" ? (
-          <>
-            {subtitle && (
-              <p className="text-center text-xs text-gray-500 px-4 pt-2">{subtitle}</p>
-            )}
-            {irpEnabled && profileStatus === "provisional" && !jobId && (
-              <p className="text-center text-xs text-amber-700 bg-amber-50 border border-amber-100 mx-4 mt-2 rounded-lg px-3 py-2">
-                {t("irp.provisionalBanner", {
-                  remaining: Math.max(0, 3 - (profile?.total_training_rounds ?? 0)),
-                })}
-              </p>
-            )}
-            {irpEnabled && profileError && !jobId && (
-              <div className="mx-4 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-center space-y-2">
-                <p className="text-xs text-red-700">{t("irp.profileLoadFailed")}</p>
-                <Button size="sm" variant="outline" onClick={() => void refetchProfile()}>
-                  {t("irp.profileRetry")}
-                </Button>
-              </div>
-            )}
-            {irpEnabled && isProfileLoading && !jobId && !profileError && (
-              <p className="text-center text-xs text-gray-500 px-4 pt-2">
-                {t("irp.loadingProfile")}
-              </p>
-            )}
-            {needsLogin ? (
-              <div className="flex-1 flex items-center justify-center p-6">
-                <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">
-                  <p className="text-sm text-gray-700 mb-4">{t("loginBanner")}</p>
-                  <Button size="sm" onClick={() => router.push(`/${locale}/login`)}>
-                    {t("signIn")}
-                  </Button>
-                </div>
-              </div>
-            ) : isJobMode ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center max-w-sm mx-auto">
-                <p className="text-sm text-gray-700">{t("startFailed")}</p>
-                <Button size="sm" onClick={() => void startJobSession()}>
-                  {t("retryStart")}
-                </Button>
-              </div>
-            ) : (
-              <InterviewRolePicker
-                onSelect={(role) => void startSession(role)}
-                disabled={isStarting || awaitingProfileEntry}
-              />
-            )}
-          </>
-        ) : phase === "prep_review" && (prepCard || prepAckRequired) ? (
-          <>
-            {subtitle && (
-              <p className="text-center text-xs text-gray-500 px-4 pt-2">{subtitle}</p>
-            )}
-            <div className="flex-1 flex flex-col p-4 gap-4 max-w-lg mx-auto w-full">
-              {showFormalReadinessMini && jobId && (
-                <IrpReadinessMiniCard jobId={jobId} locale={locale} />
-              )}
-              <InterviewPrepCard
-                prep={
-                  prepCard ?? {
-                    focus_areas: [],
-                    sample_questions: [],
-                  }
-                }
-                jobContext={jobContext}
-                locale={locale}
-                jobId={jobId}
-                onStart={() => void ackPrep("start")}
-                onSkip={() => void ackPrep("skip")}
-                disabled={prepBusy}
-                embedded
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between">
-              <div>
-                <Link
-                  href={`/${locale}/mine`}
-                  className="text-xs text-kazi-orange font-medium"
-                >
-                  {t("backToMine")}
-                </Link>
-                <h1 className="text-lg font-bold text-kazi-navy mt-1">
-                  {displayRole ? `🎤 ${displayRole}` : t("title")}
-                </h1>
-                {phase === "interview" && (
-                  <p className="text-xs text-gray-500">
-                    {t("questionOf", { current: questionIndex, total: questionCount })}
-                  </p>
-                )}
-                {phase === "feedback_pending" && (
-                  <p className="text-xs text-gray-500">{t("completed")}</p>
-                )}
-              </div>
-              <Button size="sm" variant="outline" onClick={handleReset}>
-                {t("newInterview")}
+        ) : needsLogin ? (
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">
+              <p className="text-sm text-gray-700 mb-4">{t("loginBanner")}</p>
+              <Button size="sm" onClick={() => router.push(`/${locale}/login`)}>
+                {t("signIn")}
               </Button>
             </div>
-
-            {showProgress && (
-              <InterviewProgress
-                questionIndex={questionIndex}
-                questionCount={questionCount}
-              />
-            )}
-
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg min-h-[40vh]">
-              {messages.map((msg) => (
-                <MessageBubble
-                  key={msg.id}
-                  role={msg.role}
-                  content={msg.content}
-                  variant="agent"
+          </div>
+        ) : (
+          <HubAgentShell
+            header={shellHeader}
+            progress={
+              showProgress ? (
+                <InterviewProgress
+                  questionIndex={questionIndex}
+                  questionCount={questionCount}
                 />
-              ))}
-
-              {phase === "feedback_pending" && (
-                <div className="bg-white border border-gray-200 rounded-xl p-5 text-center max-w-sm self-start">
-                  <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">{t("feedbackPending")}</p>
-                  <Button
-                    size="sm"
-                    className="mt-3"
-                    onClick={checkFeedbackNow}
-                    disabled={isCheckingFeedback}
-                  >
-                    {t("checkFeedback")}
-                  </Button>
-                </div>
-              )}
-
-              {phase === "feedback_ready" && feedback && (
-                <>
-                  <InterviewFeedbackCard
-                    targetRole={displayRole}
-                    feedback={feedback}
-                    ctas={diagnosisCtas}
-                    locale={locale}
-                    jobId={jobId}
-                    onCtaAction={handleCtaAction}
-                    onPracticeAgain={() => retrySession()}
-                  />
-                  <IrpDiagnosisUpdate
-                    enabled={irpEnabled}
-                    baselineUpdatedAt={profileBaselineUpdatedAt}
-                  />
-                </>
-              )}
-
-              {phase === "feedback_failed" && (
-                <Button size="sm" onClick={handleReset}>
-                  {t("tryAgain")}
-                </Button>
-              )}
-            </div>
-
-            {showInput && (
-              <ChatInput
-                onSend={(text) => void submitAnswer(text)}
-                disabled={isSending}
-                placeholder={t("inputPlaceholder")}
-                showAgentButton
-                onOpenAgents={openSwitcher}
-              />
-            )}
-          </>
+              ) : undefined
+            }
+            workspace={!needsLogin ? <InterviewWorkspace locale={locale} /> : undefined}
+            input={
+              showChatInput ? (
+                <ChatInput
+                  onSend={handleSend}
+                  disabled={inputDisabled}
+                  placeholder={
+                    phase === "role_select"
+                      ? t("intakePlaceholder")
+                      : t("inputPlaceholder")
+                  }
+                  showAgentButton
+                  onOpenAgents={openSwitcher}
+                />
+              ) : undefined
+            }
+          >
+            {chatBody}
+          </HubAgentShell>
         )}
       </main>
       <BottomNav locale={locale} />

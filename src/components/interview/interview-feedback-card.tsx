@@ -1,5 +1,6 @@
 'use client';
 
+/** @deprecated KAZI-134 — feedback rendered in message stream via interview-message-format. */
 import Link from 'next/link';
 import { BackToClinicButton } from '@/components/clinic/back-to-clinic-button';
 import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
