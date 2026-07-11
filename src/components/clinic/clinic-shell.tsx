@@ -61,6 +61,7 @@ import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { API_BASE_URL } from "@/lib/constants";
+import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
 
 interface ClinicShellProps {
   locale: string;
@@ -201,6 +202,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     },
     [isLoggedIn, loadHistory]
   );
+
+  /** Activates mock_interview; navigation to `/interview` is handled by performAgentSwitch. */
+  const activateMockInterviewHub = useCallback(async () => {
+    const result = await requestAgentSwitch(MOCK_INTERVIEW_AGENT_ID);
+    if (result && !result.ok && result.needsConfirm) return;
+    if (result && !result.ok) {
+      showToast(result.error ?? tClinic("activateFailed"), "error");
+    }
+  }, [requestAgentSwitch, showToast, tClinic]);
 
   const [isOnline, setIsOnline] = useState(false);
   const [englishLevel, setEnglishLevelState] = useState<string | null>(null);
@@ -652,6 +662,27 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     const result = await sendClinicMessage(text);
 
+    if (result.ok) {
+      const assistantMsg = useChatStore
+        .getState()
+        .messages.find((m) => m.id === result.assistantId);
+
+      // Interim bridge (pre-KAZI-138): L2 still processes inline mock interview;
+      // remove this path once BE returns referral-only next_actions. See KAZI-138.
+      if (
+        assistantMsg &&
+        shouldClinicReplyRouteToInterviewHub({
+          intent: assistantMsg.intent,
+          nextActions: assistantMsg.nextActions,
+          userText: text,
+        })
+      ) {
+        markStreamComplete(result.assistantId);
+        await activateMockInterviewHub();
+        return;
+      }
+    }
+
     if (result.ok && result.routedToAgent) {
       if (isCvBuilderAgent(result.routedToAgent.agentId)) {
         const msg = useChatStore
@@ -718,6 +749,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const handleReferralAccept = async (agentId: string, messageId?: string) => {
     if (messageId) dismissMessageReferral(messageId);
     setPendingReferral(null);
+    if (isMockInterviewAgent(agentId)) {
+      await activateMockInterviewHub();
+      return;
+    }
     await handleAgentSelect(agentId);
   };
 
@@ -742,7 +777,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           void handleBackToClinic();
           return;
         case "mock_interview":
-          void handleAgentSelect(MOCK_INTERVIEW_AGENT_ID);
+        case "open_interview":
+          void activateMockInterviewHub();
           return;
         case "english_tutor":
           void handleAgentSelect(ENGLISH_TUTOR_AGENT_ID);
@@ -761,7 +797,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage, routeInterviewPage, routeEnglishPage]
+    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage, routeInterviewPage, routeEnglishPage, activateMockInterviewHub]
   );
 
   const handleJobCardClick = useCallback(
