@@ -529,7 +529,7 @@
 	"interview": {
 		"title": "Sinov suhbati",
 		"subtitle": "3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.",
-		"intakeWelcome": "Sinov suhbatida yordam beraman. Qaysi rol bo'yicha mashq qilamiz? Masalan: IT qo'llab-quvvatlash, mijozlarni qo'llab-quvvatlash yoki masofaviy administrator — rolni yozing yoki pastdagi taklifni tanlang.",
+		"intakeWelcome": "Siz bilan **sinov suhbati** o'tkazaman — 3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.\n\n**Qaysi rol?** Quyidagi maydonga rol nomini yozing yoki taklifni tanlang: mijozlarni qo'llab-quvvatlash, IT qo'llab-quvvatlash yoki masofaviy administrator.",
 		"intakePlaceholder": "Rolni yozing (masalan, IT qo'llab-quvvatlash)…",
 		"prepPrompt": "Tayyor bo'lsangiz, pastdan **Suhbatni boshlash** yoki **Tayyorgarlikni o'tkazib yuborish** tugmasini bosing.",
 		"workspaceTitle": "Suhbat tarixi",
@@ -571,6 +571,7 @@
 			"continue": "Davom etish"
 		},
 		"feedbackTitle": "Fikr-mulohaza — {role}",
+		"feedbackTitleGeneric": "Suhbat fikr-mulohazasi",
 		"overallSummary": "Umumiy xulosa",
 		"strengths": "Kuchli tomonlar",
 		"improvements": "Yaxshilash kerak",

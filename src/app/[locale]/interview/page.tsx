@@ -226,7 +226,10 @@ function InterviewPageContent({ locale }: { locale: string }) {
           </p>
         )}
         {phase === "feedback_pending" && (
-          <p className="text-xs text-gray-500">{t("completed")}</p>
+          <div className="flex items-center gap-1.5 text-xs text-kazi-orange mt-0.5">
+            <div className="w-3 h-3 border-2 border-kazi-orange/30 border-t-kazi-orange rounded-full animate-spin shrink-0" />
+            <span>{t("feedbackPending")}</span>
+          </div>
         )}
       </div>
       {phase !== "role_select" || trainingRequested ? (
@@ -276,15 +279,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
           <div className="flex items-center gap-2 text-sm text-gray-500 self-start">
             <div className="w-4 h-4 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin shrink-0" />
             <span>{t("feedbackPending")}</span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-xs"
-              onClick={checkFeedbackNow}
-              disabled={isCheckingFeedback}
-            >
-              {t("checkFeedback")}
-            </Button>
           </div>
         )}
 
@@ -295,7 +289,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
               locale={locale}
               jobId={jobId}
               onCtaAction={handleCtaAction}
-              onPracticeAgain={() => retrySession()}
             />
             <IrpDiagnosisUpdate
               enabled={irpEnabled}
@@ -319,7 +312,28 @@ function InterviewPageContent({ locale }: { locale: string }) {
           </div>
         )}
       </div>
+    </>
+  );
 
+  const composerPrefix = (
+    <>
+      {phase === "feedback_pending" && (
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-orange-50 border-b border-orange-100">
+          <div className="flex items-center gap-2 text-sm text-gray-700 min-w-0">
+            <div className="w-4 h-4 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin shrink-0" />
+            <span className="truncate">{t("feedbackPending")}</span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 h-7 text-xs"
+            onClick={checkFeedbackNow}
+            disabled={isCheckingFeedback}
+          >
+            {t("checkFeedback")}
+          </Button>
+        </div>
+      )}
       {quickReplies.length > 0 ? (
         <QuickReplies
           options={quickReplies}
@@ -363,6 +377,11 @@ function InterviewPageContent({ locale }: { locale: string }) {
               ) : undefined
             }
             workspace={!needsLogin ? <InterviewWorkspace locale={locale} /> : undefined}
+            composerPrefix={
+              phase === "feedback_pending" || quickReplies.length > 0
+                ? composerPrefix
+                : undefined
+            }
             input={
               showChatInput ? (
                 <ChatInput

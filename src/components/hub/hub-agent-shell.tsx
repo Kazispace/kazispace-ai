@@ -14,6 +14,8 @@ export interface HubAgentShellProps {
   children: ReactNode;
   /** Optional workspace attachment (§19.3.1). */
   workspace?: ReactNode;
+  /** Sticky strip above composer (quick replies, pending status). */
+  composerPrefix?: ReactNode;
   /** Chat composer pinned to shell bottom. */
   input?: ReactNode;
   className?: string;
@@ -24,6 +26,7 @@ export function HubAgentShell({
   progress,
   children,
   workspace,
+  composerPrefix,
   input,
   className,
 }: HubAgentShellProps) {
@@ -34,7 +37,7 @@ export function HubAgentShell({
   return (
     <div className={cn('flex-1 flex flex-col min-h-0', className)}>
       {header}
-      {progress}
+      {progress ? <div className="shrink-0">{progress}</div> : null}
 
       <div className="flex-1 flex min-h-0">
         <div className="flex-1 flex flex-col min-h-0 min-w-0">{children}</div>
@@ -61,7 +64,12 @@ export function HubAgentShell({
         </div>
       ) : null}
 
-      {input}
+      {composerPrefix || input ? (
+        <div className="shrink-0 border-t border-gray-200 bg-white">
+          {composerPrefix}
+          {input}
+        </div>
+      ) : null}
     </div>
   );
 }

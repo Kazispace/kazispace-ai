@@ -9,6 +9,7 @@ const labels = {
   prepDuration: ({ min }: { min: number }) => `About ${min} min`,
   prepPrompt: 'Tap start or skip.',
   feedbackTitle: ({ role }: { role: string }) => `Feedback — ${role}`,
+  feedbackTitleGeneric: 'Interview Feedback',
   overallSummary: 'Overall',
   strengths: 'Strengths',
   improvements: 'Improvements',
@@ -58,5 +59,15 @@ describe('interview-message-format', () => {
     expect(text).toContain('Clarity:** 4/5');
     expect(text).toContain('Good effort');
     expect(text).toContain('Clear structure');
+  });
+
+  it('uses generic feedback title when role is empty', () => {
+    const text = formatFeedbackMessage(
+      { tier: 'pro', overall_summary: 'OK' },
+      null,
+      labels
+    );
+    expect(text).toContain('Interview Feedback');
+    expect(text).not.toContain('Interview Feedback —');
   });
 });

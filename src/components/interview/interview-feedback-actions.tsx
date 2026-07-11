@@ -14,7 +14,6 @@ interface InterviewFeedbackActionsProps {
   locale: string;
   jobId?: string | null;
   onCtaAction: (cta: InterviewCta) => void;
-  onPracticeAgain: () => void;
 }
 
 function defaultCtaLabel(
@@ -43,15 +42,29 @@ export function InterviewFeedbackActions({
   locale,
   jobId,
   onCtaAction,
-  onPracticeAgain,
 }: InterviewFeedbackActionsProps) {
   const t = useTranslations('interview');
-  const sortedCtas = ctas.length > 0 ? sortInterviewCtas(ctas) : null;
+  const sortedCtas =
+    ctas.length > 0
+      ? sortInterviewCtas(ctas)
+      : [
+          {
+            cta_type: 'retry_full' as const,
+            label: t('practiceAgain'),
+            primary: true,
+            job_id: jobId ?? null,
+          },
+          {
+            cta_type: 'edit_cv' as const,
+            label: t('buildCv'),
+            primary: false,
+            job_id: jobId ?? null,
+          },
+        ];
 
   return (
     <div className="flex flex-wrap gap-2 self-start max-w-xl">
-      {sortedCtas ? (
-        sortedCtas.map((cta) => {
+      {sortedCtas.map((cta) => {
           const label = cta.label?.trim() || defaultCtaLabel(t, cta.cta_type);
 
           if (cta.cta_type === 'back_to_clinic') {
@@ -93,25 +106,7 @@ export function InterviewFeedbackActions({
               {label}
             </Button>
           );
-        })
-      ) : (
-        <>
-          <Button size="sm" onClick={onPracticeAgain}>
-            {t('practiceAgain')}
-          </Button>
-          <Button size="sm" variant="outline" asChild>
-            <Link
-              href={
-                jobId
-                  ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
-                  : `/${locale}/cv`
-              }
-            >
-              {t('buildCv')}
-            </Link>
-          </Button>
-        </>
-      )}
+        })}
     </div>
   );
 }

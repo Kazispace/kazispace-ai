@@ -11,6 +11,7 @@ type InterviewFormatLabels = {
   prepDuration: (values: { min: number }) => string;
   prepPrompt: string;
   feedbackTitle: (values: { role: string }) => string;
+  feedbackTitleGeneric: string;
   overallSummary: string;
   strengths: string;
   improvements: string;
@@ -67,8 +68,9 @@ export function formatFeedbackMessage(
   targetRole: string | null | undefined,
   labels: InterviewFormatLabels
 ): string {
+  const roleLabel = targetRole?.trim();
   const lines: string[] = [
-    labels.feedbackTitle({ role: targetRole ?? '' }),
+    roleLabel ? labels.feedbackTitle({ role: roleLabel }) : labels.feedbackTitleGeneric,
   ];
 
   const scores = feedback.scores ?? {};

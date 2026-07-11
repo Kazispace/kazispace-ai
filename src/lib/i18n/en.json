@@ -529,7 +529,7 @@
 	"interview": {
 		"title": "Mock Interview Practice",
 		"subtitle": "Answer 3 questions and get AI feedback on clarity, relevance, and confidence.",
-		"intakeWelcome": "I'll help you practice a mock interview. Which role would you like to practice for? For example: IT Support, Customer Support, or Remote Admin — type a role name or tap a suggestion below.",
+		"intakeWelcome": "I'll run a **mock interview** with you — answer 3 practice questions and get feedback on clarity, relevance, and confidence.\n\n**Which role?** Type any job title in the box below, or tap a suggestion: Customer Support, IT Support, or Remote Admin.",
 		"intakePlaceholder": "Type a role to practice (e.g. IT Support)…",
 		"prepPrompt": "When you're ready, tap **Start interview** or **Skip prep** below.",
 		"workspaceTitle": "Interview history",
@@ -571,6 +571,7 @@
 			"continue": "Continue"
 		},
 		"feedbackTitle": "Interview Feedback — {role}",
+		"feedbackTitleGeneric": "Interview Feedback",
 		"overallSummary": "Overall Summary",
 		"strengths": "Strengths",
 		"improvements": "Areas to Improve",

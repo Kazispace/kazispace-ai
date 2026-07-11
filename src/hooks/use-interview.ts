@@ -65,6 +65,7 @@ function isProfileGateError(code?: string): boolean {
   return code === 'ONBOARDING_INCOMPLETE' || code === 'PROFILE_INCOMPLETE';
 }
 
+// §19 P3: phases orchestrate requests/loading inside one shell — not full-page UI trees.
 export type InterviewPhase =
   | 'role_select'
   | 'prep_review'
@@ -86,6 +87,7 @@ export function useInterview(jobId?: string | null) {
       prepDuration: (values: { min: number }) => t('prepDuration', values),
       prepPrompt: t('prepPrompt'),
       feedbackTitle: (values: { role: string }) => t('feedbackTitle', values),
+      feedbackTitleGeneric: t('feedbackTitleGeneric'),
       overallSummary: t('overallSummary'),
       strengths: t('strengths'),
       improvements: t('improvements'),
