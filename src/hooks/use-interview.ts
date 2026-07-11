@@ -1,13 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useAgentTransition } from '@/components/agent-transition/agent-transition-provider';
 import {
   ackInterviewPrep,
   createInterviewSession,
   getInterviewSession,
   submitInterviewAnswer,
 } from '@/lib/interview-api';
+import { followAgentEscalation } from '@/lib/agent-escalation';
+import { isNavigationPending, planNavigation } from '@/lib/agent-transition';
+import { handleAgentEnvelope } from '@/lib/handle-agent-envelope';
 import { formatFeedbackMessage, formatPrepMessage } from '@/lib/interview-message-format';
 import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
 import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/interview-roles';
@@ -76,9 +81,14 @@ export type InterviewPhase =
   | 'feedback_failed';
 
 export function useInterview(jobId?: string | null) {
+  const params = useParams();
+  const locale = typeof params.locale === 'string' ? params.locale : 'en';
+  const router = useRouter();
+  const { activateAgentWithoutPrecheck } = useAgentTransition();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const t = useTranslations('interview');
+  const tCv = useTranslations('cv');
 
   const formatLabels = useCallback(
     () => ({
@@ -144,6 +154,69 @@ export function useInterview(jobId?: string | null) {
       pollRef.current = null;
     }
   }, []);
+
+  const clearActiveInterviewSession = useCallback(() => {
+    stopPolling();
+    setSessionId(null);
+    setCurrentQuestion(null);
+    setQuestionIndex(1);
+    setQuestionCount(3);
+    pendingStartRef.current = null;
+    setPhase('role_select');
+  }, [stopPolling]);
+
+  const tryHandleAnswerEscalation = useCallback(
+    async (data: unknown, runId: number): Promise<boolean> => {
+      const { envelope, assistant, escalation } = handleAgentEnvelope(data);
+      if (!envelope.exited && !escalation) return false;
+      if (finishIfStale(runId)) return true;
+
+      clearActiveInterviewSession();
+
+      if (assistant.content && assistant.content !== '…') {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: nextId('int'),
+            role: 'assistant',
+            content: assistant.content,
+            ...(assistant.workflow ? { workflow: assistant.workflow } : {}),
+            ...(assistant.nextActions
+              ? { nextActions: assistant.nextActions }
+              : {}),
+          },
+        ]);
+      }
+
+      if (escalation) {
+        showToast(tCv('escalationSwitching'), 'info');
+        const follow = await followAgentEscalation(escalation, {
+          activateAgentWithoutPrecheck,
+        });
+        if (!follow.ok) {
+          showToast(follow.error ?? tCv('escalationFailed'), 'error');
+          setIsSending(false);
+          return true;
+        }
+        const plan = planNavigation(locale, 'interview', escalation.targetAgentId);
+        if (plan.href && isNavigationPending(plan)) {
+          router.replace(plan.href);
+        }
+      }
+
+      setIsSending(false);
+      return true;
+    },
+    [
+      activateAgentWithoutPrecheck,
+      clearActiveInterviewSession,
+      finishIfStale,
+      locale,
+      router,
+      showToast,
+      tCv,
+    ]
+  );
 
   const appendMessage = useCallback((role: 'user' | 'assistant', content: string) => {
     setMessages((prev) => [...prev, { id: nextId('int'), role, content }]);
@@ -536,7 +609,17 @@ export function useInterview(jobId?: string | null) {
 
       if (finishIfStale(runId)) return;
 
+      if (res.success && res.data) {
+        if (await tryHandleAnswerEscalation(res.data, runId)) return;
+      }
+
       if (!res.success || !res.data) {
+        if (/abandoned/i.test(res.error ?? '')) {
+          clearActiveInterviewSession();
+          setIsSending(false);
+          showToast(t('sessionEnded'), 'info');
+          return;
+        }
         showToast(res.error ?? 'Failed to submit answer', 'error');
         setIsSending(false);
         return;
@@ -563,6 +646,7 @@ export function useInterview(jobId?: string | null) {
     },
     [
       appendMessage,
+      clearActiveInterviewSession,
       currentQuestion,
       finishIfStale,
       isSending,
@@ -572,6 +656,8 @@ export function useInterview(jobId?: string | null) {
       showQuestion,
       showToast,
       startPolling,
+      t,
+      tryHandleAnswerEscalation,
     ]
   );
 

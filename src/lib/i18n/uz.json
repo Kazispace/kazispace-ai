@@ -556,6 +556,7 @@
 		"subtitleWithJob": "Vakansiyaga tayyorgarlik: {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Suhbat tayyorlanmoqda…",
+		"sessionEnded": "Suhbat sessiyasi yakunlandi.",
 		"startFailed": "Suhbatni boshlab bo'lmadi. Qayta urinib ko'ring.",
 		"retryStart": "Qayta urinish",
 		"languageHint": "Ingliz, rus yoki aralash tilda javob berishingiz mumkin.",
