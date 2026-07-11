@@ -522,9 +522,20 @@
 			"description": "Ish qidiruvini tezlashtirish uchun Pro imkoniyatlarini oching."
 		}
 	},
+	"hub": {
+		"workspaceExpand": "Ish maydonini ko'rsatish",
+		"workspaceCollapse": "Ish maydonini yashirish"
+	},
 	"interview": {
 		"title": "Sinov suhbati",
 		"subtitle": "3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.",
+		"intakeWelcome": "Siz bilan **sinov suhbati** o'tkazaman — 3 ta savolga javob bering va aniqlik, muvofiqlik hamda ishonch bo'yicha fikr-mulohaza oling.\n\n**Qaysi rol?** Quyidagi maydonga rol nomini yozing yoki taklifni tanlang: mijozlarni qo'llab-quvvatlash, IT qo'llab-quvvatlash yoki masofaviy administrator.",
+		"intakePlaceholder": "Rolni yozing (masalan, IT qo'llab-quvvatlash)…",
+		"prepPrompt": "Tayyor bo'lsangiz, pastdan **Suhbatni boshlash** yoki **Tayyorgarlikni o'tkazib yuborish** tugmasini bosing.",
+		"workspaceTitle": "Suhbat tarixi",
+		"workspaceHint": "O'tgan hisobotlar va tayyorgarlik tekshiruvlari shu yerda — chatda emas.",
+		"viewHistory": "O'sish tarixi",
+		"viewReadiness": "Vakansiyaga tayyorgarlik tekshiruvi",
 		"subtitleWithJob": "Vakansiyaga tayyorgarlik: {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Suhbat tayyorlanmoqda…",
@@ -560,6 +571,7 @@
 			"continue": "Davom etish"
 		},
 		"feedbackTitle": "Fikr-mulohaza — {role}",
+		"feedbackTitleGeneric": "Suhbat fikr-mulohazasi",
 		"overallSummary": "Umumiy xulosa",
 		"strengths": "Kuchli tomonlar",
 		"improvements": "Yaxshilash kerak",

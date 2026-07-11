@@ -1,5 +1,6 @@
 'use client';
 
+/** @deprecated KAZI-134 — prep shown as assistant messages + quick replies. */
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Briefcase, Clock, Target } from 'lucide-react';

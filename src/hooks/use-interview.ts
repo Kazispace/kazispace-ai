@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ackInterviewPrep,
   createInterviewSession,
   getInterviewSession,
   submitInterviewAnswer,
 } from '@/lib/interview-api';
+import { formatFeedbackMessage, formatPrepMessage } from '@/lib/interview-message-format';
 import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/interview-roles';
 import { getJobDetail } from '@/lib/jobs-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
@@ -24,6 +26,8 @@ import type {
 function nextId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
+
+const INTAKE_WELCOME_ID = 'intake_welcome';
 
 type SessionBootstrap = {
   session_id: string;
@@ -61,6 +65,7 @@ function isProfileGateError(code?: string): boolean {
   return code === 'ONBOARDING_INCOMPLETE' || code === 'PROFILE_INCOMPLETE';
 }
 
+// §19 P3: phases orchestrate requests/loading inside one shell — not full-page UI trees.
 export type InterviewPhase =
   | 'role_select'
   | 'prep_review'
@@ -72,6 +77,31 @@ export type InterviewPhase =
 export function useInterview(jobId?: string | null) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
+  const t = useTranslations('interview');
+
+  const formatLabels = useCallback(
+    () => ({
+      prepTitle: t('prepTitle'),
+      prepFocusAreas: t('prepFocusAreas'),
+      prepSampleQuestions: t('prepSampleQuestions'),
+      prepDuration: (values: { min: number }) => t('prepDuration', values),
+      prepPrompt: t('prepPrompt'),
+      feedbackTitle: (values: { role: string }) => t('feedbackTitle', values),
+      feedbackTitleGeneric: t('feedbackTitleGeneric'),
+      overallSummary: t('overallSummary'),
+      strengths: t('strengths'),
+      improvements: t('improvements'),
+      weaknessTags: t('weaknessTags'),
+      sampleAnswer: t('sampleAnswer'),
+      nextStep: t('nextStep'),
+      scores: {
+        clarity: t('scores.clarity'),
+        relevance: t('scores.relevance'),
+        confidence: t('scores.confidence'),
+      },
+    }),
+    [t]
+  );
 
   const [phase, setPhase] = useState<InterviewPhase>('role_select');
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
@@ -117,6 +147,30 @@ export function useInterview(jobId?: string | null) {
   const appendMessage = useCallback((role: 'user' | 'assistant', content: string) => {
     setMessages((prev) => [...prev, { id: nextId('int'), role, content }]);
   }, []);
+
+  const seedIntakeWelcome = useCallback(() => {
+    setMessages([
+      {
+        id: INTAKE_WELCOME_ID,
+        role: 'assistant',
+        content: t('intakeWelcome'),
+      },
+    ]);
+  }, [t]);
+
+  useEffect(() => {
+    if (!isLoggedIn || jobId || phase !== 'role_select') return;
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === INTAKE_WELCOME_ID)) return prev;
+      return [
+        {
+          id: INTAKE_WELCOME_ID,
+          role: 'assistant',
+          content: t('intakeWelcome'),
+        },
+      ];
+    });
+  }, [isLoggedIn, jobId, phase, t]);
 
   useEffect(() => {
     if (!jobId || !isLoggedIn) {
@@ -165,6 +219,14 @@ export function useInterview(jobId?: string | null) {
         setFeedback(data.feedback_summary);
         setDiagnosisCtas(data.ctas ?? []);
         if (data.target_role) setTargetRole(data.target_role);
+        appendMessage(
+          'assistant',
+          formatFeedbackMessage(
+            data.feedback_summary,
+            data.target_role ?? targetRole,
+            formatLabels()
+          )
+        );
         setPhase('feedback_ready');
         return;
       }
@@ -180,7 +242,7 @@ export function useInterview(jobId?: string | null) {
         data.message ?? 'Could not load feedback. Please try again.'
       );
     },
-    [appendMessage, finishIfStale, sessionId, stopPolling]
+    [appendMessage, finishIfStale, formatLabels, sessionId, stopPolling, targetRole]
   );
 
   const startPolling = useCallback(
@@ -254,10 +316,14 @@ export function useInterview(jobId?: string | null) {
       setPrepAckRequired(Boolean(data.prep_ack_required));
       if (data.target_role) setTargetRole(data.target_role);
       setPhase('prep_review');
+      appendMessage(
+        'assistant',
+        formatPrepMessage(data.prep_card, jobContext, formatLabels())
+      );
       setIsStarting(false);
       jobStartInFlightRef.current = false;
     },
-    [finishIfStale, storePendingBootstrap]
+    [appendMessage, finishIfStale, formatLabels, jobContext, storePendingBootstrap]
   );
 
   const autoAckPrepAndBegin = useCallback(
@@ -326,7 +392,6 @@ export function useInterview(jobId?: string | null) {
       const runId = ++runIdRef.current;
       setIsStarting(true);
       setTargetRole(role);
-      setMessages([]);
       setFeedback(null);
       setDiagnosisCtas([]);
       setPrepCard(null);
@@ -446,6 +511,16 @@ export function useInterview(jobId?: string | null) {
     [beginInterview, finishIfStale, isAckingPrep, sessionId, showToast]
   );
 
+  const submitIntake = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || !isLoggedIn || isStarting || jobId) return;
+      appendMessage('user', trimmed);
+      await startSession(trimmed);
+    },
+    [appendMessage, isLoggedIn, isStarting, jobId, startSession]
+  );
+
   const submitAnswer = useCallback(
     async (text: string) => {
       if (!text.trim() || !sessionId || !currentQuestion || isSending) return;
@@ -504,7 +579,6 @@ export function useInterview(jobId?: string | null) {
     stopPolling();
     jobStartInFlightRef.current = false;
     setPhase('role_select');
-    setMessages([]);
     setSessionId(null);
     setTargetRole(null);
     setQuestionIndex(1);
@@ -521,9 +595,12 @@ export function useInterview(jobId?: string | null) {
     setIsCheckingFeedback(false);
     if (jobId) {
       lastAutoStartedJobIdRef.current = null;
+      setMessages([]);
       void startJobSession(jobId);
+    } else {
+      seedIntakeWelcome();
     }
-  }, [jobId, startJobSession, stopPolling]);
+  }, [jobId, seedIntakeWelcome, startJobSession, stopPolling]);
 
   const retrySession = useCallback(
     (overrideJobId?: string | null) => {
@@ -549,14 +626,16 @@ export function useInterview(jobId?: string | null) {
           : jobId;
       if (effectiveJobId) {
         lastAutoStartedJobIdRef.current = null;
+        setMessages([]);
         void startJobSession(effectiveJobId);
       } else {
         setPhase('role_select');
         setTargetRole(null);
         setIsStarting(false);
+        seedIntakeWelcome();
       }
     },
-    [jobId, startJobSession, stopPolling]
+    [jobId, seedIntakeWelcome, startJobSession, stopPolling]
   );
 
   const checkFeedbackNow = useCallback(() => {
@@ -587,6 +666,7 @@ export function useInterview(jobId?: string | null) {
     isJobMode: Boolean(jobId),
     startSession,
     startJobSession,
+    submitIntake,
     ackPrep,
     submitAnswer,
     reset,
