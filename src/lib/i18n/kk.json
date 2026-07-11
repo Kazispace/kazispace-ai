@@ -531,7 +531,9 @@
 	},
 	"hub": {
 		"workspaceExpand": "Жұмыс аясын көрсету",
-		"workspaceCollapse": "Жұмыс аясын жасыру"
+		"workspaceCollapse": "Жұмыс аясын жасыру",
+		"escalationSwitching": "Сарапшы ауыстырылуда…",
+		"escalationFailed": "Сарапшыны ауыстыру сәтсіз. Қайта көріңіз."
 	},
 	"workflow": {
 		"trackAria": "Сессия прогрессі",
@@ -556,6 +558,7 @@
 		"subtitleWithJob": "Вакансияға дайындық: {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Сұхбат дайындалуда…",
+		"sessionEnded": "Сұхбат сессиясы аяқталды.",
 		"startFailed": "Сұхбатты бастау сәтсіз аяқталды. Қайта көріңіз.",
 		"retryStart": "Қайта көру",
 		"languageHint": "Ағылшын, орыс немесе аралас тілде жауап беруге болады.",

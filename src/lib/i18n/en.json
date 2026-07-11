@@ -531,7 +531,9 @@
 	},
 	"hub": {
 		"workspaceExpand": "Show workspace",
-		"workspaceCollapse": "Hide workspace"
+		"workspaceCollapse": "Hide workspace",
+		"escalationSwitching": "Switching expert…",
+		"escalationFailed": "Could not switch expert. Try again."
 	},
 	"workflow": {
 		"trackAria": "Session progress",
@@ -556,6 +558,7 @@
 		"subtitleWithJob": "Practice for job {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Preparing your interview…",
+		"sessionEnded": "This interview session has ended.",
 		"startFailed": "Could not start the interview. Please try again.",
 		"retryStart": "Try again",
 		"languageHint": "You can answer in English, Russian, or mixed language.",

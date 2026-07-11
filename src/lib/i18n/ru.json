@@ -531,7 +531,9 @@
 	},
 	"hub": {
 		"workspaceExpand": "Показать панель",
-		"workspaceCollapse": "Скрыть панель"
+		"workspaceCollapse": "Скрыть панель",
+		"escalationSwitching": "Переключаем эксперта…",
+		"escalationFailed": "Не удалось переключить эксперта. Попробуйте снова."
 	},
 	"workflow": {
 		"trackAria": "Прогресс сессии",
@@ -556,6 +558,7 @@
 		"subtitleWithJob": "Подготовка к вакансии {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Подготавливаем интервью…",
+		"sessionEnded": "Сессия интервью завершена.",
 		"startFailed": "Не удалось начать интервью. Попробуйте снова.",
 		"retryStart": "Повторить",
 		"languageHint": "Можно отвечать на английском, русском или смешанно.",

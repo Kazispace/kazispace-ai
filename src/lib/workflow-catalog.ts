@@ -44,7 +44,7 @@ function markSteps(
   });
 }
 
-/** Transitional until KAZI-131 `build_workflow` projection — no FE progress_pct. */
+/** Fallback when BE `workflow` is absent (local dev / legacy responses). */
 export function buildCvWorkflowFromPipeline(
   pipelineState: string | null | undefined,
   labels: CvWorkflowLabels
@@ -62,7 +62,7 @@ export function buildCvWorkflowFromPipeline(
   };
 }
 
-/** Transitional MI workflow — fixed skeleton + dynamic detail on q_group (§3.3.1). */
+/** Fallback MI workflow when BE `workflow` is absent. */
 export function buildMockInterviewWorkflow(
   phase: MockInterviewWorkflowPhase,
   labels: MockInterviewWorkflowLabels,
