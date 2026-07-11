@@ -17,7 +17,8 @@ import {
   buildAssistantMessageFields,
   handleAgentEnvelope,
 } from '@/lib/handle-agent-envelope';
-import { formatFeedbackMessage, formatPrepMessage } from '@/lib/interview-message-format';
+import { formatPrepMessage } from '@/lib/interview-message-format';
+import { resolveInterviewFeedbackCtas } from '@/lib/interview-cta';
 import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
 import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/mock-interview-config';
 import { getJobDetail } from '@/lib/jobs-api';
@@ -99,26 +100,13 @@ export function useInterview(jobId?: string | null) {
   const t = useTranslations('interview');
   const tHub = useTranslations('hub');
 
-  const formatLabels = useCallback(
+  const prepFormatLabels = useCallback(
     () => ({
       prepTitle: t('prepTitle'),
       prepFocusAreas: t('prepFocusAreas'),
       prepSampleQuestions: t('prepSampleQuestions'),
       prepDuration: (values: { min: number }) => t('prepDuration', values),
       prepPrompt: t('prepPrompt'),
-      feedbackTitle: (values: { role: string }) => t('feedbackTitle', values),
-      feedbackTitleGeneric: t('feedbackTitleGeneric'),
-      overallSummary: t('overallSummary'),
-      strengths: t('strengths'),
-      improvements: t('improvements'),
-      weaknessTags: t('weaknessTags'),
-      sampleAnswer: t('sampleAnswer'),
-      nextStep: t('nextStep'),
-      scores: {
-        clarity: t('scores.clarity'),
-        relevance: t('scores.relevance'),
-        confidence: t('scores.confidence'),
-      },
     }),
     [t]
   );
@@ -332,24 +320,32 @@ export function useInterview(jobId?: string | null) {
         return;
       }
 
-      if (data.status === 'completed' && data.feedback_summary) {
+      if (data.status === 'completed') {
         stopPolling();
-        setFeedback(data.feedback_summary);
-        setDiagnosisCtas(data.ctas ?? []);
+        const { assistant } = handleAgentEnvelope(data);
+        const feedbackContent = assistant.content?.trim();
+
+        if (data.feedback_summary) {
+          setFeedback(data.feedback_summary);
+        }
         if (data.target_role) setTargetRole(data.target_role);
+        setDiagnosisCtas(resolveInterviewFeedbackCtas(data, locale));
+
+        if (feedbackContent) {
+          appendMessage('assistant', feedbackContent, {
+            workflow: assistant.workflow,
+            nextActions: assistant.nextActions,
+            cards: assistant.cards,
+          });
+          setPhase('feedback_ready');
+          return;
+        }
+
+        setPhase('feedback_failed');
         appendMessage(
           'assistant',
-          formatFeedbackMessage(
-            data.feedback_summary,
-            data.target_role ?? targetRole,
-            formatLabels()
-          )
+          data.message ?? t('feedbackContentMissing')
         );
-        setPhase('feedback_ready');
-        return;
-      }
-
-      if (data.status === 'completed') {
         return;
       }
 
@@ -360,7 +356,7 @@ export function useInterview(jobId?: string | null) {
         data.message ?? 'Could not load feedback. Please try again.'
       );
     },
-    [appendMessage, finishIfStale, formatLabels, sessionId, stopPolling, targetRole]
+    [appendMessage, finishIfStale, locale, sessionId, stopPolling, t]
   );
 
   const startPolling = useCallback(
@@ -454,12 +450,12 @@ export function useInterview(jobId?: string | null) {
       setPhase('prep_review');
       appendMessage(
         'assistant',
-        formatPrepMessage(data.prep_card, jobContext, formatLabels())
+        formatPrepMessage(data.prep_card, jobContext, prepFormatLabels())
       );
       setIsStarting(false);
       jobStartInFlightRef.current = false;
     },
-    [appendMessage, finishIfStale, formatLabels, jobContext, storePendingBootstrap]
+    [appendMessage, finishIfStale, jobContext, prepFormatLabels, storePendingBootstrap]
   );
 
   const autoAckPrepAndBegin = useCallback(

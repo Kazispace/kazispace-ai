@@ -333,11 +333,20 @@ export interface InterviewFeedbackSummary {
   tier?: 'free' | 'pro';
 }
 
+/** KAZI-135/137 — BE-rendered feedback turn (Chat Envelope SSOT). */
+export interface InterviewAssistantResponse {
+  content?: string;
+  next_actions?: import('./chat-envelope').ChatNextAction[];
+  workflow?: import('./chat-envelope').AssistantWorkflow;
+  cards?: import('./chat-envelope').ChatJobCard[];
+}
+
 export interface InterviewSessionDetail {
   session_id: string;
   status: string;
   target_role?: string;
   feedback_summary?: InterviewFeedbackSummary;
+  assistant_response?: InterviewAssistantResponse;
   message?: string;
   ctas?: import('./interview-contract').InterviewCta[];
   job_id?: string | null;

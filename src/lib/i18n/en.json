@@ -578,6 +578,7 @@
 		"completed": "Completed",
 		"inputPlaceholder": "Type your answer… (Enter to send)",
 		"feedbackPending": "Generating your personalized feedback…",
+		"feedbackContentMissing": "Feedback is not available yet. Please try again in a moment.",
 		"checkFeedback": "Check Feedback",
 		"tryAgain": "Try Again",
 		"practiceAgain": "Practice Again",

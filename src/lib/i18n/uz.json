@@ -578,6 +578,7 @@
 		"completed": "Tugallandi",
 		"inputPlaceholder": "Javobingizni yozing…",
 		"feedbackPending": "Shaxsiy fikr-mulohaza tayyorlanmoqda…",
+		"feedbackContentMissing": "Fikr-mulohaza hali tayyor emas. Birozdan keyin qayta urinib ko'ring.",
 		"checkFeedback": "Natijani tekshirish",
 		"tryAgain": "Qayta urinish",
 		"practiceAgain": "Yana mashq qilish",
