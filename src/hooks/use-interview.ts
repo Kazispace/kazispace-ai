@@ -11,13 +11,22 @@ import {
   submitInterviewAnswer,
 } from '@/lib/interview-api';
 import { followAgentEscalation } from '@/lib/agent-escalation';
+import { resolveWorkflowFromMessages } from '@/lib/agent-sessions';
 import { isNavigationPending, planNavigation } from '@/lib/agent-transition';
-import { handleAgentEnvelope } from '@/lib/handle-agent-envelope';
+import {
+  buildAssistantMessageFields,
+  handleAgentEnvelope,
+} from '@/lib/handle-agent-envelope';
 import { formatFeedbackMessage, formatPrepMessage } from '@/lib/interview-message-format';
 import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
 import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/interview-roles';
 import { getJobDetail } from '@/lib/jobs-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
+import type {
+  AssistantWorkflow,
+  ChatJobCard,
+  ChatNextAction,
+} from '@/types/chat-envelope';
 import type {
   CreateInterviewSessionResponse,
   InterviewCta,
@@ -88,7 +97,7 @@ export function useInterview(jobId?: string | null) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const t = useTranslations('interview');
-  const tCv = useTranslations('cv');
+  const tHub = useTranslations('hub');
 
   const formatLabels = useCallback(
     () => ({
@@ -155,46 +164,70 @@ export function useInterview(jobId?: string | null) {
     }
   }, []);
 
-  const clearActiveInterviewSession = useCallback(() => {
-    stopPolling();
-    setSessionId(null);
-    setCurrentQuestion(null);
-    setQuestionIndex(1);
-    setQuestionCount(3);
-    pendingStartRef.current = null;
-    setPhase('role_select');
-  }, [stopPolling]);
+  const seedIntakeWelcome = useCallback(() => {
+    setMessages([
+      {
+        id: INTAKE_WELCOME_ID,
+        role: 'assistant',
+        content: t('intakeWelcome'),
+      },
+    ]);
+  }, [t]);
+
+  const resetInterviewSession = useCallback(
+    (options?: { messages?: 'clear' | 'welcome' }) => {
+      stopPolling();
+      setSessionId(null);
+      setCurrentQuestion(null);
+      setQuestionIndex(1);
+      setQuestionCount(3);
+      pendingStartRef.current = null;
+      setPhase('role_select');
+      if (options?.messages === 'welcome') {
+        seedIntakeWelcome();
+      } else if (options?.messages === 'clear') {
+        setMessages([]);
+      }
+    },
+    [seedIntakeWelcome, stopPolling]
+  );
+
+  const appendAssistantEnvelope = useCallback(
+    (assistant: ReturnType<typeof buildAssistantMessageFields>) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId('int'),
+          role: 'assistant',
+          content: assistant.content,
+          ...(assistant.workflow ? { workflow: assistant.workflow } : {}),
+          ...(assistant.nextActions
+            ? { nextActions: assistant.nextActions }
+            : {}),
+          ...(assistant.cards ? { cards: assistant.cards } : {}),
+        },
+      ]);
+    },
+    []
+  );
 
   const tryHandleAnswerEscalation = useCallback(
-    async (data: unknown, runId: number): Promise<boolean> => {
+    async (data: unknown): Promise<boolean> => {
       const { envelope, assistant, escalation } = handleAgentEnvelope(data);
       if (!envelope.exited && !escalation) return false;
-      if (finishIfStale(runId)) return true;
 
-      clearActiveInterviewSession();
-
+      resetInterviewSession({ messages: 'clear' });
       if (assistant.content && assistant.content !== '…') {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: nextId('int'),
-            role: 'assistant',
-            content: assistant.content,
-            ...(assistant.workflow ? { workflow: assistant.workflow } : {}),
-            ...(assistant.nextActions
-              ? { nextActions: assistant.nextActions }
-              : {}),
-          },
-        ]);
+        appendAssistantEnvelope(assistant);
       }
 
       if (escalation) {
-        showToast(tCv('escalationSwitching'), 'info');
+        showToast(tHub('escalationSwitching'), 'info');
         const follow = await followAgentEscalation(escalation, {
           activateAgentWithoutPrecheck,
         });
         if (!follow.ok) {
-          showToast(follow.error ?? tCv('escalationFailed'), 'error');
+          showToast(follow.error ?? tHub('escalationFailed'), 'error');
           setIsSending(false);
           return true;
         }
@@ -209,28 +242,39 @@ export function useInterview(jobId?: string | null) {
     },
     [
       activateAgentWithoutPrecheck,
-      clearActiveInterviewSession,
-      finishIfStale,
+      appendAssistantEnvelope,
       locale,
+      resetInterviewSession,
       router,
       showToast,
-      tCv,
+      tHub,
     ]
   );
 
-  const appendMessage = useCallback((role: 'user' | 'assistant', content: string) => {
-    setMessages((prev) => [...prev, { id: nextId('int'), role, content }]);
-  }, []);
-
-  const seedIntakeWelcome = useCallback(() => {
-    setMessages([
-      {
-        id: INTAKE_WELCOME_ID,
-        role: 'assistant',
-        content: t('intakeWelcome'),
-      },
-    ]);
-  }, [t]);
+  const appendMessage = useCallback(
+    (
+      role: 'user' | 'assistant',
+      content: string,
+      extras?: {
+        workflow?: AssistantWorkflow;
+        nextActions?: ChatNextAction[];
+        cards?: ChatJobCard[];
+      }
+    ) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId('int'),
+          role,
+          content,
+          ...(extras?.workflow ? { workflow: extras.workflow } : {}),
+          ...(extras?.nextActions ? { nextActions: extras.nextActions } : {}),
+          ...(extras?.cards ? { cards: extras.cards } : {}),
+        },
+      ]);
+    },
+    []
+  );
 
   useEffect(() => {
     if (!isLoggedIn || jobId || phase !== 'role_select') return;
@@ -331,11 +375,29 @@ export function useInterview(jobId?: string | null) {
   useEffect(() => () => stopPolling(), [stopPolling]);
 
   const showQuestion = useCallback(
-    (q: InterviewQuestion, idx: number, total: number) => {
+    (
+      q: InterviewQuestion,
+      idx: number,
+      total: number,
+      extras?: {
+        content?: string;
+        workflow?: AssistantWorkflow;
+        nextActions?: ChatNextAction[];
+        cards?: ChatJobCard[];
+      }
+    ) => {
       setQuestionIndex(idx);
       setQuestionCount(total);
       setCurrentQuestion(q);
-      appendMessage('assistant', `**Question ${idx}** (${q.category})\n\n${q.content}`);
+      const content =
+        extras?.content && extras.content !== '…'
+          ? extras.content
+          : `**Question ${idx}** (${q.category})\n\n${q.content}`;
+      appendMessage('assistant', content, {
+        workflow: extras?.workflow,
+        nextActions: extras?.nextActions,
+        cards: extras?.cards,
+      });
     },
     [appendMessage]
   );
@@ -610,12 +672,16 @@ export function useInterview(jobId?: string | null) {
       if (finishIfStale(runId)) return;
 
       if (res.success && res.data) {
-        if (await tryHandleAnswerEscalation(res.data, runId)) return;
+        if (await tryHandleAnswerEscalation(res.data)) return;
       }
 
       if (!res.success || !res.data) {
-        if (/abandoned/i.test(res.error ?? '')) {
-          clearActiveInterviewSession();
+        // TODO(KAZI-128): prefer errorCode === 'SESSION_ABANDONED' once BE stabilizes.
+        if (
+          res.errorCode === 'SESSION_ABANDONED' ||
+          /abandoned/i.test(res.error ?? '')
+        ) {
+          resetInterviewSession({ messages: 'welcome' });
           setIsSending(false);
           showToast(t('sessionEnded'), 'info');
           return;
@@ -626,13 +692,20 @@ export function useInterview(jobId?: string | null) {
       }
 
       const data = res.data;
+      const { assistant } = handleAgentEnvelope(data);
       if (data.status === 'completed') {
         setCurrentQuestion(null);
         setPhase('feedback_pending');
         appendMessage(
           'assistant',
           data.loading_hint ??
-            'All answers submitted! Generating your personalized feedback…'
+            assistant.content ??
+            'All answers submitted! Generating your personalized feedback…',
+          {
+            workflow: assistant.workflow,
+            nextActions: assistant.nextActions,
+            cards: assistant.cards,
+          }
         );
         startPolling(runId);
         setIsSending(false);
@@ -640,18 +713,23 @@ export function useInterview(jobId?: string | null) {
       }
 
       if (data.next_question) {
-        showQuestion(data.next_question, questionIndex + 1, questionCount);
+        showQuestion(data.next_question, questionIndex + 1, questionCount, {
+          content: assistant.content,
+          workflow: assistant.workflow,
+          nextActions: assistant.nextActions,
+          cards: assistant.cards,
+        });
       }
       setIsSending(false);
     },
     [
       appendMessage,
-      clearActiveInterviewSession,
+      questionCount,
+      questionIndex,
+      resetInterviewSession,
       currentQuestion,
       finishIfStale,
       isSending,
-      questionCount,
-      questionIndex,
       sessionId,
       showQuestion,
       showToast,
@@ -745,8 +823,10 @@ export function useInterview(jobId?: string | null) {
 
   const activeWorkflow = useMemo(
     () =>
-      buildMockInterviewWorkflow(phase, miWorkflowLabels, questionIndex, questionCount),
-    [miWorkflowLabels, phase, questionIndex, questionCount]
+      resolveWorkflowFromMessages(messages, () =>
+        buildMockInterviewWorkflow(phase, miWorkflowLabels, questionIndex, questionCount)
+      ),
+    [messages, miWorkflowLabels, phase, questionIndex, questionCount]
   );
 
   return {

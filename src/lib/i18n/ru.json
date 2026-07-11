@@ -531,7 +531,9 @@
 	},
 	"hub": {
 		"workspaceExpand": "Показать панель",
-		"workspaceCollapse": "Скрыть панель"
+		"workspaceCollapse": "Скрыть панель",
+		"escalationSwitching": "Переключаем эксперта…",
+		"escalationFailed": "Не удалось переключить эксперта. Попробуйте снова."
 	},
 	"workflow": {
 		"trackAria": "Прогресс сессии",

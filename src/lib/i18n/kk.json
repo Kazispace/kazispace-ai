@@ -531,7 +531,9 @@
 	},
 	"hub": {
 		"workspaceExpand": "Жұмыс аясын көрсету",
-		"workspaceCollapse": "Жұмыс аясын жасыру"
+		"workspaceCollapse": "Жұмыс аясын жасыру",
+		"escalationSwitching": "Сарапшы ауыстырылуда…",
+		"escalationFailed": "Сарапшыны ауыстыру сәтсіз. Қайта көріңіз."
 	},
 	"workflow": {
 		"trackAria": "Сессия прогрессі",

@@ -531,7 +531,9 @@
 	},
 	"hub": {
 		"workspaceExpand": "Ish maydonini ko'rsatish",
-		"workspaceCollapse": "Ish maydonini yashirish"
+		"workspaceCollapse": "Ish maydonini yashirish",
+		"escalationSwitching": "Mutaxassis almashtirilmoqda…",
+		"escalationFailed": "Mutaxassisni almashtirib bo'lmadi. Qayta urinib ko'ring."
 	},
 	"workflow": {
 		"trackAria": "Sessiya progressi",
