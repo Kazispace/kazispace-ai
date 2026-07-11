@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback } from 'react';
-import { fetchAgentMessages, parseAgentReply, sendAgentChat } from '@/lib/agent-api';
-import { parseAgentEscalation } from '@/lib/agent-escalation';
+import { fetchAgentMessages, sendAgentChat } from '@/lib/agent-api';
+import { handleAgentEnvelope } from '@/lib/handle-agent-envelope';
 import { parsePendingTransition } from '@/lib/agent-pending-transition';
 import { useAgentStore } from '@/lib/store';
 import { mapAgentHistoryToChatMessages } from '@/lib/agent-sessions';
@@ -78,8 +78,7 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
         return { ok: false as const, error: res.error };
       }
 
-      const parsed = parseAgentReply(res.data);
-      const escalation = parseAgentEscalation(res.data);
+      const { assistant, escalation } = handleAgentEnvelope(res.data);
       const pendingTransition = parsePendingTransition(res.data);
 
       if (pendingTransition) {
@@ -93,10 +92,11 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
       }
 
       updateAgentMessage(agentId, assistantId, {
-        content: parsed.reply || '…',
-        ...(parsed.nextActions.length > 0 ? { nextActions: parsed.nextActions } : {}),
-        ...(parsed.cards.length > 0 ? { cards: parsed.cards } : {}),
-        ...(parsed.workflow ? { workflow: parsed.workflow } : {}),
+        content: assistant.content,
+        ...(assistant.intent ? { intent: assistant.intent } : {}),
+        ...(assistant.nextActions ? { nextActions: assistant.nextActions } : {}),
+        ...(assistant.cards ? { cards: assistant.cards } : {}),
+        ...(assistant.workflow ? { workflow: assistant.workflow } : {}),
       });
       return {
         ok: true as const,

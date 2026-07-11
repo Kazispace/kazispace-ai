@@ -21,6 +21,14 @@ import {
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import {
+  handleAgentEnvelope,
+  resolveActiveWorkflow,
+} from '@/lib/handle-agent-envelope';
+import {
+  mapAgentHistoryToChatMessages,
+  type RawAgentHistoryMessage,
+} from '@/lib/agent-sessions';
 import { buildCvWorkflowFromPipeline } from '@/lib/workflow-catalog';
 import { useAgentTransition } from '@/components/agent-transition/agent-transition-provider';
 import { isNavigationPending, planNavigation } from '@/lib/agent-transition';
@@ -152,11 +160,19 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
       if (hist.data?.messages?.length) {
         setMessages(
-          hist.data.messages.map((m, i) => ({
-            id: m.id ?? `hist_${i}`,
-            role: m.role as CvChatMessage['role'],
-            content: m.content,
-          }))
+          mapAgentHistoryToChatMessages(
+            hist.data.messages as RawAgentHistoryMessage[],
+            sid
+          )
+            .filter((m) => m.role === 'user' || m.role === 'assistant')
+            .map((m) => ({
+              id: m.id,
+              role: m.role as CvChatMessage['role'],
+              content: m.content,
+              ...(m.nextActions ? { nextActions: m.nextActions } : {}),
+              ...(m.cards ? { cards: m.cards } : {}),
+              ...(m.workflow ? { workflow: m.workflow } : {}),
+            }))
         );
         hydrateCvMetaFromAgentHistory(hist.data.messages, {
           setPipelineState,
@@ -209,12 +225,22 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       applyAgentMetaSideEffects(data, openPaywall);
 
       if (!options?.skipReply) {
-        const reply = extractCvReplyFromAgent(data);
-        if (reply) {
-          const workflow = resolveWorkflowFromResponse(data);
+        const { assistant } = handleAgentEnvelope(data);
+        if (assistant.content) {
+          const workflow =
+            assistant.workflow ?? resolveWorkflowFromResponse(data);
           setMessages((prev) => [
             ...prev,
-            { id: nextId('cv'), role: 'assistant', content: reply, workflow },
+            {
+              id: nextId('cv'),
+              role: 'assistant',
+              content: assistant.content,
+              workflow,
+              ...(assistant.nextActions
+                ? { nextActions: assistant.nextActions }
+                : {}),
+              ...(assistant.cards ? { cards: assistant.cards } : {}),
+            },
           ]);
         }
       }
@@ -722,8 +748,11 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     !isExporting;
 
   const activeWorkflow = useMemo(
-    () => buildCvWorkflowFromPipeline(pipelineState, cvWorkflowLabels),
-    [cvWorkflowLabels, pipelineState]
+    () =>
+      resolveActiveWorkflow(messages, () =>
+        buildCvWorkflowFromPipeline(pipelineState, cvWorkflowLabels)
+      ),
+    [cvWorkflowLabels, messages, pipelineState]
   );
 
   return {

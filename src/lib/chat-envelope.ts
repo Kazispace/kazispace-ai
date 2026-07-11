@@ -35,6 +35,15 @@ function normalizeNextActions(raw: unknown): ChatNextAction[] {
     if (typeof action.payload === 'string') {
       entry.payload = action.payload;
     }
+    if (typeof action.path === 'string') {
+      entry.path = action.path;
+    }
+    if (typeof action.job_id === 'string') {
+      entry.job_id = action.job_id;
+    }
+    if (typeof action.session_id === 'string') {
+      entry.session_id = action.session_id;
+    }
     actions.push(entry);
   }
   return actions;
@@ -178,10 +187,25 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
   );
 
   const suggestedRaw = raw.suggested_next_steps ?? assistant?.suggested_next_steps;
-  // Reserved for post-turn routing (KAZI-129); parsed but not yet rendered in FE.
   const suggestedNextSteps = Array.isArray(suggestedRaw)
     ? suggestedRaw.filter((s): s is string => typeof s === 'string')
     : undefined;
+
+  const exited =
+    raw.exited === true ||
+    assistant?.exited === true ||
+    response?.exited === true;
+
+  const exitedAgent =
+    (typeof raw.exited_agent === 'string' ? raw.exited_agent : undefined) ??
+    (typeof assistant?.exited_agent === 'string' ? assistant.exited_agent : undefined);
+
+  const exitReason =
+    (typeof raw.exit_reason === 'string' ? raw.exit_reason : undefined) ??
+    (typeof assistant?.exit_reason === 'string' ? assistant.exit_reason : undefined);
+
+  const metaRaw = assistant?.meta ?? response?.meta ?? raw.meta;
+  const meta = asRecord(metaRaw);
 
   return {
     reply,
@@ -194,7 +218,10 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
     nextActions,
     cards: cards.filter((card) => card.type === 'job'),
     workflow,
-    exited: raw.exited === true,
+    exited: exited || undefined,
+    exitedAgent,
+    exitReason,
     suggestedNextSteps,
+    meta,
   };
 }

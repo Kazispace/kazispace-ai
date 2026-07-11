@@ -126,6 +126,17 @@ function CvPageContent({ locale }: { locale: string }) {
   const routedActions = nextActions.filter((a) => isRoutedCvAction(a.type));
   const pickerActions = nextActions.filter((a) => !isRoutedCvAction(a.type));
 
+  const lastAssistantMessage = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") return messages[i];
+    }
+    return null;
+  }, [messages]);
+
+  const showComposerActions = !(lastAssistantMessage?.nextActions?.length);
+  const composerRoutedActions = showComposerActions ? routedActions : [];
+  const composerPickerActions = showComposerActions ? pickerActions : [];
+
   const handleCvAction = useCallback(
     (action: ChatNextAction) => {
       handleCvNextAction(action, {
@@ -308,6 +319,10 @@ function CvPageContent({ locale }: { locale: string }) {
                       content={msg.content}
                       variant="agent"
                       locale={locale}
+                      nextActions={msg.nextActions}
+                      cards={msg.cards}
+                      onNextAction={handleCvAction}
+                      actionsDisabled={inputDisabled}
                     />
                   )
                 )}
@@ -316,24 +331,24 @@ function CvPageContent({ locale }: { locale: string }) {
 
             {!isReadOnly ? (
               <div className="shrink-0 border-t border-gray-200/80 bg-white">
-                {routedActions.length > 0 ? (
+                {composerRoutedActions.length > 0 ? (
                   <div className="max-w-3xl mx-auto px-4 pt-2">
                     <ChatNextActions
-                      actions={routedActions}
+                      actions={composerRoutedActions}
                       locale={locale}
                       onAction={handleCvAction}
                       disabled={inputDisabled}
                     />
                   </div>
                 ) : null}
-                {pickerActions.length > 0 ? (
+                {composerPickerActions.length > 0 ? (
                   <QuickReplies
-                    options={pickerActions.map((a) =>
+                    options={composerPickerActions.map((a) =>
                       quickReplyLabel(a, locale)
                     )}
                     disabled={inputDisabled}
                     onSelect={(text) => {
-                      const action = pickerActions.find(
+                      const action = composerPickerActions.find(
                         (a) => quickReplyLabel(a, locale) === text
                       );
                       if (action) handleCvAction(action);
