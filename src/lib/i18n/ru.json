@@ -526,6 +526,10 @@
 		"workspaceExpand": "Показать панель",
 		"workspaceCollapse": "Скрыть панель"
 	},
+	"workflow": {
+		"trackAria": "Прогресс сессии",
+		"progressLabel": "Прогресс"
+	},
 	"interview": {
 		"title": "Пробное интервью",
 		"subtitle": "Ответьте на 3 вопроса и получите оценку ясности, релевантности и уверенности.",
@@ -536,6 +540,12 @@
 		"workspaceHint": "Прошлые отчёты и проверки готовности — здесь, не в чате.",
 		"viewHistory": "История роста",
 		"viewReadiness": "Проверка готовности к вакансии",
+		"workflow": {
+			"prep": "Подготовка",
+			"questions": "Вопросы",
+			"feedback": "Обратная связь",
+			"report": "Отчёт"
+		},
 		"subtitleWithJob": "Подготовка к вакансии {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Подготавливаем интервью…",

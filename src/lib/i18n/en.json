@@ -526,6 +526,10 @@
 		"workspaceExpand": "Show workspace",
 		"workspaceCollapse": "Hide workspace"
 	},
+	"workflow": {
+		"trackAria": "Session progress",
+		"progressLabel": "Progress"
+	},
 	"interview": {
 		"title": "Mock Interview Practice",
 		"subtitle": "Answer 3 questions and get AI feedback on clarity, relevance, and confidence.",
@@ -536,6 +540,12 @@
 		"workspaceHint": "Past reports and readiness checks live here — not in the chat.",
 		"viewHistory": "View growth history",
 		"viewReadiness": "Job readiness check",
+		"workflow": {
+			"prep": "Prep",
+			"questions": "Questions",
+			"feedback": "Feedback",
+			"report": "Report"
+		},
 		"subtitleWithJob": "Practice for job {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Preparing your interview…",

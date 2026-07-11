@@ -11,6 +11,7 @@ import { CvChatInput } from "@/components/cv/cv-chat-input";
 import { CvHeader } from "@/components/cv/cv-header";
 import { CvParsedHints } from "@/components/cv/cv-parsed-hints";
 import { MessageBubble } from "@/components/clinic/message-bubble";
+import { AssistantTurn } from "@/components/chat/assistant-turn";
 import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
@@ -61,6 +62,7 @@ function CvPageContent({ locale }: { locale: string }) {
     needsOnboarding,
     needsProfile,
     pipelineState,
+    activeWorkflow,
     nextActions,
     isSessionReady,
     isReadOnly,
@@ -88,7 +90,14 @@ function CvPageContent({ locale }: { locale: string }) {
   const showProfileGate = needsProfile === true;
   const showWorkspace =
     !needsLogin && !needsOnboarding && !showProfileGate;
-  const showPipelineSteps = showWorkspace && !isReadOnly;
+  const showPipelineSteps = false;
+
+  const lastAssistantMessageId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") return messages[i].id;
+    }
+    return null;
+  }, [messages]);
   const canDownloadCv = documentId != null;
   const resumeHasPreview = preview != null;
   const inputDisabled =
@@ -289,11 +298,17 @@ function CvPageContent({ locale }: { locale: string }) {
                   />
                 ) : null}
                 {messages.map((msg) => (
-                  <MessageBubble
+                  <AssistantTurn
                     key={msg.id}
                     role={msg.role}
                     content={msg.content}
                     variant="agent"
+                    locale={locale}
+                    workflow={
+                      msg.role === "assistant" && msg.id === lastAssistantMessageId
+                        ? msg.workflow ?? activeWorkflow
+                        : undefined
+                    }
                   />
                 ))}
               </div>

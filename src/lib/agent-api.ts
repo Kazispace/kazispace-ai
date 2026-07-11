@@ -518,6 +518,7 @@ export function parseAgentReply(data: AgentChatResponse | undefined): {
   reply: string;
   nextActions: ChatNextAction[];
   cards: ChatJobCard[];
+  workflow?: import('@/types/chat-envelope').AssistantWorkflow;
 } {
   if (!data) return { reply: '', nextActions: [], cards: [] };
   const envelope = parseAssistantEnvelope(data);
@@ -525,5 +526,6 @@ export function parseAgentReply(data: AgentChatResponse | undefined): {
     reply: envelope.reply,
     nextActions: envelope.nextActions,
     cards: envelope.cards,
+    workflow: envelope.workflow,
   };
 }

@@ -526,6 +526,10 @@
 		"workspaceExpand": "Жұмыс аясын көрсету",
 		"workspaceCollapse": "Жұмыс аясын жасыру"
 	},
+	"workflow": {
+		"trackAria": "Сессия прогрессі",
+		"progressLabel": "Прогресс"
+	},
 	"interview": {
 		"title": "Сынақ сұхбат",
 		"subtitle": "3 сұраққа жауап беріп, анықтық, релеванттылық және сенімділік бойынша кері байланыс алыңыз.",
@@ -536,6 +540,12 @@
 		"workspaceHint": "Өткен есептер мен дайындық тексерулері мұнда — чатта емес.",
 		"viewHistory": "Өсу тарихы",
 		"viewReadiness": "Вакансияға дайындық тексеруі",
+		"workflow": {
+			"prep": "Дайындық",
+			"questions": "Сұрақтар",
+			"feedback": "Кері байланыс",
+			"report": "Есеп"
+		},
 		"subtitleWithJob": "Вакансияға дайындық: {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Сұхбат дайындалуда…",

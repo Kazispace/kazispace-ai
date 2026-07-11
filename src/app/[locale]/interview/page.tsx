@@ -13,9 +13,8 @@ import {
 } from "@/components/agent-transition/agent-transition-provider";
 import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
 import { HubAgentShell } from "@/components/hub/hub-agent-shell";
-import { MessageBubble } from "@/components/clinic/message-bubble";
+import { AssistantTurn } from "@/components/chat/assistant-turn";
 import { QuickReplies } from "@/components/clinic/quick-replies";
-import { InterviewProgress } from "@/components/interview/interview-progress";
 import { InterviewFeedbackActions } from "@/components/interview/interview-feedback-actions";
 import { InterviewWorkspace } from "@/components/interview/interview-workspace";
 import { IrpProfileHome } from "@/components/interview/irp-profile-home";
@@ -49,6 +48,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
     phase,
     messages,
     displayRole,
+    activeWorkflow,
     questionIndex,
     questionCount,
     diagnosisCtas,
@@ -188,8 +188,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
     !needsLogin &&
     ((phase === "role_select" && !isJobMode) || phase === "interview");
 
-  const showProgress = phase === "interview" && !needsLogin;
-
   const inputDisabled =
     isStarting ||
     isSending ||
@@ -212,6 +210,13 @@ function InterviewPageContent({ locale }: { locale: string }) {
     !needsLogin &&
     (phase === "role_select" || (phase === "prep_review" && !prepCard)) &&
     isStarting;
+
+  const lastAssistantMessageId = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "assistant") return messages[i].id;
+    }
+    return null;
+  }, [messages]);
 
   const shellHeader = (
     <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between shrink-0">
@@ -266,11 +271,17 @@ function InterviewPageContent({ locale }: { locale: string }) {
           </div>
         ) : (
           messages.map((msg) => (
-            <MessageBubble
+            <AssistantTurn
               key={msg.id}
               role={msg.role}
               content={msg.content}
               variant="agent"
+              locale={locale}
+              workflow={
+                msg.role === "assistant" && msg.id === lastAssistantMessageId
+                  ? msg.workflow ?? activeWorkflow
+                  : undefined
+              }
             />
           ))
         )}
@@ -368,14 +379,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
         ) : (
           <HubAgentShell
             header={shellHeader}
-            progress={
-              showProgress ? (
-                <InterviewProgress
-                  questionIndex={questionIndex}
-                  questionCount={questionCount}
-                />
-              ) : undefined
-            }
             workspace={!needsLogin ? <InterviewWorkspace locale={locale} /> : undefined}
             composerPrefix={
               phase === "feedback_pending" || quickReplies.length > 0
