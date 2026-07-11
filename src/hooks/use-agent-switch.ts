@@ -176,12 +176,6 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
         }
 
         if (currentActive === agentId) {
-          if (isDedicatedHubAgent(agentId)) {
-            applyTransitionNavigation(agentId);
-            await sleep(FADE_IN_MS);
-            return { ok: true, resumed: true, hub: true };
-          }
-
           const activeRes = await getActiveAgent();
           if (
             activeRes.success &&
@@ -189,6 +183,12 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
             activeRes.data.session_id
           ) {
             const sid = activeRes.data.session_id;
+            if (isDedicatedHubAgent(agentId)) {
+              setActiveAgent(agentId, sid);
+              applyTransitionNavigation(agentId);
+              await sleep(FADE_IN_MS);
+              return { ok: true, resumed: true, hub: true };
+            }
             setActiveAgent(agentId, sid);
             const existing = useAgentStore.getState().getAgentMessages(agentId);
             if (existing.length === 0) {

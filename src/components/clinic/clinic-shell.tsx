@@ -168,11 +168,16 @@ export function ClinicShell({ locale }: ClinicShellProps) {
    * their own hooks (e.g. useCvAgent → activateAgent resumes the latest session).
    */
   const stayInClinicForDedicatedHub = useCallback(
-    async (hubAgentId: string) => {
-      await deactivateToClinic(locale, { agentId: hubAgentId });
+    async (hubAgentId: string): Promise<boolean> => {
+      const result = await deactivateToClinic(locale, { agentId: hubAgentId });
+      if (!result.ok) {
+        showToast(tClinic("deactivateFailed"), "error");
+        return false;
+      }
       await loadHistoryRef.current();
+      return true;
     },
-    [locale]
+    [locale, showToast, tClinic]
   );
 
   const reconcileActiveAgentLayer = useCallback(async () => {

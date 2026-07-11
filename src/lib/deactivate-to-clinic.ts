@@ -35,7 +35,8 @@ export async function deactivateToClinic(
       if (!options?.skipBroadcast) {
         publishActiveAgentSync({ type: 'deactivated', agentId });
       }
-      return { ok: true, agentId: serverAgent };
+      // Return the agent we attempted to exit — callers use this for messaging.
+      return { ok: true, agentId };
     }
     return { ok: false, error: res.error };
   }
