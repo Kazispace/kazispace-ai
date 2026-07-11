@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { LocaleSwitcher } from "@/components/locale/locale-switcher";
 import {
-  isClinicNavHref,
+  isHubExitDestination,
   useHubClinicNav,
 } from "@/hooks/use-hub-clinic-nav";
 import { useUIStore } from "@/lib/store";
@@ -20,62 +20,48 @@ export function Header({ locale }: HeaderProps) {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
-  const { goToClinic, isDeactivating, isOnHub } = useHubClinicNav(locale);
+  const { handleHubExitClick, isDeactivating, isOnHub } =
+    useHubClinicNav(locale);
 
   if (isTelegramMiniApp) return null;
 
+  const homeHref = `/${locale}`;
+  const chatHref = `/${locale}/chat`;
+
   const navItems = [
-    { href: `/${locale}`, label: t("home") },
-    { href: `/${locale}/chat`, label: t("chat") },
+    { href: homeHref, label: t("home") },
+    { href: chatHref, label: t("chat") },
   ];
 
-  const renderClinicNav = (href: string, label: string, className: string) => {
-    if (isOnHub && isClinicNavHref(href, locale)) {
-      return (
-        <button
-          key={href}
-          type="button"
-          disabled={isDeactivating}
-          onClick={() => void goToClinic()}
-          className={className}
-        >
-          {isDeactivating ? (
-            <Loader2 className="h-4 w-4 animate-spin inline" aria-hidden />
-          ) : (
-            label
-          )}
-        </button>
-      );
-    }
-
-    return (
-      <Link key={href} href={href} className={className}>
-        {label}
-      </Link>
-    );
-  };
+  const renderClinicNav = (href: string, label: string, className: string) => (
+    <Link
+      key={href}
+      href={href}
+      onClick={(event) => handleHubExitClick(event, href)}
+      aria-disabled={isOnHub && isHubExitDestination(href, locale) && isDeactivating}
+      className={className}
+    >
+      {isDeactivating && isOnHub && isHubExitDestination(href, locale) ? (
+        <Loader2 className="h-4 w-4 animate-spin inline" aria-hidden />
+      ) : (
+        label
+      )}
+    </Link>
+  );
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-kazi-navy/95 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-5 flex items-center justify-between h-\[68px\]">
-        {isOnHub ? (
-          <button
-            type="button"
-            disabled={isDeactivating}
-            onClick={() => void goToClinic()}
-            className="flex items-center"
-          >
-            <span className="text-2xl font-bold text-white">
-              <span className="text-kazi-orange">Kazi</span>Space
-            </span>
-          </button>
-        ) : (
-          <Link href={`/${locale}`} className="flex items-center">
-            <span className="text-2xl font-bold text-white">
-              <span className="text-kazi-orange">Kazi</span>Space
-            </span>
-          </Link>
-        )}
+        <Link
+          href={homeHref}
+          onClick={(event) => handleHubExitClick(event, homeHref)}
+          aria-disabled={isOnHub && isDeactivating}
+          className="flex items-center"
+        >
+          <span className="text-2xl font-bold text-white">
+            <span className="text-kazi-orange">Kazi</span>Space
+          </span>
+        </Link>
 
         <div className="hidden md:flex items-center gap-8">
           {navItems.map((item) =>
@@ -100,7 +86,7 @@ export function Header({ locale }: HeaderProps) {
             {t("profile")}
           </Link>
           {renderClinicNav(
-            `/${locale}/chat`,
+            chatHref,
             t("chat"),
             "bg-kazi-orange hover:bg-kazi-orange-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
           )}
