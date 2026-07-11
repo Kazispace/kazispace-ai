@@ -472,7 +472,14 @@
 		"stepAnalyze": "Analyze",
 		"stepGenerate": "Generate",
 		"stepReview": "Review",
-		"stepDone": "Done"
+		"stepDone": "Done",
+		"workflow": {
+			"intake": "Intake",
+			"analyze": "Analyze",
+			"generate": "Generate",
+			"review": "Review",
+			"done": "Done"
+		}
 	},
 	"nba": {
 		"sectionTitle": "Suggested next step",

@@ -12,6 +12,7 @@ import { CvHeader } from "@/components/cv/cv-header";
 import { CvParsedHints } from "@/components/cv/cv-parsed-hints";
 import { MessageBubble } from "@/components/clinic/message-bubble";
 import { AssistantTurn } from "@/components/chat/assistant-turn";
+import { HubWorkflowStrip } from "@/components/hub/hub-workflow-strip";
 import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
@@ -92,12 +93,6 @@ function CvPageContent({ locale }: { locale: string }) {
     !needsLogin && !needsOnboarding && !showProfileGate;
   const showPipelineSteps = false;
 
-  const lastAssistantMessageId = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === "assistant") return messages[i].id;
-    }
-    return null;
-  }, [messages]);
   const canDownloadCv = documentId != null;
   const resumeHasPreview = preview != null;
   const inputDisabled =
@@ -281,8 +276,9 @@ function CvPageContent({ locale }: { locale: string }) {
               </p>
             ) : null}
 
-            <div className="flex-1 overflow-y-auto min-h-0">
-              <div className="max-w-3xl mx-auto w-full px-4 py-4 flex flex-col gap-3 min-h-full">
+            <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+              <HubWorkflowStrip workflow={activeWorkflow} locale={locale} />
+              <div className="max-w-3xl mx-auto w-full px-4 py-4 flex flex-col gap-3 min-h-full flex-1">
                 {error ? (
                   <p className="text-sm text-red-500 text-center">{error}</p>
                 ) : null}
@@ -297,20 +293,24 @@ function CvPageContent({ locale }: { locale: string }) {
                     onUploadClick={() => fileInputRef.current?.click()}
                   />
                 ) : null}
-                {messages.map((msg) => (
-                  <AssistantTurn
-                    key={msg.id}
-                    role={msg.role}
-                    content={msg.content}
-                    variant="agent"
-                    locale={locale}
-                    workflow={
-                      msg.role === "assistant" && msg.id === lastAssistantMessageId
-                        ? msg.workflow ?? activeWorkflow
-                        : undefined
-                    }
-                  />
-                ))}
+                {messages.map((msg) =>
+                  msg.role === "user" ? (
+                    <MessageBubble
+                      key={msg.id}
+                      role="user"
+                      content={msg.content}
+                      variant="agent"
+                      locale={locale}
+                    />
+                  ) : (
+                    <AssistantTurn
+                      key={msg.id}
+                      content={msg.content}
+                      variant="agent"
+                      locale={locale}
+                    />
+                  )
+                )}
               </div>
             </div>
 

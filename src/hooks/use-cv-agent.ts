@@ -85,24 +85,22 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
   const cvWorkflowLabels = useMemo(
     () => ({
-      intake: t('stepIntake'),
-      analyze: t('stepAnalyze'),
-      generate: t('stepGenerate'),
-      review: t('stepReview'),
-      done: t('stepDone'),
+      intake: t('workflow.intake'),
+      analyze: t('workflow.analyze'),
+      generate: t('workflow.generate'),
+      review: t('workflow.review'),
+      done: t('workflow.done'),
     }),
     [t]
   );
 
   const resolveWorkflowFromResponse = useCallback(
-    (data: AgentChatResponse, pipelineHint?: string | null) => {
+    (data: AgentChatResponse) => {
       const envelope = parseAssistantEnvelope(data);
       if (envelope.workflow) return envelope.workflow;
       const meta = resolveAgentMeta(data);
       const ps =
-        typeof meta?.pipeline_state === 'string'
-          ? meta.pipeline_state
-          : pipelineHint ?? null;
+        typeof meta?.pipeline_state === 'string' ? meta.pipeline_state : null;
       return buildCvWorkflowFromPipeline(ps, cvWorkflowLabels);
     },
     [cvWorkflowLabels]
@@ -213,7 +211,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       if (!options?.skipReply) {
         const reply = extractCvReplyFromAgent(data);
         if (reply) {
-          const workflow = resolveWorkflowFromResponse(data, pipelineState);
+          const workflow = resolveWorkflowFromResponse(data);
           setMessages((prev) => [
             ...prev,
             { id: nextId('cv'), role: 'assistant', content: reply, workflow },
@@ -234,7 +232,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         setSessionId(data.session_id);
       }
     },
-    [applyCtaState, openPaywall, pipelineState, resolveWorkflowFromResponse]
+    [applyCtaState, openPaywall, resolveWorkflowFromResponse]
   );
 
   const applyActivateResponse = useCallback(

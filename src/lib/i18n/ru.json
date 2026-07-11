@@ -472,7 +472,14 @@
 		"stepAnalyze": "Анализ",
 		"stepGenerate": "Генерация",
 		"stepReview": "Проверка",
-		"stepDone": "Готово"
+		"stepDone": "Готово",
+		"workflow": {
+			"intake": "Сбор данных",
+			"analyze": "Анализ",
+			"generate": "Генерация",
+			"review": "Проверка",
+			"done": "Готово"
+		}
 	},
 	"nba": {
 		"sectionTitle": "Рекомендуемый шаг",

@@ -46,4 +46,9 @@ describe('buildMockInterviewWorkflow', () => {
   it('returns undefined during role_select', () => {
     expect(buildMockInterviewWorkflow('role_select', labels)).toBeUndefined();
   });
+
+  it('marks prep done (not skipped) once interview starts', () => {
+    const wf = buildMockInterviewWorkflow('interview', labels, 1, 3);
+    expect(wf?.steps.find((s) => s.id === 'prep')?.status).toBe('done');
+  });
 });

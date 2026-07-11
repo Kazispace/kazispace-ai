@@ -73,7 +73,6 @@ export function buildMockInterviewWorkflow(
 
   let currentId: string | null = null;
   let detail: string | undefined;
-  const skipped = new Set<string>();
 
   switch (phase) {
     case 'role_select':
@@ -84,19 +83,15 @@ export function buildMockInterviewWorkflow(
     case 'interview':
       currentId = 'q_group';
       detail = labels.questionDetail({ current: questionIndex, total: questionCount });
-      skipped.add('prep');
       break;
     case 'feedback_pending':
       currentId = 'feedback';
-      skipped.add('prep');
       break;
     case 'feedback_ready':
       currentId = 'report';
-      skipped.add('prep');
       break;
     case 'feedback_failed':
       currentId = 'feedback';
-      skipped.add('prep');
       break;
     default:
       return undefined;
@@ -111,7 +106,7 @@ export function buildMockInterviewWorkflow(
     report: labels.report,
   };
 
-  const steps = markSteps([...order], currentId, skipped).map((step) => {
+  const steps = markSteps([...order], currentId).map((step) => {
     const id = step.id as (typeof order)[number];
     const enriched: WorkflowStep = { ...step, label: labelById[id] };
     if (id === 'q_group' && detail && step.status === 'current') {

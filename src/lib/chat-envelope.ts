@@ -178,6 +178,7 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
   );
 
   const suggestedRaw = raw.suggested_next_steps ?? assistant?.suggested_next_steps;
+  // Reserved for post-turn routing (KAZI-129); parsed but not yet rendered in FE.
   const suggestedNextSteps = Array.isArray(suggestedRaw)
     ? suggestedRaw.filter((s): s is string => typeof s === 'string')
     : undefined;

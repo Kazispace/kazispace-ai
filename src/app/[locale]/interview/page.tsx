@@ -14,6 +14,8 @@ import {
 import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
 import { HubAgentShell } from "@/components/hub/hub-agent-shell";
 import { AssistantTurn } from "@/components/chat/assistant-turn";
+import { HubWorkflowStrip } from "@/components/hub/hub-workflow-strip";
+import { MessageBubble } from "@/components/clinic/message-bubble";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { InterviewFeedbackActions } from "@/components/interview/interview-feedback-actions";
 import { InterviewWorkspace } from "@/components/interview/interview-workspace";
@@ -211,13 +213,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
     (phase === "role_select" || (phase === "prep_review" && !prepCard)) &&
     isStarting;
 
-  const lastAssistantMessageId = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === "assistant") return messages[i].id;
-    }
-    return null;
-  }, [messages]);
-
   const shellHeader = (
     <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between shrink-0">
       <div>
@@ -263,27 +258,33 @@ function InterviewPageContent({ locale }: { locale: string }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-gray-bg min-h-0">
+      <div className="flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0">
+        <HubWorkflowStrip workflow={activeWorkflow} locale={locale} />
+        <div className="flex-1 p-4 flex flex-col gap-3">
         {showJobBootstrapping && messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12">
             <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
             <p className="text-sm text-gray-600">{t("sessionLoading")}</p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <AssistantTurn
-              key={msg.id}
-              role={msg.role}
-              content={msg.content}
-              variant="agent"
-              locale={locale}
-              workflow={
-                msg.role === "assistant" && msg.id === lastAssistantMessageId
-                  ? msg.workflow ?? activeWorkflow
-                  : undefined
-              }
-            />
-          ))
+          messages.map((msg) =>
+            msg.role === "user" ? (
+              <MessageBubble
+                key={msg.id}
+                role="user"
+                content={msg.content}
+                variant="agent"
+                locale={locale}
+              />
+            ) : (
+              <AssistantTurn
+                key={msg.id}
+                content={msg.content}
+                variant="agent"
+                locale={locale}
+              />
+            )
+          )
         )}
 
         {phase === "feedback_pending" && (
@@ -322,6 +323,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
             </Button>
           </div>
         )}
+        </div>
       </div>
     </>
   );

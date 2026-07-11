@@ -472,7 +472,14 @@
 		"stepAnalyze": "Tahlil",
 		"stepGenerate": "Yaratish",
 		"stepReview": "Tekshirish",
-		"stepDone": "Tayyor"
+		"stepDone": "Tayyor",
+		"workflow": {
+			"intake": "Ma'lumot",
+			"analyze": "Tahlil",
+			"generate": "Yaratish",
+			"review": "Ko'rib chiqish",
+			"done": "Tayyor"
+		}
 	},
 	"nba": {
 		"sectionTitle": "Tavsiya etilgan qadam",

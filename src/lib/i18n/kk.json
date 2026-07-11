@@ -472,7 +472,14 @@
 		"stepAnalyze": "Талдау",
 		"stepGenerate": "Жасау",
 		"stepReview": "Тексеру",
-		"stepDone": "Дайын"
+		"stepDone": "Дайын",
+		"workflow": {
+			"intake": "Ақпарат",
+			"analyze": "Талдау",
+			"generate": "Жасау",
+			"review": "Тексеру",
+			"done": "Дайын"
+		}
 	},
 	"nba": {
 		"sectionTitle": "Келесі қадам",
