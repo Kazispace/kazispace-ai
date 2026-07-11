@@ -23,16 +23,9 @@ export type AssistantMessageEnvelopeFields = {
   intent?: string;
 };
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
-
 /** Path A escalation from parsed envelope fields. */
 export function envelopeToEscalation(
-  envelope: ParsedAssistantEnvelope,
-  raw?: Record<string, unknown>
+  envelope: ParsedAssistantEnvelope
 ): AgentEscalation | null {
   if (!envelope.exited) return null;
   const steps = envelope.suggestedNextSteps;
@@ -46,11 +39,8 @@ export function envelopeToEscalation(
   const known = AGENT_REGISTRY.some((a) => a.agentId === targetAgentId);
   if (!known) return null;
 
-  const agentId =
-    typeof raw?.agent_id === 'string' ? raw.agent_id : undefined;
-
   return {
-    exitedAgent: envelope.exitedAgent ?? agentId,
+    exitedAgent: envelope.exitedAgent,
     exitReason: envelope.exitReason,
     targetAgentId,
     suggestedNextSteps: steps,
@@ -87,24 +77,9 @@ export function handleAgentEnvelope(data: unknown): {
   escalation: AgentEscalation | null;
 } {
   const envelope = parseAssistantEnvelope(data);
-  const raw = asRecord(data);
   return {
     envelope,
     assistant: buildAssistantMessageFields(envelope),
-    escalation: envelopeToEscalation(envelope, raw),
+    escalation: envelopeToEscalation(envelope),
   };
-}
-
-/** Prefer BE workflow; fall back to transitional FE builder. */
-export function resolveActiveWorkflow<T>(
-  messages: Array<{ role: string; workflow?: AssistantWorkflow }>,
-  fallback: () => T
-): AssistantWorkflow | T {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    if (msg.role === 'assistant' && msg.workflow) {
-      return msg.workflow;
-    }
-  }
-  return fallback();
 }

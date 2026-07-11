@@ -23,10 +23,10 @@ import { consumeCvAgentHandoff } from '@/lib/cv-agent-handoff';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import {
   handleAgentEnvelope,
-  resolveActiveWorkflow,
 } from '@/lib/handle-agent-envelope';
 import {
   mapAgentHistoryToChatMessages,
+  resolveWorkflowFromMessages,
   type RawAgentHistoryMessage,
 } from '@/lib/agent-sessions';
 import { buildCvWorkflowFromPipeline } from '@/lib/workflow-catalog';
@@ -210,6 +210,8 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   }, [enabled, isLoggedIn]);
 
   const applyCtaState = useCallback((data: AgentChatResponse | ActivateAgentResponse) => {
+    // Transitional: global nextActions feeds composer QuickReplies; routed CTAs prefer
+    // per-message nextActions on the last assistant bubble (KAZI-129).
     const { nextActions: actions } = parseAgentReply(data as AgentChatResponse);
     if (actions.length > 0) {
       setNextActions(actions);
@@ -225,8 +227,9 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       applyAgentMetaSideEffects(data, openPaywall);
 
       if (!options?.skipReply) {
-        const { assistant } = handleAgentEnvelope(data);
-        if (assistant.content) {
+        const reply = extractCvReplyFromAgent(data);
+        if (reply) {
+          const { assistant } = handleAgentEnvelope(data);
           const workflow =
             assistant.workflow ?? resolveWorkflowFromResponse(data);
           setMessages((prev) => [
@@ -234,7 +237,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
             {
               id: nextId('cv'),
               role: 'assistant',
-              content: assistant.content,
+              content: reply,
               workflow,
               ...(assistant.nextActions
                 ? { nextActions: assistant.nextActions }
@@ -749,7 +752,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
   const activeWorkflow = useMemo(
     () =>
-      resolveActiveWorkflow(messages, () =>
+      resolveWorkflowFromMessages(messages, () =>
         buildCvWorkflowFromPipeline(pipelineState, cvWorkflowLabels)
       ),
     [cvWorkflowLabels, messages, pipelineState]

@@ -198,7 +198,8 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
 
   const exitedAgent =
     (typeof raw.exited_agent === 'string' ? raw.exited_agent : undefined) ??
-    (typeof assistant?.exited_agent === 'string' ? assistant.exited_agent : undefined);
+    (typeof assistant?.exited_agent === 'string' ? assistant.exited_agent : undefined) ??
+    (typeof raw.agent_id === 'string' ? raw.agent_id : undefined);
 
   const exitReason =
     (typeof raw.exit_reason === 'string' ? raw.exit_reason : undefined) ??

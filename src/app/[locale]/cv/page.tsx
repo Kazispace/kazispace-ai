@@ -133,9 +133,13 @@ function CvPageContent({ locale }: { locale: string }) {
     return null;
   }, [messages]);
 
-  const showComposerActions = !(lastAssistantMessage?.nextActions?.length);
-  const composerRoutedActions = showComposerActions ? routedActions : [];
-  const composerPickerActions = showComposerActions ? pickerActions : [];
+  const msgRoutedActions =
+    lastAssistantMessage?.nextActions?.filter((a) => isRoutedCvAction(a.type)) ??
+    [];
+  // Routed CTAs move to the message bubble; picker chips stay in composer.
+  const composerRoutedActions =
+    msgRoutedActions.length > 0 ? [] : routedActions;
+  const composerPickerActions = pickerActions;
 
   const handleCvAction = useCallback(
     (action: ChatNextAction) => {
@@ -319,7 +323,9 @@ function CvPageContent({ locale }: { locale: string }) {
                       content={msg.content}
                       variant="agent"
                       locale={locale}
-                      nextActions={msg.nextActions}
+                      nextActions={msg.nextActions?.filter((a) =>
+                        isRoutedCvAction(a.type)
+                      )}
                       cards={msg.cards}
                       onNextAction={handleCvAction}
                       actionsDisabled={inputDisabled}

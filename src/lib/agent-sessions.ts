@@ -91,14 +91,15 @@ export function isAgentSessionReadOnly(status?: string | null): boolean {
 }
 
 /** Resolve workflow strip from message history (BE SSOT when replayed). */
-export function resolveWorkflowFromMessages(
-  messages: Array<{ role: string; workflow?: AssistantWorkflow }>
-): AssistantWorkflow | undefined {
+export function resolveWorkflowFromMessages<T = undefined>(
+  messages: Array<{ role: string; workflow?: AssistantWorkflow }>,
+  fallback?: () => T
+): AssistantWorkflow | T | undefined {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
     if (msg.role === 'assistant' && msg.workflow) {
       return msg.workflow;
     }
   }
-  return undefined;
+  return fallback ? fallback() : undefined;
 }

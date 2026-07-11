@@ -18,8 +18,7 @@ export function parseAgentEscalation(
   if (!data) return null;
   const envelope = parseAssistantEnvelope(data);
   return envelopeToEscalation(
-    envelope,
-    data as unknown as Record<string, unknown>
+    envelope
   );
 }
 

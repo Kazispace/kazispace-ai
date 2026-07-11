@@ -4,9 +4,9 @@ import {
   buildAssistantMessageFields,
   envelopeToEscalation,
   handleAgentEnvelope,
-  resolveActiveWorkflow,
 } from '@/lib/handle-agent-envelope';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import { resolveWorkflowFromMessages } from '@/lib/agent-sessions';
 import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
 
 describe('parseAssistantEnvelope workflow', () => {
@@ -68,6 +68,17 @@ describe('parseAssistantEnvelope next_actions and exit', () => {
     expect(parsed.exitedAgent).toBe('mock_interview');
     expect(parsed.exitReason).toBe('escalated');
     expect(parsed.suggestedNextSteps).toEqual(['cv_builder']);
+  });
+
+  it('falls back exitedAgent to top-level agent_id', () => {
+    const parsed = parseAssistantEnvelope({
+      exited: true,
+      agent_id: 'mock_interview',
+      suggested_next_steps: ['cv_builder'],
+      assistant_response: { content: 'Switching.' },
+    });
+
+    expect(parsed.exitedAgent).toBe('mock_interview');
   });
 
   it('parses assistant_response.meta', () => {
@@ -151,14 +162,14 @@ describe('envelopeToEscalation', () => {
   });
 });
 
-describe('resolveActiveWorkflow', () => {
+describe('resolveWorkflowFromMessages', () => {
   it('prefers the latest assistant message workflow', () => {
     const beWorkflow = {
       agent_id: 'cv_builder',
       pipeline_state: 'review',
       steps: [{ id: 'review', status: 'current' as const }],
     };
-    const resolved = resolveActiveWorkflow(
+    const resolved = resolveWorkflowFromMessages(
       [
         { role: 'user' },
         { role: 'assistant', workflow: beWorkflow },
