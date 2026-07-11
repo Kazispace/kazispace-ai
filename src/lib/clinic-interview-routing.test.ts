@@ -16,6 +16,11 @@ describe('clinic-interview-routing', () => {
     );
   });
 
+  it('rejects non-practice interview utterances (false positives)', () => {
+    expect(isMockInterviewStartUtterance('我想面试这家公司')).toBe(false);
+    expect(isMockInterviewStartUtterance('帮我看看面试结果')).toBe(false);
+  });
+
   it('routes on mock_interview next_action (KAZI-138 referral)', () => {
     expect(
       shouldClinicReplyRouteToInterviewHub({

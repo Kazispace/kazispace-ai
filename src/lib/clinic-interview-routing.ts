@@ -11,7 +11,11 @@ export type ClinicInterviewHubActionType =
 
 /** User utterances that start mock interview from Clinic L2 (mirrors BE markers). */
 const MOCK_INTERVIEW_START_RE =
-  /模拟面试|mock interview|practice interview|面试练习|练习面试|帮我.*面试|我想.*面试|potrenir|собесед|потренировать/i;
+  /模拟面试|mock interview|practice interview|面试练习|练习面试|帮我(?:练习|模拟|做).*面试|我想(?:练习|模拟|做).*面试|potrenir|собесед(?:ование|овать)|потренировать/i;
+
+const INTERVIEW_HUB_ACTION_TYPE_SET = new Set<string>(
+  CLINIC_INTERVIEW_HUB_ACTION_TYPES
+);
 
 export function isMockInterviewStartUtterance(text: string): boolean {
   const trimmed = (text ?? '').trim();
@@ -24,9 +28,7 @@ export function hasInterviewHubNextAction(
 ): boolean {
   if (!nextActions?.length) return false;
   return nextActions.some((action) =>
-    (CLINIC_INTERVIEW_HUB_ACTION_TYPES as readonly string[]).includes(
-      action.type
-    )
+    INTERVIEW_HUB_ACTION_TYPE_SET.has(action.type)
   );
 }
 

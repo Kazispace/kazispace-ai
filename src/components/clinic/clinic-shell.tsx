@@ -203,12 +203,14 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     [isLoggedIn, loadHistory]
   );
 
-  const routeToMockInterviewHub = useCallback(async () => {
-    const result = await activateAgentWithoutPrecheck(MOCK_INTERVIEW_AGENT_ID);
-    if (!result.ok) {
+  /** Activates mock_interview; navigation to `/interview` is handled by performAgentSwitch. */
+  const activateMockInterviewHub = useCallback(async () => {
+    const result = await requestAgentSwitch(MOCK_INTERVIEW_AGENT_ID);
+    if (result && !result.ok && result.needsConfirm) return;
+    if (result && !result.ok) {
       showToast(result.error ?? tClinic("activateFailed"), "error");
     }
-  }, [activateAgentWithoutPrecheck, showToast, tClinic]);
+  }, [requestAgentSwitch, showToast, tClinic]);
 
   const [isOnline, setIsOnline] = useState(false);
   const [englishLevel, setEnglishLevelState] = useState<string | null>(null);
@@ -665,6 +667,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         .getState()
         .messages.find((m) => m.id === result.assistantId);
 
+      // Interim bridge (pre-KAZI-138): L2 still processes inline mock interview;
+      // remove this path once BE returns referral-only next_actions. See KAZI-138.
       if (
         assistantMsg &&
         shouldClinicReplyRouteToInterviewHub({
@@ -674,7 +678,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         })
       ) {
         markStreamComplete(result.assistantId);
-        await routeToMockInterviewHub();
+        await activateMockInterviewHub();
         return;
       }
     }
@@ -746,7 +750,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     if (messageId) dismissMessageReferral(messageId);
     setPendingReferral(null);
     if (isMockInterviewAgent(agentId)) {
-      await routeToMockInterviewHub();
+      await activateMockInterviewHub();
       return;
     }
     await handleAgentSelect(agentId);
@@ -774,7 +778,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
         case "mock_interview":
         case "open_interview":
-          void routeToMockInterviewHub();
+          void activateMockInterviewHub();
           return;
         case "english_tutor":
           void handleAgentSelect(ENGLISH_TUTOR_AGENT_ID);
@@ -793,7 +797,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage, routeInterviewPage, routeEnglishPage, routeToMockInterviewHub]
+    [locale, router, openPaywall, handleBackToClinic, handleAgentSelect, routeCvBuilderPage, routeInterviewPage, routeEnglishPage, activateMockInterviewHub]
   );
 
   const handleJobCardClick = useCallback(
