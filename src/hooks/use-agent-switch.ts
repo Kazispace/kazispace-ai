@@ -176,6 +176,12 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
         }
 
         if (currentActive === agentId) {
+          if (isDedicatedHubAgent(agentId)) {
+            applyTransitionNavigation(agentId);
+            await sleep(FADE_IN_MS);
+            return { ok: true, resumed: true, hub: true };
+          }
+
           const activeRes = await getActiveAgent();
           if (
             activeRes.success &&
@@ -408,9 +414,10 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
   );
 
   const exitToClinic = useCallback(
-    async (options?: { skipHistory?: boolean }) => {
-      const currentAgentId = useAgentStore.getState().activeAgentId;
-      if (!currentAgentId) {
+    async (options?: { skipHistory?: boolean; agentId?: string }) => {
+      const storeAgentId = useAgentStore.getState().activeAgentId;
+      const targetAgentId = storeAgentId ?? options?.agentId ?? null;
+      if (!targetAgentId) {
         const activeRes = await getActiveAgent();
         if (!activeRes.data?.active_agent) {
           return { ok: true as const };
@@ -422,7 +429,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
 
       try {
         const result = await deactivateToClinic(locale, {
-          agentId: currentAgentId ?? undefined,
+          agentId: targetAgentId ?? undefined,
         });
         if (!result.ok) {
           showToast(result.error ?? 'Failed to return to clinic', 'error');

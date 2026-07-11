@@ -161,13 +161,25 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const loadAgentHistoryRef = useRef(loadAgentHistory);
   loadAgentHistoryRef.current = loadAgentHistory;
 
+  /**
+   * Scheme A — Clinic surface: user chose /chat, so dedicated hub sticky sessions must
+   * not auto-resume here. Deactivate on the server (not just local store) so sync loops
+   * and cross-tab active_agent drift do not persist. Hub pages re-activate on entry via
+   * their own hooks (e.g. useCvAgent → activateAgent resumes the latest session).
+   */
+  const stayInClinicForDedicatedHub = useCallback(
+    async (hubAgentId: string) => {
+      await deactivateToClinic(locale, { agentId: hubAgentId });
+      await loadHistoryRef.current();
+    },
+    [locale]
+  );
+
   const reconcileActiveAgentLayer = useCallback(async () => {
     const active = await fetchActiveAgentRef.current();
     if (hasStickyActiveAgent(active)) {
-      // Scheme A (URL-first): dedicated hubs never auto-resume from Clinic sync.
       if (isDedicatedHubAgent(active.active_agent)) {
-        useAgentStore.getState().setActiveAgent(null, null);
-        await loadHistoryRef.current();
+        await stayInClinicForDedicatedHub(active.active_agent);
         setLayerReady(true);
         return;
       }
@@ -183,7 +195,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     useAgentStore.getState().setActiveAgent(null, null);
     await loadHistoryRef.current();
     setLayerReady(true);
-  }, [skipHistoryLoad]);
+  }, [skipHistoryLoad, stayInClinicForDedicatedHub]);
 
   const switcherOpen = useAgentStore((s) => s.switcherOpen);
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
@@ -504,9 +516,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const active = await fetchActiveAgentRef.current();
       if (hasStickyActiveAgent(active)) {
         if (isDedicatedHubAgent(active.active_agent)) {
-          // Scheme A: cold /chat entry stays in Clinic — no auto-resume to hub.
-          useAgentStore.getState().setActiveAgent(null, null);
-          await loadHistoryRef.current();
+          await stayInClinicForDedicatedHub(active.active_agent);
         } else {
           await resumeActiveAgentSilentlyRef.current(
             active.active_agent,
@@ -540,6 +550,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     shouldOpenInterviewPage,
     shouldOpenEnglishPage,
     skipHistoryLoad,
+    stayInClinicForDedicatedHub,
   ]);
 
   useActiveAgentSync(isLoggedIn && layerReady, async () => {
