@@ -29,7 +29,7 @@ import { useInterviewProfile } from "@/hooks/use-interview-profile";
 import { useBilling } from "@/hooks/use-billing";
 import { isProPlan } from "@/lib/api-mappers";
 import { hasFormalIrp, resolveInterviewEntry } from "@/lib/interview-irp-entry";
-import { INTAKE_SUGGESTION_KEYS } from "@/lib/interview-roles";
+import { INTAKE_SUGGESTION_KEYS } from "@/lib/interview-intake";
 import type { InterviewCta } from "@/types";
 import { useUIStore, useAuthStore } from "@/lib/store";
 

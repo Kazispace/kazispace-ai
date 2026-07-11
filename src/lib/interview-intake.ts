@@ -5,4 +5,4 @@ export const INTAKE_SUGGESTION_KEYS = [
   'sales',
 ] as const;
 
-export const DEFAULT_INTERVIEW_LEVEL = 'preparation';
+export type IntakeSuggestionKey = (typeof INTAKE_SUGGESTION_KEYS)[number];
