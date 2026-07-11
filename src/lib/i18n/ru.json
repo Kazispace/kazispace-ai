@@ -556,6 +556,7 @@
 		"subtitleWithJob": "Подготовка к вакансии {jobId}",
 		"subtitleWithJobDetail": "{title} · {company}",
 		"sessionLoading": "Подготавливаем интервью…",
+		"sessionEnded": "Сессия интервью завершена.",
 		"startFailed": "Не удалось начать интервью. Попробуйте снова.",
 		"retryStart": "Повторить",
 		"languageHint": "Можно отвечать на английском, русском или смешанно.",

@@ -350,6 +350,7 @@ export interface InterviewMessage {
   role: 'user' | 'assistant';
   content: string;
   workflow?: import('./chat-envelope').AssistantWorkflow;
+  nextActions?: import('./chat-envelope').ChatNextAction[];
 }
 
 export type {
