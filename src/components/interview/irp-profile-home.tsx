@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * IRP profile dashboard at `/interview/profile` (secondary route).
+ * Cold-open `/interview` uses chat intake instead (KAZI-161).
+ */
+
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { TrendingUp } from 'lucide-react';

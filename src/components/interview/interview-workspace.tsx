@@ -5,10 +5,11 @@ import { useTranslations } from 'next-intl';
 
 interface InterviewWorkspaceProps {
   locale: string;
+  showProfileLink?: boolean;
 }
 
 /** §19.3.1 / §19.4 — IRP history entry (B: workspace attachment). */
-export function InterviewWorkspace({ locale }: InterviewWorkspaceProps) {
+export function InterviewWorkspace({ locale, showProfileLink = false }: InterviewWorkspaceProps) {
   const t = useTranslations('interview');
 
   return (
@@ -16,6 +17,14 @@ export function InterviewWorkspace({ locale }: InterviewWorkspaceProps) {
       <h3 className="text-sm font-semibold text-kazi-navy">{t('workspaceTitle')}</h3>
       <p className="text-xs text-gray-500">{t('workspaceHint')}</p>
       <nav className="flex flex-col gap-2">
+        {showProfileLink ? (
+          <Link
+            href={`/${locale}/interview/profile`}
+            className="text-sm text-kazi-orange hover:underline"
+          >
+            {t('viewProfile')}
+          </Link>
+        ) : null}
         <Link
           href={`/${locale}/interview/growth`}
           className="text-sm text-kazi-orange hover:underline"

@@ -354,7 +354,11 @@ function InterviewPageContent({ locale }: { locale: string }) {
         ) : (
           <HubAgentShell
             header={shellHeader}
-            workspace={!needsLogin ? <InterviewWorkspace locale={locale} /> : undefined}
+            workspace={
+              !needsLogin ? (
+                <InterviewWorkspace locale={locale} showProfileLink={irpEnabled} />
+              ) : undefined
+            }
             composerPrefix={
               phase === "feedback_pending" || quickReplies.length > 0
                 ? composerPrefix
