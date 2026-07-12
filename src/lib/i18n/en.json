@@ -231,6 +231,21 @@
 		"jobs": "Jobs",
 		"profile": "Profile"
 	},
+	"sessionNav": {
+		"iconRail": "Session navigation",
+		"clinic": "Clinic",
+		"clinicTitle": "Serík · Clinic",
+		"agents": "Agents",
+		"files": "Files",
+		"search": "Search",
+		"settings": "Settings",
+		"panelTitle": "Sessions",
+		"collapsePanel": "Collapse panel",
+		"openPanel": "Open session list",
+		"comingSoon": "Coming soon",
+		"clinicInlineHint": "Start from Clinic chat",
+		"workspace": "Workspace"
+	},
 	"jobs": {
 		"title": "Job recommendations",
 		"loading": "Loading jobs…",

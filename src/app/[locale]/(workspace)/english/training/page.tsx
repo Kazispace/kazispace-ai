@@ -4,17 +4,15 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
-import { EppAssessmentFlow } from "@/components/english/epp-assessment-flow";
+import { EppTrainingFlow } from "@/components/english/epp-training-flow";
 import { EPP_PROFILE_ENABLED } from "@/lib/constants";
 
-interface AssessmentPageProps {
+interface TrainingPageProps {
   params: { locale: string };
 }
 
-function AssessmentPageContent({ locale }: { locale: string }) {
+function TrainingPageContent({ locale }: { locale: string }) {
   const t = useTranslations("english");
 
   if (!EPP_PROFILE_ENABLED) {
@@ -25,18 +23,17 @@ function AssessmentPageContent({ locale }: { locale: string }) {
     );
   }
 
-  return <EppAssessmentFlow locale={locale} />;
+  return <EppTrainingFlow locale={locale} />;
 }
 
-export default function EnglishAssessmentPage({ params }: AssessmentPageProps) {
+export default function EnglishTrainingPage({ params }: TrainingPageProps) {
   const t = useTranslations("english");
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
-      <Header locale={params.locale} />
-      <main className="pt-16 flex-1 flex flex-col">
+    <div className="min-h-0 h-full bg-gray-50 flex flex-col">
+            <main className="flex-1 flex flex-col">
         <div className="px-4 pt-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link href={`/${params.locale}/english`}>{t("assessment.back")}</Link>
+            <Link href={`/${params.locale}/english`}>{t("training.back")}</Link>
           </Button>
         </div>
         <Suspense
@@ -46,10 +43,9 @@ export default function EnglishAssessmentPage({ params }: AssessmentPageProps) {
             </div>
           }
         >
-          <AssessmentPageContent locale={params.locale} />
+          <TrainingPageContent locale={params.locale} />
         </Suspense>
       </main>
-      <BottomNav locale={params.locale} />
-    </div>
+          </div>
   );
 }

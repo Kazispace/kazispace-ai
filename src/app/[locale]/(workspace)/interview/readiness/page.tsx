@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { IrpReadinessPanel } from "@/components/interview/irp-readiness-panel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -124,9 +122,8 @@ function ReadinessPageContent({ locale }: { locale: string }) {
 export default function InterviewReadinessPage({ params }: ReadinessPageProps) {
   const t = useTranslations("interview");
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
-      <Header locale={params.locale} />
-      <main className="pt-16 flex-1 flex flex-col">
+    <div className="min-h-0 h-full bg-gray-50 flex flex-col">
+            <main className="flex-1 flex flex-col">
         <Suspense
           fallback={
             <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -137,7 +134,6 @@ export default function InterviewReadinessPage({ params }: ReadinessPageProps) {
           <ReadinessPageContent locale={params.locale} />
         </Suspense>
       </main>
-      <BottomNav locale={params.locale} />
-    </div>
+          </div>
   );
 }

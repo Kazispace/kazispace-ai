@@ -4,14 +4,11 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { ChatInput } from "@/components/chat/chat-input";
 import {
   AgentTransitionProvider,
   useAgentTransition,
 } from "@/components/agent-transition/agent-transition-provider";
-import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
 import { HubAgentShell } from "@/components/hub/hub-agent-shell";
 import { AssistantTurn } from "@/components/chat/assistant-turn";
 import { HubWorkflowStrip } from "@/components/hub/hub-workflow-strip";
@@ -357,10 +354,8 @@ function InterviewPageContent({ locale }: { locale: string }) {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
-      <Header locale={locale} />
-      {isLoggedIn ? <HubLayerBar locale={locale} /> : null}
-      <main className="pt-16 flex-1 flex flex-col max-w-5xl mx-auto w-full min-h-0">
+    <div className="flex h-full flex-col bg-gray-50">
+      <main className="mx-auto flex w-full max-w-5xl min-h-0 flex-1 flex-col">
         {showProfileHome && profile ? (
           <IrpProfileHome
             profile={profile}
@@ -406,7 +401,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
           </HubAgentShell>
         )}
       </main>
-      <BottomNav locale={locale} />
     </div>
   );
 }

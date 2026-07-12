@@ -4,8 +4,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { CvAgentWelcome } from "@/components/cv/cv-agent-welcome";
 import { CvChatInput } from "@/components/cv/cv-chat-input";
 import { CvHeader } from "@/components/cv/cv-header";
@@ -199,9 +197,8 @@ function CvPageContent({ locale }: { locale: string }) {
 
   if (!showWorkspace) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20 lg:pb-0 flex flex-col">
-        <Header locale={locale} />
-        <main className="pt-16 flex-1 flex flex-col">
+      <div className="flex h-full flex-col bg-gray-50">
+        <main className="flex flex-1 flex-col">
           <GateScreen
             needsLogin={needsLogin}
             needsOnboarding={needsOnboarding}
@@ -211,13 +208,12 @@ function CvPageContent({ locale }: { locale: string }) {
             t={t}
           />
         </main>
-        <BottomNav locale={locale} />
       </div>
     );
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gray-bg overflow-hidden relative">
+    <div className="relative flex h-full flex-col overflow-hidden bg-gray-bg">
       <CvHeader
         locale={locale}
         subtitle={headerSubtitle}

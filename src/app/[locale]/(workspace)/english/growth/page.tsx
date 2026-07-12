@@ -4,28 +4,21 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
-import { IrpGrowthHistory } from "@/components/interview/irp-growth-history";
+import { EppGrowthHistory } from "@/components/english/epp-growth-history";
 import { Button } from "@/components/ui/button";
-import { IRP_PROFILE_ENABLED } from "@/lib/constants";
-import { useInterviewProfileHistory } from "@/hooks/use-interview-profile";
-import { useBilling } from "@/hooks/use-billing";
-import { isProPlan } from "@/lib/api-mappers";
+import { EPP_PROFILE_ENABLED } from "@/lib/constants";
+import { useEnglishProfileHistory } from "@/hooks/use-english-profile";
 
 interface GrowthPageProps {
   params: { locale: string };
 }
 
 function GrowthPageContent({ locale }: { locale: string }) {
-  const t = useTranslations("interview.irp");
+  const t = useTranslations("english.growth");
   const { history, isHistoryLoading, historyError, refetchHistory } =
-    useInterviewProfileHistory({ enabled: IRP_PROFILE_ENABLED });
+    useEnglishProfileHistory({ enabled: EPP_PROFILE_ENABLED });
 
-  const { plan } = useBilling();
-  const isProUser = isProPlan(plan);
-
-  if (!IRP_PROFILE_ENABLED) {
+  if (!EPP_PROFILE_ENABLED) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
         <p className="text-sm text-gray-600">{t("featureDisabled")}</p>
@@ -37,13 +30,13 @@ function GrowthPageContent({ locale }: { locale: string }) {
     <div className="flex-1 flex flex-col max-w-lg mx-auto w-full p-4 gap-4">
       <div>
         <Link
-          href={`/${locale}/interview`}
+          href={`/${locale}/english`}
           className="text-xs text-kazi-orange font-medium"
         >
-          {t("growth.back")}
+          {t("back")}
         </Link>
-        <h1 className="text-lg font-bold text-kazi-navy mt-2">{t("growth.pageTitle")}</h1>
-        <p className="text-xs text-gray-500 mt-1">{t("growth.subtitle")}</p>
+        <h1 className="text-lg font-bold text-kazi-navy mt-2">{t("pageTitle")}</h1>
+        <p className="text-xs text-gray-500 mt-1">{t("subtitle")}</p>
       </div>
 
       {isHistoryLoading && (
@@ -56,28 +49,27 @@ function GrowthPageContent({ locale }: { locale: string }) {
         <div className="bg-white border border-gray-200 rounded-xl p-5 text-center space-y-3">
           <p className="text-sm text-red-600">{historyError}</p>
           <Button size="sm" onClick={() => void refetchHistory()}>
-            {t("growth.retry")}
+            {t("retry")}
           </Button>
         </div>
       )}
 
       {history && !isHistoryLoading && !historyError && (
-        <IrpGrowthHistory items={history.items} badges={history.badges} isPro={isProUser} />
+        <EppGrowthHistory items={history.items} />
       )}
 
       <Button size="sm" variant="outline" className="self-start" asChild>
-        <Link href={`/${locale}/interview`}>{t("growth.backToInterview")}</Link>
+        <Link href={`/${locale}/english`}>{t("backToPassport")}</Link>
       </Button>
     </div>
   );
 }
 
-export default function InterviewGrowthPage({ params }: GrowthPageProps) {
-  const t = useTranslations("interview");
+export default function EnglishGrowthPage({ params }: GrowthPageProps) {
+  const t = useTranslations("english");
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
-      <Header locale={params.locale} />
-      <main className="pt-16 flex-1 flex flex-col">
+    <div className="min-h-0 h-full bg-gray-50 flex flex-col">
+            <main className="flex-1 flex flex-col">
         <Suspense
           fallback={
             <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -88,7 +80,6 @@ export default function InterviewGrowthPage({ params }: GrowthPageProps) {
           <GrowthPageContent locale={params.locale} />
         </Suspense>
       </main>
-      <BottomNav locale={params.locale} />
-    </div>
+          </div>
   );
 }
