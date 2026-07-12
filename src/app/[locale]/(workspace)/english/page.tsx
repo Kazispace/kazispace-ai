@@ -3,13 +3,10 @@
 import { Suspense } from "react";
 import { BackToClinicButton } from "@/components/clinic/back-to-clinic-button";
 import { AgentTransitionProvider } from "@/components/agent-transition/agent-transition-provider";
-import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
 import { ENGLISH_TUTOR_AGENT_ID } from "@/lib/english-tutor-config";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { Button } from "@/components/ui/button";
 import { EppOnboarding } from "@/components/english/epp-onboarding";
 import { EppPassportHome } from "@/components/english/epp-passport-home";
@@ -94,10 +91,8 @@ export default function EnglishPage({ params }: EnglishPageProps) {
       hubAgentId={ENGLISH_TUTOR_AGENT_ID}
       isLoggedIn={isLoggedIn}
     >
-      <div className="min-h-screen bg-gray-50 pb-20 flex flex-col">
-        <Header locale={params.locale} />
-        {isLoggedIn ? <HubLayerBar locale={params.locale} /> : null}
-        <main className="pt-16 flex-1 flex flex-col">
+      <div className="flex h-full flex-col bg-gray-50">
+        <main className="flex flex-1 flex-col">
           <Suspense
             fallback={
               <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -108,7 +103,6 @@ export default function EnglishPage({ params }: EnglishPageProps) {
             <EnglishPageContent locale={params.locale} />
           </Suspense>
         </main>
-        <BottomNav locale={params.locale} />
       </div>
     </AgentTransitionProvider>
   );

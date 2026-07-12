@@ -149,6 +149,21 @@
 		"jobs": "岗位",
 		"profile": "我的"
 	},
+	"sessionNav": {
+		"iconRail": "会话导航",
+		"clinic": "门诊",
+		"clinicTitle": "Serík · 门诊",
+		"agents": "专家",
+		"files": "文件",
+		"search": "搜索",
+		"settings": "设置",
+		"panelTitle": "会话",
+		"collapsePanel": "收起列表",
+		"openPanel": "打开会话列表",
+		"comingSoon": "即将推出",
+		"clinicInlineHint": "请在门诊对话中启动",
+		"workspace": "工作区"
+	},
 	"chat": {
 		"title": "{name} · AI 职业伙伴",
 		"backToClinic": "← 返回门诊",
