@@ -48,7 +48,9 @@ import { uploadCvResumeFile, resolveCvUploadErrorMessage } from '@/lib/cv-input-
 import { exportCvDocumentPdf, resolveCvExportErrorMessage } from '@/lib/cv-export-api';
 import { useAuthStore, useUIStore } from '@/lib/store';
 import { normalizeAgentSessions, isAgentSessionReadOnly } from '@/lib/agent-sessions';
+import { consumeSessionNavHandoff } from '@/lib/session-nav-handoff';
 import {
+  SESSION_NAV_OPEN_FILE_EVENT,
   SESSION_NAV_SELECT_HISTORY_EVENT,
   SESSION_NAV_SESSION_EXITED_EVENT,
   SESSION_NAV_SESSION_OPENED_EVENT,
@@ -336,7 +338,8 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     setSessionId(null);
 
     const handoff = consumeCvAgentHandoff();
-    const handoffSessionId = handoff?.sessionId;
+    const navHandoffSessionId = consumeSessionNavHandoff(CV_BUILDER_AGENT_ID);
+    const handoffSessionId = handoff?.sessionId ?? navHandoffSessionId;
 
     if (!handoffSessionId) {
       const activeRes = await getActiveAgent();
@@ -359,6 +362,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
     if (handoffSessionId) {
       setSessionId(handoffSessionId);
+      setSessionResumed(Boolean(navHandoffSessionId || handoff?.sessionId));
       await loadSessionMessages(handoffSessionId, gen, handoff?.greeting);
       await syncActivateMeta(gen);
       finishSessionLoad(gen);

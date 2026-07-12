@@ -4,6 +4,8 @@ import {
   buildSessionNavRows,
   buildSessionViewRows,
   enrichSessionNavRows,
+  filterSessionNavRows,
+  filterSessionViewRows,
   resolveActiveNavRowId,
   resolveContextHeaderSession,
   resolveSessionNavBadge,
@@ -158,5 +160,29 @@ describe('session-nav', () => {
     expect(rows[1]?.agentId).toBe('cv_builder');
     expect(rows[2]?.agentId).toBe('mock_interview');
     expect(rows[1]?.sessionTitle).toBe('Software Engineer CV');
+  });
+
+  it('filters agent and session rows by list query', () => {
+    const rows = buildSessionNavRows('en', 'Clinic');
+    const sessions = new Map<string, AgentSessionSummary>([
+      [
+        'cv_builder',
+        {
+          session_id: 'sess_cv',
+          agent_id: 'cv_builder',
+          status: 'active',
+          title: 'Software Engineer CV',
+        },
+      ],
+    ]);
+    const enriched = enrichSessionNavRows(rows, sessions);
+    expect(filterSessionNavRows(enriched, 'software').some((r) => r.agentId === 'cv_builder')).toBe(
+      true
+    );
+    expect(filterSessionNavRows(enriched, 'zzz')).toHaveLength(0);
+
+    const sessionRows = buildSessionViewRows('en', 'Clinic', sessions);
+    expect(filterSessionViewRows(sessionRows, 'clinic')).toHaveLength(1);
+    expect(filterSessionViewRows(sessionRows, 'engineer')[0]?.agentId).toBe('cv_builder');
   });
 });

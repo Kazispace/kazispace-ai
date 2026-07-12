@@ -181,7 +181,20 @@
 		"newSessionStarted": "已新建 {agent} 会话",
 		"newSessionFailed": "无法新建会话",
 		"exitSessionDone": "会话已结束",
-		"exitSessionFailed": "无法结束会话"
+		"exitSessionFailed": "无法结束会话",
+		"globalFileLibrary": "文件库",
+		"globalSearch": "搜索会话",
+		"sessionFiles": "本会话文件",
+		"sessionSearch": "会话内搜索",
+		"searchPlaceholder": "搜索…",
+		"panelSearchPlaceholder": "搜索本列表…",
+		"noFiles": "暂无文件",
+		"noSearchResults": "无匹配结果",
+		"searchInSession": "搜索本会话消息",
+		"backToClinic": "回到门诊",
+		"moreActions": "更多操作",
+		"closeDrawer": "关闭",
+		"filePreviewUnavailable": "暂无法预览该文件"
 	},
 	"chat": {
 		"title": "{name} · AI 职业伙伴",

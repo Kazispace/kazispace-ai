@@ -5,6 +5,8 @@ import {
   resolveSurfaceForAgent,
   resolveSurfaceFromPathname,
 } from '@/lib/agent-transition/surfaces';
+import { primeSessionNavHandoff } from '@/lib/session-nav-handoff';
+import { publishSessionNavSelectHistory } from '@/lib/session-nav-events';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { AGENT_REGISTRY, getAgentLabel, type AgentRegistryEntry } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
@@ -13,7 +15,11 @@ import type { AgentSessionSummary } from '@/types';
 
 export const SESSION_NAV_STORAGE_KEY = 'kazi.sessionNav.panelOpen';
 
+export const SESSION_NAV_PANEL_MODE_KEY = 'kazi.sessionNav.panelMode';
+
 export type SessionNavViewTab = 'agent' | 'session';
+
+export type SessionNavPanelMode = 'agents' | 'files' | 'search';
 
 export type SessionNavRowId = 'clinic' | string;
 
@@ -213,4 +219,60 @@ export function buildSessionViewRows(
   );
 
   return [clinicRow, ...agentRows];
+}
+
+export function filterSessionNavRows(
+  rows: SessionNavRow[],
+  query: string
+): SessionNavRow[] {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return rows;
+  return rows.filter((row) => {
+    const haystack = [
+      row.displayName,
+      row.badgeDetail,
+      row.currentSession?.title,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(trimmed);
+  });
+}
+
+export function filterSessionViewRows(
+  rows: SessionViewRow[],
+  query: string
+): SessionViewRow[] {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return rows;
+  return rows.filter((row) => {
+    const haystack = [row.displayName, row.sessionTitle, row.badgeDetail]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(trimmed);
+  });
+}
+
+/** Open a specific agent session: in-page event when already on hub, sessionStorage handoff when navigating. */
+export function openAgentSessionTarget(
+  router: { push: (href: string) => void },
+  pathname: string,
+  locale: string,
+  agentId: string,
+  sessionId: string
+): void {
+  const href = getAgentHubPath(locale, agentId);
+  if (!href) return;
+
+  const currentAgent = getDedicatedHubAgentFromPathname(pathname);
+  if (currentAgent === agentId) {
+    publishSessionNavSelectHistory(agentId, sessionId);
+    if (pathname !== href) router.push(href);
+    return;
+  }
+
+  primeSessionNavHandoff(agentId, sessionId);
+  router.push(href);
 }
