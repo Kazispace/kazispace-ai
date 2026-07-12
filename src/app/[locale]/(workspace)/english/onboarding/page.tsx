@@ -6,47 +6,45 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { AgentTransitionProvider } from "@/components/agent-transition/agent-transition-provider";
-import { EppPassportHome } from "@/components/english/epp-passport-home";
+import { EppOnboarding } from "@/components/english/epp-onboarding";
 import { EppPassportSkeleton } from "@/components/english/epp-passport-skeleton";
-import { EppSampleJobsPanel } from "@/components/english/epp-sample-jobs-panel";
 import { Button } from "@/components/ui/button";
 import { EPP_PROFILE_ENABLED } from "@/lib/constants";
 import { ENGLISH_TUTOR_AGENT_ID } from "@/lib/english-tutor-config";
-import { useEnglishProfile, useEnglishSampleJobs } from "@/hooks/use-english-profile";
+import { useEnglishProfile } from "@/hooks/use-english-profile";
 import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
 import { useAuthStore } from "@/lib/store";
-import type { EnglishProfile } from "@/types";
+import type { EnglishOnboardingRequest } from "@/types";
 
-interface PassportPageProps {
+interface OnboardingPageProps {
   params: { locale: string };
 }
 
-function PassportSampleJobs({ profile }: { profile: EnglishProfile }) {
-  const { sampleJobs } = useEnglishSampleJobs(profile.display_level, { enabled: true });
-
-  if (!sampleJobs) return null;
-
-  return (
-    <div id="sample-jobs" className="max-w-lg mx-auto w-full px-4 pb-4 scroll-mt-4">
-      <EppSampleJobsPanel sampleJobs={sampleJobs} />
-    </div>
-  );
-}
-
-function PassportPageContent({ locale }: { locale: string }) {
+function OnboardingPageContent({ locale }: { locale: string }) {
   const t = useTranslations("english");
   const router = useRouter();
 
-  const { profile, profileStatus, isProfileLoading, profileError, refetchProfile } =
-    useEnglishProfile({ enabled: EPP_PROFILE_ENABLED });
+  const {
+    profile,
+    profileStatus,
+    isProfileLoading,
+    profileError,
+    refetchProfile,
+    submitOnboarding,
+    isOnboardingSaving,
+  } = useEnglishProfile({ enabled: EPP_PROFILE_ENABLED });
 
   useHubActiveAgentSync(locale, ENGLISH_TUTOR_AGENT_ID, EPP_PROFILE_ENABLED);
 
   useEffect(() => {
-    if (!isProfileLoading && (profileStatus === "empty" || !profile)) {
-      router.replace(`/${locale}/english/onboarding`);
+    if (
+      !isProfileLoading &&
+      profile &&
+      (profile.profile_status === "ready" || profile.profile_status === "active")
+    ) {
+      router.replace(`/${locale}/english/passport`);
     }
-  }, [isProfileLoading, locale, profile, profileStatus, router]);
+  }, [isProfileLoading, locale, profile, router]);
 
   if (!EPP_PROFILE_ENABLED) {
     return (
@@ -56,7 +54,7 @@ function PassportPageContent({ locale }: { locale: string }) {
     );
   }
 
-  if (isProfileLoading || profileStatus === "empty" || !profile) {
+  if (isProfileLoading) {
     return <EppPassportSkeleton />;
   }
 
@@ -71,24 +69,24 @@ function PassportPageContent({ locale }: { locale: string }) {
     );
   }
 
-  if (profile.profile_status === "ready" || profile.profile_status === "active") {
-    return (
-      <div className="flex-1 flex flex-col">
-        <div className="max-w-lg mx-auto w-full px-4 pt-4">
-          <Link href={`/${locale}/english`} className="text-xs text-kazi-orange font-medium">
-            {t("passportPage.back")}
-          </Link>
-        </div>
-        <EppPassportHome profile={profile} locale={locale} />
-        <PassportSampleJobs profile={profile} />
-      </div>
-    );
-  }
+  const handleOnboarding = async (data: EnglishOnboardingRequest) => {
+    await submitOnboarding(data);
+    router.push(`/${locale}/english/assessment`);
+  };
 
-  return <EppPassportSkeleton />;
+  return (
+    <div className="flex-1 flex flex-col">
+      <div className="max-w-lg mx-auto w-full px-4 pt-4">
+        <Link href={`/${locale}/english`} className="text-xs text-kazi-orange font-medium">
+          {t("onboardingPage.back")}
+        </Link>
+      </div>
+      <EppOnboarding onComplete={(d) => void handleOnboarding(d)} isSaving={isOnboardingSaving} />
+    </div>
+  );
 }
 
-export default function EnglishPassportPage({ params }: PassportPageProps) {
+export default function EnglishOnboardingPage({ params }: OnboardingPageProps) {
   const t = useTranslations("english");
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
@@ -108,7 +106,7 @@ export default function EnglishPassportPage({ params }: PassportPageProps) {
               </div>
             }
           >
-            <PassportPageContent locale={params.locale} />
+            <OnboardingPageContent locale={params.locale} />
           </Suspense>
         </main>
       </div>

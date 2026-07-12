@@ -17,6 +17,12 @@ export function EnglishWorkspace({ locale }: EnglishWorkspaceProps) {
       <p className="text-xs text-gray-500">{t('workspaceHint')}</p>
       <nav className="flex flex-col gap-2">
         <Link
+          href={`/${locale}/english/onboarding`}
+          className="text-sm text-kazi-orange hover:underline"
+        >
+          {t('workspaceLinks.onboarding')}
+        </Link>
+        <Link
           href={`/${locale}/english/passport`}
           className="text-sm text-kazi-orange hover:underline"
         >

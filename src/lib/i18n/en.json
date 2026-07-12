@@ -774,6 +774,7 @@
 		"workspaceTitle": "English tools",
 		"workspaceHint": "Passport details, sample jobs, and history — use chips below for quick starts.",
 		"workspaceLinks": {
+			"onboarding": "Set up passport",
 			"passportDetail": "Passport dashboard",
 			"sampleJobs": "Sample eligible jobs",
 			"growth": "Growth history"
@@ -785,6 +786,9 @@
 			"passport": "View my passport"
 		},
 		"passportPage": {
+			"back": "← Back to English coach"
+		},
+		"onboardingPage": {
 			"back": "← Back to English coach"
 		},
 		"onboarding": {

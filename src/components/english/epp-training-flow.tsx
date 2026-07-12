@@ -138,7 +138,7 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
               )}
             </CardContent>
           </Card>
-          <Button className="w-full" onClick={() => router.push(`/${locale}/english`)}>
+          <Button className="w-full" onClick={() => router.push(`/${locale}/english/passport`)}>
             {t('backToPassport')}
           </Button>
         </div>
@@ -147,7 +147,7 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center">
         <p className="text-sm text-gray-600">{t('submitFailed')}</p>
-        <Button size="sm" onClick={() => router.push(`/${locale}/english`)}>
+        <Button size="sm" onClick={() => router.push(`/${locale}/english/passport`)}>
           {t('backToPassport')}
         </Button>
       </div>

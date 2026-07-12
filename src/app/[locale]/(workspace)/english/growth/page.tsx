@@ -59,7 +59,7 @@ function GrowthPageContent({ locale }: { locale: string }) {
       )}
 
       <Button size="sm" variant="outline" className="self-start" asChild>
-        <Link href={`/${locale}/english`}>{t("backToPassport")}</Link>
+        <Link href={`/${locale}/english/passport`}>{t("backToPassport")}</Link>
       </Button>
     </div>
   );

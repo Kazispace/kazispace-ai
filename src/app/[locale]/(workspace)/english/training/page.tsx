@@ -33,7 +33,7 @@ export default function EnglishTrainingPage({ params }: TrainingPageProps) {
       <main className="flex-1 flex flex-col">
         <div className="px-4 pt-2">
           <Button variant="ghost" size="sm" asChild>
-            <Link href={`/${params.locale}/english`}>{t("training.back")}</Link>
+            <Link href={`/${params.locale}/english/passport`}>{t("training.back")}</Link>
           </Button>
         </div>
         <Suspense
