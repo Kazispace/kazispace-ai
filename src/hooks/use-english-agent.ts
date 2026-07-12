@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * English Hub chat session (KAZI-162).
+ *
+ * **State design:** messages and send flags live in local React state, not
+ * `useAgentStore` message slices. `/english` is a dedicated workspace URL;
+ * remount re-hydrates from L4 `fetchAgentMessages`. Per-agent store unification
+ * is tracked in KAZI-164 (`useHubAgentChat`).
+ */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -10,6 +18,7 @@ import { handleAgentEnvelope } from '@/lib/handle-agent-envelope';
 import { openHubAgentSession } from '@/lib/hub-agent-open';
 import { useAuthStore } from '@/lib/store';
 
+/** Stable id for seeded welcome — namespaced per agent surface. */
 const WELCOME_ID = 'english_chat_welcome';
 
 export type EnglishChatMessage = {
@@ -28,10 +37,16 @@ export function useEnglishAgent(locale: string, enabled: boolean) {
   const [isSending, setIsSending] = useState(false);
   const [openError, setOpenError] = useState<string | null>(null);
 
+  const sessionIdRef = useRef<string | null>(null);
   const openGenRef = useRef(0);
   const openInFlightRef = useRef<Promise<string | null> | null>(null);
 
   const needsLogin = !isLoggedIn;
+
+  const syncSessionId = useCallback((sessionId: string | null) => {
+    sessionIdRef.current = sessionId;
+    setAgentSessionId(sessionId);
+  }, []);
 
   const seedWelcome = useCallback(() => {
     setMessages((prev) => {
@@ -44,6 +59,7 @@ export function useEnglishAgent(locale: string, enabled: boolean) {
     async (sessionId: string, greeting?: string) => {
       const res = await fetchAgentMessages(sessionId);
       if (res.success && res.data?.messages?.length) {
+        // When history exists, sessions/open greeting duplicates the last turn — skip it.
         const mapped = mapAgentHistoryToChatMessages(
           res.data.messages as RawAgentHistoryMessage[],
           sessionId
@@ -70,7 +86,7 @@ export function useEnglishAgent(locale: string, enabled: boolean) {
 
   const ensureOpen = useCallback(async (): Promise<string | null> => {
     if (!isLoggedIn || !enabled) return null;
-    if (agentSessionId) return agentSessionId;
+    if (sessionIdRef.current) return sessionIdRef.current;
     if (openInFlightRef.current) return openInFlightRef.current;
 
     const promise = (async (): Promise<string | null> => {
@@ -89,7 +105,7 @@ export function useEnglishAgent(locale: string, enabled: boolean) {
         return null;
       }
 
-      setAgentSessionId(open.sessionId);
+      syncSessionId(open.sessionId);
       await hydrateHistory(open.sessionId, open.greeting);
       return open.sessionId;
     })();
@@ -100,7 +116,7 @@ export function useEnglishAgent(locale: string, enabled: boolean) {
     } finally {
       openInFlightRef.current = null;
     }
-  }, [agentSessionId, enabled, hydrateHistory, isLoggedIn, locale, seedWelcome, t]);
+  }, [enabled, hydrateHistory, isLoggedIn, locale, seedWelcome, syncSessionId, t]);
 
   useEffect(() => {
     if (!isLoggedIn || !enabled) return;
@@ -110,25 +126,28 @@ export function useEnglishAgent(locale: string, enabled: boolean) {
   useEffect(() => {
     if (!isLoggedIn) {
       setMessages([]);
-      setAgentSessionId(null);
+      syncSessionId(null);
       setOpenError(null);
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, syncSessionId]);
 
   const resyncSession = useCallback(async () => {
     openGenRef.current += 1;
-    setAgentSessionId(null);
+    syncSessionId(null);
     setMessages([]);
     await ensureOpen();
-  }, [ensureOpen]);
+  }, [ensureOpen, syncSessionId]);
 
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || isSending) return;
 
-      const sessionId = agentSessionId ?? (await ensureOpen());
-      if (!sessionId) return;
+      const sessionId = sessionIdRef.current ?? (await ensureOpen());
+      if (!sessionId) {
+        setOpenError((prev) => prev ?? t('chatOpenFailed'));
+        return;
+      }
 
       const assistantId = `assistant_${Date.now()}`;
 
@@ -160,7 +179,7 @@ export function useEnglishAgent(locale: string, enabled: boolean) {
         )
       );
     },
-    [agentSessionId, ensureOpen, isSending, t]
+    [ensureOpen, isSending, t]
   );
 
   return {

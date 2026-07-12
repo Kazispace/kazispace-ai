@@ -34,7 +34,8 @@ export function getEnglishCtaHref(
     case 'view_history':
       return `${base}/growth`;
     case 'view_sample_jobs':
-      return `${base}/passport`;
+      // Sample jobs panel lives on the passport secondary page (#sample-jobs).
+      return `${base}/passport#sample-jobs`;
     default:
       return null;
   }

@@ -772,7 +772,13 @@
 		"chatSendFailed": "Something went wrong. Please try again.",
 		"chatEmptyReply": "…",
 		"workspaceTitle": "English tools",
-		"workspaceHint": "Assessment, training, and passport live here — not in the chat thread.",
+		"workspaceHint": "Passport details, sample jobs, and history — use chips below for quick starts.",
+		"workspaceLinks": {
+			"passportDetail": "Passport dashboard",
+			"sampleJobs": "Sample eligible jobs",
+			"growth": "Growth history"
+		},
+		"quickActionNav": "Opening {action}…",
 		"quickActions": {
 			"assessment": "Quick 5-min test",
 			"training": "Workplace speaking",

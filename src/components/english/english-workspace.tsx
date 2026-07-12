@@ -7,6 +7,7 @@ interface EnglishWorkspaceProps {
   locale: string;
 }
 
+/** Secondary EPP tools — chips below composer cover the top quick actions. */
 export function EnglishWorkspace({ locale }: EnglishWorkspaceProps) {
   const t = useTranslations('english');
 
@@ -19,27 +20,19 @@ export function EnglishWorkspace({ locale }: EnglishWorkspaceProps) {
           href={`/${locale}/english/passport`}
           className="text-sm text-kazi-orange hover:underline"
         >
-          {t('quickActions.passport')}
+          {t('workspaceLinks.passportDetail')}
         </Link>
         <Link
-          href={`/${locale}/english/assessment`}
+          href={`/${locale}/english/passport#sample-jobs`}
           className="text-sm text-kazi-orange hover:underline"
         >
-          {t('quickActions.assessment')}
-        </Link>
-        <Link
-          href={`/${locale}/english/training?scenario=${encodeURIComponent(
-            'workplace_oral_interview_intro_v1'
-          )}`}
-          className="text-sm text-kazi-orange hover:underline"
-        >
-          {t('quickActions.training')}
+          {t('workspaceLinks.sampleJobs')}
         </Link>
         <Link
           href={`/${locale}/english/growth`}
           className="text-sm text-kazi-orange hover:underline"
         >
-          {t('passport.cta.viewHistory')}
+          {t('workspaceLinks.growth')}
         </Link>
       </nav>
     </div>

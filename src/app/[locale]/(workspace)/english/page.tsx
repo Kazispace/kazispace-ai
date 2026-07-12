@@ -1,3 +1,5 @@
+// TODO(KAZI-164): extract shared useHubAgentChat + HubChatPage from Interview/English pages.
+
 "use client";
 
 import { Suspense, useCallback, useMemo } from "react";
@@ -28,7 +30,7 @@ import {
 } from "@/lib/english-hub-quick-actions";
 import { EPP_PROFILE_ENABLED } from "@/lib/constants";
 import { getAgentLabel, AGENT_REGISTRY } from "@/lib/agents/registry";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore, useUIStore } from "@/lib/store";
 
 interface EnglishPageProps {
   params: { locale: string };
@@ -37,6 +39,7 @@ interface EnglishPageProps {
 function EnglishPageContent({ locale }: { locale: string }) {
   const router = useRouter();
   const t = useTranslations("english");
+  const showToast = useUIStore((s) => s.showToast);
   const { openSwitcher } = useAgentTransition();
 
   const {
@@ -76,13 +79,16 @@ function EnglishPageContent({ locale }: { locale: string }) {
     (text: string) => {
       const action = matchEnglishHubQuickAction(text, quickActionLabels);
       if (action) {
+        showToast(t("quickActionNav", { action: text }), "info");
         router.push(englishHubQuickActionHref(locale, action));
         return;
       }
       void sendMessage(text);
     },
-    [locale, quickActionLabels, router, sendMessage]
+    [locale, quickActionLabels, router, sendMessage, showToast, t]
   );
+
+  const inputDisabled = isOpening || isSending || Boolean(openError);
 
   const englishAgent = AGENT_REGISTRY.find((a) => a.agentId === ENGLISH_TUTOR_AGENT_ID);
 
@@ -170,7 +176,7 @@ function EnglishPageContent({ locale }: { locale: string }) {
               quickReplies.length > 0 ? (
                 <QuickReplies
                   options={quickReplies}
-                  disabled={isOpening || isSending}
+                  disabled={inputDisabled}
                   onSelect={handleQuickReply}
                 />
               ) : undefined
@@ -178,7 +184,7 @@ function EnglishPageContent({ locale }: { locale: string }) {
             input={
               <ChatInput
                 onSend={(text) => void sendMessage(text)}
-                disabled={isOpening || isSending}
+                disabled={inputDisabled}
                 placeholder={t("chatPlaceholder")}
                 showAgentButton
                 onOpenAgents={openSwitcher}
