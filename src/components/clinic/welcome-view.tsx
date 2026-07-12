@@ -1,16 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { getEnglishLevel, setEnglishLevel } from "@/lib/auth";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
 import { AgentCard } from "./agent-card";
-import { ClinicActiveSessionsBanner } from "./clinic-active-sessions-banner";
 import { AGENT_NAME } from "@/lib/constants";
 import { NbaActionCard } from "@/components/nba/nba-action-card";
 import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
-import { buildClinicActiveSessionEntries } from "@/lib/clinic-active-sessions";
 import { resolveRegistryAgentBadge } from "@/lib/session-nav";
 import type { CurrentSessionsByAgent } from "@/lib/current-agent-sessions";
 import type { NextBestActionItem } from "@/types";
@@ -47,14 +44,6 @@ export function WelcomeView({
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
 
-  const activeSessionEntries = useMemo(
-    () =>
-      isLoggedIn && sessionsByAgent
-        ? buildClinicActiveSessionEntries(locale, sessionsByAgent)
-        : [],
-    [isLoggedIn, locale, sessionsByAgent]
-  );
-
   const quickPrompts = [
     { label: tClinic("prompts.cv"), text: tClinic("prompts.cvText") },
     { label: tClinic("prompts.jobs"), text: tClinic("prompts.jobsText") },
@@ -69,10 +58,6 @@ export function WelcomeView({
         </p>
         <p className="text-sm text-muted-foreground mt-2">{t("welcome.prompt")}</p>
       </div>
-
-      {isLoggedIn && activeSessionEntries.length > 0 ? (
-        <ClinicActiveSessionsBanner locale={locale} entries={activeSessionEntries} />
-      ) : null}
 
       {isLoggedIn && nbaLoading ? (
         <NbaActionCardSkeleton className="w-full mb-6" />
