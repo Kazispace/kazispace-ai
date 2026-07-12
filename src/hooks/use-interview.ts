@@ -10,8 +10,15 @@ import {
   getInterviewSession,
   submitInterviewAnswer,
 } from '@/lib/interview-api';
+import { sendAgentChat, fetchAgentMessages } from '@/lib/agent-api';
 import { followAgentEscalation } from '@/lib/agent-escalation';
-import { resolveWorkflowFromMessages } from '@/lib/agent-sessions';
+import { openHubAgentSession } from '@/lib/hub-agent-open';
+import {
+  mapPipelineToInterviewPhase,
+  resolveAgentChatMeta,
+  extractQuestionProgress,
+} from '@/lib/interview-agent-meta';
+import { resolveWorkflowFromMessages, mapAgentHistoryToChatMessages, type RawAgentHistoryMessage } from '@/lib/agent-sessions';
 import { isNavigationPending, planNavigation } from '@/lib/agent-transition';
 import {
   buildAssistantMessageFields,
@@ -21,9 +28,11 @@ import { formatPrepMessage } from '@/lib/interview-message-format';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
 import { resolveInterviewFeedbackCtas } from '@/lib/interview-cta';
 import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
-import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/mock-interview-config';
+import { MOCK_INTERVIEW_AGENT_ID, DEFAULT_INTERVIEW_LEVEL } from '@/lib/mock-interview-config';
+import { isPaywallError } from '@/lib/api-errors';
 import { getJobDetail } from '@/lib/jobs-api';
-import { useAuthStore, useUIStore } from '@/lib/store';
+import { useAuthStore, useAgentStore, useUIStore } from '@/lib/store';
+import type { AgentChatResponse } from '@/types';
 import type {
   AssistantWorkflow,
   ChatJobCard,
@@ -114,6 +123,7 @@ export function useInterview(jobId?: string | null) {
   const [phase, setPhase] = useState<InterviewPhase>('role_select');
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [agentSessionId, setAgentSessionId] = useState<string | null>(null);
   const [targetRole, setTargetRole] = useState<string | null>(null);
   const [questionIndex, setQuestionIndex] = useState(1);
   const [questionCount, setQuestionCount] = useState(3);
@@ -131,6 +141,8 @@ export function useInterview(jobId?: string | null) {
   const pendingStartRef = useRef<SessionBootstrap | null>(null);
   const lastAutoStartedJobIdRef = useRef<string | null>(null);
   const jobStartInFlightRef = useRef(false);
+  const hubOpenGenRef = useRef(0);
+  const setAgentSending = useAgentStore((s) => s.setAgentSending);
 
   const finishIfStale = useCallback((runId: number) => {
     if (runId !== runIdRef.current) {
@@ -365,6 +377,211 @@ export function useInterview(jobId?: string | null) {
     },
     [pollFeedback, stopPolling]
   );
+
+  /** L4 Hub open (ADR-005 / KAZI-150). Job prep still uses REST until BE prep L4. */
+  const ensureHubOpen = useCallback(async (): Promise<string | null> => {
+    if (!isLoggedIn) return null;
+    if (agentSessionId) return agentSessionId;
+
+    const gen = ++hubOpenGenRef.current;
+    const open = await openHubAgentSession(MOCK_INTERVIEW_AGENT_ID, locale, {
+      job_id: jobId ?? undefined,
+    });
+    if (gen !== hubOpenGenRef.current) return null;
+    if (!open.ok) {
+      showToast(open.error ?? t('startFailed'), 'error');
+      return null;
+    }
+
+    setAgentSessionId(open.sessionId);
+    useAgentStore.getState().setAgentSession(MOCK_INTERVIEW_AGENT_ID, open.sessionId);
+
+    if (open.resumed && open.greeting && messages.length === 0) {
+      appendMessage('assistant', open.greeting);
+      const meta = resolveAgentChatMeta({ response: { text: open.greeting } });
+      const nextPhase = mapPipelineToInterviewPhase(meta.pipelineState);
+      if (nextPhase && nextPhase !== 'role_select') {
+        setPhase(nextPhase);
+      }
+    }
+
+    return open.sessionId;
+  }, [
+    agentSessionId,
+    appendMessage,
+    isLoggedIn,
+    jobId,
+    locale,
+    messages.length,
+    showToast,
+    t,
+  ]);
+
+  const applyChatTurn = useCallback(
+    async (data: AgentChatResponse, runId: number): Promise<boolean> => {
+      if (await tryHandleAnswerEscalation(data)) return true;
+
+      const meta = resolveAgentChatMeta(data);
+      if (meta.interviewSessionId) {
+        setSessionId(meta.interviewSessionId);
+      }
+      if (meta.targetRole) {
+        setTargetRole(meta.targetRole);
+      }
+      if (data.session_id) {
+        setAgentSessionId(data.session_id);
+        useAgentStore.getState().setAgentSession(MOCK_INTERVIEW_AGENT_ID, data.session_id);
+      }
+
+      const { assistant } = handleAgentEnvelope(data);
+      const progress = extractQuestionProgress(data);
+      const idx = progress.questionIndex ?? questionIndex;
+      const total = progress.questionCount ?? questionCount;
+
+      const exitMeta = (data.response?.meta ?? data.meta) as Record<string, unknown> | undefined;
+      const exitReason =
+        typeof exitMeta?.exit === 'string'
+          ? exitMeta.exit
+          : data.exit_reason ?? undefined;
+
+      if (exitReason === 'completed' || meta.pipelineState === 'feedback_pending') {
+        setCurrentQuestion(null);
+        setPhase('feedback_pending');
+        if (assistant.content && assistant.content !== '…') {
+          appendAssistantEnvelope(assistant);
+        }
+        startPolling(runId);
+        publishSessionNavInvalidate();
+        return true;
+      }
+
+      const mapped = mapPipelineToInterviewPhase(meta.pipelineState);
+      if (mapped === 'interview') {
+        setPhase('interview');
+        setQuestionIndex(idx);
+        setQuestionCount(total);
+        setCurrentQuestion({
+          question_id: `q_${idx}`,
+          category: 'behavioral',
+          content: assistant.content ?? '',
+        });
+        if (assistant.content && assistant.content !== '…') {
+          appendAssistantEnvelope(assistant);
+        }
+        publishSessionNavInvalidate();
+        return true;
+      }
+
+      if (mapped === 'role_select') {
+        if (assistant.content && assistant.content !== '…') {
+          appendAssistantEnvelope(assistant);
+        }
+        setPhase('role_select');
+        return true;
+      }
+
+      if (assistant.content && assistant.content !== '…') {
+        appendAssistantEnvelope(assistant);
+      }
+      return false;
+    },
+    [
+      appendAssistantEnvelope,
+      questionCount,
+      questionIndex,
+      startPolling,
+      tryHandleAnswerEscalation,
+    ]
+  );
+
+  const hydrateFromAgentHistory = useCallback(
+    async (sid: string, greeting?: string, runId?: number) => {
+      const hist = await fetchAgentMessages(sid);
+      if (!hist.success || !hist.data?.messages?.length) {
+        if (greeting) {
+          appendMessage('assistant', greeting);
+        } else {
+          seedIntakeWelcome();
+        }
+        return;
+      }
+
+      const mapped = mapAgentHistoryToChatMessages(
+        hist.data.messages as RawAgentHistoryMessage[],
+        sid
+      ).filter((m) => m.role === 'user' || m.role === 'assistant');
+
+      setMessages(
+        mapped.map((m) => ({
+          id: m.id,
+          role: m.role as InterviewMessage['role'],
+          content: m.content,
+          ...(m.nextActions ? { nextActions: m.nextActions } : {}),
+          ...(m.cards ? { cards: m.cards } : {}),
+          ...(m.workflow ? { workflow: m.workflow } : {}),
+        }))
+      );
+
+      const pipelineState = hist.data.pipeline_state ?? undefined;
+      const meta = resolveAgentChatMeta({
+        response: { meta: { pipeline_state: pipelineState } },
+      });
+      if (meta.interviewSessionId) setSessionId(meta.interviewSessionId);
+      if (meta.targetRole) setTargetRole(meta.targetRole);
+
+      const mappedPhase = mapPipelineToInterviewPhase(pipelineState ?? meta.pipelineState);
+      if (mappedPhase === 'feedback_pending' && meta.interviewSessionId && runId != null) {
+        setPhase('feedback_pending');
+        setCurrentQuestion(null);
+        startPolling(runId);
+      } else if (mappedPhase === 'interview') {
+        setPhase('interview');
+        setQuestionIndex(1);
+        setQuestionCount(3);
+      } else if (mappedPhase) {
+        setPhase(mappedPhase);
+      }
+    },
+    [appendMessage, seedIntakeWelcome, startPolling]
+  );
+
+  const resyncSession = useCallback(async () => {
+    if (!isLoggedIn) return;
+    const gen = ++hubOpenGenRef.current;
+    runIdRef.current += 1;
+    const runId = runIdRef.current;
+    stopPolling();
+    setIsStarting(true);
+
+    const open = await openHubAgentSession(MOCK_INTERVIEW_AGENT_ID, locale, {
+      job_id: jobId ?? undefined,
+    });
+    if (gen !== hubOpenGenRef.current) return;
+
+    if (!open.ok) {
+      showToast(open.error ?? t('startFailed'), 'error');
+      setIsStarting(false);
+      return;
+    }
+
+    setAgentSessionId(open.sessionId);
+    useAgentStore.getState().setAgentSession(MOCK_INTERVIEW_AGENT_ID, open.sessionId);
+    await hydrateFromAgentHistory(open.sessionId, open.greeting, runId);
+    setIsStarting(false);
+  }, [
+    hydrateFromAgentHistory,
+    isLoggedIn,
+    jobId,
+    locale,
+    showToast,
+    stopPolling,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!isLoggedIn || jobId) return;
+    void ensureHubOpen();
+  }, [ensureHubOpen, isLoggedIn, jobId]);
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 
@@ -644,32 +861,140 @@ export function useInterview(jobId?: string | null) {
     async (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || !isLoggedIn || isStarting || jobId) return;
+
+      const runId = ++runIdRef.current;
       appendMessage('user', trimmed);
-      await startSession(trimmed);
+
+      const hubId = await ensureHubOpen();
+      if (finishIfStale(runId) || !hubId) return;
+
+      setIsStarting(true);
+      setIsSending(true);
+      setAgentSending(MOCK_INTERVIEW_AGENT_ID, true);
+
+      const res = await sendAgentChat(MOCK_INTERVIEW_AGENT_ID, trimmed, hubId);
+
+      setAgentSending(MOCK_INTERVIEW_AGENT_ID, false);
+      setIsStarting(false);
+      setIsSending(false);
+
+      if (finishIfStale(runId)) return;
+
+      if (!res.success || !res.data) {
+        if (isProfileGateError(res.errorCode)) {
+          showToast(res.error ?? 'Complete your profile in chat first', 'error');
+        } else if (isPaywallError(res) && res.errorCode) {
+          useUIStore.getState().openPaywall(res.errorCode);
+        } else {
+          showToast(res.error ?? t('startFailed'), 'error');
+        }
+        return;
+      }
+
+      await applyChatTurn(res.data, runId);
     },
-    [appendMessage, isLoggedIn, isStarting, jobId, startSession]
+    [
+      appendMessage,
+      applyChatTurn,
+      ensureHubOpen,
+      finishIfStale,
+      isLoggedIn,
+      isStarting,
+      jobId,
+      setAgentSending,
+      showToast,
+      t,
+    ]
   );
 
   const submitAnswer = useCallback(
     async (text: string) => {
-      if (!text.trim() || !sessionId || !currentQuestion || isSending) return;
+      if (!text.trim() || isSending) return;
+
       const runId = runIdRef.current;
       setIsSending(true);
       appendMessage('user', text.trim());
 
-      const res = await submitInterviewAnswer(sessionId, {
-        question_id: currentQuestion.question_id,
-        answer_text: text.trim(),
-      });
+      if (jobId) {
+        if (!sessionId || !currentQuestion) {
+          setIsSending(false);
+          return;
+        }
+
+        const res = await submitInterviewAnswer(sessionId, {
+          question_id: currentQuestion.question_id,
+          answer_text: text.trim(),
+        });
+
+        if (finishIfStale(runId)) return;
+
+        if (res.success && res.data) {
+          if (await tryHandleAnswerEscalation(res.data)) return;
+        }
+
+        if (!res.success || !res.data) {
+          if (
+            res.errorCode === 'SESSION_ABANDONED' ||
+            /abandoned/i.test(res.error ?? '')
+          ) {
+            resetInterviewSession({ messages: 'welcome' });
+            setIsSending(false);
+            showToast(t('sessionEnded'), 'info');
+            return;
+          }
+          showToast(res.error ?? 'Failed to submit answer', 'error');
+          setIsSending(false);
+          return;
+        }
+
+        const data = res.data;
+        const { assistant } = handleAgentEnvelope(data);
+        if (data.status === 'completed') {
+          setCurrentQuestion(null);
+          setPhase('feedback_pending');
+          appendMessage(
+            'assistant',
+            data.loading_hint ??
+              assistant.content ??
+              'All answers submitted! Generating your personalized feedback…',
+            {
+              workflow: assistant.workflow,
+              nextActions: assistant.nextActions,
+              cards: assistant.cards,
+            }
+          );
+          startPolling(runId);
+          setIsSending(false);
+          publishSessionNavInvalidate();
+          return;
+        }
+
+        if (data.next_question) {
+          showQuestion(data.next_question, questionIndex + 1, questionCount, {
+            content: assistant.content,
+            workflow: assistant.workflow,
+            nextActions: assistant.nextActions,
+            cards: assistant.cards,
+          });
+        }
+        setIsSending(false);
+        publishSessionNavInvalidate();
+        return;
+      }
+
+      const hubId = agentSessionId ?? (await ensureHubOpen());
+      if (finishIfStale(runId) || !hubId) {
+        setIsSending(false);
+        return;
+      }
+
+      setAgentSending(MOCK_INTERVIEW_AGENT_ID, true);
+      const res = await sendAgentChat(MOCK_INTERVIEW_AGENT_ID, text.trim(), hubId);
+      setAgentSending(MOCK_INTERVIEW_AGENT_ID, false);
 
       if (finishIfStale(runId)) return;
 
-      if (res.success && res.data) {
-        if (await tryHandleAnswerEscalation(res.data)) return;
-      }
-
       if (!res.success || !res.data) {
-        // TODO(KAZI-128): prefer errorCode === 'SESSION_ABANDONED' once BE stabilizes.
         if (
           res.errorCode === 'SESSION_ABANDONED' ||
           /abandoned/i.test(res.error ?? '')
@@ -679,53 +1004,32 @@ export function useInterview(jobId?: string | null) {
           showToast(t('sessionEnded'), 'info');
           return;
         }
-        showToast(res.error ?? 'Failed to submit answer', 'error');
+        if (isPaywallError(res) && res.errorCode) {
+          useUIStore.getState().openPaywall(res.errorCode);
+        } else {
+          showToast(res.error ?? 'Failed to submit answer', 'error');
+        }
         setIsSending(false);
         return;
       }
 
-      const data = res.data;
-      const { assistant } = handleAgentEnvelope(data);
-      if (data.status === 'completed') {
-        setCurrentQuestion(null);
-        setPhase('feedback_pending');
-        appendMessage(
-          'assistant',
-          data.loading_hint ??
-            assistant.content ??
-            'All answers submitted! Generating your personalized feedback…',
-          {
-            workflow: assistant.workflow,
-            nextActions: assistant.nextActions,
-            cards: assistant.cards,
-          }
-        );
-        startPolling(runId);
-        setIsSending(false);
-        publishSessionNavInvalidate();
-        return;
-      }
-
-      if (data.next_question) {
-        showQuestion(data.next_question, questionIndex + 1, questionCount, {
-          content: assistant.content,
-          workflow: assistant.workflow,
-          nextActions: assistant.nextActions,
-          cards: assistant.cards,
-        });
-      }
+      await applyChatTurn(res.data, runId);
       setIsSending(false);
-      publishSessionNavInvalidate();
     },
     [
+      agentSessionId,
       appendMessage,
+      applyChatTurn,
+      currentQuestion,
+      ensureHubOpen,
+      finishIfStale,
+      isSending,
+      jobId,
       questionCount,
       questionIndex,
       resetInterviewSession,
-      currentQuestion,
-      finishIfStale,
-      isSending,
       sessionId,
+      setAgentSending,
       showQuestion,
       showToast,
       startPolling,
@@ -826,6 +1130,7 @@ export function useInterview(jobId?: string | null) {
     phase,
     messages,
     sessionId,
+    agentSessionId,
     targetRole,
     displayRole,
     activeWorkflow,
@@ -850,5 +1155,6 @@ export function useInterview(jobId?: string | null) {
     reset,
     retrySession,
     checkFeedbackNow,
+    resyncSession,
   };
 }

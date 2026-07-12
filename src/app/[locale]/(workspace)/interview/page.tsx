@@ -19,8 +19,10 @@ import { InterviewWorkspace } from "@/components/interview/interview-workspace";
 import { IrpProfileHome } from "@/components/interview/irp-profile-home";
 import { IrpDiagnosisUpdate } from "@/components/interview/irp-diagnosis-update";
 import { Button } from "@/components/ui/button";
+import { HubSessionStaleBanner } from "@/components/hub/hub-session-stale-banner";
 import { useInterview } from "@/hooks/use-interview";
 import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
+import { useHubSessionStaleBanner } from "@/hooks/use-hub-session-stale-banner";
 import { MOCK_INTERVIEW_AGENT_ID } from "@/lib/mock-interview-config";
 import { useInterviewProfile } from "@/hooks/use-interview-profile";
 import { useBilling } from "@/hooks/use-billing";
@@ -67,7 +69,16 @@ function InterviewPageContent({ locale }: { locale: string }) {
     reset,
     retrySession,
     checkFeedbackNow,
+    agentSessionId,
+    resyncSession,
   } = useInterview(jobId);
+
+  const sessionStale = useHubSessionStaleBanner(
+    MOCK_INTERVIEW_AGENT_ID,
+    agentSessionId,
+    !needsLogin,
+    resyncSession
+  );
 
   useHubActiveAgentSync(locale, MOCK_INTERVIEW_AGENT_ID, !needsLogin);
 
@@ -355,6 +366,12 @@ function InterviewPageContent({ locale }: { locale: string }) {
 
   return (
     <div className="flex h-full flex-col bg-gray-50">
+      {sessionStale.stale ? (
+        <HubSessionStaleBanner
+          onRefresh={sessionStale.refresh}
+          onDismiss={sessionStale.dismiss}
+        />
+      ) : null}
       <main className="mx-auto flex w-full max-w-5xl min-h-0 flex-1 flex-col">
         {showProfileHome && profile ? (
           <IrpProfileHome
