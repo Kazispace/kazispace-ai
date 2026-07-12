@@ -71,6 +71,9 @@ function nextId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** Seeded welcome — matches Hub entry contract assistant-turn pattern (KAZI-164). */
+export const CV_CHAT_WELCOME_ID = 'cv_chat_welcome';
+
 function applyAgentMetaSideEffects(
   data: Pick<AgentChatResponse, 'meta' | 'response'>,
   openPaywall: (code: string) => void
@@ -200,13 +203,15 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       if (greeting) {
         setMessages([{ id: nextId('cv'), role: 'assistant', content: greeting }]);
       } else {
-        setMessages([]);
+        setMessages([
+          { id: CV_CHAT_WELCOME_ID, role: 'assistant', content: t('agentWelcome') },
+        ]);
         setPreview(null);
         setDiff(null);
         setPipelineState(null);
       }
     },
-    []
+    [t]
   );
 
   const refreshSessions = useCallback(async () => {

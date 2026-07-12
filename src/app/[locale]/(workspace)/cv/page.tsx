@@ -4,7 +4,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
-import { CvAgentWelcome } from "@/components/cv/cv-agent-welcome";
 import { CvChatInput } from "@/components/cv/cv-chat-input";
 import { CvHeader } from "@/components/cv/cv-header";
 import { CvParsedHints } from "@/components/cv/cv-parsed-hints";
@@ -23,6 +22,12 @@ import { useSessionNavController } from "@/components/session-nav/session-nav-co
 import { Button } from "@/components/ui/button";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
+import {
+  CV_HUB_QUICK_ACTION_KEYS,
+  cvHubQuickActionPrompt,
+  matchCvHubQuickAction,
+  type CvHubQuickAction,
+} from "@/lib/cv-hub-quick-actions";
 import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
 import { useHubSessionStaleBanner } from "@/hooks/use-hub-session-stale-banner";
 import { CV_BUILDER_AGENT_ID } from "@/lib/cv-agent-config";
@@ -117,6 +122,26 @@ function CvPageContent({ locale }: { locale: string }) {
     [jobId, t]
   );
 
+  const cvQuickActionLabels = useMemo(
+    (): Record<CvHubQuickAction, string> => ({
+      upload: t("welcomePromptUpload"),
+      experience: t("welcomePromptExperience"),
+      tailor: t("welcomePromptTailor"),
+    }),
+    [t]
+  );
+
+  const cvWelcomeQuickReplies = useMemo(
+    () => CV_HUB_QUICK_ACTION_KEYS.map((key) => cvQuickActionLabels[key]),
+    [cvQuickActionLabels]
+  );
+
+  const showCvWelcomeQuickReplies = useMemo(
+    () =>
+      !isLoading && messages.length > 0 && !messages.some((m) => m.role === "user"),
+    [isLoading, messages]
+  );
+
   const escalationRecoveryAgentName = useMemo(() => {
     if (!escalationRecoveryTarget) return null;
     const entry = AGENT_REGISTRY.find(
@@ -148,6 +173,22 @@ function CvPageContent({ locale }: { locale: string }) {
   const composerRoutedActions =
     msgRoutedActions.length > 0 ? [] : routedActions;
   const composerPickerActions = pickerActions;
+
+  const handleCvWelcomeQuickReply = useCallback(
+    (text: string) => {
+      const action = matchCvHubQuickAction(text, cvQuickActionLabels);
+      if (action === "upload") {
+        fileInputRef.current?.click();
+        return;
+      }
+      if (action === "experience" || action === "tailor") {
+        void sendMessage(cvHubQuickActionPrompt(action, (key) => t(key)));
+        return;
+      }
+      void sendMessage(text);
+    },
+    [cvQuickActionLabels, sendMessage, t]
+  );
 
   const handleCvAction = useCallback(
     (action: ChatNextAction) => {
@@ -303,12 +344,6 @@ function CvPageContent({ locale }: { locale: string }) {
                   <p className="text-sm text-gray-500 text-center py-12">
                     {t("sessionLoading")}
                   </p>
-                ) : messages.length === 0 ? (
-                  <CvAgentWelcome
-                    disabled={inputDisabled}
-                    onPrompt={(text) => void sendMessage(text)}
-                    onUploadClick={() => fileInputRef.current?.click()}
-                  />
                 ) : null}
                 {messages.map((msg) =>
                   msg.role === "user" ? (
@@ -339,6 +374,13 @@ function CvPageContent({ locale }: { locale: string }) {
 
             {!isReadOnly ? (
               <div className="shrink-0 border-t border-gray-200/80 bg-white">
+                {showCvWelcomeQuickReplies ? (
+                  <QuickReplies
+                    options={cvWelcomeQuickReplies}
+                    disabled={inputDisabled}
+                    onSelect={handleCvWelcomeQuickReply}
+                  />
+                ) : null}
                 {composerRoutedActions.length > 0 ? (
                   <div className="max-w-3xl mx-auto px-4 pt-2">
                     <ChatNextActions
