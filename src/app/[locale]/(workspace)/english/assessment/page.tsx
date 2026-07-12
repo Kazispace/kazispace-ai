@@ -30,7 +30,7 @@ export default function EnglishAssessmentPage({ params }: AssessmentPageProps) {
   const t = useTranslations("english");
   return (
     <div className="min-h-0 h-full bg-gray-50 flex flex-col">
-            <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col">
         <div className="px-4 pt-2">
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/${params.locale}/english`}>{t("assessment.back")}</Link>
@@ -46,6 +46,6 @@ export default function EnglishAssessmentPage({ params }: AssessmentPageProps) {
           <AssessmentPageContent locale={params.locale} />
         </Suspense>
       </main>
-          </div>
+    </div>
   );
 }

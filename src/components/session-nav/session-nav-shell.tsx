@@ -1,9 +1,11 @@
 'use client';
 
 import { Menu } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { useSessionNavState } from '@/hooks/use-session-nav-state';
+import { resolveSurfaceFromPathname } from '@/lib/agent-transition/surfaces';
 import { useUIStore } from '@/lib/store';
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
@@ -15,8 +17,10 @@ interface SessionNavShellProps {
 }
 
 export function SessionNavShell({ locale, children }: SessionNavShellProps) {
+  const pathname = usePathname();
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
   const t = useTranslations('sessionNav');
+  const isClinic = resolveSurfaceFromPathname(pathname) === 'clinic';
   const {
     panelOpen,
     setPanelOpen,
@@ -60,7 +64,7 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
             <Menu className="h-5 w-5" />
           </button>
         </div>
-        <SessionContextHeader locale={locale} />
+        {!isClinic && <SessionContextHeader locale={locale} />}
         <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
       </div>
     </div>

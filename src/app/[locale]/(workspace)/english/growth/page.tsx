@@ -69,7 +69,7 @@ export default function EnglishGrowthPage({ params }: GrowthPageProps) {
   const t = useTranslations("english");
   return (
     <div className="min-h-0 h-full bg-gray-50 flex flex-col">
-            <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col">
         <Suspense
           fallback={
             <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -80,6 +80,6 @@ export default function EnglishGrowthPage({ params }: GrowthPageProps) {
           <GrowthPageContent locale={params.locale} />
         </Suspense>
       </main>
-          </div>
+    </div>
   );
 }

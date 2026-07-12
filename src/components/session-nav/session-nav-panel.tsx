@@ -1,12 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { PanelLeftClose, X } from 'lucide-react';
 
-import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
-import type { SupportedLocale } from '@/lib/constants';
 import {
   buildSessionNavRows,
   navigateToSessionNavTarget,
@@ -20,13 +18,6 @@ interface SessionNavPanelProps {
   open: boolean;
   mobileDrawer: boolean;
   onClose: () => void;
-}
-
-function rowLabel(row: SessionNavRow, locale: string, t: ReturnType<typeof useTranslations<'sessionNav'>>): string {
-  if (row.id === 'clinic') return t('clinic');
-  const agent = AGENT_REGISTRY.find((a) => a.agentId === row.agentId);
-  if (!agent) return row.id;
-  return getAgentLabel(agent, locale as SupportedLocale, 'name');
 }
 
 function rowBadge(
@@ -47,10 +38,20 @@ export function SessionNavPanel({
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
-  const rows = useMemo(() => buildSessionNavRows(locale), [locale]);
+  const rows = useMemo(
+    () => buildSessionNavRows(locale, t('clinic')),
+    [locale, t]
+  );
   const activeId = resolveActiveNavRowId(pathname);
 
-  if (!open && !mobileDrawer) return null;
+  useEffect(() => {
+    if (!mobileDrawer) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [mobileDrawer, onClose]);
 
   const panelBody = (
     <div className="flex h-full flex-col bg-white">
@@ -93,7 +94,7 @@ export function SessionNavPanel({
                     {row.emoji}
                   </span>
                   <span className="flex-1 truncate text-sm font-medium">
-                    {rowLabel(row, locale, t)}
+                    {row.displayName}
                   </span>
                 </div>
                 {badge && (
@@ -125,6 +126,7 @@ export function SessionNavPanel({
 
   return (
     <aside
+      aria-hidden={!open}
       className={cn(
         'hidden md:block shrink-0 overflow-hidden border-r border-[#E5E6EB] transition-[width] duration-200 ease-out',
         open ? 'w-[260px]' : 'w-0'

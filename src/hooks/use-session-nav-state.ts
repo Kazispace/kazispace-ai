@@ -33,7 +33,6 @@ export function useSessionNavState() {
     } catch {
       /* ignore */
     }
-    if (!open) setMobileDrawerOpen(false);
   }, []);
 
   const togglePanel = useCallback(() => {
@@ -44,24 +43,16 @@ export function useSessionNavState() {
       } catch {
         /* ignore */
       }
-      if (!next) setMobileDrawerOpen(false);
       return next;
     });
   }, []);
 
   const openMobileDrawer = useCallback(() => {
     setMobileDrawerOpen(true);
-    setPanelOpenState(true);
   }, []);
 
   const closeMobileDrawer = useCallback(() => {
     setMobileDrawerOpen(false);
-    setPanelOpenState(false);
-    try {
-      localStorage.setItem(SESSION_NAV_STORAGE_KEY, 'false');
-    } catch {
-      /* ignore */
-    }
   }, []);
 
   return {

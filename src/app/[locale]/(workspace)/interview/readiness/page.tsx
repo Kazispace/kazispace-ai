@@ -123,7 +123,7 @@ export default function InterviewReadinessPage({ params }: ReadinessPageProps) {
   const t = useTranslations("interview");
   return (
     <div className="min-h-0 h-full bg-gray-50 flex flex-col">
-            <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col">
         <Suspense
           fallback={
             <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -134,6 +134,6 @@ export default function InterviewReadinessPage({ params }: ReadinessPageProps) {
           <ReadinessPageContent locale={params.locale} />
         </Suspense>
       </main>
-          </div>
+    </div>
   );
 }

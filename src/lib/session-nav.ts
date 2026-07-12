@@ -1,11 +1,13 @@
 import {
   getAgentHubPath,
+  getDedicatedHubAgentFromPathname,
   getSurfacePath,
   resolveSurfaceForAgent,
   resolveSurfaceFromPathname,
 } from '@/lib/agent-transition/surfaces';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
-import { AGENT_REGISTRY, type AgentRegistryEntry } from '@/lib/agents/registry';
+import { AGENT_REGISTRY, getAgentLabel, type AgentRegistryEntry } from '@/lib/agents/registry';
+import type { SupportedLocale } from '@/lib/constants';
 
 export const SESSION_NAV_STORAGE_KEY = 'kazi.sessionNav.panelOpen';
 
@@ -15,7 +17,8 @@ export interface SessionNavRow {
   id: SessionNavRowId;
   agentId: string | null;
   emoji: string;
-  label: string;
+  /** Localized display label (Panel renders this directly). */
+  displayName: string;
   href: string | null;
   surface: AgentSurfaceId;
   disabled: boolean;
@@ -24,12 +27,15 @@ export interface SessionNavRow {
 }
 
 /** Panel rows: Clinic + Registry agents (P0 static). */
-export function buildSessionNavRows(locale: string): SessionNavRow[] {
+export function buildSessionNavRows(
+  locale: string,
+  clinicLabel: string
+): SessionNavRow[] {
   const clinicRow: SessionNavRow = {
     id: 'clinic',
     agentId: null,
     emoji: '💬',
-    label: 'clinic',
+    displayName: clinicLabel,
     href: getSurfacePath(locale, 'clinic'),
     surface: 'clinic',
     disabled: false,
@@ -54,7 +60,7 @@ function registryEntryToNavRow(
     id: agent.agentId,
     agentId: agent.agentId,
     emoji: agent.emoji,
-    label: agent.agentId,
+    displayName: getAgentLabel(agent, locale as SupportedLocale, 'name'),
     href: hubPath,
     surface: resolveSurfaceForAgent(agent.agentId),
     disabled: isComingSoon || isClinicInline || !hubPath,
@@ -70,12 +76,8 @@ function registryEntryToNavRow(
 export function resolveActiveNavRowId(pathname: string): SessionNavRowId {
   const surface = resolveSurfaceFromPathname(pathname);
   if (surface === 'clinic') return 'clinic';
-  const segment = pathname.split('/').filter(Boolean)[1];
-  const match = AGENT_REGISTRY.find((a) => {
-    const path = getAgentHubPath('en', a.agentId);
-    return path?.endsWith(`/${segment}`);
-  });
-  return match?.agentId ?? 'clinic';
+  const agentId = getDedicatedHubAgentFromPathname(pathname);
+  return agentId ?? 'clinic';
 }
 
 export function navigateToSessionNavTarget(
