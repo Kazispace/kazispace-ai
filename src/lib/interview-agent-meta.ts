@@ -86,6 +86,7 @@ export function mapPipelineToInterviewPhase(
   opts?: { feedbackStatus?: string | null }
 ): InterviewHubPhase | null {
   const ps = (pipelineState ?? '').toLowerCase();
+  if (!ps) return null;
   if (ps === 'role_intake' || ps === 'entered' || ps === 'prep_card') {
     return 'role_select';
   }
@@ -98,26 +99,38 @@ export function mapPipelineToInterviewPhase(
   if (ps === 'feedback_failed' || opts?.feedbackStatus === 'failed') {
     return 'feedback_failed';
   }
+  // L4 `completed` = all interview answers submitted; feedback may still be generating.
+  // Use opts.feedbackStatus === 'ready' to map to feedback_ready.
   if (ps === 'feedback_pending' || ps === 'completed') {
     return 'feedback_pending';
   }
   return null;
 }
 
+/** Question progress lives on response.meta (root or mock_interview nested). */
 export function extractQuestionProgress(data: AgentChatResponse | undefined): {
   questionIndex?: number;
   questionCount?: number;
 } {
-  const workflow = data?.response?.meta;
-  const wf = asRecord((data as Record<string, unknown> | undefined)?.response)?.workflow;
-  const workflowMeta = asRecord(wf) ?? asRecord(workflow);
+  const meta = asRecord(data?.response?.meta) ?? asRecord(data?.meta);
+  if (!meta) return {};
+
+  const nested =
+    asRecord(meta.mock_interview) ??
+    asRecord(meta.mockInterview) ??
+    meta;
+
   const questionIndex =
-    typeof workflowMeta?.question_index === 'number'
-      ? workflowMeta.question_index
-      : undefined;
+    typeof nested.question_index === 'number'
+      ? nested.question_index
+      : typeof meta.question_index === 'number'
+        ? meta.question_index
+        : undefined;
   const questionCount =
-    typeof workflowMeta?.question_count === 'number'
-      ? workflowMeta.question_count
-      : undefined;
+    typeof nested.question_count === 'number'
+      ? nested.question_count
+      : typeof meta.question_count === 'number'
+        ? meta.question_count
+        : undefined;
   return { questionIndex, questionCount };
 }

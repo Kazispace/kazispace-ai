@@ -17,6 +17,7 @@ import {
   mapPipelineToInterviewPhase,
   resolveAgentChatMeta,
   extractQuestionProgress,
+  parseMockInterviewPatch,
 } from '@/lib/interview-agent-meta';
 import { resolveWorkflowFromMessages, mapAgentHistoryToChatMessages, type RawAgentHistoryMessage } from '@/lib/agent-sessions';
 import { isNavigationPending, planNavigation } from '@/lib/agent-transition';
@@ -142,6 +143,7 @@ export function useInterview(jobId?: string | null) {
   const lastAutoStartedJobIdRef = useRef<string | null>(null);
   const jobStartInFlightRef = useRef(false);
   const hubOpenGenRef = useRef(0);
+  const hubOpenInFlightRef = useRef<Promise<string | null> | null>(null);
   const setAgentSending = useAgentStore((s) => s.setAgentSending);
 
   const finishIfStale = useCallback((runId: number) => {
@@ -382,30 +384,42 @@ export function useInterview(jobId?: string | null) {
   const ensureHubOpen = useCallback(async (): Promise<string | null> => {
     if (!isLoggedIn) return null;
     if (agentSessionId) return agentSessionId;
+    if (hubOpenInFlightRef.current) return hubOpenInFlightRef.current;
 
-    const gen = ++hubOpenGenRef.current;
-    const open = await openHubAgentSession(MOCK_INTERVIEW_AGENT_ID, locale, {
-      job_id: jobId ?? undefined,
-    });
-    if (gen !== hubOpenGenRef.current) return null;
-    if (!open.ok) {
-      showToast(open.error ?? t('startFailed'), 'error');
-      return null;
-    }
+    const openPromise = (async (): Promise<string | null> => {
+      const gen = ++hubOpenGenRef.current;
+      const open = await openHubAgentSession(MOCK_INTERVIEW_AGENT_ID, locale, {
+        job_id: jobId ?? undefined,
+      });
+      if (gen !== hubOpenGenRef.current) return null;
+      if (!open.ok) {
+        showToast(open.error ?? t('startFailed'), 'error');
+        return null;
+      }
 
-    setAgentSessionId(open.sessionId);
-    useAgentStore.getState().setAgentSession(MOCK_INTERVIEW_AGENT_ID, open.sessionId);
+      setAgentSessionId(open.sessionId);
+      useAgentStore.getState().setAgentSession(MOCK_INTERVIEW_AGENT_ID, open.sessionId);
 
-    if (open.resumed && open.greeting && messages.length === 0) {
-      appendMessage('assistant', open.greeting);
-      const meta = resolveAgentChatMeta({ response: { text: open.greeting } });
-      const nextPhase = mapPipelineToInterviewPhase(meta.pipelineState);
-      if (nextPhase && nextPhase !== 'role_select') {
-        setPhase(nextPhase);
+      if (open.resumed && open.greeting && messages.length === 0) {
+        appendMessage('assistant', open.greeting);
+        const meta = resolveAgentChatMeta({ response: { text: open.greeting } });
+        const nextPhase = mapPipelineToInterviewPhase(meta.pipelineState);
+        if (nextPhase && nextPhase !== 'role_select') {
+          setPhase(nextPhase);
+        }
+      }
+
+      return open.sessionId;
+    })();
+
+    hubOpenInFlightRef.current = openPromise;
+    try {
+      return await openPromise;
+    } finally {
+      if (hubOpenInFlightRef.current === openPromise) {
+        hubOpenInFlightRef.current = null;
       }
     }
-
-    return open.sessionId;
   }, [
     agentSessionId,
     appendMessage,
@@ -523,14 +537,26 @@ export function useInterview(jobId?: string | null) {
       );
 
       const pipelineState = hist.data.pipeline_state ?? undefined;
-      const meta = resolveAgentChatMeta({
-        response: { meta: { pipeline_state: pipelineState } },
-      });
-      if (meta.interviewSessionId) setSessionId(meta.interviewSessionId);
-      if (meta.targetRole) setTargetRole(meta.targetRole);
+      let patch = parseMockInterviewPatch({ pipeline_state: pipelineState });
+      const rawMessages = hist.data.messages as Array<
+        RawAgentHistoryMessage & { meta?: unknown }
+      >;
+      for (let i = rawMessages.length - 1; i >= 0; i--) {
+        const rowMeta = rawMessages[i]?.meta;
+        if (!rowMeta) continue;
+        const parsed = parseMockInterviewPatch(rowMeta);
+        if (parsed.interviewSessionId || parsed.pipelineState || parsed.targetRole) {
+          patch = { ...patch, ...parsed };
+          break;
+        }
+      }
+      if (patch.interviewSessionId) setSessionId(patch.interviewSessionId);
+      if (patch.targetRole) setTargetRole(patch.targetRole);
 
-      const mappedPhase = mapPipelineToInterviewPhase(pipelineState ?? meta.pipelineState);
-      if (mappedPhase === 'feedback_pending' && meta.interviewSessionId && runId != null) {
+      const mappedPhase = mapPipelineToInterviewPhase(
+        pipelineState ?? patch.pipelineState
+      );
+      if (mappedPhase === 'feedback_pending' && patch.interviewSessionId && runId != null) {
         setPhase('feedback_pending');
         setCurrentQuestion(null);
         startPolling(runId);
@@ -909,21 +935,19 @@ export function useInterview(jobId?: string | null) {
 
   const submitAnswer = useCallback(
     async (text: string) => {
-      if (!text.trim() || isSending) return;
-
-      const runId = runIdRef.current;
-      setIsSending(true);
-      appendMessage('user', text.trim());
+      const trimmed = text.trim();
+      if (!trimmed || isSending) return;
 
       if (jobId) {
-        if (!sessionId || !currentQuestion) {
-          setIsSending(false);
-          return;
-        }
+        if (!sessionId || !currentQuestion) return;
+
+        const runId = runIdRef.current;
+        setIsSending(true);
+        appendMessage('user', trimmed);
 
         const res = await submitInterviewAnswer(sessionId, {
           question_id: currentQuestion.question_id,
-          answer_text: text.trim(),
+          answer_text: trimmed,
         });
 
         if (finishIfStale(runId)) return;
@@ -982,6 +1006,12 @@ export function useInterview(jobId?: string | null) {
         return;
       }
 
+      if (phase !== 'interview' || !currentQuestion) return;
+
+      const runId = runIdRef.current;
+      setIsSending(true);
+      appendMessage('user', trimmed);
+
       const hubId = agentSessionId ?? (await ensureHubOpen());
       if (finishIfStale(runId) || !hubId) {
         setIsSending(false);
@@ -989,10 +1019,13 @@ export function useInterview(jobId?: string | null) {
       }
 
       setAgentSending(MOCK_INTERVIEW_AGENT_ID, true);
-      const res = await sendAgentChat(MOCK_INTERVIEW_AGENT_ID, text.trim(), hubId);
+      const res = await sendAgentChat(MOCK_INTERVIEW_AGENT_ID, trimmed, hubId);
       setAgentSending(MOCK_INTERVIEW_AGENT_ID, false);
 
-      if (finishIfStale(runId)) return;
+      if (finishIfStale(runId)) {
+        setIsSending(false);
+        return;
+      }
 
       if (!res.success || !res.data) {
         if (
@@ -1025,6 +1058,7 @@ export function useInterview(jobId?: string | null) {
       finishIfStale,
       isSending,
       jobId,
+      phase,
       questionCount,
       questionIndex,
       resetInterviewSession,
