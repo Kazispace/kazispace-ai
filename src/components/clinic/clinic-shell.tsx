@@ -170,13 +170,24 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const loadAgentHistoryRef = useRef(loadAgentHistory);
   loadAgentHistoryRef.current = loadAgentHistory;
 
+  /** Hub agent id already cold-opened on Clinic — avoids reconcile/focus reload loops. */
+  const clinicHubColdOpenRef = useRef<string | null>(null);
+
   /**
    * Clinic cold-open (ADR-005 INV-6): user is on /chat while a dedicated hub session
    * remains active on the server. Clear local UI focus and load Clinic history only —
    * no deactivate, no redirect to Hub. Hub pages resume via their own entry hooks.
    */
   const stayInClinicForDedicatedHub = useCallback(
-    async (_hubAgentId: string): Promise<boolean> => {
+    async (hubAgentId: string): Promise<boolean> => {
+      const localActive = useAgentStore.getState().activeAgentId;
+      if (
+        clinicHubColdOpenRef.current === hubAgentId &&
+        localActive === null
+      ) {
+        return true;
+      }
+      clinicHubColdOpenRef.current = hubAgentId;
       useAgentStore.getState().setActiveAgent(null, null);
       await loadHistoryRef.current();
       return true;
@@ -192,6 +203,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         setLayerReady(true);
         return;
       }
+      clinicHubColdOpenRef.current = null;
       await resumeActiveAgentSilentlyRef.current(
         active.active_agent,
         active.session_id
@@ -201,6 +213,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       return;
     }
 
+    clinicHubColdOpenRef.current = null;
     useAgentStore.getState().setActiveAgent(null, null);
     await loadHistoryRef.current();
     setLayerReady(true);
@@ -518,6 +531,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         if (isDedicatedHubAgent(active.active_agent)) {
           await stayInClinicForDedicatedHub(active.active_agent);
         } else {
+          clinicHubColdOpenRef.current = null;
           await resumeActiveAgentSilentlyRef.current(
             active.active_agent,
             active.session_id
@@ -525,6 +539,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           skipHistoryLoad();
         }
       } else {
+        clinicHubColdOpenRef.current = null;
         useAgentStore.getState().setActiveAgent(null, null);
         await loadHistoryRef.current();
       }

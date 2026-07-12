@@ -7,6 +7,14 @@ import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
 import { leaveDedicatedHubForClinic } from '@/lib/leave-dedicated-hub';
 import { useUIStore } from '@/lib/store';
 
+/** Brief spinner guard while Hub→Clinic navigation starts (navigate-only path). */
+const HUB_EXIT_SPINNER_MS = 200;
+
+/**
+ * Clinic exit helper. Dedicated hubs use navigate-only (ADR-005): `isDeactivating`
+ * only guards double-clicks during router.push — no server deactivate on that path.
+ * Non-hub / explicit exits still await `deactivateToClinic`.
+ */
 export function useDeactivateToClinic(locale: string) {
   const router = useRouter();
   const showToast = useUIStore((s) => s.showToast);
@@ -24,9 +32,9 @@ export function useDeactivateToClinic(locale: string) {
 
       if (options?.bestEffort && options.agentId) {
         setIsDeactivating(true);
-        leaveDedicatedHubForClinic(locale, options.agentId);
+        leaveDedicatedHubForClinic();
         router.push(targetHref);
-        window.setTimeout(() => setIsDeactivating(false), 200);
+        window.setTimeout(() => setIsDeactivating(false), HUB_EXIT_SPINNER_MS);
         return { ok: true as const, agentId: options.agentId };
       }
 

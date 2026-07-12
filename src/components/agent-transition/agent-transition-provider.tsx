@@ -95,7 +95,7 @@ export function AgentTransitionProvider({
   const returnToClinic = useCallback(async () => {
     const clinicHref =
       planNavigation(locale, fromSurface, null).href ?? `/${locale}/chat`;
-    leaveDedicatedHubForClinic(locale, hubAgentId);
+    leaveDedicatedHubForClinic();
     router.replace(clinicHref);
     return { ok: true as const };
   }, [fromSurface, hubAgentId, locale, router]);
