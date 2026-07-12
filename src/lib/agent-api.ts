@@ -9,6 +9,9 @@ import type {
   ChatJobCard,
   ChatNextAction,
   DeactivateAgentResponse,
+  ExitAgentSessionResponse,
+  NewAgentSessionOptions,
+  OpenAgentSessionOptions,
 } from '@/types';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import {
@@ -543,6 +546,121 @@ export async function fetchCurrentAgentSessions(): Promise<
     }
 
     return { success: true, data: { sessions } };
+  }
+  return res;
+}
+
+export async function openAgentSession(
+  agentId: string,
+  locale: string,
+  options?: OpenAgentSessionOptions
+): Promise<ApiResponse<ActivateAgentResponse>> {
+  const body: Record<string, string> = {};
+  if (options?.master_session_id) body.master_session_id = options.master_session_id;
+  if (options?.handoff_message) body.handoff_message = options.handoff_message;
+  if (options?.job_id) body.job_id = options.job_id;
+
+  const masterSessionId =
+    options?.master_session_id ??
+    (getAuthToken() ? await ensureMasterSession() : undefined);
+  if (masterSessionId && !body.master_session_id) {
+    body.master_session_id = masterSessionId;
+  }
+
+  const res = await apiRequest<ActivateAgentResponse>(
+    `/api/v1/agents/${agentId}/sessions/open`,
+    { method: 'POST', body: JSON.stringify(body) }
+  );
+  if (res.success) return withSessionNavRefresh(res);
+  if (useMockFallback(res.error)) {
+    return withSessionNavRefresh({
+      success: true,
+      data: {
+        ...mockActivate(agentId, locale, options?.handoff_message, {
+          job_id: options?.job_id,
+        }),
+        master_session_id: masterSessionId,
+        resumed: true,
+      },
+    });
+  }
+  return res;
+}
+
+export async function newAgentSession(
+  agentId: string,
+  locale: string,
+  options?: NewAgentSessionOptions
+): Promise<ApiResponse<ActivateAgentResponse>> {
+  const body: Record<string, string | boolean> = {};
+  if (options?.confirm_abandon) body.confirm_abandon = true;
+  if (options?.master_session_id) body.master_session_id = options.master_session_id;
+  if (options?.handoff_message) body.handoff_message = options.handoff_message;
+  if (options?.job_id) body.job_id = options.job_id;
+
+  const masterSessionId =
+    options?.master_session_id ??
+    (getAuthToken() ? await ensureMasterSession() : undefined);
+  if (masterSessionId && !body.master_session_id) {
+    body.master_session_id = masterSessionId;
+  }
+
+  const res = await apiRequest<ActivateAgentResponse>(
+    `/api/v1/agents/${agentId}/sessions/new`,
+    { method: 'POST', body: JSON.stringify(body) }
+  );
+  if (res.success) return withSessionNavRefresh(res);
+  if (
+    res.errorCode === 'SESSION_IN_PROGRESS' ||
+    res.error?.includes('SESSION_IN_PROGRESS')
+  ) {
+    return res;
+  }
+  if (useMockFallback(res.error)) {
+    mockSessions.forEach((state, key) => {
+      if (state.active_agent === agentId) mockSessions.delete(key);
+    });
+    return withSessionNavRefresh({
+      success: true,
+      data: {
+        ...mockActivate(agentId, locale, options?.handoff_message, {
+          job_id: options?.job_id,
+        }),
+        master_session_id: masterSessionId,
+        resumed: false,
+      },
+    });
+  }
+  return res;
+}
+
+export async function exitAgentSession(
+  agentId: string,
+  locale: string
+): Promise<ApiResponse<ExitAgentSessionResponse>> {
+  const res = await apiRequest<ExitAgentSessionResponse>(
+    `/api/v1/agents/${agentId}/sessions/exit`,
+    { method: 'POST', body: '{}' }
+  );
+  if (res.success) return withSessionNavRefresh(res);
+  if (useMockFallback(res.error)) {
+    const active = getMockActive();
+    if (active.active_agent !== agentId) {
+      return withSessionNavRefresh({
+        success: true,
+        data: {
+          status: 'already_exited' as const,
+          agent_id: agentId,
+          session_id: null,
+          deactivated_agent: agentId,
+          return_message: '',
+        },
+      });
+    }
+    return withSessionNavRefresh({
+      success: true,
+      data: mockDeactivate(agentId, locale),
+    });
   }
   return res;
 }

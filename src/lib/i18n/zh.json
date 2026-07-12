@@ -167,7 +167,21 @@
 		"badgeResumable": "可继续",
 		"badgeArchived": "已归档",
 		"badgeNotStarted": "未开始",
-		"refreshFailed": "无法刷新进行中会话"
+		"refreshFailed": "无法刷新进行中会话",
+		"tabAgent": "专家",
+		"tabSession": "会话",
+		"newSession": "新建会话",
+		"exitSession": "结束会话",
+		"expandHistory": "展开历史",
+		"collapseHistory": "收起历史",
+		"confirmAbandonTitle": "新建会话？",
+		"confirmAbandonBody": "当前 {agent} 会话仍在进行中，新建将归档当前会话。",
+		"confirmAbandonAction": "新建",
+		"confirmAbandonCancel": "取消",
+		"newSessionStarted": "已新建会话",
+		"newSessionFailed": "无法新建会话",
+		"exitSessionDone": "会话已结束",
+		"exitSessionFailed": "无法结束会话"
 	},
 	"chat": {
 		"title": "{name} · AI 职业伙伴",

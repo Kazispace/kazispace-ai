@@ -178,6 +178,22 @@ export interface DeactivateAgentResponse {
   };
 }
 
+export interface ExitAgentSessionResponse extends DeactivateAgentResponse {
+  status?: 'already_exited';
+  agent_id?: string;
+  session_id?: string | null;
+}
+
+export type OpenAgentSessionOptions = {
+  master_session_id?: string;
+  handoff_message?: string;
+  job_id?: string;
+};
+
+export type NewAgentSessionOptions = OpenAgentSessionOptions & {
+  confirm_abandon?: boolean;
+};
+
 export interface AgentChatMeta {
   cv_preview_markdown?: string;
   cv_content?: string;

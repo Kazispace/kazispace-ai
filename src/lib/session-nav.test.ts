@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildSessionNavRows,
+  buildSessionViewRows,
   enrichSessionNavRows,
   resolveActiveNavRowId,
   resolveContextHeaderSession,
@@ -126,5 +127,36 @@ describe('session-nav', () => {
         ])
       )?.agent_id
     ).toBe('cv_builder');
+  });
+
+  it('builds session view rows with clinic first and sorted agent sessions', () => {
+    const sessions = new Map<string, AgentSessionSummary>([
+      [
+        'mock_interview',
+        {
+          session_id: 'sess_mi',
+          agent_id: 'mock_interview',
+          status: 'active',
+          title: 'PM interview',
+          updated_at: '2026-07-10T10:00:00Z',
+        },
+      ],
+      [
+        'cv_builder',
+        {
+          session_id: 'sess_cv',
+          agent_id: 'cv_builder',
+          status: 'active',
+          title: 'Software Engineer CV',
+          updated_at: '2026-07-12T10:00:00Z',
+        },
+      ],
+    ]);
+
+    const rows = buildSessionViewRows('en', 'Clinic', sessions);
+    expect(rows[0]?.kind).toBe('clinic');
+    expect(rows[1]?.agentId).toBe('cv_builder');
+    expect(rows[2]?.agentId).toBe('mock_interview');
+    expect(rows[1]?.sessionTitle).toBe('Software Engineer CV');
   });
 });

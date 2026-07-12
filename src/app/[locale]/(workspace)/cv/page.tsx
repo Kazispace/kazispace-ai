@@ -15,11 +15,10 @@ import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { CvPreviewPane } from "@/components/cv/cv-preview-pane";
 import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
-import { AgentSessionPanel } from "@/components/agent/agent-session-panel";
-import { CvNewSessionDialog } from "@/components/cv/cv-new-session-dialog";
 import { CvWorkspaceTabs, type CvWorkspaceTab, CV_CHAT_PANEL_ID, CV_RESUME_PANEL_ID } from "@/components/cv/cv-workspace-tabs";
 import { AgentTransitionProvider } from "@/components/agent-transition/agent-transition-provider";
 import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
+import { useSessionNavController } from "@/components/session-nav/session-nav-controller";
 import { Button } from "@/components/ui/button";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
@@ -41,9 +40,8 @@ function CvPageContent({ locale }: { locale: string }) {
   const t = useTranslations("cv");
   const openPaywall = useUIStore((s) => s.openPaywall);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [newSessionDialogOpen, setNewSessionDialogOpen] = useState(false);
-  const [sessionPanelOpen, setSessionPanelOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<CvWorkspaceTab>("chat");
+  const sessionNav = useSessionNavController();
 
   const agentSession = useCvAgent(jobId);
 
@@ -70,18 +68,12 @@ function CvPageContent({ locale }: { locale: string }) {
     continueEscalationRecovery,
     parsedSections,
     documentId,
-    sessions,
-    sessionsLoading,
-    sessionId,
     sendMessage,
     sendPayload,
     uploadResume,
     confirmCv,
     regenerateCv,
     exportCvPdf,
-    selectSession,
-    refreshSessions,
-    restart,
   } = agentSession;
 
   useHubActiveAgentSync(locale, CV_BUILDER_AGENT_ID, !needsLogin);
@@ -114,12 +106,6 @@ function CvPageContent({ locale }: { locale: string }) {
       setMobileTab("resume");
     }
   }, [canDownloadCv]);
-
-  useEffect(() => {
-    if (sessionPanelOpen) {
-      void refreshSessions();
-    }
-  }, [sessionPanelOpen, refreshSessions]);
 
   const routedActions = nextActions.filter((a) => isRoutedCvAction(a.type));
   const pickerActions = nextActions.filter((a) => !isRoutedCvAction(a.type));
@@ -165,16 +151,19 @@ function CvPageContent({ locale }: { locale: string }) {
     ]
   );
 
-  const handleRestart = useCallback(async () => {
-    setNewSessionDialogOpen(false);
-    await restart();
-    await refreshSessions();
-  }, [refreshSessions, restart]);
-
   const requestNewSession = useCallback(() => {
     if (isLoading || isSending) return;
-    setNewSessionDialogOpen(true);
-  }, [isLoading, isSending]);
+    sessionNav?.requestNewSession(CV_BUILDER_AGENT_ID, {
+      jobId: jobId ?? undefined,
+    });
+  }, [isLoading, isSending, jobId, sessionNav]);
+
+  const openSessionHistory = useCallback(() => {
+    sessionNav?.openPanel({
+      viewTab: "agent",
+      expandAgentId: CV_BUILDER_AGENT_ID,
+    });
+  }, [sessionNav]);
 
   const previewFooter = (
     <>
@@ -221,7 +210,7 @@ function CvPageContent({ locale }: { locale: string }) {
         isExporting={isExporting}
         onDownload={() => void exportCvPdf()}
         onNewSession={requestNewSession}
-        onOpenHistory={() => setSessionPanelOpen(true)}
+        onOpenHistory={openSessionHistory}
         actionsDisabled={isLoading || isSending}
         pipelineState={pipelineState}
         isWorking={isSending}
@@ -229,20 +218,6 @@ function CvPageContent({ locale }: { locale: string }) {
       />
 
       <HubLayerBar locale={locale} />
-
-      <AgentSessionPanel
-        open={sessionPanelOpen}
-        onClose={() => setSessionPanelOpen(false)}
-        title={t("sessionsTitle")}
-        sessions={sessions}
-        activeSessionId={sessionId}
-        isLoading={sessionsLoading}
-        disabled={isSending || isLoading}
-        onSelect={(id) => void selectSession(id)}
-        onNew={requestNewSession}
-        newLabel={t("newCv")}
-        topOffset="var(--cv-header-offset, 0px)"
-      />
 
       <CvWorkspaceTabs
         active={mobileTab}
@@ -394,12 +369,6 @@ function CvPageContent({ locale }: { locale: string }) {
           />
         </div>
       </div>
-
-      <CvNewSessionDialog
-        open={newSessionDialogOpen}
-        onConfirm={() => void handleRestart()}
-        onCancel={() => setNewSessionDialogOpen(false)}
-      />
     </div>
   );
 }

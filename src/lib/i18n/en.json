@@ -249,7 +249,21 @@
 		"badgeResumable": "Resume",
 		"badgeArchived": "Archived",
 		"badgeNotStarted": "Not started",
-		"refreshFailed": "Could not refresh active sessions"
+		"refreshFailed": "Could not refresh active sessions",
+		"tabAgent": "Agents",
+		"tabSession": "Sessions",
+		"newSession": "New session",
+		"exitSession": "End session",
+		"expandHistory": "Show session history",
+		"collapseHistory": "Hide session history",
+		"confirmAbandonTitle": "Start a new session?",
+		"confirmAbandonBody": "Your current {agent} session is still in progress. Starting new will archive it.",
+		"confirmAbandonAction": "Start new",
+		"confirmAbandonCancel": "Cancel",
+		"newSessionStarted": "New session started",
+		"newSessionFailed": "Could not start a new session",
+		"exitSessionDone": "Session ended",
+		"exitSessionFailed": "Could not end session"
 	},
 	"jobs": {
 		"title": "Job recommendations",

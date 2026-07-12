@@ -1,0 +1,41 @@
+import type { ActivateAgentResponse } from '@/types';
+
+export const SESSION_NAV_VIEW_TAB_KEY = 'kazi.sessionNav.viewTab';
+
+export const SESSION_NAV_SELECT_HISTORY_EVENT = 'kazi-session-nav-select-history';
+
+export const SESSION_NAV_SESSION_OPENED_EVENT = 'kazi-session-nav-session-opened';
+
+export type SessionNavSelectHistoryDetail = {
+  agentId: string;
+  sessionId: string;
+};
+
+export type SessionNavSessionOpenedDetail = {
+  agentId: string;
+  data: ActivateAgentResponse;
+};
+
+export function publishSessionNavSelectHistory(
+  agentId: string,
+  sessionId: string
+): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent<SessionNavSelectHistoryDetail>(SESSION_NAV_SELECT_HISTORY_EVENT, {
+      detail: { agentId, sessionId },
+    })
+  );
+}
+
+export function publishSessionNavSessionOpened(
+  agentId: string,
+  data: ActivateAgentResponse
+): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent<SessionNavSessionOpenedDetail>(SESSION_NAV_SESSION_OPENED_EVENT, {
+      detail: { agentId, data },
+    })
+  );
+}

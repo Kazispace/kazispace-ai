@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { SESSION_NAV_STORAGE_KEY } from '@/lib/session-nav';
+import { SESSION_NAV_STORAGE_KEY, type SessionNavViewTab } from '@/lib/session-nav';
+import { SESSION_NAV_VIEW_TAB_KEY } from '@/lib/session-nav-events';
 
 function readStoredPanelOpen(): boolean {
   if (typeof window === 'undefined') return true;
@@ -16,13 +17,27 @@ function readStoredPanelOpen(): boolean {
   return window.innerWidth >= 1024;
 }
 
+function readStoredViewTab(): SessionNavViewTab {
+  if (typeof window === 'undefined') return 'agent';
+  try {
+    const raw = localStorage.getItem(SESSION_NAV_VIEW_TAB_KEY);
+    if (raw === 'session') return 'session';
+  } catch {
+    /* ignore */
+  }
+  return 'agent';
+}
+
 export function useSessionNavState() {
   const [panelOpen, setPanelOpenState] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [viewTab, setViewTabState] = useState<SessionNavViewTab>('agent');
+  const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     setPanelOpenState(readStoredPanelOpen());
+    setViewTabState(readStoredViewTab());
     setHydrated(true);
   }, []);
 
@@ -55,6 +70,15 @@ export function useSessionNavState() {
     setMobileDrawerOpen(false);
   }, []);
 
+  const setViewTab = useCallback((tab: SessionNavViewTab) => {
+    setViewTabState(tab);
+    try {
+      localStorage.setItem(SESSION_NAV_VIEW_TAB_KEY, tab);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   return {
     panelOpen: hydrated ? panelOpen : false,
     setPanelOpen,
@@ -62,6 +86,10 @@ export function useSessionNavState() {
     mobileDrawerOpen,
     openMobileDrawer,
     closeMobileDrawer,
+    viewTab: hydrated ? viewTab : 'agent',
+    setViewTab,
+    expandedAgentId,
+    setExpandedAgentId,
     hydrated,
   };
 }

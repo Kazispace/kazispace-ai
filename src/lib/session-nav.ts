@@ -13,6 +13,8 @@ import type { AgentSessionSummary } from '@/types';
 
 export const SESSION_NAV_STORAGE_KEY = 'kazi.sessionNav.panelOpen';
 
+export type SessionNavViewTab = 'agent' | 'session';
+
 export type SessionNavRowId = 'clinic' | string;
 
 export type SessionNavBadgeKind =
@@ -146,4 +148,73 @@ export function navigateToSessionNavTarget(
 ): void {
   if (row.disabled || !row.href) return;
   router.push(row.href);
+}
+
+export interface SessionViewRow {
+  id: string;
+  kind: 'clinic' | 'agent';
+  agentId: string | null;
+  emoji: string;
+  displayName: string;
+  sessionTitle?: string | null;
+  href: string;
+  badge?: SessionNavBadgeKind;
+  badgeDetail?: string | null;
+  updatedAt?: string | null;
+  session?: AgentSessionSummary | null;
+}
+
+function sessionTimestamp(iso?: string | null): number {
+  if (!iso) return 0;
+  const ms = Date.parse(iso);
+  return Number.isNaN(ms) ? 0 : ms;
+}
+
+/** Session tab: cross-agent flat list + FE Clinic row (SDD §5.3). */
+export function buildSessionViewRows(
+  locale: string,
+  clinicLabel: string,
+  sessionsByAgent: Map<string, AgentSessionSummary>
+): SessionViewRow[] {
+  const clinicRow: SessionViewRow = {
+    id: 'clinic',
+    kind: 'clinic',
+    agentId: null,
+    emoji: '💬',
+    displayName: clinicLabel,
+    href: getSurfacePath(locale, 'clinic'),
+    updatedAt: null,
+  };
+
+  const agentRows: SessionViewRow[] = [];
+  for (const session of Array.from(sessionsByAgent.values())) {
+    const agent = AGENT_REGISTRY.find((entry) => entry.agentId === session.agent_id);
+    if (!agent) continue;
+    const href = getAgentHubPath(locale, agent.agentId);
+    if (!href) continue;
+    const badge = resolveSessionNavBadge(session);
+    agentRows.push({
+      id: session.session_id,
+      kind: 'agent',
+      agentId: agent.agentId,
+      emoji: agent.emoji,
+      displayName: getAgentLabel(agent, locale as SupportedLocale, 'name'),
+      sessionTitle: session.title,
+      href,
+      updatedAt: session.updated_at,
+      badge: badge?.kind,
+      badgeDetail: badge?.detail ?? session.title,
+      session,
+    });
+  }
+
+  agentRows.sort(
+    (a, b) => sessionTimestamp(b.updatedAt) - sessionTimestamp(a.updatedAt)
+  );
+
+  return [clinicRow, ...agentRows];
+}
+
+export function resolveActiveHubAgentId(pathname: string): string | null {
+  return getDedicatedHubAgentFromPathname(pathname);
 }
