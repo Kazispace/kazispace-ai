@@ -1,3 +1,7 @@
+/**
+ * English proficiency passport dashboard at `/english/passport` (secondary route).
+ * Cold-open `/english` uses chat intake (KAZI-162).
+ */
 'use client';
 
 import { BackToClinicButton } from '@/components/clinic/back-to-clinic-button';

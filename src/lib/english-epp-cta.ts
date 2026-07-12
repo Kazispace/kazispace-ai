@@ -34,7 +34,7 @@ export function getEnglishCtaHref(
     case 'view_history':
       return `${base}/growth`;
     case 'view_sample_jobs':
-      return base;
+      return `${base}/passport`;
     default:
       return null;
   }
