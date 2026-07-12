@@ -12,20 +12,27 @@ import {
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
+import type { SessionNavPanelMode } from '@/lib/session-nav';
 import { cn } from '@/lib/utils';
 import { getSurfacePath } from '@/lib/agent-transition/surfaces';
 
 interface SessionIconRailProps {
   locale: string;
   panelOpen: boolean;
-  onTogglePanel: () => void;
+  panelMode: SessionNavPanelMode;
+  onToggleAgentsPanel: () => void;
+  onOpenFilesPanel: () => void;
+  onOpenSearchPanel: () => void;
   onOpenMobileDrawer: () => void;
 }
 
 export function SessionIconRail({
   locale,
   panelOpen,
-  onTogglePanel,
+  panelMode,
+  onToggleAgentsPanel,
+  onOpenFilesPanel,
+  onOpenSearchPanel,
   onOpenMobileDrawer,
 }: SessionIconRailProps) {
   const pathname = usePathname();
@@ -37,7 +44,7 @@ export function SessionIconRail({
       onOpenMobileDrawer();
       return;
     }
-    onTogglePanel();
+    onToggleAgentsPanel();
   };
 
   const iconBtn = (
@@ -53,12 +60,17 @@ export function SessionIconRail({
       title={label}
       className={cn(
         'relative flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]',
-        active && 'bg-[#FFF4EC] text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
+        active &&
+          'bg-[#FFF4EC] text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
       )}
     >
       {icon}
     </button>
   );
+
+  const agentsActive = panelOpen && panelMode === 'agents';
+  const filesActive = panelOpen && panelMode === 'files';
+  const searchActive = panelOpen && panelMode === 'search';
 
   return (
     <nav
@@ -87,27 +99,9 @@ export function SessionIconRail({
         <MessageCircle className="h-5 w-5" />
       </Link>
 
-      {iconBtn(panelOpen, handleAgentsClick, t('agents'), <Bot className="h-5 w-5" />)}
-
-      <button
-        type="button"
-        disabled
-        title={t('comingSoon')}
-        className="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-lg text-[#C9CDD4]"
-        aria-label={t('files')}
-      >
-        <FolderOpen className="h-5 w-5" />
-      </button>
-
-      <button
-        type="button"
-        disabled
-        title={t('comingSoon')}
-        className="flex h-10 w-10 cursor-not-allowed items-center justify-center rounded-lg text-[#C9CDD4]"
-        aria-label={t('search')}
-      >
-        <Search className="h-5 w-5" />
-      </button>
+      {iconBtn(agentsActive, handleAgentsClick, t('agents'), <Bot className="h-5 w-5" />)}
+      {iconBtn(filesActive, onOpenFilesPanel, t('files'), <FolderOpen className="h-5 w-5" />)}
+      {iconBtn(searchActive, onOpenSearchPanel, t('search'), <Search className="h-5 w-5" />)}
 
       <div className="mt-auto flex flex-col gap-1">
         <Link
@@ -121,7 +115,11 @@ export function SessionIconRail({
         {panelOpen && (
           <button
             type="button"
-            onClick={onTogglePanel}
+            onClick={() => {
+              if (panelMode === 'agents') onToggleAgentsPanel();
+              else if (panelMode === 'files') onOpenFilesPanel();
+              else onOpenSearchPanel();
+            }}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"
             aria-label={t('collapsePanel')}
             title={t('collapsePanel')}

@@ -11,13 +11,19 @@ import {
   type SessionNavOpenOptions,
 } from '@/components/session-nav/session-nav-controller';
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
+import { SessionFileLibraryPanel } from '@/components/session-nav/session-file-library-panel';
+import { SessionGlobalSearchPanel } from '@/components/session-nav/session-global-search-panel';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
 import { SessionNavPanel } from '@/components/session-nav/session-nav-panel';
 import { useActiveAgentSessions } from '@/hooks/use-active-agent-sessions';
 import { useAgentSessionActions } from '@/hooks/use-agent-session-actions';
 import { useSessionNavState } from '@/hooks/use-session-nav-state';
-import { resolveSurfaceFromPathname, getDedicatedHubAgentFromPathname } from '@/lib/agent-transition/surfaces';
+import {
+  resolveSurfaceFromPathname,
+  getDedicatedHubAgentFromPathname,
+} from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
+import type { SessionNavPanelMode } from '@/lib/session-nav';
 import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
 import { useUIStore } from '@/lib/store';
 
@@ -45,6 +51,8 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
     setViewTab,
     expandedAgentId,
     setExpandedAgentId,
+    panelMode,
+    setPanelMode,
   } = useSessionNavState();
 
   const panelVisible = panelOpen || mobileDrawerOpen;
@@ -61,8 +69,31 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
     isBusy,
   } = useAgentSessionActions(locale);
 
+  const closePanel = useCallback(() => {
+    if (mobileDrawerOpen) closeMobileDrawer();
+    else setPanelOpen(false);
+  }, [closeMobileDrawer, mobileDrawerOpen, setPanelOpen]);
+
+  const openPanelMode = useCallback(
+    (mode: SessionNavPanelMode) => {
+      const isSameMode = panelMode === mode;
+      if (isSameMode && panelVisible) {
+        closePanel();
+        return;
+      }
+      setPanelMode(mode);
+      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        openMobileDrawer();
+      } else {
+        setPanelOpen(true);
+      }
+    },
+    [closePanel, openMobileDrawer, panelMode, panelVisible, setPanelMode, setPanelOpen]
+  );
+
   const openPanel = useCallback(
     (options?: SessionNavOpenOptions) => {
+      setPanelMode('agents');
       if (typeof window !== 'undefined' && window.innerWidth < 768) {
         openMobileDrawer();
       } else {
@@ -73,8 +104,28 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
         setExpandedAgentId(options.expandAgentId);
       }
     },
-    [openMobileDrawer, setExpandedAgentId, setPanelOpen, setViewTab]
+    [openMobileDrawer, setExpandedAgentId, setPanelMode, setPanelOpen, setViewTab]
   );
+
+  const handleToggleAgentsPanel = useCallback(() => {
+    if (panelMode !== 'agents') {
+      openPanelMode('agents');
+      return;
+    }
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      if (mobileDrawerOpen) closeMobileDrawer();
+      else openMobileDrawer();
+      return;
+    }
+    togglePanel();
+  }, [
+    closeMobileDrawer,
+    mobileDrawerOpen,
+    openMobileDrawer,
+    openPanelMode,
+    panelMode,
+    togglePanel,
+  ]);
 
   const handleRequestNewSession = useCallback(
     async (agentId: string, options?: { jobId?: string }) => {
@@ -89,7 +140,7 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
       if ('needsConfirm' in result && result.needsConfirm) return;
       showToast('error' in result && result.error ? result.error : t('newSessionFailed'), 'error');
     },
-    [refresh, requestNewSession, showToast, t]
+    [locale, refresh, requestNewSession, showToast, t]
   );
 
   const handleConfirmAbandon = useCallback(async () => {
@@ -136,42 +187,66 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
     return <>{children}</>;
   }
 
+  const showAgentsPanel = panelMode === 'agents';
+  const showFilesPanel = panelMode === 'files';
+  const showSearchPanel = panelMode === 'search';
+
   return (
     <SessionNavControllerProvider value={controllerValue}>
       <div className="flex h-[100dvh] w-full overflow-hidden bg-[#F4F5F7]">
         <SessionIconRail
           locale={locale}
-          panelOpen={panelOpen}
-          onTogglePanel={togglePanel}
-          onOpenMobileDrawer={openMobileDrawer}
+          panelOpen={panelVisible}
+          panelMode={panelMode}
+          onToggleAgentsPanel={handleToggleAgentsPanel}
+          onOpenFilesPanel={() => openPanelMode('files')}
+          onOpenSearchPanel={() => openPanelMode('search')}
+          onOpenMobileDrawer={() => openPanelMode('agents')}
         />
 
-        <SessionNavPanel
-          locale={locale}
-          open={panelOpen}
-          mobileDrawer={mobileDrawerOpen}
-          viewTab={viewTab}
-          onViewTabChange={setViewTab}
-          expandedAgentId={expandedAgentId}
-          onExpandedAgentIdChange={setExpandedAgentId}
-          activeHubAgentId={activeHubAgentId}
-          sessionsByAgent={sessionsByAgent}
-          isLoading={isLoading}
-          fetchError={error}
-          actionsDisabled={isBusy}
-          onClose={() => {
-            if (mobileDrawerOpen) closeMobileDrawer();
-            else setPanelOpen(false);
-          }}
-          onNewSession={(agentId) => void handleRequestNewSession(agentId)}
-          onExitSession={(agentId) => void handleExitSession(agentId)}
-        />
+        {showAgentsPanel ? (
+          <SessionNavPanel
+            locale={locale}
+            open={panelOpen}
+            mobileDrawer={mobileDrawerOpen}
+            viewTab={viewTab}
+            onViewTabChange={setViewTab}
+            expandedAgentId={expandedAgentId}
+            onExpandedAgentIdChange={setExpandedAgentId}
+            activeHubAgentId={activeHubAgentId}
+            sessionsByAgent={sessionsByAgent}
+            isLoading={isLoading}
+            fetchError={error}
+            actionsDisabled={isBusy}
+            onClose={closePanel}
+            onNewSession={(agentId) => void handleRequestNewSession(agentId)}
+            onExitSession={(agentId) => void handleExitSession(agentId)}
+          />
+        ) : null}
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        {showFilesPanel ? (
+          <SessionFileLibraryPanel
+            locale={locale}
+            open={panelOpen}
+            mobileDrawer={mobileDrawerOpen}
+            onClose={closePanel}
+          />
+        ) : null}
+
+        {showSearchPanel ? (
+          <SessionGlobalSearchPanel
+            locale={locale}
+            open={panelOpen}
+            mobileDrawer={mobileDrawerOpen}
+            onClose={closePanel}
+          />
+        ) : null}
+
+        <div className="relative flex min-w-0 flex-1 flex-col">
           <div className="flex items-center border-b border-[#E5E6EB] bg-white md:hidden">
             <button
               type="button"
-              onClick={openMobileDrawer}
+              onClick={() => openPanelMode('agents')}
               className="m-2 rounded-lg p-2 text-[#1D2129] hover:bg-[#F2F3F5]"
               aria-label={t('openPanel')}
             >

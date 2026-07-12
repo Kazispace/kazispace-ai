@@ -15,6 +15,8 @@ export const SESSION_NAV_STORAGE_KEY = 'kazi.sessionNav.panelOpen';
 
 export type SessionNavViewTab = 'agent' | 'session';
 
+export type SessionNavPanelMode = 'agents' | 'files' | 'search';
+
 export type SessionNavRowId = 'clinic' | string;
 
 export type SessionNavBadgeKind =
@@ -213,4 +215,38 @@ export function buildSessionViewRows(
   );
 
   return [clinicRow, ...agentRows];
+}
+
+export function filterSessionNavRows(
+  rows: SessionNavRow[],
+  query: string
+): SessionNavRow[] {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return rows;
+  return rows.filter((row) => {
+    const haystack = [
+      row.displayName,
+      row.badgeDetail,
+      row.currentSession?.title,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(trimmed);
+  });
+}
+
+export function filterSessionViewRows(
+  rows: SessionViewRow[],
+  query: string
+): SessionViewRow[] {
+  const trimmed = query.trim().toLowerCase();
+  if (!trimmed) return rows;
+  return rows.filter((row) => {
+    const haystack = [row.displayName, row.sessionTitle, row.badgeDetail]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(trimmed);
+  });
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { SESSION_NAV_STORAGE_KEY, type SessionNavViewTab } from '@/lib/session-nav';
+import { SESSION_NAV_STORAGE_KEY, type SessionNavPanelMode, type SessionNavViewTab } from '@/lib/session-nav';
 import { SESSION_NAV_VIEW_TAB_KEY } from '@/lib/session-nav-events';
 
 function readStoredPanelOpen(): boolean {
@@ -33,6 +33,7 @@ export function useSessionNavState() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [viewTab, setViewTabState] = useState<SessionNavViewTab>('agent');
   const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null);
+  const [panelMode, setPanelModeState] = useState<SessionNavPanelMode>('agents');
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -79,6 +80,10 @@ export function useSessionNavState() {
     }
   }, []);
 
+  const setPanelMode = useCallback((mode: SessionNavPanelMode) => {
+    setPanelModeState(mode);
+  }, []);
+
   return {
     panelOpen: hydrated ? panelOpen : false,
     setPanelOpen,
@@ -90,6 +95,8 @@ export function useSessionNavState() {
     setViewTab,
     expandedAgentId,
     setExpandedAgentId,
+    panelMode,
+    setPanelMode,
     hydrated,
   };
 }

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, ChevronRight, PanelLeftClose, Plus, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, PanelLeftClose, Plus, Search, X } from 'lucide-react';
 
 import { AgentSessionList } from '@/components/agent/agent-session-list';
 import type { CurrentSessionsByAgent } from '@/hooks/use-active-agent-sessions';
@@ -12,6 +12,8 @@ import {
   buildSessionNavRows,
   buildSessionViewRows,
   enrichSessionNavRows,
+  filterSessionNavRows,
+  filterSessionViewRows,
   navigateToSessionNavTarget,
   resolveActiveNavRowId,
   type SessionNavBadgeKind,
@@ -103,15 +105,20 @@ export function SessionNavPanel({
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
+  const [listQuery, setListQuery] = useState('');
 
   const agentRows = useMemo(() => {
     const base = buildSessionNavRows(locale, t('clinic'));
-    return enrichSessionNavRows(base, sessionsByAgent);
-  }, [locale, sessionsByAgent, t]);
+    return filterSessionNavRows(enrichSessionNavRows(base, sessionsByAgent), listQuery);
+  }, [listQuery, locale, sessionsByAgent, t]);
 
   const sessionRows = useMemo(
-    () => buildSessionViewRows(locale, t('clinic'), sessionsByAgent),
-    [locale, sessionsByAgent, t]
+    () =>
+      filterSessionViewRows(
+        buildSessionViewRows(locale, t('clinic'), sessionsByAgent),
+        listQuery
+      ),
+    [listQuery, locale, sessionsByAgent, t]
   );
 
   const activeId = resolveActiveNavRowId(pathname);
@@ -296,6 +303,19 @@ export function SessionNavPanel({
         </p>
       )}
 
+      <div className="border-b border-[#E5E6EB] px-3 py-2">
+        <label className="relative block">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86909C]" />
+          <input
+            type="search"
+            value={listQuery}
+            onChange={(event) => setListQuery(event.target.value)}
+            placeholder={t('panelSearchPlaceholder')}
+            className="w-full rounded-lg border border-[#E5E6EB] bg-[#FAFBFC] py-2 pl-8 pr-3 text-sm text-[#1D2129] placeholder:text-[#86909C] focus:border-kazi-orange focus:outline-none"
+          />
+        </label>
+      </div>
+
       <ul className="flex-1 space-y-1 overflow-y-auto p-2">
         {isLoading &&
         (viewTab === 'agent'
@@ -308,7 +328,17 @@ export function SessionNavPanel({
             </li>
           ))
         ) : viewTab === 'agent' ? (
-          agentRows.map(renderAgentRow)
+          agentRows.length === 0 ? (
+            <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+              {t('noSearchResults')}
+            </li>
+          ) : (
+            agentRows.map(renderAgentRow)
+          )
+        ) : sessionRows.length === 0 ? (
+          <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+            {t('noSearchResults')}
+          </li>
         ) : (
           sessionRows.map(renderSessionRow)
         )}

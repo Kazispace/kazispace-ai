@@ -263,7 +263,19 @@
 		"newSessionStarted": "New {agent} session started",
 		"newSessionFailed": "Could not start a new session",
 		"exitSessionDone": "Session ended",
-		"exitSessionFailed": "Could not end session"
+		"exitSessionFailed": "Could not end session",
+		"globalFileLibrary": "File library",
+		"globalSearch": "Search sessions",
+		"sessionFiles": "Session files",
+		"sessionSearch": "Search in session",
+		"searchPlaceholder": "Search…",
+		"panelSearchPlaceholder": "Search this list…",
+		"noFiles": "No files yet",
+		"noSearchResults": "No results",
+		"searchInSession": "Search messages in this session",
+		"backToClinic": "Back to clinic",
+		"moreActions": "More actions",
+		"closeDrawer": "Close"
 	},
 	"jobs": {
 		"title": "Job recommendations",
