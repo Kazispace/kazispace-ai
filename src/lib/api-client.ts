@@ -211,7 +211,8 @@ export interface ClinicChatResponse {
 export async function sendChatMessage(
   sessionId: string,
   text: string,
-  locale?: string
+  locale?: string,
+  options?: { routingMode?: 'clinic' }
 ): Promise<ApiResponse<ClinicChatResponse>> {
   const languagePreference =
     locale ??
@@ -226,6 +227,9 @@ export async function sendChatMessage(
       // TODO(KAZI-74): remove locale after backend reads language_preference only
       locale: languagePreference,
       language_preference: languagePreference,
+      ...(options?.routingMode
+        ? { routing: { mode: options.routingMode } }
+        : {}),
     }),
   });
 }

@@ -244,7 +244,11 @@
 		"openPanel": "Open session list",
 		"comingSoon": "Coming soon",
 		"clinicInlineHint": "Start from Clinic chat",
-		"workspace": "Workspace"
+		"workspace": "Workspace",
+		"badgeInProgress": "In progress",
+		"badgeResumable": "Resume",
+		"badgeNotStarted": "Not started",
+		"refreshFailed": "Could not refresh active sessions"
 	},
 	"jobs": {
 		"title": "Job recommendations",

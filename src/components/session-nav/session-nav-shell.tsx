@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { useSessionNavState } from '@/hooks/use-session-nav-state';
+import { useActiveAgentSessions } from '@/hooks/use-active-agent-sessions';
 import { resolveSurfaceFromPathname } from '@/lib/agent-transition/surfaces';
 import { useUIStore } from '@/lib/store';
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
@@ -29,6 +30,10 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
     openMobileDrawer,
     closeMobileDrawer,
   } = useSessionNavState();
+  const panelVisible = panelOpen || mobileDrawerOpen;
+  const { sessionsByAgent, isLoading, error } = useActiveAgentSessions({
+    panelOpen: panelVisible,
+  });
 
   if (isTelegramMiniApp) {
     return <>{children}</>;
@@ -47,6 +52,9 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
         locale={locale}
         open={panelOpen}
         mobileDrawer={mobileDrawerOpen}
+        sessionsByAgent={sessionsByAgent}
+        isLoading={isLoading}
+        fetchError={error}
         onClose={() => {
           if (mobileDrawerOpen) closeMobileDrawer();
           else setPanelOpen(false);
@@ -64,7 +72,9 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
             <Menu className="h-5 w-5" />
           </button>
         </div>
-        {!isClinic && <SessionContextHeader locale={locale} />}
+        {!isClinic && (
+          <SessionContextHeader locale={locale} sessionsByAgent={sessionsByAgent} />
+        )}
         <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
       </div>
     </div>
