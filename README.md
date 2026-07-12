@@ -57,6 +57,31 @@ npm run gen:api:full
 - Generated output: `src/types/api.generated.ts` (run `gen:api` after install; commit with API updates)
 - Staging API: `https://bot.kazispace.ai`
 
+## Smoke tests (FE health gate)
+
+Automated checks live in this repo; **UAT docs and execution reports** live in [kazispace-test](https://github.com/Kazispace/kazispace-test).
+
+```bash
+# Full FE smoke (vitest + health + routes + CV upload proxy)
+npm run smoke
+
+# Deploy preview
+SMOKE_HOST=https://owen--kazispace.netlify.app npm run smoke
+
+# Include eslint
+SMOKE_LINT=1 npm run smoke
+```
+
+| Script | What it checks |
+| --- | --- |
+| `npm test` | Unit tests (session-nav, hub-agent-open, leave-dedicated-hub, …) |
+| `npm run smoke:health` | Site reachable + `GET /health` on API |
+| `npm run smoke:routes` | `/chat`, `/cv`, `/interview`, `/jobs`, `/mine`, `/login` non-5xx |
+| `npm run smoke:cv-upload` | FE `/api/cv/upload` proxy forwards to backend |
+| `npm run smoke` | All of the above |
+
+Manual post-deploy UAT: [kazispace-test/docs/frontend/DEPLOY-SMOKE-TEST.md](https://github.com/Kazispace/kazispace-test/blob/main/docs/frontend/DEPLOY-SMOKE-TEST.md)
+
 ## Project Structure
 
 ```
