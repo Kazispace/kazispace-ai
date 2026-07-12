@@ -1,5 +1,3 @@
-// TODO(KAZI-164): extract shared useHubAgentChat + HubChatPage from Interview/English pages.
-
 "use client";
 
 import { Suspense, useCallback, useMemo } from "react";
