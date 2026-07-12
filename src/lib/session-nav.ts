@@ -20,6 +20,7 @@ export type SessionNavBadgeKind =
   | 'clinicInline'
   | 'inProgress'
   | 'resumable'
+  | 'archived'
   | 'notStarted'
   | 'pipeline';
 
@@ -90,12 +91,12 @@ export function resolveSessionNavBadge(
   session: AgentSessionSummary | null | undefined
 ): { kind: SessionNavBadgeKind; detail?: string | null } | null {
   if (!session) return { kind: 'notStarted' };
-  if (session.pipeline_state) {
+  if (session.status === 'archived') return { kind: 'archived' };
+  if (session.status === 'active' && session.pipeline_state) {
     return { kind: 'pipeline', detail: session.pipeline_state };
   }
   if (session.status === 'active') return { kind: 'inProgress' };
   if (session.status === 'exited') return { kind: 'resumable' };
-  if (session.status === 'archived') return { kind: 'resumable' };
   return { kind: 'notStarted' };
 }
 
@@ -104,6 +105,7 @@ export function enrichSessionNavRows(
   sessionsByAgent: Map<string, AgentSessionSummary>
 ): SessionNavRow[] {
   return rows.map((row) => {
+    // job_search has no Hub URL or independent Current slot — keep static clinicInline hint.
     if (row.badge === 'comingSoon' || row.disabledReason === 'clinicInline') {
       return row;
     }

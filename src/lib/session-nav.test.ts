@@ -4,6 +4,7 @@ import {
   buildSessionNavRows,
   enrichSessionNavRows,
   resolveActiveNavRowId,
+  resolveContextHeaderSession,
   resolveSessionNavBadge,
 } from '@/lib/session-nav';
 import type { AgentSessionSummary } from '@/types';
@@ -45,6 +46,14 @@ describe('session-nav', () => {
     ).toBe('resumable');
     expect(
       resolveSessionNavBadge({
+        session_id: 's4',
+        agent_id: 'cv_builder',
+        status: 'archived',
+        title: 'CV',
+      })?.kind
+    ).toBe('archived');
+    expect(
+      resolveSessionNavBadge({
         session_id: 's3',
         agent_id: 'cv_builder',
         status: 'active',
@@ -76,5 +85,46 @@ describe('session-nav', () => {
 
     const interviewRow = enriched.find((row) => row.agentId === 'mock_interview');
     expect(interviewRow?.badge).toBe('notStarted');
+  });
+
+  it('does not enrich clinicInline rows', () => {
+    const rows = buildSessionNavRows('en', 'Clinic');
+    const sessions = new Map<string, AgentSessionSummary>([
+      [
+        'job_search',
+        {
+          session_id: 'sess_js',
+          agent_id: 'job_search',
+          status: 'active',
+          title: 'Job search',
+        },
+      ],
+    ]);
+
+    const enriched = enrichSessionNavRows(rows, sessions);
+    const jobSearch = enriched.find((row) => row.agentId === 'job_search');
+    expect(jobSearch?.badge).toBeUndefined();
+    expect(jobSearch?.disabledReason).toBe('clinicInline');
+  });
+
+  it('resolveContextHeaderSession returns null for non-hub paths', () => {
+    expect(resolveContextHeaderSession('/en/chat', new Map())).toBeNull();
+    expect(resolveContextHeaderSession('/en/jobs', new Map())).toBeNull();
+    expect(
+      resolveContextHeaderSession(
+        '/en/cv',
+        new Map([
+          [
+            'cv_builder',
+            {
+              session_id: 's1',
+              agent_id: 'cv_builder',
+              status: 'active',
+              title: 'CV',
+            },
+          ],
+        ])
+      )?.agent_id
+    ).toBe('cv_builder');
   });
 });

@@ -18,6 +18,7 @@ import {
   handleAgentEnvelope,
 } from '@/lib/handle-agent-envelope';
 import { formatPrepMessage } from '@/lib/interview-message-format';
+import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
 import { resolveInterviewFeedbackCtas } from '@/lib/interview-cta';
 import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
 import { DEFAULT_INTERVIEW_LEVEL } from '@/lib/mock-interview-config';
@@ -421,6 +422,7 @@ export function useInterview(jobId?: string | null) {
       setIsStarting(false);
       setIsAckingPrep(false);
       jobStartInFlightRef.current = false;
+      publishSessionNavInvalidate();
     },
     [appendMessage, finishIfStale, showQuestion]
   );
@@ -700,6 +702,7 @@ export function useInterview(jobId?: string | null) {
         );
         startPolling(runId);
         setIsSending(false);
+        publishSessionNavInvalidate();
         return;
       }
 
@@ -712,6 +715,7 @@ export function useInterview(jobId?: string | null) {
         });
       }
       setIsSending(false);
+      publishSessionNavInvalidate();
     },
     [
       appendMessage,

@@ -6,8 +6,8 @@ import { useTranslations } from 'next-intl';
 
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
 import type { CurrentSessionsByAgent } from '@/hooks/use-active-agent-sessions';
+import { getDedicatedHubAgentFromPathname } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
-import { resolveSurfaceFromPathname } from '@/lib/agent-transition/surfaces';
 import {
   resolveContextHeaderSession,
   resolveSessionNavBadge,
@@ -27,6 +27,7 @@ function statusPillClass(kind: SessionNavBadgeKind): string {
       return 'bg-green-100 text-green-800';
     case 'resumable':
       return 'bg-amber-100 text-amber-800';
+    case 'archived':
     case 'notStarted':
       return 'bg-gray-100 text-gray-600';
     default:
@@ -40,16 +41,13 @@ export function SessionContextHeader({
 }: SessionContextHeaderProps) {
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
-  const surface = resolveSurfaceFromPathname(pathname);
   const currentSession = resolveContextHeaderSession(pathname, sessionsByAgent);
 
   const { title, statusLabel, statusKind } = useMemo(() => {
-    const agent = AGENT_REGISTRY.find((entry) => {
-      if (surface === 'cv' && entry.agentId === 'cv_builder') return true;
-      if (surface === 'interview' && entry.agentId === 'mock_interview') return true;
-      if (surface === 'english' && entry.agentId === 'english_tutor') return true;
-      return false;
-    });
+    const agentId = getDedicatedHubAgentFromPathname(pathname);
+    const agent = agentId
+      ? AGENT_REGISTRY.find((entry) => entry.agentId === agentId)
+      : undefined;
 
     if (!agent) {
       return {
@@ -69,6 +67,7 @@ export function SessionContextHeader({
     const statusLabelMap = {
       inProgress: t('badgeInProgress'),
       resumable: t('badgeResumable'),
+      archived: t('badgeArchived'),
       notStarted: t('badgeNotStarted'),
       pipeline: currentSession?.pipeline_state ?? t('badgeInProgress'),
       comingSoon: t('comingSoon'),
@@ -80,7 +79,7 @@ export function SessionContextHeader({
       statusLabel: badge ? statusLabelMap[badge.kind] : null,
       statusKind: badge,
     };
-  }, [currentSession, locale, surface, t]);
+  }, [currentSession, locale, pathname, t]);
 
   return (
     <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-[#E5E6EB] bg-white px-4">

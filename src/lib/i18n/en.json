@@ -247,6 +247,7 @@
 		"workspace": "Workspace",
 		"badgeInProgress": "In progress",
 		"badgeResumable": "Resume",
+		"badgeArchived": "Archived",
 		"badgeNotStarted": "Not started",
 		"refreshFailed": "Could not refresh active sessions"
 	},

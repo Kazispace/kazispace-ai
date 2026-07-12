@@ -39,6 +39,7 @@ function rowBadgeText(
     clinicInline: t('clinicInlineHint'),
     inProgress: t('badgeInProgress'),
     resumable: t('badgeResumable'),
+    archived: t('badgeArchived'),
     notStarted: t('badgeNotStarted'),
     pipeline: row.badgeDetail ?? t('badgeInProgress'),
   };
