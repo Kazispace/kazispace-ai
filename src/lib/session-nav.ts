@@ -91,8 +91,21 @@ function registryEntryToNavRow(
       : isClinicInline
         ? 'clinicInline'
         : undefined,
-    badge: isComingSoon ? 'comingSoon' : undefined,
+    badge: isComingSoon ? 'comingSoon' : isClinicInline ? 'clinicInline' : undefined,
   };
+}
+
+/** Static + session badge for registry agents (Clinic cards / switcher). */
+export function resolveRegistryAgentBadge(
+  agent: AgentRegistryEntry,
+  session?: AgentSessionSummary | null
+): { kind: SessionNavBadgeKind; detail?: string | null } | null {
+  if (agent.status === 'coming_soon') return { kind: 'comingSoon' };
+  if (agent.agentId === 'job_search') return { kind: 'clinicInline' };
+
+  const resolved = resolveSessionNavBadge(session ?? null);
+  if (!resolved || resolved.kind === 'notStarted') return null;
+  return resolved;
 }
 
 export function resolveSessionNavBadge(

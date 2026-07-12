@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
+import { resolveRegistryAgentBadge } from "@/lib/session-nav";
+import type { CurrentSessionsByAgent } from "@/hooks/use-active-agent-sessions";
 import { AgentCard } from "./agent-card";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +12,7 @@ interface AgentSwitcherProps {
   isLoggedIn: boolean;
   open: boolean;
   activeAgentId: string | null;
+  sessionsByAgent?: CurrentSessionsByAgent;
   onClose: () => void;
   onSelect: (agentId: string) => void;
 }
@@ -19,6 +22,7 @@ export function AgentSwitcher({
   isLoggedIn,
   open,
   activeAgentId,
+  sessionsByAgent,
   onClose,
   onSelect,
 }: AgentSwitcherProps) {
@@ -42,18 +46,25 @@ export function AgentSwitcher({
       >
         <h3 className="text-base font-semibold text-kazi-navy mb-3">{t("switchExpert")}</h3>
         <div className="grid grid-cols-1 gap-3">
-          {AGENT_REGISTRY.map((agent) => (
-            <AgentCard
-              key={agent.agentId}
-              agent={agent}
-              locale={locale}
-              locked={!isLoggedIn && agent.status === "available"}
-              onSelect={(id) => {
-                onClose();
-                onSelect(id);
-              }}
-            />
-          ))}
+          {AGENT_REGISTRY.map((agent) => {
+            const session = sessionsByAgent?.get(agent.agentId);
+            const resolved = resolveRegistryAgentBadge(agent, session);
+            return (
+              <AgentCard
+                key={agent.agentId}
+                agent={agent}
+                locale={locale}
+                locked={!isLoggedIn && agent.status === "available"}
+                isActive={activeAgentId === agent.agentId}
+                badge={resolved?.kind}
+                badgeDetail={resolved?.detail}
+                onSelect={(id) => {
+                  onClose();
+                  onSelect(id);
+                }}
+              />
+            );
+          })}
         </div>
         {activeAgentId && (
           <p className="text-xs text-muted-foreground mt-3 text-center">

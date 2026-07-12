@@ -16,6 +16,7 @@ import { AgentSwitcher } from "./agent-switcher";
 import { ReferralPrompt } from "./referral-prompt";
 import { ChatInput } from "@/components/chat/chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
+import { useActiveAgentSessions } from "@/hooks/use-active-agent-sessions";
 import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
@@ -62,6 +63,8 @@ import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { API_BASE_URL } from "@/lib/constants";
 import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
+import { resolveSessionNavBadge } from "@/lib/session-nav";
+import { formatSessionNavBadgeLabel } from "@/lib/session-nav-badges";
 
 interface ClinicShellProps {
   locale: string;
@@ -73,6 +76,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const tClinic = useTranslations("clinic");
   const tReferral = useTranslations("referral");
   const tSessions = useTranslations("agentSessions");
+  const tSessionNav = useTranslations("sessionNav");
 
   const switcherOpen = useAgentStore((s) => s.switcherOpen);
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
@@ -133,7 +137,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     activeAgentId,
     agentSessionId,
     isSwitching,
-    statusBadge,
     fetchActiveAgent,
     resumeActiveAgentSilently,
     activateAgentWithoutPrecheck,
@@ -144,6 +147,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     syncActiveAgentFromGateway,
     exitToClinic,
   } = useAgentSwitch(locale, switchContext);
+
+  const { sessionsByAgent } = useActiveAgentSessions({ enabled: isLoggedIn });
 
   const requestAgentSwitchRef = useRef(requestAgentSwitch);
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
@@ -383,6 +388,18 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const activeEntry = AGENT_REGISTRY.find((a) => a.agentId === activeAgentId);
   const isAgentMode = !!activeAgentId && !!activeEntry;
+  const agentLayerStatusDetail = useMemo(() => {
+    if (!isAgentMode || !activeAgentId) return null;
+    const session = sessionsByAgent.get(activeAgentId);
+    if (!session) return null;
+    const badge = resolveSessionNavBadge(session);
+    if (!badge) return null;
+    const detail =
+      badge.kind === 'pipeline'
+        ? session.pipeline_state ?? session.title
+        : badge.detail ?? session.title;
+    return formatSessionNavBadgeLabel(badge.kind, detail, (key) => tSessionNav(key));
+  }, [activeAgentId, isAgentMode, sessionsByAgent, tSessionNav]);
   const messages = isAgentMode ? agentMessages : clinicMessages;
   const agentActiveWorkflow = useMemo(
     () => (isAgentMode ? resolveWorkflowFromMessages(messages) : undefined),
@@ -903,7 +920,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         <LayerIndicator
           locale={locale}
           activeAgentId={isAgentMode ? activeAgentId : null}
-          statusDetail={isAgentMode ? statusBadge : null}
+          statusDetail={isAgentMode ? agentLayerStatusDetail : null}
           onClinicClick={isAgentMode ? handleBackToClinic : undefined}
         />
       ) : null}
@@ -942,6 +959,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             onQuickPrompt={handleQuickPrompt}
             nbaAction={nbaResponse?.next_best_action ?? null}
             nbaLoading={nbaLoading}
+            sessionsByAgent={sessionsByAgent}
           />
         ) : isSwitchingSession ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
@@ -1045,6 +1063,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         isLoggedIn={isLoggedIn}
         open={switcherOpen}
         activeAgentId={activeAgentId}
+        sessionsByAgent={sessionsByAgent}
         onClose={() => setSwitcherOpen(false)}
         onSelect={handleAgentSelect}
       />

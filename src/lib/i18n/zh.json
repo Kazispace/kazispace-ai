@@ -230,6 +230,34 @@
 		"sessionSwitching": "正在加载会话…"
 	},
 	"clinic": {
+		"comingSoon": "即将推出",
+		"openAgent": "打开",
+		"loginToContinue": "登录后继续",
+		"loginToChat": "登录后发送消息",
+		"guestBanner": "登录以保存聊天记录并解锁专家",
+		"signIn": "登录",
+		"englishLevelLabel": "英语水平（可选）",
+		"englishLevel": {
+			"basic": "基础",
+			"intermediate": "中级",
+			"fluent": "流利"
+		},
+		"prompts": {
+			"cv": "✏️ 优化简历",
+			"jobs": "🇰🇿 哈萨克斯坦岗位",
+			"interview": "🎯 面试技巧",
+			"cvText": "帮我优化简历",
+			"jobsText": "哈萨克斯坦有哪些热门岗位？",
+			"interviewText": "如何准备求职面试？"
+		},
+		"sendFailed": "发送失败",
+		"switching": "正在切换专家…",
+		"switchExpert": "选择专家",
+		"closeSwitcher": "关闭",
+		"switchHint": "选择其他专家将切换当前会话",
+		"activateFailed": "无法打开专家",
+		"deactivateFailed": "无法返回门诊",
+		"agentErrorFallback": "专家不可用 — 已返回门诊",
 		"backToClinic": "返回门诊",
 		"switchAgent": "切换专家",
 		"layerAria": "当前工作区层级",
@@ -240,7 +268,9 @@
 		"switchConfirmTitle": "切换专家？",
 		"switchConfirmBody": "你正在与 {currentName} 对话。要离开并打开 {targetName} 吗？",
 		"switchConfirmAction": "切换到 {targetName}",
-		"switchConfirmCancel": "留在这里"
+		"switchConfirmCancel": "留在这里",
+		"activeSessionsTitle": "继续上次的进度",
+		"activeSessionsContinue": "继续 {agent}"
 	},
 	"cv": {
 		"title": "简历助手",

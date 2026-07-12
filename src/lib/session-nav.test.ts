@@ -8,9 +8,11 @@ import {
   filterSessionViewRows,
   resolveActiveNavRowId,
   resolveContextHeaderSession,
+  resolveRegistryAgentBadge,
   resolveSessionNavBadge,
 } from '@/lib/session-nav';
 import type { AgentSessionSummary } from '@/types';
+import { AGENT_REGISTRY } from '@/lib/agents/registry';
 
 describe('session-nav', () => {
   it('builds clinic row first and disables job_search', () => {
@@ -19,6 +21,7 @@ describe('session-nav', () => {
     expect(rows[0]?.href).toBe('/en/chat');
     const jobSearch = rows.find((r) => r.agentId === 'job_search');
     expect(jobSearch?.disabled).toBe(true);
+    expect(jobSearch?.badge).toBe('clinicInline');
     expect(rows.find((r) => r.agentId === 'cv_builder')?.href).toBe('/en/cv');
   });
 
@@ -106,8 +109,25 @@ describe('session-nav', () => {
 
     const enriched = enrichSessionNavRows(rows, sessions);
     const jobSearch = enriched.find((row) => row.agentId === 'job_search');
-    expect(jobSearch?.badge).toBeUndefined();
+    expect(jobSearch?.badge).toBe('clinicInline');
     expect(jobSearch?.disabledReason).toBe('clinicInline');
+  });
+
+  it('resolveRegistryAgentBadge maps static and session states', () => {
+    const cv = AGENT_REGISTRY.find((a) => a.agentId === 'cv_builder')!;
+    expect(resolveRegistryAgentBadge(cv, null)).toBeNull();
+    expect(
+      resolveRegistryAgentBadge(cv, {
+        session_id: 's1',
+        agent_id: 'cv_builder',
+        status: 'active',
+        title: 'CV',
+        pipeline_state: 'collecting',
+      })?.kind
+    ).toBe('pipeline');
+
+    const jobSearch = AGENT_REGISTRY.find((a) => a.agentId === 'job_search')!;
+    expect(resolveRegistryAgentBadge(jobSearch)?.kind).toBe('clinicInline');
   });
 
   it('resolveContextHeaderSession returns null for non-hub paths', () => {

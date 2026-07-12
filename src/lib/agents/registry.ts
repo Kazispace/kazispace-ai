@@ -188,19 +188,3 @@ export const AGENT_QUICK_REPLIES: Record<
   },
 };
 
-export function getAgentStatusBadge(
-  agentId: string,
-  locale: SupportedLocale
-): string | null {
-  if (agentId === 'job_search') {
-    const labels: Record<SupportedLocale, string> = {
-      en: '🔍 12 positions found · Refresh',
-      ru: '🔍 Найдено 12 вакансий · Обновить',
-      kk: '🔍 12 лауазым табылды · Жаңарту',
-      uz: '🔍 12 ta vakansiya · Yangilash',
-      zh: '🔍 找到 12 个岗位 · 刷新',
-    };
-    return labels[locale] ?? labels.en;
-  }
-  return null;
-}

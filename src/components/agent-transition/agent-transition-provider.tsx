@@ -15,8 +15,11 @@ import { AgentSwitcher } from '@/components/clinic/agent-switcher';
 import { AgentSwitchDialog } from '@/components/clinic/agent-switch-dialog';
 import { SwitchingOverlay } from '@/components/clinic/switching-overlay';
 import { useAgentSwitch } from '@/hooks/use-agent-switch';
+import { useActiveAgentSessions } from '@/hooks/use-active-agent-sessions';
 import { planNavigation, type AgentSurfaceId } from '@/lib/agent-transition';
 import { leaveDedicatedHubForClinic } from '@/lib/leave-dedicated-hub';
+import { resolveSessionNavBadge } from '@/lib/session-nav';
+import { formatSessionNavBadgeLabel } from '@/lib/session-nav-badges';
 import { useAgentStore, useUIStore } from '@/lib/store';
 
 type AgentTransitionContextValue = {
@@ -66,6 +69,7 @@ export function AgentTransitionProvider({
 }: AgentTransitionProviderProps) {
   const router = useRouter();
   const tClinic = useTranslations('clinic');
+  const tSessionNav = useTranslations('sessionNav');
   const showToast = useUIStore((s) => s.showToast);
   const switcherOpen = useAgentStore((s) => s.switcherOpen);
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
@@ -83,14 +87,27 @@ export function AgentTransitionProvider({
     activeAgentId,
     isSwitching,
     pendingAgentSwitch,
-    statusBadge,
     requestAgentSwitch,
     confirmPendingAgentSwitch,
     cancelPendingAgentSwitch,
     activateAgentWithoutPrecheck,
   } = useAgentSwitch(locale, switchContext);
 
+  const { sessionsByAgent } = useActiveAgentSessions({ enabled: isLoggedIn });
+
   const layerAgentId = activeAgentId ?? hubAgentId;
+
+  const statusBadge = useMemo(() => {
+    const session = sessionsByAgent.get(layerAgentId);
+    if (!session) return null;
+    const badge = resolveSessionNavBadge(session);
+    if (!badge) return null;
+    const detail =
+      badge.kind === 'pipeline'
+        ? session.pipeline_state ?? session.title
+        : badge.detail ?? session.title;
+    return formatSessionNavBadgeLabel(badge.kind, detail, (key) => tSessionNav(key));
+  }, [layerAgentId, sessionsByAgent, tSessionNav]);
 
   const returnToClinic = useCallback(async () => {
     const clinicHref =
@@ -152,6 +169,7 @@ export function AgentTransitionProvider({
         isLoggedIn={isLoggedIn}
         open={switcherOpen}
         activeAgentId={activeAgentId}
+        sessionsByAgent={sessionsByAgent}
         onClose={() => setSwitcherOpen(false)}
         onSelect={(agentId) => void handleAgentSelect(agentId)}
       />
