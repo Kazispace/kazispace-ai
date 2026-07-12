@@ -855,21 +855,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     [locale, router]
   );
 
-  const showWelcome =
-    layerReady &&
-    !isSwitching &&
-    !isAgentMode &&
-    !isHistoryLoading &&
-    clinicMessages.length === 0;
+  const clinicShellReady =
+    layerReady && !isSwitching && !isAgentMode && !isHistoryLoading;
+
+  const clinicIdleReady = clinicShellReady && !isSwitchingSession;
+
+  const showWelcome = clinicIdleReady && clinicMessages.length === 0;
 
   const showActiveSessionsBanner =
-    layerReady &&
-    !isSwitching &&
-    !isAgentMode &&
-    !isHistoryLoading &&
-    !isSwitchingSession &&
-    isLoggedIn &&
-    activeSessionEntries.length > 0;
+    clinicIdleReady && isLoggedIn && activeSessionEntries.length > 0;
 
   return (
     <div className="relative flex flex-col h-screen max-w-[860px] mx-auto bg-white shadow-xl">
@@ -956,11 +950,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           }`}
         >
         {showActiveSessionsBanner ? (
-          <div className="w-full max-w-3xl mx-auto shrink-0">
+          <div className="sticky top-0 z-10 w-full max-w-3xl mx-auto shrink-0 bg-gray-bg pb-2">
             <ClinicActiveSessionsBanner
               locale={locale}
               entries={activeSessionEntries}
-              className={showWelcome ? undefined : "mb-2"}
+              className={showWelcome ? undefined : "mb-0"}
             />
           </div>
         ) : null}
