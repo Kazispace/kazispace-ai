@@ -17,6 +17,7 @@ import { ReferralPrompt } from "./referral-prompt";
 import { ChatInput } from "@/components/chat/chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { useActiveAgentSessions } from "@/hooks/use-active-agent-sessions";
+import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
 import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
@@ -63,8 +64,6 @@ import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { API_BASE_URL } from "@/lib/constants";
 import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
-import { resolveSessionNavBadge } from "@/lib/session-nav";
-import { formatSessionNavBadgeLabel } from "@/lib/session-nav-badges";
 
 interface ClinicShellProps {
   locale: string;
@@ -148,7 +147,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     exitToClinic,
   } = useAgentSwitch(locale, switchContext);
 
-  const { sessionsByAgent } = useActiveAgentSessions({ enabled: isLoggedIn });
+  const { sessionsByAgent } = useActiveAgentSessions();
 
   const requestAgentSwitchRef = useRef(requestAgentSwitch);
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
@@ -388,18 +387,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const activeEntry = AGENT_REGISTRY.find((a) => a.agentId === activeAgentId);
   const isAgentMode = !!activeAgentId && !!activeEntry;
-  const agentLayerStatusDetail = useMemo(() => {
-    if (!isAgentMode || !activeAgentId) return null;
-    const session = sessionsByAgent.get(activeAgentId);
-    if (!session) return null;
-    const badge = resolveSessionNavBadge(session);
-    if (!badge) return null;
-    const detail =
-      badge.kind === 'pipeline'
-        ? session.pipeline_state ?? session.title
-        : badge.detail ?? session.title;
-    return formatSessionNavBadgeLabel(badge.kind, detail, (key) => tSessionNav(key));
-  }, [activeAgentId, isAgentMode, sessionsByAgent, tSessionNav]);
+  const agentLayerStatusDetail = useLayerStatusBadge(
+    isAgentMode ? activeAgentId : null,
+    sessionsByAgent,
+    (key) => tSessionNav(key)
+  );
   const messages = isAgentMode ? agentMessages : clinicMessages;
   const agentActiveWorkflow = useMemo(
     () => (isAgentMode ? resolveWorkflowFromMessages(messages) : undefined),

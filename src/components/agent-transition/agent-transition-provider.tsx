@@ -16,10 +16,9 @@ import { AgentSwitchDialog } from '@/components/clinic/agent-switch-dialog';
 import { SwitchingOverlay } from '@/components/clinic/switching-overlay';
 import { useAgentSwitch } from '@/hooks/use-agent-switch';
 import { useActiveAgentSessions } from '@/hooks/use-active-agent-sessions';
+import { useLayerStatusBadge } from '@/hooks/use-layer-status-badge';
 import { planNavigation, type AgentSurfaceId } from '@/lib/agent-transition';
 import { leaveDedicatedHubForClinic } from '@/lib/leave-dedicated-hub';
-import { resolveSessionNavBadge } from '@/lib/session-nav';
-import { formatSessionNavBadgeLabel } from '@/lib/session-nav-badges';
 import { useAgentStore, useUIStore } from '@/lib/store';
 
 type AgentTransitionContextValue = {
@@ -93,21 +92,13 @@ export function AgentTransitionProvider({
     activateAgentWithoutPrecheck,
   } = useAgentSwitch(locale, switchContext);
 
-  const { sessionsByAgent } = useActiveAgentSessions({ enabled: isLoggedIn });
+  const { sessionsByAgent } = useActiveAgentSessions();
 
   const layerAgentId = activeAgentId ?? hubAgentId;
 
-  const statusBadge = useMemo(() => {
-    const session = sessionsByAgent.get(layerAgentId);
-    if (!session) return null;
-    const badge = resolveSessionNavBadge(session);
-    if (!badge) return null;
-    const detail =
-      badge.kind === 'pipeline'
-        ? session.pipeline_state ?? session.title
-        : badge.detail ?? session.title;
-    return formatSessionNavBadgeLabel(badge.kind, detail, (key) => tSessionNav(key));
-  }, [layerAgentId, sessionsByAgent, tSessionNav]);
+  const statusBadge = useLayerStatusBadge(layerAgentId, sessionsByAgent, (key) =>
+    tSessionNav(key)
+  );
 
   const returnToClinic = useCallback(async () => {
     const clinicHref =

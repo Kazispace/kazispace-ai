@@ -22,6 +22,8 @@ export function sessionNavBadgePillClass(kind: SessionNavBadgeKind): string {
     case 'notStarted':
       return 'bg-gray-100 text-gray-600';
     case 'comingSoon':
+      return 'bg-gray-100 text-gray-600';
+    // Placement hint (Clinic-only agents), not a lifecycle status.
     case 'clinicInline':
       return 'bg-gray-100 text-gray-600';
     default:

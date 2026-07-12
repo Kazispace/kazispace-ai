@@ -104,6 +104,7 @@ export function resolveRegistryAgentBadge(
   if (agent.agentId === 'job_search') return { kind: 'clinicInline' };
 
   const resolved = resolveSessionNavBadge(session ?? null);
+  // Available agents without a Current session show no badge (not "Not started").
   if (!resolved || resolved.kind === 'notStarted') return null;
   return resolved;
 }

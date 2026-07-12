@@ -17,6 +17,9 @@ interface ClinicActiveSessionsBannerProps {
   className?: string;
 }
 
+const bannerShellClass =
+  'w-full mb-6 rounded-xl border border-kazi-orange/30 bg-orange-50/80 overflow-hidden';
+
 export function ClinicActiveSessionsBanner({
   entries,
   className,
@@ -40,8 +43,8 @@ export function ClinicActiveSessionsBanner({
         type="button"
         onClick={() => router.push(entry.href)}
         className={cn(
-          'w-full mb-6 flex items-center gap-3 rounded-xl border border-kazi-orange/30 bg-orange-50/80 px-4 py-3 text-left',
-          'hover:border-kazi-orange/50 hover:bg-orange-50 transition-colors',
+          bannerShellClass,
+          'flex items-center gap-3 px-4 py-3 text-left hover:border-kazi-orange/50 hover:bg-orange-50 transition-colors',
           className
         )}
       >
@@ -68,16 +71,11 @@ export function ClinicActiveSessionsBanner({
   }
 
   return (
-    <div
-      className={cn(
-        'w-full mb-6 rounded-xl border border-gray-200 bg-white overflow-hidden',
-        className
-      )}
-    >
-      <p className="px-4 pt-3 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+    <div className={cn(bannerShellClass, className)}>
+      <p className="px-4 pt-3 pb-2 text-xs font-semibold uppercase tracking-wide text-kazi-navy/70">
         {tClinic('activeSessionsTitle')}
       </p>
-      <ul className="divide-y divide-gray-100">
+      <ul className="divide-y divide-kazi-orange/15">
         {entries.map((entry) => {
           const badgeLabel = badgeLabelFor(entry);
           return (
@@ -85,7 +83,7 @@ export function ClinicActiveSessionsBanner({
               <button
                 type="button"
                 onClick={() => router.push(entry.href)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 transition-colors"
               >
                 <span className="text-xl shrink-0" aria-hidden>
                   {entry.agent.emoji}
@@ -95,7 +93,7 @@ export function ClinicActiveSessionsBanner({
                     {entry.displayName}
                   </span>
                   {entry.sessionTitle ? (
-                    <span className="mt-0.5 block text-xs text-gray-500 truncate">
+                    <span className="mt-0.5 block text-xs text-gray-600 truncate">
                       {entry.sessionTitle}
                     </span>
                   ) : null}
@@ -108,7 +106,7 @@ export function ClinicActiveSessionsBanner({
                 >
                   {badgeLabel}
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+                <ChevronRight className="h-4 w-4 shrink-0 text-kazi-orange/70" aria-hidden />
               </button>
             </li>
           );

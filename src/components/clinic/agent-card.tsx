@@ -34,6 +34,8 @@ export function AgentCard({
   const t = useTranslations("clinic");
   const tNav = useTranslations("sessionNav");
   const isSoon = agent.status === "coming_soon";
+  const isClinicInline = badge === "clinicInline";
+  const isDisabled = isSoon || isClinicInline;
   const badgeLabel =
     badge != null
       ? formatSessionNavBadgeLabel(badge, badgeDetail, (key) => tNav(key))
@@ -42,7 +44,7 @@ export function AgentCard({
   return (
     <button
       type="button"
-      disabled={isSoon || badge === "clinicInline"}
+      disabled={isDisabled}
       onClick={() => onSelect?.(agent.agentId)}
       className={cn(
         "text-left rounded-xl border bg-gray-50 p-4 min-h-[180px] flex flex-col",
@@ -50,11 +52,9 @@ export function AgentCard({
         isActive
           ? "border-kazi-orange/60 ring-1 ring-kazi-orange/20"
           : "border-gray-200",
-        !isSoon &&
-          badge !== "clinicInline" &&
-          "hover:-translate-y-0.5 hover:shadow-md hover:border-kazi-orange/40",
-        (isSoon || badge === "clinicInline") && "opacity-80 cursor-not-allowed",
-        locked && !isSoon && badge !== "clinicInline" && "opacity-90"
+        !isDisabled && "hover:-translate-y-0.5 hover:shadow-md hover:border-kazi-orange/40",
+        isDisabled && "opacity-80 cursor-not-allowed",
+        locked && !isDisabled && "opacity-90"
       )}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -81,7 +81,7 @@ export function AgentCard({
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             {t("comingSoon")}
           </span>
-        ) : badge === "clinicInline" ? (
+        ) : isClinicInline ? (
           <span className="text-xs text-muted-foreground">{badgeLabel}</span>
         ) : locked ? (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-kazi-navy">

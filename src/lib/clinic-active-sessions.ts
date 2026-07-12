@@ -8,6 +8,8 @@ import type { SupportedLocale } from '@/lib/constants';
 import { resolveSessionNavBadge, type SessionNavBadgeKind } from '@/lib/session-nav';
 import type { AgentSessionSummary } from '@/types';
 
+const AGENT_BY_ID = new Map(AGENT_REGISTRY.map((agent) => [agent.agentId, agent]));
+
 export type ClinicActiveSessionEntry = {
   agentId: string;
   agent: AgentRegistryEntry;
@@ -47,7 +49,7 @@ export function buildClinicActiveSessionEntries(
       continue;
     }
 
-    const agent = AGENT_REGISTRY.find((entry) => entry.agentId === session.agent_id);
+    const agent = AGENT_BY_ID.get(session.agent_id);
     if (!agent || agent.status === 'coming_soon') continue;
 
     entries.push({
