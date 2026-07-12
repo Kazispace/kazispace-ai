@@ -31,7 +31,7 @@ type AgentTransitionContextValue = {
   activateAgentWithoutPrecheck: ReturnType<
     typeof useAgentSwitch
   >['activateAgentWithoutPrecheck'];
-  /** Hub → Clinic: navigates immediately; always `{ ok: true }` (deactivate is background). */
+  /** Hub → Clinic: navigate-only (ADR-005); server session stays active. */
   returnToClinic: () => Promise<{ ok: true }>;
 };
 

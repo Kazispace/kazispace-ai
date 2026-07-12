@@ -26,7 +26,7 @@ export function useDeactivateToClinic(locale: string) {
         setIsDeactivating(true);
         leaveDedicatedHubForClinic(locale, options.agentId);
         router.push(targetHref);
-        window.setTimeout(() => setIsDeactivating(false), 400);
+        window.setTimeout(() => setIsDeactivating(false), 200);
         return { ok: true as const, agentId: options.agentId };
       }
 

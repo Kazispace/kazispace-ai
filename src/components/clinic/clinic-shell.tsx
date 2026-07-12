@@ -171,24 +171,17 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   loadAgentHistoryRef.current = loadAgentHistory;
 
   /**
-   * Scheme A — Clinic surface: user chose /chat, so dedicated hub sticky sessions must
-   * not auto-resume here. Deactivate on the server (not just local store) so sync loops
-   * and cross-tab active_agent drift do not persist. Hub pages re-activate on entry via
-   * their own hooks (e.g. useCvAgent → activateAgent resumes the latest session).
+   * Clinic cold-open (ADR-005 INV-6): user is on /chat while a dedicated hub session
+   * remains active on the server. Clear local UI focus and load Clinic history only —
+   * no deactivate, no redirect to Hub. Hub pages resume via their own entry hooks.
    */
   const stayInClinicForDedicatedHub = useCallback(
-    async (hubAgentId: string): Promise<boolean> => {
-      const result = await deactivateToClinic(locale, {
-        agentId: hubAgentId,
-        bestEffort: true,
-      });
-      if (!result.ok) {
-        return false;
-      }
+    async (_hubAgentId: string): Promise<boolean> => {
+      useAgentStore.getState().setActiveAgent(null, null);
       await loadHistoryRef.current();
       return true;
     },
-    [locale]
+    []
   );
 
   const reconcileActiveAgentLayer = useCallback(async () => {
