@@ -8,6 +8,14 @@ export const SESSION_NAV_SESSION_OPENED_EVENT = 'kazi-session-nav-session-opened
 
 export const SESSION_NAV_SESSION_EXITED_EVENT = 'kazi-session-nav-session-exited';
 
+export const SESSION_NAV_OPEN_FILE_EVENT = 'kazi-session-nav-open-file';
+
+export type SessionNavOpenFileDetail = {
+  agentId: string;
+  sessionId: string;
+  fileName: string;
+};
+
 export type SessionNavSelectHistoryDetail = {
   agentId: string;
   sessionId: string;
@@ -47,6 +55,15 @@ export function publishSessionNavSessionExited(agentId: string): void {
   window.dispatchEvent(
     new CustomEvent<{ agentId: string }>(SESSION_NAV_SESSION_EXITED_EVENT, {
       detail: { agentId },
+    })
+  );
+}
+
+export function publishSessionNavOpenFile(detail: SessionNavOpenFileDetail): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent<SessionNavOpenFileDetail>(SESSION_NAV_OPEN_FILE_EVENT, {
+      detail,
     })
   );
 }

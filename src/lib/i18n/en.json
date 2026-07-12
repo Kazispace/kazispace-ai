@@ -275,7 +275,8 @@
 		"searchInSession": "Search messages in this session",
 		"backToClinic": "Back to clinic",
 		"moreActions": "More actions",
-		"closeDrawer": "Close"
+		"closeDrawer": "Close",
+		"filePreviewUnavailable": "File preview is not available yet"
 	},
 	"jobs": {
 		"title": "Job recommendations",

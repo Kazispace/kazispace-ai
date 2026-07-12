@@ -193,7 +193,8 @@
 		"searchInSession": "搜索本会话消息",
 		"backToClinic": "回到门诊",
 		"moreActions": "更多操作",
-		"closeDrawer": "关闭"
+		"closeDrawer": "关闭",
+		"filePreviewUnavailable": "暂无法预览该文件"
 	},
 	"chat": {
 		"title": "{name} · AI 职业伙伴",

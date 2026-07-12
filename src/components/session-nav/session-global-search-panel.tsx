@@ -2,12 +2,11 @@
 
 import { useState } from 'react';
 import { PanelLeftClose, Search, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { useGlobalLibrarySearch } from '@/hooks/use-session-library';
-import { getAgentHubPath } from '@/lib/agent-transition/surfaces';
-import { publishSessionNavSelectHistory } from '@/lib/session-nav-events';
+import { openAgentSessionTarget } from '@/lib/session-nav';
 import type { SessionLibrarySearchHit } from '@/types/session-library';
 import { cn } from '@/lib/utils';
 
@@ -25,6 +24,7 @@ export function SessionGlobalSearchPanel({
   onClose,
 }: SessionGlobalSearchPanelProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const t = useTranslations('sessionNav');
   const [query, setQuery] = useState('');
   const enabled = open || mobileDrawer;
@@ -32,14 +32,12 @@ export function SessionGlobalSearchPanel({
 
   const openHit = (hit: SessionLibrarySearchHit) => {
     if (hit.agent_id && hit.session_id) {
-      publishSessionNavSelectHistory(hit.agent_id, hit.session_id);
+      openAgentSessionTarget(router, pathname, locale, hit.agent_id, hit.session_id);
+      if (mobileDrawer) onClose();
+      return;
     }
-    const href = hit.agent_id
-      ? getAgentHubPath(locale, hit.agent_id)
-      : hit.hub_segment
-        ? `/${locale}/${hit.hub_segment}`
-        : `/${locale}/chat`;
-    if (href) router.push(href);
+    const href = hit.hub_segment ? `/${locale}/${hit.hub_segment}` : `/${locale}/chat`;
+    router.push(href);
     if (mobileDrawer) onClose();
   };
 

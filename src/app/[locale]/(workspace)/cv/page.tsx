@@ -24,6 +24,7 @@ import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-
 import { useCvAgent } from "@/hooks/use-cv-agent";
 import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
 import { CV_BUILDER_AGENT_ID } from "@/lib/cv-agent-config";
+import { SESSION_NAV_OPEN_FILE_EVENT } from "@/lib/session-nav-events";
 import { AGENT_REGISTRY, getAgentLabel } from "@/lib/agents/registry";
 import { useAuthStore, useUIStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -77,6 +78,18 @@ function CvPageContent({ locale }: { locale: string }) {
   } = agentSession;
 
   useHubActiveAgentSync(locale, CV_BUILDER_AGENT_ID, !needsLogin);
+
+  useEffect(() => {
+    const onOpenFile = (event: Event) => {
+      const detail = (event as CustomEvent<{ agentId: string; fileName: string }>).detail;
+      if (detail.agentId !== CV_BUILDER_AGENT_ID) return;
+      if (detail.fileName === "resume.md") {
+        setMobileTab("resume");
+      }
+    };
+    window.addEventListener(SESSION_NAV_OPEN_FILE_EVENT, onOpenFile);
+    return () => window.removeEventListener(SESSION_NAV_OPEN_FILE_EVENT, onOpenFile);
+  }, []);
 
   const showProfileGate = needsProfile === true;
   const showWorkspace =

@@ -128,27 +128,32 @@ export function useSessionMessageSearch(
 ) {
   const [hits, setHits] = useState<SessionMessageSearchHit[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!enabled || !sessionId) {
       setHits([]);
+      setError(null);
       return;
     }
 
     const trimmed = query.trim();
     if (!trimmed) {
       setHits([]);
+      setError(null);
       setIsLoading(false);
       return;
     }
 
     let cancelled = false;
     setIsLoading(true);
+    setError(null);
 
     const timer = window.setTimeout(() => {
-      void searchSessionMessages(sessionId, trimmed).then((results) => {
+      void searchSessionMessages(sessionId, trimmed).then((result) => {
         if (cancelled) return;
-        setHits(results);
+        setHits(result.hits);
+        setError(result.error ?? null);
         setIsLoading(false);
       });
     }, 250);
@@ -159,5 +164,5 @@ export function useSessionMessageSearch(
     };
   }, [enabled, query, sessionId]);
 
-  return { hits, isLoading };
+  return { hits, isLoading, error };
 }

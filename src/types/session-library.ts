@@ -8,6 +8,7 @@ export type SessionLibraryFile = {
   hub_segment?: string | null;
   updated_at?: string | null;
   size_bytes?: number | null;
+  download_url?: string | null;
 };
 
 export type SessionLibrarySearchHit = {
@@ -32,4 +33,9 @@ export type SessionMessageSearchHit = {
   message_id: string;
   role: string;
   snippet: string;
+};
+
+export type SessionMessageSearchResult = {
+  hits: SessionMessageSearchHit[];
+  error?: string | null;
 };

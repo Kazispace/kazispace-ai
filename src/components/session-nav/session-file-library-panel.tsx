@@ -1,12 +1,11 @@
 'use client';
 
 import { FileText, PanelLeftClose, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { useGlobalLibraryFiles } from '@/hooks/use-session-library';
-import { getAgentHubPath } from '@/lib/agent-transition/surfaces';
-import { publishSessionNavSelectHistory } from '@/lib/session-nav-events';
+import { openAgentSessionTarget } from '@/lib/session-nav';
 import type { SessionLibraryFile } from '@/types/session-library';
 import { cn } from '@/lib/utils';
 
@@ -58,18 +57,22 @@ export function SessionFileLibraryPanel({
   onClose,
 }: SessionFileLibraryPanelProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const t = useTranslations('sessionNav');
   const { files, isLoading, error } = useGlobalLibraryFiles(open || mobileDrawer);
 
   const navigateToFile = (file: SessionLibraryFile) => {
-    if (file.agent_id && file.session_id) {
-      publishSessionNavSelectHistory(file.agent_id, file.session_id);
+    if (file.download_url) {
+      window.open(file.download_url, '_blank', 'noopener,noreferrer');
+      if (mobileDrawer) onClose();
+      return;
     }
-    const href = file.agent_id
-      ? getAgentHubPath(locale, file.agent_id)
-      : file.hub_segment
-        ? `/${locale}/${file.hub_segment}`
-        : null;
+    if (file.agent_id && file.session_id) {
+      openAgentSessionTarget(router, pathname, locale, file.agent_id, file.session_id);
+      if (mobileDrawer) onClose();
+      return;
+    }
+    const href = file.hub_segment ? `/${locale}/${file.hub_segment}` : null;
     if (href) router.push(href);
     if (mobileDrawer) onClose();
   };

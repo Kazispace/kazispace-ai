@@ -1,5 +1,5 @@
 import { fetchAgentMessages, fetchCurrentAgentSessions } from '@/lib/agent-api';
-import { getAgentHubPath } from '@/lib/agent-transition/surfaces';
+import { resolveSurfaceForAgent } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import { apiRequest } from '@/lib/api-client';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
@@ -11,20 +11,25 @@ import type {
   SessionLibrarySearchHit,
   SessionLibrarySearchResponse,
   SessionMessageSearchHit,
+  SessionMessageSearchResult,
 } from '@/types/session-library';
 import type { AgentSessionSummary } from '@/types';
 
 function useMockFallback(error?: string): boolean {
   if (process.env.NEXT_PUBLIC_AGENT_API_MOCK === 'true') return true;
+  if (process.env.NODE_ENV === 'production') return false;
   if (!error) return false;
   return error.includes('404') || error.includes('Not Found');
 }
 
+function warnMockFallback(endpoint: string): void {
+  if (process.env.NODE_ENV === 'production') return;
+  console.warn(`[session-library] Using mock fallback for ${endpoint}`);
+}
+
 function hubSegmentForAgent(agentId: string): string | null {
-  const path = getAgentHubPath('en', agentId);
-  if (!path) return null;
-  const parts = path.split('/').filter(Boolean);
-  return parts[parts.length - 1] ?? null;
+  const surface = resolveSurfaceForAgent(agentId);
+  return surface === 'clinic' ? null : surface;
 }
 
 function mockFilesForSession(
@@ -152,6 +157,7 @@ export async function fetchGlobalLibraryFiles(): Promise<
   const res = await apiRequest<SessionLibraryFilesResponse>('/api/v1/library/files');
   if (res.success && res.data) return res;
   if (useMockFallback(res.error)) {
+    warnMockFallback('GET /library/files');
     const sessions = await loadCurrentSessions();
     return { success: true, data: { files: buildMockGlobalFiles(sessions) } };
   }
@@ -167,6 +173,7 @@ export async function fetchSessionFiles(
   );
   if (res.success && res.data) return res;
   if (useMockFallback(res.error)) {
+    warnMockFallback(`GET /agents/sessions/${sessionId}/files`);
     return {
       success: true,
       data: { files: buildMockSessionFiles(sessionId, agentId) },
@@ -188,6 +195,7 @@ export async function searchLibrary(
   );
   if (res.success && res.data) return res;
   if (useMockFallback(res.error)) {
+    warnMockFallback('GET /library/search');
     const hits = await buildMockSearchHits(trimmed);
     return { success: true, data: { hits } };
   }
@@ -197,12 +205,16 @@ export async function searchLibrary(
 export async function searchSessionMessages(
   sessionId: string,
   query: string
-): Promise<SessionMessageSearchHit[]> {
+): Promise<SessionMessageSearchResult> {
   const trimmed = query.trim();
-  if (!trimmed) return [];
+  if (!trimmed) return { hits: [] };
 
+  // TODO(KAZI-158): replace with server-side session search when BE API is ready.
   const res = await fetchAgentMessages(sessionId);
-  if (!res.success || !res.data?.messages?.length) return [];
+  if (!res.success) {
+    return { hits: [], error: res.error ?? 'Failed to load session messages' };
+  }
+  if (!res.data?.messages?.length) return { hits: [] };
 
   const hits: SessionMessageSearchHit[] = [];
   for (let index = 0; index < res.data.messages.length; index += 1) {
@@ -223,5 +235,5 @@ export async function searchSessionMessages(
       snippet,
     });
   }
-  return hits;
+  return { hits };
 }

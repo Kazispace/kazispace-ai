@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { SESSION_NAV_STORAGE_KEY, type SessionNavPanelMode, type SessionNavViewTab } from '@/lib/session-nav';
+import { SESSION_NAV_PANEL_MODE_KEY, SESSION_NAV_STORAGE_KEY, type SessionNavPanelMode, type SessionNavViewTab } from '@/lib/session-nav';
 import { SESSION_NAV_VIEW_TAB_KEY } from '@/lib/session-nav-events';
 
 function readStoredPanelOpen(): boolean {
@@ -28,6 +28,17 @@ function readStoredViewTab(): SessionNavViewTab {
   return 'agent';
 }
 
+function readStoredPanelMode(): SessionNavPanelMode {
+  if (typeof window === 'undefined') return 'agents';
+  try {
+    const raw = localStorage.getItem(SESSION_NAV_PANEL_MODE_KEY);
+    if (raw === 'files' || raw === 'search') return raw;
+  } catch {
+    /* ignore */
+  }
+  return 'agents';
+}
+
 export function useSessionNavState() {
   const [panelOpen, setPanelOpenState] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -39,6 +50,7 @@ export function useSessionNavState() {
   useEffect(() => {
     setPanelOpenState(readStoredPanelOpen());
     setViewTabState(readStoredViewTab());
+    setPanelModeState(readStoredPanelMode());
     setHydrated(true);
   }, []);
 
@@ -82,6 +94,11 @@ export function useSessionNavState() {
 
   const setPanelMode = useCallback((mode: SessionNavPanelMode) => {
     setPanelModeState(mode);
+    try {
+      localStorage.setItem(SESSION_NAV_PANEL_MODE_KEY, mode);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   return {

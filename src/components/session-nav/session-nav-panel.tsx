@@ -15,13 +15,13 @@ import {
   filterSessionNavRows,
   filterSessionViewRows,
   navigateToSessionNavTarget,
+  openAgentSessionTarget,
   resolveActiveNavRowId,
   type SessionNavBadgeKind,
   type SessionNavRow,
   type SessionNavViewTab,
   type SessionViewRow,
 } from '@/lib/session-nav';
-import { publishSessionNavSelectHistory } from '@/lib/session-nav-events';
 import { cn } from '@/lib/utils';
 
 interface SessionNavPanelProps {
@@ -204,8 +204,7 @@ export function SessionNavPanel({
               activeSessionId={currentSessionId}
               disabled={actionsDisabled}
               onSelect={(sessionId) => {
-                publishSessionNavSelectHistory(row.agentId!, sessionId);
-                navigateToSessionNavTarget(router, row);
+                openAgentSessionTarget(router, pathname, locale, row.agentId!, sessionId);
                 if (mobileDrawer) onClose();
               }}
             />
@@ -231,9 +230,16 @@ export function SessionNavPanel({
           type="button"
           onClick={() => {
             if (!isClinic && row.agentId && row.session?.session_id) {
-              publishSessionNavSelectHistory(row.agentId, row.session.session_id);
+              openAgentSessionTarget(
+                router,
+                pathname,
+                locale,
+                row.agentId,
+                row.session.session_id
+              );
+            } else {
+              router.push(row.href);
             }
-            router.push(row.href);
             if (mobileDrawer) onClose();
           }}
           className={cn(

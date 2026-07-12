@@ -15,12 +15,16 @@ import {
 } from '@/hooks/use-session-library';
 import { getDedicatedHubAgentFromPathname, getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
+import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { publishSessionNavOpenFile } from '@/lib/session-nav-events';
 import {
   resolveContextHeaderSession,
   resolveSessionNavBadge,
   type SessionNavBadgeKind,
 } from '@/lib/session-nav';
+import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import type { SessionLibraryFile } from '@/types/session-library';
 
 interface SessionContextHeaderProps {
   locale: string;
@@ -50,6 +54,7 @@ export function SessionContextHeader({
 }: SessionContextHeaderProps) {
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
+  const showToast = useUIStore((s) => s.showToast);
   const currentSession = resolveContextHeaderSession(pathname, sessionsByAgent);
   const agentId = getDedicatedHubAgentFromPathname(pathname);
   const [drawer, setDrawer] = useState<HeaderDrawer>(null);
@@ -60,7 +65,8 @@ export function SessionContextHeader({
     agentId,
     drawer === 'files'
   );
-  const { hits: messageHits, isLoading: searchLoading } = useSessionMessageSearch(
+  const { hits: messageHits, isLoading: searchLoading, error: searchError } =
+    useSessionMessageSearch(
     currentSession?.session_id ?? null,
     sessionSearchQuery,
     drawer === 'search'
@@ -108,6 +114,28 @@ export function SessionContextHeader({
   const closeDrawer = () => {
     setDrawer(null);
     setSessionSearchQuery('');
+  };
+
+  const handleOpenSessionFile = (file: SessionLibraryFile) => {
+    if (file.download_url) {
+      window.open(file.download_url, '_blank', 'noopener,noreferrer');
+      closeDrawer();
+      return;
+    }
+    if (
+      agentId === CV_BUILDER_AGENT_ID &&
+      file.session_id &&
+      file.name === 'resume.md'
+    ) {
+      publishSessionNavOpenFile({
+        agentId,
+        sessionId: file.session_id,
+        fileName: file.name,
+      });
+      closeDrawer();
+      return;
+    }
+    showToast(t('filePreviewUnavailable'), 'info');
   };
 
   return (
@@ -189,7 +217,11 @@ export function SessionContextHeader({
           ) : (
             files.map((file) => (
               <li key={file.file_id}>
-                <div className="flex items-start gap-2 rounded-lg px-3 py-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleOpenSessionFile(file)}
+                  className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left hover:bg-[#F2F3F5]"
+                >
                   <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#86909C]" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-[#1D2129]">
@@ -201,7 +233,7 @@ export function SessionContextHeader({
                       </span>
                     ) : null}
                   </span>
-                </div>
+                </button>
               </li>
             ))
           )}
@@ -223,6 +255,11 @@ export function SessionContextHeader({
           />
         </div>
         <ul className="p-2">
+          {searchError ? (
+            <li className="border-b border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {searchError}
+            </li>
+          ) : null}
           {!sessionSearchQuery.trim() ? (
             <li className="px-3 py-6 text-center text-sm text-[#86909C]">
               {t('searchInSession')}
