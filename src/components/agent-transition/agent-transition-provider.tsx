@@ -15,6 +15,8 @@ import { AgentSwitcher } from '@/components/clinic/agent-switcher';
 import { AgentSwitchDialog } from '@/components/clinic/agent-switch-dialog';
 import { SwitchingOverlay } from '@/components/clinic/switching-overlay';
 import { useAgentSwitch } from '@/hooks/use-agent-switch';
+import { useActiveAgentSessions } from '@/hooks/use-active-agent-sessions';
+import { useLayerStatusBadge } from '@/hooks/use-layer-status-badge';
 import { planNavigation, type AgentSurfaceId } from '@/lib/agent-transition';
 import { leaveDedicatedHubForClinic } from '@/lib/leave-dedicated-hub';
 import { useAgentStore, useUIStore } from '@/lib/store';
@@ -66,6 +68,7 @@ export function AgentTransitionProvider({
 }: AgentTransitionProviderProps) {
   const router = useRouter();
   const tClinic = useTranslations('clinic');
+  const tSessionNav = useTranslations('sessionNav');
   const showToast = useUIStore((s) => s.showToast);
   const switcherOpen = useAgentStore((s) => s.switcherOpen);
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
@@ -83,14 +86,19 @@ export function AgentTransitionProvider({
     activeAgentId,
     isSwitching,
     pendingAgentSwitch,
-    statusBadge,
     requestAgentSwitch,
     confirmPendingAgentSwitch,
     cancelPendingAgentSwitch,
     activateAgentWithoutPrecheck,
   } = useAgentSwitch(locale, switchContext);
 
+  const { sessionsByAgent } = useActiveAgentSessions();
+
   const layerAgentId = activeAgentId ?? hubAgentId;
+
+  const statusBadge = useLayerStatusBadge(layerAgentId, sessionsByAgent, (key) =>
+    tSessionNav(key)
+  );
 
   const returnToClinic = useCallback(async () => {
     const clinicHref =
@@ -152,6 +160,7 @@ export function AgentTransitionProvider({
         isLoggedIn={isLoggedIn}
         open={switcherOpen}
         activeAgentId={activeAgentId}
+        sessionsByAgent={sessionsByAgent}
         onClose={() => setSwitcherOpen(false)}
         onSelect={(agentId) => void handleAgentSelect(agentId)}
       />

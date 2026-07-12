@@ -15,7 +15,7 @@ import { SessionFileLibraryPanel } from '@/components/session-nav/session-file-l
 import { SessionGlobalSearchPanel } from '@/components/session-nav/session-global-search-panel';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
 import { SessionNavPanel } from '@/components/session-nav/session-nav-panel';
-import { useActiveAgentSessions } from '@/hooks/use-active-agent-sessions';
+import { useActiveAgentSessions, ActiveAgentSessionsProvider } from '@/hooks/use-active-agent-sessions';
 import { useAgentSessionActions } from '@/hooks/use-agent-session-actions';
 import { useSessionNavState } from '@/hooks/use-session-nav-state';
 import {
@@ -33,8 +33,41 @@ interface SessionNavShellProps {
 }
 
 export function SessionNavShell({ locale, children }: SessionNavShellProps) {
-  const pathname = usePathname();
+  return (
+    <SessionNavShellFrame locale={locale}>{children}</SessionNavShellFrame>
+  );
+}
+
+function SessionNavShellFrame({ locale, children }: SessionNavShellProps) {
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
+  const navState = useSessionNavState();
+  const panelVisible = navState.panelOpen || navState.mobileDrawerOpen;
+
+  if (isTelegramMiniApp) {
+    return (
+      <ActiveAgentSessionsProvider>
+        {children}
+      </ActiveAgentSessionsProvider>
+    );
+  }
+
+  return (
+    <ActiveAgentSessionsProvider panelOpen={panelVisible}>
+      <SessionNavShellLayout locale={locale} navState={navState}>
+        {children}
+      </SessionNavShellLayout>
+    </ActiveAgentSessionsProvider>
+  );
+}
+
+function SessionNavShellLayout({
+  locale,
+  children,
+  navState,
+}: SessionNavShellProps & {
+  navState: ReturnType<typeof useSessionNavState>;
+}) {
+  const pathname = usePathname();
   const showToast = useUIStore((s) => s.showToast);
   const t = useTranslations('sessionNav');
   const isClinic = resolveSurfaceFromPathname(pathname) === 'clinic';
@@ -53,12 +86,10 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
     setExpandedAgentId,
     panelMode,
     setPanelMode,
-  } = useSessionNavState();
+  } = navState;
 
   const panelVisible = panelOpen || mobileDrawerOpen;
-  const { sessionsByAgent, isLoading, error, refresh } = useActiveAgentSessions({
-    panelOpen: panelVisible,
-  });
+  const { sessionsByAgent, isLoading, error, refresh } = useActiveAgentSessions();
 
   const {
     requestNewSession,
@@ -182,10 +213,6 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
     }),
     [handleRequestNewSession, openPanel]
   );
-
-  if (isTelegramMiniApp) {
-    return <>{children}</>;
-  }
 
   const showAgentsPanel = panelMode === 'agents';
   const showFilesPanel = panelMode === 'files';

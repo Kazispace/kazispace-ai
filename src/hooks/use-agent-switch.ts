@@ -16,7 +16,7 @@ import {
 } from '@/lib/agent-ui-switch';
 import { isDedicatedHubAgent } from '@/lib/agent-layer';
 import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
-import { AGENT_REGISTRY, getAgentStatusBadge } from '@/lib/agents/registry';
+import { AGENT_REGISTRY } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
 import { useAgentStore, useUIStore } from '@/lib/store';
 import type { ChatMessage } from '@/types';
@@ -461,15 +461,11 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
     [locale, setSwitching, showToast]
   );
 
-  const statusBadge =
-    activeAgentId && getAgentStatusBadge(activeAgentId, locale as SupportedLocale);
-
   return {
     activeAgentId,
     agentSessionId,
     isSwitching,
     pendingAgentSwitch,
-    statusBadge,
     fetchActiveAgent,
     resumeActiveAgentSilently,
     /** Path A / post-confirm only — bypasses Path B precheck dialog. */

@@ -9,6 +9,9 @@ import { AgentSessionList } from '@/components/agent/agent-session-list';
 import type { CurrentSessionsByAgent } from '@/hooks/use-active-agent-sessions';
 import { useAgentSessionList } from '@/hooks/use-agent-session-list';
 import {
+  formatSessionNavBadgeLabel,
+} from '@/lib/session-nav-badges';
+import {
   buildSessionNavRows,
   buildSessionViewRows,
   enrichSessionNavRows,
@@ -48,16 +51,7 @@ function rowBadgeText(
   t: ReturnType<typeof useTranslations<'sessionNav'>>
 ): string | null {
   if (!badge) return null;
-  const kindLabels: Record<SessionNavBadgeKind, string> = {
-    comingSoon: t('comingSoon'),
-    clinicInline: t('clinicInlineHint'),
-    inProgress: t('badgeInProgress'),
-    resumable: t('badgeResumable'),
-    archived: t('badgeArchived'),
-    notStarted: t('badgeNotStarted'),
-    pipeline: badgeDetail ?? t('badgeInProgress'),
-  };
-  return kindLabels[badge] ?? null;
+  return formatSessionNavBadgeLabel(badge, badgeDetail, (key) => t(key));
 }
 
 function AgentRowHistory({

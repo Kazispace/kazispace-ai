@@ -20,8 +20,11 @@ import { publishSessionNavOpenFile } from '@/lib/session-nav-events';
 import {
   resolveContextHeaderSession,
   resolveSessionNavBadge,
-  type SessionNavBadgeKind,
 } from '@/lib/session-nav';
+import {
+  formatSessionNavBadgeLabel,
+  sessionNavBadgePillClass,
+} from '@/lib/session-nav-badges';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { SessionLibraryFile } from '@/types/session-library';
@@ -32,21 +35,6 @@ interface SessionContextHeaderProps {
 }
 
 type HeaderDrawer = 'files' | 'search' | 'more' | null;
-
-function statusPillClass(kind: SessionNavBadgeKind): string {
-  switch (kind) {
-    case 'inProgress':
-    case 'pipeline':
-      return 'bg-green-100 text-green-800';
-    case 'resumable':
-      return 'bg-amber-100 text-amber-800';
-    case 'archived':
-    case 'notStarted':
-      return 'bg-gray-100 text-gray-600';
-    default:
-      return 'bg-gray-100 text-gray-600';
-  }
-}
 
 export function SessionContextHeader({
   locale,
@@ -92,22 +80,18 @@ export function SessionContextHeader({
       : `${agent.emoji} ${name}`;
 
     const badge = resolveSessionNavBadge(currentSession);
-    const statusLabelMap = {
-      inProgress: t('badgeInProgress'),
-      resumable: t('badgeResumable'),
-      archived: t('badgeArchived'),
-      notStarted: t('badgeNotStarted'),
-      pipeline: currentSession?.pipeline_state ?? t('badgeInProgress'),
-      comingSoon: t('comingSoon'),
-      clinicInline: t('clinicInlineHint'),
-    } as const;
+    const statusLabel = badge
+      ? formatSessionNavBadgeLabel(badge.kind, badge.detail ?? currentSession?.pipeline_state, (key) =>
+          t(key)
+        )
+      : null;
 
     return {
       title: titleText,
-      statusLabel: badge ? statusLabelMap[badge.kind] : null,
+      statusLabel,
       statusKind: badge,
     };
-  }, [agentId, currentSession, locale, pathname, t]);
+  }, [agentId, currentSession, locale, t]);
 
   const showSessionActions = Boolean(agentId && currentSession?.session_id);
 
@@ -147,7 +131,7 @@ export function SessionContextHeader({
             <span
               className={cn(
                 'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
-                statusPillClass(statusKind.kind)
+                sessionNavBadgePillClass(statusKind.kind)
               )}
             >
               {statusLabel}

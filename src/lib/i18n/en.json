@@ -422,7 +422,9 @@
 		"switchConfirmTitle": "Switch expert?",
 		"switchConfirmBody": "You're currently with {currentName}. Leave and open {targetName}?",
 		"switchConfirmAction": "Switch to {targetName}",
-		"switchConfirmCancel": "Stay here"
+		"switchConfirmCancel": "Stay here",
+		"activeSessionsTitle": "Continue where you left off",
+		"activeSessionsContinue": "Continue {agent}"
 	},
 	"subscription": {
 		"title": "Upgrade to PRO / Sprint",

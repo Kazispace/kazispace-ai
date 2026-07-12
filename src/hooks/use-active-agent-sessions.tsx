@@ -1,15 +1,35 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 
 import { useActiveAgentSync } from '@/hooks/use-active-agent-sync';
 import { fetchCurrentAgentSessions } from '@/lib/agent-api';
+import { useAuthStore } from '@/lib/store';
 import { SESSION_NAV_INVALIDATE_EVENT } from '@/lib/session-nav-invalidate';
 import type { AgentSessionSummary } from '@/types';
 
 const STALE_TIME_MS = 10_000;
 
 export type CurrentSessionsByAgent = Map<string, AgentSessionSummary>;
+
+type ActiveAgentSessionsValue = {
+  sessionsByAgent: CurrentSessionsByAgent;
+  isLoading: boolean;
+  error: string | null;
+  refresh: (force?: boolean) => Promise<void>;
+};
+
+const ActiveAgentSessionsContext = createContext<ActiveAgentSessionsValue | null>(
+  null
+);
 
 function toSessionsByAgent(sessions: AgentSessionSummary[]): CurrentSessionsByAgent {
   const map = new Map<string, AgentSessionSummary>();
@@ -20,10 +40,10 @@ function toSessionsByAgent(sessions: AgentSessionSummary[]): CurrentSessionsByAg
   return map;
 }
 
-export function useActiveAgentSessions(options?: {
+function useActiveAgentSessionsState(options?: {
   panelOpen?: boolean;
   enabled?: boolean;
-}) {
+}): ActiveAgentSessionsValue {
   const enabled = options?.enabled ?? true;
   const panelOpen = options?.panelOpen ?? false;
   const [sessionsByAgent, setSessionsByAgent] = useState<CurrentSessionsByAgent>(
@@ -73,4 +93,39 @@ export function useActiveAgentSessions(options?: {
   }, [enabled, refresh]);
 
   return { sessionsByAgent, isLoading, error, refresh };
+}
+
+type ActiveAgentSessionsProviderProps = {
+  children: ReactNode;
+  panelOpen?: boolean;
+  enabled?: boolean;
+};
+
+/** Single fetch for Session Nav + Clinic + Hub (ADR-005 / KAZI-148). */
+export function ActiveAgentSessionsProvider({
+  children,
+  panelOpen,
+  enabled: enabledProp,
+}: ActiveAgentSessionsProviderProps) {
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const enabled = enabledProp ?? isLoggedIn;
+  const value = useActiveAgentSessionsState({ panelOpen, enabled });
+  return (
+    <ActiveAgentSessionsContext.Provider value={value}>
+      {children}
+    </ActiveAgentSessionsContext.Provider>
+  );
+}
+
+export function useActiveAgentSessions(options?: {
+  panelOpen?: boolean;
+  enabled?: boolean;
+}): ActiveAgentSessionsValue {
+  const context = useContext(ActiveAgentSessionsContext);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  if (context) return context;
+  return useActiveAgentSessionsState({
+    ...options,
+    enabled: options?.enabled ?? isLoggedIn,
+  });
 }
