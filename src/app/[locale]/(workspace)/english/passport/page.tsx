@@ -12,6 +12,7 @@ import { EppSampleJobsPanel } from "@/components/english/epp-sample-jobs-panel";
 import { Button } from "@/components/ui/button";
 import { EPP_PROFILE_ENABLED } from "@/lib/constants";
 import { ENGLISH_TUTOR_AGENT_ID } from "@/lib/english-tutor-config";
+import { englishProfileRedirectTarget } from "@/lib/english-profile-routes";
 import { useEnglishProfile, useEnglishSampleJobs } from "@/hooks/use-english-profile";
 import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
 import { useAuthStore } from "@/lib/store";
@@ -43,10 +44,17 @@ function PassportPageContent({ locale }: { locale: string }) {
   useHubActiveAgentSync(locale, ENGLISH_TUTOR_AGENT_ID, EPP_PROFILE_ENABLED);
 
   useEffect(() => {
-    if (!isProfileLoading && (profileStatus === "empty" || !profile)) {
-      router.replace(`/${locale}/english/onboarding`);
+    const target = englishProfileRedirectTarget({
+      page: "passport",
+      isProfileLoading,
+      profileError,
+      profileStatus,
+      hasProfile: profile != null,
+    });
+    if (target) {
+      router.replace(`/${locale}/english/${target}`);
     }
-  }, [isProfileLoading, locale, profile, profileStatus, router]);
+  }, [isProfileLoading, locale, profile, profileError, profileStatus, router]);
 
   if (!EPP_PROFILE_ENABLED) {
     return (
@@ -56,7 +64,7 @@ function PassportPageContent({ locale }: { locale: string }) {
     );
   }
 
-  if (isProfileLoading || profileStatus === "empty" || !profile) {
+  if (isProfileLoading) {
     return <EppPassportSkeleton />;
   }
 
@@ -69,6 +77,10 @@ function PassportPageContent({ locale }: { locale: string }) {
         </Button>
       </div>
     );
+  }
+
+  if (profileStatus === "empty" || !profile) {
+    return <EppPassportSkeleton />;
   }
 
   if (profile.profile_status === "ready" || profile.profile_status === "active") {
