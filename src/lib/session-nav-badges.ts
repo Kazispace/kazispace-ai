@@ -9,7 +9,51 @@ export type SessionNavBadgeTranslator = (
     | 'badgeResumable'
     | 'badgeArchived'
     | 'badgeNotStarted'
+    | 'pipelineFeedbackPending'
+    | 'pipelineInterviewActive'
+    | 'pipelineCvBuilding'
+    | 'pipelinePrep'
+    | 'pipelineReview'
+    | 'pipelineCompleted'
 ) => string;
+
+type SessionNavPipelineKey =
+  | 'pipelineFeedbackPending'
+  | 'pipelineInterviewActive'
+  | 'pipelineCvBuilding'
+  | 'pipelinePrep'
+  | 'pipelineReview'
+  | 'pipelineCompleted';
+
+const PIPELINE_STATE_LABEL_KEY: Record<string, SessionNavPipelineKey> = {
+  feedback_pending: 'pipelineFeedbackPending',
+  completed: 'pipelineCompleted',
+  answering: 'pipelineInterviewActive',
+  role_intake: 'pipelineInterviewActive',
+  prep_hook: 'pipelinePrep',
+  review_confirm: 'pipelineReview',
+  needs_confirmation: 'pipelineReview',
+  generated: 'pipelineCompleted',
+  collecting: 'pipelineCvBuilding',
+  intake: 'pipelineCvBuilding',
+  entered: 'pipelineCvBuilding',
+  profile_analysis: 'pipelineCvBuilding',
+  cv_analysis: 'pipelineCvBuilding',
+  job_target: 'pipelineCvBuilding',
+  strength: 'pipelineCvBuilding',
+  draft_generate: 'pipelineCvBuilding',
+  polish: 'pipelineCvBuilding',
+};
+
+export function resolvePipelineBadgeLabel(
+  pipelineState: string | null | undefined,
+  t: SessionNavBadgeTranslator
+): string {
+  const raw = pipelineState?.trim();
+  if (!raw) return t('badgeInProgress');
+  const key = PIPELINE_STATE_LABEL_KEY[raw.toLowerCase()];
+  return key ? t(key) : t('badgeInProgress');
+}
 
 export function sessionNavBadgePillClass(kind: SessionNavBadgeKind): string {
   switch (kind) {
@@ -43,7 +87,7 @@ export function formatSessionNavBadgeLabel(
     resumable: t('badgeResumable'),
     archived: t('badgeArchived'),
     notStarted: t('badgeNotStarted'),
-    pipeline: badgeDetail?.trim() || t('badgeInProgress'),
+    pipeline: resolvePipelineBadgeLabel(badgeDetail, t),
   };
   return kindLabels[badge];
 }

@@ -1,10 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ChevronRight } from 'lucide-react';
 
 import type { ClinicActiveSessionEntry } from '@/lib/clinic-active-sessions';
+import { openAgentSessionTarget } from '@/lib/session-nav';
 import {
   formatSessionNavBadgeLabel,
   sessionNavBadgePillClass,
@@ -21,10 +22,12 @@ const bannerShellClass =
   'w-full mb-6 rounded-xl border border-kazi-orange/30 bg-orange-50/80 overflow-hidden';
 
 export function ClinicActiveSessionsBanner({
+  locale,
   entries,
   className,
 }: ClinicActiveSessionsBannerProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const tClinic = useTranslations('clinic');
   const tNav = useTranslations('sessionNav');
 
@@ -32,6 +35,16 @@ export function ClinicActiveSessionsBanner({
 
   const badgeLabelFor = (entry: ClinicActiveSessionEntry) =>
     formatSessionNavBadgeLabel(entry.badge, entry.badgeDetail, (key) => tNav(key));
+
+  const openEntry = (entry: ClinicActiveSessionEntry) => {
+    openAgentSessionTarget(
+      router,
+      pathname,
+      locale,
+      entry.agentId,
+      entry.session.session_id
+    );
+  };
 
   if (entries.length === 1) {
     const entry = entries[0]!;
@@ -41,7 +54,7 @@ export function ClinicActiveSessionsBanner({
     return (
       <button
         type="button"
-        onClick={() => router.push(entry.href)}
+        onClick={() => openEntry(entry)}
         className={cn(
           bannerShellClass,
           'flex items-center gap-3 px-4 py-3 text-left hover:border-kazi-orange/50 hover:bg-orange-50 transition-colors',
@@ -82,7 +95,7 @@ export function ClinicActiveSessionsBanner({
             <li key={entry.session.session_id}>
               <button
                 type="button"
-                onClick={() => router.push(entry.href)}
+                onClick={() => openEntry(entry)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 transition-colors"
               >
                 <span className="text-xl shrink-0" aria-hidden>

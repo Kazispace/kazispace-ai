@@ -11,14 +11,17 @@ import {
 } from 'react';
 
 import { useActiveAgentSync } from '@/hooks/use-active-agent-sync';
+import {
+  toLatestSessionsByAgent,
+  type CurrentSessionsByAgent,
+} from '@/lib/current-agent-sessions';
 import { fetchCurrentAgentSessions } from '@/lib/agent-api';
 import { useAuthStore } from '@/lib/store';
 import { SESSION_NAV_INVALIDATE_EVENT } from '@/lib/session-nav-invalidate';
-import type { AgentSessionSummary } from '@/types';
 
 const STALE_TIME_MS = 10_000;
 
-export type CurrentSessionsByAgent = Map<string, AgentSessionSummary>;
+export type { CurrentSessionsByAgent };
 
 type ActiveAgentSessionsValue = {
   sessionsByAgent: CurrentSessionsByAgent;
@@ -30,15 +33,6 @@ type ActiveAgentSessionsValue = {
 const ActiveAgentSessionsContext = createContext<ActiveAgentSessionsValue | null>(
   null
 );
-
-function toSessionsByAgent(sessions: AgentSessionSummary[]): CurrentSessionsByAgent {
-  const map = new Map<string, AgentSessionSummary>();
-  for (const session of sessions) {
-    if (!session.agent_id) continue;
-    map.set(session.agent_id, session);
-  }
-  return map;
-}
 
 function useActiveAgentSessionsState(options?: {
   panelOpen?: boolean;
@@ -62,7 +56,7 @@ function useActiveAgentSessionsState(options?: {
       setIsLoading(true);
       const res = await fetchCurrentAgentSessions();
       if (res.success && res.data) {
-        setSessionsByAgent(toSessionsByAgent(res.data.sessions));
+        setSessionsByAgent(toLatestSessionsByAgent(res.data.sessions));
         setError(null);
         lastFetchedAt.current = now;
       } else if (res.error) {
