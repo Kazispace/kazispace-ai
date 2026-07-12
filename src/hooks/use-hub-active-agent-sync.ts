@@ -18,8 +18,7 @@ import { useAgentStore } from '@/lib/store';
  *   follow that switch so all tabs stay on the same agent surface.
  *
  * Clinic (/chat) uses the complementary rule in clinic-shell: dedicated hub stickies
- * are deactivated on the server when the user is on Clinic, instead of auto-resuming.
- * Hub hooks (useCvAgent, useInterview, …) re-activate and resume sessions on hub entry.
+ * cold-open Clinic (no auto-resume, no deactivate). Hub hooks re-activate on hub entry.
  */
 export function useHubActiveAgentSync(
   locale: string,

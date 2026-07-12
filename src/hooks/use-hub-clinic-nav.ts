@@ -12,7 +12,7 @@ export function isHubExitDestination(href: string, locale: string): boolean {
 }
 
 /**
- * Leaving dedicated hub pages — navigate to Clinic immediately; deactivate in background.
+ * Leaving dedicated hub pages — navigate to Clinic immediately (ADR-005 navigate-only).
  */
 export function useHubClinicNav(locale: string) {
   const pathname = usePathname();

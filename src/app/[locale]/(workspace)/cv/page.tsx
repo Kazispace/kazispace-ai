@@ -18,11 +18,13 @@ import { CvDiffPanel } from "@/components/cv/cv-diff-panel";
 import { CvWorkspaceTabs, type CvWorkspaceTab, CV_CHAT_PANEL_ID, CV_RESUME_PANEL_ID } from "@/components/cv/cv-workspace-tabs";
 import { AgentTransitionProvider } from "@/components/agent-transition/agent-transition-provider";
 import { HubLayerBar } from "@/components/agent-transition/hub-layer-bar";
+import { HubSessionStaleBanner } from "@/components/hub/hub-session-stale-banner";
 import { useSessionNavController } from "@/components/session-nav/session-nav-controller";
 import { Button } from "@/components/ui/button";
 import { handleCvNextAction, isRoutedCvAction, quickReplyLabel } from "@/lib/cv-next-action";
 import { useCvAgent } from "@/hooks/use-cv-agent";
 import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
+import { useHubSessionStaleBanner } from "@/hooks/use-hub-session-stale-banner";
 import { CV_BUILDER_AGENT_ID } from "@/lib/cv-agent-config";
 import { SESSION_NAV_OPEN_FILE_EVENT } from "@/lib/session-nav-events";
 import { AGENT_REGISTRY, getAgentLabel } from "@/lib/agents/registry";
@@ -69,13 +71,22 @@ function CvPageContent({ locale }: { locale: string }) {
     continueEscalationRecovery,
     parsedSections,
     documentId,
+    sessionId,
     sendMessage,
     sendPayload,
     uploadResume,
     confirmCv,
     regenerateCv,
     exportCvPdf,
+    resyncSession,
   } = agentSession;
+
+  const sessionStale = useHubSessionStaleBanner(
+    CV_BUILDER_AGENT_ID,
+    sessionId,
+    !needsLogin && !needsOnboarding && !needsProfile,
+    resyncSession
+  );
 
   useHubActiveAgentSync(locale, CV_BUILDER_AGENT_ID, !needsLogin);
 
@@ -229,6 +240,13 @@ function CvPageContent({ locale }: { locale: string }) {
         isWorking={isSending}
         showPipeline={showPipelineSteps}
       />
+
+      {sessionStale.stale ? (
+        <HubSessionStaleBanner
+          onRefresh={sessionStale.refresh}
+          onDismiss={sessionStale.dismiss}
+        />
+      ) : null}
 
       <HubLayerBar locale={locale} />
 

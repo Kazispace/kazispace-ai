@@ -14,14 +14,20 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
     setAgentMessages,
     addAgentMessage,
     updateAgentMessage,
-    isAgentSending,
-    isAgentStreaming,
     setAgentSending,
     setAgentStreaming,
   } = useAgentStore();
 
   const messages = useAgentStore((s) =>
-    agentId ? s.agentMessages[agentId] ?? [] : []
+    agentId ? s.getAgentMessages(agentId) : []
+  );
+
+  const isAgentSending = useAgentStore((s) =>
+    agentId ? s.getAgentSlice(agentId).isSending : false
+  );
+
+  const isAgentStreaming = useAgentStore((s) =>
+    agentId ? s.getAgentSlice(agentId).isStreaming : false
   );
 
   const loadAgentHistory = useCallback(async () => {
@@ -55,7 +61,7 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
         sessionId,
       };
       addAgentMessage(agentId, userMsg);
-      setAgentSending(true);
+      setAgentSending(agentId, true);
 
       const assistantId = `assistant_${Date.now()}`;
       addAgentMessage(agentId, {
@@ -65,11 +71,11 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
         timestamp: new Date().toISOString(),
         sessionId,
       });
-      setAgentStreaming(true);
+      setAgentStreaming(agentId, true);
 
       const res = await sendAgentChat(agentId, text, sessionId);
-      setAgentSending(false);
-      setAgentStreaming(false);
+      setAgentSending(agentId, false);
+      setAgentStreaming(agentId, false);
 
       if (!res.success || !res.data) {
         updateAgentMessage(agentId, assistantId, {

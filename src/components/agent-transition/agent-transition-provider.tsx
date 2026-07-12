@@ -31,7 +31,7 @@ type AgentTransitionContextValue = {
   activateAgentWithoutPrecheck: ReturnType<
     typeof useAgentSwitch
   >['activateAgentWithoutPrecheck'];
-  /** Hub → Clinic: navigates immediately; always `{ ok: true }` (deactivate is background). */
+  /** Hub → Clinic: navigate-only (ADR-005); server session stays active. */
   returnToClinic: () => Promise<{ ok: true }>;
 };
 
@@ -95,7 +95,7 @@ export function AgentTransitionProvider({
   const returnToClinic = useCallback(async () => {
     const clinicHref =
       planNavigation(locale, fromSurface, null).href ?? `/${locale}/chat`;
-    leaveDedicatedHubForClinic(locale, hubAgentId);
+    leaveDedicatedHubForClinic();
     router.replace(clinicHref);
     return { ok: true as const };
   }, [fromSurface, hubAgentId, locale, router]);

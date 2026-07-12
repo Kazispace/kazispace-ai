@@ -10,6 +10,7 @@ import {
   fetchAgentMessages,
   fetchAgentSessions,
   getActiveAgent,
+  openAgentSession,
   parseAgentReply,
   sendAgentChat,
 } from '@/lib/agent-api';
@@ -46,7 +47,7 @@ import {
 } from '@/lib/cv-api';
 import { uploadCvResumeFile, resolveCvUploadErrorMessage } from '@/lib/cv-input-api';
 import { exportCvDocumentPdf, resolveCvExportErrorMessage } from '@/lib/cv-export-api';
-import { useAuthStore, useUIStore } from '@/lib/store';
+import { useAuthStore, useAgentStore, useUIStore } from '@/lib/store';
 import { normalizeAgentSessions, isAgentSessionReadOnly } from '@/lib/agent-sessions';
 import { consumeSessionNavHandoff } from '@/lib/session-nav-handoff';
 import {
@@ -288,14 +289,18 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     [applyCtaState, openPaywall]
   );
 
-  /** Idempotent activate to sync meta (document_id, preview) after history-only loads. */
-  const syncActivateMeta = useCallback(
+  /** Idempotent open to sync meta (document_id, preview) after history-only loads. */
+  const syncOpenMeta = useCallback(
     async (gen: number) => {
-      const res = await activateAgent(CV_BUILDER_AGENT_ID, locale, undefined, {
+      const res = await openAgentSession(CV_BUILDER_AGENT_ID, locale, {
         job_id: jobId ?? undefined,
       });
       if (gen !== activateGenRef.current) return;
       if (res.success && res.data) {
+        useAgentStore.getState().setAgentSession(
+          CV_BUILDER_AGENT_ID,
+          res.data.session_id
+        );
         applyActivateResponse(res.data);
       }
     },
@@ -353,7 +358,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         setSessionId(sid);
         setSessionResumed(true);
         await loadSessionMessages(sid, gen, handoff?.greeting);
-        await syncActivateMeta(gen);
+        await syncOpenMeta(gen);
         finishSessionLoad(gen);
         void refreshSessions();
         return;
@@ -364,13 +369,13 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setSessionId(handoffSessionId);
       setSessionResumed(Boolean(navHandoffSessionId || handoff?.sessionId));
       await loadSessionMessages(handoffSessionId, gen, handoff?.greeting);
-      await syncActivateMeta(gen);
+      await syncOpenMeta(gen);
       finishSessionLoad(gen);
       void refreshSessions();
       return;
     }
 
-    const res = await activateAgent(CV_BUILDER_AGENT_ID, locale, undefined, {
+    const res = await openAgentSession(CV_BUILDER_AGENT_ID, locale, {
       job_id: jobId ?? undefined,
     });
     if (gen !== activateGenRef.current) return;
@@ -384,6 +389,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     const { session_id, greeting, resumed } = res.data;
     setSessionId(session_id);
     setSessionResumed(Boolean(resumed));
+    useAgentStore.getState().setAgentSession(CV_BUILDER_AGENT_ID, session_id);
     publishActiveAgentSync({
       type: 'activated',
       agentId: CV_BUILDER_AGENT_ID,
@@ -407,7 +413,44 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     loadSessionMessages,
     locale,
     refreshSessions,
-    syncActivateMeta,
+    syncOpenMeta,
+  ]);
+
+  const resyncSession = useCallback(async () => {
+    if (!enabled || !isLoggedIn) return;
+    const gen = ++activateGenRef.current;
+    setIsLoading(true);
+    setError(null);
+
+    const res = await openAgentSession(CV_BUILDER_AGENT_ID, locale, {
+      job_id: jobId ?? undefined,
+    });
+    if (gen !== activateGenRef.current) return;
+
+    if (!res.success || !res.data) {
+      handleApiError(res);
+      finishSessionLoad(gen);
+      return;
+    }
+
+    const { session_id, resumed } = res.data;
+    setSessionId(session_id);
+    setSessionResumed(Boolean(resumed));
+    useAgentStore.getState().setAgentSession(CV_BUILDER_AGENT_ID, session_id);
+    await loadSessionMessages(session_id, gen);
+    applyActivateResponse(res.data);
+    finishSessionLoad(gen);
+    void refreshSessions();
+  }, [
+    applyActivateResponse,
+    enabled,
+    finishSessionLoad,
+    handleApiError,
+    isLoggedIn,
+    jobId,
+    loadSessionMessages,
+    locale,
+    refreshSessions,
   ]);
 
   useEffect(() => {
@@ -469,10 +512,10 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setSessionResumed(false);
 
       await loadSessionMessages(sid, gen);
-      await syncActivateMeta(gen);
+      await syncOpenMeta(gen);
       finishSessionLoad(gen);
     },
-    [enabled, finishSessionLoad, isLoggedIn, loadSessionMessages, sessionId, sessions, syncActivateMeta]
+    [enabled, finishSessionLoad, isLoggedIn, loadSessionMessages, sessionId, sessions, syncOpenMeta]
   );
 
   const applyOpenedSession = useCallback(
@@ -908,6 +951,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     uploadResume,
     selectSession,
     refreshSessions,
+    resyncSession,
     restart: restartSession,
   };
 }
