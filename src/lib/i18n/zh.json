@@ -330,5 +330,14 @@
 			"review": "审阅",
 			"done": "完成"
 		}
+	},
+	"hub": {
+		"workspaceExpand": "展开工作区",
+		"workspaceCollapse": "收起工作区",
+		"escalationSwitching": "正在切换专家…",
+		"escalationFailed": "切换专家失败，请重试。",
+		"sessionStaleMessage": "此会话已在其他标签页更新。",
+		"sessionStaleRefresh": "刷新",
+		"sessionStaleDismiss": "忽略"
 	}
 }

@@ -5,6 +5,11 @@ import { clearBillingCache } from './billing-cache';
 import { clearMockAgentSessions } from './agent-api';
 import { clearLocaleCookies } from './locale';
 import { clearMasterSession } from './master-session';
+import {
+  getAgentSliceFromRecord,
+  patchAgentSlice,
+  type AgentSlice,
+} from './agent-slice';
 
 // ---- Auth Store ----
 interface AuthStore {
@@ -127,8 +132,9 @@ export const useCreditsStore = create<CreditsStore>()((set) => ({
   setBalance: (balance) => set({ balance }),
 }));
 
-// ---- Agent Store (Sprint 2) ----
+// ---- Agent Store (ADR-005 per-agent slices) ----
 interface AgentStore {
+  /** Clinic inline chat focus — null on cold-open Clinic or dedicated hub pages. */
   activeAgentId: string | null;
   agentSessionId: string | null;
   isSwitching: boolean;
@@ -138,9 +144,7 @@ interface AgentStore {
     toAgentId: string;
     triggerMessage?: string;
   } | null;
-  isAgentSending: boolean;
-  isAgentStreaming: boolean;
-  agentMessages: Record<string, ChatMessage[]>;
+  agents: Record<string, AgentSlice>;
   setSwitcherOpen: (open: boolean) => void;
   setPendingAgentSwitch: (
     pending: {
@@ -151,13 +155,15 @@ interface AgentStore {
   ) => void;
   setSwitching: (switching: boolean) => void;
   setActiveAgent: (agentId: string | null, sessionId: string | null) => void;
+  setAgentSession: (agentId: string, sessionId: string | null) => void;
+  getAgentSlice: (agentId: string) => AgentSlice;
   getAgentMessages: (agentId: string) => ChatMessage[];
   setAgentMessages: (agentId: string, messages: ChatMessage[]) => void;
   addAgentMessage: (agentId: string, message: ChatMessage) => void;
   updateAgentMessage: (agentId: string, id: string, patch: Partial<ChatMessage>) => void;
   removeAgentMessage: (agentId: string, id: string) => void;
-  setAgentSending: (sending: boolean) => void;
-  setAgentStreaming: (streaming: boolean) => void;
+  setAgentSending: (agentId: string, sending: boolean) => void;
+  setAgentStreaming: (agentId: string, streaming: boolean) => void;
   reset: () => void;
 }
 
@@ -171,9 +177,7 @@ const initialAgentState = {
     toAgentId: string;
     triggerMessage?: string;
   } | null,
-  isAgentSending: false,
-  isAgentStreaming: false,
-  agentMessages: {} as Record<string, ChatMessage[]>,
+  agents: {} as Record<string, AgentSlice>,
 };
 
 export const useAgentStore = create<AgentStore>()((set, get) => ({
@@ -182,39 +186,65 @@ export const useAgentStore = create<AgentStore>()((set, get) => ({
   setPendingAgentSwitch: (pending) => set({ pendingAgentSwitch: pending }),
   setSwitching: (switching) => set({ isSwitching: switching }),
   setActiveAgent: (agentId, sessionId) =>
-    set({ activeAgentId: agentId, agentSessionId: sessionId }),
-  getAgentMessages: (agentId) => get().agentMessages[agentId] ?? [],
+    set((state) => ({
+      activeAgentId: agentId,
+      agentSessionId: sessionId,
+      agents:
+        agentId != null
+          ? patchAgentSlice(state.agents, agentId, { sessionId })
+          : state.agents,
+    })),
+  setAgentSession: (agentId, sessionId) =>
+    set((state) => {
+      const agents = patchAgentSlice(state.agents, agentId, { sessionId });
+      return {
+        agents,
+        ...(state.activeAgentId === agentId ? { agentSessionId: sessionId } : {}),
+      };
+    }),
+  getAgentSlice: (agentId) => getAgentSliceFromRecord(get().agents, agentId),
+  getAgentMessages: (agentId) => getAgentSliceFromRecord(get().agents, agentId).messages,
   setAgentMessages: (agentId, messages) =>
     set((state) => ({
-      agentMessages: { ...state.agentMessages, [agentId]: messages },
+      agents: patchAgentSlice(state.agents, agentId, { messages }),
     })),
   addAgentMessage: (agentId, message) =>
-    set((state) => ({
-      agentMessages: {
-        ...state.agentMessages,
-        [agentId]: [...(state.agentMessages[agentId] ?? []), message],
-      },
-    })),
+    set((state) => {
+      const slice = getAgentSliceFromRecord(state.agents, agentId);
+      return {
+        agents: patchAgentSlice(state.agents, agentId, {
+          messages: [...slice.messages, message],
+        }),
+      };
+    }),
   updateAgentMessage: (agentId, id, patch) =>
-    set((state) => ({
-      agentMessages: {
-        ...state.agentMessages,
-        [agentId]: (state.agentMessages[agentId] ?? []).map((m) =>
-          m.id === id ? { ...m, ...patch } : m
-        ),
-      },
-    })),
+    set((state) => {
+      const slice = getAgentSliceFromRecord(state.agents, agentId);
+      return {
+        agents: patchAgentSlice(state.agents, agentId, {
+          messages: slice.messages.map((m) => (m.id === id ? { ...m, ...patch } : m)),
+        }),
+      };
+    }),
   removeAgentMessage: (agentId, id) =>
+    set((state) => {
+      const slice = getAgentSliceFromRecord(state.agents, agentId);
+      return {
+        agents: patchAgentSlice(state.agents, agentId, {
+          messages: slice.messages.filter((m) => m.id !== id),
+        }),
+      };
+    }),
+  setAgentSending: (agentId, sending) =>
     set((state) => ({
-      agentMessages: {
-        ...state.agentMessages,
-        [agentId]: (state.agentMessages[agentId] ?? []).filter((m) => m.id !== id),
-      },
+      agents: patchAgentSlice(state.agents, agentId, { isSending: sending }),
     })),
-  setAgentSending: (sending) => set({ isAgentSending: sending }),
-  setAgentStreaming: (streaming) => set({ isAgentStreaming: streaming }),
+  setAgentStreaming: (agentId, streaming) =>
+    set((state) => ({
+      agents: patchAgentSlice(state.agents, agentId, { isStreaming: streaming }),
+    })),
   reset: () => {
     clearMockAgentSessions();
-    set({ ...initialAgentState, agentMessages: {} });
+    set({ ...initialAgentState, agents: {} });
   },
 }));

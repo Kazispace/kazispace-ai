@@ -581,7 +581,10 @@
 		"workspaceExpand": "Show workspace",
 		"workspaceCollapse": "Hide workspace",
 		"escalationSwitching": "Switching expert…",
-		"escalationFailed": "Could not switch expert. Try again."
+		"escalationFailed": "Could not switch expert. Try again.",
+		"sessionStaleMessage": "This session was updated in another tab.",
+		"sessionStaleRefresh": "Refresh",
+		"sessionStaleDismiss": "Dismiss"
 	},
 	"workflow": {
 		"trackAria": "Session progress",

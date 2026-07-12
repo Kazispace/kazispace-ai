@@ -1,7 +1,4 @@
-import { activateAgent } from '@/lib/agent-api';
-import { publishActiveAgentSync } from '@/lib/active-agent-sync';
-import { isCvBuilderAgent } from '@/lib/cv-agent-config';
-import { setCvAgentHandoff } from '@/lib/cv-agent-handoff';
+import { openHubAgentSession } from '@/lib/hub-agent-open';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import {
   envelopeToEscalation,
@@ -17,35 +14,18 @@ export function parseAgentEscalation(
 ): AgentEscalation | null {
   if (!data) return null;
   const envelope = parseAssistantEnvelope(data);
-  return envelopeToEscalation(
-    envelope
-  );
+  return envelopeToEscalation(envelope);
 }
 
-/** Activate hub agent session only — navigation is SSOT in planNavigation. */
+/** Activate hub agent session via sessions/open — navigation is SSOT in planNavigation. */
 export async function activateHubAgentSession(
   targetAgentId: string,
   locale: string
 ): Promise<{ ok: boolean; error?: string; errorCode?: string }> {
-  const res = await activateAgent(targetAgentId, locale);
-  if (!res.success || !res.data) {
-    return { ok: false, error: res.error, errorCode: res.errorCode };
+  const result = await openHubAgentSession(targetAgentId, locale);
+  if (!result.ok) {
+    return { ok: false, error: result.error, errorCode: result.errorCode };
   }
-
-  if (isCvBuilderAgent(targetAgentId)) {
-    setCvAgentHandoff({
-      sessionId: res.data.session_id,
-      greeting: res.data.greeting,
-    });
-  }
-
-  useAgentStore.getState().setActiveAgent(targetAgentId, res.data.session_id);
-
-  publishActiveAgentSync({
-    type: 'activated',
-    agentId: targetAgentId,
-    sessionId: res.data.session_id,
-  });
   return { ok: true };
 }
 
