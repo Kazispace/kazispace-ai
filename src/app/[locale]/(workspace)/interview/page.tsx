@@ -16,7 +16,6 @@ import { MessageBubble } from "@/components/clinic/message-bubble";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { InterviewFeedbackActions } from "@/components/interview/interview-feedback-actions";
 import { InterviewWorkspace } from "@/components/interview/interview-workspace";
-import { IrpProfileHome } from "@/components/interview/irp-profile-home";
 import { IrpDiagnosisUpdate } from "@/components/interview/irp-diagnosis-update";
 import { Button } from "@/components/ui/button";
 import { HubSessionStaleBanner } from "@/components/hub/hub-session-stale-banner";
@@ -25,9 +24,6 @@ import { useHubActiveAgentSync } from "@/hooks/use-hub-active-agent-sync";
 import { useHubSessionStaleBanner } from "@/hooks/use-hub-session-stale-banner";
 import { MOCK_INTERVIEW_AGENT_ID } from "@/lib/mock-interview-config";
 import { useInterviewProfile } from "@/hooks/use-interview-profile";
-import { useBilling } from "@/hooks/use-billing";
-import { isProPlan } from "@/lib/api-mappers";
-import { hasFormalIrp, resolveInterviewEntry } from "@/lib/interview-irp-entry";
 import { INTAKE_SUGGESTION_KEYS } from "@/lib/interview-intake";
 import type { InterviewCta } from "@/types";
 import { useUIStore, useAuthStore } from "@/lib/store";
@@ -91,31 +87,9 @@ function InterviewPageContent({ locale }: { locale: string }) {
     refetchProfile,
   } = useInterviewProfile({ enabled: !needsLogin });
 
-  const { plan } = useBilling();
-
-  const [trainingRequested, setTrainingRequested] = useState(false);
   const [profileBaselineUpdatedAt, setProfileBaselineUpdatedAt] = useState<string | null>(
     null
   );
-
-  const entryRoute = useMemo(
-    () =>
-      resolveInterviewEntry({
-        irpEnabled,
-        jobId,
-        profileStatus: profileError ? null : profileStatus,
-      }),
-    [irpEnabled, jobId, profileError, profileStatus]
-  );
-
-  const showProfileHome =
-    entryRoute === "profile_home" &&
-    !trainingRequested &&
-    phase === "role_select" &&
-    !needsLogin &&
-    profile != null;
-
-  const isProUser = isProPlan(plan);
 
   const prevPhaseRef = useRef(phase);
 
@@ -153,12 +127,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
     [jobId, retrySession, showToast, t]
   );
 
-  const handleStartTraining = useCallback(() => {
-    setTrainingRequested(true);
-  }, []);
-
   const handleReset = useCallback(() => {
-    setTrainingRequested(false);
     setProfileBaselineUpdatedAt(null);
     reset();
   }, [reset]);
@@ -239,7 +208,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
           </div>
         )}
       </div>
-      {phase !== "role_select" || trainingRequested ? (
+      {phase !== "role_select" ? (
         <Button size="sm" variant="outline" onClick={handleReset}>
           {t("newInterview")}
         </Button>
@@ -373,14 +342,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
         />
       ) : null}
       <main className="mx-auto flex w-full max-w-5xl min-h-0 flex-1 flex-col">
-        {showProfileHome && profile ? (
-          <IrpProfileHome
-            profile={profile}
-            locale={locale}
-            onStartTraining={handleStartTraining}
-            isPro={isProUser}
-          />
-        ) : needsLogin ? (
+        {needsLogin ? (
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">
               <p className="text-sm text-gray-700 mb-4">{t("loginBanner")}</p>
@@ -392,7 +354,11 @@ function InterviewPageContent({ locale }: { locale: string }) {
         ) : (
           <HubAgentShell
             header={shellHeader}
-            workspace={!needsLogin ? <InterviewWorkspace locale={locale} /> : undefined}
+            workspace={
+              !needsLogin ? (
+                <InterviewWorkspace locale={locale} showProfileLink={irpEnabled} />
+              ) : undefined
+            }
             composerPrefix={
               phase === "feedback_pending" || quickReplies.length > 0
                 ? composerPrefix

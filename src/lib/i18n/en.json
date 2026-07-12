@@ -613,6 +613,7 @@
 		"workspaceHint": "Past reports and readiness checks live here — not in the chat.",
 		"viewHistory": "View growth history",
 		"viewReadiness": "Job readiness check",
+		"viewProfile": "View readiness profile",
 		"workflow": {
 			"prep": "Prep",
 			"questions": "Questions",
@@ -744,6 +745,10 @@
 				"chartNeedsMore": "Complete 3+ rounds to see the level curve.",
 				"badges": "Badges",
 				"proHint": "Upgrade to PRO for heatmap and badges."
+			},
+			"profile": {
+				"back": "← Back to interview",
+				"backToInterview": "Back to interview"
 			},
 			"diagnosis": {
 				"title": "Profile update",
