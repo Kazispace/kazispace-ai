@@ -260,7 +260,7 @@
 		"confirmAbandonBody": "Your current {agent} session is still in progress. Starting new will archive it.",
 		"confirmAbandonAction": "Start new",
 		"confirmAbandonCancel": "Cancel",
-		"newSessionStarted": "New session started",
+		"newSessionStarted": "New {agent} session started",
 		"newSessionFailed": "Could not start a new session",
 		"exitSessionDone": "Session ended",
 		"exitSessionFailed": "Could not end session"

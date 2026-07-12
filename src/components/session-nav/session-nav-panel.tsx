@@ -223,6 +223,9 @@ export function SessionNavPanel({
         <button
           type="button"
           onClick={() => {
+            if (!isClinic && row.agentId && row.session?.session_id) {
+              publishSessionNavSelectHistory(row.agentId, row.session.session_id);
+            }
             router.push(row.href);
             if (mobileDrawer) onClose();
           }}

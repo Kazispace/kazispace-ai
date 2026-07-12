@@ -16,8 +16,9 @@ import { SessionNavPanel } from '@/components/session-nav/session-nav-panel';
 import { useActiveAgentSessions } from '@/hooks/use-active-agent-sessions';
 import { useAgentSessionActions } from '@/hooks/use-agent-session-actions';
 import { useSessionNavState } from '@/hooks/use-session-nav-state';
-import { resolveSurfaceFromPathname } from '@/lib/agent-transition/surfaces';
-import { resolveActiveHubAgentId } from '@/lib/session-nav';
+import { resolveSurfaceFromPathname, getDedicatedHubAgentFromPathname } from '@/lib/agent-transition/surfaces';
+import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
+import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
 import { useUIStore } from '@/lib/store';
 
 interface SessionNavShellProps {
@@ -31,7 +32,7 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
   const showToast = useUIStore((s) => s.showToast);
   const t = useTranslations('sessionNav');
   const isClinic = resolveSurfaceFromPathname(pathname) === 'clinic';
-  const activeHubAgentId = resolveActiveHubAgentId(pathname);
+  const activeHubAgentId = getDedicatedHubAgentFromPathname(pathname);
 
   const {
     panelOpen,
@@ -79,7 +80,9 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
     async (agentId: string, options?: { jobId?: string }) => {
       const result = await requestNewSession(agentId, options);
       if (result.ok) {
-        showToast(t('newSessionStarted'), 'info');
+        const agent = AGENT_REGISTRY.find((entry) => entry.agentId === agentId);
+        const agentName = agent ? getAgentLabel(agent, locale, 'name') : agentId;
+        showToast(t('newSessionStarted', { agent: agentName }), 'info');
         void refresh(true);
         return;
       }
@@ -92,17 +95,24 @@ export function SessionNavShell({ locale, children }: SessionNavShellProps) {
   const handleConfirmAbandon = useCallback(async () => {
     const result = await confirmAbandonAndNew();
     if (result.ok) {
-      showToast(t('newSessionStarted'), 'info');
+      const agent = confirmAgentId
+        ? AGENT_REGISTRY.find((entry) => entry.agentId === confirmAgentId)
+        : undefined;
+      const agentName = agent
+        ? getAgentLabel(agent, locale, 'name')
+        : confirmAgentId ?? '';
+      showToast(t('newSessionStarted', { agent: agentName }), 'info');
       void refresh(true);
       return;
     }
     showToast('error' in result && result.error ? result.error : t('newSessionFailed'), 'error');
-  }, [confirmAbandonAndNew, refresh, showToast, t]);
+  }, [confirmAbandonAndNew, confirmAgentId, locale, refresh, showToast, t]);
 
   const handleExitSession = useCallback(
     async (agentId: string) => {
       const res = await exitSession(agentId);
       if (res.success) {
+        publishSessionNavSessionExited(agentId);
         showToast(t('exitSessionDone'), 'info');
         void refresh(true);
         return;

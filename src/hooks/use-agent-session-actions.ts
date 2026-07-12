@@ -27,10 +27,7 @@ export function useAgentSessionActions(locale: string) {
       });
       setIsBusy(false);
 
-      if (
-        res.errorCode === 'SESSION_IN_PROGRESS' ||
-        res.error?.includes('SESSION_IN_PROGRESS')
-      ) {
+      if (res.errorCode === 'SESSION_IN_PROGRESS') {
         setConfirmAgentId(agentId);
         setPendingJobId(options?.jobId);
         return { ok: false as const, needsConfirm: true as const };

@@ -214,7 +214,3 @@ export function buildSessionViewRows(
 
   return [clinicRow, ...agentRows];
 }
-
-export function resolveActiveHubAgentId(pathname: string): string | null {
-  return getDedicatedHubAgentFromPathname(pathname);
-}

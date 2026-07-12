@@ -6,6 +6,8 @@ export const SESSION_NAV_SELECT_HISTORY_EVENT = 'kazi-session-nav-select-history
 
 export const SESSION_NAV_SESSION_OPENED_EVENT = 'kazi-session-nav-session-opened';
 
+export const SESSION_NAV_SESSION_EXITED_EVENT = 'kazi-session-nav-session-exited';
+
 export type SessionNavSelectHistoryDetail = {
   agentId: string;
   sessionId: string;
@@ -36,6 +38,15 @@ export function publishSessionNavSessionOpened(
   window.dispatchEvent(
     new CustomEvent<SessionNavSessionOpenedDetail>(SESSION_NAV_SESSION_OPENED_EVENT, {
       detail: { agentId, data },
+    })
+  );
+}
+
+export function publishSessionNavSessionExited(agentId: string): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent<{ agentId: string }>(SESSION_NAV_SESSION_EXITED_EVENT, {
+      detail: { agentId },
     })
   );
 }

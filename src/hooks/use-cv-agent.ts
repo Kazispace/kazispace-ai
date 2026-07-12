@@ -50,6 +50,7 @@ import { useAuthStore, useUIStore } from '@/lib/store';
 import { normalizeAgentSessions, isAgentSessionReadOnly } from '@/lib/agent-sessions';
 import {
   SESSION_NAV_SELECT_HISTORY_EVENT,
+  SESSION_NAV_SESSION_EXITED_EVENT,
   SESSION_NAV_SESSION_OPENED_EVENT,
   type SessionNavSelectHistoryDetail,
   type SessionNavSessionOpenedDetail,
@@ -515,28 +516,63 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     ]
   );
 
+  const selectSessionRef = useRef(selectSession);
+  const applyOpenedSessionRef = useRef(applyOpenedSession);
+
+  useEffect(() => {
+    selectSessionRef.current = selectSession;
+  }, [selectSession]);
+
+  useEffect(() => {
+    applyOpenedSessionRef.current = applyOpenedSession;
+  }, [applyOpenedSession]);
+
   useEffect(() => {
     if (!enabled) return;
 
     const onSelectHistory = (event: Event) => {
       const detail = (event as CustomEvent<SessionNavSelectHistoryDetail>).detail;
       if (detail.agentId !== CV_BUILDER_AGENT_ID) return;
-      void selectSession(detail.sessionId);
+      void selectSessionRef.current(detail.sessionId);
     };
 
     const onSessionOpened = (event: Event) => {
       const detail = (event as CustomEvent<SessionNavSessionOpenedDetail>).detail;
       if (detail.agentId !== CV_BUILDER_AGENT_ID) return;
-      void applyOpenedSession(detail.data);
+      void applyOpenedSessionRef.current(detail.data);
+    };
+
+    const onSessionExited = (event: Event) => {
+      const detail = (event as CustomEvent<{ agentId: string }>).detail;
+      if (detail.agentId !== CV_BUILDER_AGENT_ID) return;
+      activateGenRef.current += 1;
+      setMessages([]);
+      setPreview(null);
+      setDiff(null);
+      setPipelineState(null);
+      setNextActions([]);
+      setQuickReplies([]);
+      setSessionId(null);
+      setIsReadOnly(false);
+      setSessionResumed(false);
+      setParsedSections(null);
+      setDocumentId(null);
+      setError(null);
+      setNeedsOnboarding(false);
+      setNeedsProfile(false);
+      setIsLoading(false);
+      setIsSending(false);
     };
 
     window.addEventListener(SESSION_NAV_SELECT_HISTORY_EVENT, onSelectHistory);
     window.addEventListener(SESSION_NAV_SESSION_OPENED_EVENT, onSessionOpened);
+    window.addEventListener(SESSION_NAV_SESSION_EXITED_EVENT, onSessionExited);
     return () => {
       window.removeEventListener(SESSION_NAV_SELECT_HISTORY_EVENT, onSelectHistory);
       window.removeEventListener(SESSION_NAV_SESSION_OPENED_EVENT, onSessionOpened);
+      window.removeEventListener(SESSION_NAV_SESSION_EXITED_EVENT, onSessionExited);
     };
-  }, [applyOpenedSession, enabled, selectSession]);
+  }, [enabled]);
 
   const sendAgentMessage = useCallback(
     async (
