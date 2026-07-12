@@ -9,6 +9,11 @@ const HUB_AGENT_TO_SURFACE: Record<string, AgentSurfaceId> = {
   [ENGLISH_TUTOR_AGENT_ID]: 'english',
 };
 
+/** SSOT list of agents with dedicated Hub surfaces (chat-first entry). */
+export const DEDICATED_HUB_AGENT_IDS = Object.freeze(
+  Object.keys(HUB_AGENT_TO_SURFACE)
+) as readonly string[];
+
 const SURFACE_TO_HUB_AGENT: Partial<Record<AgentSurfaceId, string>> = {
   cv: CV_BUILDER_AGENT_ID,
   interview: MOCK_INTERVIEW_AGENT_ID,

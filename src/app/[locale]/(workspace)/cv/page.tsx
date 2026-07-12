@@ -59,6 +59,7 @@ function CvPageContent({ locale }: { locale: string }) {
     diff,
     quickReplies,
     isLoading,
+    isOpening,
     isSending,
     isUploading,
     isExporting,
@@ -138,8 +139,11 @@ function CvPageContent({ locale }: { locale: string }) {
 
   const showCvWelcomeQuickReplies = useMemo(
     () =>
-      !isLoading && messages.length > 0 && !messages.some((m) => m.role === "user"),
-    [isLoading, messages]
+      !isOpening &&
+      isSessionReady &&
+      messages.length > 0 &&
+      !messages.some((m) => m.role === "user"),
+    [isOpening, isSessionReady, messages]
   );
 
   const escalationRecoveryAgentName = useMemo(() => {
@@ -340,7 +344,7 @@ function CvPageContent({ locale }: { locale: string }) {
                 {error ? (
                   <p className="text-sm text-red-500 text-center">{error}</p>
                 ) : null}
-                {isLoading && messages.length === 0 ? (
+                {(isOpening || isLoading) && messages.length === 0 ? (
                   <p className="text-sm text-gray-500 text-center py-12">
                     {t("sessionLoading")}
                   </p>

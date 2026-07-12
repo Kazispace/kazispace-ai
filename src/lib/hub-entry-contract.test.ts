@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
-import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
-import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
 import {
   assertChatFirstClinicHandoff,
   HUB_CHAT_FIRST_AGENT_IDS,
   HUB_ENTRY_CONTRACT,
   planClinicHandoff,
 } from '@/lib/hub-entry-contract';
-import { getAgentHubPath } from '@/lib/agent-transition/surfaces';
+import {
+  DEDICATED_HUB_AGENT_IDS,
+  getAgentHubPath,
+  isDedicatedHubAgent,
+} from '@/lib/agent-transition/surfaces';
 import { planNavigation } from '@/lib/agent-transition/navigation';
 
 const LOCALE = 'en';
@@ -23,20 +24,21 @@ describe('HUB_ENTRY_CONTRACT', () => {
       infoPagesSecondary: true,
     });
   });
+
+  it('keeps HUB_CHAT_FIRST_AGENT_IDS in sync with isDedicatedHubAgent', () => {
+    expect(HUB_CHAT_FIRST_AGENT_IDS).toEqual(DEDICATED_HUB_AGENT_IDS);
+    for (const agentId of DEDICATED_HUB_AGENT_IDS) {
+      expect(isDedicatedHubAgent(agentId)).toBe(true);
+    }
+  });
 });
 
 describe('assertChatFirstClinicHandoff', () => {
   it('returns chat-first root for every dedicated Hub agent', () => {
-    const expected: Record<string, string> = {
-      [CV_BUILDER_AGENT_ID]: '/en/cv',
-      [MOCK_INTERVIEW_AGENT_ID]: '/en/interview',
-      [ENGLISH_TUTOR_AGENT_ID]: '/en/english',
-    };
-
     for (const agentId of HUB_CHAT_FIRST_AGENT_IDS) {
       const handoff = assertChatFirstClinicHandoff(LOCALE, agentId);
       expect(handoff, agentId).toEqual({
-        href: expected[agentId],
+        href: getAgentHubPath(LOCALE, agentId),
         isChatFirstRoot: true,
       });
     }

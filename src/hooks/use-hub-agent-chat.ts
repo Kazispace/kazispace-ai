@@ -5,6 +5,10 @@
  *
  * **State design:** messages and send flags live in local React state, not
  * `useAgentStore` message slices. Remount re-hydrates from L4 `fetchAgentMessages`.
+ *
+ * **Intentionally plain-text only:** no preview/diff/pipeline side effects, streaming
+ * tokens, or per-message envelope fields (nextActions, cards). CV and other rich Hub
+ * agents keep bespoke hooks until envelope handlers can plug in via `onEnvelope`.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -33,8 +37,11 @@ export function useHubAgentChat(options: {
   welcomeMessageId: string;
   seedWelcome: () => string;
   labels: HubAgentChatLabels;
+  /** Optional hook for envelope side effects (preview, escalation, etc.). */
+  onEnvelope?: (data: unknown, result: ReturnType<typeof handleAgentEnvelope>) => void;
 }) {
-  const { agentId, locale, enabled, welcomeMessageId, seedWelcome, labels } = options;
+  const { agentId, locale, enabled, welcomeMessageId, seedWelcome, labels, onEnvelope } =
+    options;
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
   const [messages, setMessages] = useState<HubChatMessage[]>([]);
@@ -54,7 +61,7 @@ export function useHubAgentChat(options: {
     setAgentSessionId(sessionId);
   }, []);
 
-  const applyWelcome = useCallback(() => {
+  const seedWelcomeIfEmpty = useCallback(() => {
     setMessages((prev) => {
       if (prev.length > 0) return prev;
       return [{ id: welcomeMessageId, role: 'assistant', content: seedWelcome() }];
@@ -86,9 +93,9 @@ export function useHubAgentChat(options: {
         return;
       }
 
-      applyWelcome();
+      seedWelcomeIfEmpty();
     },
-    [applyWelcome, welcomeMessageId]
+    [seedWelcomeIfEmpty, welcomeMessageId]
   );
 
   const ensureOpen = useCallback(async (): Promise<string | null> => {
@@ -108,7 +115,7 @@ export function useHubAgentChat(options: {
 
       if (!open.ok) {
         setOpenError(open.error ?? labels.openFailed);
-        applyWelcome();
+        seedWelcomeIfEmpty();
         return null;
       }
 
@@ -125,12 +132,12 @@ export function useHubAgentChat(options: {
     }
   }, [
     agentId,
-    applyWelcome,
     enabled,
     hydrateHistory,
     isLoggedIn,
     labels.openFailed,
     locale,
+    seedWelcomeIfEmpty,
     syncSessionId,
   ]);
 
@@ -188,7 +195,9 @@ export function useHubAgentChat(options: {
         return;
       }
 
-      const { assistant } = handleAgentEnvelope(res.data);
+      const envelopeResult = handleAgentEnvelope(res.data);
+      onEnvelope?.(res.data, envelopeResult);
+      const { assistant } = envelopeResult;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantId
@@ -197,7 +206,15 @@ export function useHubAgentChat(options: {
         )
       );
     },
-    [agentId, ensureOpen, isSending, labels.emptyReply, labels.openFailed, labels.sendFailed]
+    [
+      agentId,
+      ensureOpen,
+      isSending,
+      labels.emptyReply,
+      labels.openFailed,
+      labels.sendFailed,
+      onEnvelope,
+    ]
   );
 
   return {

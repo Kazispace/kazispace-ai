@@ -8,18 +8,16 @@
  * 4. Info dashboards live on secondary routes only — never block primary chat flow
  */
 import { planNavigation } from '@/lib/agent-transition/navigation';
-import { getAgentHubPath, isDedicatedHubAgent } from '@/lib/agent-transition/surfaces';
-import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
-import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
-import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
+import {
+  DEDICATED_HUB_AGENT_IDS,
+  getAgentHubPath,
+  isDedicatedHubAgent,
+} from '@/lib/agent-transition/surfaces';
 
-export const HUB_CHAT_FIRST_AGENT_IDS = [
-  CV_BUILDER_AGENT_ID,
-  MOCK_INTERVIEW_AGENT_ID,
-  ENGLISH_TUTOR_AGENT_ID,
-] as const;
+/** Derived from `DEDICATED_HUB_AGENT_IDS` — kept for contract tests and docs. */
+export const HUB_CHAT_FIRST_AGENT_IDS = DEDICATED_HUB_AGENT_IDS;
 
-export type HubChatFirstAgentId = (typeof HUB_CHAT_FIRST_AGENT_IDS)[number];
+export type HubChatFirstAgentId = (typeof DEDICATED_HUB_AGENT_IDS)[number];
 
 /** Secondary info routes — must not be Clinic handoff targets. */
 export const HUB_SECONDARY_ROUTE_SUFFIXES = [

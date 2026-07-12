@@ -138,6 +138,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [isLoading, setIsLoading] = useState(enabled);
+  const [isOpening, setIsOpening] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -154,11 +155,27 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const finishSessionLoad = useCallback((gen: number) => {
     if (gen === activateGenRef.current) {
       setIsLoading(false);
+      setIsOpening(false);
     }
   }, []);
 
+  const beginSessionOpen = useCallback(() => {
+    setIsOpening(true);
+    setIsLoading(true);
+  }, []);
+
+  const applyEmptySessionGreeting = useCallback((greeting?: string) => {
+    setMessages((prev) => {
+      if (prev.length > 0) return prev;
+      if (greeting?.trim()) {
+        return [{ id: nextId('cv'), role: 'assistant', content: greeting.trim() }];
+      }
+      return [{ id: CV_CHAT_WELCOME_ID, role: 'assistant', content: t('agentWelcome') }];
+    });
+  }, [t]);
+
   const loadSessionMessages = useCallback(
-    async (sid: string, gen: number, greeting?: string) => {
+    async (sid: string, gen: number) => {
       const hist = await fetchAgentMessages(sid);
       if (gen !== activateGenRef.current) return;
 
@@ -200,18 +217,9 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         return;
       }
 
-      if (greeting) {
-        setMessages([{ id: nextId('cv'), role: 'assistant', content: greeting }]);
-      } else {
-        setMessages([
-          { id: CV_CHAT_WELCOME_ID, role: 'assistant', content: t('agentWelcome') },
-        ]);
-        setPreview(null);
-        setDiff(null);
-        setPipelineState(null);
-      }
+      // Empty history — greeting/welcome applied after session open + hydrate.
     },
-    [t]
+    []
   );
 
   const refreshSessions = useCallback(async () => {
@@ -296,18 +304,20 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
   /** Idempotent open to sync meta (document_id, preview) after history-only loads. */
   const syncOpenMeta = useCallback(
-    async (gen: number) => {
+    async (gen: number): Promise<string | undefined> => {
       const res = await openAgentSession(CV_BUILDER_AGENT_ID, locale, {
         job_id: jobId ?? undefined,
       });
-      if (gen !== activateGenRef.current) return;
+      if (gen !== activateGenRef.current) return undefined;
       if (res.success && res.data) {
         useAgentStore.getState().setAgentSession(
           CV_BUILDER_AGENT_ID,
           res.data.session_id
         );
         applyActivateResponse(res.data);
+        return res.data.greeting;
       }
+      return undefined;
     },
     [applyActivateResponse, jobId, locale]
   );
@@ -337,7 +347,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const startSession = useCallback(async () => {
     if (!enabled) return;
     const gen = ++activateGenRef.current;
-    setIsLoading(true);
+    beginSessionOpen();
     setError(null);
     setNeedsOnboarding(false);
     setNeedsProfile(false);
@@ -362,8 +372,10 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         const sid = activeRes.data.session_id;
         setSessionId(sid);
         setSessionResumed(true);
-        await loadSessionMessages(sid, gen, handoff?.greeting);
-        await syncOpenMeta(gen);
+        await loadSessionMessages(sid, gen);
+        const openGreeting = await syncOpenMeta(gen);
+        if (gen !== activateGenRef.current) return;
+        applyEmptySessionGreeting(handoff?.greeting ?? openGreeting);
         finishSessionLoad(gen);
         void refreshSessions();
         return;
@@ -373,8 +385,10 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     if (handoffSessionId) {
       setSessionId(handoffSessionId);
       setSessionResumed(Boolean(navHandoffSessionId || handoff?.sessionId));
-      await loadSessionMessages(handoffSessionId, gen, handoff?.greeting);
-      await syncOpenMeta(gen);
+      await loadSessionMessages(handoffSessionId, gen);
+      const openGreeting = await syncOpenMeta(gen);
+      if (gen !== activateGenRef.current) return;
+      applyEmptySessionGreeting(handoff?.greeting ?? openGreeting);
       finishSessionLoad(gen);
       void refreshSessions();
       return;
@@ -403,14 +417,17 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     if (resumed) {
       await loadSessionMessages(session_id, gen);
       applyActivateResponse(res.data);
+      applyEmptySessionGreeting(greeting);
     } else {
-      setMessages([{ id: nextId('cv'), role: 'assistant', content: greeting }]);
       applyActivateResponse(res.data);
+      applyEmptySessionGreeting(greeting);
     }
     finishSessionLoad(gen);
     void refreshSessions();
   }, [
     applyActivateResponse,
+    applyEmptySessionGreeting,
+    beginSessionOpen,
     enabled,
     finishSessionLoad,
     handleApiError,
@@ -424,7 +441,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const resyncSession = useCallback(async () => {
     if (!enabled || !isLoggedIn) return;
     const gen = ++activateGenRef.current;
-    setIsLoading(true);
+    beginSessionOpen();
     setError(null);
 
     const res = await openAgentSession(CV_BUILDER_AGENT_ID, locale, {
@@ -438,16 +455,19 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       return;
     }
 
-    const { session_id, resumed } = res.data;
+    const { session_id } = res.data;
     setSessionId(session_id);
-    setSessionResumed(Boolean(resumed));
+    setSessionResumed(Boolean(res.data.resumed));
     useAgentStore.getState().setAgentSession(CV_BUILDER_AGENT_ID, session_id);
     await loadSessionMessages(session_id, gen);
     applyActivateResponse(res.data);
+    applyEmptySessionGreeting(res.data.greeting);
     finishSessionLoad(gen);
     void refreshSessions();
   }, [
     applyActivateResponse,
+    applyEmptySessionGreeting,
+    beginSessionOpen,
     enabled,
     finishSessionLoad,
     handleApiError,
@@ -500,7 +520,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     async (sid: string) => {
       if (!enabled || !isLoggedIn || sid === sessionId) return;
       const gen = ++activateGenRef.current;
-      setIsLoading(true);
+      beginSessionOpen();
       setError(null);
       setSessionId(sid);
       setMessages([]);
@@ -517,16 +537,28 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       setSessionResumed(false);
 
       await loadSessionMessages(sid, gen);
-      await syncOpenMeta(gen);
+      const openGreeting = await syncOpenMeta(gen);
+      if (gen !== activateGenRef.current) return;
+      applyEmptySessionGreeting(openGreeting);
       finishSessionLoad(gen);
     },
-    [enabled, finishSessionLoad, isLoggedIn, loadSessionMessages, sessionId, sessions, syncOpenMeta]
+    [
+      applyEmptySessionGreeting,
+      beginSessionOpen,
+      enabled,
+      finishSessionLoad,
+      isLoggedIn,
+      loadSessionMessages,
+      sessionId,
+      sessions,
+      syncOpenMeta,
+    ]
   );
 
   const applyOpenedSession = useCallback(
     async (data: ActivateAgentResponse) => {
       const gen = ++activateGenRef.current;
-      setIsLoading(true);
+      beginSessionOpen();
       setError(null);
       setNeedsOnboarding(false);
       setNeedsProfile(false);
@@ -553,15 +585,18 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       if (resumed) {
         await loadSessionMessages(session_id, gen);
         applyActivateResponse(data);
+        applyEmptySessionGreeting(greeting);
       } else {
-        setMessages([{ id: nextId('cv'), role: 'assistant', content: greeting }]);
         applyActivateResponse(data);
+        applyEmptySessionGreeting(greeting);
       }
       finishSessionLoad(gen);
       void refreshSessions();
     },
     [
       applyActivateResponse,
+      applyEmptySessionGreeting,
+      beginSessionOpen,
       finishSessionLoad,
       loadSessionMessages,
       refreshSessions,
@@ -836,7 +871,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
   const restartSession = useCallback(async () => {
     if (!enabled || !isLoggedIn || isSending || isLoading) return;
     const gen = ++activateGenRef.current;
-    setIsLoading(true);
+    beginSessionOpen();
     setError(null);
     setIsReadOnly(false);
     setSessionResumed(false);
@@ -877,7 +912,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
 
       const { session_id, greeting } = res.data;
       setSessionId(session_id);
-      setMessages([{ id: nextId('cv'), role: 'assistant', content: greeting }]);
+      applyEmptySessionGreeting(greeting);
       publishActiveAgentSync({
         type: 'activated',
         agentId: CV_BUILDER_AGENT_ID,
@@ -890,6 +925,8 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     }
   }, [
     applyActivateResponse,
+    applyEmptySessionGreeting,
+    beginSessionOpen,
     enabled,
     finishSessionLoad,
     handleApiError,
@@ -934,6 +971,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     sessionsLoading,
     sessionId,
     isLoading,
+    isOpening,
     isSending,
     isUploading,
     isExporting,
