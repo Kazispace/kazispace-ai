@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { AGENT_REGISTRY } from "@/lib/agents/registry";
 import { resolveRegistryAgentBadge } from "@/lib/session-nav";
-import type { CurrentSessionsByAgent } from "@/hooks/use-active-agent-sessions";
+import type { CurrentSessionsByAgent } from "@/lib/current-agent-sessions";
 import { AgentCard } from "./agent-card";
 import { cn } from "@/lib/utils";
 

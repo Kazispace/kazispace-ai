@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronRight, PanelLeftClose, Plus, Search, X } from 'lucide-react';
 
 import { AgentSessionList } from '@/components/agent/agent-session-list';
-import type { CurrentSessionsByAgent } from '@/hooks/use-active-agent-sessions';
+import type { CurrentSessionsByAgent } from '@/lib/current-agent-sessions';
 import { useAgentSessionList } from '@/hooks/use-agent-session-list';
 import {
   formatSessionNavBadgeLabel,

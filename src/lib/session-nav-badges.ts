@@ -25,12 +25,18 @@ type SessionNavPipelineKey =
   | 'pipelineReview'
   | 'pipelineCompleted';
 
-const PIPELINE_STATE_LABEL_KEY: Record<string, SessionNavPipelineKey> = {
+/**
+ * Global pipeline_state → badge label (CV + Interview + job_search prep today).
+ * TODO(KAZI-148): scope by agentId — e.g. resolvePipelineBadgeLabel(agentId, state, t)
+ * so English Tutor / future agents do not share ambiguous keys like `completed`.
+ */
+export const PIPELINE_STATE_LABEL_KEYS: Record<string, SessionNavPipelineKey> = {
   feedback_pending: 'pipelineFeedbackPending',
   completed: 'pipelineCompleted',
   answering: 'pipelineInterviewActive',
   role_intake: 'pipelineInterviewActive',
   prep_hook: 'pipelinePrep',
+  // CV-only review states (needs_confirmation, review_confirm)
   review_confirm: 'pipelineReview',
   needs_confirmation: 'pipelineReview',
   generated: 'pipelineCompleted',
@@ -47,12 +53,22 @@ const PIPELINE_STATE_LABEL_KEY: Record<string, SessionNavPipelineKey> = {
 
 export function resolvePipelineBadgeLabel(
   pipelineState: string | null | undefined,
-  t: SessionNavBadgeTranslator
+  t: SessionNavBadgeTranslator,
+  /** Reserved for agent-scoped labels (see TODO above). */
+  _agentId?: string | null
 ): string {
   const raw = pipelineState?.trim();
   if (!raw) return t('badgeInProgress');
-  const key = PIPELINE_STATE_LABEL_KEY[raw.toLowerCase()];
-  return key ? t(key) : t('badgeInProgress');
+  const key = PIPELINE_STATE_LABEL_KEYS[raw.toLowerCase()];
+  if (!key) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        `[session-nav-badges] Unmapped pipeline_state "${raw}" — add to PIPELINE_STATE_LABEL_KEYS`
+      );
+    }
+    return t('badgeInProgress');
+  }
+  return t(key);
 }
 
 export function sessionNavBadgePillClass(kind: SessionNavBadgeKind): string {
@@ -78,7 +94,8 @@ export function sessionNavBadgePillClass(kind: SessionNavBadgeKind): string {
 export function formatSessionNavBadgeLabel(
   badge: SessionNavBadgeKind,
   badgeDetail: string | null | undefined,
-  t: SessionNavBadgeTranslator
+  t: SessionNavBadgeTranslator,
+  agentId?: string | null
 ): string {
   const kindLabels: Record<SessionNavBadgeKind, string> = {
     comingSoon: t('comingSoon'),
@@ -87,7 +104,7 @@ export function formatSessionNavBadgeLabel(
     resumable: t('badgeResumable'),
     archived: t('badgeArchived'),
     notStarted: t('badgeNotStarted'),
-    pipeline: resolvePipelineBadgeLabel(badgeDetail, t),
+    pipeline: resolvePipelineBadgeLabel(badgeDetail, t, agentId),
   };
   return kindLabels[badge];
 }

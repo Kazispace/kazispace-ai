@@ -1,12 +1,7 @@
+import { parseSessionTimestamp } from '@/lib/session-timestamp';
 import type { AgentSessionSummary } from '@/types';
 
 export type CurrentSessionsByAgent = Map<string, AgentSessionSummary>;
-
-function sessionTimestamp(iso?: string | null): number {
-  if (!iso) return 0;
-  const ms = Date.parse(iso);
-  return Number.isNaN(ms) ? 0 : ms;
-}
 
 /** One row per agent — keep the session with the latest `updated_at`. */
 export function toLatestSessionsByAgent(
@@ -18,7 +13,8 @@ export function toLatestSessionsByAgent(
     const prev = map.get(session.agent_id);
     if (
       !prev ||
-      sessionTimestamp(session.updated_at) > sessionTimestamp(prev.updated_at)
+      parseSessionTimestamp(session.updated_at) >
+        parseSessionTimestamp(prev.updated_at)
     ) {
       map.set(session.agent_id, session);
     }

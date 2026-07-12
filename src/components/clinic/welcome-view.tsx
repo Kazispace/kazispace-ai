@@ -12,7 +12,7 @@ import { NbaActionCard } from "@/components/nba/nba-action-card";
 import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
 import { buildClinicActiveSessionEntries } from "@/lib/clinic-active-sessions";
 import { resolveRegistryAgentBadge } from "@/lib/session-nav";
-import type { CurrentSessionsByAgent } from "@/hooks/use-active-agent-sessions";
+import type { CurrentSessionsByAgent } from "@/lib/current-agent-sessions";
 import type { NextBestActionItem } from "@/types";
 
 const ENGLISH_LEVELS = [

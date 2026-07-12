@@ -171,7 +171,7 @@
 		"pipelineInterviewActive": "面试进行中",
 		"pipelineCvBuilding": "简历进行中",
 		"pipelinePrep": "准备中",
-		"pipelineReview": "待确认",
+		"pipelineReview": "确认中",
 		"pipelineCompleted": "已完成",
 		"refreshFailed": "无法刷新进行中会话",
 		"tabAgent": "专家",

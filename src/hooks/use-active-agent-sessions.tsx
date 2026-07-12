@@ -21,8 +21,6 @@ import { SESSION_NAV_INVALIDATE_EVENT } from '@/lib/session-nav-invalidate';
 
 const STALE_TIME_MS = 10_000;
 
-export type { CurrentSessionsByAgent };
-
 type ActiveAgentSessionsValue = {
   sessionsByAgent: CurrentSessionsByAgent;
   isLoading: boolean;

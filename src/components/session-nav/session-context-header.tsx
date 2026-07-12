@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
 
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
 import { SessionHeaderDrawer } from '@/components/session-nav/session-header-drawer';
-import type { CurrentSessionsByAgent } from '@/hooks/use-active-agent-sessions';
+import type { CurrentSessionsByAgent } from '@/lib/current-agent-sessions';
 import {
   useSessionFiles,
   useSessionMessageSearch,

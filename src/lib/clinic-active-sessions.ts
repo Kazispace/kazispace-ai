@@ -6,6 +6,7 @@ import {
 } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
 import { resolveSessionNavBadge, type SessionNavBadgeKind } from '@/lib/session-nav';
+import { parseSessionTimestamp } from '@/lib/session-timestamp';
 import type { AgentSessionSummary } from '@/types';
 
 const AGENT_BY_ID = new Map(AGENT_REGISTRY.map((agent) => [agent.agentId, agent]));
@@ -20,12 +21,6 @@ export type ClinicActiveSessionEntry = {
   displayName: string;
   sessionTitle: string | null;
 };
-
-function sessionTimestamp(iso?: string | null): number {
-  if (!iso) return 0;
-  const ms = Date.parse(iso);
-  return Number.isNaN(ms) ? 0 : ms;
-}
 
 /** Hub sessions worth surfacing on Clinic welcome (in progress / resumable / pipeline). */
 export function buildClinicActiveSessionEntries(
@@ -66,6 +61,7 @@ export function buildClinicActiveSessionEntries(
 
   return entries.sort(
     (a, b) =>
-      sessionTimestamp(b.session.updated_at) - sessionTimestamp(a.session.updated_at)
+      parseSessionTimestamp(b.session.updated_at) -
+      parseSessionTimestamp(a.session.updated_at)
   );
 }

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type { CurrentSessionsByAgent } from '@/hooks/use-active-agent-sessions';
+import type { CurrentSessionsByAgent } from '@/lib/current-agent-sessions';
 import { resolveSessionNavBadge } from '@/lib/session-nav';
 import {
   formatSessionNavBadgeLabel,
