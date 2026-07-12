@@ -21,6 +21,7 @@ import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
 import { apiRequest } from '@/lib/api-client';
 import { getAuthToken } from '@/lib/auth';
 import { ensureMasterSession } from '@/lib/master-session';
+import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
 
 const mockSessions = new Map<string, ActiveAgentState>();
 
@@ -64,6 +65,11 @@ function useMockFallback(error?: string): boolean {
   if (process.env.NEXT_PUBLIC_AGENT_API_MOCK === 'true') return true;
   if (!error) return false;
   return error.includes('404') || error.includes('Not Found');
+}
+
+function withSessionNavRefresh<T extends { success: boolean }>(res: T): T {
+  if (res.success) publishSessionNavInvalidate();
+  return res;
 }
 
 function getMockActive(): ActiveAgentState {
@@ -239,7 +245,7 @@ function mockAgentEscalationResponse(
   targetAgentId: string,
   text: string
 ): ApiResponse<AgentChatResponse> {
-  return {
+  return withSessionNavRefresh({
     success: true,
     data: {
       agent_id: agentId,
@@ -250,7 +256,7 @@ function mockAgentEscalationResponse(
       message_id: `mock_${Date.now()}`,
       response: { text: `${emoji} ${text}` },
     },
-  };
+  });
 }
 
 export async function sendAgentChat(
@@ -266,7 +272,7 @@ export async function sendAgentChat(
       ...(sessionId ? { session_id: sessionId } : {}),
     }),
   });
-  if (res.success) return res;
+  if (res.success) return withSessionNavRefresh(res);
   if (useMockFallback(res.error)) {
     const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
     const emoji = entry?.emoji ?? '🤖';
@@ -279,7 +285,7 @@ export async function sendAgentChat(
       if (/^简历$|^(cv|resume)$/i.test(trimmed)) {
         const responseId = `mock_resp_${Date.now()}`;
         const triggerId = `mock_trig_${Date.now() + 1}`;
-        return {
+        return withSessionNavRefresh({
           success: true,
           data: {
             agent_id: agentId,
@@ -294,7 +300,7 @@ export async function sendAgentChat(
               cancel_action: { continue_agent: agentId },
             },
           },
-        };
+        });
       }
 
       const wantsCv =
@@ -309,7 +315,7 @@ export async function sendAgentChat(
         const targetName = targetEntry
           ? getAgentLabel(targetEntry, 'en', 'name')
           : target;
-        return {
+        return withSessionNavRefresh({
           success: true,
           data: {
             agent_id: agentId,
@@ -322,7 +328,7 @@ export async function sendAgentChat(
               text: `${emoji} Returning to clinic to open ${targetName}.`,
             },
           },
-        };
+        });
       }
     }
 
@@ -420,7 +426,7 @@ export async function sendAgentChat(
         };
       }
 
-      return {
+      return withSessionNavRefresh({
         success: true,
         data: {
           agent_id: agentId,
@@ -439,9 +445,9 @@ export async function sendAgentChat(
             ...(nextActions ? { next_actions: nextActions } : {}),
           },
         },
-      };
+      });
     }
-    return {
+    return withSessionNavRefresh({
       success: true,
       data: {
         agent_id: agentId,
@@ -450,7 +456,7 @@ export async function sendAgentChat(
           text: `${emoji} (Mock) Received: "${message}"`,
         },
       },
-    };
+    });
   }
   return res;
 }
@@ -494,6 +500,49 @@ export async function fetchAgentSessions(
       },
     ];
     return { success: true, data: { sessions: mockRows } };
+  }
+  return res;
+}
+
+/** Cross-agent Current slots for Session Nav panel badges (P1). */
+export async function fetchCurrentAgentSessions(): Promise<
+  ApiResponse<AgentSessionsListResponse>
+> {
+  const res = await apiRequest<AgentSessionsListResponse>(
+    '/api/v1/agents/sessions?status=current'
+  );
+  if (res.success) return res;
+  if (useMockFallback(res.error)) {
+    const now = Date.now();
+    const seen = new Set<string>();
+    const sessions: AgentSessionsListResponse['sessions'] = [];
+
+    for (const state of Array.from(mockSessions.values())) {
+      const agentId = state.active_agent;
+      if (!agentId || seen.has(agentId)) continue;
+      seen.add(agentId);
+      const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
+      sessions.push({
+        session_id: state.session_id ?? `mock_current_${agentId}`,
+        agent_id: agentId,
+        status: 'active',
+        pipeline_state:
+          agentId === CV_BUILDER_AGENT_ID ? 'collecting' : null,
+        title:
+          agentId === CV_BUILDER_AGENT_ID
+            ? 'Software Engineer CV'
+            : agentId === MOCK_INTERVIEW_AGENT_ID
+              ? 'Product Manager mock'
+              : agentId === ENGLISH_TUTOR_AGENT_ID
+                ? 'English practice'
+                : entry
+                  ? getAgentLabel(entry, 'en', 'name')
+                  : agentId,
+        updated_at: state.activated_at ?? new Date(now).toISOString(),
+      });
+    }
+
+    return { success: true, data: { sessions } };
   }
   return res;
 }

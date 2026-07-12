@@ -211,8 +211,11 @@ export interface ClinicChatResponse {
 export async function sendChatMessage(
   sessionId: string,
   text: string,
-  locale?: string
+  locale?: string,
+  options?: { routingMode?: 'clinic' }
 ): Promise<ApiResponse<ClinicChatResponse>> {
+  // API v2.10.6: routing.mode applies to POST /chat/messages (Clinic) only.
+  // Hub expert chat uses POST /agents/chat with agent_id in the body — no routing.mode.
   const languagePreference =
     locale ??
     getActiveLanguagePreference(
@@ -226,6 +229,9 @@ export async function sendChatMessage(
       // TODO(KAZI-74): remove locale after backend reads language_preference only
       locale: languagePreference,
       language_preference: languagePreference,
+      ...(options?.routingMode
+        ? { routing: { mode: options.routingMode } }
+        : {}),
     }),
   });
 }

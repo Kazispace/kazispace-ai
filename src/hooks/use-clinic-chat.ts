@@ -10,6 +10,7 @@ import {
 } from '@/lib/api-client';
 import { isPaywallError, isProfileIncomplete } from '@/lib/api-errors';
 import { ensureMasterSession } from '@/lib/master-session';
+import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
 import type { ChatMessage } from '@/types';
 
 function normalizeHistoryMessage(
@@ -116,7 +117,9 @@ export function useClinicChat(locale?: string) {
       });
       setStreaming(true);
 
-      const res = await sendChatMessage(sessionId, text, locale);
+      const res = await sendChatMessage(sessionId, text, locale, {
+        routingMode: 'clinic',
+      });
       setSending(false);
       setStreaming(false);
 
@@ -138,6 +141,8 @@ export function useClinicChat(locale?: string) {
         ...(cards.length > 0 ? { cards } : {}),
         streamComplete: false,
       });
+
+      publishSessionNavInvalidate();
 
       return {
         ok: true as const,

@@ -162,7 +162,12 @@
 		"openPanel": "打开会话列表",
 		"comingSoon": "即将推出",
 		"clinicInlineHint": "请在门诊对话中启动",
-		"workspace": "工作区"
+		"workspace": "工作区",
+		"badgeInProgress": "进行中",
+		"badgeResumable": "可继续",
+		"badgeArchived": "已归档",
+		"badgeNotStarted": "未开始",
+		"refreshFailed": "无法刷新进行中会话"
 	},
 	"chat": {
 		"title": "{name} · AI 职业伙伴",
