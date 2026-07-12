@@ -414,7 +414,11 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
   );
 
   const exitToClinic = useCallback(
-    async (options?: { skipHistory?: boolean; agentId?: string }) => {
+    async (options?: {
+      skipHistory?: boolean;
+      agentId?: string;
+      bestEffort?: boolean;
+    }) => {
       const storeAgentId = useAgentStore.getState().activeAgentId;
       const targetAgentId = storeAgentId ?? options?.agentId ?? null;
       if (!targetAgentId) {
@@ -430,9 +434,12 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
       try {
         const result = await deactivateToClinic(locale, {
           agentId: targetAgentId ?? undefined,
+          bestEffort: options?.bestEffort,
         });
         if (!result.ok) {
-          showToast(result.error ?? 'Failed to return to clinic', 'error');
+          if (!options?.bestEffort) {
+            showToast(result.error ?? 'Failed to return to clinic', 'error');
+          }
           return { ok: false as const };
         }
 

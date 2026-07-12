@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
+import { leaveDedicatedHubForClinic } from '@/lib/leave-dedicated-hub';
 import { useUIStore } from '@/lib/store';
 
 export function useDeactivateToClinic(locale: string) {
@@ -16,8 +17,19 @@ export function useDeactivateToClinic(locale: string) {
       agentId?: string;
       showReturnMessage?: boolean;
       targetHref?: string;
+      bestEffort?: boolean;
     }) => {
       if (isDeactivating) return { ok: false as const };
+      const targetHref = options?.targetHref ?? `/${locale}/chat`;
+
+      if (options?.bestEffort && options.agentId) {
+        setIsDeactivating(true);
+        leaveDedicatedHubForClinic(locale, options.agentId);
+        router.push(targetHref);
+        window.setTimeout(() => setIsDeactivating(false), 400);
+        return { ok: true as const, agentId: options.agentId };
+      }
+
       setIsDeactivating(true);
       try {
         const result = await deactivateToClinic(locale, {
@@ -29,7 +41,7 @@ export function useDeactivateToClinic(locale: string) {
         if (options?.showReturnMessage && result.returnMessage) {
           showToast(result.returnMessage, 'info');
         }
-        router.push(options?.targetHref ?? `/${locale}/chat`);
+        router.push(targetHref);
         return result;
       } finally {
         setIsDeactivating(false);

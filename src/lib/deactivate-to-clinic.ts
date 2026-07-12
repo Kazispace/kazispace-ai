@@ -11,7 +11,12 @@ export type DeactivateToClinicResult =
  */
 export async function deactivateToClinic(
   locale: string,
-  options?: { agentId?: string; skipBroadcast?: boolean }
+  options?: {
+    agentId?: string;
+    skipBroadcast?: boolean;
+    /** Hub/clinic surface exit — clear local state and proceed even if POST fails. */
+    bestEffort?: boolean;
+  }
 ): Promise<DeactivateToClinicResult> {
   let agentId =
     options?.agentId ?? useAgentStore.getState().activeAgentId ?? null;
@@ -36,6 +41,13 @@ export async function deactivateToClinic(
         publishActiveAgentSync({ type: 'deactivated', agentId });
       }
       // Return the agent we attempted to exit — callers use this for messaging.
+      return { ok: true, agentId };
+    }
+    if (options?.bestEffort) {
+      useAgentStore.getState().setActiveAgent(null, null);
+      if (!options?.skipBroadcast) {
+        publishActiveAgentSync({ type: 'deactivated', agentId });
+      }
       return { ok: true, agentId };
     }
     return { ok: false, error: res.error };

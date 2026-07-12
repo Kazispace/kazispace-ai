@@ -31,7 +31,14 @@ export function BackToClinicButton({
       type="button"
       disabled={disabled || isDeactivating}
       onClick={() => {
-        void deactivateAndGo({ agentId, showReturnMessage }).then((result) => {
+        // Dedicated hub exits are best-effort — never block navigation.
+        // Non-hub agents use strict mode so errors are surfaced to the user.
+        const isDedicatedHub = Boolean(agentId);
+        void deactivateAndGo({
+          agentId,
+          showReturnMessage,
+          bestEffort: isDedicatedHub,
+        }).then((result) => {
           if (result && !result.ok) {
             showToast(tClinic('deactivateFailed'), 'error');
           }
