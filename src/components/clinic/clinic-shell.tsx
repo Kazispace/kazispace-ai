@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChatHeader } from "./chat-header";
 import { WelcomeView } from "./welcome-view";
+import { ClinicActiveSessionsBanner } from "./clinic-active-sessions-banner";
 import { MessageBubble } from "./message-bubble";
 import { SwitchingOverlay } from "./switching-overlay";
 import { LayerIndicator } from "./layer-indicator";
@@ -64,6 +65,7 @@ import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { API_BASE_URL } from "@/lib/constants";
 import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
+import { buildClinicActiveSessionEntries } from "@/lib/clinic-active-sessions";
 
 interface ClinicShellProps {
   locale: string;
@@ -148,6 +150,14 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   } = useAgentSwitch(locale, switchContext);
 
   const { sessionsByAgent } = useActiveAgentSessions();
+
+  const activeSessionEntries = useMemo(
+    () =>
+      isLoggedIn
+        ? buildClinicActiveSessionEntries(locale, sessionsByAgent)
+        : [],
+    [isLoggedIn, locale, sessionsByAgent]
+  );
 
   const requestAgentSwitchRef = useRef(requestAgentSwitch);
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
@@ -852,6 +862,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     !isHistoryLoading &&
     clinicMessages.length === 0;
 
+  const showActiveSessionsBanner =
+    layerReady &&
+    !isSwitching &&
+    !isAgentMode &&
+    !isHistoryLoading &&
+    !isSwitchingSession &&
+    isLoggedIn &&
+    activeSessionEntries.length > 0;
+
   return (
     <div className="relative flex flex-col h-screen max-w-[860px] mx-auto bg-white shadow-xl">
       {isSwitching && <SwitchingOverlay />}
@@ -936,6 +955,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             isAgentMode ? "p-4" : ""
           }`}
         >
+        {showActiveSessionsBanner ? (
+          <div className="w-full max-w-3xl mx-auto shrink-0">
+            <ClinicActiveSessionsBanner
+              locale={locale}
+              entries={activeSessionEntries}
+              className={showWelcome ? undefined : "mb-2"}
+            />
+          </div>
+        ) : null}
         {!layerReady && isLoggedIn ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
             <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
