@@ -367,6 +367,23 @@
 			"done": "完成"
 		}
 	},
+	"english": {
+		"retry": "重试",
+		"passportPage": {
+			"back": "← 返回英语教练"
+		},
+		"onboardingPage": {
+			"back": "← 返回英语教练"
+		},
+		"workspaceTitle": "英语工具",
+		"workspaceHint": "护照详情、示例岗位与成长记录在此；常用操作请用下方快捷按钮。",
+		"workspaceLinks": {
+			"onboarding": "设置英语护照",
+			"passportDetail": "护照仪表盘",
+			"sampleJobs": "示例匹配岗位",
+			"growth": "成长记录"
+		}
+	},
 	"hub": {
 		"workspaceExpand": "展开工作区",
 		"workspaceCollapse": "收起工作区",

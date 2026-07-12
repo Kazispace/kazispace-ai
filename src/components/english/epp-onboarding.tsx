@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * EPP onboarding form at `/english/onboarding` (secondary route).
+ * Cold-open `/english` uses chat intake (KAZI-162).
+ */
+
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 

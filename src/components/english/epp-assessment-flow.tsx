@@ -199,7 +199,7 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
         <Button
           variant="secondary"
           className="w-full"
-          onClick={() => router.push(`/${locale}/english`)}
+          onClick={() => router.push(`/${locale}/english/passport`)}
         >
           {t('viewPassport')}
         </Button>
