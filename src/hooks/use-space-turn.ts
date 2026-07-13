@@ -3,26 +3,21 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { fetchChatHistory } from '@/lib/api-client';
-import { handleAgentEnvelope } from '@/lib/handle-agent-envelope';
 import { sendSpaceTurn } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
-import type { ChatMessage } from '@/types';
+import {
+  mapSpaceHistoryMessages,
+  resolveSpaceTurnReply,
+  type SpaceChatMessage,
+} from '@/lib/spaces/turn';
 
-export type SpaceChatMessage = {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-};
-
-function mapHistoryToSpaceMessages(messages: ChatMessage[]): SpaceChatMessage[] {
-  return messages
-    .filter((m) => m.role === 'user' || m.role === 'assistant')
-    .map((m) => ({
-      id: m.id,
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    }))
-    .filter((m) => m.content.trim().length > 0);
+async function loadSpaceHistory(
+  masterSessionId: string
+): Promise<SpaceChatMessage[]> {
+  const res = await fetchChatHistory(masterSessionId);
+  if (!res.success || !res.data) return [];
+  const list = Array.isArray(res.data) ? res.data : (res.data.messages ?? []);
+  return mapSpaceHistoryMessages(list);
 }
 
 /**
@@ -36,6 +31,13 @@ export function useSpaceTurn(spaceId: string | null, masterSessionId: string | n
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
+  const refreshHistory = useCallback(async () => {
+    if (!masterSessionId) return [];
+    const next = await loadSpaceHistory(masterSessionId);
+    setMessages(next);
+    return next;
+  }, [masterSessionId]);
+
   useEffect(() => {
     if (!enabled || !masterSessionId) {
       setMessages([]);
@@ -46,14 +48,10 @@ export function useSpaceTurn(spaceId: string | null, masterSessionId: string | n
     setIsHydrating(true);
 
     void (async () => {
-      const res = await fetchChatHistory(masterSessionId);
+      const next = await loadSpaceHistory(masterSessionId);
       if (cancelled) return;
+      setMessages(next);
       setIsHydrating(false);
-
-      if (res.success && res.data) {
-        const list = Array.isArray(res.data) ? res.data : (res.data.messages ?? []);
-        setMessages(mapHistoryToSpaceMessages(list as ChatMessage[]));
-      }
     })();
 
     return () => {
@@ -67,15 +65,13 @@ export function useSpaceTurn(spaceId: string | null, masterSessionId: string | n
         return { ok: false as const, error: 'Space not ready' };
       }
 
+      const trimmed = text.trim();
       const userId = `user_${Date.now()}`;
-      setMessages((prev) => [
-        ...prev,
-        { id: userId, role: 'user', content: text.trim() },
-      ]);
+      setMessages((prev) => [...prev, { id: userId, role: 'user', content: trimmed }]);
       setIsSending(true);
       setSendError(null);
 
-      const res = await sendSpaceTurn(spaceId, { message: text.trim() });
+      const res = await sendSpaceTurn(spaceId, { message: trimmed });
       setIsSending(false);
 
       if (!res.success) {
@@ -84,13 +80,13 @@ export function useSpaceTurn(spaceId: string | null, masterSessionId: string | n
         return { ok: false as const, error: err };
       }
 
-      const data = res.data;
-      let reply = data?.reply_text?.trim() ?? '';
+      const reply = resolveSpaceTurnReply(res.data);
 
-      if (data?.envelope) {
-        const handled = handleAgentEnvelope(data.envelope);
-        if (handled.assistant.content) {
-          reply = handled.assistant.content;
+      if (masterSessionId) {
+        const refreshed = await loadSpaceHistory(masterSessionId);
+        if (refreshed.length > 0) {
+          setMessages(refreshed);
+          return { ok: true as const };
         }
       }
 
@@ -103,7 +99,7 @@ export function useSpaceTurn(spaceId: string | null, masterSessionId: string | n
 
       return { ok: true as const };
     },
-    [enabled, spaceId]
+    [enabled, masterSessionId, spaceId]
   );
 
   return {
@@ -112,6 +108,9 @@ export function useSpaceTurn(spaceId: string | null, masterSessionId: string | n
     isSending,
     sendError,
     sendMessage,
+    refreshHistory,
     enabled,
   };
 }
+
+export type { SpaceChatMessage };

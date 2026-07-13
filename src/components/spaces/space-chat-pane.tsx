@@ -57,7 +57,7 @@ export function SpaceChatPane({
       variant={shellVariant}
       footer={composerNode ?? null}
     >
-      <div className="mx-auto flex min-h-0 flex-1 flex-col gap-3">
+      <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-3">
         {isHydrating && messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
             <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
@@ -73,9 +73,20 @@ export function SpaceChatPane({
               content={message.content}
               locale={locale}
               variant="clinic"
+              streamComplete
             />
           ))
         )}
+        {isSending ? (
+          <MessageBubble
+            role="assistant"
+            content=""
+            locale={locale}
+            variant="clinic"
+            isStreaming
+            streamComplete={false}
+          />
+        ) : null}
         {sendError ? (
           <p className="text-center text-xs text-red-600">{sendError}</p>
         ) : null}
