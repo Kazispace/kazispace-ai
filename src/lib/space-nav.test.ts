@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSpaceNavRows,
   filterSpaceNavRows,
+  isClinicChatPathname,
   resolveActiveSpaceNavRowId,
   resolveSpaceIdFromPathname,
 } from '@/lib/space-nav';
@@ -62,6 +63,15 @@ describe('space-nav', () => {
     expect(resolveActiveSpaceNavRowId('/zh/chat')).toBe(CLINIC_SPACE_ID);
     expect(resolveActiveSpaceNavRowId('/zh/spaces/sp_abc123')).toBe('sp_abc123');
     expect(resolveActiveSpaceNavRowId('/zh/cv')).toBeNull();
+  });
+
+  it('isClinicChatPathname matches /chat only, not dedicated hub routes', () => {
+    expect(isClinicChatPathname('/zh/chat')).toBe(true);
+    expect(isClinicChatPathname('/en/chat')).toBe(true);
+    expect(isClinicChatPathname('/zh/spaces/sp_abc')).toBe(false);
+    expect(isClinicChatPathname('/zh/cv')).toBe(false);
+    expect(isClinicChatPathname('/zh/interview')).toBe(false);
+    expect(isClinicChatPathname('/zh/english')).toBe(false);
   });
 
   it('filters rows by name', () => {

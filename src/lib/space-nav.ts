@@ -20,12 +20,17 @@ export function resolveSpaceIdFromPathname(pathname: string): string | null {
   }
 }
 
+/** True only for `/{locale}/chat` — not dedicated hub routes (`/cv`, `/interview`, `/english`). */
+export function isClinicChatPathname(pathname: string): boolean {
+  const segments = pathname.split('/').filter(Boolean);
+  return segments.length >= 2 && segments[1] === 'chat';
+}
+
 /** Active sidebar row for `/spaces/*` and `/chat` only; null for legacy hub routes. */
 export function resolveActiveSpaceNavRowId(pathname: string): string | null {
   const spaceId = resolveSpaceIdFromPathname(pathname);
   if (spaceId) return spaceId;
-  const segments = pathname.split('/').filter(Boolean);
-  if (segments.length >= 2 && segments[1] === 'chat') {
+  if (isClinicChatPathname(pathname)) {
     return CLINIC_SPACE_ID;
   }
   return null;

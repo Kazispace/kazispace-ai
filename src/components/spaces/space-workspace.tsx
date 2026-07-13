@@ -16,6 +16,7 @@ interface SpaceWorkspaceProps {
   spaceId: string;
 }
 
+/** Ensures loading/error/template views share the same h-full flex chain as panels. */
 function SpaceWorkspaceFrame({ children }: { children: React.ReactNode }) {
   return <div className="flex h-full min-h-0 flex-col">{children}</div>;
 }

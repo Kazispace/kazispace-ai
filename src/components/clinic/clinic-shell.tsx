@@ -865,6 +865,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const showActiveSessionsBanner =
     clinicIdleReady && isLoggedIn && activeSessionEntries.length > 0;
 
+  // Fills SessionNavShell `<main className="min-h-0 flex-1">` — not viewport `h-screen`.
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
       {isSwitching && <SwitchingOverlay />}

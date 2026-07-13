@@ -8,22 +8,17 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
 import type { SpaceDetail } from '@/types/spaces';
 
-/** @deprecated Use `column` — `page` kept for call-site compat, same full-width shell. */
-export type SpaceShellVariant = 'page' | 'column';
-
 interface SpaceShellProps {
   locale: string;
   space: SpaceDetail;
-  variant?: SpaceShellVariant;
   children: React.ReactNode;
   footer?: React.ReactNode;
 }
 
-/** Clinic-aligned shell: navy header, guest banner, gray message area, composer footer. */
+/** Clinic-aligned shell: full-width column inside SessionNav main (h-full chain). */
 export function SpaceShell({
   locale,
   space,
-  variant: _variant = 'column',
   children,
   footer,
 }: SpaceShellProps) {
