@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  extractSpaceTurnEnvelopeText,
   isPlaceholderReply,
   mapSpaceHistoryMessages,
+  mergeSpaceMessagesAfterSend,
   resolveSpaceTurnReply,
 } from '@/lib/spaces/turn';
 
@@ -37,6 +39,41 @@ describe('resolveSpaceTurnReply', () => {
         assistant_message: { content: 'From assistant_message' },
       })
     ).toBe('From assistant_message');
+  });
+
+  it('reads envelope.components text parts', () => {
+    expect(
+      resolveSpaceTurnReply({
+        envelope: {
+          components: [{ type: 'text', text: 'Hello from space turn' }],
+          meta: { space_id: 'sp_test' },
+        },
+      })
+    ).toBe('Hello from space turn');
+  });
+});
+
+describe('extractSpaceTurnEnvelopeText', () => {
+  it('joins multiple text components', () => {
+    expect(
+      extractSpaceTurnEnvelopeText({
+        components: [
+          { type: 'text', text: 'Line one' },
+          { type: 'text', text: 'Line two' },
+        ],
+      })
+    ).toBe('Line one\n\nLine two');
+  });
+});
+
+describe('mergeSpaceMessagesAfterSend', () => {
+  it('keeps local assistant rows when server history lags', () => {
+    const local = [
+      { id: 'u1', role: 'user' as const, content: 'hi' },
+      { id: 'a1', role: 'assistant' as const, content: 'hello' },
+    ];
+    const server = [{ id: 'u1', role: 'user' as const, content: 'hi' }];
+    expect(mergeSpaceMessagesAfterSend(local, server)).toEqual(local);
   });
 });
 
