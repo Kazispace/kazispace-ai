@@ -106,7 +106,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#F4F5F7]">
+    <div className="flex h-full min-h-0 flex-col bg-gray-bg">
       <SpacePanelTabs
         className="lg:hidden"
         panels={panels}
