@@ -7,7 +7,6 @@ import {
   isSupportedLocale,
   type SupportedLocale,
 } from "./lib/constants";
-import { isSpacesIndexPath } from "./lib/spaces/routes";
 
 const intlMiddleware = createMiddleware({
   locales: [...SUPPORTED_LOCALES],
@@ -63,12 +62,6 @@ export default function middleware(request: NextRequest) {
     );
     redirectUrl.search = request.nextUrl.search;
     return NextResponse.redirect(redirectUrl);
-  }
-
-  if (isSpacesIndexPath(path)) {
-    const chatUrl = new URL(`/${locale}/chat`, request.url);
-    chatUrl.search = request.nextUrl.search;
-    return NextResponse.redirect(chatUrl);
   }
 
   if (!isPublicPath(path)) {

@@ -1,13 +1,22 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 
-/**
- * `/spaces` has no index workspace — only `/spaces/[spaceId]`.
- * Clinic dialog lives at `/chat` (ADR-006).
- */
-export default function SpacesIndexPage({
+import { SpacesIndexPage } from '@/components/spaces/spaces-index-page';
+import { SpaceWorkspaceLoading } from '@/components/spaces/space-workspace-states';
+import { isSpacesEnabled } from '@/lib/spaces/constants';
+
+export default function SpacesRoutePage({
   params,
 }: {
   params: { locale: string };
 }) {
-  redirect(`/${params.locale}/chat`);
+  if (!isSpacesEnabled()) {
+    redirect(`/${params.locale}/chat`);
+  }
+
+  return (
+    <Suspense fallback={<SpaceWorkspaceLoading />}>
+      <SpacesIndexPage locale={params.locale} />
+    </Suspense>
+  );
 }
