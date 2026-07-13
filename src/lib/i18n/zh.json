@@ -200,7 +200,29 @@
 		"backToClinic": "回到门诊",
 		"moreActions": "更多操作",
 		"closeDrawer": "关闭",
-		"filePreviewUnavailable": "暂无法预览该文件"
+		"filePreviewUnavailable": "暂无法预览该文件",
+		"tabSpaces": "空间",
+		"newSpace": "新建空间"
+	},
+	"spaces": {
+		"pickerTitle": "新建空间",
+		"closePicker": "关闭",
+		"templateBlank": "空白对话",
+		"templateBlankDesc": "自由对话，无预设工作流",
+		"templateJobSprint": "求职冲刺",
+		"templateJobSprintDesc": "简历优化 + 模拟面试 + 求职进度",
+		"templateIelts": "雅思备考",
+		"templateIeltsDesc": "口语/写作练习与成绩跟踪",
+		"browseMoreComingSoon": "浏览更多模板（即将推出）",
+		"createFailed": "无法创建空间",
+		"loading": "加载中…",
+		"loadFailed": "无法加载空间",
+		"apiNotReadyHint": "请确认后端已开启 SPACES_ENABLED",
+		"emptyState": "发送消息开始对话",
+		"composerPlaceholder": "输入消息…",
+		"send": "发送",
+		"statusLabel": "状态：{status}",
+		"panelsLayout": "多面板工作区"
 	},
 	"chat": {
 		"title": "{name} · AI 职业伙伴",

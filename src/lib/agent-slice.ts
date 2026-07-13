@@ -1,6 +1,10 @@
 import type { ChatMessage } from '@/types';
 
-/** Per-agent client state (ADR-005 — multi-active sessions). */
+/**
+ * Per-agent client state (ADR-005 — multi-active sessions).
+ * ADR-006: evolve to `space-slice.ts` (`Record<SpaceId, SpaceSlice>`);
+ * `activeAgentId` becomes Orchestrator-internal only.
+ */
 export interface AgentSlice {
   sessionId: string | null;
   messages: ChatMessage[];

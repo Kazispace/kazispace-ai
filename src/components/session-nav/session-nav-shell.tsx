@@ -1,9 +1,11 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Menu } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+
+import { SpaceTemplatePicker } from '@/components/spaces/space-template-picker';
 
 import { ConfirmAbandonSessionDialog } from '@/components/session-nav/confirm-abandon-session-dialog';
 import {
@@ -17,6 +19,7 @@ import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
 import { SessionNavPanel } from '@/components/session-nav/session-nav-panel';
 import { useActiveAgentSessions, ActiveAgentSessionsProvider } from '@/hooks/use-active-agent-sessions';
 import { useAgentSessionActions } from '@/hooks/use-agent-session-actions';
+import { useSpaces } from '@/hooks/use-spaces';
 import { useSessionNavState } from '@/hooks/use-session-nav-state';
 import {
   resolveSurfaceFromPathname,
@@ -24,6 +27,9 @@ import {
 } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import type { SessionNavPanelMode } from '@/lib/session-nav';
+import { buildSpaceNavRows, resolveSpaceIdFromPathname } from '@/lib/space-nav';
+import { createSpace } from '@/lib/spaces-api';
+import { isSpacesEnabled } from '@/lib/spaces/constants';
 import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
 import { useUIStore } from '@/lib/store';
 
@@ -68,10 +74,17 @@ function SessionNavShellLayout({
   navState: ReturnType<typeof useSessionNavState>;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const showToast = useUIStore((s) => s.showToast);
   const t = useTranslations('sessionNav');
-  const isClinic = resolveSurfaceFromPathname(pathname) === 'clinic';
+  const tSpaces = useTranslations('spaces');
+  const spacesEnabled = isSpacesEnabled();
+  const spaceRouteId = resolveSpaceIdFromPathname(pathname);
+  const isClinic =
+    resolveSurfaceFromPathname(pathname) === 'clinic' && !spaceRouteId;
   const activeHubAgentId = getDedicatedHubAgentFromPathname(pathname);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [isCreatingSpace, setIsCreatingSpace] = useState(false);
 
   const {
     panelOpen,
@@ -89,7 +102,16 @@ function SessionNavShellLayout({
   } = navState;
 
   const panelVisible = panelOpen || mobileDrawerOpen;
-  const { sessionsByAgent, isLoading, error, refresh } = useActiveAgentSessions();
+  const { sessionsByAgent, isLoading, error, refresh } = useActiveAgentSessions({
+    panelOpen: panelVisible,
+    enabled: !spacesEnabled,
+  });
+  const {
+    spaces,
+    isLoading: spacesLoading,
+    error: spacesError,
+    refresh: refreshSpaces,
+  } = useSpaces({ panelOpen: panelVisible });
 
   const {
     requestNewSession,
@@ -204,6 +226,27 @@ function SessionNavShellLayout({
     [exitSession, refresh, showToast, t]
   );
 
+  const spaceNavRows = useMemo(
+    () => (spacesEnabled ? buildSpaceNavRows(spaces, locale, t('clinic')) : []),
+    [locale, spaces, spacesEnabled, t]
+  );
+
+  const handleCreateSpace = useCallback(
+    async (templateId: string) => {
+      setIsCreatingSpace(true);
+      const res = await createSpace({ template_id: templateId });
+      setIsCreatingSpace(false);
+      if (!res.success || !res.data) {
+        showToast(res.error ?? tSpaces('createFailed'), 'error');
+        return;
+      }
+      setTemplatePickerOpen(false);
+      void refreshSpaces(true);
+      router.push(`/${locale}/spaces/${encodeURIComponent(res.data.id)}`);
+    },
+    [locale, refreshSpaces, router, showToast, tSpaces]
+  );
+
   const controllerValue = useMemo(
     () => ({
       openPanel,
@@ -242,12 +285,15 @@ function SessionNavShellLayout({
             onExpandedAgentIdChange={setExpandedAgentId}
             activeHubAgentId={activeHubAgentId}
             sessionsByAgent={sessionsByAgent}
-            isLoading={isLoading}
-            fetchError={error}
-            actionsDisabled={isBusy}
+            isLoading={spacesEnabled ? spacesLoading : isLoading}
+            fetchError={spacesEnabled ? spacesError : error}
+            actionsDisabled={isBusy || isCreatingSpace}
             onClose={closePanel}
             onNewSession={(agentId) => void handleRequestNewSession(agentId)}
             onExitSession={(agentId) => void handleExitSession(agentId)}
+            spacesMode={spacesEnabled}
+            spaceRows={spaceNavRows}
+            onNewSpace={() => setTemplatePickerOpen(true)}
           />
         ) : null}
 
@@ -281,11 +327,22 @@ function SessionNavShellLayout({
             </button>
           </div>
           {!isClinic && (
-            <SessionContextHeader locale={locale} sessionsByAgent={sessionsByAgent} />
+            <SessionContextHeader
+              locale={locale}
+              sessionsByAgent={sessionsByAgent}
+              spaceId={spaceRouteId}
+            />
           )}
           <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
         </div>
       </div>
+
+      <SpaceTemplatePicker
+        open={templatePickerOpen}
+        isCreating={isCreatingSpace}
+        onClose={() => setTemplatePickerOpen(false)}
+        onSelect={(templateId) => void handleCreateSpace(templateId)}
+      />
 
       <ConfirmAbandonSessionDialog
         open={Boolean(confirmAgentId)}

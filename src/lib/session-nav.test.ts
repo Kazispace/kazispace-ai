@@ -27,6 +27,7 @@ describe('session-nav', () => {
 
   it('resolves active row from pathname', () => {
     expect(resolveActiveNavRowId('/en/chat')).toBe('clinic');
+    expect(resolveActiveNavRowId('/en/spaces/sp_abc')).toBe('sp_abc');
     expect(resolveActiveNavRowId('/en/cv')).toBe('cv_builder');
     expect(resolveActiveNavRowId('/en/interview')).toBe('mock_interview');
     expect(resolveActiveNavRowId('/zh/english')).toBe('english_tutor');

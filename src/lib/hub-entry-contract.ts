@@ -1,6 +1,9 @@
 /**
  * KAZI-160 Hub Entry Contract — code-as-contract for chat-first Hub cold-opens.
  *
+ * ADR-006: reused by Space Orchestrator (mode B) inside templates — user sees
+ * the space, not agent switching. Do not expose agent IDs in user-facing UI.
+ *
  * Invariants (every dedicated Hub agent):
  * 1. Cold open → L4 `openHubAgentSession` + session history hydrate
  * 2. ≥1 assistant guidance message (welcome, greeting, or history)
