@@ -125,10 +125,10 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             locale={locale}
             space={space}
             welcomeKey={welcomeKey}
-            composer={({ sendMessage, isSending }) => (
+            composer={({ sendMessage, isSending, spaceSessionReady }) => (
               <ChatInput
                 onSend={(text) => void sendMessage(text)}
-                disabled={isSending}
+                disabled={isSending || !spaceSessionReady}
                 placeholder={t('composerPlaceholder')}
               />
             )}
