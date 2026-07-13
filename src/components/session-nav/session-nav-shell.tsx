@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -101,7 +101,17 @@ function SessionNavShellLayout({
     setPanelMode,
   } = navState;
 
-  const panelVisible = panelOpen || mobileDrawerOpen;
+  const isSpaceRoute = spacesEnabled && Boolean(spaceRouteId);
+  const effectivePanelOpen = isSpaceRoute ? true : panelOpen;
+  const panelVisible = effectivePanelOpen || mobileDrawerOpen;
+
+  useEffect(() => {
+    if (!isSpaceRoute) return;
+    setPanelMode('agents');
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      setPanelOpen(true);
+    }
+  }, [isSpaceRoute, setPanelMode, setPanelOpen]);
   const { sessionsByAgent, isLoading, error, refresh } = useActiveAgentSessions({
     panelOpen: panelVisible,
     enabled: !spacesEnabled,
@@ -124,14 +134,18 @@ function SessionNavShellLayout({
 
   const closePanel = useCallback(() => {
     if (mobileDrawerOpen) closeMobileDrawer();
-    else setPanelOpen(false);
-  }, [closeMobileDrawer, mobileDrawerOpen, setPanelOpen]);
+    else if (!isSpaceRoute) setPanelOpen(false);
+  }, [closeMobileDrawer, isSpaceRoute, mobileDrawerOpen, setPanelOpen]);
 
   const openPanelMode = useCallback(
     (mode: SessionNavPanelMode) => {
       const isSameMode = panelMode === mode;
       if (isSameMode && panelVisible) {
-        closePanel();
+        const onDesktop =
+          typeof window !== 'undefined' && window.innerWidth >= 768;
+        if (!isSpaceRoute || !onDesktop) {
+          closePanel();
+        }
         return;
       }
       setPanelMode(mode);
@@ -141,7 +155,7 @@ function SessionNavShellLayout({
         setPanelOpen(true);
       }
     },
-    [closePanel, openMobileDrawer, panelMode, panelVisible, setPanelMode, setPanelOpen]
+    [closePanel, isSpaceRoute, openMobileDrawer, panelMode, panelVisible, setPanelMode, setPanelOpen]
   );
 
   const openPanel = useCallback(
@@ -170,6 +184,7 @@ function SessionNavShellLayout({
       else openMobileDrawer();
       return;
     }
+    if (isSpaceRoute) return;
     togglePanel();
   }, [
     closeMobileDrawer,
@@ -177,6 +192,7 @@ function SessionNavShellLayout({
     openMobileDrawer,
     openPanelMode,
     panelMode,
+    isSpaceRoute,
     togglePanel,
   ]);
 
@@ -277,7 +293,7 @@ function SessionNavShellLayout({
         {showAgentsPanel ? (
           <SessionNavPanel
             locale={locale}
-            open={panelOpen}
+            open={effectivePanelOpen}
             mobileDrawer={mobileDrawerOpen}
             viewTab={viewTab}
             onViewTabChange={setViewTab}
@@ -326,11 +342,10 @@ function SessionNavShellLayout({
               <Menu className="h-5 w-5" />
             </button>
           </div>
-          {!isClinic && (
+          {!isClinic && !spaceRouteId && (
             <SessionContextHeader
               locale={locale}
               sessionsByAgent={sessionsByAgent}
-              spaceId={spaceRouteId}
             />
           )}
           <main className="min-h-0 flex-1 overflow-hidden">{children}</main>

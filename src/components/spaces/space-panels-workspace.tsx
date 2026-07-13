@@ -106,7 +106,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-gray-bg">
+    <div className="flex h-full min-h-0 flex-col bg-[#F4F5F7]">
       <SpacePanelTabs
         className="lg:hidden"
         panels={panels}
@@ -122,7 +122,9 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
           )}
         >
           <SpaceChatPane
+            locale={locale}
             space={space}
+            shellVariant="column"
             welcomeKey={welcomeKey}
             composer={({ sendMessage, isSending }) => (
               <ChatInput

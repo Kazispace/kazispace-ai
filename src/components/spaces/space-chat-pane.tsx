@@ -1,9 +1,11 @@
 'use client';
 
 import { type ReactNode, useEffect, useRef } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import { ChatMessage } from '@/components/chat/chat-message';
+import { MessageBubble } from '@/components/clinic/message-bubble';
+import { SpaceShell, type SpaceShellVariant } from '@/components/spaces/space-shell';
 import { useSpaceTurn } from '@/hooks/use-space-turn';
 import type { SpaceDetail } from '@/types/spaces';
 
@@ -15,20 +17,22 @@ export type SpaceComposerRenderProps = {
 };
 
 interface SpaceChatPaneProps {
+  locale: string;
   space: SpaceDetail;
   welcomeKey?: SpaceWelcomeKey;
+  shellVariant?: SpaceShellVariant;
   composer?:
     | ReactNode
     | ((ctx: SpaceComposerRenderProps) => ReactNode);
-  className?: string;
 }
 
 /** Shared space orchestrator chat column (POST /spaces/{id}/turn). */
 export function SpaceChatPane({
+  locale,
   space,
   welcomeKey = 'blankWelcome',
+  shellVariant = 'page',
   composer,
-  className,
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
   const { messages, isHydrating, isSending, sendError, sendMessage } = useSpaceTurn(
@@ -41,41 +45,42 @@ export function SpaceChatPane({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length, isSending]);
 
-  if (isHydrating && messages.length === 0) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-[#86909C]">
-        {t('loading')}
-      </div>
-    );
-  }
-
   const composerNode =
     typeof composer === 'function'
       ? composer({ sendMessage, isSending })
       : composer;
 
   return (
-    <div className={className ?? 'flex h-full min-h-0 flex-col bg-gray-bg'}>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4">
-          {messages.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
-          ) : (
-            messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                role={message.role}
-                content={message.content}
-              />
-            ))
-          )}
-          {sendError ? (
-            <p className="text-center text-xs text-red-600">{sendError}</p>
-          ) : null}
-          <div ref={messagesEndRef} />
-        </div>
+    <SpaceShell
+      locale={locale}
+      space={space}
+      variant={shellVariant}
+      footer={composerNode ?? null}
+    >
+      <div className="mx-auto flex min-h-0 flex-1 flex-col gap-3">
+        {isHydrating && messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
+            <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+            <p className="text-sm">{t('loading')}</p>
+          </div>
+        ) : messages.length === 0 ? (
+          <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
+        ) : (
+          messages.map((message) => (
+            <MessageBubble
+              key={message.id}
+              role={message.role}
+              content={message.content}
+              locale={locale}
+              variant="clinic"
+            />
+          ))
+        )}
+        {sendError ? (
+          <p className="text-center text-xs text-red-600">{sendError}</p>
+        ) : null}
+        <div ref={messagesEndRef} />
       </div>
-      {composerNode ?? null}
-    </div>
+    </SpaceShell>
   );
 }

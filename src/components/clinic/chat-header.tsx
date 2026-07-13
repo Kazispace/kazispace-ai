@@ -11,9 +11,11 @@ import { closeTelegramWebApp } from "@/lib/telegram";
 
 interface ChatHeaderProps {
   locale: string;
-  mode?: "clinic" | "agent";
+  mode?: "clinic" | "agent" | "space";
   agentName?: string;
   agentEmoji?: string;
+  spaceName?: string;
+  spaceEmoji?: string;
   isOnline?: boolean;
   onBackToClinic?: () => void;
   onOpenSessionHistory?: () => void;
@@ -24,6 +26,8 @@ export function ChatHeader({
   mode = "clinic",
   agentName,
   agentEmoji,
+  spaceName,
+  spaceEmoji,
   isOnline = true,
   onBackToClinic,
   onOpenSessionHistory,
@@ -56,11 +60,19 @@ export function ChatHeader({
 
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-kazi-orange to-amber-500 flex items-center justify-center text-lg shrink-0">
-          {mode === "agent" && agentEmoji ? agentEmoji : "🤖"}
+          {mode === "space" && spaceEmoji
+            ? spaceEmoji
+            : mode === "agent" && agentEmoji
+              ? agentEmoji
+              : "🤖"}
         </div>
         <div className="min-w-0">
           <div className="text-sm font-semibold text-white truncate">
-            {mode === "agent" && agentName ? agentName : t("title", { name: AGENT_NAME })}
+            {mode === "space" && spaceName
+              ? spaceName
+              : mode === "agent" && agentName
+                ? agentName
+                : t("title", { name: AGENT_NAME })}
           </div>
           <div className="flex items-center gap-1.5">
             <div
