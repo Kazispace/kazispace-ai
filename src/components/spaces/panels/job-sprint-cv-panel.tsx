@@ -1,14 +1,16 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
+import { AgentTransitionProvider } from '@/components/agent-transition/agent-transition-provider';
 import { CvDiffPanel } from '@/components/cv/cv-diff-panel';
 import { CvParsedHints } from '@/components/cv/cv-parsed-hints';
 import { CvPreviewPane } from '@/components/cv/cv-preview-pane';
 import { Button } from '@/components/ui/button';
 import { useCvAgent } from '@/hooks/use-cv-agent';
+import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 interface JobSprintCvPanelProps {
@@ -19,7 +21,25 @@ interface JobSprintCvPanelProps {
 
 /** Template-internal CV workspace panel (surfaces.ts → cv_workspace). */
 export function JobSprintCvPanel({ locale, jobId, className }: JobSprintCvPanelProps) {
-  // jobId resolved in SpacePanelsWorkspace via resolveSpaceJobId (URL override → space_state).
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+
+  return (
+    <AgentTransitionProvider
+      locale={locale}
+      fromSurface="cv"
+      hubAgentId={CV_BUILDER_AGENT_ID}
+      isLoggedIn={isLoggedIn}
+    >
+      <JobSprintCvPanelContent locale={locale} jobId={jobId} className={className} />
+    </AgentTransitionProvider>
+  );
+}
+
+function JobSprintCvPanelContent({
+  locale,
+  jobId,
+  className,
+}: JobSprintCvPanelProps) {
   const router = useRouter();
   const t = useTranslations('spaces');
   const tCv = useTranslations('cv');
