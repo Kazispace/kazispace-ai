@@ -9,8 +9,10 @@ import {
   parseClinicReply,
 } from '@/lib/api-client';
 import { isPaywallError, isProfileIncomplete } from '@/lib/api-errors';
+import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
 import { ensureMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
+import { isPlaceholderReply } from '@/lib/spaces/turn';
 import type { ChatMessage } from '@/types';
 
 function normalizeHistoryMessage(
@@ -20,15 +22,58 @@ function normalizeHistoryMessage(
   const roleRaw = (raw.role as string) ?? 'assistant';
   const role =
     roleRaw === 'user' ? 'user' : roleRaw === 'assistant' || roleRaw === 'ai' ? 'assistant' : 'assistant';
+
+  let content =
+    (typeof raw.content === 'string' ? raw.content : '') ||
+    (typeof raw.text === 'string' ? raw.text : '');
+
+  if (!content && raw.assistant_message && typeof raw.assistant_message === 'object') {
+    const nested = (raw.assistant_message as Record<string, unknown>).content;
+    if (typeof nested === 'string') content = nested;
+  }
+
   return {
     id: (raw.id as string) ?? (raw.message_id as string) ?? crypto.randomUUID(),
     role,
-    content: (raw.content as string) ?? (raw.text as string) ?? '',
+    content,
     timestamp: (raw.timestamp as string) ?? (raw.created_at as string) ?? new Date().toISOString(),
     sessionId,
     status: 'sent',
     streamComplete: true,
   };
+}
+
+async function fetchNormalizedHistory(sessionId: string): Promise<ChatMessage[]> {
+  const res = await fetchChatHistory(sessionId);
+  if (!res.success || !res.data) return [];
+
+  const list = Array.isArray(res.data)
+    ? res.data
+    : (res.data as { messages: ChatMessage[] }).messages ?? [];
+
+  return list.map((m) =>
+    normalizeHistoryMessage(m as unknown as Record<string, unknown>, sessionId)
+  );
+}
+
+function latestAssistantAfterUser(
+  messages: ChatMessage[],
+  userText: string
+): string {
+  const trimmed = userText.trim();
+  const userIndex = [...messages]
+    .reverse()
+    .findIndex((message) => message.role === 'user' && message.content.trim() === trimmed);
+  if (userIndex < 0) return '';
+
+  const absoluteIndex = messages.length - 1 - userIndex;
+  for (let index = absoluteIndex + 1; index < messages.length; index++) {
+    const message = messages[index];
+    if (message?.role === 'assistant' && !isPlaceholderReply(message.content)) {
+      return message.content.trim();
+    }
+  }
+  return '';
 }
 
 export function useClinicChat(locale?: string) {
@@ -62,21 +107,14 @@ export function useClinicChat(locale?: string) {
   );
 
   const loadHistory = useCallback(async () => {
+    if (useChatStore.getState().isSending) return;
+
     setIsHistoryLoading(true);
     try {
       const sessionId = await ensureMasterSession();
-      const res = await fetchChatHistory(sessionId);
-      if (!res.success || !res.data) return;
-
-      const list = Array.isArray(res.data)
-        ? res.data
-        : (res.data as { messages: ChatMessage[] }).messages ?? [];
-
-      setMessages(
-        list.map((m) =>
-          normalizeHistoryMessage(m as unknown as Record<string, unknown>, sessionId)
-        )
-      );
+      const fromServer = await fetchNormalizedHistory(sessionId);
+      const local = useChatStore.getState().messages;
+      setMessages(mergeClinicMessagesAfterHistoryLoad(local, fromServer));
     } finally {
       setIsHistoryLoading(false);
     }
@@ -117,40 +155,65 @@ export function useClinicChat(locale?: string) {
       });
       setStreaming(true);
 
-      const res = await sendChatMessage(sessionId, text, locale, {
-        routingMode: 'clinic',
-      });
-      setSending(false);
-      setStreaming(false);
+      try {
+        const res = await sendChatMessage(sessionId, text, locale, {
+          routingMode: 'clinic',
+        });
 
-      if (!res.success || !res.data) {
-        removeMessage(assistantId);
-        updateMessage(userMsgId, { status: 'failed' });
-        handleApiFailure(res);
-        return { ok: false as const, error: res.error, errorCode: res.errorCode };
+        if (!res.success || !res.data) {
+          removeMessage(assistantId);
+          updateMessage(userMsgId, { status: 'failed' });
+          handleApiFailure(res);
+          return { ok: false as const, error: res.error, errorCode: res.errorCode };
+        }
+
+        let { reply, intent, referral, nextActions, cards, routedToAgent } =
+          parseClinicReply(res.data);
+
+        if (isPlaceholderReply(reply)) {
+          try {
+            const refreshed = await fetchNormalizedHistory(sessionId);
+            reply = latestAssistantAfterUser(refreshed, text);
+            if (!isPlaceholderReply(reply)) {
+              setMessages(mergeClinicMessagesAfterHistoryLoad(
+                useChatStore.getState().messages,
+                refreshed
+              ));
+            }
+          } catch (error) {
+            console.warn('[useClinicChat] history refresh failed after send', error);
+          }
+        }
+
+        if (isPlaceholderReply(reply)) {
+          removeMessage(assistantId);
+          updateMessage(userMsgId, { status: 'failed' });
+          return { ok: false as const, error: 'Assistant did not return a reply' };
+        }
+
+        updateMessage(userMsgId, { status: 'sent' });
+        updateMessage(assistantId, {
+          content: reply,
+          ...(intent ? { intent } : {}),
+          ...(referral ? { referral } : {}),
+          ...(nextActions.length > 0 ? { nextActions } : {}),
+          ...(cards.length > 0 ? { cards } : {}),
+          streamComplete: false,
+        });
+
+        publishSessionNavInvalidate();
+
+        return {
+          ok: true as const,
+          assistantId,
+          ...(routedToAgent ? { routedToAgent } : {}),
+        };
+      } finally {
+        setSending(false);
+        setStreaming(false);
       }
-
-      const { reply, intent, referral, nextActions, cards, routedToAgent } =
-        parseClinicReply(res.data);
-      updateMessage(userMsgId, { status: 'sent' });
-      updateMessage(assistantId, {
-        content: reply || '…',
-        ...(intent ? { intent } : {}),
-        ...(referral ? { referral } : {}),
-        ...(nextActions.length > 0 ? { nextActions } : {}),
-        ...(cards.length > 0 ? { cards } : {}),
-        streamComplete: false,
-      });
-
-      publishSessionNavInvalidate();
-
-      return {
-        ok: true as const,
-        assistantId,
-        ...(routedToAgent ? { routedToAgent } : {}),
-      };
     },
-    [addMessage, setSending, setStreaming, updateMessage, removeMessage, handleApiFailure, locale]
+    [addMessage, setMessages, setSending, setStreaming, updateMessage, removeMessage, handleApiFailure, locale]
   );
 
   const markStreamComplete = useCallback(

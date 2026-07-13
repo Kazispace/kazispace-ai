@@ -6,6 +6,7 @@ import {
   isClinicChatPathname,
   resolveActiveSpaceNavRowId,
   resolveSpaceIdFromPathname,
+  shouldPinSpacesNavPanel,
 } from '@/lib/space-nav';
 import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import type { SpaceSummary } from '@/types/spaces';
@@ -72,6 +73,16 @@ describe('space-nav', () => {
     expect(isClinicChatPathname('/zh/cv')).toBe(false);
     expect(isClinicChatPathname('/zh/interview')).toBe(false);
     expect(isClinicChatPathname('/zh/english')).toBe(false);
+  });
+
+  it('shouldPinSpacesNavPanel pins chat, spaces, and dedicated hub routes', () => {
+    expect(shouldPinSpacesNavPanel('/zh/chat')).toBe(true);
+    expect(shouldPinSpacesNavPanel('/zh/spaces/sp_abc123')).toBe(true);
+    expect(shouldPinSpacesNavPanel('/zh/interview')).toBe(true);
+    expect(shouldPinSpacesNavPanel('/zh/cv')).toBe(true);
+    expect(shouldPinSpacesNavPanel('/en/english')).toBe(true);
+    expect(shouldPinSpacesNavPanel('/zh/profile')).toBe(false);
+    expect(shouldPinSpacesNavPanel('/zh/mine')).toBe(false);
   });
 
   it('filters rows by name', () => {

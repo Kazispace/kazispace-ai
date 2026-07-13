@@ -149,14 +149,14 @@ function EnglishPageContent({ locale }: { locale: string }) {
   }
 
   return (
-    <div className="flex h-full flex-col bg-gray-50">
+    <div className="flex h-full min-h-0 w-full flex-col bg-white">
       {sessionStale.stale ? (
         <HubSessionStaleBanner
           onRefresh={sessionStale.refresh}
           onDismiss={sessionStale.dismiss}
         />
       ) : null}
-      <main className="mx-auto flex w-full max-w-5xl min-h-0 flex-1 flex-col">
+      <main className="flex min-h-0 flex-1 w-full flex-col">
         {needsLogin ? (
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">

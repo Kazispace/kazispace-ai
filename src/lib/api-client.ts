@@ -4,6 +4,7 @@ import { getActiveLanguagePreference } from './locale';
 import { mapUserFromApi } from './api-mappers';
 import { parseAssistantEnvelope } from './chat-envelope';
 import { isReferralDismissed } from './referral-dismiss';
+import { isPlaceholderReply, resolveSpaceTurnReply } from './spaces/turn';
 import { getTmaClientHeaders } from './telegram';
 import type {
   ApiResponse,
@@ -223,6 +224,9 @@ export async function sendChatMessage(
     );
   return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
+    headers: {
+      'X-Kazi-Routing-Version': '2',
+    },
     body: JSON.stringify({
       session_id: sessionId,
       content: text,
@@ -296,6 +300,11 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
 
   const envelope = parseAssistantEnvelope(data);
 
+  let reply = envelope.reply.trim();
+  if (isPlaceholderReply(reply)) {
+    reply = resolveSpaceTurnReply(data);
+  }
+
   let referralAgentId =
     data.referral_agent_id ?? data.referral?.agent_id;
   let referralReason = data.referral_reason ?? data.referral?.reason ?? '';
@@ -319,7 +328,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
       : undefined;
 
   return {
-    reply: envelope.reply,
+    reply,
     intent: data.intent ?? envelope.intent,
     referral,
     nextActions: envelope.nextActions,

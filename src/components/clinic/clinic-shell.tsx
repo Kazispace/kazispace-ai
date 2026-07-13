@@ -203,7 +203,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       }
       clinicHubColdOpenRef.current = hubAgentId;
       useAgentStore.getState().setActiveAgent(null, null);
-      await loadHistoryRef.current();
+      if (!useChatStore.getState().isSending) {
+        await loadHistoryRef.current();
+      }
       return true;
     },
     []
@@ -229,7 +231,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     clinicHubColdOpenRef.current = null;
     useAgentStore.getState().setActiveAgent(null, null);
-    await loadHistoryRef.current();
+    if (!useChatStore.getState().isSending) {
+      await loadHistoryRef.current();
+    }
     setLayerReady(true);
   }, [skipHistoryLoad, stayInClinicForDedicatedHub]);
 
