@@ -9,9 +9,15 @@ import type { SpaceSummary } from '@/types/spaces';
 
 const STALE_TIME_MS = 10_000;
 
-export function useSpaces(options?: { panelOpen?: boolean; enabled?: boolean }) {
+export function useSpaces(options?: {
+  panelOpen?: boolean;
+  enabled?: boolean;
+  /** Bypass stale-time on mount (e.g. `/spaces` index resolver). */
+  fetchImmediately?: boolean;
+}) {
   const enabled = (options?.enabled ?? true) && isSpacesEnabled();
   const panelOpen = options?.panelOpen ?? false;
+  const fetchImmediately = options?.fetchImmediately ?? false;
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
   const [spaces, setSpaces] = useState<SpaceSummary[]>([]);
@@ -48,8 +54,8 @@ export function useSpaces(options?: { panelOpen?: boolean; enabled?: boolean }) 
 
   useEffect(() => {
     if (!enabled || !isLoggedIn) return;
-    void refresh(panelOpen);
-  }, [enabled, isLoggedIn, panelOpen, refresh]);
+    void refresh(fetchImmediately || panelOpen);
+  }, [enabled, fetchImmediately, isLoggedIn, panelOpen, refresh]);
 
   useEffect(() => {
     if (!enabled || !isLoggedIn) return;
