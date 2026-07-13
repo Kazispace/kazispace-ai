@@ -218,6 +218,7 @@
 		"loadingTemplates": "加载模板…",
 		"comingSoonSection": "即将推出",
 		"createFailed": "无法创建空间",
+		"spaceNotReady": "空间尚未就绪，请刷新页面或稍后再试。",
 		"loading": "加载中…",
 		"loadFailed": "无法加载空间",
 		"apiNotReadyHint": "请确认后端已开启 SPACES_ENABLED",

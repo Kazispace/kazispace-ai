@@ -17,6 +17,7 @@ import { useSpaceDetail } from '@/hooks/use-space-detail';
 import { getDedicatedHubAgentFromPathname, getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { isClinicChatPathname } from '@/lib/space-nav';
 import { publishSessionNavOpenFile } from '@/lib/session-nav-events';
 import {
   resolveContextHeaderSession,
@@ -73,6 +74,14 @@ export function SessionContextHeader({
       };
     }
 
+    if (isClinicChatPathname(pathname) || (spaceId && !space)) {
+      return {
+        title: t('clinic'),
+        statusLabel: null as string | null,
+        statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
+      };
+    }
+
     const agent = agentId
       ? AGENT_REGISTRY.find((entry) => entry.agentId === agentId)
       : undefined;
@@ -103,7 +112,7 @@ export function SessionContextHeader({
       statusLabel,
       statusKind: badge,
     };
-  }, [agentId, currentSession, locale, space, spaceId, t]);
+  }, [agentId, currentSession, locale, pathname, space, spaceId, t]);
 
   const showSessionActions = Boolean(agentId && currentSession?.session_id);
 

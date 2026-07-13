@@ -28,10 +28,11 @@ import {
 } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import type { SessionNavPanelMode } from '@/lib/session-nav';
-import { buildSpaceNavRows, resolveSpaceIdFromPathname, shouldPinSpacesNavPanel } from '@/lib/space-nav';
+import { buildSpaceNavRows, resolveSpaceIdFromPathname, shouldPinWorkspaceNavPanel } from '@/lib/space-nav';
+import { CLINIC_SPACE_ID, isSpacesEnabled } from '@/lib/spaces/constants';
 import { createSpace } from '@/lib/spaces-api';
-import { isSpacesEnabled } from '@/lib/spaces/constants';
 import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
+import { WorkspaceShellProvider } from '@/lib/workspace-shell-context';
 import { useUIStore } from '@/lib/store';
 
 interface SessionNavShellProps {
@@ -104,15 +105,18 @@ function SessionNavShellLayout({
   } = navState;
 
   const isSpaceRoute = spacesEnabled && Boolean(spaceRouteId);
-  const pinSpacesNavPanel = spacesEnabled && isDesktop && shouldPinSpacesNavPanel(pathname);
-  const effectivePanelOpen = pinSpacesNavPanel ? true : panelOpen;
+  const pinNavPanel = isDesktop && shouldPinWorkspaceNavPanel(pathname);
+  const effectivePanelOpen = pinNavPanel ? true : panelOpen;
   const panelVisible = effectivePanelOpen || mobileDrawerOpen;
+  const contextHeaderSpaceId =
+    spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
+  const showContextHeader = isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId);
 
   useEffect(() => {
-    if (!pinSpacesNavPanel) return;
+    if (!pinNavPanel) return;
     setPanelMode('agents');
     setPanelOpen(true);
-  }, [pinSpacesNavPanel, setPanelMode, setPanelOpen]);
+  }, [pinNavPanel, setPanelMode, setPanelOpen]);
   const { sessionsByAgent, isLoading, error, refresh } = useActiveAgentSessions({
     panelOpen: panelVisible,
     enabled: !spacesEnabled,
@@ -135,14 +139,14 @@ function SessionNavShellLayout({
 
   const closePanel = useCallback(() => {
     if (mobileDrawerOpen) closeMobileDrawer();
-    else if (!pinSpacesNavPanel) setPanelOpen(false);
-  }, [closeMobileDrawer, mobileDrawerOpen, pinSpacesNavPanel, setPanelOpen]);
+    else if (!pinNavPanel) setPanelOpen(false);
+  }, [closeMobileDrawer, mobileDrawerOpen, pinNavPanel, setPanelOpen]);
 
   const openPanelMode = useCallback(
     (mode: SessionNavPanelMode) => {
       const isSameMode = panelMode === mode;
       if (isSameMode && panelVisible) {
-        if (!pinSpacesNavPanel || !isDesktop) {
+        if (!pinNavPanel || !isDesktop) {
           closePanel();
         }
         return;
@@ -154,7 +158,7 @@ function SessionNavShellLayout({
         setPanelOpen(true);
       }
     },
-    [closePanel, isDesktop, openMobileDrawer, panelMode, panelVisible, pinSpacesNavPanel, setPanelMode, setPanelOpen]
+    [closePanel, isDesktop, openMobileDrawer, panelMode, panelVisible, pinNavPanel, setPanelMode, setPanelOpen]
   );
 
   const openPanel = useCallback(
@@ -183,7 +187,7 @@ function SessionNavShellLayout({
       else openMobileDrawer();
       return;
     }
-    if (pinSpacesNavPanel) return;
+    if (pinNavPanel) return;
     togglePanel();
   }, [
     closeMobileDrawer,
@@ -192,7 +196,7 @@ function SessionNavShellLayout({
     openMobileDrawer,
     openPanelMode,
     panelMode,
-    pinSpacesNavPanel,
+    pinNavPanel,
     togglePanel,
   ]);
 
@@ -279,6 +283,7 @@ function SessionNavShellLayout({
 
   return (
     <SessionNavControllerProvider value={controllerValue}>
+      <WorkspaceShellProvider>
       <div className="flex h-[100dvh] w-full overflow-hidden bg-[#F4F5F7]">
         <SessionIconRail
           locale={locale}
@@ -342,15 +347,17 @@ function SessionNavShellLayout({
               <Menu className="h-5 w-5" />
             </button>
           </div>
-          {!isClinic && !spaceRouteId && (
+          {showContextHeader && (
             <SessionContextHeader
               locale={locale}
               sessionsByAgent={sessionsByAgent}
+              spaceId={contextHeaderSpaceId}
             />
           )}
           <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
         </div>
       </div>
+      </WorkspaceShellProvider>
 
       <SpaceTemplatePicker
         open={templatePickerOpen}

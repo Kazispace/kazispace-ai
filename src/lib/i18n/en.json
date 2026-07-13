@@ -300,6 +300,7 @@
 		"loadingTemplates": "Loading templates…",
 		"comingSoonSection": "Coming soon",
 		"createFailed": "Could not create space",
+		"spaceNotReady": "This space is not ready yet. Refresh the page or try again later.",
 		"loading": "Loading…",
 		"loadFailed": "Could not load space",
 		"apiNotReadyHint": "Ensure backend SPACES_ENABLED is on",

@@ -14,6 +14,7 @@ type SpaceWelcomeKey = 'blankWelcome' | 'jobSprintWelcome' | 'ieltsWelcome';
 export type SpaceComposerRenderProps = {
   sendMessage: (text: string) => Promise<{ ok: boolean; error?: string }>;
   isSending: boolean;
+  spaceSessionReady: boolean;
 };
 
 interface SpaceChatPaneProps {
@@ -39,6 +40,7 @@ export function SpaceChatPane({
     locale
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const spaceSessionReady = Boolean(space.master_session_id?.trim());
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -46,7 +48,7 @@ export function SpaceChatPane({
 
   const composerNode =
     typeof composer === 'function'
-      ? composer({ sendMessage, isSending })
+      ? composer({ sendMessage, isSending, spaceSessionReady })
       : composer;
 
   return (
@@ -56,7 +58,9 @@ export function SpaceChatPane({
       footer={composerNode ?? null}
     >
       <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-3">
-        {isHydrating && messages.length === 0 ? (
+        {!spaceSessionReady ? (
+          <p className="py-8 text-center text-sm text-red-600">{t('spaceNotReady')}</p>
+        ) : isHydrating && messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
             <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
             <p className="text-sm">{t('loading')}</p>

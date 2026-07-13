@@ -40,7 +40,7 @@ function readStoredPanelMode(): SessionNavPanelMode {
 }
 
 export function useSessionNavState() {
-  const [panelOpen, setPanelOpenState] = useState(false);
+  const [panelOpen, setPanelOpenState] = useState(readStoredPanelOpen);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [viewTab, setViewTabState] = useState<SessionNavViewTab>('agent');
   const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null);
@@ -102,7 +102,7 @@ export function useSessionNavState() {
   }, []);
 
   return {
-    panelOpen: hydrated ? panelOpen : false,
+    panelOpen,
     setPanelOpen,
     togglePanel,
     mobileDrawerOpen,

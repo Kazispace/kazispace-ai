@@ -7,6 +7,7 @@ import {
   resolveActiveSpaceNavRowId,
   resolveSpaceIdFromPathname,
   shouldPinSpacesNavPanel,
+  shouldPinWorkspaceNavPanel,
 } from '@/lib/space-nav';
 import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import type { SpaceSummary } from '@/types/spaces';
@@ -75,14 +76,20 @@ describe('space-nav', () => {
     expect(isClinicChatPathname('/zh/english')).toBe(false);
   });
 
-  it('shouldPinSpacesNavPanel pins chat, spaces, and dedicated hub routes', () => {
-    expect(shouldPinSpacesNavPanel('/zh/chat')).toBe(true);
-    expect(shouldPinSpacesNavPanel('/zh/spaces/sp_abc123')).toBe(true);
-    expect(shouldPinSpacesNavPanel('/zh/interview')).toBe(true);
-    expect(shouldPinSpacesNavPanel('/zh/cv')).toBe(true);
-    expect(shouldPinSpacesNavPanel('/en/english')).toBe(true);
-    expect(shouldPinSpacesNavPanel('/zh/profile')).toBe(false);
-    expect(shouldPinSpacesNavPanel('/zh/mine')).toBe(false);
+  it('shouldPinWorkspaceNavPanel pins chat, spaces, and dedicated hub routes', () => {
+    expect(shouldPinWorkspaceNavPanel('/zh/chat')).toBe(true);
+    expect(shouldPinWorkspaceNavPanel('/zh/spaces/sp_abc123')).toBe(true);
+    expect(shouldPinWorkspaceNavPanel('/zh/interview')).toBe(true);
+    expect(shouldPinWorkspaceNavPanel('/zh/cv')).toBe(true);
+    expect(shouldPinWorkspaceNavPanel('/en/english')).toBe(true);
+    expect(shouldPinWorkspaceNavPanel('/zh/profile')).toBe(false);
+    expect(shouldPinWorkspaceNavPanel('/zh/mine')).toBe(false);
+  });
+
+  it('shouldPinSpacesNavPanel remains an alias', () => {
+    expect(shouldPinSpacesNavPanel('/zh/chat')).toBe(
+      shouldPinWorkspaceNavPanel('/zh/chat')
+    );
   });
 
   it('filters rows by name', () => {
