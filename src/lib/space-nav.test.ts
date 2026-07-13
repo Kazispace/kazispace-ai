@@ -40,10 +40,28 @@ describe('space-nav', () => {
     expect(rows[1]?.emoji).toBe('🎯');
   });
 
+  it('sorts clinic first then last_active_at desc', () => {
+    const older: SpaceSummary = {
+      ...jobSprint,
+      id: 'sp_old',
+      name: 'Old',
+      last_active_at: '2026-07-10T10:00:00Z',
+    };
+    const newer: SpaceSummary = {
+      ...jobSprint,
+      id: 'sp_new',
+      name: 'New',
+      last_active_at: '2026-07-11T10:00:00Z',
+    };
+    const rows = buildSpaceNavRows([newer, clinicSpace, older], 'en', 'Clinic');
+    expect(rows.map((r) => r.id)).toEqual([CLINIC_SPACE_ID, 'sp_new', 'sp_old']);
+  });
+
   it('resolves active space from pathname', () => {
     expect(resolveSpaceIdFromPathname('/zh/spaces/sp_abc123')).toBe('sp_abc123');
     expect(resolveActiveSpaceNavRowId('/zh/chat')).toBe(CLINIC_SPACE_ID);
     expect(resolveActiveSpaceNavRowId('/zh/spaces/sp_abc123')).toBe('sp_abc123');
+    expect(resolveActiveSpaceNavRowId('/zh/cv')).toBeNull();
   });
 
   it('filters rows by name', () => {

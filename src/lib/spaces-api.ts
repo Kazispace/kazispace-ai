@@ -1,5 +1,4 @@
 import { apiRequest } from '@/lib/api-client';
-import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import type { ApiResponse } from '@/types';
 import type {
   CreateSpaceRequest,
@@ -11,9 +10,9 @@ import type {
   SpaceTurnResponse,
 } from '@/types/spaces';
 
-/** Normalize BE `space_id` field to FE `id`. */
+/** Normalize BE `id` field (Spaces SDD §1.4 / BE serialize_space_summary). */
 export function normalizeSpaceSummary(raw: Record<string, unknown>): SpaceSummary {
-  const id = String(raw.space_id ?? raw.id ?? '');
+  const id = String(raw.id ?? '');
   return {
     id,
     name: String(raw.name ?? ''),
@@ -100,11 +99,4 @@ export async function sendSpaceTurn(
       body: JSON.stringify(body),
     }
   );
-}
-
-export function getSpaceHref(locale: string, spaceId: string): string {
-  if (spaceId === CLINIC_SPACE_ID) {
-    return `/${locale}/chat`;
-  }
-  return `/${locale}/spaces/${encodeURIComponent(spaceId)}`;
 }

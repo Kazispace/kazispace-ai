@@ -1,10 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
+import { fetchChatHistory } from '@/lib/api-client';
 import { handleAgentEnvelope } from '@/lib/handle-agent-envelope';
 import { sendSpaceTurn } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
+import type { ChatMessage } from '@/types';
 
 export type SpaceChatMessage = {
   id: string;
@@ -12,11 +14,52 @@ export type SpaceChatMessage = {
   content: string;
 };
 
-export function useSpaceTurn(spaceId: string | null) {
+function mapHistoryToSpaceMessages(messages: ChatMessage[]): SpaceChatMessage[] {
+  return messages
+    .filter((m) => m.role === 'user' || m.role === 'assistant')
+    .map((m) => ({
+      id: m.id,
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    }))
+    .filter((m) => m.content.trim().length > 0);
+}
+
+/**
+ * Space chat loop. Phase A hydrates via `master_session_id` → clinic messages API.
+ * TODO(KAZI-172): switch to `GET /spaces/{id}/messages` when BE exposes space-scoped history.
+ */
+export function useSpaceTurn(spaceId: string | null, masterSessionId: string | null) {
   const enabled = isSpacesEnabled() && Boolean(spaceId);
   const [messages, setMessages] = useState<SpaceChatMessage[]>([]);
+  const [isHydrating, setIsHydrating] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enabled || !masterSessionId) {
+      setMessages([]);
+      return;
+    }
+
+    let cancelled = false;
+    setIsHydrating(true);
+
+    void (async () => {
+      const res = await fetchChatHistory(masterSessionId);
+      if (cancelled) return;
+      setIsHydrating(false);
+
+      if (res.success && res.data) {
+        const list = Array.isArray(res.data) ? res.data : (res.data.messages ?? []);
+        setMessages(mapHistoryToSpaceMessages(list as ChatMessage[]));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, masterSessionId]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -63,5 +106,12 @@ export function useSpaceTurn(spaceId: string | null) {
     [enabled, spaceId]
   );
 
-  return { messages, isSending, sendError, sendMessage, enabled };
+  return {
+    messages,
+    isHydrating,
+    isSending,
+    sendError,
+    sendMessage,
+    enabled,
+  };
 }

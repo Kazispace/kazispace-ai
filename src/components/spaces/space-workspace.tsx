@@ -15,7 +15,10 @@ interface SpaceWorkspaceProps {
 export function SpaceWorkspace({ spaceId }: SpaceWorkspaceProps) {
   const t = useTranslations('spaces');
   const { space, isLoading, error } = useSpaceDetail(spaceId);
-  const { messages, isSending, sendError, sendMessage } = useSpaceTurn(spaceId);
+  const { messages, isHydrating, isSending, sendError, sendMessage } = useSpaceTurn(
+    spaceId,
+    space?.master_session_id ?? null
+  );
   const [draft, setDraft] = useState('');
 
   if (isLoading && !space) {
@@ -31,6 +34,14 @@ export function SpaceWorkspace({ spaceId }: SpaceWorkspaceProps) {
       <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
         <p className="text-sm text-[#4E5969]">{error ?? t('loadFailed')}</p>
         <p className="text-xs text-[#86909C]">{t('apiNotReadyHint')}</p>
+      </div>
+    );
+  }
+
+  if (isHydrating && messages.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-[#86909C]">
+        {t('loading')}
       </div>
     );
   }

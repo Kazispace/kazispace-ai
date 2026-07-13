@@ -1,9 +1,11 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { X } from 'lucide-react';
 
-import { MVP_SPACE_TEMPLATE_IDS } from '@/lib/spaces/constants';
+import { useSpaceTemplates } from '@/hooks/use-space-templates';
+import { TEMPLATE_EMOJI } from '@/lib/spaces/constants';
+import type { SpaceTemplateItem } from '@/types/spaces';
 import { cn } from '@/lib/utils';
 
 interface SpaceTemplatePickerProps {
@@ -13,11 +15,68 @@ interface SpaceTemplatePickerProps {
   onSelect: (templateId: string) => void;
 }
 
-const TEMPLATE_KEYS: Record<string, string> = {
-  blank_conversation: 'templateBlank',
-  job_sprint: 'templateJobSprint',
-  ielts_prep: 'templateIelts',
+const TEMPLATE_I18N_KEYS: Record<string, { title: string; desc: string }> = {
+  blank_conversation: { title: 'templateBlank', desc: 'templateBlankDesc' },
+  job_sprint: { title: 'templateJobSprint', desc: 'templateJobSprintDesc' },
+  ielts_prep: { title: 'templateIelts', desc: 'templateIeltsDesc' },
 };
+
+function resolveTemplateLabel(
+  template: SpaceTemplateItem,
+  locale: string,
+  t: ReturnType<typeof useTranslations<'spaces'>>
+): { title: string; desc: string } {
+  const display = template.display_name;
+  if (display && typeof display === 'object') {
+    const title =
+      display[locale] ?? display.zh ?? display.en ?? template.template_id;
+    return { title, desc: '' };
+  }
+  if (typeof display === 'string' && display !== template.template_id) {
+    return { title: display, desc: '' };
+  }
+
+  const keys = TEMPLATE_I18N_KEYS[template.template_id];
+  if (keys) {
+    return { title: t(keys.title), desc: t(keys.desc) };
+  }
+  return { title: template.template_id, desc: '' };
+}
+
+function TemplateButton({
+  template,
+  disabled,
+  onSelect,
+}: {
+  template: SpaceTemplateItem;
+  disabled?: boolean;
+  onSelect: (templateId: string) => void;
+}) {
+  const t = useTranslations('spaces');
+  const locale = useLocale();
+  const { title, desc } = resolveTemplateLabel(template, locale, t);
+  const emoji = TEMPLATE_EMOJI[template.template_id] ?? '✨';
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => onSelect(template.template_id)}
+      className={cn(
+        'w-full rounded-lg border border-[#E5E6EB] px-4 py-3 text-left transition-colors',
+        'hover:border-kazi-orange hover:bg-[#FFF9F5] disabled:opacity-50'
+      )}
+    >
+      <span className="flex items-center gap-2 text-sm font-medium text-[#1D2129]">
+        <span aria-hidden>{emoji}</span>
+        {title}
+      </span>
+      {desc ? (
+        <span className="mt-0.5 block pl-7 text-xs text-[#86909C]">{desc}</span>
+      ) : null}
+    </button>
+  );
+}
 
 export function SpaceTemplatePicker({
   open,
@@ -26,6 +85,7 @@ export function SpaceTemplatePicker({
   onSelect,
 }: SpaceTemplatePickerProps) {
   const t = useTranslations('spaces');
+  const { templates, comingSoon, isLoading } = useSpaceTemplates(open);
 
   if (!open) return null;
 
@@ -57,33 +117,36 @@ export function SpaceTemplatePicker({
           </button>
         </div>
 
-        <ul className="space-y-2">
-          {MVP_SPACE_TEMPLATE_IDS.map((templateId) => {
-            const key = TEMPLATE_KEYS[templateId] ?? templateId;
-            return (
-              <li key={templateId}>
-                <button
-                  type="button"
+        {isLoading ? (
+          <p className="py-4 text-center text-sm text-[#86909C]">{t('loadingTemplates')}</p>
+        ) : (
+          <ul className="space-y-2">
+            {templates.map((template) => (
+              <li key={template.template_id}>
+                <TemplateButton
+                  template={template}
                   disabled={isCreating}
-                  onClick={() => onSelect(templateId)}
-                  className={cn(
-                    'w-full rounded-lg border border-[#E5E6EB] px-4 py-3 text-left transition-colors',
-                    'hover:border-kazi-orange hover:bg-[#FFF9F5] disabled:opacity-50'
-                  )}
-                >
-                  <span className="block text-sm font-medium text-[#1D2129]">
-                    {t(key)}
-                  </span>
-                  <span className="mt-0.5 block text-xs text-[#86909C]">
-                    {t(`${key}Desc`)}
-                  </span>
-                </button>
+                  onSelect={onSelect}
+                />
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ul>
+        )}
 
-        <p className="mt-4 text-center text-xs text-[#86909C]">{t('browseMoreComingSoon')}</p>
+        {comingSoon.length > 0 ? (
+          <div className="mt-4 border-t border-[#E5E6EB] pt-3">
+            <p className="mb-2 text-xs font-medium text-[#86909C]">{t('comingSoonSection')}</p>
+            <ul className="space-y-2 opacity-60">
+              {comingSoon.map((template) => (
+                <li key={template.template_id}>
+                  <TemplateButton template={template} disabled onSelect={() => {}} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="mt-4 text-center text-xs text-[#86909C]">{t('browseMoreComingSoon')}</p>
+        )}
       </div>
     </>
   );

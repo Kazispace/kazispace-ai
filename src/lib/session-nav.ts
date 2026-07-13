@@ -10,7 +10,7 @@ import { publishSessionNavSelectHistory } from '@/lib/session-nav-events';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { AGENT_REGISTRY, getAgentLabel, type AgentRegistryEntry } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
-import { resolveActiveSpaceNavRowId, resolveSpaceIdFromPathname } from '@/lib/space-nav';
+import { resolveSpaceIdFromPathname } from '@/lib/space-nav';
 
 import type { AgentSessionSummary } from '@/types';
 
@@ -31,7 +31,8 @@ export type SessionNavBadgeKind =
   | 'resumable'
   | 'archived'
   | 'notStarted'
-  | 'pipeline';
+  | 'pipeline'
+  | 'completed';
 
 export interface SessionNavRow {
   id: SessionNavRowId;
