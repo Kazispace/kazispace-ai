@@ -71,33 +71,35 @@ export function useSpaceTurn(spaceId: string | null, masterSessionId: string | n
       setIsSending(true);
       setSendError(null);
 
-      const res = await sendSpaceTurn(spaceId, { message: trimmed });
-      setIsSending(false);
+      try {
+        const res = await sendSpaceTurn(spaceId, { message: trimmed });
 
-      if (!res.success) {
-        const err = res.error ?? 'Send failed';
-        setSendError(err);
-        return { ok: false as const, error: err };
-      }
-
-      const reply = resolveSpaceTurnReply(res.data);
-
-      if (masterSessionId) {
-        const refreshed = await loadSpaceHistory(masterSessionId);
-        if (refreshed.length > 0) {
-          setMessages(refreshed);
-          return { ok: true as const };
+        if (!res.success) {
+          const err = res.error ?? 'Send failed';
+          setSendError(err);
+          return { ok: false as const, error: err };
         }
-      }
 
-      if (reply) {
-        setMessages((prev) => [
-          ...prev,
-          { id: `assistant_${Date.now()}`, role: 'assistant', content: reply },
-        ]);
-      }
+        const reply = resolveSpaceTurnReply(res.data);
 
-      return { ok: true as const };
+        if (reply) {
+          setMessages((prev) => [
+            ...prev,
+            { id: `assistant_${Date.now()}`, role: 'assistant', content: reply },
+          ]);
+        }
+
+        if (masterSessionId) {
+          const refreshed = await loadSpaceHistory(masterSessionId);
+          if (refreshed.length > 0) {
+            setMessages(refreshed);
+          }
+        }
+
+        return { ok: true as const };
+      } finally {
+        setIsSending(false);
+      }
     },
     [enabled, masterSessionId, spaceId]
   );

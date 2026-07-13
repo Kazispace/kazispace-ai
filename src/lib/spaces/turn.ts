@@ -1,6 +1,7 @@
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 
-const PLACEHOLDER_REPLIES = new Set(['…', '...', '\u2026']);
+/** Unicode ellipsis (U+2026) and ASCII three-dot placeholder. */
+const PLACEHOLDER_REPLIES = new Set(['…', '...']);
 
 export function isPlaceholderReply(text: string): boolean {
   const trimmed = text.trim();
@@ -17,8 +18,9 @@ export function resolveSpaceTurnReply(data: unknown): string {
     typeof raw.reply_text === 'string' ? raw.reply_text.trim() : '';
   if (!isPlaceholderReply(replyText)) return replyText;
 
-  const fromRoot = parseAssistantEnvelope(data).reply.trim();
-  if (!isPlaceholderReply(fromRoot)) return fromRoot;
+  // Clinic-style turns may flatten assistant_response / reply on the root payload.
+  const fromFlattenedTurn = parseAssistantEnvelope(data).reply.trim();
+  if (!isPlaceholderReply(fromFlattenedTurn)) return fromFlattenedTurn;
 
   if (raw.envelope) {
     const fromEnvelope = parseAssistantEnvelope(raw.envelope).reply.trim();
@@ -42,8 +44,22 @@ export type SpaceChatMessage = {
   content: string;
 };
 
+function stableMessageIdFallback(
+  role: 'user' | 'assistant',
+  content: string,
+  index: number
+): string {
+  let hash = 0;
+  const key = `${role}\0${content}\0${index}`;
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) >>> 0;
+  }
+  return `msg_${role}_${hash.toString(36)}`;
+}
+
 export function normalizeSpaceHistoryMessage(
-  raw: Record<string, unknown>
+  raw: Record<string, unknown>,
+  index = 0
 ): SpaceChatMessage | null {
   const roleRaw = String(raw.role ?? 'assistant');
   const role: 'user' | 'assistant' = roleRaw === 'user' ? 'user' : 'assistant';
@@ -62,18 +78,21 @@ export function normalizeSpaceHistoryMessage(
   if (!content) return null;
   if (role === 'assistant' && isPlaceholderReply(content)) return null;
 
-  return {
-    id: String(raw.id ?? raw.message_id ?? `msg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`),
-    role,
-    content,
-  };
+  const id =
+    typeof raw.id === 'string' && raw.id
+      ? raw.id
+      : typeof raw.message_id === 'string' && raw.message_id
+        ? raw.message_id
+        : stableMessageIdFallback(role, content, index);
+
+  return { id, role, content };
 }
 
 export function mapSpaceHistoryMessages(messages: unknown[]): SpaceChatMessage[] {
   return messages
-    .map((item) =>
+    .map((item, index) =>
       item && typeof item === 'object'
-        ? normalizeSpaceHistoryMessage(item as Record<string, unknown>)
+        ? normalizeSpaceHistoryMessage(item as Record<string, unknown>, index)
         : null
     )
     .filter((message): message is SpaceChatMessage => message != null);

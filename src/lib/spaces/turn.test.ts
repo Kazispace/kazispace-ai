@@ -53,4 +53,9 @@ describe('mapSpaceHistoryMessages', () => {
       { id: 'a2', role: 'assistant', content: 'world' },
     ]);
   });
+
+  it('uses stable fallback ids when server omits message ids', () => {
+    const rows = [{ role: 'user', text: 'hello' }];
+    expect(mapSpaceHistoryMessages(rows)).toEqual(mapSpaceHistoryMessages(rows));
+  });
 });
