@@ -8,6 +8,7 @@ export type SessionNavBadgeTranslator = (
     | 'badgeInProgress'
     | 'badgeResumable'
     | 'badgeArchived'
+    | 'badgeCompleted'
     | 'badgeNotStarted'
     | 'pipelineFeedbackPending'
     | 'pipelineInterviewActive'
@@ -80,6 +81,7 @@ export function sessionNavBadgePillClass(kind: SessionNavBadgeKind): string {
       return 'bg-amber-100 text-amber-800';
     case 'archived':
     case 'notStarted':
+    case 'completed':
       return 'bg-gray-100 text-gray-600';
     case 'comingSoon':
       return 'bg-gray-100 text-gray-600';
@@ -103,6 +105,7 @@ export function formatSessionNavBadgeLabel(
     inProgress: t('badgeInProgress'),
     resumable: t('badgeResumable'),
     archived: t('badgeArchived'),
+    completed: t('badgeCompleted'),
     notStarted: t('badgeNotStarted'),
     pipeline: resolvePipelineBadgeLabel(badgeDetail, t, agentId),
   };

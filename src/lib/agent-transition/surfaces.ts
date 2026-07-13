@@ -1,3 +1,10 @@
+/**
+ * Template-internal rendering surfaces (ADR-006).
+ *
+ * `/cv`, `/interview`, `/english` and agent IDs here are **not** user-facing
+ * navigation — they map capabilities inside Space templates (e.g. 求职冲刺).
+ * Do not add new entries for primary nav; Session Nav → Spaces list (ADR-006).
+ */
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
 import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';

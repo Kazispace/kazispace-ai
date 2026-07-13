@@ -25,6 +25,7 @@ import {
   type SessionNavViewTab,
   type SessionViewRow,
 } from '@/lib/session-nav';
+import { filterSpaceNavRows } from '@/lib/space-nav';
 import { cn } from '@/lib/utils';
 
 interface SessionNavPanelProps {
@@ -43,6 +44,10 @@ interface SessionNavPanelProps {
   onClose: () => void;
   onNewSession?: (agentId: string) => void;
   onExitSession?: (agentId: string) => void;
+  /** ADR-006: Spaces list mode (replaces agent/session tabs). */
+  spacesMode?: boolean;
+  spaceRows?: SessionNavRow[];
+  onNewSpace?: () => void;
 }
 
 function rowBadgeText(
@@ -95,6 +100,9 @@ export function SessionNavPanel({
   onClose,
   onNewSession,
   onExitSession,
+  spacesMode = false,
+  spaceRows = [],
+  onNewSpace,
 }: SessionNavPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -106,6 +114,11 @@ export function SessionNavPanel({
     return filterSessionNavRows(enrichSessionNavRows(base, sessionsByAgent), listQuery);
   }, [listQuery, locale, sessionsByAgent, t]);
 
+  const filteredSpaceRows = useMemo(
+    () => filterSpaceNavRows(spaceRows, listQuery),
+    [listQuery, spaceRows]
+  );
+
   const sessionRows = useMemo(
     () =>
       filterSessionViewRows(
@@ -116,7 +129,9 @@ export function SessionNavPanel({
   );
 
   const activeId = resolveActiveNavRowId(pathname);
-  const showHubActions = Boolean(activeHubAgentId) && viewTab === 'agent';
+  const showHubActions =
+    !spacesMode && Boolean(activeHubAgentId) && viewTab === 'agent';
+  const listRows = spacesMode ? filteredSpaceRows : agentRows;
 
   useEffect(() => {
     if (!mobileDrawer) return;
@@ -260,32 +275,38 @@ export function SessionNavPanel({
     <div className="flex h-full flex-col bg-white">
       <div className="border-b border-[#E5E6EB] px-3 py-2">
         <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-1 rounded-lg bg-[#F2F3F5] p-0.5">
-            <button
-              type="button"
-              onClick={() => onViewTabChange('agent')}
-              className={cn(
-                'flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
-                viewTab === 'agent'
-                  ? 'bg-white text-[#1D2129] shadow-sm'
-                  : 'text-[#86909C]'
-              )}
-            >
-              {t('tabAgent')}
-            </button>
-            <button
-              type="button"
-              onClick={() => onViewTabChange('session')}
-              className={cn(
-                'flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
-                viewTab === 'session'
-                  ? 'bg-white text-[#1D2129] shadow-sm'
-                  : 'text-[#86909C]'
-              )}
-            >
-              {t('tabSession')}
-            </button>
-          </div>
+          {spacesMode ? (
+            <p className="min-w-0 flex-1 px-1 text-sm font-medium text-[#1D2129]">
+              {t('tabSpaces')}
+            </p>
+          ) : (
+            <div className="flex min-w-0 flex-1 rounded-lg bg-[#F2F3F5] p-0.5">
+              <button
+                type="button"
+                onClick={() => onViewTabChange('agent')}
+                className={cn(
+                  'flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
+                  viewTab === 'agent'
+                    ? 'bg-white text-[#1D2129] shadow-sm'
+                    : 'text-[#86909C]'
+                )}
+              >
+                {t('tabAgent')}
+              </button>
+              <button
+                type="button"
+                onClick={() => onViewTabChange('session')}
+                className={cn(
+                  'flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
+                  viewTab === 'session'
+                    ? 'bg-white text-[#1D2129] shadow-sm'
+                    : 'text-[#86909C]'
+                )}
+              >
+                {t('tabSession')}
+              </button>
+            </div>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -318,15 +339,59 @@ export function SessionNavPanel({
 
       <ul className="flex-1 space-y-1 overflow-y-auto p-2">
         {isLoading &&
-        (viewTab === 'agent'
-          ? agentRows.every((row) => !row.currentSession)
-          : sessionRows.length <= 1) ? (
+        (spacesMode
+          ? listRows.length === 0
+          : viewTab === 'agent'
+            ? agentRows.every((row) => !row.currentSession)
+            : sessionRows.length <= 1) ? (
           Array.from({ length: 3 }).map((_, index) => (
             <li key={`skeleton-${index}`} className="rounded-lg px-3 py-2.5">
               <div className="h-4 w-3/4 animate-pulse rounded bg-[#F2F3F5]" />
               <div className="mt-1.5 h-3 w-1/2 animate-pulse rounded bg-[#F2F3F5]" />
             </li>
           ))
+        ) : spacesMode ? (
+          listRows.length === 0 ? (
+            <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+              {t('noSearchResults')}
+            </li>
+          ) : (
+            listRows.map((row) => {
+              const isActive = row.id === activeId;
+              const badge = rowBadgeText(row.badge, row.badgeDetail, t);
+              return (
+                <li key={row.id}>
+                  <button
+                    type="button"
+                    disabled={row.disabled}
+                    onClick={() => {
+                      navigateToSessionNavTarget(router, row);
+                      if (mobileDrawer) onClose();
+                    }}
+                    className={cn(
+                      'w-full rounded-lg px-3 py-2.5 text-left transition-colors',
+                      isActive && 'bg-[#FFF4EC]',
+                      row.disabled
+                        ? 'cursor-not-allowed opacity-60'
+                        : 'hover:bg-[#F2F3F5] text-[#1D2129]'
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-base" aria-hidden>
+                        {row.emoji}
+                      </span>
+                      <span className="flex-1 truncate text-sm font-medium">
+                        {row.displayName}
+                      </span>
+                    </div>
+                    {badge ? (
+                      <p className="mt-0.5 pl-7 text-xs text-[#86909C]">{badge}</p>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })
+          )
         ) : viewTab === 'agent' ? (
           agentRows.length === 0 ? (
             <li className="px-3 py-6 text-center text-sm text-[#86909C]">
@@ -343,6 +408,20 @@ export function SessionNavPanel({
           sessionRows.map(renderSessionRow)
         )}
       </ul>
+
+      {spacesMode && onNewSpace ? (
+        <div className="shrink-0 border-t border-[#E5E6EB] p-2">
+          <button
+            type="button"
+            disabled={actionsDisabled}
+            onClick={onNewSpace}
+            className="flex w-full items-center justify-center gap-1 rounded-lg border border-[#E5E6EB] px-2 py-2 text-xs font-medium text-[#1D2129] hover:bg-[#F2F3F5] disabled:opacity-50"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {t('newSpace')}
+          </button>
+        </div>
+      ) : null}
 
       {showHubActions && activeHubAgentId ? (
         <div className="flex shrink-0 gap-1 border-t border-[#E5E6EB] p-2">

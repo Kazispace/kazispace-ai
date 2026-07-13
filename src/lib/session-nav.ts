@@ -10,6 +10,7 @@ import { publishSessionNavSelectHistory } from '@/lib/session-nav-events';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { AGENT_REGISTRY, getAgentLabel, type AgentRegistryEntry } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
+import { resolveSpaceIdFromPathname } from '@/lib/space-nav';
 
 import type { AgentSessionSummary } from '@/types';
 
@@ -30,7 +31,8 @@ export type SessionNavBadgeKind =
   | 'resumable'
   | 'archived'
   | 'notStarted'
-  | 'pipeline';
+  | 'pipeline'
+  | 'completed';
 
 export interface SessionNavRow {
   id: SessionNavRowId;
@@ -48,7 +50,13 @@ export interface SessionNavRow {
   currentSession?: AgentSessionSummary | null;
 }
 
-/** Panel rows: Clinic + Registry agents (P0 static). */
+/**
+ * Panel rows: Clinic + Registry agents (ADR-005 P0 static).
+ *
+ * @deprecated ADR-006 — replace with `buildSpaceNavRows()` (Clinic + user spaces).
+ * Do not extend Agent rows (P2 history tabs, cross-agent search). Frozen per
+ * docs/ADR-006-FE-FREEZE.md.
+ */
 export function buildSessionNavRows(
   locale: string,
   clinicLabel: string
@@ -156,6 +164,9 @@ export function resolveContextHeaderSession(
 }
 
 export function resolveActiveNavRowId(pathname: string): SessionNavRowId {
+  const spaceId = resolveSpaceIdFromPathname(pathname);
+  if (spaceId) return spaceId;
+
   const surface = resolveSurfaceFromPathname(pathname);
   if (surface === 'clinic') return 'clinic';
   const agentId = getDedicatedHubAgentFromPathname(pathname);

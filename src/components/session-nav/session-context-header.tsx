@@ -13,6 +13,7 @@ import {
   useSessionFiles,
   useSessionMessageSearch,
 } from '@/hooks/use-session-library';
+import { useSpaceDetail } from '@/hooks/use-space-detail';
 import { getDedicatedHubAgentFromPathname, getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
@@ -32,6 +33,7 @@ import type { SessionLibraryFile } from '@/types/session-library';
 interface SessionContextHeaderProps {
   locale: string;
   sessionsByAgent: CurrentSessionsByAgent;
+  spaceId?: string | null;
 }
 
 type HeaderDrawer = 'files' | 'search' | 'more' | null;
@@ -39,12 +41,14 @@ type HeaderDrawer = 'files' | 'search' | 'more' | null;
 export function SessionContextHeader({
   locale,
   sessionsByAgent,
+  spaceId = null,
 }: SessionContextHeaderProps) {
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
   const showToast = useUIStore((s) => s.showToast);
   const currentSession = resolveContextHeaderSession(pathname, sessionsByAgent);
   const agentId = getDedicatedHubAgentFromPathname(pathname);
+  const { space } = useSpaceDetail(spaceId);
   const [drawer, setDrawer] = useState<HeaderDrawer>(null);
   const [sessionSearchQuery, setSessionSearchQuery] = useState('');
 
@@ -61,6 +65,14 @@ export function SessionContextHeader({
   );
 
   const { title, statusLabel, statusKind } = useMemo(() => {
+    if (spaceId && space) {
+      return {
+        title: `${space.name}`,
+        statusLabel: space.status === 'active' ? t('badgeInProgress') : space.status,
+        statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
+      };
+    }
+
     const agent = agentId
       ? AGENT_REGISTRY.find((entry) => entry.agentId === agentId)
       : undefined;
@@ -91,7 +103,7 @@ export function SessionContextHeader({
       statusLabel,
       statusKind: badge,
     };
-  }, [agentId, currentSession, locale, t]);
+  }, [agentId, currentSession, locale, space, spaceId, t]);
 
   const showSessionActions = Boolean(agentId && currentSession?.session_id);
 
