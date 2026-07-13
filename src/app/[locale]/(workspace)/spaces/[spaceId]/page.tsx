@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 
 import { SpaceWorkspace } from '@/components/spaces/space-workspace';
@@ -16,5 +17,15 @@ export default function SpacePage({
     redirect(`/${params.locale}/chat`);
   }
 
-  return <SpaceWorkspace spaceId={params.spaceId} />;
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-full items-center justify-center text-sm text-[#86909C]">
+          …
+        </div>
+      }
+    >
+      <SpaceWorkspace spaceId={params.spaceId} />
+    </Suspense>
+  );
 }

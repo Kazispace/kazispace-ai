@@ -54,3 +54,12 @@ export interface SpaceTurnResponse {
   envelope?: unknown;
   meta?: Record<string, unknown>;
 }
+
+/** ADR-006 rendering.panels[] — maps to template-internal surfaces. */
+export type SpacePanelSurface = 'cv_workspace' | 'interview_irp' | 'english_epp';
+
+export interface SpacePanelConfig {
+  panel_id: string;
+  surface: SpacePanelSurface;
+  default_visible?: boolean;
+}
