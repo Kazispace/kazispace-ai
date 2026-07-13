@@ -11,9 +11,11 @@ import { closeTelegramWebApp } from "@/lib/telegram";
 
 interface ChatHeaderProps {
   locale: string;
-  mode?: "clinic" | "agent";
+  mode?: "clinic" | "agent" | "space";
   agentName?: string;
   agentEmoji?: string;
+  spaceName?: string;
+  spaceEmoji?: string;
   isOnline?: boolean;
   onBackToClinic?: () => void;
   onOpenSessionHistory?: () => void;
@@ -24,6 +26,8 @@ export function ChatHeader({
   mode = "clinic",
   agentName,
   agentEmoji,
+  spaceName,
+  spaceEmoji,
   isOnline = true,
   onBackToClinic,
   onOpenSessionHistory,
@@ -33,6 +37,15 @@ export function ChatHeader({
   const tNav = useTranslations("nav");
   const tTma = useTranslations("tma");
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
+
+  const headerEmoji =
+    mode === "space" ? spaceEmoji : mode === "agent" ? agentEmoji : null;
+  const headerName =
+    mode === "space"
+      ? spaceName
+      : mode === "agent"
+        ? agentName
+        : t("title", { name: AGENT_NAME });
 
   return (
     <header className="bg-kazi-navy px-4 py-3 flex items-center gap-3 shrink-0 border-b border-white/5">
@@ -56,11 +69,11 @@ export function ChatHeader({
 
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-kazi-orange to-amber-500 flex items-center justify-center text-lg shrink-0">
-          {mode === "agent" && agentEmoji ? agentEmoji : "🤖"}
+          {headerEmoji ?? "🤖"}
         </div>
         <div className="min-w-0">
           <div className="text-sm font-semibold text-white truncate">
-            {mode === "agent" && agentName ? agentName : t("title", { name: AGENT_NAME })}
+            {headerName}
           </div>
           <div className="flex items-center gap-1.5">
             <div

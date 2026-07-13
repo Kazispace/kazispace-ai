@@ -122,7 +122,9 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
           )}
         >
           <SpaceChatPane
+            locale={locale}
             space={space}
+            shellVariant="column"
             welcomeKey={welcomeKey}
             composer={({ sendMessage, isSending }) => (
               <ChatInput
