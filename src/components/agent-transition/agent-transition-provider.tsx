@@ -56,6 +56,8 @@ interface AgentTransitionProviderProps {
   fromSurface: AgentSurfaceId;
   hubAgentId: string;
   isLoggedIn: boolean;
+  /** Space panels: exit back to the owning space instead of Clinic. */
+  returnToClinicHref?: string;
   children: ReactNode;
 }
 
@@ -64,6 +66,7 @@ export function AgentTransitionProvider({
   fromSurface,
   hubAgentId,
   isLoggedIn,
+  returnToClinicHref,
   children,
 }: AgentTransitionProviderProps) {
   const router = useRouter();
@@ -102,11 +105,13 @@ export function AgentTransitionProvider({
 
   const returnToClinic = useCallback(async () => {
     const clinicHref =
-      planNavigation(locale, fromSurface, null).href ?? `/${locale}/chat`;
+      returnToClinicHref ??
+      planNavigation(locale, fromSurface, null).href ??
+      `/${locale}/chat`;
     leaveDedicatedHubForClinic();
     router.replace(clinicHref);
     return { ok: true as const };
-  }, [fromSurface, hubAgentId, locale, router]);
+  }, [fromSurface, locale, returnToClinicHref, router]);
 
   const handleAgentSelect = useCallback(
     async (agentId: string) => {

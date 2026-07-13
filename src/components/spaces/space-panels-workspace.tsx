@@ -177,6 +177,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             <SpacePanelHost
               panel={(mobilePanel ?? activePanel)!}
               locale={locale}
+              spaceId={space.id}
               jobId={jobId}
               className="min-h-0 flex-1"
             />

@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -19,7 +18,6 @@ interface JobSprintCvPanelProps {
 
 /** Template-internal CV workspace panel (surfaces.ts → cv_workspace). */
 export function JobSprintCvPanel({ locale, jobId, className }: JobSprintCvPanelProps) {
-  // jobId resolved in SpacePanelsWorkspace via resolveSpaceJobId (URL override → space_state).
   const router = useRouter();
   const t = useTranslations('spaces');
   const tCv = useTranslations('cv');
