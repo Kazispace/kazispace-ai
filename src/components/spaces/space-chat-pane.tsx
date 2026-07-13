@@ -9,7 +9,7 @@ import type { SpaceDetail } from '@/types/spaces';
 
 type SpaceWelcomeKey = 'blankWelcome' | 'jobSprintWelcome' | 'ieltsWelcome';
 
-export type SpaceChatComposerContext = {
+export type SpaceComposerRenderProps = {
   sendMessage: (text: string) => Promise<{ ok: boolean; error?: string }>;
   isSending: boolean;
 };
@@ -19,7 +19,7 @@ interface SpaceChatPaneProps {
   welcomeKey?: SpaceWelcomeKey;
   composer?:
     | ReactNode
-    | ((ctx: SpaceChatComposerContext) => ReactNode);
+    | ((ctx: SpaceComposerRenderProps) => ReactNode);
   className?: string;
 }
 

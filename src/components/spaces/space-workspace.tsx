@@ -1,7 +1,7 @@
 'use client';
 
 import { useSpaceDetail } from '@/hooks/use-space-detail';
-import { resolveSpaceLayout } from '@/lib/spaces/layout';
+import { isSupportedSpaceTemplate } from '@/lib/spaces/constants';
 
 import { BlankConversationWorkspace } from '@/components/spaces/blank-conversation-workspace';
 import { IeltsPrepWorkspace } from '@/components/spaces/ielts-prep-workspace';
@@ -26,19 +26,18 @@ export function SpaceWorkspace({ spaceId }: SpaceWorkspaceProps) {
     return <SpaceWorkspaceError message={error} />;
   }
 
-  const layout = resolveSpaceLayout(space);
-
-  if (layout === 'chat_only') {
-    return <BlankConversationWorkspace space={space} />;
+  if (!isSupportedSpaceTemplate(space.template_id)) {
+    return <SpaceWorkspaceError reason="unsupportedTemplate" />;
   }
 
-  if (space.template_id === 'job_sprint') {
-    return <JobSprintWorkspace space={space} />;
+  switch (space.template_id) {
+    case 'blank_conversation':
+      return <BlankConversationWorkspace space={space} />;
+    case 'job_sprint':
+      return <JobSprintWorkspace space={space} />;
+    case 'ielts_prep':
+      return <IeltsPrepWorkspace space={space} />;
+    default:
+      return <SpaceWorkspaceError reason="unsupportedTemplate" />;
   }
-
-  if (space.template_id === 'ielts_prep') {
-    return <IeltsPrepWorkspace space={space} />;
-  }
-
-  return <SpaceWorkspaceError message={null} />;
 }

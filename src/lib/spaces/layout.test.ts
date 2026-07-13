@@ -29,4 +29,8 @@ describe('resolveSpaceLayout', () => {
     expect(resolveSpaceLayout(space('job_sprint'))).toBe('chat_with_panels');
     expect(resolveSpaceLayout(space('ielts_prep'))).toBe('chat_with_panels');
   });
+
+  it('defaults unknown templates to chat_only layout metadata', () => {
+    expect(resolveSpaceLayout(space('leetcode_prep'))).toBe('chat_only');
+  });
 });

@@ -45,4 +45,8 @@ describe('resolveSpacePanels', () => {
     ]);
     expect(resolveDefaultPanelId(panels)).toBe('epp');
   });
+
+  it('returns empty panels for unknown templates', () => {
+    expect(resolveSpacePanels(space('leetcode_prep'))).toEqual([]);
+  });
 });

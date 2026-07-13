@@ -16,6 +16,7 @@ import {
   resolveDefaultPanelId,
   resolveSpacePanels,
 } from '@/lib/spaces/panels';
+import { resolveSpaceJobId } from '@/lib/spaces/space-context';
 import { getSpacePanelLabel } from '@/lib/spaces/panel-labels';
 import { cn } from '@/lib/utils';
 import type { SpaceDetail } from '@/types/spaces';
@@ -34,7 +35,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   const searchParams = useSearchParams();
   const t = useTranslations('spaces');
   const locale = (params.locale as string) ?? 'en';
-  const jobId = searchParams.get('job_id');
+  const jobId = resolveSpaceJobId(space, searchParams);
 
   const panels = useMemo(() => resolveSpacePanels(space), [space]);
   const defaultPanelId = resolveDefaultPanelId(panels);

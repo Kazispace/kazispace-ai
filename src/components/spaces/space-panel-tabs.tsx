@@ -7,7 +7,8 @@ import { cn } from '@/lib/utils';
 import { getSpacePanelLabel } from '@/lib/spaces/panel-labels';
 import type { SpacePanelConfig } from '@/types/spaces';
 
-export type SpaceWorkspaceView = 'chat' | string;
+/** Mobile view switcher: chat column ↔ template panel. */
+export type SpaceWorkspaceView = 'chat' | SpacePanelConfig['panel_id'];
 
 interface SpacePanelTabsProps {
   panels: SpacePanelConfig[];

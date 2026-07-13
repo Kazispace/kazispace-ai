@@ -9,6 +9,10 @@ export const MVP_SPACE_TEMPLATE_IDS = [
 
 export type MvpSpaceTemplateId = (typeof MVP_SPACE_TEMPLATE_IDS)[number];
 
+export function isSupportedSpaceTemplate(templateId: string): templateId is MvpSpaceTemplateId {
+  return (MVP_SPACE_TEMPLATE_IDS as readonly string[]).includes(templateId);
+}
+
 export function isSpacesEnabled(): boolean {
   return process.env.NEXT_PUBLIC_SPACES_ENABLED === 'true';
 }

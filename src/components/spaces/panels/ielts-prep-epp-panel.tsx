@@ -52,11 +52,7 @@ export function IeltsPrepEppPanel({ locale, className }: IeltsPrepEppPanelProps)
   }
 
   return (
-    <div className={cn('flex h-full flex-col overflow-y-auto bg-white', className)}>
-      <div className="border-b border-gray-200/80 px-4 py-3">
-        <h2 className="text-sm font-semibold text-kazi-navy">{t('panelEnglish')}</h2>
-        <p className="text-xs text-gray-500">{t('eppPanelHint')}</p>
-      </div>
+    <div className={cn('flex h-full min-h-0 flex-col overflow-y-auto bg-white', className)}>
       <EnglishWorkspace locale={locale} />
     </div>
   );

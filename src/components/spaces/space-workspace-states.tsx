@@ -11,12 +11,27 @@ export function SpaceWorkspaceLoading() {
   );
 }
 
-export function SpaceWorkspaceError({ message }: { message?: string | null }) {
+type SpaceWorkspaceErrorReason = 'loadFailed' | 'unsupportedTemplate';
+
+export function SpaceWorkspaceError({
+  message,
+  reason = 'loadFailed',
+}: {
+  message?: string | null;
+  reason?: SpaceWorkspaceErrorReason;
+}) {
   const t = useTranslations('spaces');
+  const hint =
+    reason === 'unsupportedTemplate'
+      ? t('unsupportedTemplateHint')
+      : t('apiNotReadyHint');
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-      <p className="text-sm text-[#4E5969]">{message ?? t('loadFailed')}</p>
-      <p className="text-xs text-[#86909C]">{t('apiNotReadyHint')}</p>
+      <p className="text-sm text-[#4E5969]">
+        {message ?? t(reason === 'unsupportedTemplate' ? 'unsupportedTemplate' : 'loadFailed')}
+      </p>
+      <p className="text-xs text-[#86909C]">{hint}</p>
     </div>
   );
 }

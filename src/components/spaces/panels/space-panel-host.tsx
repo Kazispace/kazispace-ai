@@ -5,6 +5,7 @@ import type { SpacePanelConfig } from '@/types/spaces';
 import { IeltsPrepEppPanel } from '@/components/spaces/panels/ielts-prep-epp-panel';
 import { JobSprintCvPanel } from '@/components/spaces/panels/job-sprint-cv-panel';
 import { JobSprintInterviewPanel } from '@/components/spaces/panels/job-sprint-interview-panel';
+import { SpacePanelUnavailable } from '@/components/spaces/panels/space-panel-unavailable';
 
 interface SpacePanelHostProps {
   panel: SpacePanelConfig;
@@ -25,6 +26,8 @@ export function SpacePanelHost({ panel, locale, jobId, className }: SpacePanelHo
     case 'english_epp':
       return <IeltsPrepEppPanel locale={locale} className={className} />;
     default:
-      return null;
+      return (
+        <SpacePanelUnavailable panelId={panel.panel_id} className={className} />
+      );
   }
 }
