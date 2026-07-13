@@ -26,6 +26,16 @@ export function isClinicChatPathname(pathname: string): boolean {
   return segments.length >= 2 && segments[1] === 'chat';
 }
 
+const DEDICATED_HUB_SEGMENTS = new Set(['cv', 'interview', 'english']);
+
+/** Workspace routes that keep the spaces list pinned on desktop (ADR-006). */
+export function shouldPinSpacesNavPanel(pathname: string): boolean {
+  if (isClinicChatPathname(pathname)) return true;
+  if (resolveSpaceIdFromPathname(pathname)) return true;
+  const segments = pathname.split('/').filter(Boolean);
+  return segments.length >= 2 && DEDICATED_HUB_SEGMENTS.has(segments[1]!);
+}
+
 /** Active sidebar row for `/spaces/*` and `/chat` only; null for legacy hub routes. */
 export function resolveActiveSpaceNavRowId(pathname: string): string | null {
   const spaceId = resolveSpaceIdFromPathname(pathname);

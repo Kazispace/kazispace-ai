@@ -103,7 +103,7 @@ function EnglishPageContent({ locale }: { locale: string }) {
 
   const chatBody = (
     <div className="flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0">
-      <div className="flex-1 p-4 flex flex-col gap-3">
+      <div className="flex-1 p-4 flex flex-col gap-3 max-w-3xl mx-auto w-full">
         {isOpening && messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12">
             <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
@@ -149,14 +149,14 @@ function EnglishPageContent({ locale }: { locale: string }) {
   }
 
   return (
-    <div className="flex h-full flex-col bg-gray-50">
+    <div className="flex h-full min-h-0 w-full flex-col bg-white">
       {sessionStale.stale ? (
         <HubSessionStaleBanner
           onRefresh={sessionStale.refresh}
           onDismiss={sessionStale.dismiss}
         />
       ) : null}
-      <main className="mx-auto flex w-full max-w-5xl min-h-0 flex-1 flex-col">
+      <main className="flex min-h-0 flex-1 w-full flex-col">
         {needsLogin ? (
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">

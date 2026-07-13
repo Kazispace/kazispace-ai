@@ -28,7 +28,7 @@ import {
 } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import type { SessionNavPanelMode } from '@/lib/session-nav';
-import { buildSpaceNavRows, isClinicChatPathname, resolveSpaceIdFromPathname } from '@/lib/space-nav';
+import { buildSpaceNavRows, resolveSpaceIdFromPathname, shouldPinSpacesNavPanel } from '@/lib/space-nav';
 import { createSpace } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
 import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
@@ -82,7 +82,6 @@ function SessionNavShellLayout({
   const spacesEnabled = isSpacesEnabled();
   const isDesktop = useIsDesktop();
   const spaceRouteId = resolveSpaceIdFromPathname(pathname);
-  const isClinicChatRoute = isClinicChatPathname(pathname);
   const isClinic =
     resolveSurfaceFromPathname(pathname) === 'clinic' && !spaceRouteId;
   const activeHubAgentId = getDedicatedHubAgentFromPathname(pathname);
@@ -105,9 +104,7 @@ function SessionNavShellLayout({
   } = navState;
 
   const isSpaceRoute = spacesEnabled && Boolean(spaceRouteId);
-  // Pin spaces list on desktop for /chat + /spaces/* only (not /cv, /interview, /english).
-  const pinSpacesNavPanel =
-    spacesEnabled && isDesktop && (isSpaceRoute || isClinicChatRoute);
+  const pinSpacesNavPanel = spacesEnabled && isDesktop && shouldPinSpacesNavPanel(pathname);
   const effectivePanelOpen = pinSpacesNavPanel ? true : panelOpen;
   const panelVisible = effectivePanelOpen || mobileDrawerOpen;
 

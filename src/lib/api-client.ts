@@ -4,6 +4,7 @@ import { getActiveLanguagePreference } from './locale';
 import { mapUserFromApi } from './api-mappers';
 import { parseAssistantEnvelope } from './chat-envelope';
 import { isReferralDismissed } from './referral-dismiss';
+import { isPlaceholderReply, resolveSpaceTurnReply } from './spaces/turn';
 import { getTmaClientHeaders } from './telegram';
 import type {
   ApiResponse,
@@ -212,7 +213,7 @@ export async function sendChatMessage(
   sessionId: string,
   text: string,
   locale?: string,
-  options?: { routingMode?: 'clinic' }
+  options?: { routingMode?: 'clinic'; routingVersion?: number }
 ): Promise<ApiResponse<ClinicChatResponse>> {
   // API v2.10.6: routing.mode applies to POST /chat/messages (Clinic) only.
   // Hub expert chat uses POST /agents/chat with agent_id in the body — no routing.mode.
@@ -221,8 +222,13 @@ export async function sendChatMessage(
     getActiveLanguagePreference(
       typeof window !== 'undefined' ? window.location.pathname : undefined
     );
+  const headers: Record<string, string> = {};
+  if (options?.routingVersion != null) {
+    headers['X-Kazi-Routing-Version'] = String(options.routingVersion);
+  }
   return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
+    ...(Object.keys(headers).length > 0 ? { headers } : {}),
     body: JSON.stringify({
       session_id: sessionId,
       content: text,
@@ -282,6 +288,7 @@ export async function getLedger(
   return { success: false, error: res.error, errorCode: res.errorCode };
 }
 
+/** Extract clinic/agent reply fields; `reply` may be empty — callers must validate. */
 export function parseClinicReply(data: ClinicChatResponse | undefined): {
   reply: string;
   intent?: string;
@@ -295,6 +302,11 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   }
 
   const envelope = parseAssistantEnvelope(data);
+
+  let reply = envelope.reply.trim();
+  if (isPlaceholderReply(reply)) {
+    reply = resolveSpaceTurnReply(data);
+  }
 
   let referralAgentId =
     data.referral_agent_id ?? data.referral?.agent_id;
@@ -319,7 +331,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
       : undefined;
 
   return {
-    reply: envelope.reply,
+    reply,
     intent: data.intent ?? envelope.intent,
     referral,
     nextActions: envelope.nextActions,

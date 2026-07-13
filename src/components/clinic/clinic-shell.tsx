@@ -186,6 +186,16 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   /** Hub agent id already cold-opened on Clinic — avoids reconcile/focus reload loops. */
   const clinicHubColdOpenRef = useRef<string | null>(null);
+  const pendingClinicHistoryReloadRef = useRef(false);
+
+  const reloadClinicHistoryIfIdle = useCallback(async () => {
+    if (useChatStore.getState().isSending) {
+      pendingClinicHistoryReloadRef.current = true;
+      return;
+    }
+    pendingClinicHistoryReloadRef.current = false;
+    await loadHistoryRef.current();
+  }, []);
 
   /**
    * Clinic cold-open (ADR-005 INV-6): user is on /chat while a dedicated hub session
@@ -203,10 +213,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       }
       clinicHubColdOpenRef.current = hubAgentId;
       useAgentStore.getState().setActiveAgent(null, null);
-      await loadHistoryRef.current();
+      await reloadClinicHistoryIfIdle();
       return true;
     },
-    []
+    [reloadClinicHistoryIfIdle]
   );
 
   const reconcileActiveAgentLayer = useCallback(async () => {
@@ -229,9 +239,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     clinicHubColdOpenRef.current = null;
     useAgentStore.getState().setActiveAgent(null, null);
-    await loadHistoryRef.current();
+    await reloadClinicHistoryIfIdle();
     setLayerReady(true);
-  }, [skipHistoryLoad, stayInClinicForDedicatedHub]);
+  }, [skipHistoryLoad, stayInClinicForDedicatedHub, reloadClinicHistoryIfIdle]);
 
   const reloadClinicIfNeeded = useCallback(
     async (result?: { reloadClinic?: boolean; ok?: boolean }) => {
@@ -653,6 +663,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSending, isSwitching]);
+
+  useEffect(() => {
+    if (isClinicSending || !pendingClinicHistoryReloadRef.current) return;
+    pendingClinicHistoryReloadRef.current = false;
+    void loadHistory();
+  }, [isClinicSending, loadHistory]);
 
   const handleQuickPrompt = (text: string) => {
     if (text === tClinic("prompts.cvText")) {
