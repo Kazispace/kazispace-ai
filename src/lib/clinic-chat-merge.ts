@@ -1,26 +1,26 @@
 import { isPlaceholderReply } from '@/lib/spaces/turn';
 import type { ChatMessage } from '@/types';
 
-function messageContentKey(message: ChatMessage): string {
-  return `${message.role}\0${message.content.trim()}`;
+/** Rows still owned by the client turn loop — not yet fully persisted in session history. */
+export function isInFlightClinicMessage(message: ChatMessage): boolean {
+  if (message.status === 'sending') return true;
+  if (message.streamComplete === false) return true;
+  if (message.role === 'assistant' && isPlaceholderReply(message.content)) return true;
+  return false;
 }
 
-/** Keep in-flight / not-yet-persisted turns when session history reloads. */
+/** Keep in-flight turns when session history reloads; sent/failed rows defer to server. */
 export function mergeClinicMessagesAfterHistoryLoad(
   local: ChatMessage[],
   fromServer: ChatMessage[]
 ): ChatMessage[] {
   if (fromServer.length === 0) return local;
 
-  const serverKeys = new Set(fromServer.map(messageContentKey));
+  const serverIds = new Set(fromServer.map((message) => message.id));
 
-  const pendingLocal = local.filter((message) => {
-    if (message.status === 'sending' || message.status === 'failed') return true;
-    if (message.streamComplete === false) return true;
-    if (serverKeys.has(messageContentKey(message))) return false;
-    if (message.role === 'assistant' && isPlaceholderReply(message.content)) return true;
-    return true;
-  });
+  const pendingLocal = local.filter(
+    (message) => isInFlightClinicMessage(message) && !serverIds.has(message.id)
+  );
 
   if (pendingLocal.length === 0) return fromServer;
 

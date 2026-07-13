@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
+import {
+  isInFlightClinicMessage,
+  mergeClinicMessagesAfterHistoryLoad,
+} from '@/lib/clinic-chat-merge';
 import type { ChatMessage } from '@/types';
 
 const base = (overrides: Partial<ChatMessage>): ChatMessage => ({
@@ -12,6 +15,22 @@ const base = (overrides: Partial<ChatMessage>): ChatMessage => ({
   status: 'sent',
   streamComplete: true,
   ...overrides,
+});
+
+describe('isInFlightClinicMessage', () => {
+  it('treats sending and streaming assistant rows as in-flight', () => {
+    expect(isInFlightClinicMessage(base({ status: 'sending' }))).toBe(true);
+    expect(
+      isInFlightClinicMessage(
+        base({ id: 'a1', role: 'assistant', content: '', streamComplete: false })
+      )
+    ).toBe(true);
+  });
+
+  it('does not treat sent or failed rows as in-flight', () => {
+    expect(isInFlightClinicMessage(base({ status: 'sent' }))).toBe(false);
+    expect(isInFlightClinicMessage(base({ status: 'failed' }))).toBe(false);
+  });
 });
 
 describe('mergeClinicMessagesAfterHistoryLoad', () => {
@@ -32,7 +51,7 @@ describe('mergeClinicMessagesAfterHistoryLoad', () => {
     ]);
   });
 
-  it('prefers server when assistant content already persisted', () => {
+  it('prefers server for completed local rows even when content matches', () => {
     const local = [
       base({ id: 'u1', content: 'hello' }),
       base({ id: 'a_local', role: 'assistant', content: 'world' }),
@@ -41,6 +60,24 @@ describe('mergeClinicMessagesAfterHistoryLoad', () => {
       base({ id: 'u_srv', content: 'hello' }),
       base({ id: 'a_srv', role: 'assistant', content: 'world' }),
     ];
+    expect(mergeClinicMessagesAfterHistoryLoad(local, server)).toEqual(server);
+  });
+
+  it('does not duplicate repeated user text that is already sent locally', () => {
+    const local = [
+      base({ id: 'u_dup', content: '你好' }),
+      base({ id: 'a_dup', role: 'assistant', content: 'reply' }),
+    ];
+    const server = [
+      base({ id: 'u_srv', content: '你好' }),
+      base({ id: 'a_srv', role: 'assistant', content: 'reply' }),
+    ];
+    expect(mergeClinicMessagesAfterHistoryLoad(local, server)).toEqual(server);
+  });
+
+  it('drops failed rows in favor of server history', () => {
+    const local = [base({ id: 'u_fail', content: 'retry me', status: 'failed' })];
+    const server = [base({ id: 'u_srv', content: 'older' })];
     expect(mergeClinicMessagesAfterHistoryLoad(local, server)).toEqual(server);
   });
 });

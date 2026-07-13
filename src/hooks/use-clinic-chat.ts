@@ -12,25 +12,40 @@ import { isPaywallError, isProfileIncomplete } from '@/lib/api-errors';
 import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
 import { ensureMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
-import { isPlaceholderReply } from '@/lib/spaces/turn';
+import { isPlaceholderReply, resolveSpaceTurnReply } from '@/lib/spaces/turn';
 import type { ChatMessage } from '@/types';
+
+function extractHistoryMessageContent(
+  raw: Record<string, unknown>,
+  role: 'user' | 'assistant'
+): string {
+  if (role === 'user') {
+    return (
+      (typeof raw.content === 'string' ? raw.content : '') ||
+      (typeof raw.text === 'string' ? raw.text : '')
+    ).trim();
+  }
+
+  const fromTurn = resolveSpaceTurnReply(raw).trim();
+  if (!isPlaceholderReply(fromTurn)) return fromTurn;
+
+  return (
+    (typeof raw.content === 'string' ? raw.content : '') ||
+    (typeof raw.text === 'string' ? raw.text : '')
+  ).trim();
+}
 
 function normalizeHistoryMessage(
   raw: Record<string, unknown>,
   sessionId: string
-): ChatMessage {
+): ChatMessage | null {
   const roleRaw = (raw.role as string) ?? 'assistant';
-  const role =
+  const role: 'user' | 'assistant' =
     roleRaw === 'user' ? 'user' : roleRaw === 'assistant' || roleRaw === 'ai' ? 'assistant' : 'assistant';
 
-  let content =
-    (typeof raw.content === 'string' ? raw.content : '') ||
-    (typeof raw.text === 'string' ? raw.text : '');
-
-  if (!content && raw.assistant_message && typeof raw.assistant_message === 'object') {
-    const nested = (raw.assistant_message as Record<string, unknown>).content;
-    if (typeof nested === 'string') content = nested;
-  }
+  const content = extractHistoryMessageContent(raw, role);
+  if (!content) return null;
+  if (role === 'assistant' && isPlaceholderReply(content)) return null;
 
   return {
     id: (raw.id as string) ?? (raw.message_id as string) ?? crypto.randomUUID(),
@@ -51,29 +66,39 @@ async function fetchNormalizedHistory(sessionId: string): Promise<ChatMessage[]>
     ? res.data
     : (res.data as { messages: ChatMessage[] }).messages ?? [];
 
-  return list.map((m) =>
-    normalizeHistoryMessage(m as unknown as Record<string, unknown>, sessionId)
-  );
+  return list
+    .map((m) =>
+      normalizeHistoryMessage(m as unknown as Record<string, unknown>, sessionId)
+    )
+    .filter((message): message is ChatMessage => message != null);
 }
 
-function latestAssistantAfterUser(
-  messages: ChatMessage[],
-  userText: string
-): string {
-  const trimmed = userText.trim();
-  const userIndex = [...messages]
-    .reverse()
-    .findIndex((message) => message.role === 'user' && message.content.trim() === trimmed);
+function assistantAfterUserId(messages: ChatMessage[], userMsgId: string): string {
+  const userIndex = messages.findIndex((message) => message.id === userMsgId);
   if (userIndex < 0) return '';
 
-  const absoluteIndex = messages.length - 1 - userIndex;
-  for (let index = absoluteIndex + 1; index < messages.length; index++) {
+  for (let index = userIndex + 1; index < messages.length; index++) {
     const message = messages[index];
     if (message?.role === 'assistant' && !isPlaceholderReply(message.content)) {
       return message.content.trim();
     }
   }
   return '';
+}
+
+async function recoverPlaceholderReplyFromHistory(
+  sessionId: string,
+  userMsgId: string,
+  setMessages: (messages: ChatMessage[]) => void
+): Promise<string> {
+  const refreshed = await fetchNormalizedHistory(sessionId);
+  const reply = assistantAfterUserId(refreshed, userMsgId);
+  if (!isPlaceholderReply(reply)) {
+    setMessages(
+      mergeClinicMessagesAfterHistoryLoad(useChatStore.getState().messages, refreshed)
+    );
+  }
+  return reply;
 }
 
 export function useClinicChat(locale?: string) {
@@ -107,7 +132,7 @@ export function useClinicChat(locale?: string) {
   );
 
   const loadHistory = useCallback(async () => {
-    if (useChatStore.getState().isSending) return;
+    if (useChatStore.getState().isSending) return false;
 
     setIsHistoryLoading(true);
     try {
@@ -115,6 +140,7 @@ export function useClinicChat(locale?: string) {
       const fromServer = await fetchNormalizedHistory(sessionId);
       const local = useChatStore.getState().messages;
       setMessages(mergeClinicMessagesAfterHistoryLoad(local, fromServer));
+      return true;
     } finally {
       setIsHistoryLoading(false);
     }
@@ -158,6 +184,7 @@ export function useClinicChat(locale?: string) {
       try {
         const res = await sendChatMessage(sessionId, text, locale, {
           routingMode: 'clinic',
+          routingVersion: 2,
         });
 
         if (!res.success || !res.data) {
@@ -172,14 +199,11 @@ export function useClinicChat(locale?: string) {
 
         if (isPlaceholderReply(reply)) {
           try {
-            const refreshed = await fetchNormalizedHistory(sessionId);
-            reply = latestAssistantAfterUser(refreshed, text);
-            if (!isPlaceholderReply(reply)) {
-              setMessages(mergeClinicMessagesAfterHistoryLoad(
-                useChatStore.getState().messages,
-                refreshed
-              ));
-            }
+            reply = await recoverPlaceholderReplyFromHistory(
+              sessionId,
+              userMsgId,
+              setMessages
+            );
           } catch (error) {
             console.warn('[useClinicChat] history refresh failed after send', error);
           }

@@ -213,7 +213,7 @@ export async function sendChatMessage(
   sessionId: string,
   text: string,
   locale?: string,
-  options?: { routingMode?: 'clinic' }
+  options?: { routingMode?: 'clinic'; routingVersion?: number }
 ): Promise<ApiResponse<ClinicChatResponse>> {
   // API v2.10.6: routing.mode applies to POST /chat/messages (Clinic) only.
   // Hub expert chat uses POST /agents/chat with agent_id in the body — no routing.mode.
@@ -222,11 +222,13 @@ export async function sendChatMessage(
     getActiveLanguagePreference(
       typeof window !== 'undefined' ? window.location.pathname : undefined
     );
+  const headers: Record<string, string> = {};
+  if (options?.routingVersion != null) {
+    headers['X-Kazi-Routing-Version'] = String(options.routingVersion);
+  }
   return apiRequest<ClinicChatResponse>('/api/v1/chat/messages', {
     method: 'POST',
-    headers: {
-      'X-Kazi-Routing-Version': '2',
-    },
+    ...(Object.keys(headers).length > 0 ? { headers } : {}),
     body: JSON.stringify({
       session_id: sessionId,
       content: text,
@@ -286,6 +288,7 @@ export async function getLedger(
   return { success: false, error: res.error, errorCode: res.errorCode };
 }
 
+/** Extract clinic/agent reply fields; `reply` may be empty — callers must validate. */
 export function parseClinicReply(data: ClinicChatResponse | undefined): {
   reply: string;
   intent?: string;
