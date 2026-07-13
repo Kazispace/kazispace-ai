@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -28,7 +28,7 @@ import {
 } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import type { SessionNavPanelMode } from '@/lib/session-nav';
-import { buildSpaceNavRows, resolveSpaceIdFromPathname } from '@/lib/space-nav';
+import { buildSpaceNavRows, isClinicChatPathname, resolveSpaceIdFromPathname } from '@/lib/space-nav';
 import { createSpace } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
 import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
@@ -82,6 +82,7 @@ function SessionNavShellLayout({
   const spacesEnabled = isSpacesEnabled();
   const isDesktop = useIsDesktop();
   const spaceRouteId = resolveSpaceIdFromPathname(pathname);
+  const isClinicChatRoute = isClinicChatPathname(pathname);
   const isClinic =
     resolveSurfaceFromPathname(pathname) === 'clinic' && !spaceRouteId;
   const activeHubAgentId = getDedicatedHubAgentFromPathname(pathname);
@@ -104,23 +105,17 @@ function SessionNavShellLayout({
   } = navState;
 
   const isSpaceRoute = spacesEnabled && Boolean(spaceRouteId);
-  const effectivePanelOpen =
-    isSpaceRoute && isDesktop ? true : panelOpen;
+  // Pin spaces list on desktop for /chat + /spaces/* only (not /cv, /interview, /english).
+  const pinSpacesNavPanel =
+    spacesEnabled && isDesktop && (isSpaceRoute || isClinicChatRoute);
+  const effectivePanelOpen = pinSpacesNavPanel ? true : panelOpen;
   const panelVisible = effectivePanelOpen || mobileDrawerOpen;
-  const spaceRouteEnteredRef = useRef(false);
 
   useEffect(() => {
-    if (!isSpaceRoute) {
-      spaceRouteEnteredRef.current = false;
-      return;
-    }
-    if (spaceRouteEnteredRef.current) return;
-    spaceRouteEnteredRef.current = true;
+    if (!pinSpacesNavPanel) return;
     setPanelMode('agents');
-    if (isDesktop) {
-      setPanelOpen(true);
-    }
-  }, [isDesktop, isSpaceRoute, setPanelMode, setPanelOpen]);
+    setPanelOpen(true);
+  }, [pinSpacesNavPanel, setPanelMode, setPanelOpen]);
   const { sessionsByAgent, isLoading, error, refresh } = useActiveAgentSessions({
     panelOpen: panelVisible,
     enabled: !spacesEnabled,
@@ -143,14 +138,14 @@ function SessionNavShellLayout({
 
   const closePanel = useCallback(() => {
     if (mobileDrawerOpen) closeMobileDrawer();
-    else if (!isSpaceRoute) setPanelOpen(false);
-  }, [closeMobileDrawer, isSpaceRoute, mobileDrawerOpen, setPanelOpen]);
+    else if (!pinSpacesNavPanel) setPanelOpen(false);
+  }, [closeMobileDrawer, mobileDrawerOpen, pinSpacesNavPanel, setPanelOpen]);
 
   const openPanelMode = useCallback(
     (mode: SessionNavPanelMode) => {
       const isSameMode = panelMode === mode;
       if (isSameMode && panelVisible) {
-        if (!isSpaceRoute || !isDesktop) {
+        if (!pinSpacesNavPanel || !isDesktop) {
           closePanel();
         }
         return;
@@ -162,7 +157,7 @@ function SessionNavShellLayout({
         setPanelOpen(true);
       }
     },
-    [closePanel, isDesktop, isSpaceRoute, openMobileDrawer, panelMode, panelVisible, setPanelMode, setPanelOpen]
+    [closePanel, isDesktop, openMobileDrawer, panelMode, panelVisible, pinSpacesNavPanel, setPanelMode, setPanelOpen]
   );
 
   const openPanel = useCallback(
@@ -191,7 +186,7 @@ function SessionNavShellLayout({
       else openMobileDrawer();
       return;
     }
-    if (isSpaceRoute) return;
+    if (pinSpacesNavPanel) return;
     togglePanel();
   }, [
     closeMobileDrawer,
@@ -200,7 +195,7 @@ function SessionNavShellLayout({
     openMobileDrawer,
     openPanelMode,
     panelMode,
-    isSpaceRoute,
+    pinSpacesNavPanel,
     togglePanel,
   ]);
 

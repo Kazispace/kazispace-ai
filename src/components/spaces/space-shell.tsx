@@ -6,24 +6,19 @@ import { useTranslations } from 'next-intl';
 import { ChatHeader } from '@/components/clinic/chat-header';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
-import { cn } from '@/lib/utils';
 import type { SpaceDetail } from '@/types/spaces';
-
-export type SpaceShellVariant = 'page' | 'column';
 
 interface SpaceShellProps {
   locale: string;
   space: SpaceDetail;
-  variant?: SpaceShellVariant;
   children: React.ReactNode;
   footer?: React.ReactNode;
 }
 
-/** Clinic-aligned shell: navy header, guest banner, gray message area, composer footer. */
+/** Clinic-aligned shell: full-width column inside SessionNav main (h-full chain). */
 export function SpaceShell({
   locale,
   space,
-  variant = 'page',
   children,
   footer,
 }: SpaceShellProps) {
@@ -32,12 +27,7 @@ export function SpaceShell({
   const spaceEmoji = space.template_icon ?? '💬';
 
   return (
-    <div
-      className={cn(
-        'relative flex h-full min-h-0 flex-col bg-white',
-        variant === 'page' && 'mx-auto max-w-[860px] shadow-xl'
-      )}
-    >
+    <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
       <ChatHeader
         locale={locale}
         mode="space"

@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
-import { SpaceShell, type SpaceShellVariant } from '@/components/spaces/space-shell';
+import { SpaceShell } from '@/components/spaces/space-shell';
 import { useSpaceTurn } from '@/hooks/use-space-turn';
 import type { SpaceDetail } from '@/types/spaces';
 
@@ -20,7 +20,6 @@ interface SpaceChatPaneProps {
   locale: string;
   space: SpaceDetail;
   welcomeKey?: SpaceWelcomeKey;
-  shellVariant?: SpaceShellVariant;
   composer?:
     | ReactNode
     | ((ctx: SpaceComposerRenderProps) => ReactNode);
@@ -31,7 +30,6 @@ export function SpaceChatPane({
   locale,
   space,
   welcomeKey = 'blankWelcome',
-  shellVariant = 'page',
   composer,
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
@@ -55,7 +53,6 @@ export function SpaceChatPane({
     <SpaceShell
       locale={locale}
       space={space}
-      variant={shellVariant}
       footer={composerNode ?? null}
     >
       <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-3">

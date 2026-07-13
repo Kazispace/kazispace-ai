@@ -10,26 +10,18 @@ import {
   SpaceWorkspaceError,
   SpaceWorkspaceLoading,
 } from '@/components/spaces/space-workspace-states';
+import type { SpaceDetail } from '@/types/spaces';
 
 interface SpaceWorkspaceProps {
   spaceId: string;
 }
 
-export function SpaceWorkspace({ spaceId }: SpaceWorkspaceProps) {
-  const { space, isLoading, error } = useSpaceDetail(spaceId);
+/** Ensures loading/error/template views share the same h-full flex chain as panels. */
+function SpaceWorkspaceFrame({ children }: { children: React.ReactNode }) {
+  return <div className="flex h-full min-h-0 flex-col">{children}</div>;
+}
 
-  if (isLoading && !space) {
-    return <SpaceWorkspaceLoading />;
-  }
-
-  if (error || !space) {
-    return <SpaceWorkspaceError message={error} />;
-  }
-
-  if (!isSupportedSpaceTemplate(space.template_id)) {
-    return <SpaceWorkspaceError reason="unsupportedTemplate" />;
-  }
-
+function renderTemplateWorkspace(space: SpaceDetail) {
   switch (space.template_id) {
     case 'blank_conversation':
       return <BlankConversationWorkspace space={space} />;
@@ -40,4 +32,34 @@ export function SpaceWorkspace({ spaceId }: SpaceWorkspaceProps) {
     default:
       return <SpaceWorkspaceError reason="unsupportedTemplate" />;
   }
+}
+
+export function SpaceWorkspace({ spaceId }: SpaceWorkspaceProps) {
+  const { space, isLoading, error } = useSpaceDetail(spaceId);
+
+  if (isLoading && !space) {
+    return (
+      <SpaceWorkspaceFrame>
+        <SpaceWorkspaceLoading />
+      </SpaceWorkspaceFrame>
+    );
+  }
+
+  if (error || !space) {
+    return (
+      <SpaceWorkspaceFrame>
+        <SpaceWorkspaceError message={error} />
+      </SpaceWorkspaceFrame>
+    );
+  }
+
+  if (!isSupportedSpaceTemplate(space.template_id)) {
+    return (
+      <SpaceWorkspaceFrame>
+        <SpaceWorkspaceError reason="unsupportedTemplate" />
+      </SpaceWorkspaceFrame>
+    );
+  }
+
+  return <SpaceWorkspaceFrame>{renderTemplateWorkspace(space)}</SpaceWorkspaceFrame>;
 }
