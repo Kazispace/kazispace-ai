@@ -31,7 +31,7 @@ export function SpaceChatPane({
   locale,
   space,
   welcomeKey = 'blankWelcome',
-  shellVariant = 'page',
+  shellVariant = 'column',
   composer,
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');

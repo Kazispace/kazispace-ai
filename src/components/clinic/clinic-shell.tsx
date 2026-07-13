@@ -866,7 +866,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     clinicIdleReady && isLoggedIn && activeSessionEntries.length > 0;
 
   return (
-    <div className="relative flex flex-col h-screen max-w-[860px] mx-auto bg-white shadow-xl">
+    <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
       {isSwitching && <SwitchingOverlay />}
 
       <ChatHeader
