@@ -75,6 +75,44 @@ describe('mergeSpaceMessagesAfterSend', () => {
     const server = [{ id: 'u1', role: 'user' as const, content: 'hi' }];
     expect(mergeSpaceMessagesAfterSend(local, server)).toEqual(local);
   });
+
+  it('returns local when server history is empty', () => {
+    const local = [
+      { id: 'u1', role: 'user' as const, content: 'hi' },
+      { id: 'a1', role: 'assistant' as const, content: 'hello' },
+    ];
+    expect(mergeSpaceMessagesAfterSend(local, [])).toEqual(local);
+  });
+
+  it('prefers server when it already has the same assistant content', () => {
+    const local = [
+      { id: 'u1', role: 'user' as const, content: 'hi' },
+      { id: 'local_a1', role: 'assistant' as const, content: 'hello' },
+    ];
+    const server = [
+      { id: 'u1', role: 'user' as const, content: 'hi' },
+      { id: 'srv_a1', role: 'assistant' as const, content: 'hello' },
+    ];
+    expect(mergeSpaceMessagesAfterSend(local, server)).toEqual(server);
+  });
+
+  it('appends only assistant rows missing from server by content', () => {
+    const local = [
+      { id: 'u1', role: 'user' as const, content: 'one' },
+      { id: 'local_a1', role: 'assistant' as const, content: 'first' },
+      { id: 'u2', role: 'user' as const, content: 'two' },
+      { id: 'local_a2', role: 'assistant' as const, content: 'second' },
+    ];
+    const server = [
+      { id: 'u1', role: 'user' as const, content: 'one' },
+      { id: 'srv_a1', role: 'assistant' as const, content: 'first' },
+      { id: 'u2', role: 'user' as const, content: 'two' },
+    ];
+    expect(mergeSpaceMessagesAfterSend(local, server)).toEqual([
+      ...server,
+      { id: 'local_a2', role: 'assistant', content: 'second' },
+    ]);
+  });
 });
 
 describe('mapSpaceHistoryMessages', () => {

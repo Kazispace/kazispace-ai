@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { fetchChatHistory, parseClinicReply, sendChatMessage } from '@/lib/api-client';
-import { ensureMasterSession } from '@/lib/master-session';
 import { sendSpaceTurn } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
 import {
@@ -14,13 +13,11 @@ import {
   type SpaceChatMessage,
 } from '@/lib/spaces/turn';
 
-async function resolveChatSessionId(
+function resolveSpaceMasterSessionId(
   spaceMasterSessionId: string | null | undefined
-): Promise<string | null> {
-  const fromSpace = spaceMasterSessionId?.trim();
-  if (fromSpace) return fromSpace;
-  const fallback = await ensureMasterSession();
-  return fallback.trim() || null;
+): string | null {
+  const sessionId = spaceMasterSessionId?.trim();
+  return sessionId || null;
 }
 
 async function loadSpaceHistory(
@@ -34,7 +31,8 @@ async function loadSpaceHistory(
 
 /**
  * Space chat loop. POST /spaces/{id}/turn when orchestrator replies; otherwise
- * falls back to master_session clinic chat (BE P0.5 stub).
+ * falls back to the space `master_session_id` clinic chat (BE P0.5 stub).
+ * Requires BE to bind `master_session_id` on the space — no clinic default fallback.
  * TODO(KAZI-172): switch to GET /spaces/{id}/messages when BE exposes space-scoped history.
  */
 export function useSpaceTurn(
@@ -49,7 +47,7 @@ export function useSpaceTurn(
   const [sendError, setSendError] = useState<string | null>(null);
 
   const refreshHistory = useCallback(async () => {
-    const sessionId = await resolveChatSessionId(masterSessionId);
+    const sessionId = resolveSpaceMasterSessionId(masterSessionId);
     if (!sessionId) return [];
     const next = await loadSpaceHistory(sessionId);
     setMessages(next);
@@ -62,17 +60,17 @@ export function useSpaceTurn(
       return;
     }
 
+    const sessionId = resolveSpaceMasterSessionId(masterSessionId);
+    if (!sessionId) {
+      setMessages([]);
+      setIsHydrating(false);
+      return;
+    }
+
     let cancelled = false;
     setIsHydrating(true);
 
     void (async () => {
-      const sessionId = await resolveChatSessionId(masterSessionId);
-      if (cancelled) return;
-      if (!sessionId) {
-        setMessages([]);
-        setIsHydrating(false);
-        return;
-      }
       const next = await loadSpaceHistory(sessionId);
       if (cancelled) return;
       setMessages(next);
@@ -90,6 +88,13 @@ export function useSpaceTurn(
         return { ok: false as const, error: 'Space not ready' };
       }
 
+      const sessionId = resolveSpaceMasterSessionId(masterSessionId);
+      if (!sessionId) {
+        const err = 'Space not ready';
+        setSendError(err);
+        return { ok: false as const, error: err };
+      }
+
       const trimmed = text.trim();
       const userId = `user_${Date.now()}`;
       let nextMessages: SpaceChatMessage[] = [];
@@ -102,7 +107,6 @@ export function useSpaceTurn(
       setSendError(null);
 
       try {
-        const sessionId = await resolveChatSessionId(masterSessionId);
         const res = await sendSpaceTurn(spaceId, { message: trimmed });
 
         if (!res.success) {
@@ -114,7 +118,7 @@ export function useSpaceTurn(
 
         let reply = resolveSpaceTurnReply(res.data);
 
-        if (!reply && sessionId) {
+        if (!reply) {
           const clinicRes = await sendChatMessage(sessionId, trimmed, locale, {
             routingMode: 'clinic',
           });
@@ -134,16 +138,18 @@ export function useSpaceTurn(
           ];
           setMessages(nextMessages);
         } else {
-          const err = sessionId ? 'Assistant did not return a reply' : 'Chat session not ready';
+          const err = 'Assistant did not return a reply';
           setSendError(err);
           return { ok: false as const, error: err };
         }
 
-        if (sessionId) {
+        try {
           const refreshed = await loadSpaceHistory(sessionId);
           if (refreshed.length > 0) {
             setMessages(mergeSpaceMessagesAfterSend(nextMessages, refreshed));
           }
+        } catch (error) {
+          console.warn('[useSpaceTurn] history refresh failed after send', error);
         }
 
         return { ok: true as const };

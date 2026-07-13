@@ -8,7 +8,11 @@ export function isPlaceholderReply(text: string): boolean {
   return !trimmed || PLACEHOLDER_REPLIES.has(trimmed);
 }
 
-/** Extract text components from ADR-006 SpaceTurnEnvelope. */
+/**
+ * Extract text components from ADR-006 SpaceTurnEnvelope.
+ * MVP: only `type: "text"` is rendered in Space chat; tool_call / card / referral
+ * components are ignored until the pane supports rich envelopes.
+ */
 export function extractSpaceTurnEnvelopeText(envelope: unknown): string {
   if (!envelope || typeof envelope !== 'object') return '';
   const components = (envelope as Record<string, unknown>).components;
@@ -121,6 +125,10 @@ export function mapSpaceHistoryMessages(messages: unknown[]): SpaceChatMessage[]
     .filter((message): message is SpaceChatMessage => message != null);
 }
 
+function assistantContentKey(content: string): string {
+  return content.trim();
+}
+
 /** Keep local assistant turns when session history lags behind the turn response. */
 export function mergeSpaceMessagesAfterSend(
   local: SpaceChatMessage[],
@@ -128,12 +136,19 @@ export function mergeSpaceMessagesAfterSend(
 ): SpaceChatMessage[] {
   if (fromServer.length === 0) return local;
 
-  const serverAssistantCount = fromServer.filter((m) => m.role === 'assistant').length;
-  const localAssistantCount = local.filter((m) => m.role === 'assistant').length;
-  if (serverAssistantCount >= localAssistantCount) return fromServer;
+  const serverAssistantContents = new Set(
+    fromServer
+      .filter((message) => message.role === 'assistant')
+      .map((message) => assistantContentKey(message.content))
+  );
 
-  const trailingAssistants = local
-    .filter((m) => m.role === 'assistant')
-    .slice(serverAssistantCount);
-  return [...fromServer, ...trailingAssistants];
+  const missingAssistants = local.filter(
+    (message) =>
+      message.role === 'assistant' &&
+      !serverAssistantContents.has(assistantContentKey(message.content))
+  );
+
+  if (missingAssistants.length === 0) return fromServer;
+
+  return [...fromServer, ...missingAssistants];
 }
