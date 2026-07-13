@@ -8,6 +8,24 @@ export function isPlaceholderReply(text: string): boolean {
   return !trimmed || PLACEHOLDER_REPLIES.has(trimmed);
 }
 
+/** Extract text components from ADR-006 SpaceTurnEnvelope. */
+export function extractSpaceTurnEnvelopeText(envelope: unknown): string {
+  if (!envelope || typeof envelope !== 'object') return '';
+  const components = (envelope as Record<string, unknown>).components;
+  if (!Array.isArray(components)) return '';
+
+  const parts = components
+    .map((item) => {
+      if (!item || typeof item !== 'object') return '';
+      const component = item as Record<string, unknown>;
+      if (component.type !== 'text' || typeof component.text !== 'string') return '';
+      return component.text.trim();
+    })
+    .filter((text) => text && !isPlaceholderReply(text));
+
+  return parts.join('\n\n');
+}
+
 /** Extract assistant text from POST /spaces/{id}/turn payloads. */
 export function resolveSpaceTurnReply(data: unknown): string {
   if (!data || typeof data !== 'object') return '';
@@ -17,6 +35,11 @@ export function resolveSpaceTurnReply(data: unknown): string {
   const replyText =
     typeof raw.reply_text === 'string' ? raw.reply_text.trim() : '';
   if (!isPlaceholderReply(replyText)) return replyText;
+
+  if (raw.envelope) {
+    const fromComponents = extractSpaceTurnEnvelopeText(raw.envelope);
+    if (!isPlaceholderReply(fromComponents)) return fromComponents;
+  }
 
   // Clinic-style turns may flatten assistant_response / reply on the root payload.
   const fromFlattenedTurn = parseAssistantEnvelope(data).reply.trim();
@@ -96,4 +119,21 @@ export function mapSpaceHistoryMessages(messages: unknown[]): SpaceChatMessage[]
         : null
     )
     .filter((message): message is SpaceChatMessage => message != null);
+}
+
+/** Keep local assistant turns when session history lags behind the turn response. */
+export function mergeSpaceMessagesAfterSend(
+  local: SpaceChatMessage[],
+  fromServer: SpaceChatMessage[]
+): SpaceChatMessage[] {
+  if (fromServer.length === 0) return local;
+
+  const serverAssistantCount = fromServer.filter((m) => m.role === 'assistant').length;
+  const localAssistantCount = local.filter((m) => m.role === 'assistant').length;
+  if (serverAssistantCount >= localAssistantCount) return fromServer;
+
+  const trailingAssistants = local
+    .filter((m) => m.role === 'assistant')
+    .slice(serverAssistantCount);
+  return [...fromServer, ...trailingAssistants];
 }

@@ -37,7 +37,8 @@ export function SpaceChatPane({
   const t = useTranslations('spaces');
   const { messages, isHydrating, isSending, sendError, sendMessage } = useSpaceTurn(
     space.id,
-    space.master_session_id
+    space.master_session_id,
+    locale
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
