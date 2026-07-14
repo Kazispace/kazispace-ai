@@ -44,6 +44,8 @@ export interface ReferralPayload {
   dismissed?: boolean;
 }
 
+export type { SpaceNudgePayload } from '@/lib/spaces/space-nudge';
+
 export type { ChatJobCard, ChatNextAction, LocalizedLabel, ParsedAssistantEnvelope, AssistantWorkflow, WorkflowStep, WorkflowStepStatus } from './chat-envelope';
 
 export interface ChatMessage {
@@ -55,6 +57,7 @@ export interface ChatMessage {
   intent?: string;
   status?: 'sending' | 'sent' | 'failed';
   referral?: ReferralPayload;
+  spaceNudge?: import('@/lib/spaces/space-nudge').SpaceNudgePayload;
   nextActions?: ChatNextAction[];
   cards?: ChatJobCard[];
   workflow?: import('./chat-envelope').AssistantWorkflow;

@@ -4,6 +4,12 @@ import { getActiveLanguagePreference } from './locale';
 import { mapUserFromApi } from './api-mappers';
 import { parseAssistantEnvelope } from './chat-envelope';
 import { isReferralDismissed } from './referral-dismiss';
+import {
+  extractSpaceNudge,
+  isSpaceNudgeDismissed,
+  type SpaceNudgePayload,
+} from './spaces/space-nudge';
+import { isSpacesEnabled } from './spaces/constants';
 import { isPlaceholderReply, resolveSpaceTurnReply } from './spaces/turn';
 import { getTmaClientHeaders } from './telegram';
 import { parseRetryAfterSeconds } from './retry-after';
@@ -299,6 +305,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   reply: string;
   intent?: string;
   referral?: { agentId: string; reason: string };
+  spaceNudge?: SpaceNudgePayload;
   nextActions: ChatNextAction[];
   cards: ChatJobCard[];
   routedToAgent?: { agentId: string; sessionId?: string };
@@ -336,10 +343,19 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
         }
       : undefined;
 
+  let spaceNudge: SpaceNudgePayload | undefined;
+  if (isSpacesEnabled()) {
+    const extracted = extractSpaceNudge(data, getActiveLanguagePreference());
+    if (extracted && !isSpaceNudgeDismissed(extracted.templateId)) {
+      spaceNudge = extracted;
+    }
+  }
+
   return {
     reply,
     intent: data.intent ?? envelope.intent,
     referral,
+    ...(spaceNudge ? { spaceNudge } : {}),
     nextActions: envelope.nextActions,
     cards: envelope.cards,
     routedToAgent,

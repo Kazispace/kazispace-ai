@@ -33,6 +33,13 @@ import {
 } from "@/lib/agents/registry";
 import { getEnglishLevel } from "@/lib/auth";
 import { dismissReferral, isReferralDismissed, clearExpiredReferralDismissals } from "@/lib/referral-dismiss";
+import {
+  clearExpiredSpaceNudgeDismissals,
+  dismissSpaceNudge,
+  type SpaceNudgePayload,
+} from "@/lib/spaces/space-nudge";
+import { createSpace } from "@/lib/spaces-api";
+import { publishSpacesListInvalidate } from "@/lib/spaces-list-invalidate";
 import { consumePendingTmaAction, routeForTmaAction } from "@/lib/tma-routing";
 import {
   CV_BUILDER_AGENT_ID,
@@ -81,6 +88,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const tReferral = useTranslations("referral");
   const tSessions = useTranslations("agentSessions");
   const tSessionNav = useTranslations("sessionNav");
+  const tSpaces = useTranslations("spaces");
+  // MVP: one in-flight accept at a time (BE emits at most one live nudge per reply).
+  const [spaceNudgeBusy, setSpaceNudgeBusy] = useState(false);
 
   const switcherOpen = useAgentStore((s) => s.switcherOpen);
   const setSwitcherOpen = useAgentStore((s) => s.setSwitcherOpen);
@@ -136,6 +146,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     retryMessage,
     markStreamComplete,
     dismissMessageReferral,
+    dismissMessageSpaceNudge,
   } = useClinicChat(locale);
 
   const {
@@ -452,6 +463,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   useEffect(() => {
     setEnglishLevelState(getEnglishLevel());
     clearExpiredReferralDismissals();
+    clearExpiredSpaceNudgeDismissals();
     fetch(`${API_BASE_URL}/health`, { signal: AbortSignal.timeout(5000) })
       .then((r) => setIsOnline(r.ok))
       .catch(() => setIsOnline(false));
@@ -842,6 +854,46 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     setPendingReferral(null);
   };
 
+  const handleSpaceNudgeAccept = useCallback(
+    async (nudge: SpaceNudgePayload, messageId?: string) => {
+      if (!isSpacesEnabled() || spaceNudgeBusy) return;
+      setSpaceNudgeBusy(true);
+      try {
+        const res = await createSpace({
+          template_id: nudge.templateId,
+          ...(nudge.suggestedName ? { name: nudge.suggestedName } : {}),
+        });
+        if (!res.success || !res.data) {
+          showToast(res.error ?? tSpaces("nudgeCreateFailed"), "error");
+          return;
+        }
+        // Dismiss only after success — failed accept must keep the card for retry.
+        dismissSpaceNudge(nudge.templateId);
+        if (messageId) dismissMessageSpaceNudge(messageId);
+        publishSpacesListInvalidate();
+        router.push(`/${locale}/spaces/${encodeURIComponent(res.data.id)}`);
+      } finally {
+        setSpaceNudgeBusy(false);
+      }
+    },
+    [
+      dismissMessageSpaceNudge,
+      locale,
+      router,
+      showToast,
+      spaceNudgeBusy,
+      tSpaces,
+    ]
+  );
+
+  const handleSpaceNudgeDismiss = useCallback(
+    (nudge: SpaceNudgePayload, messageId?: string) => {
+      dismissSpaceNudge(nudge.templateId);
+      if (messageId) dismissMessageSpaceNudge(messageId);
+    },
+    [dismissMessageSpaceNudge]
+  );
+
   const handleNextAction = useCallback(
     (action: ChatNextAction) => {
       switch (action.type) {
@@ -1033,6 +1085,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 intent={msg.intent}
                 status={msg.status}
                 referral={msg.referral}
+                spaceNudge={!isAgentMode ? msg.spaceNudge : undefined}
                 nextActions={msg.nextActions}
                 cards={msg.cards}
                 locale={locale}
@@ -1065,10 +1118,24 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                     ? () => handleReferralDismiss(msg.referral!.agentId, msg.id)
                     : undefined
                 }
-                referralDisabled={isSending || isSwitching}
+                onSpaceNudgeAccept={
+                  !isAgentMode &&
+                  msg.spaceNudge &&
+                  !msg.spaceNudge.dismissed
+                    ? () => void handleSpaceNudgeAccept(msg.spaceNudge!, msg.id)
+                    : undefined
+                }
+                onSpaceNudgeDismiss={
+                  !isAgentMode &&
+                  msg.spaceNudge &&
+                  !msg.spaceNudge.dismissed
+                    ? () => handleSpaceNudgeDismiss(msg.spaceNudge!, msg.id)
+                    : undefined
+                }
+                referralDisabled={isSending || isSwitching || spaceNudgeBusy}
                 onNextAction={handleNextAction}
                 onJobCardClick={handleJobCardClick}
-                actionsDisabled={isSending || isSwitching}
+                actionsDisabled={isSending || isSwitching || spaceNudgeBusy}
               />
             );
           })

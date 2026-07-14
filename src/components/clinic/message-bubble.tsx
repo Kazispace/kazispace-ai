@@ -7,8 +7,10 @@ import { ChatJobTeasers } from "./chat-job-teasers";
 import { ChatNextActions } from "./chat-next-actions";
 import { MarkdownContent } from "./markdown-content";
 import { ReferralPrompt } from "./referral-prompt";
+import { SpaceNudgePrompt } from "./space-nudge-prompt";
 import { StreamingText } from "@/components/chat/streaming-text";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
+import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 
 interface MessageBubbleProps {
@@ -21,6 +23,7 @@ interface MessageBubbleProps {
   surface?: "default" | "workspace";
   status?: "sending" | "sent" | "failed";
   referral?: ReferralPayload;
+  spaceNudge?: SpaceNudgePayload;
   nextActions?: ChatNextAction[];
   cards?: ChatJobCard[];
   locale?: string;
@@ -30,6 +33,8 @@ interface MessageBubbleProps {
   onRetry?: () => void;
   onReferralAccept?: () => void;
   onReferralDismiss?: () => void;
+  onSpaceNudgeAccept?: () => void;
+  onSpaceNudgeDismiss?: () => void;
   onNextAction?: (action: ChatNextAction) => void;
   onJobCardClick?: (card: ChatJobCard) => void;
   referralDisabled?: boolean;
@@ -47,6 +52,7 @@ export function MessageBubble({
   surface = "default",
   status,
   referral,
+  spaceNudge,
   nextActions,
   cards,
   locale = "en",
@@ -56,6 +62,8 @@ export function MessageBubble({
   onRetry,
   onReferralAccept,
   onReferralDismiss,
+  onSpaceNudgeAccept,
+  onSpaceNudgeDismiss,
   onNextAction,
   onJobCardClick,
   referralDisabled,
@@ -72,6 +80,12 @@ export function MessageBubble({
     !referral.dismissed &&
     onReferralAccept &&
     onReferralDismiss;
+  const showSpaceNudge =
+    !isUser &&
+    spaceNudge &&
+    !spaceNudge.dismissed &&
+    onSpaceNudgeAccept &&
+    onSpaceNudgeDismiss;
   const showEnrichment =
     !isUser && streamComplete && !isStreaming;
   const jobCards = cards?.filter((card) => card.type === "job") ?? [];
@@ -182,6 +196,14 @@ export function MessageBubble({
               onAccept={onReferralAccept}
               onDismiss={onReferralDismiss}
               disabled={referralDisabled}
+            />
+          )}
+          {showSpaceNudge && (
+            <SpaceNudgePrompt
+              nudge={spaceNudge}
+              onAccept={onSpaceNudgeAccept}
+              onDismiss={onSpaceNudgeDismiss}
+              disabled={referralDisabled || actionsDisabled}
             />
           )}
         </div>

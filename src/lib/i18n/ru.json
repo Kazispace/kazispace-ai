@@ -822,7 +822,12 @@
 		"lifecycleCompleteOk": "Пространство отмечено завершённым",
 		"lifecycleArchiveOk": "Пространство в архиве",
 		"lifecycleRestoreOk": "Пространство восстановлено",
-		"lifecycleDeleteOk": "Пространство перемещено в корзину"
+		"lifecycleDeleteOk": "Пространство перемещено в корзину",
+		"nudgeDefaultReason": "Готовы открыть пространство «{template}»? Создайте в один тап.",
+		"nudgeCta": "Создать {template}",
+		"nudgeDismiss": "Не сейчас",
+		"nudgeCreateFailed": "Не удалось создать пространство",
+		"nudgeGenericTemplate": "это пространство"
 	},
 	"tma": {
 		"launching": "Открываем KaziSpace…",

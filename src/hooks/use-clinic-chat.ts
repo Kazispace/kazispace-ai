@@ -220,7 +220,7 @@ export function useClinicChat(locale?: string) {
           };
         }
 
-        let { reply, intent, referral, nextActions, cards, routedToAgent } =
+        let { reply, intent, referral, spaceNudge, nextActions, cards, routedToAgent } =
           parseClinicReply(res.data);
 
         if (isPlaceholderReply(reply)) {
@@ -246,6 +246,7 @@ export function useClinicChat(locale?: string) {
           content: reply,
           ...(intent ? { intent } : {}),
           ...(referral ? { referral } : {}),
+          ...(spaceNudge ? { spaceNudge } : {}),
           ...(nextActions.length > 0 ? { nextActions } : {}),
           ...(cards.length > 0 ? { cards } : {}),
           streamComplete: false,
@@ -284,6 +285,17 @@ export function useClinicChat(locale?: string) {
     [updateMessage]
   );
 
+  const dismissMessageSpaceNudge = useCallback(
+    (messageId: string) => {
+      const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
+      if (!msg?.spaceNudge) return;
+      updateMessage(messageId, {
+        spaceNudge: { ...msg.spaceNudge, dismissed: true },
+      });
+    },
+    [updateMessage]
+  );
+
   const retryMessage = useCallback(
     async (messageId: string) => {
       const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
@@ -304,5 +316,6 @@ export function useClinicChat(locale?: string) {
     retryMessage,
     markStreamComplete,
     dismissMessageReferral,
+    dismissMessageSpaceNudge,
   };
 }
