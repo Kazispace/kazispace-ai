@@ -69,6 +69,8 @@ export type SpaceChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  /** Present on optimistic local turns (KAZI-186 retry). */
+  status?: 'sending' | 'sent' | 'failed';
 };
 
 function stableMessageIdFallback(

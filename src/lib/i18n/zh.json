@@ -257,11 +257,14 @@
 		"input": {
 			"placeholder": "和我聊聊你的职业问题…"
 		},
-		"retry": "重试"
+		"retry": "重试",
+		"processing": "处理中…"
 	},
 	"errors": {
 		"network": "网络错误，请重试。",
-		"profileIncomplete": "请先完善资料以使用此功能。"
+		"profileIncomplete": "请先完善资料以使用此功能。",
+		"llmBusy": "AI 当前繁忙，请稍后重试。",
+		"llmBusyWithRetry": "AI 当前繁忙，请约 {seconds} 秒后重试。"
 	},
 	"agentSessions": {
 		"sessionHistory": "会话历史",

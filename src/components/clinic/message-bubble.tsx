@@ -8,6 +8,7 @@ import { ChatNextActions } from "./chat-next-actions";
 import { MarkdownContent } from "./markdown-content";
 import { ReferralPrompt } from "./referral-prompt";
 import { StreamingText } from "@/components/chat/streaming-text";
+import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 
 interface MessageBubbleProps {
@@ -80,12 +81,16 @@ export function MessageBubble({
   const isWorkspace = surface === "workspace";
 
   const renderAssistantContent = () => {
-    if (isStreaming && !content) {
+    // Empty or BE placeholder ("…") while waiting — show Processing… (KAZI-186).
+    if (isStreaming && isPlaceholderReply(content ?? "")) {
       return (
-        <span className="inline-flex gap-1 align-middle">
-          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot" />
-          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.15s]" />
-          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.3s]" />
+        <span className="inline-flex items-center gap-2 text-muted-foreground">
+          <span className="inline-flex gap-1 align-middle" aria-hidden>
+            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot" />
+            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.15s]" />
+            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.3s]" />
+          </span>
+          <span>{t("processing")}</span>
         </span>
       );
     }

@@ -789,6 +789,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         await reloadClinicIfNeeded(exitResult);
         return;
       }
+      // Hook already toasted special cases (LLM_BUSY / profile / paywall).
+      if ("toastShown" in result && result.toastShown) return;
       showToast(result.error ?? tClinic("sendFailed"), "error");
     }
   };
