@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extractSpaceTurnEnvelopeText,
   isPlaceholderReply,
+  latestAssistantAfterLastUser,
   mapSpaceHistoryMessages,
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnReply,
@@ -50,6 +51,52 @@ describe('resolveSpaceTurnReply', () => {
         },
       })
     ).toBe('Hello from space turn');
+  });
+
+  it('reads KAZI-171 envelope with assistant_response passthrough', () => {
+    expect(
+      resolveSpaceTurnReply({
+        envelope: {
+          components: [{ type: 'text', text: 'From components' }],
+          assistant_response: { content: 'From assistant_response' },
+          meta: { mode: 'space_l2_delegate' },
+        },
+      })
+    ).toBe('From components');
+  });
+
+  it('falls back to assistant_response when components are missing', () => {
+    expect(
+      resolveSpaceTurnReply({
+        envelope: {
+          assistant_response: { content: 'Only assistant_response' },
+          meta: { mode: 'space_l2_delegate' },
+        },
+      })
+    ).toBe('Only assistant_response');
+  });
+});
+
+describe('latestAssistantAfterLastUser', () => {
+  it('returns assistant after the last user turn by position', () => {
+    expect(
+      latestAssistantAfterLastUser([
+        { id: 'u1', role: 'user', content: 'ok' },
+        { id: 'a1', role: 'assistant', content: 'first' },
+        { id: 'u2', role: 'user', content: 'ok' },
+        { id: 'a2', role: 'assistant', content: 'second' },
+      ])
+    ).toBe('second');
+  });
+
+  it('returns empty when last user has no assistant yet', () => {
+    expect(
+      latestAssistantAfterLastUser([
+        { id: 'u1', role: 'user', content: 'hi' },
+        { id: 'a1', role: 'assistant', content: 'hello' },
+        { id: 'u2', role: 'user', content: 'again' },
+      ])
+    ).toBe('');
   });
 });
 
