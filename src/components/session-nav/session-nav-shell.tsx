@@ -122,7 +122,6 @@ function SessionNavShellLayout({
   }, [pinNavPanel, setPanelMode, setPanelOpen]);
   const { sessionsByAgent, isLoading, error, refresh } = useActiveAgentSessions({
     panelOpen: panelVisible,
-    enabled: !spacesEnabled,
   });
   const {
     spaces,

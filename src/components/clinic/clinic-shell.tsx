@@ -25,6 +25,7 @@ import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useNbaAction } from "@/hooks/use-nba-action";
 import { useAuthStore, useAgentStore, useChatStore, useUIStore } from "@/lib/store";
 import { useEmbeddedInWorkspaceShell } from "@/lib/workspace-shell-context";
+import { isSpacesEnabled } from "@/lib/spaces/constants";
 import {
   AGENT_REGISTRY,
   AGENT_QUICK_REPLIES,
@@ -409,7 +410,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   }, [activeAgentId]);
 
   const activeEntry = AGENT_REGISTRY.find((a) => a.agentId === activeAgentId);
-  const isAgentMode = !!activeAgentId && !!activeEntry;
+  // KAZI-195 / INV-W4: embedded Clinic is the entry Space — ignore global active_agent chrome.
+  const suppressGlobalAgentOnSpace =
+    embeddedInWorkspace && isSpacesEnabled();
+  const isAgentMode =
+    !suppressGlobalAgentOnSpace && !!activeAgentId && !!activeEntry;
   const agentLayerStatusDetail = useLayerStatusBadge(
     isAgentMode ? activeAgentId : null,
     sessionsByAgent,
