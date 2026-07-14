@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatRegisteredCapabilityLabel,
   resolveActiveCapability,
   resolveActiveCapabilityFromTurn,
   shouldUseGlobalAgentForContextHeader,
@@ -11,6 +12,15 @@ describe('resolveActiveCapability', () => {
     expect(
       resolveActiveCapability({ active_capability: 'cv_builder' })
     ).toBe('cv_builder');
+  });
+
+  it('reads nested space_state on a detail-like object', () => {
+    expect(
+      resolveActiveCapability({
+        id: 'sp_1',
+        space_state: { active_capability: 'english_tutor' },
+      })
+    ).toBe('english_tutor');
   });
 
   it('returns null when blank / absent', () => {
@@ -35,6 +45,15 @@ describe('resolveActiveCapabilityFromTurn', () => {
         envelope: { meta: { active_capability: 'mock_interview' } },
       })
     ).toBe('mock_interview');
+  });
+
+  it('reads top-level active_capability when meta omitted', () => {
+    expect(
+      resolveActiveCapabilityFromTurn({
+        reply_text: 'hi',
+        active_capability: 'cv_builder',
+      })
+    ).toBe('cv_builder');
   });
 });
 
@@ -70,5 +89,18 @@ describe('shouldUseGlobalAgentForContextHeader', () => {
         spaceId: null,
       })
     ).toBe(true);
+  });
+});
+
+describe('formatRegisteredCapabilityLabel', () => {
+  it('formats known agents and hides unknown ids', () => {
+    expect(
+      formatRegisteredCapabilityLabel('cv_builder', (id) =>
+        id === 'cv_builder' ? { emoji: '📄', name: 'CV' } : null
+      )
+    ).toBe('📄 CV');
+    expect(
+      formatRegisteredCapabilityLabel('future_agent', () => null)
+    ).toBeNull();
   });
 });

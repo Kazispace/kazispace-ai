@@ -30,17 +30,25 @@ export function resolveActiveCapability(source: unknown): string | null {
 }
 
 /**
- * Extract capability from a Space turn response payload
- * (`meta.active_capability` or nested envelope meta).
+ * Extract capability from a Space turn response payload.
+ * Prefer `meta.active_capability`, then top-level field, then envelope meta.
  */
 export function resolveActiveCapabilityFromTurn(data: unknown): string | null {
   if (!data || typeof data !== 'object') return null;
   const raw = data as Record<string, unknown>;
-  const fromMeta = resolveActiveCapability(raw.meta ?? raw);
-  if (fromMeta) return fromMeta;
-  if (raw.envelope) {
+
+  if (raw.meta != null) {
+    const fromMeta = resolveActiveCapability(raw.meta);
+    if (fromMeta) return fromMeta;
+  }
+
+  const fromTopLevel = resolveActiveCapability(raw);
+  if (fromTopLevel) return fromTopLevel;
+
+  if (raw.envelope != null) {
     return resolveActiveCapability(raw.envelope);
   }
+
   return null;
 }
 
@@ -55,4 +63,19 @@ export function shouldUseGlobalAgentForContextHeader(options: {
   if (options.hubAgentId) return true;
   if (options.spaceId) return false;
   return true;
+}
+
+/**
+ * Human label for a space capability id — only when registered in the FE agent list.
+ * Unknown / future BE ids must not leak snake_case identifiers into the UI.
+ */
+export function formatRegisteredCapabilityLabel(
+  capabilityId: string,
+  resolveAgent: (
+    id: string
+  ) => { emoji: string; name: string } | null | undefined
+): string | null {
+  const agent = resolveAgent(capabilityId);
+  if (!agent) return null;
+  return `${agent.emoji} ${agent.name}`;
 }

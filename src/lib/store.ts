@@ -336,7 +336,11 @@ export const useSpaceStore = create<SpaceStore>()((set, get) => ({
       return applySpacePatch(state, spaceId, { replyNotice: notice });
     }),
   setSpaceActiveCapability: (spaceId, activeCapability) =>
-    set((state) => applySpacePatch(state, spaceId, { activeCapability })),
+    set((state) => {
+      // Do not recreate empty slices after LRU eviction (align with touchExistingSpaceLru).
+      if (!state.spaces[spaceId]) return {};
+      return applySpacePatch(state, spaceId, { activeCapability });
+    }),
   clearSpaceSlice: (spaceId) =>
     set((state) => removeSpaceFromLru(state.spaces, state.spaceLruOrder, spaceId)),
   reset: () => set({ activeSpaceId: null, spaces: {}, spaceLruOrder: [] }),

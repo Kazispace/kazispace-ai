@@ -21,6 +21,7 @@ import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import {
+  formatRegisteredCapabilityLabel,
   resolveActiveCapability,
   shouldUseGlobalAgentForContextHeader,
 } from '@/lib/spaces/capability';
@@ -119,12 +120,16 @@ export function SessionContextHeader({
         spaceActiveCapability?.trim() ||
         resolveActiveCapability(space.space_state) ||
         null;
-      const capabilityAgent = capabilityId
-        ? AGENT_REGISTRY.find((entry) => entry.agentId === capabilityId)
-        : undefined;
-      const capabilityLabel = capabilityAgent
-        ? `${capabilityAgent.emoji} ${getAgentLabel(capabilityAgent, locale, 'name')}`
-        : capabilityId;
+      const capabilityLabel = capabilityId
+        ? formatRegisteredCapabilityLabel(capabilityId, (id) => {
+            const entry = AGENT_REGISTRY.find((a) => a.agentId === id);
+            if (!entry) return null;
+            return {
+              emoji: entry.emoji,
+              name: getAgentLabel(entry, locale, 'name'),
+            };
+          })
+        : null;
       return {
         title: `${space.name}`,
         statusLabel: capabilityLabel

@@ -99,7 +99,6 @@ export function useSpaceTurn(
   const isHydrating = slice?.isHydrating ?? false;
   const isSending = slice?.isSending ?? false;
   const replyNotice = slice?.replyNotice ?? null;
-  const activeCapability = slice?.activeCapability ?? null;
   const capabilityFromSpaceState = resolveActiveCapability(spaceState);
 
   useEffect(() => {
@@ -352,7 +351,6 @@ export function useSpaceTurn(
     messages,
     isHydrating,
     isSending,
-    activeCapability,
     sendError: replyNotice?.kind === 'error' ? replyNotice.message : null,
     replyNotice,
     sendMessage,
