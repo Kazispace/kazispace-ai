@@ -18,6 +18,16 @@ import {
 const HISTORY_RECOVERY_ATTEMPTS = 3;
 const HISTORY_RECOVERY_DELAY_MS = 700;
 
+export type SpaceSendResult =
+  | { ok: true; pending?: false }
+  | { ok: true; pending: true }
+  | { ok: false; error: string };
+
+export type SpaceReplyNotice = {
+  kind: 'error' | 'pending';
+  message: string;
+};
+
 function resolveSpaceMasterSessionId(
   spaceMasterSessionId: string | null | undefined
 ): string | null {
@@ -70,7 +80,7 @@ export function useSpaceTurn(
   const [messages, setMessages] = useState<SpaceChatMessage[]>([]);
   const [isHydrating, setIsHydrating] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
+  const [replyNotice, setReplyNotice] = useState<SpaceReplyNotice | null>(null);
 
   const refreshHistory = useCallback(async () => {
     const resolvedMasterId = resolveSpaceMasterSessionId(masterSessionId);
@@ -95,7 +105,7 @@ export function useSpaceTurn(
 
     let cancelled = false;
     setIsHydrating(true);
-    // Do not clear sendError here — reload must not erase a failed/pending turn notice.
+    // Do not clear replyNotice here — reload must not erase a failed/pending turn notice.
 
     void (async () => {
       const next = await loadSpaceHistory(resolvedMasterId);
@@ -111,7 +121,7 @@ export function useSpaceTurn(
   }, [enabled, masterSessionId, spaceId]);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string): Promise<SpaceSendResult> => {
       if (!enabled || !spaceId || !text.trim()) {
         return { ok: false as const, error: 'Space not ready' };
       }
@@ -119,7 +129,7 @@ export function useSpaceTurn(
       const resolvedMasterId = resolveSpaceMasterSessionId(masterSessionId);
       if (!resolvedMasterId) {
         const err = 'Space not ready';
-        setSendError(err);
+        setReplyNotice({ kind: 'error', message: err });
         return { ok: false as const, error: err };
       }
 
@@ -132,7 +142,7 @@ export function useSpaceTurn(
         return nextMessages;
       });
       setIsSending(true);
-      setSendError(null);
+      setReplyNotice(null);
 
       try {
         // TODO(KAZI-74): drop `locale` once BE reads language_preference only.
@@ -144,7 +154,7 @@ export function useSpaceTurn(
 
         if (!res.success) {
           const err = res.error ?? 'Send failed';
-          setSendError(err);
+          setReplyNotice({ kind: 'error', message: err });
           setMessages((prev) => prev.filter((message) => message.id !== userId));
           return { ok: false as const, error: err };
         }
@@ -166,7 +176,10 @@ export function useSpaceTurn(
 
         if (isPlaceholderReply(reply)) {
           // Turn was accepted — L2 may still be writing. Keep user bubble; don't invite resend.
-          setSendError(t('replyStillGenerating'));
+          setReplyNotice({
+            kind: 'pending',
+            message: t('replyStillGenerating'),
+          });
           return { ok: true as const, pending: true as const };
         }
 
@@ -199,7 +212,9 @@ export function useSpaceTurn(
     messages,
     isHydrating,
     isSending,
-    sendError,
+    /** @deprecated Prefer replyNotice — kept as error-message string for older call sites. */
+    sendError: replyNotice?.kind === 'error' ? replyNotice.message : null,
+    replyNotice,
     sendMessage,
     refreshHistory,
     enabled,

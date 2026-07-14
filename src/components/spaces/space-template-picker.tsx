@@ -1,17 +1,15 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { X } from 'lucide-react';
 
+import { useDialogFocusTrap } from '@/hooks/use-dialog-focus-trap';
 import { useSpaceTemplates } from '@/hooks/use-space-templates';
 import { TEMPLATE_EMOJI } from '@/lib/spaces/constants';
 import { resolveTemplateLabel } from '@/lib/spaces/template-label';
 import type { SpaceTemplateItem } from '@/types/spaces';
 import { cn } from '@/lib/utils';
-
-const FOCUSABLE =
-  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 interface SpaceTemplatePickerProps {
   open: boolean;
@@ -65,52 +63,25 @@ export function SpaceTemplatePicker({
   const { templates, comingSoon, isLoading } = useSpaceTemplates(open);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-
-    previousFocusRef.current = document.activeElement as HTMLElement | null;
-    closeButtonRef.current?.focus();
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-        return;
-      }
-      if (e.key !== 'Tab' || !dialogRef.current) return;
-
-      const focusables = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)
-      ).filter((el) => !el.hasAttribute('disabled'));
-      if (focusables.length === 0) return;
-
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      previousFocusRef.current?.focus();
-    };
-  }, [open, onClose]);
+  useDialogFocusTrap({
+    open,
+    onClose,
+    dialogRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   if (!open) return null;
 
   return (
-    <>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="presentation"
+    >
+      {/* Backdrop — click outside dialog closes (review P1-1). */}
       <button
         type="button"
-        className="fixed inset-0 z-50 bg-black/40"
+        className="absolute inset-0 bg-black/40"
         aria-label={t('closePicker')}
         onClick={onClose}
       />
@@ -119,7 +90,7 @@ export function SpaceTemplatePicker({
         role="dialog"
         aria-modal="true"
         aria-labelledby="space-template-picker-title"
-        className="fixed left-1/2 top-1/2 z-50 w-[min(400px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-4 shadow-xl"
+        className="relative z-10 w-[min(400px,92vw)] rounded-xl bg-white p-4 shadow-xl"
       >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 id="space-template-picker-title" className="text-base font-semibold text-[#1D2129]">
@@ -167,6 +138,6 @@ export function SpaceTemplatePicker({
           <p className="mt-4 text-center text-xs text-[#86909C]">{t('browseMoreComingSoon')}</p>
         )}
       </div>
-    </>
+    </div>
   );
 }

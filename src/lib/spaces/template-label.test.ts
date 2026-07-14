@@ -23,6 +23,15 @@ describe('resolveTemplateLabel', () => {
     });
   });
 
+  it('treats display_name === template_id as unset (client / BE seed)', () => {
+    expect(
+      resolveTemplateLabel(item('job_sprint', 'job_sprint'), 'en', t)
+    ).toEqual({
+      title: 'i18n:templateJobSprint',
+      desc: 'i18n:templateJobSprintDesc',
+    });
+  });
+
   it('keeps local desc when API provides localized display_name', () => {
     expect(
       resolveTemplateLabel(
@@ -36,12 +45,32 @@ describe('resolveTemplateLabel', () => {
     });
   });
 
+  it('falls back to en before zh for unsupported locale keys', () => {
+    expect(
+      resolveTemplateLabel(
+        item('ielts_prep', { zh: '雅思备考', en: 'IELTS prep' }),
+        'ru',
+        t
+      )
+    ).toEqual({
+      title: 'IELTS prep',
+      desc: 'i18n:templateIeltsDesc',
+    });
+  });
+
   it('keeps local desc when API provides string display_name', () => {
     expect(
       resolveTemplateLabel(item('ielts_prep', 'IELTS Prep Pro'), 'en', t)
     ).toEqual({
       title: 'IELTS Prep Pro',
       desc: 'i18n:templateIeltsDesc',
+    });
+  });
+
+  it('falls back to template_id for unknown templates', () => {
+    expect(resolveTemplateLabel(item('stock_analysis'), 'en', t)).toEqual({
+      title: 'stock_analysis',
+      desc: '',
     });
   });
 });
