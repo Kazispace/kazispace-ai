@@ -28,6 +28,8 @@ export type SpaceReplyNotice = {
   kind: 'error' | 'pending';
   message: string;
   retryable?: boolean;
+  /** User message id to retry when retryable. */
+  retryMessageId?: string;
 };
 
 function resolveSpaceMasterSessionId(
@@ -71,6 +73,10 @@ async function recoverReplyFromMasterHistory(
  * History is the space `master_session_id` thread
  * (`GET /chat/sessions/{master}/messages`). Do **not** fall back to
  * POST /chat/messages — BE remaps that to Clinic `sess_{uid}_web`.
+ *
+ * KAZI-186: while `isSending`, SpaceChatPane mounts an empty streaming bubble
+ * → MessageBubble shows 「处理中…」. History-poll recovery also runs under
+ * `isSending` so Processing stays visible until the turn settles.
  */
 export function useSpaceTurn(
   spaceId: string | null,
@@ -124,7 +130,10 @@ export function useSpaceTurn(
   }, [enabled, masterSessionId, spaceId]);
 
   const sendMessage = useCallback(
-    async (text: string): Promise<SpaceSendResult> => {
+    async (
+      text: string,
+      options?: { retryMessageId?: string }
+    ): Promise<SpaceSendResult> => {
       if (!enabled || !spaceId || !text.trim()) {
         return { ok: false as const, error: 'Space not ready' };
       }
@@ -137,13 +146,27 @@ export function useSpaceTurn(
       }
 
       const trimmed = text.trim();
-      const userId = `user_${Date.now()}`;
+      const userId = options?.retryMessageId ?? `user_${Date.now()}`;
       let nextMessages: SpaceChatMessage[] = [];
 
-      setMessages((prev) => {
-        nextMessages = [...prev, { id: userId, role: 'user', content: trimmed }];
-        return nextMessages;
-      });
+      if (options?.retryMessageId) {
+        setMessages((prev) => {
+          nextMessages = prev.map((message) =>
+            message.id === userId
+              ? { ...message, content: trimmed, status: 'sending' as const }
+              : message
+          );
+          return nextMessages;
+        });
+      } else {
+        setMessages((prev) => {
+          nextMessages = [
+            ...prev,
+            { id: userId, role: 'user', content: trimmed, status: 'sending' },
+          ];
+          return nextMessages;
+        });
+      }
       setIsSending(true);
       setReplyNotice(null);
 
@@ -156,24 +179,33 @@ export function useSpaceTurn(
         });
 
         if (!res.success) {
-          if (isLlmBusy(res)) {
-            const message =
-              res.retryAfter && res.retryAfter > 0
-                ? tErrors('llmBusyWithRetry', { seconds: res.retryAfter })
-                : tErrors('llmBusy');
-            // Keep user bubble — overload is retryable (KAZI-186).
-            setReplyNotice({ kind: 'error', message, retryable: true });
-            return {
-              ok: false as const,
-              error: message,
-              errorCode: 'LLM_BUSY',
-              retryable: true,
-            };
-          }
-          const err = res.error ?? 'Send failed';
-          setReplyNotice({ kind: 'error', message: err });
-          setMessages((prev) => prev.filter((message) => message.id !== userId));
-          return { ok: false as const, error: err, errorCode: res.errorCode };
+          const busy = isLlmBusy(res);
+          const message = busy
+            ? res.retryAfter && res.retryAfter > 0
+              ? tErrors('llmBusyWithRetry', { seconds: res.retryAfter })
+              : tErrors('llmBusy')
+            : (res.error ?? 'Send failed');
+
+          // Keep user bubble on all failures; mark failed for Retry (KAZI-186 P1/P2).
+          setMessages((prev) =>
+            prev.map((messageRow) =>
+              messageRow.id === userId
+                ? { ...messageRow, status: 'failed' as const }
+                : messageRow
+            )
+          );
+          setReplyNotice({
+            kind: 'error',
+            message,
+            retryable: true,
+            retryMessageId: userId,
+          });
+          return {
+            ok: false as const,
+            error: message,
+            errorCode: busy ? 'LLM_BUSY' : res.errorCode,
+            retryable: true,
+          };
         }
 
         let reply = resolveSpaceTurnReply(res.data);
@@ -193,6 +225,13 @@ export function useSpaceTurn(
 
         if (isPlaceholderReply(reply)) {
           // Turn was accepted — L2 may still be writing. Keep user bubble; don't invite resend.
+          setMessages((prev) =>
+            prev.map((messageRow) =>
+              messageRow.id === userId
+                ? { ...messageRow, status: 'sent' as const }
+                : messageRow
+            )
+          );
           setReplyNotice({
             kind: 'pending',
             message: t('replyStillGenerating'),
@@ -201,7 +240,11 @@ export function useSpaceTurn(
         }
 
         nextMessages = [
-          ...nextMessages,
+          ...nextMessages.map((messageRow) =>
+            messageRow.id === userId
+              ? { ...messageRow, status: 'sent' as const }
+              : messageRow
+          ),
           { id: `assistant_${Date.now()}`, role: 'assistant', content: reply },
         ];
         setMessages(nextMessages);
@@ -225,6 +268,17 @@ export function useSpaceTurn(
     [enabled, locale, masterSessionId, spaceId, t, tErrors]
   );
 
+  const retryMessage = useCallback(
+    async (messageId: string) => {
+      const msg = messages.find((message) => message.id === messageId);
+      if (!msg || msg.role !== 'user') {
+        return { ok: false as const, error: 'Nothing to retry' };
+      }
+      return sendMessage(msg.content, { retryMessageId: messageId });
+    },
+    [messages, sendMessage]
+  );
+
   return {
     messages,
     isHydrating,
@@ -233,6 +287,7 @@ export function useSpaceTurn(
     sendError: replyNotice?.kind === 'error' ? replyNotice.message : null,
     replyNotice,
     sendMessage,
+    retryMessage,
     refreshHistory,
     enabled,
   };

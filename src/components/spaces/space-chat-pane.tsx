@@ -38,11 +38,15 @@ export function SpaceChatPane({
   composer,
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
-  const { messages, isHydrating, isSending, replyNotice, sendMessage } = useSpaceTurn(
-    space.id,
-    space.master_session_id,
-    locale
-  );
+  const tChat = useTranslations('chat');
+  const {
+    messages,
+    isHydrating,
+    isSending,
+    replyNotice,
+    sendMessage,
+    retryMessage,
+  } = useSpaceTurn(space.id, space.master_session_id, locale);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
@@ -55,6 +59,11 @@ export function SpaceChatPane({
     typeof composer === 'function'
       ? composer({ sendMessage, isSending, spaceSessionReady })
       : composer;
+
+  const handleRetryNotice = () => {
+    if (!replyNotice?.retryMessageId) return;
+    void retryMessage(replyNotice.retryMessageId);
+  };
 
   return (
     <SpaceShell
@@ -78,9 +87,15 @@ export function SpaceChatPane({
               key={message.id}
               role={message.role}
               content={message.content}
+              status={message.status}
               locale={locale}
               variant="clinic"
               streamComplete
+              onRetry={
+                message.role === 'user' && message.status === 'failed'
+                  ? () => void retryMessage(message.id)
+                  : undefined
+              }
             />
           ))
         )}
@@ -95,14 +110,26 @@ export function SpaceChatPane({
           />
         ) : null}
         {replyNotice ? (
-          <p
-            className={cn(
-              'text-center text-xs',
-              replyNotice.kind === 'pending' ? 'text-[#86909C]' : 'text-red-600'
-            )}
-          >
-            {replyNotice.message}
-          </p>
+          <div className="flex flex-col items-center gap-1">
+            <p
+              className={cn(
+                'text-center text-xs',
+                replyNotice.kind === 'pending' ? 'text-[#86909C]' : 'text-red-600'
+              )}
+            >
+              {replyNotice.message}
+            </p>
+            {replyNotice.retryable && replyNotice.retryMessageId ? (
+              <button
+                type="button"
+                onClick={handleRetryNotice}
+                disabled={isSending}
+                className="text-xs text-red-600 underline-offset-2 hover:underline disabled:opacity-50"
+              >
+                {tChat('retry')}
+              </button>
+            ) : null}
+          </div>
         ) : null}
         <div ref={messagesEndRef} />
       </div>

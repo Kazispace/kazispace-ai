@@ -119,7 +119,10 @@ export interface ApiResponse<T = unknown> {
   errorCode?: string;
   /** HTTP status when success is false (KAZI-186 / LLM_BUSY). */
   status?: number;
-  /** Parsed `Retry-After` seconds when present. */
+  /**
+   * Parsed `Retry-After` seconds when present on error responses only.
+   * Prefer `parseRetryAfterSeconds` — delay-seconds or HTTP-date.
+   */
   retryAfter?: number;
 }
 

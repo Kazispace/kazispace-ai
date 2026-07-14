@@ -30,7 +30,10 @@ export function isAgentSwitchRequiresClinic(res: ErrorLike): boolean {
 
 /**
  * KAZI-186 / SDD §3.5 — LLM quota full or queue wait timeout.
- * Prefer `error_code=LLM_BUSY`; also accept HTTP 429 with that code (or bare 429).
+ * Prefer `error_code=LLM_BUSY`.
+ *
+ * TODO(KAZI-186): drop bare-429 fallback once BE always returns `LLM_BUSY`
+ * (other rate-limit 429s must not share this copy).
  */
 export function isLlmBusy(res: ErrorLike): boolean {
   if (res.errorCode === 'LLM_BUSY') return true;

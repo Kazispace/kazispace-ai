@@ -8,6 +8,7 @@ import { ChatNextActions } from "./chat-next-actions";
 import { MarkdownContent } from "./markdown-content";
 import { ReferralPrompt } from "./referral-prompt";
 import { StreamingText } from "@/components/chat/streaming-text";
+import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 
 interface MessageBubbleProps {
@@ -80,7 +81,8 @@ export function MessageBubble({
   const isWorkspace = surface === "workspace";
 
   const renderAssistantContent = () => {
-    if (isStreaming && !content) {
+    // Empty or BE placeholder ("…") while waiting — show Processing… (KAZI-186).
+    if (isStreaming && isPlaceholderReply(content ?? "")) {
       return (
         <span className="inline-flex items-center gap-2 text-muted-foreground">
           <span className="inline-flex gap-1 align-middle" aria-hidden>

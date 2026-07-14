@@ -165,6 +165,8 @@ export function useClinicChat(locale?: string) {
 
   const sendMessage = useCallback(
     async (text: string, options?: { retryMessageId?: string }) => {
+      // Clinic Phase 1 path is a single long HTTP POST (not mid-stream SSE).
+      // LLM_BUSY surfaces on the response envelope via handleApiFailure + toastShown.
       const sessionId = await ensureMasterSession();
       const userMsgId = options?.retryMessageId ?? `user_${Date.now()}`;
 
@@ -204,14 +206,17 @@ export function useClinicChat(locale?: string) {
           removeMessage(assistantId);
           updateMessage(userMsgId, { status: 'failed' });
           handleApiFailure(res);
+          const busy = isLlmBusy(res);
           return {
             ok: false as const,
-            error: isLlmBusy(res)
+            error: busy
               ? res.retryAfter && res.retryAfter > 0
                 ? tErrors('llmBusyWithRetry', { seconds: res.retryAfter })
                 : tErrors('llmBusy')
               : res.error,
-            errorCode: res.errorCode ?? (isLlmBusy(res) ? 'LLM_BUSY' : undefined),
+            errorCode: res.errorCode ?? (busy ? 'LLM_BUSY' : undefined),
+            // Explicit contract: caller must not toast again when true (KAZI-186 review).
+            toastShown: busy || isProfileIncomplete(res) || isPaywallError(res),
           };
         }
 

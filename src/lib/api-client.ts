@@ -6,6 +6,7 @@ import { parseAssistantEnvelope } from './chat-envelope';
 import { isReferralDismissed } from './referral-dismiss';
 import { isPlaceholderReply, resolveSpaceTurnReply } from './spaces/turn';
 import { getTmaClientHeaders } from './telegram';
+import { parseRetryAfterSeconds } from './retry-after';
 import type {
   ApiResponse,
   OtpRequestResponse,
@@ -85,8 +86,9 @@ export async function apiRequest<T>(
           : undefined) ??
         errorData.error_code ??
         (typeof errorData.error === 'string' ? errorData.error : undefined);
-      const retryAfterRaw = response.headers.get('Retry-After');
-      const retryAfterParsed = retryAfterRaw ? Number.parseInt(retryAfterRaw, 10) : NaN;
+      const retryAfter = parseRetryAfterSeconds(
+        response.headers.get('Retry-After')
+      );
       return {
         success: false,
         error:
@@ -97,9 +99,7 @@ export async function apiRequest<T>(
           `HTTP ${response.status}`,
         errorCode,
         status: response.status,
-        ...(Number.isFinite(retryAfterParsed) && retryAfterParsed > 0
-          ? { retryAfter: retryAfterParsed }
-          : {}),
+        ...(retryAfter != null ? { retryAfter } : {}),
       };
     }
 
