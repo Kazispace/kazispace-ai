@@ -789,6 +789,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         await reloadClinicIfNeeded(exitResult);
         return;
       }
+      // LLM_BUSY already toasted in useClinicChat.handleApiFailure (KAZI-186).
+      if (result.errorCode === "LLM_BUSY") return;
       showToast(result.error ?? tClinic("sendFailed"), "error");
     }
   };

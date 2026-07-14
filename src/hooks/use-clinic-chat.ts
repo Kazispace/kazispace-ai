@@ -8,7 +8,7 @@ import {
   fetchChatHistory,
   parseClinicReply,
 } from '@/lib/api-client';
-import { isPaywallError, isProfileIncomplete } from '@/lib/api-errors';
+import { isPaywallError, isProfileIncomplete, isLlmBusy } from '@/lib/api-errors';
 import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
 import { ensureMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
@@ -119,7 +119,20 @@ export function useClinicChat(locale?: string) {
   const tErrors = useTranslations('errors');
 
   const handleApiFailure = useCallback(
-    (res: { error?: string; errorCode?: string }) => {
+    (res: {
+      error?: string;
+      errorCode?: string;
+      status?: number;
+      retryAfter?: number;
+    }) => {
+      if (isLlmBusy(res)) {
+        const message =
+          res.retryAfter && res.retryAfter > 0
+            ? tErrors('llmBusyWithRetry', { seconds: res.retryAfter })
+            : tErrors('llmBusy');
+        showToast(message, 'error');
+        return;
+      }
       if (isProfileIncomplete(res)) {
         showToast(tErrors('profileIncomplete'), 'info');
         return;
@@ -191,7 +204,15 @@ export function useClinicChat(locale?: string) {
           removeMessage(assistantId);
           updateMessage(userMsgId, { status: 'failed' });
           handleApiFailure(res);
-          return { ok: false as const, error: res.error, errorCode: res.errorCode };
+          return {
+            ok: false as const,
+            error: isLlmBusy(res)
+              ? res.retryAfter && res.retryAfter > 0
+                ? tErrors('llmBusyWithRetry', { seconds: res.retryAfter })
+                : tErrors('llmBusy')
+              : res.error,
+            errorCode: res.errorCode ?? (isLlmBusy(res) ? 'LLM_BUSY' : undefined),
+          };
         }
 
         let { reply, intent, referral, nextActions, cards, routedToAgent } =
@@ -237,7 +258,7 @@ export function useClinicChat(locale?: string) {
         setStreaming(false);
       }
     },
-    [addMessage, setMessages, setSending, setStreaming, updateMessage, removeMessage, handleApiFailure, locale]
+    [addMessage, setMessages, setSending, setStreaming, updateMessage, removeMessage, handleApiFailure, locale, tErrors]
   );
 
   const markStreamComplete = useCallback(

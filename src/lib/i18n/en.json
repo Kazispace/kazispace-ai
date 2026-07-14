@@ -387,6 +387,7 @@
 			"placeholder": "Talk to me about your career…"
 		},
 		"retry": "Retry",
+		"processing": "Processing…",
 		"actions": {
 			"open_list": "View job recommendations",
 			"view_job_recommendations": "View job recommendations",
@@ -417,7 +418,9 @@
 		"continueFree": "Continue with free tier"
 	},
 	"errors": {
-		"profileIncomplete": "Add a few profile details to unlock personalized features — you can keep chatting here."
+		"profileIncomplete": "Add a few profile details to unlock personalized features — you can keep chatting here.",
+		"llmBusy": "The AI is busy right now. Please try again in a moment.",
+		"llmBusyWithRetry": "The AI is busy right now. Please try again in {seconds}s."
 	},
 	"agentSessions": {
 		"sessionHistory": "Session history",

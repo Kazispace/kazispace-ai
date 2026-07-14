@@ -82,10 +82,13 @@ export function MessageBubble({
   const renderAssistantContent = () => {
     if (isStreaming && !content) {
       return (
-        <span className="inline-flex gap-1 align-middle">
-          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot" />
-          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.15s]" />
-          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.3s]" />
+        <span className="inline-flex items-center gap-2 text-muted-foreground">
+          <span className="inline-flex gap-1 align-middle" aria-hidden>
+            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot" />
+            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.15s]" />
+            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.3s]" />
+          </span>
+          <span>{t("processing")}</span>
         </span>
       );
     }

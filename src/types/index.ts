@@ -117,6 +117,10 @@ export interface ApiResponse<T = unknown> {
   message?: string;
   error?: string;
   errorCode?: string;
+  /** HTTP status when success is false (KAZI-186 / LLM_BUSY). */
+  status?: number;
+  /** Parsed `Retry-After` seconds when present. */
+  retryAfter?: number;
 }
 
 export interface OtpRequestResponse {

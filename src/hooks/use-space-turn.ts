@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { fetchChatHistory } from '@/lib/api-client';
+import { isLlmBusy } from '@/lib/api-errors';
 import { sendSpaceTurn } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
 import {
@@ -21,11 +22,12 @@ const HISTORY_RECOVERY_DELAY_MS = 700;
 export type SpaceSendResult =
   | { ok: true; pending?: false }
   | { ok: true; pending: true }
-  | { ok: false; error: string };
+  | { ok: false; error: string; errorCode?: string; retryable?: boolean };
 
 export type SpaceReplyNotice = {
   kind: 'error' | 'pending';
   message: string;
+  retryable?: boolean;
 };
 
 function resolveSpaceMasterSessionId(
@@ -76,6 +78,7 @@ export function useSpaceTurn(
   locale: string
 ) {
   const t = useTranslations('spaces');
+  const tErrors = useTranslations('errors');
   const enabled = isSpacesEnabled() && Boolean(spaceId);
   const [messages, setMessages] = useState<SpaceChatMessage[]>([]);
   const [isHydrating, setIsHydrating] = useState(false);
@@ -153,10 +156,24 @@ export function useSpaceTurn(
         });
 
         if (!res.success) {
+          if (isLlmBusy(res)) {
+            const message =
+              res.retryAfter && res.retryAfter > 0
+                ? tErrors('llmBusyWithRetry', { seconds: res.retryAfter })
+                : tErrors('llmBusy');
+            // Keep user bubble — overload is retryable (KAZI-186).
+            setReplyNotice({ kind: 'error', message, retryable: true });
+            return {
+              ok: false as const,
+              error: message,
+              errorCode: 'LLM_BUSY',
+              retryable: true,
+            };
+          }
           const err = res.error ?? 'Send failed';
           setReplyNotice({ kind: 'error', message: err });
           setMessages((prev) => prev.filter((message) => message.id !== userId));
-          return { ok: false as const, error: err };
+          return { ok: false as const, error: err, errorCode: res.errorCode };
         }
 
         let reply = resolveSpaceTurnReply(res.data);
@@ -205,7 +222,7 @@ export function useSpaceTurn(
         setIsSending(false);
       }
     },
-    [enabled, locale, masterSessionId, spaceId, t]
+    [enabled, locale, masterSessionId, spaceId, t, tErrors]
   );
 
   return {
