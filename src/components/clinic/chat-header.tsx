@@ -37,9 +37,6 @@ export function ChatHeader({
   const tNav = useTranslations("nav");
   const tTma = useTranslations("tma");
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
-  // ... we'll use isTelegramWebApp for back to bot too
-
-Wait I shouldn't replace like that. Let me read chat-header.
 
   const headerEmoji =
     mode === "space" ? spaceEmoji : mode === "agent" ? agentEmoji : null;
