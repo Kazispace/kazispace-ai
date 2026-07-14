@@ -40,6 +40,7 @@ import {
 import {
   ENGLISH_TUTOR_AGENT_ID,
   isEnglishTutorAgent,
+  shouldRouteToEnglishEpp,
 } from "@/lib/english-tutor-config";
 import {
   isMockInterviewAgent,
@@ -725,17 +726,17 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     const result = await sendClinicMessage(text);
 
     if (result.ok) {
-      const assistantMsg = useChatStore
+      const msg = useChatStore
         .getState()
         .messages.find((m) => m.id === result.assistantId);
 
       // Interim bridge (pre-KAZI-138): L2 still processes inline mock interview;
       // remove this path once BE returns referral-only next_actions. See KAZI-138.
       if (
-        assistantMsg &&
+        msg &&
         shouldClinicReplyRouteToInterviewHub({
-          intent: assistantMsg.intent,
-          nextActions: assistantMsg.nextActions,
+          intent: msg.intent,
+          nextActions: msg.nextActions,
           userText: text,
         })
       ) {
@@ -743,34 +744,40 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         await activateMockInterviewHub();
         return;
       }
-    }
 
-    if (result.ok && result.routedToAgent) {
-      if (isCvBuilderAgent(result.routedToAgent.agentId)) {
-        const msg = useChatStore
-          .getState()
-          .messages.find((m) => m.id === result.assistantId);
-        setCvAgentHandoff({
-          sessionId: result.routedToAgent.sessionId,
-          greeting: msg?.content?.trim() || undefined,
-        });
+      if (
+        shouldRouteToEnglishEpp({
+          intent: msg?.intent,
+          nextActions: msg?.nextActions,
+          routedAgentId: result.routedToAgent?.agentId,
+        })
+      ) {
         markStreamComplete(result.assistantId);
-        routeCvBuilderPage();
+        routeEnglishPage();
         return;
       }
-      const msg = useChatStore
-        .getState()
-        .messages.find((m) => m.id === result.assistantId);
-      if (msg?.role === "assistant") {
-        const syncResult = await syncActiveAgentFromGateway(
-          result.routedToAgent.agentId,
-          {
-            ...msg,
-            sessionId: result.routedToAgent.sessionId ?? msg.sessionId,
+
+      if (result.routedToAgent) {
+        if (isCvBuilderAgent(result.routedToAgent.agentId)) {
+          setCvAgentHandoff({
+            sessionId: result.routedToAgent.sessionId,
+            greeting: msg?.content?.trim() || undefined,
+          });
+          markStreamComplete(result.assistantId);
+          routeCvBuilderPage();
+          return;
+        }
+        if (msg?.role === "assistant") {
+          const syncResult = await syncActiveAgentFromGateway(
+            result.routedToAgent.agentId,
+            {
+              ...msg,
+              sessionId: result.routedToAgent.sessionId ?? msg.sessionId,
+            }
+          );
+          if (syncResult && !syncResult.ok) {
+            showToast(tClinic("activateFailed"), "error");
           }
-        );
-        if (syncResult && !syncResult.ok) {
-          showToast(tClinic("activateFailed"), "error");
         }
       }
     }
@@ -815,6 +822,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       await activateMockInterviewHub();
       return;
     }
+    if (isEnglishTutorAgent(agentId)) {
+      routeEnglishPage();
+      return;
+    }
     await handleAgentSelect(agentId);
   };
 
@@ -843,7 +854,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           void activateMockInterviewHub();
           return;
         case "english_tutor":
-          void handleAgentSelect(ENGLISH_TUTOR_AGENT_ID);
+          routeEnglishPage();
           return;
         case "job_search":
           void handleAgentSelect("job_search");

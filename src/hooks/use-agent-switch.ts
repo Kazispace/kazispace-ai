@@ -17,6 +17,7 @@ import {
 import { isDedicatedHubAgent } from '@/lib/agent-layer';
 import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
 import { AGENT_REGISTRY } from '@/lib/agents/registry';
+import { isEnglishTutorAgent } from '@/lib/english-tutor-config';
 import type { SupportedLocale } from '@/lib/constants';
 import { useAgentStore, useUIStore } from '@/lib/store';
 import type { ChatMessage } from '@/types';
@@ -349,6 +350,10 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
 
   const syncActiveAgentFromGateway = useCallback(
     async (agentId: string, assistantMessage: ChatMessage) => {
+      if (isEnglishTutorAgent(agentId)) {
+        return { ok: false as const };
+      }
+
       const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
       if (!entry || entry.status === 'coming_soon') {
         return { ok: false as const };
@@ -363,7 +368,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
         const activeRes = await getActiveAgent();
         if (activeRes.success && activeRes.data?.active_agent === agentId) {
           sessionId = activeRes.data.session_id ?? sessionId;
-        } else if (!sessionId) {
+        } else {
           const activateRes = await activateAgent(agentId, locale);
           if (!activateRes.success || !activateRes.data) {
             if (isAgentSwitchRequiresClinic(activateRes)) {
