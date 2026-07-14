@@ -46,7 +46,9 @@ export interface CreateSpaceRequest {
 export interface SpaceTurnRequest {
   message: string;
   input_mode?: string;
+  /** @deprecated Prefer language_preference (BCP-47 / app locale codes). */
   locale?: string;
+  /** Preferred UI language for this turn (same codes as Accept-Language / app locale). */
   language_preference?: string;
 }
 

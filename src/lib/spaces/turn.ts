@@ -129,29 +129,38 @@ function assistantContentKey(content: string): string {
   return content.trim();
 }
 
-/** Find the first assistant reply after the latest matching user utterance. */
-export function latestAssistantAfterUser(
-  messages: SpaceChatMessage[],
-  userText: string
+/**
+ * First non-placeholder assistant after the **last** user turn (position-based).
+ * Prefer this over content matching — duplicate utterances / in-flight turns
+ * are ambiguous when keyed only by text.
+ */
+export function latestAssistantAfterLastUser(
+  messages: SpaceChatMessage[]
 ): string {
-  const trimmed = userText.trim();
-  if (!trimmed) return '';
+  let lastUserIndex = -1;
+  for (let index = messages.length - 1; index >= 0; index--) {
+    if (messages[index]?.role === 'user') {
+      lastUserIndex = index;
+      break;
+    }
+  }
+  if (lastUserIndex < 0) return '';
 
-  const userIndex = [...messages]
-    .reverse()
-    .findIndex(
-      (message) => message.role === 'user' && message.content.trim() === trimmed
-    );
-  if (userIndex < 0) return '';
-
-  const absoluteIndex = messages.length - 1 - userIndex;
-  for (let index = absoluteIndex + 1; index < messages.length; index++) {
+  for (let index = lastUserIndex + 1; index < messages.length; index++) {
     const message = messages[index];
     if (message?.role === 'assistant' && !isPlaceholderReply(message.content)) {
       return message.content.trim();
     }
   }
   return '';
+}
+
+/** @deprecated Use latestAssistantAfterLastUser — text matching is unreliable. */
+export function latestAssistantAfterUser(
+  messages: SpaceChatMessage[],
+  _userText?: string
+): string {
+  return latestAssistantAfterLastUser(messages);
 }
 
 /** Keep local assistant turns when session history lags behind the turn response. */
