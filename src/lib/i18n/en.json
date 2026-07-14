@@ -315,7 +315,7 @@
 		"workspacePanels": "Workspace panels",
 		"cvPanelHint": "Mention CV polish in chat, or open the full CV workspace.",
 		"interviewPanelHint": "Interview readiness for the job linked to this space.",
-		"eppPanelHint": "Passport details, sample jobs, and growth history.",
+		"eppPanelHint": "English passport level, dimensions, and sample jobs for this space.",
 		"unsupportedTemplate": "This space template is not supported yet",
 		"unsupportedTemplateHint": "Create a different space type from the sidebar.",
 		"panelUnavailable": "Panel not available",
