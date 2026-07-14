@@ -234,6 +234,8 @@
 		"cvPanelHint": "在对话中提及简历优化，或打开完整简历工作区。",
 		"interviewPanelHint": "查看本空间关联职位的面试准备度。",
 		"eppPanelHint": "查看本空间英语护照等级、维度与样例岗位。",
+		"eppPanelEmpty": "先完成英语护照设置，即可在此查看等级与练习入口。",
+		"eppPanelEmptyCta": "开始设置",
 		"unsupportedTemplate": "该空间模板暂不支持",
 		"unsupportedTemplateHint": "请从侧栏新建其他类型的空间。",
 		"panelUnavailable": "面板暂不可用",

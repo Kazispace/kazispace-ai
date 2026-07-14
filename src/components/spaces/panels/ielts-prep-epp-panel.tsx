@@ -15,23 +15,10 @@ import {
 import { EPP_PROFILE_ENABLED } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/lib/store';
-import type { EnglishProfile } from '@/types';
 
 interface IeltsPrepEppPanelProps {
   locale: string;
   className?: string;
-}
-
-function PanelSampleJobs({ profile }: { profile: EnglishProfile }) {
-  const { sampleJobs } = useEnglishSampleJobs(profile.display_level, {
-    enabled: true,
-  });
-  if (!sampleJobs) return null;
-  return (
-    <div id="sample-jobs" className="scroll-mt-4 px-4 pb-4">
-      <EppSampleJobsPanel sampleJobs={sampleJobs} />
-    </div>
-  );
 }
 
 /** Template-internal EPP panel (surfaces.ts → english_epp). */
@@ -48,6 +35,14 @@ export function IeltsPrepEppPanel({ locale, className }: IeltsPrepEppPanelProps)
     profileError,
     refetchProfile,
   } = useEnglishProfile({ enabled: EPP_PROFILE_ENABLED && isLoggedIn });
+
+  const showPassport =
+    profile != null &&
+    (profileStatus === 'ready' || profileStatus === 'active');
+
+  const { sampleJobs } = useEnglishSampleJobs(profile?.display_level, {
+    enabled: EPP_PROFILE_ENABLED && isLoggedIn && showPassport,
+  });
 
   if (!EPP_PROFILE_ENABLED) {
     return (
@@ -79,10 +74,6 @@ export function IeltsPrepEppPanel({ locale, className }: IeltsPrepEppPanelProps)
     );
   }
 
-  const showPassport =
-    profile != null &&
-    (profileStatus === 'ready' || profileStatus === 'active');
-
   return (
     <div className={cn('flex h-full min-h-0 flex-col overflow-y-auto bg-white', className)}>
       <div className="shrink-0 border-b border-gray-200/80 px-4 py-3">
@@ -103,24 +94,25 @@ export function IeltsPrepEppPanel({ locale, className }: IeltsPrepEppPanelProps)
 
       {!isProfileLoading && !profileError && (profileStatus === 'empty' || !profile) ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-          <p className="text-sm font-medium text-kazi-navy">{tEnglish('onboarding.title')}</p>
-          <p className="text-xs text-gray-500">{tEnglish('onboarding.subtitle')}</p>
+          <p className="text-sm text-gray-700">{t('eppPanelEmpty')}</p>
           <Button size="sm" asChild>
-            <Link href={`/${locale}/english/onboarding`}>
-              {tEnglish('workspaceLinks.onboarding')}
-            </Link>
+            <Link href={`/${locale}/english/onboarding`}>{t('eppPanelEmptyCta')}</Link>
           </Button>
         </div>
       ) : null}
 
-      {showPassport ? (
+      {showPassport && profile ? (
         <>
           <EppPassportHome
             profile={profile}
             locale={locale}
             showBackToClinic={false}
           />
-          <PanelSampleJobs profile={profile} />
+          {sampleJobs ? (
+            <div id="sample-jobs" className="scroll-mt-4 px-4 pb-4">
+              <EppSampleJobsPanel sampleJobs={sampleJobs} />
+            </div>
+          ) : null}
         </>
       ) : null}
     </div>
