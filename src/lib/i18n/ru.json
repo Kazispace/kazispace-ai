@@ -811,6 +811,19 @@
 			"maxLevelHint": "Шкала до L{max}"
 		}
 	},
+	"spaces": {
+		"composerMuted": "Это пространство в архиве или корзине — восстановите, чтобы продолжить чат.",
+		"lifecycleComplete": "Отметить завершённым",
+		"lifecycleArchive": "В архив",
+		"lifecycleRestore": "Восстановить",
+		"lifecycleDelete": "Удалить",
+		"lifecycleDeleteConfirm": "Переместить пространство в корзину? Восстановить можно в течение 7 дней.",
+		"lifecycleFailed": "Не удалось обновить пространство",
+		"lifecycleCompleteOk": "Пространство отмечено завершённым",
+		"lifecycleArchiveOk": "Пространство в архиве",
+		"lifecycleRestoreOk": "Пространство восстановлено",
+		"lifecycleDeleteOk": "Пространство перемещено в корзину"
+	},
 	"tma": {
 		"launching": "Открываем KaziSpace…",
 		"authFailed": "Не удалось войти через Telegram",

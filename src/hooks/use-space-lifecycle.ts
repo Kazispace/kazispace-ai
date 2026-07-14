@@ -17,7 +17,10 @@ import type { SpaceDetail, SpaceStatus } from '@/types/spaces';
 
 export type SpaceLifecycleAction = 'complete' | 'archive' | 'restore' | 'delete';
 
-/** Archived / soft-deleted spaces cannot send turns (BE lifecycle 联调). */
+/**
+ * Mute composer for archived / soft-deleted only.
+ * `completed` stays writable so users can continue the thread or archive later.
+ */
 export function isSpaceComposerMuted(status: SpaceStatus): boolean {
   return status === 'archived' || status === 'deleted';
 }
@@ -73,7 +76,13 @@ export function useSpaceLifecycle(locale: string) {
         }
 
         publishSpacesListInvalidate();
-        showToast(t(`lifecycle${capitalize(action)}Ok` as 'lifecycleArchiveOk'), 'info');
+        const okMessages: Record<SpaceLifecycleAction, string> = {
+          complete: t('lifecycleCompleteOk'),
+          archive: t('lifecycleArchiveOk'),
+          restore: t('lifecycleRestoreOk'),
+          delete: t('lifecycleDeleteOk'),
+        };
+        showToast(okMessages[action], 'info');
 
         if (action === 'delete') {
           clearSpaceSlice(spaceId);
@@ -89,8 +98,4 @@ export function useSpaceLifecycle(locale: string) {
   );
 
   return { run, pendingAction };
-}
-
-function capitalize(action: SpaceLifecycleAction): string {
-  return action.charAt(0).toUpperCase() + action.slice(1);
 }

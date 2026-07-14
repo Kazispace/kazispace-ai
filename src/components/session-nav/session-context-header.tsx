@@ -346,6 +346,12 @@ export function SessionContextHeader({
                       disabled={pendingAction != null}
                       onClick={() => {
                         void (async () => {
+                          if (action === 'delete') {
+                            const confirmed = window.confirm(
+                              tSpaces('lifecycleDeleteConfirm')
+                            );
+                            if (!confirmed) return;
+                          }
                           const result = await runLifecycle(space.id, action);
                           closeDrawer();
                           if (result.ok && action !== 'delete') {

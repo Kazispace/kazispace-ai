@@ -247,6 +247,7 @@
 		"lifecycleArchive": "归档",
 		"lifecycleRestore": "恢复",
 		"lifecycleDelete": "删除",
+		"lifecycleDeleteConfirm": "将此空间移入回收站？7 天内可恢复。",
 		"lifecycleFailed": "无法更新空间",
 		"lifecycleCompleteOk": "空间已标记完成",
 		"lifecycleArchiveOk": "空间已归档",

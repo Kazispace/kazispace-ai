@@ -329,6 +329,7 @@
 		"lifecycleArchive": "Archive",
 		"lifecycleRestore": "Restore",
 		"lifecycleDelete": "Delete",
+		"lifecycleDeleteConfirm": "Move this space to trash? You can restore it within 7 days.",
 		"lifecycleFailed": "Could not update space",
 		"lifecycleCompleteOk": "Space marked complete",
 		"lifecycleArchiveOk": "Space archived",

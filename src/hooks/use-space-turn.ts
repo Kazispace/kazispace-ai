@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { fetchChatHistory } from '@/lib/api-client';
@@ -86,10 +86,17 @@ export function useSpaceTurn(
   const setSpaceSending = useSpaceStore((s) => s.setSpaceSending);
   const setSpaceReplyNotice = useSpaceStore((s) => s.setSpaceReplyNotice);
 
+  /** Bumped on spaceId change so in-flight sends skip stale store writes (PR #108 P1-3). */
+  const sendGenerationRef = useRef(0);
+
   const messages = slice?.messages ?? [];
   const isHydrating = slice?.isHydrating ?? false;
   const isSending = slice?.isSending ?? false;
   const replyNotice = slice?.replyNotice ?? null;
+
+  useEffect(() => {
+    sendGenerationRef.current += 1;
+  }, [spaceId]);
 
   useEffect(() => {
     if (!spaceId) {
@@ -98,7 +105,16 @@ export function useSpaceTurn(
     }
     setActiveSpaceId(spaceId);
     setSpaceMasterSessionId(spaceId, resolveSpaceMasterSessionId(masterSessionId));
-  }, [masterSessionId, setActiveSpaceId, setSpaceMasterSessionId, spaceId]);
+    return () => {
+      setSpaceSending(spaceId, false);
+    };
+  }, [
+    masterSessionId,
+    setActiveSpaceId,
+    setSpaceMasterSessionId,
+    setSpaceSending,
+    spaceId,
+  ]);
 
   useEffect(() => {
     if (!enabled || !spaceId) {
@@ -142,6 +158,9 @@ export function useSpaceTurn(
         return { ok: false as const, error: 'Space not ready' };
       }
 
+      const generation = sendGenerationRef.current;
+      const isStale = () => generation !== sendGenerationRef.current;
+
       const resolvedMasterId = resolveSpaceMasterSessionId(masterSessionId);
       if (!resolvedMasterId) {
         const err = 'Space not ready';
@@ -181,6 +200,10 @@ export function useSpaceTurn(
           language_preference: locale,
         });
 
+        if (isStale()) {
+          return { ok: false as const, error: 'Navigated away' };
+        }
+
         if (!res.success) {
           const busy = isLlmBusy(res);
           const message = busy
@@ -217,12 +240,19 @@ export function useSpaceTurn(
         if (isPlaceholderReply(reply)) {
           try {
             const recovered = await recoverReplyFromMasterHistory(resolvedMasterId);
+            if (isStale()) {
+              return { ok: false as const, error: 'Navigated away' };
+            }
             reply = recovered.reply;
             history = recovered.history;
             recoveredFromHistory = true;
           } catch (error) {
             console.warn('[useSpaceTurn] history recovery failed after send', error);
           }
+        }
+
+        if (isStale()) {
+          return { ok: false as const, error: 'Navigated away' };
         }
 
         if (isPlaceholderReply(reply)) {
@@ -254,6 +284,9 @@ export function useSpaceTurn(
           if (!recoveredFromHistory) {
             history = await loadSpaceHistory(resolvedMasterId);
           }
+          if (isStale()) {
+            return { ok: false as const, error: 'Navigated away' };
+          }
           if (history.length > 0) {
             setSpaceMessages(
               spaceId,
@@ -266,7 +299,9 @@ export function useSpaceTurn(
 
         return { ok: true as const };
       } finally {
-        setSpaceSending(spaceId, false);
+        if (!isStale()) {
+          setSpaceSending(spaceId, false);
+        }
       }
     },
     [
