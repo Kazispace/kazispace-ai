@@ -15,11 +15,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { EppDimensionBars } from '@/components/english/epp-dimension-bars';
 import { getEnglishCtaHref, sortEnglishCtas } from '@/lib/english-epp-cta';
 import { clampPct } from '@/lib/interview-irp-utils';
+import { cn } from '@/lib/utils';
 import type { EnglishCtaHint, EnglishProfile } from '@/types';
 
 interface EppPassportHomeProps {
   profile: EnglishProfile;
   locale: string;
+  /** Hub passport page keeps Back to Clinic; space panel hides it (KAZI-183). */
+  showBackToClinic?: boolean;
+  className?: string;
 }
 
 function defaultCtaLabel(
@@ -40,7 +44,12 @@ function defaultCtaLabel(
   }
 }
 
-export function EppPassportHome({ profile, locale }: EppPassportHomeProps) {
+export function EppPassportHome({
+  profile,
+  locale,
+  showBackToClinic = true,
+  className,
+}: EppPassportHomeProps) {
   const t = useTranslations('english.passport');
   const router = useRouter();
 
@@ -64,7 +73,13 @@ export function EppPassportHome({ profile, locale }: EppPassportHomeProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col p-4 gap-4 max-w-lg mx-auto w-full">
+    <div
+      className={cn(
+        'flex w-full flex-1 flex-col gap-4 p-4',
+        showBackToClinic && 'mx-auto max-w-lg',
+        className
+      )}
+    >
       {profile.level_locked && (
         <div className="text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-3 py-2">
           {t('levelLocked', { level: profile.display_level })}
@@ -129,15 +144,17 @@ export function EppPassportHome({ profile, locale }: EppPassportHomeProps) {
         </CardContent>
       </Card>
 
-      <BackToClinicButton
-        size="sm"
-        variant="outline"
-        className="self-start"
-        locale={locale}
-        agentId={ENGLISH_TUTOR_AGENT_ID}
-      >
-        {t('backToClinic')}
-      </BackToClinicButton>
+      {showBackToClinic ? (
+        <BackToClinicButton
+          size="sm"
+          variant="outline"
+          className="self-start"
+          locale={locale}
+          agentId={ENGLISH_TUTOR_AGENT_ID}
+        >
+          {t('backToClinic')}
+        </BackToClinicButton>
+      ) : null}
     </div>
   );
 }
