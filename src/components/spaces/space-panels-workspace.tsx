@@ -19,6 +19,7 @@ import {
 } from '@/lib/spaces/panels';
 import { resolveSpaceJobId } from '@/lib/spaces/space-context';
 import { getSpacePanelLabel } from '@/lib/spaces/panel-labels';
+import { useSpaceStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { SpaceDetail } from '@/types/spaces';
 
@@ -43,6 +44,10 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   const defaultPanelId = resolveDefaultPanelId(panels);
   const panelFromUrl = searchParams.get('panel');
   const fallbackPanelId = defaultPanelId ?? panels[0]?.panel_id ?? 'panel';
+  const activePanelHint = useSpaceStore(
+    (s) => s.getSpaceSlice(space.id).activePanelHint
+  );
+  const setSpaceActivePanelHint = useSpaceStore((s) => s.setSpaceActivePanelHint);
 
   const initialView: SpaceWorkspaceView = useMemo(() => {
     if (panelFromUrl && isValidPanelId(panels, panelFromUrl)) {
@@ -91,6 +96,25 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
     },
     [syncPanelQuery]
   );
+
+  /** Envelope `meta.active_panel` / `ui_hints.panel_id` → switch + clear hint. */
+  useEffect(() => {
+    if (!activePanelHint) return;
+    if (!isValidPanelId(panels, activePanelHint)) {
+      setSpaceActivePanelHint(space.id, null);
+      return;
+    }
+    setDesktopPanelId(activePanelHint);
+    setMobileView(activePanelHint);
+    syncPanelQuery(activePanelHint);
+    setSpaceActivePanelHint(space.id, null);
+  }, [
+    activePanelHint,
+    panels,
+    setSpaceActivePanelHint,
+    space.id,
+    syncPanelQuery,
+  ]);
 
   const activePanel =
     panels.find((panel) => panel.panel_id === desktopPanelId) ?? panels[0];

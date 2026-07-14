@@ -19,6 +19,8 @@ export interface SpaceSlice {
   replyNotice: SpaceReplyNotice | null;
   /** Worker foreground for this space only (KAZI-195). */
   activeCapability: string | null;
+  /** Turn-driven panel highlight; workspace syncs to `?panel=` then clears (KAZI-182). */
+  activePanelHint: string | null;
 }
 
 /** Cap cached space slices to avoid unbounded SPA memory. */
@@ -34,6 +36,7 @@ export function emptySpaceSlice(
     isSending: false,
     replyNotice: null,
     activeCapability: null,
+    activePanelHint: null,
   };
 }
 

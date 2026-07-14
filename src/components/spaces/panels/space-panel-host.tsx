@@ -33,7 +33,9 @@ function renderSpacePanel({
         <JobSprintCvPanel locale={locale} jobId={jobId} className={className} />
       );
     case 'interview_irp':
-      return <JobSprintInterviewPanel locale={locale} className={className} />;
+      return (
+        <JobSprintInterviewPanel locale={locale} jobId={jobId} className={className} />
+      );
     case 'english_epp':
       return <IeltsPrepEppPanel locale={locale} className={className} />;
     default:
