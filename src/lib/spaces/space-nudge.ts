@@ -66,12 +66,26 @@ export function clearExpiredSpaceNudgeDismissals(): void {
   if (changed) writeDismissMap(map);
 }
 
-function resolveCtaLabel(raw: unknown): string | undefined {
+function resolveCtaLabel(raw: unknown, locale?: string): string | undefined {
   if (typeof raw === 'string' && raw.trim()) return raw.trim();
   if (raw && typeof raw === 'object') {
     const map = raw as Record<string, unknown>;
-    for (const key of ['en', 'zh', 'ru', 'kk', 'uz']) {
+    const preferred = [
+      locale,
+      'en',
+      'zh',
+      'ru',
+      'kk',
+      'uz',
+    ].filter((key): key is string => Boolean(key));
+    const seen = new Set<string>();
+    for (const key of preferred) {
+      if (seen.has(key)) continue;
+      seen.add(key);
       const v = map[key];
+      if (typeof v === 'string' && v.trim()) return v.trim();
+    }
+    for (const v of Object.values(map)) {
       if (typeof v === 'string' && v.trim()) return v.trim();
     }
   }
@@ -79,7 +93,8 @@ function resolveCtaLabel(raw: unknown): string | undefined {
 }
 
 export function parseSpaceNudgeRecord(
-  raw: Record<string, unknown>
+  raw: Record<string, unknown>,
+  locale?: string
 ): SpaceNudgePayload | null {
   const templateId =
     typeof raw.template_id === 'string'
@@ -96,7 +111,7 @@ export function parseSpaceNudgeRecord(
         ? raw.suggestedName.trim()
         : undefined;
 
-  const ctaLabel = resolveCtaLabel(raw.cta_label ?? raw.ctaLabel);
+  const ctaLabel = resolveCtaLabel(raw.cta_label ?? raw.ctaLabel, locale);
   const reason =
     typeof raw.reason === 'string'
       ? raw.reason.trim()
@@ -113,11 +128,14 @@ export function parseSpaceNudgeRecord(
 }
 
 /** Parse `type: space_nudge` component or standalone object. */
-export function parseSpaceNudgeComponent(item: unknown): SpaceNudgePayload | null {
+export function parseSpaceNudgeComponent(
+  item: unknown,
+  locale?: string
+): SpaceNudgePayload | null {
   const record = asRecord(item);
   if (!record) return null;
   if (record.type != null && record.type !== 'space_nudge') return null;
-  return parseSpaceNudgeRecord(record);
+  return parseSpaceNudgeRecord(record, locale);
 }
 
 function collectComponents(root: Record<string, unknown>): unknown[] {
@@ -138,12 +156,15 @@ function collectComponents(root: Record<string, unknown>): unknown[] {
  * Extract Clinic → Space nudge from a chat / turn payload.
  * Prefers `components[]` with `type: space_nudge`; falls back to root `space_nudge`.
  */
-export function extractSpaceNudge(data: unknown): SpaceNudgePayload | null {
+export function extractSpaceNudge(
+  data: unknown,
+  locale?: string
+): SpaceNudgePayload | null {
   const root = asRecord(data);
   if (!root) return null;
 
   for (const item of collectComponents(root)) {
-    const nudge = parseSpaceNudgeComponent(item);
+    const nudge = parseSpaceNudgeComponent(item, locale);
     if (nudge) return nudge;
   }
 
@@ -153,7 +174,7 @@ export function extractSpaceNudge(data: unknown): SpaceNudgePayload | null {
     asRecord(asRecord(root.response)?.space_nudge) ??
     asRecord(asRecord(root.envelope)?.space_nudge);
   if (nested) {
-    return parseSpaceNudgeRecord({ type: 'space_nudge', ...nested });
+    return parseSpaceNudgeRecord({ type: 'space_nudge', ...nested }, locale);
   }
 
   return null;

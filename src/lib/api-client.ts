@@ -345,7 +345,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
 
   let spaceNudge: SpaceNudgePayload | undefined;
   if (isSpacesEnabled()) {
-    const extracted = extractSpaceNudge(data);
+    const extracted = extractSpaceNudge(data, getActiveLanguagePreference());
     if (extracted && !isSpaceNudgeDismissed(extracted.templateId)) {
       spaceNudge = extracted;
     }

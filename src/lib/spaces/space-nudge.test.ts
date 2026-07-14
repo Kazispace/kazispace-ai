@@ -31,6 +31,23 @@ describe('extractSpaceNudge', () => {
     });
   });
 
+  it('prefers CTA label for the active locale', () => {
+    expect(
+      extractSpaceNudge(
+        {
+          components: [
+            {
+              type: 'space_nudge',
+              template_id: 'job_sprint',
+              cta_label: { en: 'Start Job Sprint', ru: 'Начать спринт' },
+            },
+          ],
+        },
+        'ru'
+      )?.ctaLabel
+    ).toBe('Начать спринт');
+  });
+
   it('reads nested envelope.components', () => {
     expect(
       extractSpaceNudge({
@@ -39,6 +56,26 @@ describe('extractSpaceNudge', () => {
         },
       })
     ).toEqual({ templateId: 'ielts_prep' });
+  });
+
+  it('reads assistant_response.components', () => {
+    expect(
+      extractSpaceNudge({
+        assistant_response: {
+          components: [{ type: 'space_nudge', template_id: 'job_sprint' }],
+        },
+      })
+    ).toEqual({ templateId: 'job_sprint' });
+  });
+
+  it('reads response.components', () => {
+    expect(
+      extractSpaceNudge({
+        response: {
+          components: [{ type: 'space_nudge', template_id: 'blank_conversation' }],
+        },
+      })
+    ).toEqual({ templateId: 'blank_conversation' });
   });
 
   it('reads root space_nudge object', () => {

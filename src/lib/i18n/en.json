@@ -339,6 +339,7 @@
 		"nudgeCta": "Create {template}",
 		"nudgeDismiss": "Not now",
 		"nudgeCreateFailed": "Could not create space",
+		"nudgeGenericTemplate": "this space",
 		"statusLabel": "Status: {status}",
 		"panelsLayout": "Multi-panel workspace"
 	},

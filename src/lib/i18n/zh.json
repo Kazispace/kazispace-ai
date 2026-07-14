@@ -257,6 +257,7 @@
 		"nudgeCta": "创建{template}",
 		"nudgeDismiss": "暂不需要",
 		"nudgeCreateFailed": "无法创建空间",
+		"nudgeGenericTemplate": "此空间",
 		"statusLabel": "状态：{status}",
 		"panelsLayout": "多面板工作区"
 	},

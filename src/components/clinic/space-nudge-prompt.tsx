@@ -25,7 +25,9 @@ export function SpaceNudgePrompt({
 }: SpaceNudgePromptProps) {
   const t = useTranslations('spaces');
   const i18nKey = TEMPLATE_I18N_KEYS[nudge.templateId];
-  const templateTitle = i18nKey ? t(i18nKey.title) : nudge.templateId;
+  // Never surface raw snake_case ids (defense in depth; parser already whitelists).
+  const templateTitle = i18nKey ? t(i18nKey.title) : t('nudgeGenericTemplate');
+  // `{template}` = human template display name for translators.
   const reason =
     nudge.reason?.trim() ||
     t('nudgeDefaultReason', { template: templateTitle });

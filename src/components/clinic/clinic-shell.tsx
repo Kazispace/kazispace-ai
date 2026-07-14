@@ -89,6 +89,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const tSessions = useTranslations("agentSessions");
   const tSessionNav = useTranslations("sessionNav");
   const tSpaces = useTranslations("spaces");
+  // MVP: one in-flight accept at a time (BE emits at most one live nudge per reply).
   const [spaceNudgeBusy, setSpaceNudgeBusy] = useState(false);
 
   const switcherOpen = useAgentStore((s) => s.switcherOpen);
@@ -858,8 +859,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       if (!isSpacesEnabled() || spaceNudgeBusy) return;
       setSpaceNudgeBusy(true);
       try {
-        dismissSpaceNudge(nudge.templateId);
-        if (messageId) dismissMessageSpaceNudge(messageId);
         const res = await createSpace({
           template_id: nudge.templateId,
           ...(nudge.suggestedName ? { name: nudge.suggestedName } : {}),
@@ -868,6 +867,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           showToast(res.error ?? tSpaces("nudgeCreateFailed"), "error");
           return;
         }
+        // Dismiss only after success — failed accept must keep the card for retry.
+        dismissSpaceNudge(nudge.templateId);
+        if (messageId) dismissMessageSpaceNudge(messageId);
         publishSpacesListInvalidate();
         router.push(`/${locale}/spaces/${encodeURIComponent(res.data.id)}`);
       } finally {
