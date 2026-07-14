@@ -314,7 +314,7 @@
 		"panelEnglish": "English practice",
 		"workspacePanels": "Workspace panels",
 		"cvPanelHint": "Mention CV polish in chat, or open the full CV workspace.",
-		"interviewPanelHint": "Interview profile, history, and readiness.",
+		"interviewPanelHint": "Interview readiness for the job linked to this space.",
 		"eppPanelHint": "Passport details, sample jobs, and growth history.",
 		"unsupportedTemplate": "This space template is not supported yet",
 		"unsupportedTemplateHint": "Create a different space type from the sidebar.",

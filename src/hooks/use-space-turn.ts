@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { fetchChatHistory } from '@/lib/api-client';
 import { isLlmBusy } from '@/lib/api-errors';
 import { sendSpaceTurn } from '@/lib/spaces-api';
+import { resolveActivePanelFromTurn } from '@/lib/spaces/active-panel';
 import {
   resolveActiveCapability,
   resolveActiveCapabilityFromTurn,
@@ -91,6 +92,7 @@ export function useSpaceTurn(
   const setSpaceSending = useSpaceStore((s) => s.setSpaceSending);
   const setSpaceReplyNotice = useSpaceStore((s) => s.setSpaceReplyNotice);
   const setSpaceActiveCapability = useSpaceStore((s) => s.setSpaceActiveCapability);
+  const setSpaceActivePanelHint = useSpaceStore((s) => s.setSpaceActivePanelHint);
 
   /** Generation counter — skip stale async store writes when the user navigates away. */
   const sendGenerationRef = useRef(0);
@@ -254,6 +256,11 @@ export function useSpaceTurn(
           setSpaceActiveCapability(spaceId, nextCapability);
         }
 
+        const nextPanel = resolveActivePanelFromTurn(res.data);
+        if (nextPanel) {
+          setSpaceActivePanelHint(spaceId, nextPanel);
+        }
+
         if (isPlaceholderReply(reply)) {
           try {
             const recovered = await recoverReplyFromMasterHistory(resolvedMasterId);
@@ -327,6 +334,7 @@ export function useSpaceTurn(
       masterSessionId,
       patchSpaceMessages,
       setSpaceActiveCapability,
+      setSpaceActivePanelHint,
       setSpaceMessages,
       setSpaceReplyNotice,
       setSpaceSending,

@@ -232,7 +232,7 @@
 		"panelEnglish": "英语练习",
 		"workspacePanels": "工作区面板",
 		"cvPanelHint": "在对话中提及简历优化，或打开完整简历工作区。",
-		"interviewPanelHint": "查看面试档案、历史与准备度。",
+		"interviewPanelHint": "查看本空间关联职位的面试准备度。",
 		"eppPanelHint": "护照详情、样例岗位与成长曲线。",
 		"unsupportedTemplate": "该空间模板暂不支持",
 		"unsupportedTemplateHint": "请从侧栏新建其他类型的空间。",
