@@ -32,6 +32,7 @@ import { buildSpaceNavRows, resolveSpaceIdFromPathname, shouldPinWorkspaceNavPan
 import { CLINIC_SPACE_ID, isSpacesEnabled } from '@/lib/spaces/constants';
 import { createSpace } from '@/lib/spaces-api';
 import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
+import { isTelegramWebApp } from '@/lib/telegram';
 import { WorkspaceShellProvider } from '@/lib/workspace-shell-context';
 import { useUIStore } from '@/lib/store';
 
@@ -51,7 +52,9 @@ function SessionNavShellFrame({ locale, children }: SessionNavShellProps) {
   const navState = useSessionNavState();
   const panelVisible = navState.panelOpen || navState.mobileDrawerOpen;
 
-  if (isTelegramMiniApp) {
+  // Store flag alone is insufficient: a false-positive TMA init used to hide nav
+  // for every desktop visitor after telegram-web-app.js loaded. Require real initData.
+  if (isTelegramMiniApp && isTelegramWebApp()) {
     return (
       <ActiveAgentSessionsProvider>
         {children}

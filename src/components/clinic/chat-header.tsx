@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
 import { useUIStore } from "@/lib/store";
-import { closeTelegramWebApp } from "@/lib/telegram";
+import { closeTelegramWebApp, isTelegramWebApp } from "@/lib/telegram";
 
 interface ChatHeaderProps {
   locale: string;
@@ -37,6 +37,9 @@ export function ChatHeader({
   const tNav = useTranslations("nav");
   const tTma = useTranslations("tma");
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
+  // ... we'll use isTelegramWebApp for back to bot too
+
+Wait I shouldn't replace like that. Let me read chat-header.
 
   const headerEmoji =
     mode === "space" ? spaceEmoji : mode === "agent" ? agentEmoji : null;
@@ -108,7 +111,7 @@ export function ChatHeader({
         </Button>
       </Link>
 
-      {isTelegramMiniApp && mode === "clinic" && (
+      {isTelegramMiniApp && isTelegramWebApp() && mode === "clinic" && (
         <Button
           type="button"
           variant="ghost"
