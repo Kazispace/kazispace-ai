@@ -45,6 +45,8 @@ export const STORAGE_KEYS = {
   MASTER_SESSION: 'kazi_master_session_id',
   ENGLISH_LEVEL: 'kazi_english_level',
   REFERRAL_DISMISSED: 'kazi_referral_dismissed',
+  /** Clinic → Space nudge dismiss timestamps by template_id (KAZI-181). */
+  SPACE_NUDGE_DISMISSED: 'kazi_space_nudge_dismissed',
   TMA_PENDING_ACTION: 'kazi_tma_pending_action',
   CV_AGENT_HANDOFF: 'kazi_cv_agent_handoff',
 } as const;

@@ -335,6 +335,10 @@
 		"lifecycleArchiveOk": "Space archived",
 		"lifecycleRestoreOk": "Space restored",
 		"lifecycleDeleteOk": "Space moved to trash",
+		"nudgeDefaultReason": "Ready for a focused {template} space? One tap to create it.",
+		"nudgeCta": "Create {template}",
+		"nudgeDismiss": "Not now",
+		"nudgeCreateFailed": "Could not create space",
 		"statusLabel": "Status: {status}",
 		"panelsLayout": "Multi-panel workspace"
 	},

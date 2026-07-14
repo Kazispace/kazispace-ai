@@ -253,6 +253,10 @@
 		"lifecycleArchiveOk": "空间已归档",
 		"lifecycleRestoreOk": "空间已恢复",
 		"lifecycleDeleteOk": "空间已移入回收站",
+		"nudgeDefaultReason": "准备好进入「{template}」专属空间了吗？一键创建即可开始。",
+		"nudgeCta": "创建{template}",
+		"nudgeDismiss": "暂不需要",
+		"nudgeCreateFailed": "无法创建空间",
 		"statusLabel": "状态：{status}",
 		"panelsLayout": "多面板工作区"
 	},
