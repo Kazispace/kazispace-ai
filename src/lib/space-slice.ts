@@ -17,6 +17,8 @@ export interface SpaceSlice {
   isHydrating: boolean;
   isSending: boolean;
   replyNotice: SpaceReplyNotice | null;
+  /** Worker foreground for this space only (KAZI-195). */
+  activeCapability: string | null;
 }
 
 /** Cap cached space slices to avoid unbounded SPA memory. */
@@ -31,6 +33,7 @@ export function emptySpaceSlice(
     isHydrating: false,
     isSending: false,
     replyNotice: null,
+    activeCapability: null,
   };
 }
 

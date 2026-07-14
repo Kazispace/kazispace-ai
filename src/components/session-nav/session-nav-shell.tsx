@@ -120,9 +120,11 @@ function SessionNavShellLayout({
     setPanelMode('agents');
     setPanelOpen(true);
   }, [pinNavPanel, setPanelMode, setPanelOpen]);
+  // Spaces on still needs agent sessions: Hub routes + Session Nav agent tab.
+  // Space Context Header no longer consumes them (KAZI-195); do not gate with
+  // `enabled: !spacesEnabled` — that would break /cv|/interview|/english history.
   const { sessionsByAgent, isLoading, error, refresh } = useActiveAgentSessions({
     panelOpen: panelVisible,
-    enabled: !spacesEnabled,
   });
   const {
     spaces,

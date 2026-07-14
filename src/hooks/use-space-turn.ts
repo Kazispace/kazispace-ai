@@ -6,6 +6,10 @@ import { useTranslations } from 'next-intl';
 import { fetchChatHistory } from '@/lib/api-client';
 import { isLlmBusy } from '@/lib/api-errors';
 import { sendSpaceTurn } from '@/lib/spaces-api';
+import {
+  resolveActiveCapability,
+  resolveActiveCapabilityFromTurn,
+} from '@/lib/spaces/capability';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
 import {
   isPlaceholderReply,
@@ -69,7 +73,8 @@ async function recoverReplyFromMasterHistory(
 export function useSpaceTurn(
   spaceId: string | null,
   masterSessionId: string | null,
-  locale: string
+  locale: string,
+  spaceState: Record<string, unknown> | null = null
 ) {
   const t = useTranslations('spaces');
   const tErrors = useTranslations('errors');
@@ -85,6 +90,7 @@ export function useSpaceTurn(
   const setSpaceHydrating = useSpaceStore((s) => s.setSpaceHydrating);
   const setSpaceSending = useSpaceStore((s) => s.setSpaceSending);
   const setSpaceReplyNotice = useSpaceStore((s) => s.setSpaceReplyNotice);
+  const setSpaceActiveCapability = useSpaceStore((s) => s.setSpaceActiveCapability);
 
   /** Generation counter — skip stale async store writes when the user navigates away. */
   const sendGenerationRef = useRef(0);
@@ -93,6 +99,7 @@ export function useSpaceTurn(
   const isHydrating = slice?.isHydrating ?? false;
   const isSending = slice?.isSending ?? false;
   const replyNotice = slice?.replyNotice ?? null;
+  const capabilityFromSpaceState = resolveActiveCapability(spaceState);
 
   useEffect(() => {
     sendGenerationRef.current += 1;
@@ -105,12 +112,17 @@ export function useSpaceTurn(
     }
     setActiveSpaceId(spaceId);
     setSpaceMasterSessionId(spaceId, resolveSpaceMasterSessionId(masterSessionId));
+    if (capabilityFromSpaceState) {
+      setSpaceActiveCapability(spaceId, capabilityFromSpaceState);
+    }
     return () => {
       setSpaceSending(spaceId, false);
     };
   }, [
+    capabilityFromSpaceState,
     masterSessionId,
     setActiveSpaceId,
+    setSpaceActiveCapability,
     setSpaceMasterSessionId,
     setSpaceSending,
     spaceId,
@@ -237,6 +249,11 @@ export function useSpaceTurn(
         let history: SpaceChatMessage[] = [];
         let recoveredFromHistory = false;
 
+        const nextCapability = resolveActiveCapabilityFromTurn(res.data);
+        if (nextCapability) {
+          setSpaceActiveCapability(spaceId, nextCapability);
+        }
+
         if (isPlaceholderReply(reply)) {
           try {
             const recovered = await recoverReplyFromMasterHistory(resolvedMasterId);
@@ -309,6 +326,7 @@ export function useSpaceTurn(
       locale,
       masterSessionId,
       patchSpaceMessages,
+      setSpaceActiveCapability,
       setSpaceMessages,
       setSpaceReplyNotice,
       setSpaceSending,

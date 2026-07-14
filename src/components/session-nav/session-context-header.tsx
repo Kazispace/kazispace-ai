@@ -20,6 +20,11 @@ import { getDedicatedHubAgentFromPathname, getSurfacePath } from '@/lib/agent-tr
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
+import {
+  formatRegisteredCapabilityLabel,
+  resolveActiveCapability,
+  shouldUseGlobalAgentForContextHeader,
+} from '@/lib/spaces/capability';
 import { isClinicChatPathname } from '@/lib/space-nav';
 import { publishSessionNavOpenFile } from '@/lib/session-nav-events';
 import {
@@ -30,7 +35,7 @@ import {
   formatSessionNavBadgeLabel,
   sessionNavBadgePillClass,
 } from '@/lib/session-nav-badges';
-import { useAgentStore, useUIStore } from '@/lib/store';
+import { useAgentStore, useSpaceStore, useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { SessionLibraryFile } from '@/types/session-library';
 
@@ -53,11 +58,21 @@ export function SessionContextHeader({
   const showToast = useUIStore((s) => s.showToast);
   const clinicActiveAgentId = useAgentStore((s) => s.activeAgentId);
   const hubAgentId = getDedicatedHubAgentFromPathname(pathname);
-  const agentId = hubAgentId ?? (isClinicChatPathname(pathname) ? clinicActiveAgentId : null);
+  // KAZI-195: space surfaces (incl. clinic entry) ignore global activeAgentId.
+  const useGlobalAgent = shouldUseGlobalAgentForContextHeader({
+    hubAgentId,
+    spaceId,
+  });
+  const agentId =
+    hubAgentId ??
+    (useGlobalAgent && isClinicChatPathname(pathname) ? clinicActiveAgentId : null);
   const currentSession = agentId
     ? sessionsByAgent.get(agentId) ?? null
     : resolveContextHeaderSession(pathname, sessionsByAgent);
   const { space, refresh: refreshSpace } = useSpaceDetail(spaceId);
+  const spaceActiveCapability = useSpaceStore((s) =>
+    spaceId ? s.getSpaceSlice(spaceId).activeCapability : null
+  );
   const { run: runLifecycle, pendingAction } = useSpaceLifecycle(locale);
   const [drawer, setDrawer] = useState<HeaderDrawer>(null);
   const [sessionSearchQuery, setSessionSearchQuery] = useState('');
@@ -101,9 +116,27 @@ export function SessionContextHeader({
     }
 
     if (spaceId && space) {
+      const capabilityId =
+        spaceActiveCapability?.trim() ||
+        resolveActiveCapability(space.space_state) ||
+        null;
+      const capabilityLabel = capabilityId
+        ? formatRegisteredCapabilityLabel(capabilityId, (id) => {
+            const entry = AGENT_REGISTRY.find((a) => a.agentId === id);
+            if (!entry) return null;
+            return {
+              emoji: entry.emoji,
+              name: getAgentLabel(entry, locale, 'name'),
+            };
+          })
+        : null;
       return {
         title: `${space.name}`,
-        statusLabel: space.status === 'active' ? t('badgeInProgress') : space.status,
+        statusLabel: capabilityLabel
+          ? capabilityLabel
+          : space.status === 'active'
+            ? t('badgeInProgress')
+            : space.status,
         statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
       };
     }
@@ -121,7 +154,16 @@ export function SessionContextHeader({
       statusLabel: null as string | null,
       statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
     };
-  }, [agentId, currentSession, locale, pathname, space, spaceId, t]);
+  }, [
+    agentId,
+    currentSession,
+    locale,
+    pathname,
+    space,
+    spaceActiveCapability,
+    spaceId,
+    t,
+  ]);
 
   const showSessionActions = Boolean(agentId && currentSession?.session_id);
   // Dedicated hub routes — plain Link back to /chat. Inline clinic agent mode keeps

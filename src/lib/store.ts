@@ -277,6 +277,7 @@ interface SpaceStore {
   setSpaceHydrating: (spaceId: string, isHydrating: boolean) => void;
   setSpaceSending: (spaceId: string, isSending: boolean) => void;
   setSpaceReplyNotice: (spaceId: string, notice: SpaceReplyNotice | null) => void;
+  setSpaceActiveCapability: (spaceId: string, activeCapability: string | null) => void;
   clearSpaceSlice: (spaceId: string) => void;
   reset: () => void;
 }
@@ -333,6 +334,12 @@ export const useSpaceStore = create<SpaceStore>()((set, get) => ({
     set((state) => {
       if (notice == null && !state.spaces[spaceId]) return {};
       return applySpacePatch(state, spaceId, { replyNotice: notice });
+    }),
+  setSpaceActiveCapability: (spaceId, activeCapability) =>
+    set((state) => {
+      // Do not recreate empty slices after LRU eviction (align with touchExistingSpaceLru).
+      if (!state.spaces[spaceId]) return {};
+      return applySpacePatch(state, spaceId, { activeCapability });
     }),
   clearSpaceSlice: (spaceId) =>
     set((state) => removeSpaceFromLru(state.spaces, state.spaceLruOrder, spaceId)),
