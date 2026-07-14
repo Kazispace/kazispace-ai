@@ -1,46 +1,23 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { X } from 'lucide-react';
 
 import { useSpaceTemplates } from '@/hooks/use-space-templates';
 import { TEMPLATE_EMOJI } from '@/lib/spaces/constants';
+import { resolveTemplateLabel } from '@/lib/spaces/template-label';
 import type { SpaceTemplateItem } from '@/types/spaces';
 import { cn } from '@/lib/utils';
+
+const FOCUSABLE =
+  'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 interface SpaceTemplatePickerProps {
   open: boolean;
   isCreating?: boolean;
   onClose: () => void;
   onSelect: (templateId: string) => void;
-}
-
-const TEMPLATE_I18N_KEYS: Record<string, { title: string; desc: string }> = {
-  blank_conversation: { title: 'templateBlank', desc: 'templateBlankDesc' },
-  job_sprint: { title: 'templateJobSprint', desc: 'templateJobSprintDesc' },
-  ielts_prep: { title: 'templateIelts', desc: 'templateIeltsDesc' },
-};
-
-function resolveTemplateLabel(
-  template: SpaceTemplateItem,
-  locale: string,
-  t: ReturnType<typeof useTranslations<'spaces'>>
-): { title: string; desc: string } {
-  const display = template.display_name;
-  if (display && typeof display === 'object') {
-    const title =
-      display[locale] ?? display.zh ?? display.en ?? template.template_id;
-    return { title, desc: '' };
-  }
-  if (typeof display === 'string' && display !== template.template_id) {
-    return { title: display, desc: '' };
-  }
-
-  const keys = TEMPLATE_I18N_KEYS[template.template_id];
-  if (keys) {
-    return { title: t(keys.title), desc: t(keys.desc) };
-  }
-  return { title: template.template_id, desc: '' };
 }
 
 function TemplateButton({
@@ -86,6 +63,46 @@ export function SpaceTemplatePicker({
 }: SpaceTemplatePickerProps) {
   const t = useTranslations('spaces');
   const { templates, comingSoon, isLoading } = useSpaceTemplates(open);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    closeButtonRef.current?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab' || !dialogRef.current) return;
+
+      const focusables = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)
+      ).filter((el) => !el.hasAttribute('disabled'));
+      if (focusables.length === 0) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -98,6 +115,7 @@ export function SpaceTemplatePicker({
         onClick={onClose}
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="space-template-picker-title"
@@ -108,6 +126,7 @@ export function SpaceTemplatePicker({
             {t('pickerTitle')}
           </h2>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             className="rounded p-1 text-[#86909C] hover:bg-[#F2F3F5]"

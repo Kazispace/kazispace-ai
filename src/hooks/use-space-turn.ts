@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { fetchChatHistory } from '@/lib/api-client';
 import { sendSpaceTurn } from '@/lib/spaces-api';
@@ -64,6 +65,7 @@ export function useSpaceTurn(
   masterSessionId: string | null,
   locale: string
 ) {
+  const t = useTranslations('spaces');
   const enabled = isSpacesEnabled() && Boolean(spaceId);
   const [messages, setMessages] = useState<SpaceChatMessage[]>([]);
   const [isHydrating, setIsHydrating] = useState(false);
@@ -164,9 +166,7 @@ export function useSpaceTurn(
 
         if (isPlaceholderReply(reply)) {
           // Turn was accepted — L2 may still be writing. Keep user bubble; don't invite resend.
-          const err =
-            'Reply is still generating — reopen this space in a moment if it does not appear.';
-          setSendError(err);
+          setSendError(t('replyStillGenerating'));
           return { ok: true as const, pending: true as const };
         }
 
@@ -192,7 +192,7 @@ export function useSpaceTurn(
         setIsSending(false);
       }
     },
-    [enabled, locale, masterSessionId, spaceId]
+    [enabled, locale, masterSessionId, spaceId, t]
   );
 
   return {

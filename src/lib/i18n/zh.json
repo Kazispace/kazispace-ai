@@ -241,6 +241,7 @@
 		"templateWorkspaceComingSoon": "该模板的多面板工作区即将推出。",
 		"composerPlaceholder": "输入消息…",
 		"send": "发送",
+		"replyStillGenerating": "回复仍在生成中——若未出现，请稍后重新打开此空间。",
 		"statusLabel": "状态：{status}",
 		"panelsLayout": "多面板工作区"
 	},
