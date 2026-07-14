@@ -40,6 +40,7 @@ export function SpaceChatPane({
     locale
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
 
   useEffect(() => {

@@ -286,6 +286,7 @@ function SessionNavShellLayout({
 
   return (
     <SessionNavControllerProvider value={controllerValue}>
+      {/* Provider wraps floating sheets too — Clinic/Space shells must see embedded=true. */}
       <WorkspaceShellProvider>
       <div className="flex h-[100dvh] w-full overflow-hidden bg-[#F4F5F7]">
         <SessionIconRail
@@ -360,7 +361,6 @@ function SessionNavShellLayout({
           <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
         </div>
       </div>
-      </WorkspaceShellProvider>
 
       <SpaceTemplatePicker
         open={templatePickerOpen}
@@ -376,6 +376,7 @@ function SessionNavShellLayout({
         onConfirm={() => void handleConfirmAbandon()}
         onCancel={cancelConfirmAbandon}
       />
+      </WorkspaceShellProvider>
     </SessionNavControllerProvider>
   );
 }

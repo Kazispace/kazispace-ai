@@ -27,7 +27,7 @@ import {
   formatSessionNavBadgeLabel,
   sessionNavBadgePillClass,
 } from '@/lib/session-nav-badges';
-import { useUIStore } from '@/lib/store';
+import { useAgentStore, useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { SessionLibraryFile } from '@/types/session-library';
 
@@ -47,8 +47,12 @@ export function SessionContextHeader({
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
   const showToast = useUIStore((s) => s.showToast);
-  const currentSession = resolveContextHeaderSession(pathname, sessionsByAgent);
-  const agentId = getDedicatedHubAgentFromPathname(pathname);
+  const clinicActiveAgentId = useAgentStore((s) => s.activeAgentId);
+  const hubAgentId = getDedicatedHubAgentFromPathname(pathname);
+  const agentId = hubAgentId ?? (isClinicChatPathname(pathname) ? clinicActiveAgentId : null);
+  const currentSession = agentId
+    ? sessionsByAgent.get(agentId) ?? null
+    : resolveContextHeaderSession(pathname, sessionsByAgent);
   const { space } = useSpaceDetail(spaceId);
   const [drawer, setDrawer] = useState<HeaderDrawer>(null);
   const [sessionSearchQuery, setSessionSearchQuery] = useState('');
@@ -66,6 +70,31 @@ export function SessionContextHeader({
   );
 
   const { title, statusLabel, statusKind } = useMemo(() => {
+    const agent = agentId
+      ? AGENT_REGISTRY.find((entry) => entry.agentId === agentId)
+      : undefined;
+
+    if (agent) {
+      const name = getAgentLabel(agent, locale, 'name');
+      const sessionTitle = currentSession?.title?.trim();
+      const titleText = sessionTitle
+        ? `${agent.emoji} ${name} · ${sessionTitle}`
+        : `${agent.emoji} ${name}`;
+
+      const badge = resolveSessionNavBadge(currentSession);
+      return {
+        title: titleText,
+        statusLabel: badge
+          ? formatSessionNavBadgeLabel(
+              badge.kind,
+              badge.detail ?? currentSession?.pipeline_state,
+              (key) => t(key)
+            )
+          : null,
+        statusKind: badge,
+      };
+    }
+
     if (spaceId && space) {
       return {
         title: `${space.name}`,
@@ -82,39 +111,18 @@ export function SessionContextHeader({
       };
     }
 
-    const agent = agentId
-      ? AGENT_REGISTRY.find((entry) => entry.agentId === agentId)
-      : undefined;
-
-    if (!agent) {
-      return {
-        title: t('workspace'),
-        statusLabel: null as string | null,
-        statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
-      };
-    }
-
-    const name = getAgentLabel(agent, locale, 'name');
-    const sessionTitle = currentSession?.title?.trim();
-    const titleText = sessionTitle
-      ? `${agent.emoji} ${name} · ${sessionTitle}`
-      : `${agent.emoji} ${name}`;
-
-    const badge = resolveSessionNavBadge(currentSession);
-    const statusLabel = badge
-      ? formatSessionNavBadgeLabel(badge.kind, badge.detail ?? currentSession?.pipeline_state, (key) =>
-          t(key)
-        )
-      : null;
-
     return {
-      title: titleText,
-      statusLabel,
-      statusKind: badge,
+      title: t('workspace'),
+      statusLabel: null as string | null,
+      statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
     };
   }, [agentId, currentSession, locale, pathname, space, spaceId, t]);
 
   const showSessionActions = Boolean(agentId && currentSession?.session_id);
+  // Dedicated hub routes — plain Link back to /chat. Inline clinic agent mode keeps
+  // ChatHeader for deactivate (SessionContextHeader cannot call exitToClinic).
+  const showBackToClinic = Boolean(hubAgentId);
+  const showHeaderActions = showSessionActions || showBackToClinic;
 
   const closeDrawer = () => {
     setDrawer(null);
@@ -187,6 +195,9 @@ export function SessionContextHeader({
               >
                 <Search className="h-4 w-4" />
               </button>
+            </>
+          ) : null}
+          {showHeaderActions ? (
               <button
                 type="button"
                 onClick={() => setDrawer(drawer === 'more' ? null : 'more')}
@@ -199,7 +210,6 @@ export function SessionContextHeader({
               >
                 <MoreHorizontal className="h-4 w-4" />
               </button>
-            </>
           ) : null}
           <LocaleSwitcher locale={locale} />
         </div>
@@ -294,13 +304,15 @@ export function SessionContextHeader({
 
       <SessionHeaderDrawer open={drawer === 'more'} title={t('moreActions')} onClose={closeDrawer}>
         <div className="p-2">
-          <Link
-            href={getSurfacePath(locale, 'clinic')}
-            onClick={closeDrawer}
-            className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[#1D2129] hover:bg-[#F2F3F5]"
-          >
-            {t('backToClinic')}
-          </Link>
+          {showBackToClinic ? (
+            <Link
+              href={getSurfacePath(locale, 'clinic')}
+              onClick={closeDrawer}
+              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[#1D2129] hover:bg-[#F2F3F5]"
+            >
+              {t('backToClinic')}
+            </Link>
+          ) : null}
         </div>
       </SessionHeaderDrawer>
     </div>

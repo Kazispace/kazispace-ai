@@ -28,7 +28,10 @@ export function isClinicChatPathname(pathname: string): boolean {
 
 const DEDICATED_HUB_SEGMENTS = new Set(['cv', 'interview', 'english']);
 
-/** Workspace routes that keep the nav list pinned on desktop (ADR-006). */
+/** Workspace routes that keep the nav list pinned on desktop (ADR-006).
+ * Deliberately independent of NEXT_PUBLIC_SPACES_ENABLED — pin is about chrome
+ * visibility (/chat, hubs, spaces), not whether spaces list rows are populated.
+ */
 export function shouldPinWorkspaceNavPanel(pathname: string): boolean {
   if (isClinicChatPathname(pathname)) return true;
   if (resolveSpaceIdFromPathname(pathname)) return true;

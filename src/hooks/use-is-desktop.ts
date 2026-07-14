@@ -1,25 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 const DESKTOP_MEDIA_QUERY = '(min-width: 768px)';
 
-function readIsDesktop(): boolean {
-  if (typeof window === 'undefined') return false;
+function subscribe(onStoreChange: () => void): () => void {
+  const media = window.matchMedia(DESKTOP_MEDIA_QUERY);
+  media.addEventListener('change', onStoreChange);
+  return () => media.removeEventListener('change', onStoreChange);
+}
+
+function getSnapshot(): boolean {
   return window.matchMedia(DESKTOP_MEDIA_QUERY).matches;
 }
 
-/** Tailwind `md` breakpoint — sync on first client render to avoid nav pin flash. */
+/** SSR + first paint: treat as mobile so pin/layout matches until client snapshot applies. */
+function getServerSnapshot(): boolean {
+  return false;
+}
+
+/** Tailwind `md` breakpoint via useSyncExternalStore — no hydration mismatch warning. */
 export function useIsDesktop(): boolean {
-  const [isDesktop, setIsDesktop] = useState(readIsDesktop);
-
-  useEffect(() => {
-    const media = window.matchMedia(DESKTOP_MEDIA_QUERY);
-    const update = () => setIsDesktop(media.matches);
-    update();
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, []);
-
-  return isDesktop;
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

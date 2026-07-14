@@ -888,6 +888,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
       {isSwitching && <SwitchingOverlay />}
 
+      {/* Agent mode keeps ChatHeader for deactivate + session history; ContextHeader alone cannot exit. */}
       {(!embeddedInWorkspace || isAgentMode) && (
       <ChatHeader
         locale={locale}
