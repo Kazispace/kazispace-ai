@@ -129,6 +129,31 @@ function assistantContentKey(content: string): string {
   return content.trim();
 }
 
+/** Find the first assistant reply after the latest matching user utterance. */
+export function latestAssistantAfterUser(
+  messages: SpaceChatMessage[],
+  userText: string
+): string {
+  const trimmed = userText.trim();
+  if (!trimmed) return '';
+
+  const userIndex = [...messages]
+    .reverse()
+    .findIndex(
+      (message) => message.role === 'user' && message.content.trim() === trimmed
+    );
+  if (userIndex < 0) return '';
+
+  const absoluteIndex = messages.length - 1 - userIndex;
+  for (let index = absoluteIndex + 1; index < messages.length; index++) {
+    const message = messages[index];
+    if (message?.role === 'assistant' && !isPlaceholderReply(message.content)) {
+      return message.content.trim();
+    }
+  }
+  return '';
+}
+
 /** Keep local assistant turns when session history lags behind the turn response. */
 export function mergeSpaceMessagesAfterSend(
   local: SpaceChatMessage[],

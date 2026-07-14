@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extractSpaceTurnEnvelopeText,
   isPlaceholderReply,
+  latestAssistantAfterUser,
   mapSpaceHistoryMessages,
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnReply,
@@ -50,6 +51,34 @@ describe('resolveSpaceTurnReply', () => {
         },
       })
     ).toBe('Hello from space turn');
+  });
+
+  it('reads KAZI-171 envelope with assistant_response passthrough', () => {
+    expect(
+      resolveSpaceTurnReply({
+        envelope: {
+          components: [{ type: 'text', text: 'From components' }],
+          assistant_response: { content: 'From assistant_response' },
+          meta: { mode: 'space_l2_delegate' },
+        },
+      })
+    ).toBe('From components');
+  });
+});
+
+describe('latestAssistantAfterUser', () => {
+  it('returns assistant reply after the matching user turn', () => {
+    expect(
+      latestAssistantAfterUser(
+        [
+          { id: 'u1', role: 'user', content: 'hi' },
+          { id: 'a1', role: 'assistant', content: 'hello' },
+          { id: 'u2', role: 'user', content: 'again' },
+          { id: 'a2', role: 'assistant', content: 'world' },
+        ],
+        'again'
+      )
+    ).toBe('world');
   });
 });
 

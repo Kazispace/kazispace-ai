@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { fetchChatHistory, parseClinicReply, sendChatMessage } from '@/lib/api-client';
+import { fetchChatHistory } from '@/lib/api-client';
 import { sendSpaceTurn } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
 import {
   isPlaceholderReply,
+  latestAssistantAfterUser,
   mapSpaceHistoryMessages,
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnReply,
@@ -30,10 +31,10 @@ async function loadSpaceHistory(
 }
 
 /**
- * Space chat loop. POST /spaces/{id}/turn when orchestrator replies; otherwise
- * falls back to the space `master_session_id` clinic chat (BE P0.5 stub).
- * Requires BE to bind `master_session_id` on the space — no clinic default fallback.
- * TODO(KAZI-172): switch to GET /spaces/{id}/messages when BE exposes space-scoped history.
+ * Space chat loop via POST /spaces/{id}/turn (KAZI-171).
+ * History is the space `master_session_id` thread
+ * (`GET /chat/sessions/{master}/messages`). Do **not** fall back to
+ * POST /chat/messages — BE remaps that to Clinic `sess_{uid}_web`.
  */
 export function useSpaceTurn(
   spaceId: string | null,
@@ -69,6 +70,7 @@ export function useSpaceTurn(
 
     let cancelled = false;
     setIsHydrating(true);
+    setSendError(null);
 
     void (async () => {
       const next = await loadSpaceHistory(sessionId);
@@ -80,7 +82,7 @@ export function useSpaceTurn(
     return () => {
       cancelled = true;
     };
-  }, [enabled, masterSessionId]);
+  }, [enabled, masterSessionId, spaceId]);
 
   const sendMessage = useCallback(
     async (text: string) => {
@@ -107,7 +109,11 @@ export function useSpaceTurn(
       setSendError(null);
 
       try {
-        const res = await sendSpaceTurn(spaceId, { message: trimmed });
+        const res = await sendSpaceTurn(spaceId, {
+          message: trimmed,
+          locale,
+          language_preference: locale,
+        });
 
         if (!res.success) {
           const err = res.error ?? 'Send failed';
@@ -117,34 +123,33 @@ export function useSpaceTurn(
         }
 
         let reply = resolveSpaceTurnReply(res.data);
+        let refreshed: SpaceChatMessage[] = [];
 
-        if (!reply) {
-          const clinicRes = await sendChatMessage(sessionId, trimmed, locale, {
-            routingMode: 'clinic',
-          });
-          if (!clinicRes.success) {
-            const err = clinicRes.error ?? 'Send failed';
-            setSendError(err);
-            setMessages((prev) => prev.filter((message) => message.id !== userId));
-            return { ok: false as const, error: err };
+        if (isPlaceholderReply(reply)) {
+          try {
+            refreshed = await loadSpaceHistory(sessionId);
+            reply = latestAssistantAfterUser(refreshed, trimmed);
+          } catch (error) {
+            console.warn('[useSpaceTurn] history recovery failed after send', error);
           }
-          reply = parseClinicReply(clinicRes.data).reply.trim();
         }
 
-        if (reply && !isPlaceholderReply(reply)) {
-          nextMessages = [
-            ...nextMessages,
-            { id: `assistant_${Date.now()}`, role: 'assistant', content: reply },
-          ];
-          setMessages(nextMessages);
-        } else {
+        if (isPlaceholderReply(reply)) {
           const err = 'Assistant did not return a reply';
           setSendError(err);
           return { ok: false as const, error: err };
         }
 
+        nextMessages = [
+          ...nextMessages,
+          { id: `assistant_${Date.now()}`, role: 'assistant', content: reply },
+        ];
+        setMessages(nextMessages);
+
         try {
-          const refreshed = await loadSpaceHistory(sessionId);
+          if (refreshed.length === 0) {
+            refreshed = await loadSpaceHistory(sessionId);
+          }
           if (refreshed.length > 0) {
             setMessages(mergeSpaceMessagesAfterSend(nextMessages, refreshed));
           }

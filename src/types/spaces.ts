@@ -46,6 +46,8 @@ export interface CreateSpaceRequest {
 export interface SpaceTurnRequest {
   message: string;
   input_mode?: string;
+  locale?: string;
+  language_preference?: string;
 }
 
 export interface SpaceTurnResponse {
