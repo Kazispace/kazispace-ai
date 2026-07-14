@@ -43,6 +43,10 @@ export interface CreateSpaceRequest {
   name?: string;
 }
 
+export interface PatchSpaceRequest {
+  name: string;
+}
+
 export interface SpaceTurnRequest {
   message: string;
   input_mode?: string;

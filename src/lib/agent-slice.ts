@@ -2,8 +2,8 @@ import type { ChatMessage } from '@/types';
 
 /**
  * Per-agent client state (ADR-005 — multi-active sessions).
- * ADR-006: evolve to `space-slice.ts` (`Record<SpaceId, SpaceSlice>`);
- * `activeAgentId` becomes Orchestrator-internal only.
+ * ADR-006 / KAZI-178: Space orchestrator chat uses `space-slice.ts`
+ * (`Record<spaceId, SpaceSlice>`); agent slices remain for Hub L4 sessions.
  */
 export interface AgentSlice {
   sessionId: string | null;

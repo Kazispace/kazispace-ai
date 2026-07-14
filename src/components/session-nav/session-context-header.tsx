@@ -14,9 +14,14 @@ import {
   useSessionMessageSearch,
 } from '@/hooks/use-session-library';
 import { useSpaceDetail } from '@/hooks/use-space-detail';
+import {
+  canRunSpaceLifecycle,
+  useSpaceLifecycle,
+} from '@/hooks/use-space-lifecycle';
 import { getDedicatedHubAgentFromPathname, getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import { isClinicChatPathname } from '@/lib/space-nav';
 import { publishSessionNavOpenFile } from '@/lib/session-nav-events';
 import {
@@ -46,6 +51,7 @@ export function SessionContextHeader({
 }: SessionContextHeaderProps) {
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
+  const tSpaces = useTranslations('spaces');
   const showToast = useUIStore((s) => s.showToast);
   const clinicActiveAgentId = useAgentStore((s) => s.activeAgentId);
   const hubAgentId = getDedicatedHubAgentFromPathname(pathname);
@@ -53,7 +59,8 @@ export function SessionContextHeader({
   const currentSession = agentId
     ? sessionsByAgent.get(agentId) ?? null
     : resolveContextHeaderSession(pathname, sessionsByAgent);
-  const { space } = useSpaceDetail(spaceId);
+  const { space, refresh: refreshSpace } = useSpaceDetail(spaceId);
+  const { run: runLifecycle, pendingAction } = useSpaceLifecycle(locale);
   const [drawer, setDrawer] = useState<HeaderDrawer>(null);
   const [sessionSearchQuery, setSessionSearchQuery] = useState('');
 
@@ -122,7 +129,15 @@ export function SessionContextHeader({
   // Dedicated hub routes — plain Link back to /chat. Inline clinic agent mode keeps
   // ChatHeader for deactivate (SessionContextHeader cannot call exitToClinic).
   const showBackToClinic = Boolean(hubAgentId);
-  const showHeaderActions = showSessionActions || showBackToClinic;
+  const showSpaceLifecycle = Boolean(
+    spaceId &&
+      space &&
+      !space.is_system &&
+      !space.is_entry_point &&
+      space.id !== CLINIC_SPACE_ID
+  );
+  const showHeaderActions =
+    showSessionActions || showBackToClinic || showSpaceLifecycle;
 
   const closeDrawer = () => {
     setDrawer(null);
@@ -312,6 +327,42 @@ export function SessionContextHeader({
             >
               {t('backToClinic')}
             </Link>
+          ) : null}
+          {showSpaceLifecycle && space ? (
+            <ul className="space-y-0.5">
+              {(
+                [
+                  ['complete', 'lifecycleComplete'],
+                  ['archive', 'lifecycleArchive'],
+                  ['restore', 'lifecycleRestore'],
+                  ['delete', 'lifecycleDelete'],
+                ] as const
+              )
+                .filter(([action]) => canRunSpaceLifecycle(space, action))
+                .map(([action, labelKey]) => (
+                  <li key={action}>
+                    <button
+                      type="button"
+                      disabled={pendingAction != null}
+                      onClick={() => {
+                        void (async () => {
+                          const result = await runLifecycle(space.id, action);
+                          closeDrawer();
+                          if (result.ok && action !== 'delete') {
+                            await refreshSpace();
+                          }
+                        })();
+                      }}
+                      className={cn(
+                        'w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-[#F2F3F5] disabled:opacity-50',
+                        action === 'delete' ? 'text-red-600' : 'text-[#1D2129]'
+                      )}
+                    >
+                      {tSpaces(labelKey)}
+                    </button>
+                  </li>
+                ))}
+            </ul>
           ) : null}
         </div>
       </SessionHeaderDrawer>

@@ -10,6 +10,14 @@ import {
   patchAgentSlice,
   type AgentSlice,
 } from './agent-slice';
+import {
+  emptySpaceSlice,
+  getSpaceSliceFromRecord,
+  patchSpaceSlice,
+  type SpaceReplyNotice,
+  type SpaceSlice,
+} from './space-slice';
+import type { SpaceChatMessage } from './spaces/turn';
 
 // ---- Auth Store ----
 interface AuthStore {
@@ -36,6 +44,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     clearLocaleCookies();
     clearBillingCache();
     useAgentStore.getState().reset();
+    useSpaceStore.getState().reset();
     set({ token: null, user: null, isLoggedIn: false });
   },
   updateUser: (partialUser) =>
@@ -248,3 +257,68 @@ export const useAgentStore = create<AgentStore>()((set, get) => ({
     set({ ...initialAgentState, agents: {} });
   },
 }));
+
+// ---- Space Store (ADR-006 / KAZI-178 per-space slices) ----
+interface SpaceStore {
+  activeSpaceId: string | null;
+  spaces: Record<string, SpaceSlice>;
+  setActiveSpaceId: (spaceId: string | null) => void;
+  getSpaceSlice: (spaceId: string) => SpaceSlice;
+  setSpaceMasterSessionId: (spaceId: string, masterSessionId: string | null) => void;
+  setSpaceMessages: (spaceId: string, messages: SpaceChatMessage[]) => void;
+  patchSpaceMessages: (
+    spaceId: string,
+    updater: (prev: SpaceChatMessage[]) => SpaceChatMessage[]
+  ) => void;
+  setSpaceHydrating: (spaceId: string, isHydrating: boolean) => void;
+  setSpaceSending: (spaceId: string, isSending: boolean) => void;
+  setSpaceReplyNotice: (spaceId: string, notice: SpaceReplyNotice | null) => void;
+  clearSpaceSlice: (spaceId: string) => void;
+  reset: () => void;
+}
+
+export const useSpaceStore = create<SpaceStore>()((set, get) => ({
+  activeSpaceId: null,
+  spaces: {},
+  setActiveSpaceId: (spaceId) => set({ activeSpaceId: spaceId }),
+  getSpaceSlice: (spaceId) => getSpaceSliceFromRecord(get().spaces, spaceId),
+  setSpaceMasterSessionId: (spaceId, masterSessionId) =>
+    set((state) => ({
+      spaces: patchSpaceSlice(state.spaces, spaceId, { masterSessionId }),
+    })),
+  setSpaceMessages: (spaceId, messages) =>
+    set((state) => ({
+      spaces: patchSpaceSlice(state.spaces, spaceId, { messages }),
+    })),
+  patchSpaceMessages: (spaceId, updater) =>
+    set((state) => {
+      const slice = getSpaceSliceFromRecord(state.spaces, spaceId);
+      return {
+        spaces: patchSpaceSlice(state.spaces, spaceId, {
+          messages: updater(slice.messages),
+        }),
+      };
+    }),
+  setSpaceHydrating: (spaceId, isHydrating) =>
+    set((state) => ({
+      spaces: patchSpaceSlice(state.spaces, spaceId, { isHydrating }),
+    })),
+  setSpaceSending: (spaceId, isSending) =>
+    set((state) => ({
+      spaces: patchSpaceSlice(state.spaces, spaceId, { isSending }),
+    })),
+  setSpaceReplyNotice: (spaceId, notice) =>
+    set((state) => ({
+      spaces: patchSpaceSlice(state.spaces, spaceId, { replyNotice: notice }),
+    })),
+  clearSpaceSlice: (spaceId) =>
+    set((state) => {
+      const next = { ...state.spaces };
+      delete next[spaceId];
+      return { spaces: next };
+    }),
+  reset: () => set({ activeSpaceId: null, spaces: {} }),
+}));
+
+export type { SpaceReplyNotice, SpaceSlice };
+export { emptySpaceSlice };
