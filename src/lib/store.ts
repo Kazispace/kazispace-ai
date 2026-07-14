@@ -10,6 +10,16 @@ import {
   patchAgentSlice,
   type AgentSlice,
 } from './agent-slice';
+import {
+  emptySpaceSlice,
+  getSpaceSliceFromRecord,
+  patchSpaceSliceWithLru,
+  removeSpaceFromLru,
+  touchExistingSpaceLru,
+  type SpaceReplyNotice,
+  type SpaceSlice,
+} from './space-slice';
+import type { SpaceChatMessage } from './spaces/turn';
 
 // ---- Auth Store ----
 interface AuthStore {
@@ -36,6 +46,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     clearLocaleCookies();
     clearBillingCache();
     useAgentStore.getState().reset();
+    useSpaceStore.getState().reset();
     set({ token: null, user: null, isLoggedIn: false });
   },
   updateUser: (partialUser) =>
@@ -248,3 +259,85 @@ export const useAgentStore = create<AgentStore>()((set, get) => ({
     set({ ...initialAgentState, agents: {} });
   },
 }));
+
+// ---- Space Store (ADR-006 / KAZI-178 per-space slices) ----
+interface SpaceStore {
+  activeSpaceId: string | null;
+  spaces: Record<string, SpaceSlice>;
+  /** Most-recent-first ids; paired with LRU prune on patch (max SPACE_SLICE_LRU_LIMIT). */
+  spaceLruOrder: string[];
+  setActiveSpaceId: (spaceId: string | null) => void;
+  getSpaceSlice: (spaceId: string) => SpaceSlice;
+  setSpaceMasterSessionId: (spaceId: string, masterSessionId: string | null) => void;
+  setSpaceMessages: (spaceId: string, messages: SpaceChatMessage[]) => void;
+  patchSpaceMessages: (
+    spaceId: string,
+    updater: (prev: SpaceChatMessage[]) => SpaceChatMessage[]
+  ) => void;
+  setSpaceHydrating: (spaceId: string, isHydrating: boolean) => void;
+  setSpaceSending: (spaceId: string, isSending: boolean) => void;
+  setSpaceReplyNotice: (spaceId: string, notice: SpaceReplyNotice | null) => void;
+  clearSpaceSlice: (spaceId: string) => void;
+  reset: () => void;
+}
+
+function applySpacePatch(
+  state: Pick<SpaceStore, 'spaces' | 'spaceLruOrder' | 'activeSpaceId'>,
+  spaceId: string,
+  patch: Partial<SpaceSlice>
+) {
+  return patchSpaceSliceWithLru(state.spaces, state.spaceLruOrder, spaceId, patch, {
+    protectSpaceId: state.activeSpaceId,
+  });
+}
+
+export const useSpaceStore = create<SpaceStore>()((set, get) => ({
+  activeSpaceId: null,
+  spaces: {},
+  spaceLruOrder: [],
+  setActiveSpaceId: (spaceId) =>
+    set((state) => {
+      if (!spaceId) return { activeSpaceId: null };
+      // Do not create empty slices on browse — wait for messages/masterSession patch.
+      const touched = touchExistingSpaceLru(
+        state.spaces,
+        state.spaceLruOrder,
+        spaceId,
+        { protectSpaceId: spaceId }
+      );
+      return { activeSpaceId: spaceId, ...touched };
+    }),
+  getSpaceSlice: (spaceId) => getSpaceSliceFromRecord(get().spaces, spaceId),
+  setSpaceMasterSessionId: (spaceId, masterSessionId) =>
+    set((state) => applySpacePatch(state, spaceId, { masterSessionId })),
+  setSpaceMessages: (spaceId, messages) =>
+    set((state) => applySpacePatch(state, spaceId, { messages })),
+  patchSpaceMessages: (spaceId, updater) =>
+    set((state) => {
+      const slice = getSpaceSliceFromRecord(state.spaces, spaceId);
+      return applySpacePatch(state, spaceId, {
+        messages: updater(slice.messages),
+      });
+    }),
+  setSpaceHydrating: (spaceId, isHydrating) =>
+    set((state) => {
+      if (!isHydrating && !state.spaces[spaceId]) return {};
+      return applySpacePatch(state, spaceId, { isHydrating });
+    }),
+  setSpaceSending: (spaceId, isSending) =>
+    set((state) => {
+      if (!isSending && !state.spaces[spaceId]) return {};
+      return applySpacePatch(state, spaceId, { isSending });
+    }),
+  setSpaceReplyNotice: (spaceId, notice) =>
+    set((state) => {
+      if (notice == null && !state.spaces[spaceId]) return {};
+      return applySpacePatch(state, spaceId, { replyNotice: notice });
+    }),
+  clearSpaceSlice: (spaceId) =>
+    set((state) => removeSpaceFromLru(state.spaces, state.spaceLruOrder, spaceId)),
+  reset: () => set({ activeSpaceId: null, spaces: {}, spaceLruOrder: [] }),
+}));
+
+export type { SpaceReplyNotice, SpaceSlice };
+export { emptySpaceSlice };

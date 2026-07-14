@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { listSpaces } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
+import { SPACES_LIST_INVALIDATE_EVENT } from '@/lib/spaces-list-invalidate';
 import { useAuthStore } from '@/lib/store';
 import type { SpaceSummary } from '@/types/spaces';
 
@@ -56,6 +57,13 @@ export function useSpaces(options?: {
     if (!enabled || !isLoggedIn) return;
     void refresh(fetchImmediately || panelOpen);
   }, [enabled, fetchImmediately, isLoggedIn, panelOpen, refresh]);
+
+  useEffect(() => {
+    if (!enabled || !isLoggedIn) return;
+    const onInvalidate = () => void refresh(true);
+    window.addEventListener(SPACES_LIST_INVALIDATE_EVENT, onInvalidate);
+    return () => window.removeEventListener(SPACES_LIST_INVALIDATE_EVENT, onInvalidate);
+  }, [enabled, isLoggedIn, refresh]);
 
   useEffect(() => {
     if (!enabled || !isLoggedIn) return;

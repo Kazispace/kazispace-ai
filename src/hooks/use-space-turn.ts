@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { fetchChatHistory } from '@/lib/api-client';
@@ -15,6 +15,7 @@ import {
   resolveSpaceTurnReply,
   type SpaceChatMessage,
 } from '@/lib/spaces/turn';
+import { useSpaceStore, type SpaceReplyNotice } from '@/lib/store';
 
 const HISTORY_RECOVERY_ATTEMPTS = 3;
 const HISTORY_RECOVERY_DELAY_MS = 700;
@@ -24,13 +25,7 @@ export type SpaceSendResult =
   | { ok: true; pending: true }
   | { ok: false; error: string; errorCode?: string; retryable?: boolean };
 
-export type SpaceReplyNotice = {
-  kind: 'error' | 'pending';
-  message: string;
-  retryable?: boolean;
-  /** User message id to retry when retryable. */
-  retryMessageId?: string;
-};
+export type { SpaceReplyNotice };
 
 function resolveSpaceMasterSessionId(
   spaceMasterSessionId: string | null | undefined
@@ -52,7 +47,6 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Poll space master history until a trailing assistant reply appears (or give up). */
 async function recoverReplyFromMasterHistory(
   masterSessionId: string
 ): Promise<{ reply: string; history: SpaceChatMessage[] }> {
@@ -69,14 +63,8 @@ async function recoverReplyFromMasterHistory(
 }
 
 /**
- * Space chat loop via POST /spaces/{id}/turn (KAZI-171).
- * History is the space `master_session_id` thread
- * (`GET /chat/sessions/{master}/messages`). Do **not** fall back to
- * POST /chat/messages — BE remaps that to Clinic `sess_{uid}_web`.
- *
- * KAZI-186: while `isSending`, SpaceChatPane mounts an empty streaming bubble
- * → MessageBubble shows 「处理中…」. History-poll recovery also runs under
- * `isSending` so Processing stays visible until the turn settles.
+ * Space chat loop via POST /spaces/{id}/turn.
+ * State is per-`spaceId` in `useSpaceStore` (KAZI-178).
  */
 export function useSpaceTurn(
   spaceId: string | null,
@@ -86,48 +74,80 @@ export function useSpaceTurn(
   const t = useTranslations('spaces');
   const tErrors = useTranslations('errors');
   const enabled = isSpacesEnabled() && Boolean(spaceId);
-  const [messages, setMessages] = useState<SpaceChatMessage[]>([]);
-  const [isHydrating, setIsHydrating] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-  const [replyNotice, setReplyNotice] = useState<SpaceReplyNotice | null>(null);
 
-  const refreshHistory = useCallback(async () => {
-    const resolvedMasterId = resolveSpaceMasterSessionId(masterSessionId);
-    if (!resolvedMasterId) return [];
-    const next = await loadSpaceHistory(resolvedMasterId);
-    setMessages(next);
-    return next;
-  }, [masterSessionId]);
+  const slice = useSpaceStore((s) =>
+    spaceId ? s.getSpaceSlice(spaceId) : null
+  );
+  const setActiveSpaceId = useSpaceStore((s) => s.setActiveSpaceId);
+  const setSpaceMasterSessionId = useSpaceStore((s) => s.setSpaceMasterSessionId);
+  const setSpaceMessages = useSpaceStore((s) => s.setSpaceMessages);
+  const patchSpaceMessages = useSpaceStore((s) => s.patchSpaceMessages);
+  const setSpaceHydrating = useSpaceStore((s) => s.setSpaceHydrating);
+  const setSpaceSending = useSpaceStore((s) => s.setSpaceSending);
+  const setSpaceReplyNotice = useSpaceStore((s) => s.setSpaceReplyNotice);
+
+  /** Generation counter — skip stale async store writes when the user navigates away. */
+  const sendGenerationRef = useRef(0);
+
+  const messages = slice?.messages ?? [];
+  const isHydrating = slice?.isHydrating ?? false;
+  const isSending = slice?.isSending ?? false;
+  const replyNotice = slice?.replyNotice ?? null;
 
   useEffect(() => {
-    if (!enabled) {
-      setMessages([]);
+    sendGenerationRef.current += 1;
+  }, [spaceId]);
+
+  useEffect(() => {
+    if (!spaceId) {
+      setActiveSpaceId(null);
+      return;
+    }
+    setActiveSpaceId(spaceId);
+    setSpaceMasterSessionId(spaceId, resolveSpaceMasterSessionId(masterSessionId));
+    return () => {
+      setSpaceSending(spaceId, false);
+    };
+  }, [
+    masterSessionId,
+    setActiveSpaceId,
+    setSpaceMasterSessionId,
+    setSpaceSending,
+    spaceId,
+  ]);
+
+  useEffect(() => {
+    if (!enabled || !spaceId) {
       return;
     }
 
     const resolvedMasterId = resolveSpaceMasterSessionId(masterSessionId);
     if (!resolvedMasterId) {
-      setMessages([]);
-      setIsHydrating(false);
+      setSpaceMessages(spaceId, []);
+      setSpaceHydrating(spaceId, false);
       return;
     }
 
     let cancelled = false;
-    setIsHydrating(true);
-    // Do not clear replyNotice here — reload must not erase a failed/pending turn notice.
+    setSpaceHydrating(spaceId, true);
 
     void (async () => {
       const next = await loadSpaceHistory(resolvedMasterId);
       if (cancelled) return;
-      setMessages(next);
-      setIsHydrating(false);
+      setSpaceMessages(spaceId, next);
+      setSpaceHydrating(spaceId, false);
     })();
 
     return () => {
       cancelled = true;
     };
-    // spaceId: defensive — masterSessionId is 1:1 with space, but remounts can race.
-  }, [enabled, masterSessionId, spaceId]);
+  }, [
+    enabled,
+    masterSessionId,
+    setSpaceHydrating,
+    setSpaceMessages,
+    spaceId,
+  ]);
 
   const sendMessage = useCallback(
     async (
@@ -138,10 +158,13 @@ export function useSpaceTurn(
         return { ok: false as const, error: 'Space not ready' };
       }
 
+      const generation = sendGenerationRef.current;
+      const isStale = () => generation !== sendGenerationRef.current;
+
       const resolvedMasterId = resolveSpaceMasterSessionId(masterSessionId);
       if (!resolvedMasterId) {
         const err = 'Space not ready';
-        setReplyNotice({ kind: 'error', message: err });
+        setSpaceReplyNotice(spaceId, { kind: 'error', message: err });
         return { ok: false as const, error: err };
       }
 
@@ -150,7 +173,7 @@ export function useSpaceTurn(
       let nextMessages: SpaceChatMessage[] = [];
 
       if (options?.retryMessageId) {
-        setMessages((prev) => {
+        patchSpaceMessages(spaceId, (prev) => {
           nextMessages = prev.map((message) =>
             message.id === userId
               ? { ...message, content: trimmed, status: 'sending' as const }
@@ -159,7 +182,7 @@ export function useSpaceTurn(
           return nextMessages;
         });
       } else {
-        setMessages((prev) => {
+        patchSpaceMessages(spaceId, (prev) => {
           nextMessages = [
             ...prev,
             { id: userId, role: 'user', content: trimmed, status: 'sending' },
@@ -167,16 +190,19 @@ export function useSpaceTurn(
           return nextMessages;
         });
       }
-      setIsSending(true);
-      setReplyNotice(null);
+      setSpaceSending(spaceId, true);
+      setSpaceReplyNotice(spaceId, null);
 
       try {
-        // TODO(KAZI-74): drop `locale` once BE reads language_preference only.
         const res = await sendSpaceTurn(spaceId, {
           message: trimmed,
           locale,
           language_preference: locale,
         });
+
+        if (isStale()) {
+          return { ok: false as const, error: 'Navigated away' };
+        }
 
         if (!res.success) {
           const busy = isLlmBusy(res);
@@ -186,15 +212,14 @@ export function useSpaceTurn(
               : tErrors('llmBusy')
             : (res.error ?? 'Send failed');
 
-          // Keep user bubble on all failures; mark failed for Retry (KAZI-186 P1/P2).
-          setMessages((prev) =>
+          patchSpaceMessages(spaceId, (prev) =>
             prev.map((messageRow) =>
               messageRow.id === userId
                 ? { ...messageRow, status: 'failed' as const }
                 : messageRow
             )
           );
-          setReplyNotice({
+          setSpaceReplyNotice(spaceId, {
             kind: 'error',
             message,
             retryable: true,
@@ -215,6 +240,9 @@ export function useSpaceTurn(
         if (isPlaceholderReply(reply)) {
           try {
             const recovered = await recoverReplyFromMasterHistory(resolvedMasterId);
+            if (isStale()) {
+              return { ok: false as const, error: 'Navigated away' };
+            }
             reply = recovered.reply;
             history = recovered.history;
             recoveredFromHistory = true;
@@ -223,16 +251,19 @@ export function useSpaceTurn(
           }
         }
 
+        if (isStale()) {
+          return { ok: false as const, error: 'Navigated away' };
+        }
+
         if (isPlaceholderReply(reply)) {
-          // Turn was accepted — L2 may still be writing. Keep user bubble; don't invite resend.
-          setMessages((prev) =>
+          patchSpaceMessages(spaceId, (prev) =>
             prev.map((messageRow) =>
               messageRow.id === userId
                 ? { ...messageRow, status: 'sent' as const }
                 : messageRow
             )
           );
-          setReplyNotice({
+          setSpaceReplyNotice(spaceId, {
             kind: 'pending',
             message: t('replyStillGenerating'),
           });
@@ -247,14 +278,20 @@ export function useSpaceTurn(
           ),
           { id: `assistant_${Date.now()}`, role: 'assistant', content: reply },
         ];
-        setMessages(nextMessages);
+        setSpaceMessages(spaceId, nextMessages);
 
         try {
           if (!recoveredFromHistory) {
             history = await loadSpaceHistory(resolvedMasterId);
           }
+          if (isStale()) {
+            return { ok: false as const, error: 'Navigated away' };
+          }
           if (history.length > 0) {
-            setMessages(mergeSpaceMessagesAfterSend(nextMessages, history));
+            setSpaceMessages(
+              spaceId,
+              mergeSpaceMessagesAfterSend(nextMessages, history)
+            );
           }
         } catch (error) {
           console.warn('[useSpaceTurn] history refresh failed after send', error);
@@ -262,10 +299,23 @@ export function useSpaceTurn(
 
         return { ok: true as const };
       } finally {
-        setIsSending(false);
+        if (!isStale()) {
+          setSpaceSending(spaceId, false);
+        }
       }
     },
-    [enabled, locale, masterSessionId, spaceId, t, tErrors]
+    [
+      enabled,
+      locale,
+      masterSessionId,
+      patchSpaceMessages,
+      setSpaceMessages,
+      setSpaceReplyNotice,
+      setSpaceSending,
+      spaceId,
+      t,
+      tErrors,
+    ]
   );
 
   const retryMessage = useCallback(
@@ -283,12 +333,10 @@ export function useSpaceTurn(
     messages,
     isHydrating,
     isSending,
-    /** @deprecated Prefer replyNotice — kept as error-message string for older call sites. */
     sendError: replyNotice?.kind === 'error' ? replyNotice.message : null,
     replyNotice,
     sendMessage,
     retryMessage,
-    refreshHistory,
     enabled,
   };
 }

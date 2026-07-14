@@ -11,6 +11,7 @@ import {
   SpacePanelTabs,
   type SpaceWorkspaceView,
 } from '@/components/spaces/space-panel-tabs';
+import { isSpaceComposerMuted } from '@/lib/spaces/lifecycle';
 import {
   isValidPanelId,
   resolveDefaultPanelId,
@@ -36,6 +37,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   const t = useTranslations('spaces');
   const locale = (params.locale as string) ?? 'en';
   const jobId = resolveSpaceJobId(space, searchParams);
+  const muted = isSpaceComposerMuted(space.status);
 
   const panels = useMemo(() => resolveSpacePanels(space), [space]);
   const defaultPanelId = resolveDefaultPanelId(panels);
@@ -128,8 +130,8 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             composer={({ sendMessage, isSending, spaceSessionReady }) => (
               <ChatInput
                 onSend={(text) => void sendMessage(text)}
-                disabled={isSending || !spaceSessionReady}
-                placeholder={t('composerPlaceholder')}
+                disabled={muted || isSending || !spaceSessionReady}
+                placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
               />
             )}
           />

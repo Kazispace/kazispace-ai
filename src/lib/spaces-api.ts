@@ -2,6 +2,7 @@ import { apiRequest } from '@/lib/api-client';
 import type { ApiResponse } from '@/types';
 import type {
   CreateSpaceRequest,
+  PatchSpaceRequest,
   SpaceDetail,
   SpaceListResponse,
   SpaceSummary,
@@ -46,12 +47,31 @@ function normalizeSpaceDetail(raw: Record<string, unknown>): SpaceDetail {
   };
 }
 
+function detailFromResponse(
+  res: ApiResponse<Record<string, unknown>>
+): ApiResponse<SpaceDetail> {
+  if (!res.success || !res.data) {
+    return {
+      success: false,
+      error: res.error,
+      errorCode: res.errorCode,
+      status: res.status,
+    };
+  }
+  return { success: true, data: normalizeSpaceDetail(res.data) };
+}
+
 export async function listSpaces(): Promise<ApiResponse<SpaceListResponse>> {
   const res = await apiRequest<{ spaces?: Record<string, unknown>[] }>(
     '/api/v1/spaces'
   );
   if (!res.success || !res.data) {
-    return { success: false, error: res.error };
+    return {
+      success: false,
+      error: res.error,
+      errorCode: res.errorCode,
+      status: res.status,
+    };
   }
   const spaces = (res.data.spaces ?? []).map(normalizeSpaceSummary);
   return { success: true, data: { spaces } };
@@ -63,10 +83,7 @@ export async function getSpace(
   const res = await apiRequest<Record<string, unknown>>(
     `/api/v1/spaces/${encodeURIComponent(spaceId)}`
   );
-  if (!res.success || !res.data) {
-    return { success: false, error: res.error };
-  }
-  return { success: true, data: normalizeSpaceDetail(res.data) };
+  return detailFromResponse(res);
 }
 
 export async function createSpace(
@@ -76,10 +93,66 @@ export async function createSpace(
     method: 'POST',
     body: JSON.stringify(body),
   });
-  if (!res.success || !res.data) {
-    return { success: false, error: res.error };
-  }
-  return { success: true, data: normalizeSpaceDetail(res.data) };
+  return detailFromResponse(res);
+}
+
+/** PATCH /spaces/{id} — rename (KAZI-176). */
+export async function patchSpace(
+  spaceId: string,
+  body: PatchSpaceRequest
+): Promise<ApiResponse<SpaceDetail>> {
+  const res = await apiRequest<Record<string, unknown>>(
+    `/api/v1/spaces/${encodeURIComponent(spaceId)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }
+  );
+  return detailFromResponse(res);
+}
+
+/** POST /spaces/{id}/complete */
+export async function completeSpace(
+  spaceId: string
+): Promise<ApiResponse<SpaceDetail>> {
+  const res = await apiRequest<Record<string, unknown>>(
+    `/api/v1/spaces/${encodeURIComponent(spaceId)}/complete`,
+    { method: 'POST' }
+  );
+  return detailFromResponse(res);
+}
+
+/** POST /spaces/{id}/archive */
+export async function archiveSpace(
+  spaceId: string
+): Promise<ApiResponse<SpaceDetail>> {
+  const res = await apiRequest<Record<string, unknown>>(
+    `/api/v1/spaces/${encodeURIComponent(spaceId)}/archive`,
+    { method: 'POST' }
+  );
+  return detailFromResponse(res);
+}
+
+/** POST /spaces/{id}/restore */
+export async function restoreSpace(
+  spaceId: string
+): Promise<ApiResponse<SpaceDetail>> {
+  const res = await apiRequest<Record<string, unknown>>(
+    `/api/v1/spaces/${encodeURIComponent(spaceId)}/restore`,
+    { method: 'POST' }
+  );
+  return detailFromResponse(res);
+}
+
+/** DELETE /spaces/{id} — soft-delete (7d). */
+export async function deleteSpace(
+  spaceId: string
+): Promise<ApiResponse<SpaceDetail>> {
+  const res = await apiRequest<Record<string, unknown>>(
+    `/api/v1/spaces/${encodeURIComponent(spaceId)}`,
+    { method: 'DELETE' }
+  );
+  return detailFromResponse(res);
 }
 
 export async function listSpaceTemplates(): Promise<
