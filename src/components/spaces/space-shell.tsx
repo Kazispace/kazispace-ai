@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { ChatHeader } from '@/components/clinic/chat-header';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
+import { useEmbeddedInWorkspaceShell } from '@/lib/workspace-shell-context';
 import type { SpaceDetail } from '@/types/spaces';
 
 interface SpaceShellProps {
@@ -24,16 +25,19 @@ export function SpaceShell({
 }: SpaceShellProps) {
   const tClinic = useTranslations('clinic');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
   const spaceEmoji = space.template_icon ?? '💬';
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
+      {!embeddedInWorkspace ? (
       <ChatHeader
         locale={locale}
         mode="space"
         spaceName={space.name}
         spaceEmoji={spaceEmoji}
       />
+      ) : null}
 
       {!isLoggedIn ? (
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-orange-100 bg-orange-50 px-4 py-2">

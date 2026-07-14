@@ -20,10 +20,10 @@ export function BlankConversationWorkspace({ space }: BlankConversationWorkspace
       locale={locale}
       space={space}
       welcomeKey="blankWelcome"
-      composer={({ sendMessage, isSending }) => (
+      composer={({ sendMessage, isSending, spaceSessionReady }) => (
         <ChatInput
           onSend={(text) => void sendMessage(text)}
-          disabled={isSending}
+          disabled={isSending || !spaceSessionReady}
           placeholder={t('composerPlaceholder')}
         />
       )}

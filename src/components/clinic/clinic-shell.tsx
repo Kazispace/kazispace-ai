@@ -24,6 +24,7 @@ import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAge
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useNbaAction } from "@/hooks/use-nba-action";
 import { useAuthStore, useAgentStore, useChatStore, useUIStore } from "@/lib/store";
+import { useEmbeddedInWorkspaceShell } from "@/lib/workspace-shell-context";
 import {
   AGENT_REGISTRY,
   AGENT_QUICK_REPLIES,
@@ -87,6 +88,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const openPaywall = useUIStore((s) => s.openPaywall);
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
   const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
+  const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
 
   /** TMA / deep-link / routedToAgent — may include ?job_id=; not used by planNavigation SSOT. */
   const routeCvBuilderPage = useCallback(
@@ -886,6 +888,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
       {isSwitching && <SwitchingOverlay />}
 
+      {/* Agent mode keeps ChatHeader for deactivate + session history; ContextHeader alone cannot exit. */}
+      {(!embeddedInWorkspace || isAgentMode) && (
       <ChatHeader
         locale={locale}
         mode={isAgentMode ? "agent" : "clinic"}
@@ -903,6 +907,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             : undefined
         }
       />
+      )}
 
       {isAgentMode && isLoggedIn ? (
         <AgentSessionPanel

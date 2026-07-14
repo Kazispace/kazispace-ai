@@ -9,7 +9,6 @@ import {
   applyTelegramTheme,
   expandTelegramWebApp,
   getInitData,
-  getTelegramWebApp,
   isTelegramWebApp,
   readyTelegramWebApp,
 } from '@/lib/telegram';
@@ -43,8 +42,10 @@ export function useTmaInit() {
   const setTmaInitComplete = useUIStore((s) => s.setTmaInitComplete);
 
   useEffect(() => {
-    const tg = getTelegramWebApp();
-    if (!tg) return;
+    // telegram-web-app.js injects `window.Telegram.WebApp` on every page load
+    // (TmaScript is global). Only treat this as TMA when initData is present —
+    // otherwise SessionNavShell would skip the whole desktop nav chrome.
+    if (!isTelegramWebApp()) return;
 
     const init = async () => {
       setTelegramMiniApp(true);

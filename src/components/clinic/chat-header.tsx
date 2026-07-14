@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
 import { useUIStore } from "@/lib/store";
-import { closeTelegramWebApp } from "@/lib/telegram";
+import { closeTelegramWebApp, isTelegramWebApp } from "@/lib/telegram";
 
 interface ChatHeaderProps {
   locale: string;
@@ -108,7 +108,7 @@ export function ChatHeader({
         </Button>
       </Link>
 
-      {isTelegramMiniApp && mode === "clinic" && (
+      {isTelegramMiniApp && isTelegramWebApp() && mode === "clinic" && (
         <Button
           type="button"
           variant="ghost"

@@ -2,11 +2,17 @@
 
 import { CLIENT_VARIANTS } from './constants';
 
+/**
+ * True only inside a real Telegram Mini App session.
+ * Do NOT use `getTelegramWebApp()` alone — `telegram-web-app.js` injects
+ * `window.Telegram.WebApp` even in a normal browser (empty initData).
+ */
 export function isTelegramWebApp(): boolean {
   if (typeof window === 'undefined') return false;
   return Boolean(window.Telegram?.WebApp?.initData);
 }
 
+/** Raw SDK object — may be present outside Telegram when the script is loaded. */
 export function getTelegramWebApp(): TelegramWebApp | null {
   if (typeof window === 'undefined') return null;
   return window.Telegram?.WebApp ?? null;

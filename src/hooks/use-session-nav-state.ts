@@ -40,7 +40,8 @@ function readStoredPanelMode(): SessionNavPanelMode {
 }
 
 export function useSessionNavState() {
-  const [panelOpen, setPanelOpenState] = useState(false);
+  // Constant SSR/first-paint default — localStorage syncs after hydrate (avoids mismatch).
+  const [panelOpen, setPanelOpenState] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [viewTab, setViewTabState] = useState<SessionNavViewTab>('agent');
   const [expandedAgentId, setExpandedAgentId] = useState<string | null>(null);
@@ -102,7 +103,8 @@ export function useSessionNavState() {
   }, []);
 
   return {
-    panelOpen: hydrated ? panelOpen : false,
+    // Until hydrated, expose the SSR-safe default (true) — pinned routes force open anyway.
+    panelOpen: hydrated ? panelOpen : true,
     setPanelOpen,
     togglePanel,
     mobileDrawerOpen,
@@ -112,7 +114,7 @@ export function useSessionNavState() {
     setViewTab,
     expandedAgentId,
     setExpandedAgentId,
-    panelMode,
+    panelMode: hydrated ? panelMode : 'agents',
     setPanelMode,
     hydrated,
   };
