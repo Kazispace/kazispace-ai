@@ -14,10 +14,8 @@ import {
   useSessionMessageSearch,
 } from '@/hooks/use-session-library';
 import { useSpaceDetail } from '@/hooks/use-space-detail';
-import {
-  canRunSpaceLifecycle,
-  useSpaceLifecycle,
-} from '@/hooks/use-space-lifecycle';
+import { useSpaceLifecycle } from '@/hooks/use-space-lifecycle';
+import { canRunSpaceLifecycle } from '@/lib/spaces/lifecycle';
 import { getDedicatedHubAgentFromPathname, getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';

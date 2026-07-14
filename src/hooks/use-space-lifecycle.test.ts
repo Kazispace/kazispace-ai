@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { canRunSpaceLifecycle, isSpaceComposerMuted } from '@/hooks/use-space-lifecycle';
+import { canRunSpaceLifecycle, isSpaceComposerMuted } from '@/lib/spaces/lifecycle';
 import type { SpaceDetail } from '@/types/spaces';
 
 function space(
@@ -39,6 +39,18 @@ describe('canRunSpaceLifecycle', () => {
     expect(canRunSpaceLifecycle(space({ id: 'sp_1', status: 'active' }), 'restore')).toBe(
       false
     );
+  });
+
+  it('allows delete unless already deleted', () => {
+    expect(canRunSpaceLifecycle(space({ id: 'sp_1', status: 'active' }), 'delete')).toBe(
+      true
+    );
+    expect(
+      canRunSpaceLifecycle(space({ id: 'sp_1', status: 'archived' }), 'delete')
+    ).toBe(true);
+    expect(
+      canRunSpaceLifecycle(space({ id: 'sp_1', status: 'deleted' }), 'delete')
+    ).toBe(false);
   });
 });
 

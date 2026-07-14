@@ -19,7 +19,7 @@ export interface SpaceSlice {
   replyNotice: SpaceReplyNotice | null;
 }
 
-/** Cap cached space slices to avoid unbounded SPA memory (PR #108 P1-1). */
+/** Cap cached space slices to avoid unbounded SPA memory. */
 export const SPACE_SLICE_LRU_LIMIT = 10;
 
 export function emptySpaceSlice(
@@ -100,6 +100,22 @@ export function patchSpaceSliceWithLru(
     spaces: pruneSpacesToLru(patched, order),
     lruOrder: order,
   };
+}
+
+/**
+ * Touch LRU for an existing slice only — never create empty entries.
+ * Used when activating a space before history/messages lands.
+ */
+export function touchExistingSpaceLru(
+  spaces: Record<string, SpaceSlice>,
+  lruOrder: string[],
+  spaceId: string,
+  options?: { limit?: number; protectSpaceId?: string | null }
+): { spaces: Record<string, SpaceSlice>; lruOrder: string[] } {
+  if (!spaces[spaceId]) {
+    return { spaces, lruOrder };
+  }
+  return patchSpaceSliceWithLru(spaces, lruOrder, spaceId, {}, options);
 }
 
 export function removeSpaceFromLru(

@@ -86,7 +86,7 @@ export function useSpaceTurn(
   const setSpaceSending = useSpaceStore((s) => s.setSpaceSending);
   const setSpaceReplyNotice = useSpaceStore((s) => s.setSpaceReplyNotice);
 
-  /** Bumped on spaceId change so in-flight sends skip stale store writes (PR #108 P1-3). */
+  /** Generation counter — skip stale async store writes when the user navigates away. */
   const sendGenerationRef = useRef(0);
 
   const messages = slice?.messages ?? [];

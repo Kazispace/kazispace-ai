@@ -8,6 +8,7 @@ import {
   pruneSpacesToLru,
   removeSpaceFromLru,
   SPACE_SLICE_LRU_LIMIT,
+  touchExistingSpaceLru,
   touchSpaceLruOrder,
 } from '@/lib/space-slice';
 
@@ -50,8 +51,8 @@ describe('space-slice', () => {
     expect(spaces[`sp_${SPACE_SLICE_LRU_LIMIT + 2}`]).toBeDefined();
   });
 
-  it('protects active spaceId from eviction when possible', () => {
-    let spaces = {};
+  it('protects active spaceId from eviction when truncated', () => {
+    let spaces: Record<string, ReturnType<typeof emptySpaceSlice>> = {};
     let order: string[] = [];
     for (let i = 0; i < SPACE_SLICE_LRU_LIMIT; i++) {
       const next = patchSpaceSliceWithLru(spaces, order, `sp_${i}`, {
@@ -60,18 +61,23 @@ describe('space-slice', () => {
       spaces = next.spaces;
       order = next.lruOrder;
     }
-    const protectedId = 'sp_0';
-    // Access oldest as active so it moves… actually leave it old, then insert new ones with protect
+    // sp_0 is oldest in LRU; protect it while inserting sp_new.
     const next = patchSpaceSliceWithLru(
       spaces,
       order,
       'sp_new',
       { isSending: true },
-      { protectSpaceId: protectedId }
+      { protectSpaceId: 'sp_0' }
     );
-    expect(next.spaces[protectedId]).toBeDefined();
+    expect(next.spaces.sp_0).toBeDefined();
     expect(next.spaces.sp_new?.isSending).toBe(true);
     expect(Object.keys(next.spaces).length).toBeLessThanOrEqual(SPACE_SLICE_LRU_LIMIT);
+  });
+
+  it('touchExistingSpaceLru does not create missing slices', () => {
+    const result = touchExistingSpaceLru({}, [], 'sp_ghost');
+    expect(result.spaces).toEqual({});
+    expect(result.lruOrder).toEqual([]);
   });
 
   it('removeSpaceFromLru drops id from both maps', () => {

@@ -11,7 +11,7 @@ import {
   SpacePanelTabs,
   type SpaceWorkspaceView,
 } from '@/components/spaces/space-panel-tabs';
-import { isSpaceComposerMuted } from '@/hooks/use-space-lifecycle';
+import { isSpaceComposerMuted } from '@/lib/spaces/lifecycle';
 import {
   isValidPanelId,
   resolveDefaultPanelId,

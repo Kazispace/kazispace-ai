@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 
 import { ChatInput } from '@/components/chat/chat-input';
 import { SpaceChatPane } from '@/components/spaces/space-chat-pane';
-import { isSpaceComposerMuted } from '@/hooks/use-space-lifecycle';
+import { isSpaceComposerMuted } from '@/lib/spaces/lifecycle';
 import type { SpaceDetail } from '@/types/spaces';
 
 interface BlankConversationWorkspaceProps {

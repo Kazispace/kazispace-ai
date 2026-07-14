@@ -15,6 +15,7 @@ import {
   getSpaceSliceFromRecord,
   patchSpaceSliceWithLru,
   removeSpaceFromLru,
+  touchExistingSpaceLru,
   type SpaceReplyNotice,
   type SpaceSlice,
 } from './space-slice';
@@ -297,7 +298,13 @@ export const useSpaceStore = create<SpaceStore>()((set, get) => ({
   setActiveSpaceId: (spaceId) =>
     set((state) => {
       if (!spaceId) return { activeSpaceId: null };
-      const touched = applySpacePatch(state, spaceId, {});
+      // Do not create empty slices on browse — wait for messages/masterSession patch.
+      const touched = touchExistingSpaceLru(
+        state.spaces,
+        state.spaceLruOrder,
+        spaceId,
+        { protectSpaceId: spaceId }
+      );
       return { activeSpaceId: spaceId, ...touched };
     }),
   getSpaceSlice: (spaceId) => getSpaceSliceFromRecord(get().spaces, spaceId),
@@ -313,11 +320,20 @@ export const useSpaceStore = create<SpaceStore>()((set, get) => ({
       });
     }),
   setSpaceHydrating: (spaceId, isHydrating) =>
-    set((state) => applySpacePatch(state, spaceId, { isHydrating })),
+    set((state) => {
+      if (!isHydrating && !state.spaces[spaceId]) return {};
+      return applySpacePatch(state, spaceId, { isHydrating });
+    }),
   setSpaceSending: (spaceId, isSending) =>
-    set((state) => applySpacePatch(state, spaceId, { isSending })),
+    set((state) => {
+      if (!isSending && !state.spaces[spaceId]) return {};
+      return applySpacePatch(state, spaceId, { isSending });
+    }),
   setSpaceReplyNotice: (spaceId, notice) =>
-    set((state) => applySpacePatch(state, spaceId, { replyNotice: notice })),
+    set((state) => {
+      if (notice == null && !state.spaces[spaceId]) return {};
+      return applySpacePatch(state, spaceId, { replyNotice: notice });
+    }),
   clearSpaceSlice: (spaceId) =>
     set((state) => removeSpaceFromLru(state.spaces, state.spaceLruOrder, spaceId)),
   reset: () => set({ activeSpaceId: null, spaces: {}, spaceLruOrder: [] }),
