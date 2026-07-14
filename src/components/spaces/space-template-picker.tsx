@@ -1,10 +1,13 @@
 'use client';
 
+import { useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { X } from 'lucide-react';
 
+import { useDialogFocusTrap } from '@/hooks/use-dialog-focus-trap';
 import { useSpaceTemplates } from '@/hooks/use-space-templates';
 import { TEMPLATE_EMOJI } from '@/lib/spaces/constants';
+import { resolveTemplateLabel } from '@/lib/spaces/template-label';
 import type { SpaceTemplateItem } from '@/types/spaces';
 import { cn } from '@/lib/utils';
 
@@ -13,34 +16,6 @@ interface SpaceTemplatePickerProps {
   isCreating?: boolean;
   onClose: () => void;
   onSelect: (templateId: string) => void;
-}
-
-const TEMPLATE_I18N_KEYS: Record<string, { title: string; desc: string }> = {
-  blank_conversation: { title: 'templateBlank', desc: 'templateBlankDesc' },
-  job_sprint: { title: 'templateJobSprint', desc: 'templateJobSprintDesc' },
-  ielts_prep: { title: 'templateIelts', desc: 'templateIeltsDesc' },
-};
-
-function resolveTemplateLabel(
-  template: SpaceTemplateItem,
-  locale: string,
-  t: ReturnType<typeof useTranslations<'spaces'>>
-): { title: string; desc: string } {
-  const display = template.display_name;
-  if (display && typeof display === 'object') {
-    const title =
-      display[locale] ?? display.zh ?? display.en ?? template.template_id;
-    return { title, desc: '' };
-  }
-  if (typeof display === 'string' && display !== template.template_id) {
-    return { title: display, desc: '' };
-  }
-
-  const keys = TEMPLATE_I18N_KEYS[template.template_id];
-  if (keys) {
-    return { title: t(keys.title), desc: t(keys.desc) };
-  }
-  return { title: template.template_id, desc: '' };
 }
 
 function TemplateButton({
@@ -86,28 +61,43 @@ export function SpaceTemplatePicker({
 }: SpaceTemplatePickerProps) {
   const t = useTranslations('spaces');
   const { templates, comingSoon, isLoading } = useSpaceTemplates(open);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useDialogFocusTrap({
+    open,
+    onClose,
+    dialogRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   if (!open) return null;
 
   return (
-    <>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="presentation"
+    >
+      {/* Backdrop — click outside dialog closes (review P1-1). */}
       <button
         type="button"
-        className="fixed inset-0 z-50 bg-black/40"
+        className="absolute inset-0 bg-black/40"
         aria-label={t('closePicker')}
         onClick={onClose}
       />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="space-template-picker-title"
-        className="fixed left-1/2 top-1/2 z-50 w-[min(400px,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-4 shadow-xl"
+        className="relative z-10 w-[min(400px,92vw)] rounded-xl bg-white p-4 shadow-xl"
       >
         <div className="mb-4 flex items-center justify-between gap-2">
           <h2 id="space-template-picker-title" className="text-base font-semibold text-[#1D2129]">
             {t('pickerTitle')}
           </h2>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             className="rounded p-1 text-[#86909C] hover:bg-[#F2F3F5]"
@@ -148,6 +138,6 @@ export function SpaceTemplatePicker({
           <p className="mt-4 text-center text-xs text-[#86909C]">{t('browseMoreComingSoon')}</p>
         )}
       </div>
-    </>
+    </div>
   );
 }

@@ -6,13 +6,17 @@ import { useTranslations } from 'next-intl';
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
 import { SpaceShell } from '@/components/spaces/space-shell';
-import { useSpaceTurn } from '@/hooks/use-space-turn';
+import {
+  useSpaceTurn,
+  type SpaceSendResult,
+} from '@/hooks/use-space-turn';
 import type { SpaceDetail } from '@/types/spaces';
+import { cn } from '@/lib/utils';
 
 type SpaceWelcomeKey = 'blankWelcome' | 'jobSprintWelcome' | 'ieltsWelcome';
 
 export type SpaceComposerRenderProps = {
-  sendMessage: (text: string) => Promise<{ ok: boolean; error?: string }>;
+  sendMessage: (text: string) => Promise<SpaceSendResult>;
   isSending: boolean;
   spaceSessionReady: boolean;
 };
@@ -34,7 +38,7 @@ export function SpaceChatPane({
   composer,
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
-  const { messages, isHydrating, isSending, sendError, sendMessage } = useSpaceTurn(
+  const { messages, isHydrating, isSending, replyNotice, sendMessage } = useSpaceTurn(
     space.id,
     space.master_session_id,
     locale
@@ -90,8 +94,15 @@ export function SpaceChatPane({
             streamComplete={false}
           />
         ) : null}
-        {sendError ? (
-          <p className="text-center text-xs text-red-600">{sendError}</p>
+        {replyNotice ? (
+          <p
+            className={cn(
+              'text-center text-xs',
+              replyNotice.kind === 'pending' ? 'text-[#86909C]' : 'text-red-600'
+            )}
+          >
+            {replyNotice.message}
+          </p>
         ) : null}
         <div ref={messagesEndRef} />
       </div>

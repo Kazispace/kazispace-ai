@@ -23,3 +23,10 @@ export const TEMPLATE_EMOJI: Record<string, string> = {
   job_sprint: '🎯',
   ielts_prep: '📘',
 };
+
+/** next-intl key pairs under `spaces.*` for MVP template picker labels. */
+export const TEMPLATE_I18N_KEYS: Record<string, { title: string; desc: string }> = {
+  blank_conversation: { title: 'templateBlank', desc: 'templateBlankDesc' },
+  job_sprint: { title: 'templateJobSprint', desc: 'templateJobSprintDesc' },
+  ielts_prep: { title: 'templateIelts', desc: 'templateIeltsDesc' },
+};
