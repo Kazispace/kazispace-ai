@@ -42,8 +42,10 @@ export async function apiRequest<T>(
   const token = getAuthToken();
   const deviceId = getDeviceId();
 
+  const isFormData =
+    typeof FormData !== 'undefined' && fetchOptions.body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     'X-Device-ID': deviceId,
   };
 
@@ -109,6 +111,9 @@ export async function apiRequest<T>(
       };
     }
 
+    if (response.status === 204) {
+      return { success: true, data: undefined as T };
+    }
     const data = await response.json();
     return { success: true, data: data as T };
   } catch (err) {

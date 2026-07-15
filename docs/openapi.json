@@ -2,7 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "KaziSpace Multi-Platform Backend",
-    "version": "0.1.0"
+    "version": "0.1.0",
+    "description": "KaziSpace Multi-Platform Backend. KAZI-74 language contract: see LanguageCode schema and X-Language-Preference parameter."
   },
   "paths": {
     "/api/v1/auth/otp/request": {
@@ -317,50 +318,6 @@
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/cv/chat": {
-      "post": {
-        "summary": "Cv Chat",
-        "description": "CV Builder 对话接口（状态机驱动）\n严格对照 API Spec v2.3 §4.3\n\nWeb 端交互协议（action 枚举）：\n1. action=\"start\"                              → 初始化会话，返回 target_role 选项\n2. action=\"message\", message=\"...\"             → 发送对话内容（含 experience_starter 和追问回复）\n3. action=\"confirm\"                            → 确认摘要，触发 CV 生成\n4. action=\"regenerate\"                         → 重新生成同一 flow 下的新版本\n\nTelegram 端兼容动作（tg_action 枚举，内部使用）：\n- tg_action=\"select_role\",    value=\"...\"      → 选择目标岗位\n- tg_action=\"select_status\",  value=\"...\"      → 选择当前状态\n- tg_action=\"select_english\", value=\"...\"      → 选择英语水平",
-        "operationId": "cv_chat_api_v1_cv_chat_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CvChatRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CvChatResponse"
-                }
               }
             }
           },
@@ -1418,6 +1375,14 @@
         ],
         "summary": "Agent Chat",
         "operationId": "agent_chat_api_v1_agents_chat_post",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/X-Language-Preference"
+          },
+          {
+            "$ref": "#/components/parameters/X-Locale"
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1452,7 +1417,8 @@
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "description": "Agent Hub chat. Language: Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT."
       }
     },
     "/api/v1/agents/sessions/{session_id}/messages": {
@@ -1642,8 +1608,16 @@
     "/api/v1/chat": {
       "post": {
         "summary": "Web Chat",
-        "description": "Web Chat 发送消息接口（API Spec v2.3 §3.3）",
+        "description": "Web Chat (API Spec v2.3 §3.3). Language: Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT.",
         "operationId": "web_chat_api_v1_chat_post",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/X-Language-Preference"
+          },
+          {
+            "$ref": "#/components/parameters/X-Locale"
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1684,8 +1658,16 @@
     "/api/v1/chat/messages": {
       "post": {
         "summary": "Web Chat",
-        "description": "Web Chat 发送消息接口（API Spec v2.3 §3.3）",
+        "description": "Web Chat (API Spec v2.3 §3.3). Language: Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT.",
         "operationId": "web_chat_api_v1_chat_messages_post",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/X-Language-Preference"
+          },
+          {
+            "$ref": "#/components/parameters/X-Locale"
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1811,6 +1793,208 @@
             }
           }
         }
+      }
+    },
+    "/api/v1/spaces": {
+      "get": {
+        "tags": [
+          "spaces"
+        ],
+        "summary": "List Spaces",
+        "description": "List spaces. Lazily bootstraps Clinic on first access (writes + commit).\n\nP1 follow-up: move bootstrap to login/`GET /me` so this endpoint stays read-only.\nConcurrent bootstrap is safe via `uq_spaces_user_clinic` + IntegrityError retry in store.",
+        "operationId": "list_spaces_api_v1_spaces_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceListResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "spaces"
+        ],
+        "summary": "Post Create Space",
+        "operationId": "post_create_space_api_v1_spaces_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSpaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSpaceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/spaces/{space_id}": {
+      "get": {
+        "tags": [
+          "spaces"
+        ],
+        "summary": "Get Space",
+        "operationId": "get_space_api_v1_spaces__space_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Space Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/spaces/{space_id}/turn": {
+      "post": {
+        "tags": [
+          "spaces"
+        ],
+        "summary": "Post Space Turn",
+        "description": "Space turn — unified user message path (ADR-006 §1.5). P0.5 returns envelope stub.",
+        "operationId": "post_space_turn_api_v1_spaces__space_id__turn_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "space_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Space Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpaceTurnRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceTurnResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/space-templates": {
+      "get": {
+        "tags": [
+          "spaces"
+        ],
+        "summary": "List Templates",
+        "operationId": "list_templates_api_v1_space_templates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceTemplatesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     }
   },
@@ -2043,78 +2227,6 @@
         ],
         "title": "CreateSessionRequest"
       },
-      "CvChatRequest": {
-        "properties": {
-          "action": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Action"
-          },
-          "message": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Message"
-          },
-          "device_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Device Id"
-          },
-          "job_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Job Id"
-          },
-          "value": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Value"
-          },
-          "tg_action": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tg Action"
-          }
-        },
-        "type": "object",
-        "title": "CvChatRequest"
-      },
       "CvEditRequest": {
         "properties": {
           "mode": {
@@ -2250,15 +2362,22 @@
             "title": "Primary Country"
           },
           "primary_locale": {
-            "anyOf": [
+            "allOf": [
               {
-                "type": "string"
-              },
-              {
-                "type": "null"
+                "$ref": "#/components/schemas/NullableLanguageCode"
               }
             ],
-            "title": "Primary Locale"
+            "title": "Primary Locale",
+            "description": "Transition alias for language_preference. Optional on PATCH. Valid enum updates Profile SSOT. Clearing not supported in MVP — unset users fall back to phone inference then default ru."
+          },
+          "language_preference": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NullableLanguageCode"
+              }
+            ],
+            "title": "Language Preference",
+            "description": "Formal name (KAZI-74). Maps to primary_locale DB column in MVP. Optional on PATCH. Valid enum updates Profile SSOT. Clearing not supported in MVP — unset users fall back to phone inference then default ru."
           },
           "career_goal": {
             "anyOf": [
@@ -2340,7 +2459,7 @@
         },
         "type": "object",
         "title": "PatchMeBody",
-        "description": "Partial profile update — all fields optional."
+        "description": "Partial profile update — all fields optional. Language: send language_preference (preferred) or primary_locale; if both sent, language_preference wins. Omit a field to leave unchanged; null is treated as omit (no clear-to-null in MVP)."
       },
       "RespondRequest": {
         "properties": {
@@ -2557,6 +2676,24 @@
               }
             ],
             "title": "Content"
+          },
+          "locale": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NullableLanguageCode"
+              }
+            ],
+            "title": "Locale",
+            "description": "Transition alias for per-turn language (KAZI-74). If both locale and language_preference are sent in the body, language_preference wins. Request headers outrank body fields."
+          },
+          "language_preference": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NullableLanguageCode"
+              }
+            ],
+            "title": "Language Preference",
+            "description": "Per-turn UI/chat language hint (KAZI-74 formal name). See X-Language-Preference header for full resolution order."
           },
           "web_user_id": {
             "anyOf": [
@@ -2833,358 +2970,6 @@
           "question"
         ],
         "title": "CreateInterviewSessionResponse"
-      },
-      "CvAssistantMessage": {
-        "properties": {
-          "role": {
-            "type": "string",
-            "const": "assistant",
-            "title": "Role",
-            "default": "assistant"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          }
-        },
-        "type": "object",
-        "required": [
-          "content"
-        ],
-        "title": "CvAssistantMessage"
-      },
-      "CvChatResponse": {
-        "properties": {
-          "cv_session_id": {
-            "type": "string",
-            "title": "Cv Session Id"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "is_anonymous": {
-            "type": "boolean",
-            "title": "Is Anonymous"
-          },
-          "assistant_message": {
-            "$ref": "#/components/schemas/CvAssistantMessage"
-          },
-          "profile_hints": {
-            "$ref": "#/components/schemas/CvProfileHints"
-          },
-          "regenerate_policy": {
-            "$ref": "#/components/schemas/CvRegeneratePolicy"
-          },
-          "buttons": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Buttons"
-          },
-          "button_action": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Button Action"
-          },
-          "cv_content": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cv Content"
-          },
-          "document_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Document Id"
-          },
-          "version": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Version"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          },
-          "error_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Code"
-          },
-          "paywall_source": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Paywall Source"
-          },
-          "fields_summary": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Fields Summary"
-          },
-          "followup_round": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Followup Round"
-          },
-          "followup_remaining": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Followup Remaining"
-          },
-          "prefilled": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Prefilled"
-          },
-          "job_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Job Id"
-          },
-          "diff": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/CvDiffPayload"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "additionalProperties": true,
-        "type": "object",
-        "required": [
-          "cv_session_id",
-          "status",
-          "is_anonymous",
-          "assistant_message",
-          "profile_hints",
-          "regenerate_policy"
-        ],
-        "title": "CvChatResponse"
-      },
-      "CvDiffChange": {
-        "properties": {
-          "path": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Path"
-          },
-          "before": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Before"
-          },
-          "after": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "After"
-          }
-        },
-        "type": "object",
-        "title": "CvDiffChange",
-        "description": "Planned v0.2d depth (KAZI-33)."
-      },
-      "CvDiffPayload": {
-        "properties": {
-          "added": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Added"
-          },
-          "removed": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Removed"
-          },
-          "modified": {
-            "items": {
-              "$ref": "#/components/schemas/CvDiffChange"
-            },
-            "type": "array",
-            "title": "Modified"
-          }
-        },
-        "type": "object",
-        "title": "CvDiffPayload"
-      },
-      "CvProfileHints": {
-        "properties": {
-          "target_role": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target Role"
-          },
-          "english_level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "English Level"
-          },
-          "current_status": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Current Status"
-          }
-        },
-        "type": "object",
-        "title": "CvProfileHints"
-      },
-      "CvRegeneratePolicy": {
-        "properties": {
-          "current_flow_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Current Flow Id"
-          },
-          "free_regenerates_used": {
-            "type": "integer",
-            "title": "Free Regenerates Used",
-            "default": 0
-          },
-          "free_regenerates_remaining": {
-            "type": "integer",
-            "title": "Free Regenerates Remaining",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "title": "CvRegeneratePolicy"
       },
       "InterviewPrepCard": {
         "properties": {
@@ -3694,8 +3479,22 @@
             "title": "Is Paid"
           },
           "primary_locale": {
-            "type": "string",
-            "title": "Primary Locale"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NullableLanguageCode"
+              }
+            ],
+            "title": "Primary Locale",
+            "description": "Transition alias for language_preference (KAZI-74). Same value as language_preference when set. Null when Profile language not yet set."
+          },
+          "language_preference": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NullableLanguageCode"
+              }
+            ],
+            "title": "Language Preference",
+            "description": "User UI/chat/agent language (Profile SSOT). DB column still primary_locale in MVP."
           },
           "primary_country": {
             "anyOf": [
@@ -3813,7 +3612,8 @@
           "hook_state_label",
           "profile_completion",
           "capabilities",
-          "billing_snapshot"
+          "billing_snapshot",
+          "language_preference"
         ],
         "title": "MeResponse"
       },
@@ -3945,12 +3745,575 @@
         },
         "type": "object",
         "title": "UserProfileBlock"
+      },
+      "LanguageCode": {
+        "type": "string",
+        "enum": [
+          "en",
+          "ru",
+          "kk",
+          "uz",
+          "zh"
+        ],
+        "title": "Language Code",
+        "description": "Supported UI/chat language (KAZI-74). Add new languages here only; reference via $ref elsewhere."
+      },
+      "NullableLanguageCode": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/LanguageCode"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Nullable Language Code"
+      },
+      "CreateSpaceRequest": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "title": "Template Id",
+            "description": "blank_conversation | job_sprint | ielts_prep"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_id"
+        ],
+        "title": "CreateSpaceRequest"
+      },
+      "CreateSpaceResponse": {
+        "properties": {
+          "space": {
+            "$ref": "#/components/schemas/SpaceDetail"
+          },
+          "master_session_id": {
+            "type": "string",
+            "title": "Master Session Id",
+            "description": "Convenience duplicate of space.master_session_id for post-create navigation (design SDD §1.4); BE guarantees equality on create."
+          }
+        },
+        "type": "object",
+        "required": [
+          "space",
+          "master_session_id"
+        ],
+        "title": "CreateSpaceResponse"
+      },
+      "SpaceDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "sp_* or __clinic__"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "template_id": {
+            "type": "string",
+            "title": "Template Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "completed",
+              "archived",
+              "deleted"
+            ],
+            "title": "Status"
+          },
+          "is_entry_point": {
+            "type": "boolean",
+            "title": "Is Entry Point",
+            "default": false
+          },
+          "is_system": {
+            "type": "boolean",
+            "title": "Is System",
+            "default": false
+          },
+          "last_active_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Active At"
+          },
+          "template_icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Icon"
+          },
+          "template_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Display Name"
+          },
+          "master_session_id": {
+            "type": "string",
+            "title": "Master Session Id"
+          },
+          "config_snapshot": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Config Snapshot"
+          },
+          "space_state": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Space State"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "template_id",
+          "status",
+          "master_session_id"
+        ],
+        "title": "SpaceDetail"
+      },
+      "SpaceListResponse": {
+        "properties": {
+          "spaces": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceSummary"
+            },
+            "type": "array",
+            "title": "Spaces"
+          }
+        },
+        "type": "object",
+        "title": "SpaceListResponse"
+      },
+      "SpaceSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "sp_* or __clinic__"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "template_id": {
+            "type": "string",
+            "title": "Template Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "completed",
+              "archived",
+              "deleted"
+            ],
+            "title": "Status"
+          },
+          "is_entry_point": {
+            "type": "boolean",
+            "title": "Is Entry Point",
+            "default": false
+          },
+          "is_system": {
+            "type": "boolean",
+            "title": "Is System",
+            "default": false
+          },
+          "last_active_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Active At"
+          },
+          "template_icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Icon"
+          },
+          "template_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Display Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "template_id",
+          "status"
+        ],
+        "title": "SpaceSummary",
+        "description": "Sidebar row — ``GET /api/v1/spaces`` item (design SDD §1.4)."
+      },
+      "SpaceTemplateItem": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "title": "Template Id"
+          },
+          "display_name": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Display Name"
+          },
+          "mvp": {
+            "type": "boolean",
+            "title": "Mvp",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_id"
+        ],
+        "title": "SpaceTemplateItem"
+      },
+      "SpaceTemplatesResponse": {
+        "properties": {
+          "templates": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceTemplateItem"
+            },
+            "type": "array",
+            "title": "Templates"
+          },
+          "coming_soon": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceTemplateItem"
+            },
+            "type": "array",
+            "title": "Coming Soon"
+          }
+        },
+        "type": "object",
+        "title": "SpaceTemplatesResponse"
+      },
+      "SpaceTurnEnvelope": {
+        "properties": {
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceTurnEnvelopeComponent"
+            },
+            "type": "array",
+            "title": "Components"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/SpaceTurnEnvelopeMeta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "meta"
+        ],
+        "title": "SpaceTurnEnvelope"
+      },
+      "SpaceTurnEnvelopeComponent": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "SpaceTurnEnvelopeComponent",
+        "description": "Chat envelope component. ``text`` is populated when ``type`` is ``text``."
+      },
+      "SpaceTurnEnvelopeMeta": {
+        "properties": {
+          "space_id": {
+            "type": "string",
+            "title": "Space Id"
+          },
+          "engine": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engine"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "template_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Id"
+          },
+          "echo_len": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Echo Len"
+          },
+          "extensions": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extensions",
+            "description": "Additional meta from orchestrator; TODO(P2): tighten per-envelope-type schemas."
+          }
+        },
+        "type": "object",
+        "required": [
+          "space_id"
+        ],
+        "title": "SpaceTurnEnvelopeMeta",
+        "description": "P0.5 core meta fields. Use ``extensions`` for forward-compatible keys (P2+)."
+      },
+      "SpaceTurnRequest": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "input_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Mode"
+          },
+          "attachments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SpaceTurnAttachment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attachments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "SpaceTurnRequest"
+      },
+      "SpaceTurnResponse": {
+        "properties": {
+          "envelope": {
+            "$ref": "#/components/schemas/SpaceTurnEnvelope"
+          }
+        },
+        "type": "object",
+        "required": [
+          "envelope"
+        ],
+        "title": "SpaceTurnResponse"
+      },
+      "SpaceTurnAttachment": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "mime_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mime Type"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "SpaceTurnAttachment",
+        "description": "File attachment on a space turn request."
       }
     },
     "securitySchemes": {
       "HTTPBearer": {
         "type": "http",
         "scheme": "bearer"
+      }
+    },
+    "parameters": {
+      "X-Language-Preference": {
+        "name": "X-Language-Preference",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/LanguageCode"
+        },
+        "description": "Explicit UI/chat language for this request (KAZI-74). Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT."
+      },
+      "X-Locale": {
+        "name": "X-Locale",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/LanguageCode"
+        },
+        "description": "Legacy header for pre-KAZI-74 clients (mirrors next-intl URL route segment). When both X-Language-Preference and X-Locale are present, X-Language-Preference wins. Will be deprecated after client migration; do not use as the sole language signal."
       }
     }
   }

@@ -27,6 +27,7 @@ export function BlankConversationWorkspace({ space }: BlankConversationWorkspace
           onSend={(text) => void sendMessage(text)}
           disabled={muted || isSending || !spaceSessionReady}
           placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
+          showAttachButton
         />
       )}
     />
