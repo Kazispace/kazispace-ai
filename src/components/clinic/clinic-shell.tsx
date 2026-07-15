@@ -1164,7 +1164,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           }
           const res = await transcribeVoice(blob);
           if (!res.success || !res.data) {
-            showToast(res.error ?? tClinic("voiceUploadFailed"), "error");
+            const msg = res.errorCode === 'EMPTY_TRANSCRIPTION'
+              ? tClinic("voiceEmpty")
+              : (res.error ?? tClinic("voiceUploadFailed"));
+            showToast(msg, "error");
             return;
           }
           void handleSend(res.data.canonical_text);

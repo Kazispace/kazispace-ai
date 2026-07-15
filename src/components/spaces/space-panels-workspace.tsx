@@ -174,7 +174,10 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
                 onSendAudio={async (blob) => {
                   const res = await transcribeVoice(blob);
                   if (!res.success || !res.data) {
-                    useUIStore.getState().showToast(res.error ?? t('voiceUploadFailed'), 'error');
+                    const msg = res.errorCode === 'EMPTY_TRANSCRIPTION'
+                      ? t('voiceEmpty')
+                      : (res.error ?? t('voiceUploadFailed'));
+                    useUIStore.getState().showToast(msg, 'error');
                     return;
                   }
                   void sendMessage(res.data.canonical_text);

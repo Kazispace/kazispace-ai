@@ -11,13 +11,30 @@ export interface VoiceInputResponse {
   [key: string]: unknown;
 }
 
+const MIME_TO_EXT: Record<string, string> = {
+  'audio/webm': 'webm',
+  'audio/ogg': 'ogg',
+  'audio/mpeg': 'mp3',
+  'audio/mp4': 'm4a',
+  'audio/aac': 'aac',
+  'audio/wav': 'wav',
+};
+
+function resolveExt(mime: string): string {
+  return MIME_TO_EXT[mime] ?? 'webm';
+}
+
 function buildVoiceForm(audioBlob: Blob): FormData {
-  const ext = audioBlob.type.includes('ogg') ? 'ogg' : 'webm';
+  const ext = resolveExt(audioBlob.type);
   const form = new FormData();
   form.append('source_channel', 'web');
   form.append('input_mode', 'voice');
   form.append('device_id', getDeviceId());
-  form.append('file', audioBlob, `voice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`);
+  form.append(
+    'file',
+    audioBlob,
+    `voice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`,
+  );
   return form;
 }
 
@@ -27,15 +44,16 @@ function buildHeaders(): Record<string, string> {
   );
   const headers: Record<string, string> = {
     'X-Device-ID': getDeviceId(),
-    'Accept-Language': lang,
     'X-Language-Preference': lang,
-    'X-Locale': lang,
     ...getTmaClientHeaders(),
   };
   const token = getAuthToken();
   if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
 }
+
+// TODO(KAZI-213): /api/v1/inputs does not accept spaceId yet.
+// If space-scoped quotas / auditing are needed, add context_module or space_id param.
 
 /**
  * POST audio blob to /api/v1/inputs (input_mode=voice).
@@ -52,7 +70,7 @@ export async function transcribeVoice(
       body: buildVoiceForm(audioBlob),
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({})) as Record<string, unknown>;
+      const err = (await res.json().catch(() => ({}))) as Record<string, unknown>;
       const detail = err.detail;
       const msg =
         typeof detail === 'string'
@@ -68,7 +86,7 @@ export async function transcribeVoice(
     }
     const data = (await res.json()) as VoiceInputResponse;
     if (!data.canonical_text?.trim()) {
-      return { success: false, error: 'No speech detected', errorCode: 'EMPTY_TRANSCRIPTION' };
+      return { success: false, errorCode: 'EMPTY_TRANSCRIPTION' };
     }
     return { success: true, data };
   } catch (err) {
