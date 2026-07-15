@@ -131,38 +131,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/cv/chat": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Cv Chat
-         * @description CV Builder 对话接口（状态机驱动）
-         *     严格对照 API Spec v2.3 §4.3
-         *
-         *     Web 端交互协议（action 枚举）：
-         *     1. action="start"                              → 初始化会话，返回 target_role 选项
-         *     2. action="message", message="..."             → 发送对话内容（含 experience_starter 和追问回复）
-         *     3. action="confirm"                            → 确认摘要，触发 CV 生成
-         *     4. action="regenerate"                         → 重新生成同一 flow 下的新版本
-         *
-         *     Telegram 端兼容动作（tg_action 枚举，内部使用）：
-         *     - tg_action="select_role",    value="..."      → 选择目标岗位
-         *     - tg_action="select_status",  value="..."      → 选择当前状态
-         *     - tg_action="select_english", value="..."      → 选择英语水平
-         */
-        post: operations["cv_chat_api_v1_cv_chat_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/cv/documents": {
         parameters: {
             query?: never;
@@ -628,7 +596,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Agent Chat */
+        /**
+         * Agent Chat
+         * @description Agent Hub chat. Language: Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT.
+         */
         post: operations["agent_chat_api_v1_agents_chat_post"];
         delete?: never;
         options?: never;
@@ -757,7 +728,7 @@ export interface paths {
         put?: never;
         /**
          * Web Chat
-         * @description Web Chat 发送消息接口（API Spec v2.3 §3.3）
+         * @description Web Chat (API Spec v2.3 §3.3). Language: Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT.
          */
         post: operations["web_chat_api_v1_chat_post"];
         delete?: never;
@@ -777,7 +748,7 @@ export interface paths {
         put?: never;
         /**
          * Web Chat
-         * @description Web Chat 发送消息接口（API Spec v2.3 §3.3）
+         * @description Web Chat (API Spec v2.3 §3.3). Language: Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT.
          */
         post: operations["web_chat_api_v1_chat_messages_post"];
         delete?: never;
@@ -829,6 +800,84 @@ export interface paths {
         };
         /** Health Check */
         get: operations["health_check_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Spaces
+         * @description List spaces. Lazily bootstraps Clinic on first access (writes + commit).
+         *
+         *     P1 follow-up: move bootstrap to login/`GET /me` so this endpoint stays read-only.
+         *     Concurrent bootstrap is safe via `uq_spaces_user_clinic` + IntegrityError retry in store.
+         */
+        get: operations["list_spaces_api_v1_spaces_get"];
+        put?: never;
+        /** Post Create Space */
+        post: operations["post_create_space_api_v1_spaces_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Space */
+        get: operations["get_space_api_v1_spaces__space_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/spaces/{space_id}/turn": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Space Turn
+         * @description Space turn — unified user message path (ADR-006 §1.5). P0.5 returns envelope stub.
+         */
+        post: operations["post_space_turn_api_v1_spaces__space_id__turn_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/space-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates */
+        get: operations["list_templates_api_v1_space_templates_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -917,21 +966,6 @@ export interface components {
             /** Job Id */
             job_id?: string | null;
         };
-        /** CvChatRequest */
-        CvChatRequest: {
-            /** Action */
-            action?: string | null;
-            /** Message */
-            message?: string | null;
-            /** Device Id */
-            device_id?: string | null;
-            /** Job Id */
-            job_id?: string | null;
-            /** Value */
-            value?: string | null;
-            /** Tg Action */
-            tg_action?: string | null;
-        };
         /** CvEditRequest */
         CvEditRequest: {
             /** Mode */
@@ -972,13 +1006,21 @@ export interface components {
         };
         /**
          * PatchMeBody
-         * @description Partial profile update — all fields optional.
+         * @description Partial profile update — all fields optional. Language: send language_preference (preferred) or primary_locale; if both sent, language_preference wins. Omit a field to leave unchanged; null is treated as omit (no clear-to-null in MVP).
          */
         PatchMeBody: {
             /** Primary Country */
             primary_country?: string | null;
-            /** Primary Locale */
-            primary_locale?: string | null;
+            /**
+             * Primary Locale
+             * @description Transition alias for language_preference. Optional on PATCH. Valid enum updates Profile SSOT. Clearing not supported in MVP — unset users fall back to phone inference then default ru.
+             */
+            primary_locale?: components["schemas"]["NullableLanguageCode"];
+            /**
+             * Language Preference
+             * @description Formal name (KAZI-74). Maps to primary_locale DB column in MVP. Optional on PATCH. Valid enum updates Profile SSOT. Clearing not supported in MVP — unset users fall back to phone inference then default ru.
+             */
+            language_preference?: components["schemas"]["NullableLanguageCode"];
             /** Career Goal */
             career_goal?: string | null;
             /** Target Role */
@@ -1061,6 +1103,16 @@ export interface components {
             session_id?: string | null;
             /** Content */
             content?: string | null;
+            /**
+             * Locale
+             * @description Transition alias for per-turn language (KAZI-74). If both locale and language_preference are sent in the body, language_preference wins. Request headers outrank body fields.
+             */
+            locale?: components["schemas"]["NullableLanguageCode"];
+            /**
+             * Language Preference
+             * @description Per-turn UI/chat language hint (KAZI-74 formal name). See X-Language-Preference header for full resolution order.
+             */
+            language_preference?: components["schemas"]["NullableLanguageCode"];
             /** Web User Id */
             web_user_id?: string | null;
             /** Message */
@@ -1141,107 +1193,6 @@ export interface components {
              * @description Echoed when sent; prep_card generation is KAZI-32 (schema ahead of runtime).
              */
             job_id?: string | null;
-        };
-        /** CvAssistantMessage */
-        CvAssistantMessage: {
-            /**
-             * Role
-             * @default assistant
-             * @constant
-             */
-            role: "assistant";
-            /** Content */
-            content: string;
-        };
-        /** CvChatResponse */
-        CvChatResponse: {
-            /** Cv Session Id */
-            cv_session_id: string;
-            /** Status */
-            status: string;
-            /** Is Anonymous */
-            is_anonymous: boolean;
-            assistant_message: components["schemas"]["CvAssistantMessage"];
-            profile_hints: components["schemas"]["CvProfileHints"];
-            regenerate_policy: components["schemas"]["CvRegeneratePolicy"];
-            /** Buttons */
-            buttons?: string[] | null;
-            /** Button Action */
-            button_action?: string | null;
-            /** Cv Content */
-            cv_content?: string | null;
-            /** Document Id */
-            document_id?: string | null;
-            /** Version */
-            version?: number | string | null;
-            /** Error */
-            error?: boolean | string | null;
-            /** Error Code */
-            error_code?: string | null;
-            /** Paywall Source */
-            paywall_source?: string | null;
-            /** Fields Summary */
-            fields_summary?: {
-                [key: string]: unknown;
-            } | null;
-            /** Followup Round */
-            followup_round?: number | null;
-            /** Followup Remaining */
-            followup_remaining?: number | null;
-            /** Prefilled */
-            prefilled?: {
-                [key: string]: unknown;
-            } | null;
-            /** Job Id */
-            job_id?: string | null;
-            diff?: components["schemas"]["CvDiffPayload"] | null;
-        } & {
-            [key: string]: unknown;
-        };
-        /**
-         * CvDiffChange
-         * @description Planned v0.2d depth (KAZI-33).
-         */
-        CvDiffChange: {
-            /** Path */
-            path?: string | null;
-            /** Before */
-            before?: string | null;
-            /** After */
-            after?: string | null;
-        };
-        /** CvDiffPayload */
-        CvDiffPayload: {
-            /** Added */
-            added?: string[];
-            /** Removed */
-            removed?: string[];
-            /** Modified */
-            modified?: components["schemas"]["CvDiffChange"][];
-        };
-        /** CvProfileHints */
-        CvProfileHints: {
-            /** Target Role */
-            target_role?: string | null;
-            /** English Level */
-            english_level?: string | null;
-            /** Current Status */
-            current_status?: string | null;
-        };
-        /** CvRegeneratePolicy */
-        CvRegeneratePolicy: {
-            /** Current Flow Id */
-            current_flow_id?: string | null;
-            /**
-             * Free Regenerates Used
-             * @default 0
-             */
-            free_regenerates_used: number;
-            /**
-             * Free Regenerates Remaining
-             * @default 0
-             */
-            free_regenerates_remaining: number;
         };
         /**
          * InterviewPrepCard
@@ -1402,8 +1353,16 @@ export interface components {
             is_bound: boolean;
             /** Is Paid */
             is_paid: boolean;
-            /** Primary Locale */
-            primary_locale: string;
+            /**
+             * Primary Locale
+             * @description Transition alias for language_preference (KAZI-74). Same value as language_preference when set. Null when Profile language not yet set.
+             */
+            primary_locale: components["schemas"]["NullableLanguageCode"];
+            /**
+             * Language Preference
+             * @description User UI/chat/agent language (Profile SSOT). DB column still primary_locale in MVP.
+             */
+            language_preference: components["schemas"]["NullableLanguageCode"];
             /** Primary Country */
             primary_country?: string | null;
             /** Source Channel */
@@ -1461,9 +1420,220 @@ export interface components {
             /** Experience Text */
             experience_text?: string | null;
         };
+        /**
+         * Language Code
+         * @description Supported UI/chat language (KAZI-74). Add new languages here only; reference via $ref elsewhere.
+         * @enum {string}
+         */
+        LanguageCode: "en" | "ru" | "kk" | "uz" | "zh";
+        /** Nullable Language Code */
+        NullableLanguageCode: components["schemas"]["LanguageCode"] | null;
+        /** CreateSpaceRequest */
+        CreateSpaceRequest: {
+            /**
+             * Template Id
+             * @description blank_conversation | job_sprint | ielts_prep
+             */
+            template_id: string;
+            /** Name */
+            name?: string | null;
+        };
+        /** CreateSpaceResponse */
+        CreateSpaceResponse: {
+            space: components["schemas"]["SpaceDetail"];
+            /**
+             * Master Session Id
+             * @description Convenience duplicate of space.master_session_id for post-create navigation (design SDD §1.4); BE guarantees equality on create.
+             */
+            master_session_id: string;
+        };
+        /** SpaceDetail */
+        SpaceDetail: {
+            /**
+             * Id
+             * @description sp_* or __clinic__
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Template Id */
+            template_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "completed" | "archived" | "deleted";
+            /**
+             * Is Entry Point
+             * @default false
+             */
+            is_entry_point: boolean;
+            /**
+             * Is System
+             * @default false
+             */
+            is_system: boolean;
+            /** Last Active At */
+            last_active_at?: string | null;
+            /** Template Icon */
+            template_icon?: string | null;
+            /** Template Display Name */
+            template_display_name?: string | null;
+            /** Master Session Id */
+            master_session_id: string;
+            /** Config Snapshot */
+            config_snapshot?: {
+                [key: string]: unknown;
+            };
+            /** Space State */
+            space_state?: {
+                [key: string]: unknown;
+            };
+            /** Created At */
+            created_at?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /** SpaceListResponse */
+        SpaceListResponse: {
+            /** Spaces */
+            spaces?: components["schemas"]["SpaceSummary"][];
+        };
+        /**
+         * SpaceSummary
+         * @description Sidebar row — ``GET /api/v1/spaces`` item (design SDD §1.4).
+         */
+        SpaceSummary: {
+            /**
+             * Id
+             * @description sp_* or __clinic__
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Template Id */
+            template_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "completed" | "archived" | "deleted";
+            /**
+             * Is Entry Point
+             * @default false
+             */
+            is_entry_point: boolean;
+            /**
+             * Is System
+             * @default false
+             */
+            is_system: boolean;
+            /** Last Active At */
+            last_active_at?: string | null;
+            /** Template Icon */
+            template_icon?: string | null;
+            /** Template Display Name */
+            template_display_name?: string | null;
+        };
+        /** SpaceTemplateItem */
+        SpaceTemplateItem: {
+            /** Template Id */
+            template_id: string;
+            /** Display Name */
+            display_name?: {
+                [key: string]: string;
+            };
+            /**
+             * Mvp
+             * @default false
+             */
+            mvp: boolean;
+        };
+        /** SpaceTemplatesResponse */
+        SpaceTemplatesResponse: {
+            /** Templates */
+            templates?: components["schemas"]["SpaceTemplateItem"][];
+            /** Coming Soon */
+            coming_soon?: components["schemas"]["SpaceTemplateItem"][];
+        };
+        /** SpaceTurnEnvelope */
+        SpaceTurnEnvelope: {
+            /** Components */
+            components?: components["schemas"]["SpaceTurnEnvelopeComponent"][];
+            meta: components["schemas"]["SpaceTurnEnvelopeMeta"];
+        };
+        /**
+         * SpaceTurnEnvelopeComponent
+         * @description Chat envelope component. ``text`` is populated when ``type`` is ``text``.
+         */
+        SpaceTurnEnvelopeComponent: {
+            /** Type */
+            type: string;
+            /** Text */
+            text?: string | null;
+        };
+        /**
+         * SpaceTurnEnvelopeMeta
+         * @description P0.5 core meta fields. Use ``extensions`` for forward-compatible keys (P2+).
+         */
+        SpaceTurnEnvelopeMeta: {
+            /** Space Id */
+            space_id: string;
+            /** Engine */
+            engine?: string | null;
+            /** Mode */
+            mode?: string | null;
+            /** Template Id */
+            template_id?: string | null;
+            /** Echo Len */
+            echo_len?: number | null;
+            /**
+             * Extensions
+             * @description Additional meta from orchestrator; TODO(P2): tighten per-envelope-type schemas.
+             */
+            extensions?: {
+                [key: string]: unknown;
+            };
+        };
+        /** SpaceTurnRequest */
+        SpaceTurnRequest: {
+            /** Message */
+            message: string;
+            /** Input Mode */
+            input_mode?: string | null;
+            /** Attachments */
+            attachments?: components["schemas"]["SpaceTurnAttachment"][] | null;
+        };
+        /** SpaceTurnResponse */
+        SpaceTurnResponse: {
+            envelope: components["schemas"]["SpaceTurnEnvelope"];
+        };
+        /**
+         * SpaceTurnAttachment
+         * @description File attachment on a space turn request.
+         */
+        SpaceTurnAttachment: {
+            /** Id */
+            id?: string | null;
+            /** Type */
+            type?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Size */
+            size?: number | null;
+            /** Mime Type */
+            mime_type?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
     };
     responses: never;
-    parameters: never;
+    parameters: {
+        /** @description Explicit UI/chat language for this request (KAZI-74). Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT. */
+        "X-Language-Preference": components["schemas"]["LanguageCode"];
+        /** @description Legacy header for pre-KAZI-74 clients (mirrors next-intl URL route segment). When both X-Language-Preference and X-Locale are present, X-Language-Preference wins. Will be deprecated after client migration; do not use as the sole language signal. */
+        "X-Locale": components["schemas"]["LanguageCode"];
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
@@ -1741,39 +1911,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    cv_chat_api_v1_cv_chat_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CvChatRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CvChatResponse"];
                 };
             };
             /** @description Validation Error */
@@ -2515,7 +2652,12 @@ export interface operations {
     agent_chat_api_v1_agents_chat_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Explicit UI/chat language for this request (KAZI-74). Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT. */
+                "X-Language-Preference"?: components["parameters"]["X-Language-Preference"];
+                /** @description Legacy header for pre-KAZI-74 clients (mirrors next-intl URL route segment). When both X-Language-Preference and X-Locale are present, X-Language-Preference wins. Will be deprecated after client migration; do not use as the sole language signal. */
+                "X-Locale"?: components["parameters"]["X-Locale"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -2698,7 +2840,12 @@ export interface operations {
     web_chat_api_v1_chat_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Explicit UI/chat language for this request (KAZI-74). Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT. */
+                "X-Language-Preference"?: components["parameters"]["X-Language-Preference"];
+                /** @description Legacy header for pre-KAZI-74 clients (mirrors next-intl URL route segment). When both X-Language-Preference and X-Locale are present, X-Language-Preference wins. Will be deprecated after client migration; do not use as the sole language signal. */
+                "X-Locale"?: components["parameters"]["X-Locale"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -2731,7 +2878,12 @@ export interface operations {
     web_chat_api_v1_chat_messages_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description Explicit UI/chat language for this request (KAZI-74). Full resolution order (KAZI-74): (1) X-Language-Preference header; (2) body language_preference; (3) body locale; (4) X-Locale legacy header; (5) authenticated Profile language_preference (GET /me); (6) phone-country inference only when Profile unset; (7) default ru. Accept-Language is NOT supported — use X-Language-Preference or Profile SSOT. */
+                "X-Language-Preference"?: components["parameters"]["X-Language-Preference"];
+                /** @description Legacy header for pre-KAZI-74 clients (mirrors next-intl URL route segment). When both X-Language-Preference and X-Locale are present, X-Language-Preference wins. Will be deprecated after client migration; do not use as the sole language signal. */
+                "X-Locale"?: components["parameters"]["X-Locale"];
+            };
             path?: never;
             cookie?: never;
         };
@@ -2839,6 +2991,145 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    list_spaces_api_v1_spaces_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceListResponse"];
+                };
+            };
+        };
+    };
+    post_create_space_api_v1_spaces_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSpaceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateSpaceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_space_api_v1_spaces__space_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_space_turn_api_v1_spaces__space_id__turn_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                space_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpaceTurnRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceTurnResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_templates_api_v1_space_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceTemplatesResponse"];
                 };
             };
         };
