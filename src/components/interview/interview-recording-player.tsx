@@ -83,7 +83,14 @@ function RecordingCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const scoreColor = (recording.score ?? 0) >= 75 ? 'border-l-green-500' : (recording.score ?? 0) >= 60 ? 'border-l-amber-400' : 'border-l-red-400';
+  const scoreColor =
+    recording.score == null
+      ? 'border-l-gray-300'
+      : recording.score >= 75
+        ? 'border-l-green-500'
+        : recording.score >= 60
+          ? 'border-l-amber-400'
+          : 'border-l-red-400';
   return (
     <button
       type="button"
@@ -124,6 +131,7 @@ function PlayerExpanded({
   const [activeTab, setActiveTab] = useState<'transcript' | 'feedback'>('transcript');
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [durationSec, setDurationSec] = useState(recording.duration_seconds);
   const [speed, setSpeed] = useState(1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -133,6 +141,11 @@ function PlayerExpanded({
       audioRef.current.playbackRate = speed;
       audioRef.current.ontimeupdate = () => {
         if (audioRef.current) setCurrentTime(Math.floor(audioRef.current.currentTime));
+      };
+      audioRef.current.onloadedmetadata = () => {
+        if (audioRef.current && Number.isFinite(audioRef.current.duration)) {
+          setDurationSec(Math.max(0, Math.round(audioRef.current.duration)));
+        }
       };
       audioRef.current.onended = () => setIsPlaying(false);
     }
@@ -152,9 +165,9 @@ function PlayerExpanded({
     if (audioRef.current) {
       audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime + delta);
     } else {
-      setCurrentTime((t) => Math.max(0, Math.min(recording.duration_seconds, t + delta)));
+      setCurrentTime((t) => Math.max(0, Math.min(durationSec, t + delta)));
     }
-  }, [recording.duration_seconds]);
+  }, [durationSec]);
 
   const cycleSpeed = useCallback(() => {
     const speeds = [1, 1.5, 2, 0.5];
@@ -190,7 +203,7 @@ function PlayerExpanded({
       {/* Player controls */}
       <div className="flex flex-col items-center gap-3 border-b border-gray-200/80 px-4 py-4">
         <p className="text-sm tabular-nums text-kazi-orange">
-          {formatDuration(currentTime)} / {formatDuration(recording.duration_seconds)}
+          {formatDuration(currentTime)} / {formatDuration(durationSec)}
         </p>
         <div className="flex items-center gap-4">
           <button type="button" onClick={() => skip(-15)} className="text-[#86909C] hover:text-[#1D2129]">

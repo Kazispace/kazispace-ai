@@ -6,6 +6,16 @@ export type FileCategory =
   | 'interview/audio'
   | 'scratch';
 
+/** Optional metadata written by BE integrations (duration_sec, cv_document_id, …). */
+export type UserFileMeta = {
+  duration_sec?: number;
+  interview_session_id?: string;
+  question_idx?: number;
+  cv_document_id?: number;
+  version_number?: number;
+  [key: string]: unknown;
+};
+
 export interface UserFile {
   file_id: string;
   filename: string;
@@ -16,6 +26,8 @@ export interface UserFile {
   space_id?: string | null;
   download_url?: string | null;
   created_at: string;
+  /** Present when BE list/detail includes UserFile.meta (KAZI-207 audio, KAZI-206 CV). */
+  meta?: UserFileMeta | null;
 }
 
 export interface UserFileListResponse {

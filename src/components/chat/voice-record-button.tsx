@@ -20,12 +20,14 @@ function formatDuration(seconds: number): string {
 
 function WaveformBars({ level }: { level: number }) {
   const bars = 20;
+  // Derive heights from level only — no Math.random() in render (avoids flicker on duration re-renders)
   return (
     <div className="flex items-center justify-center gap-[2px] h-10">
       {Array.from({ length: bars }).map((_, i) => {
         const center = bars / 2;
         const dist = Math.abs(i - center) / center;
-        const h = Math.max(4, (1 - dist * 0.5) * level * 40 + Math.random() * 4);
+        const wave = Math.sin(i * 0.9 + level * 12) * 0.15 + 0.85;
+        const h = Math.max(4, (1 - dist * 0.5) * level * 40 * wave);
         return (
           <div
             key={i}

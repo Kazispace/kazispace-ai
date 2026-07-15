@@ -17,15 +17,17 @@ import { VoiceRecordButton } from "@/components/chat/voice-record-button";
 import { formatFileSize } from "@/lib/file-utils";
 import { cn } from "@/lib/utils";
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
-const ALLOWED_MIME_PREFIXES = [
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats",
-  "text/",
-  "image/",
-  "audio/",
-];
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB — matches BE MAX_FILE_SIZE_BYTES
+/** Align with backend files/constants.py ALLOWED_MIME_TYPES */
+const ALLOWED_MIME_TYPES = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'audio/ogg',
+  'audio/mpeg',
+  'audio/webm',
+  'image/jpeg',
+  'image/png',
+]);
 
 interface AttachmentPreview {
   file: File;
@@ -45,7 +47,7 @@ interface ChatInputProps {
 }
 
 function isAllowedMime(mime: string): boolean {
-  return ALLOWED_MIME_PREFIXES.some((prefix) => mime.startsWith(prefix));
+  return ALLOWED_MIME_TYPES.has(mime);
 }
 
 export function ChatInput({
@@ -55,8 +57,8 @@ export function ChatInput({
   placeholder,
   onOpenAgents,
   showAgentButton,
-  showAttachButton = true,
-  showMicButton = true,
+  showAttachButton = false,
+  showMicButton = false,
   isUploading,
 }: ChatInputProps) {
   const t = useTranslations("spaces");
@@ -169,7 +171,8 @@ export function ChatInput({
               type="button"
               onClick={() => {
                 if (fileInputRef.current) {
-                  fileInputRef.current.accept = "image/*,video/*";
+                  fileInputRef.current.accept = "image/jpeg,image/png";
+                  fileInputRef.current.removeAttribute("capture");
                   fileInputRef.current.click();
                 }
               }}
@@ -183,7 +186,8 @@ export function ChatInput({
               onClick={() => {
                 if (fileInputRef.current) {
                   fileInputRef.current.accept =
-                    ".pdf,.doc,.docx,.txt,.md,.csv,.xls,.xlsx";
+                    "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                  fileInputRef.current.removeAttribute("capture");
                   fileInputRef.current.click();
                 }
               }}
@@ -196,8 +200,8 @@ export function ChatInput({
               type="button"
               onClick={() => {
                 if (fileInputRef.current) {
-                  fileInputRef.current.accept = "image/*";
-                  fileInputRef.current.capture = "environment";
+                  fileInputRef.current.accept = "image/jpeg,image/png";
+                  fileInputRef.current.setAttribute("capture", "environment");
                   fileInputRef.current.click();
                 }
               }}

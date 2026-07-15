@@ -1,7 +1,6 @@
 /**
  * Interview recording list — wraps the unified file API filtered by
- * interview/audio category. Score/transcript come from session metadata
- * when available; the file API provides audio URLs.
+ * interview/audio category. Duration/score come from file.meta when BE exposes it.
  */
 import { fetchUserFiles, getFileDownloadUrl } from '@/lib/file-api';
 import type { ApiResponse } from '@/types';
@@ -32,12 +31,18 @@ export interface RecordingListResponse {
 }
 
 function fileToRecording(file: UserFile): InterviewRecording {
+  const durationRaw = file.meta?.duration_sec;
+  const duration_seconds =
+    typeof durationRaw === 'number' && Number.isFinite(durationRaw)
+      ? Math.max(0, Math.round(durationRaw))
+      : 0;
+
   return {
     file_id: file.file_id,
     session_title: file.filename.replace(/\.[^.]+$/, '').replace(/_/g, ' '),
     filename: file.filename,
     size_bytes: file.size_bytes,
-    duration_seconds: 0,
+    duration_seconds,
     score: null,
     category_scores: null,
     ai_feedback: null,

@@ -8,10 +8,15 @@ import type {
 } from '@/types/user-files';
 
 function useMockFallback(error?: string): boolean {
+  // Explicit opt-in only — avoid masking real 404s / misconfigured routes.
+  if (process.env.NEXT_PUBLIC_MOCK_FILES === 'true') return true;
   if (process.env.NEXT_PUBLIC_AGENT_API_MOCK === 'true') return true;
-  if (process.env.NODE_ENV === 'production') return false;
-  if (!error) return false;
-  return error.includes('404') || error.includes('Not Found');
+  return false;
+}
+
+function warnMockFallback(endpoint: string): void {
+  if (process.env.NODE_ENV === 'production') return;
+  console.warn(`[file-api] Using mock fallback for ${endpoint}`);
 }
 
 const MOCK_FILES: UserFile[] = [
@@ -24,6 +29,7 @@ const MOCK_FILES: UserFile[] = [
     tier: 'agent_output',
     space_id: null,
     created_at: '2026-07-12T10:00:00Z',
+    meta: { version_number: 3 },
   },
   {
     file_id: 'mock_cv_upload_1',
@@ -54,6 +60,7 @@ const MOCK_FILES: UserFile[] = [
     tier: 'agent_output',
     space_id: null,
     created_at: '2026-07-08T16:00:00Z',
+    meta: { duration_sec: 754, interview_session_id: 'abc123', question_idx: 0 },
   },
   {
     file_id: 'mock_doc_2',
@@ -78,6 +85,7 @@ export async function fetchUserFiles(
   const res = await apiRequest<UserFileListResponse>(`/api/v1/files${query}`);
   if (res.success && res.data) return res;
   if (useMockFallback(res.error)) {
+    warnMockFallback(`GET /api/v1/files${query}`);
     const filtered = category
       ? MOCK_FILES.filter((f) => f.category === category)
       : MOCK_FILES;
@@ -97,6 +105,7 @@ export async function getFileDownloadUrl(
   );
   if (res.success && res.data) return res;
   if (useMockFallback(res.error)) {
+    warnMockFallback(`GET /api/v1/files/${fileId}/url`);
     return {
       success: true,
       data: {
@@ -118,6 +127,7 @@ export async function deleteUserFile(
   );
   if (res.success) return { success: true, data: undefined };
   if (useMockFallback(res.error)) {
+    warnMockFallback(`DELETE /api/v1/files/${fileId}`);
     return { success: true, data: undefined };
   }
   return { success: false, error: res.error, errorCode: res.errorCode };
@@ -141,6 +151,7 @@ export async function uploadFile(
   });
   if (res.success && res.data) return res;
   if (useMockFallback(res.error)) {
+    warnMockFallback('POST /api/v1/files/upload');
     return {
       success: true,
       data: {

@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { useUserFiles } from '@/hooks/use-user-files';
 import { FILE_CATEGORY_TABS, formatFileDate, formatFileSize, resolveFileIconType } from '@/lib/file-utils';
@@ -94,10 +94,12 @@ function DeleteConfirm({
 
 function FileRow({
   file,
+  locale,
   onDownload,
   onDelete,
 }: {
   file: UserFile;
+  locale: string;
   onDownload: (fileId: string) => void;
   onDelete: (fileId: string) => Promise<boolean>;
 }) {
@@ -125,7 +127,7 @@ function FileRow({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-[#1D2129]">{file.filename}</p>
         <p className="text-xs text-[#86909C]">
-          {formatFileSize(file.size_bytes)} · {formatFileDate(file.created_at)}
+          {formatFileSize(file.size_bytes)} · {formatFileDate(file.created_at, locale)}
         </p>
       </div>
       <div className="flex shrink-0 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -168,6 +170,7 @@ export function SessionFileLibraryPanel({
   onClose,
 }: SessionFileLibraryPanelProps) {
   const t = useTranslations('sessionNav');
+  const locale = useLocale();
   const { files, isLoading, error, activeCategory, setActiveCategory, downloadFile, removeFile } =
     useUserFiles();
 
@@ -239,6 +242,7 @@ export function SessionFileLibraryPanel({
               <FileRow
                 key={file.file_id}
                 file={file}
+                locale={locale}
                 onDownload={downloadFile}
                 onDelete={removeFile}
               />

@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Badge, Download, Eye, Loader2 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { Badge, Download, Loader2 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { fetchCvVersions, getCvVersionDownloadUrl, type CvVersion } from '@/lib/cv-version-api';
 import { formatFileDate, formatFileSize } from '@/lib/file-utils';
@@ -14,6 +14,7 @@ interface CvVersionListProps {
 
 export function CvVersionList({ className }: CvVersionListProps) {
   const t = useTranslations('cv');
+  const locale = useLocale();
   const [versions, setVersions] = useState<CvVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,11 +31,13 @@ export function CvVersionList({ className }: CvVersionListProps) {
       }
       setIsLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleDownload = useCallback(async (versionId: string) => {
-    const res = await getCvVersionDownloadUrl(versionId);
+  const handleDownload = useCallback(async (fileId: string) => {
+    const res = await getCvVersionDownloadUrl(fileId);
     if (res.success && res.data) {
       window.open(res.data.download_url, '_blank', 'noopener');
     }
@@ -73,9 +76,7 @@ export function CvVersionList({ className }: CvVersionListProps) {
         >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-[#1D2129]">
-                v{v.version_number}
-              </span>
+              <span className="text-sm font-semibold text-[#1D2129]">{v.label}</span>
               {v.is_current && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">
                   <Badge className="h-3 w-3" />
@@ -83,27 +84,19 @@ export function CvVersionList({ className }: CvVersionListProps) {
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-xs text-[#86909C]">
-              {formatFileDate(v.created_at)} · {formatFileSize(v.size_bytes)}
+            <p className="mt-0.5 truncate text-xs text-[#86909C]">
+              {v.filename} · {formatFileDate(v.created_at, locale)} ·{' '}
+              {formatFileSize(v.size_bytes)}
             </p>
           </div>
-          <div className="flex shrink-0 gap-1">
-            <button
-              type="button"
-              onClick={() => void handleDownload(v.file_id)}
-              className="rounded-lg p-2 text-[#86909C] hover:bg-blue-50 hover:text-blue-600 transition-colors"
-              aria-label={t('downloadPdf')}
-            >
-              <Download className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className="rounded-lg p-2 text-[#86909C] hover:bg-gray-100 hover:text-[#1D2129] transition-colors"
-              aria-label={t('previewTitle')}
-            >
-              <Eye className="h-4 w-4" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => void handleDownload(v.file_id)}
+            className="shrink-0 rounded-lg p-2 text-[#86909C] hover:bg-blue-50 hover:text-blue-600 transition-colors"
+            aria-label={t('downloadPdf')}
+          >
+            <Download className="h-4 w-4" />
+          </button>
         </div>
       ))}
     </div>
