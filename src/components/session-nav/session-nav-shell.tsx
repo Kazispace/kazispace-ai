@@ -13,6 +13,8 @@ import {
   type SessionNavOpenOptions,
 } from '@/components/session-nav/session-nav-controller';
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
+import { SessionFileLibraryPanel } from '@/components/session-nav/session-file-library-panel';
+import { SessionGlobalSearchPanel } from '@/components/session-nav/session-global-search-panel';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
 import { SessionNavPanel } from '@/components/session-nav/session-nav-panel';
 import { useActiveAgentSessions, ActiveAgentSessionsProvider } from '@/hooks/use-active-agent-sessions';
@@ -275,6 +277,8 @@ function SessionNavShellLayout({
   );
 
   const showAgentsPanel = panelMode === 'agents';
+  const showFilesPanel = panelMode === 'files';
+  const showSearchPanel = panelMode === 'search';
 
   return (
     <SessionNavControllerProvider value={controllerValue}>
@@ -286,6 +290,8 @@ function SessionNavShellLayout({
           panelOpen={panelVisible}
           panelMode={panelMode}
           onToggleAgentsPanel={handleToggleAgentsPanel}
+          onOpenFilesPanel={() => openPanelMode('files')}
+          onOpenSearchPanel={() => openPanelMode('search')}
           onOpenMobileDrawer={() => openPanelMode('agents')}
         />
 
@@ -309,6 +315,24 @@ function SessionNavShellLayout({
             spacesMode={spacesEnabled}
             spaceRows={spaceNavRows}
             onNewSpace={() => setTemplatePickerOpen(true)}
+          />
+        ) : null}
+
+        {showFilesPanel ? (
+          <SessionFileLibraryPanel
+            locale={locale}
+            open={panelOpen}
+            mobileDrawer={mobileDrawerOpen}
+            onClose={closePanel}
+          />
+        ) : null}
+
+        {showSearchPanel ? (
+          <SessionGlobalSearchPanel
+            locale={locale}
+            open={panelOpen}
+            mobileDrawer={mobileDrawerOpen}
+            onClose={closePanel}
           />
         ) : null}
 
