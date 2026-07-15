@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Button } from "@/components/ui/button";
 import { VoiceRecordButton } from "@/components/chat/voice-record-button";
 import { formatFileSize } from "@/lib/file-utils";
 import { cn } from "@/lib/utils";
@@ -120,10 +119,11 @@ export function ChatInput({
   }, [attachment]);
 
   const hasContent = message.trim() || attachment;
+  const showPlus = showAttachButton || (showAgentButton && onOpenAgents);
 
   return (
     <form onSubmit={handleSubmit} className="bg-white border-t border-gray-200/80">
-      {/* Attachment preview */}
+      {/* Attachment preview — above the input box */}
       {attachment && (
         <div className="flex items-center gap-3 px-4 pt-3">
           <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
@@ -157,7 +157,7 @@ export function ChatInput({
         </div>
       )}
 
-      {/* Attach menu (bottom sheet style) */}
+      {/* Attach menu popover */}
       {attachMenuOpen && (
         <>
           <button
@@ -223,86 +223,81 @@ export function ChatInput({
         tabIndex={-1}
       />
 
-      {/* Input bar */}
-      <div className="flex gap-2 p-4 items-end">
-        {/* "+" attach button (KAZI-212) */}
-        {showAttachButton && (
-          <Button
-            type="button"
-            size="icon"
-            variant="outline"
-            className="h-10 w-10 shrink-0 rounded-full border-gray-200"
-            onClick={() => {
-              setAttachMenuOpen(!attachMenuOpen);
-              setFileError(null);
-            }}
-            disabled={inputDisabled}
-            aria-label={t("attachFile")}
-          >
-            <Plus className={cn("w-5 h-5 transition-transform", attachMenuOpen && "rotate-45")} />
-          </Button>
-        )}
+      {/* ── Unified input bar: [+] textarea [mic|send] ── */}
+      <div className="p-3">
+        <div
+          className={cn(
+            "flex items-end gap-1 rounded-2xl border bg-gray-50 px-2 py-1.5 transition-colors",
+            "focus-within:border-kazi-orange focus-within:bg-white",
+            inputDisabled ? "opacity-50" : "border-gray-200"
+          )}
+        >
+          {/* Left: "+" inside the box */}
+          {showPlus && (
+            <button
+              type="button"
+              onClick={() => {
+                if (showAttachButton) {
+                  setAttachMenuOpen(!attachMenuOpen);
+                  setFileError(null);
+                } else if (onOpenAgents) {
+                  onOpenAgents();
+                }
+              }}
+              disabled={inputDisabled}
+              className={cn(
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#86909C]",
+                "hover:bg-gray-200/60 hover:text-[#1D2129] transition-colors",
+                "disabled:cursor-not-allowed disabled:opacity-50"
+              )}
+              aria-label={t("attachFile")}
+            >
+              <Plus className={cn("h-[18px] w-[18px] transition-transform", attachMenuOpen && "rotate-45")} />
+            </button>
+          )}
 
-        {/* Legacy agent button fallback */}
-        {!showAttachButton && showAgentButton && onOpenAgents && (
-          <Button
-            type="button"
-            size="icon"
-            variant="outline"
-            className="h-10 w-10 shrink-0 rounded-full"
-            onClick={onOpenAgents}
-            disabled={inputDisabled}
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
-        )}
-
-        <div className="flex-1 relative">
+          {/* Center: textarea */}
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
-              isUploading
-                ? t("uploading")
-                : placeholder || "Ask Kazi anything..."
+              isUploading ? t("uploading") : placeholder || "Ask Kazi anything..."
             }
             disabled={inputDisabled}
             rows={1}
             className={cn(
-              "w-full resize-none rounded-[24px] border border-gray-200 bg-gray-50 px-4 py-3 text-sm",
-              "focus:outline-none focus:border-kazi-orange focus:bg-white transition-colors",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              "max-h-32"
+              "min-h-[36px] max-h-32 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5",
+              "placeholder:text-[#86909C] focus:outline-none",
+              "disabled:cursor-not-allowed"
             )}
-            style={{ minHeight: "44px" }}
           />
-        </div>
 
-        {/* Mic button (KAZI-213) — press-and-hold to record, release to send */}
-        {showMicButton && !hasContent && onSendAudio && (
-          <VoiceRecordButton
-            onRecordComplete={onSendAudio}
-            disabled={inputDisabled}
-          />
-        )}
-
-        {/* Send button */}
-        <Button
-          type="submit"
-          size="icon"
-          disabled={!hasContent || inputDisabled}
-          className={cn(
-            "h-10 w-10 shrink-0 rounded-full",
-            !hasContent && showMicButton && onSendAudio && "hidden"
-          )}
-        >
-          {isUploading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
+          {/* Right: mic or send — inside the box */}
+          {showMicButton && !hasContent && onSendAudio ? (
+            <VoiceRecordButton
+              onRecordComplete={onSendAudio}
+              disabled={inputDisabled}
+            />
           ) : (
-            <Send className="w-5 h-5" />
+            <button
+              type="submit"
+              disabled={!hasContent || inputDisabled}
+              className={cn(
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
+                hasContent && !inputDisabled
+                  ? "bg-kazi-orange text-white hover:bg-kazi-orange/90"
+                  : "text-[#C9CDD4] cursor-not-allowed"
+              )}
+            >
+              {isUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </button>
           )}
-        </Button>
+        </div>
       </div>
     </form>
   );
