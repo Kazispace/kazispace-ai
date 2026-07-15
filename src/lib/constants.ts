@@ -7,8 +7,8 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 export function isSupportedLocale(value: string): value is SupportedLocale {
   return (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }
-/** CIS / Kazakhstan primary market — SDD §11 */
-export const DEFAULT_LOCALE: SupportedLocale = 'ru';
+/** English as universal fallback; CIS/KZ users still get ru via Accept-Language. */
+export const DEFAULT_LOCALE: SupportedLocale = 'en';
 
 export const ROUTES = {
   HOME: '/',

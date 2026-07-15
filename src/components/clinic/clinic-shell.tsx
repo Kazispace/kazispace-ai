@@ -1155,8 +1155,18 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       <ChatInput
         onSend={handleSend}
-          disabled={isSending || isSwitching || (isAgentMode && historyReadOnly) || isSwitchingSession}
+        onSendAudio={async (blob) => {
+          if (!isLoggedIn) {
+            showToast(tClinic("loginToChat"), "info");
+            router.push(`/${locale}/login`);
+            return;
+          }
+          void handleSend('[Voice message]');
+        }}
+        disabled={isSending || isSwitching || (isAgentMode && historyReadOnly) || isSwitchingSession}
         placeholder={inputPlaceholder}
+        showAttachButton
+        showMicButton
         showAgentButton={isLoggedIn}
         onOpenAgents={() => setSwitcherOpen(true)}
       />
