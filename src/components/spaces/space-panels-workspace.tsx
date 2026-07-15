@@ -18,7 +18,6 @@ import {
   resolveSpacePanels,
 } from '@/lib/spaces/panels';
 import { resolveSpaceJobId } from '@/lib/spaces/space-context';
-import { getSpacePanelLabel } from '@/lib/spaces/panel-labels';
 import { useSpaceStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { SpaceDetail } from '@/types/spaces';
@@ -57,14 +56,17 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   }, [panelFromUrl, panels]);
 
   const [mobileView, setMobileView] = useState<SpaceWorkspaceView>(initialView);
+  const urlRequestsPanel = panelFromUrl != null && isValidPanelId(panels, panelFromUrl);
+  const [desktopPanelOpen, setDesktopPanelOpen] = useState(urlRequestsPanel);
   const [desktopPanelId, setDesktopPanelId] = useState(
-    isValidPanelId(panels, panelFromUrl) ? panelFromUrl! : fallbackPanelId
+    urlRequestsPanel ? panelFromUrl! : fallbackPanelId
   );
 
   useEffect(() => {
     if (panelFromUrl && isValidPanelId(panels, panelFromUrl)) {
       setMobileView(panelFromUrl);
       setDesktopPanelId(panelFromUrl);
+      setDesktopPanelOpen(true);
     }
   }, [panelFromUrl, panels]);
 
@@ -89,12 +91,23 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
     [panels, syncPanelQuery]
   );
 
-  const handleDesktopPanelChange = useCallback(
-    (panelId: string) => {
-      setDesktopPanelId(panelId);
-      syncPanelQuery(panelId);
+  const handleTabChange = useCallback(
+    (view: SpaceWorkspaceView) => {
+      handleMobileViewChange(view);
+      if (view === 'chat') {
+        setDesktopPanelOpen(false);
+      } else if (isValidPanelId(panels, view)) {
+        if (desktopPanelOpen && desktopPanelId === view) {
+          setDesktopPanelOpen(false);
+          setMobileView('chat');
+        } else {
+          setDesktopPanelId(view);
+          setDesktopPanelOpen(true);
+          syncPanelQuery(view);
+        }
+      }
     },
-    [syncPanelQuery]
+    [desktopPanelId, desktopPanelOpen, handleMobileViewChange, panels, syncPanelQuery]
   );
 
   /** Envelope `meta.active_panel` / `ui_hints.panel_id` → switch + clear hint. */
@@ -105,6 +118,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
       return;
     }
     setDesktopPanelId(activePanelHint);
+    setDesktopPanelOpen(true);
     setMobileView(activePanelHint);
     syncPanelQuery(activePanelHint);
     setSpaceActivePanelHint(space.id, null);
@@ -131,13 +145,15 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
     );
   }
 
+  const desktopActive: SpaceWorkspaceView = desktopPanelOpen ? desktopPanelId : 'chat';
+
   return (
     <div className="flex h-full min-h-0 flex-col bg-gray-bg">
       <SpacePanelTabs
-        className="lg:hidden"
         panels={panels}
         active={mobileView}
-        onChange={handleMobileViewChange}
+        desktopActive={desktopActive}
+        onChange={handleTabChange}
       />
 
       <div className="flex min-h-0 flex-1">
@@ -164,40 +180,11 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
         <aside
           className={cn(
             'flex min-h-0 flex-col border-gray-200/80 bg-white lg:w-[min(440px,40vw)] lg:shrink-0 lg:border-l',
-            mobileView === 'chat' && 'hidden lg:flex',
+            mobileView === 'chat' && !desktopPanelOpen && 'hidden',
+            mobileView === 'chat' && desktopPanelOpen && 'hidden lg:flex',
             mobileView !== 'chat' && 'flex flex-1 lg:flex-none'
           )}
         >
-          {panels.length > 1 ? (
-            <div className="hidden shrink-0 border-b border-gray-200/80 lg:flex">
-              {panels.map((panel) => {
-                const selected = panel.panel_id === desktopPanelId;
-                return (
-                  <button
-                    key={panel.panel_id}
-                    type="button"
-                    onClick={() => handleDesktopPanelChange(panel.panel_id)}
-                    className={cn(
-                      'relative flex-1 px-3 py-3 text-sm font-medium transition-colors',
-                      selected ? 'text-kazi-navy' : 'text-gray-500'
-                    )}
-                  >
-                    {getSpacePanelLabel(panel, t)}
-                    {selected ? (
-                      <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-kazi-orange" />
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-          ) : activePanel ? (
-            <div className="hidden shrink-0 border-b border-gray-200/80 px-4 py-3 lg:block">
-              <h2 className="text-sm font-semibold text-kazi-navy">
-                {getSpacePanelLabel(activePanel, t)}
-              </h2>
-            </div>
-          ) : null}
-
           {mobilePanel || activePanel ? (
             <SpacePanelHost
               panel={(mobilePanel ?? activePanel)!}

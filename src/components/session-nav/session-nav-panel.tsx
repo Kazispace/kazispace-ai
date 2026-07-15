@@ -324,6 +324,20 @@ export function SessionNavPanel({
         </p>
       )}
 
+      {spacesMode && onNewSpace ? (
+        <div className="shrink-0 border-b border-[#E5E6EB] p-2">
+          <button
+            type="button"
+            disabled={actionsDisabled}
+            onClick={onNewSpace}
+            className="flex w-full items-center justify-center gap-1 rounded-lg border border-[#E5E6EB] px-2 py-2 text-xs font-medium text-[#1D2129] hover:bg-[#F2F3F5] disabled:opacity-50"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {t('newSpace')}
+          </button>
+        </div>
+      ) : null}
+
       <div className="border-b border-[#E5E6EB] px-3 py-2">
         <label className="relative block">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86909C]" />
@@ -408,20 +422,6 @@ export function SessionNavPanel({
           sessionRows.map(renderSessionRow)
         )}
       </ul>
-
-      {spacesMode && onNewSpace ? (
-        <div className="shrink-0 border-t border-[#E5E6EB] p-2">
-          <button
-            type="button"
-            disabled={actionsDisabled}
-            onClick={onNewSpace}
-            className="flex w-full items-center justify-center gap-1 rounded-lg border border-[#E5E6EB] px-2 py-2 text-xs font-medium text-[#1D2129] hover:bg-[#F2F3F5] disabled:opacity-50"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {t('newSpace')}
-          </button>
-        </div>
-      ) : null}
 
       {showHubActions && activeHubAgentId ? (
         <div className="flex shrink-0 gap-1 border-t border-[#E5E6EB] p-2">

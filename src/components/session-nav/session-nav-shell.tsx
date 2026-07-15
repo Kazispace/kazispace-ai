@@ -107,10 +107,8 @@ function SessionNavShellLayout({
     setPanelMode,
   } = navState;
 
-  const isSpaceRoute = spacesEnabled && Boolean(spaceRouteId);
   const pinNavPanel = isDesktop && shouldPinWorkspaceNavPanel(pathname);
-  const effectivePanelOpen = pinNavPanel ? true : panelOpen;
-  const panelVisible = effectivePanelOpen || mobileDrawerOpen;
+  const panelVisible = panelOpen || mobileDrawerOpen;
   const contextHeaderSpaceId =
     spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
   const showContextHeader = isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId);
@@ -144,16 +142,14 @@ function SessionNavShellLayout({
 
   const closePanel = useCallback(() => {
     if (mobileDrawerOpen) closeMobileDrawer();
-    else if (!pinNavPanel) setPanelOpen(false);
-  }, [closeMobileDrawer, mobileDrawerOpen, pinNavPanel, setPanelOpen]);
+    else setPanelOpen(false);
+  }, [closeMobileDrawer, mobileDrawerOpen, setPanelOpen]);
 
   const openPanelMode = useCallback(
     (mode: SessionNavPanelMode) => {
       const isSameMode = panelMode === mode;
       if (isSameMode && panelVisible) {
-        if (!pinNavPanel || !isDesktop) {
-          closePanel();
-        }
+        closePanel();
         return;
       }
       setPanelMode(mode);
@@ -163,7 +159,7 @@ function SessionNavShellLayout({
         setPanelOpen(true);
       }
     },
-    [closePanel, isDesktop, openMobileDrawer, panelMode, panelVisible, pinNavPanel, setPanelMode, setPanelOpen]
+    [closePanel, isDesktop, openMobileDrawer, panelMode, panelVisible, setPanelMode, setPanelOpen]
   );
 
   const openPanel = useCallback(
@@ -192,7 +188,6 @@ function SessionNavShellLayout({
       else openMobileDrawer();
       return;
     }
-    if (pinNavPanel) return;
     togglePanel();
   }, [
     closeMobileDrawer,
@@ -201,7 +196,6 @@ function SessionNavShellLayout({
     openMobileDrawer,
     openPanelMode,
     panelMode,
-    pinNavPanel,
     togglePanel,
   ]);
 
@@ -304,7 +298,7 @@ function SessionNavShellLayout({
         {showAgentsPanel ? (
           <SessionNavPanel
             locale={locale}
-            open={effectivePanelOpen}
+            open={panelOpen}
             mobileDrawer={mobileDrawerOpen}
             viewTab={viewTab}
             onViewTabChange={setViewTab}
