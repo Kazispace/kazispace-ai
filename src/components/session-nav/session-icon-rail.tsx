@@ -3,10 +3,8 @@
 import Link from 'next/link';
 import {
   Bot,
-  FolderOpen,
   MessageCircle,
   PanelLeftClose,
-  Search,
   Settings,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -21,8 +19,6 @@ interface SessionIconRailProps {
   panelOpen: boolean;
   panelMode: SessionNavPanelMode;
   onToggleAgentsPanel: () => void;
-  onOpenFilesPanel: () => void;
-  onOpenSearchPanel: () => void;
   onOpenMobileDrawer: () => void;
 }
 
@@ -31,8 +27,6 @@ export function SessionIconRail({
   panelOpen,
   panelMode,
   onToggleAgentsPanel,
-  onOpenFilesPanel,
-  onOpenSearchPanel,
   onOpenMobileDrawer,
 }: SessionIconRailProps) {
   const pathname = usePathname();
@@ -69,8 +63,6 @@ export function SessionIconRail({
   );
 
   const agentsActive = panelOpen && panelMode === 'agents';
-  const filesActive = panelOpen && panelMode === 'files';
-  const searchActive = panelOpen && panelMode === 'search';
 
   return (
     <nav
@@ -100,8 +92,6 @@ export function SessionIconRail({
       </Link>
 
       {iconBtn(agentsActive, handleAgentsClick, t('agents'), <Bot className="h-5 w-5" />)}
-      {iconBtn(filesActive, onOpenFilesPanel, t('files'), <FolderOpen className="h-5 w-5" />)}
-      {iconBtn(searchActive, onOpenSearchPanel, t('search'), <Search className="h-5 w-5" />)}
 
       <div className="mt-auto flex flex-col gap-1">
         <Link
@@ -115,11 +105,7 @@ export function SessionIconRail({
         {panelOpen && (
           <button
             type="button"
-            onClick={() => {
-              if (panelMode === 'agents') onToggleAgentsPanel();
-              else if (panelMode === 'files') onOpenFilesPanel();
-              else onOpenSearchPanel();
-            }}
+            onClick={onToggleAgentsPanel}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"
             aria-label={t('collapsePanel')}
             title={t('collapsePanel')}

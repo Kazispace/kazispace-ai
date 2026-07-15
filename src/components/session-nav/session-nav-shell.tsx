@@ -13,8 +13,6 @@ import {
   type SessionNavOpenOptions,
 } from '@/components/session-nav/session-nav-controller';
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
-import { SessionFileLibraryPanel } from '@/components/session-nav/session-file-library-panel';
-import { SessionGlobalSearchPanel } from '@/components/session-nav/session-global-search-panel';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
 import { SessionNavPanel } from '@/components/session-nav/session-nav-panel';
 import { useActiveAgentSessions, ActiveAgentSessionsProvider } from '@/hooks/use-active-agent-sessions';
@@ -107,10 +105,8 @@ function SessionNavShellLayout({
     setPanelMode,
   } = navState;
 
-  const isSpaceRoute = spacesEnabled && Boolean(spaceRouteId);
   const pinNavPanel = isDesktop && shouldPinWorkspaceNavPanel(pathname);
-  const effectivePanelOpen = pinNavPanel ? true : panelOpen;
-  const panelVisible = effectivePanelOpen || mobileDrawerOpen;
+  const panelVisible = panelOpen || mobileDrawerOpen;
   const contextHeaderSpaceId =
     spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
   const showContextHeader = isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId);
@@ -144,16 +140,14 @@ function SessionNavShellLayout({
 
   const closePanel = useCallback(() => {
     if (mobileDrawerOpen) closeMobileDrawer();
-    else if (!pinNavPanel) setPanelOpen(false);
-  }, [closeMobileDrawer, mobileDrawerOpen, pinNavPanel, setPanelOpen]);
+    else setPanelOpen(false);
+  }, [closeMobileDrawer, mobileDrawerOpen, setPanelOpen]);
 
   const openPanelMode = useCallback(
     (mode: SessionNavPanelMode) => {
       const isSameMode = panelMode === mode;
       if (isSameMode && panelVisible) {
-        if (!pinNavPanel || !isDesktop) {
-          closePanel();
-        }
+        closePanel();
         return;
       }
       setPanelMode(mode);
@@ -163,7 +157,7 @@ function SessionNavShellLayout({
         setPanelOpen(true);
       }
     },
-    [closePanel, isDesktop, openMobileDrawer, panelMode, panelVisible, pinNavPanel, setPanelMode, setPanelOpen]
+    [closePanel, isDesktop, openMobileDrawer, panelMode, panelVisible, setPanelMode, setPanelOpen]
   );
 
   const openPanel = useCallback(
@@ -192,7 +186,6 @@ function SessionNavShellLayout({
       else openMobileDrawer();
       return;
     }
-    if (pinNavPanel) return;
     togglePanel();
   }, [
     closeMobileDrawer,
@@ -201,7 +194,6 @@ function SessionNavShellLayout({
     openMobileDrawer,
     openPanelMode,
     panelMode,
-    pinNavPanel,
     togglePanel,
   ]);
 
@@ -283,8 +275,6 @@ function SessionNavShellLayout({
   );
 
   const showAgentsPanel = panelMode === 'agents';
-  const showFilesPanel = panelMode === 'files';
-  const showSearchPanel = panelMode === 'search';
 
   return (
     <SessionNavControllerProvider value={controllerValue}>
@@ -296,15 +286,13 @@ function SessionNavShellLayout({
           panelOpen={panelVisible}
           panelMode={panelMode}
           onToggleAgentsPanel={handleToggleAgentsPanel}
-          onOpenFilesPanel={() => openPanelMode('files')}
-          onOpenSearchPanel={() => openPanelMode('search')}
           onOpenMobileDrawer={() => openPanelMode('agents')}
         />
 
         {showAgentsPanel ? (
           <SessionNavPanel
             locale={locale}
-            open={effectivePanelOpen}
+            open={panelOpen}
             mobileDrawer={mobileDrawerOpen}
             viewTab={viewTab}
             onViewTabChange={setViewTab}
@@ -321,24 +309,6 @@ function SessionNavShellLayout({
             spacesMode={spacesEnabled}
             spaceRows={spaceNavRows}
             onNewSpace={() => setTemplatePickerOpen(true)}
-          />
-        ) : null}
-
-        {showFilesPanel ? (
-          <SessionFileLibraryPanel
-            locale={locale}
-            open={panelOpen}
-            mobileDrawer={mobileDrawerOpen}
-            onClose={closePanel}
-          />
-        ) : null}
-
-        {showSearchPanel ? (
-          <SessionGlobalSearchPanel
-            locale={locale}
-            open={panelOpen}
-            mobileDrawer={mobileDrawerOpen}
-            onClose={closePanel}
           />
         ) : null}
 

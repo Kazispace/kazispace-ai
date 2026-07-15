@@ -7,12 +7,14 @@ import { cn } from '@/lib/utils';
 import { getSpacePanelLabel } from '@/lib/spaces/panel-labels';
 import type { SpacePanelConfig } from '@/types/spaces';
 
-/** Mobile view switcher: chat column ↔ template panel. */
 export type SpaceWorkspaceView = 'chat' | SpacePanelConfig['panel_id'];
 
 interface SpacePanelTabsProps {
   panels: SpacePanelConfig[];
+  /** Active tab on mobile (controls which column is visible). */
   active: SpaceWorkspaceView;
+  /** Active tab on desktop — defaults to `active` when omitted. */
+  desktopActive?: SpaceWorkspaceView;
   onChange: (view: SpaceWorkspaceView) => void;
   className?: string;
 }
@@ -20,6 +22,7 @@ interface SpacePanelTabsProps {
 export function SpacePanelTabs({
   panels,
   active,
+  desktopActive,
   onChange,
   className,
 }: SpacePanelTabsProps) {
@@ -49,6 +52,8 @@ export function SpacePanelTabs({
     [onChange, tabs]
   );
 
+  const resolvedDesktop = desktopActive ?? active;
+
   return (
     <div
       className={cn('flex shrink-0 border-b border-gray-200/80 bg-white', className)}
@@ -56,25 +61,31 @@ export function SpacePanelTabs({
       aria-label={t('workspacePanels')}
     >
       {tabs.map(({ id, label }) => {
-        const selected = active === id;
+        const mobileSelected = active === id;
+        const dtSelected = resolvedDesktop === id;
         return (
           <button
             key={id}
             type="button"
             role="tab"
-            aria-selected={selected}
-            tabIndex={selected ? 0 : -1}
+            aria-selected={mobileSelected || dtSelected}
+            tabIndex={mobileSelected ? 0 : -1}
             onClick={() => onChange(id)}
             onKeyDown={(event) => handleKeyDown(event, id)}
             className={cn(
               'relative flex-1 py-3 text-sm font-medium transition-colors',
-              selected ? 'text-kazi-navy' : 'text-gray-500'
+              mobileSelected ? 'text-kazi-navy lg:text-gray-500' : 'text-gray-500',
+              dtSelected && 'lg:text-kazi-navy'
             )}
           >
             {label}
-            {selected ? (
-              <span className="absolute inset-x-4 bottom-0 h-0.5 rounded-full bg-kazi-orange" />
-            ) : null}
+            <span
+              className={cn(
+                'absolute inset-x-4 bottom-0 h-0.5 rounded-full bg-kazi-orange',
+                mobileSelected ? 'block lg:hidden' : 'hidden',
+                dtSelected && 'lg:block'
+              )}
+            />
           </button>
         );
       })}
