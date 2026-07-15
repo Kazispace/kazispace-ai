@@ -15,7 +15,7 @@ import { QuickReplies } from "./quick-replies";
 import { AgentSwitcher } from "./agent-switcher";
 import { ReferralPrompt } from "./referral-prompt";
 import { ChatInput } from "@/components/chat/chat-input";
-import { uploadFile } from "@/lib/file-api";
+import { transcribeVoice } from "@/lib/voice-input-api";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { useActiveAgentSessions } from "@/hooks/use-active-agent-sessions";
 import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
@@ -1162,13 +1162,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             router.push(`/${locale}/login`);
             return;
           }
-          try {
-            const file = new File([blob], `voice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.webm`, { type: blob.type || 'audio/webm' });
-            await uploadFile(file, 'documents');
-            void handleSend('[Voice message]');
-          } catch {
-            showToast(tClinic("voiceUploadFailed") || "Voice upload failed", "error");
+          const res = await transcribeVoice(blob);
+          if (!res.success || !res.data) {
+            showToast(res.error ?? tClinic("voiceUploadFailed"), "error");
+            return;
           }
+          void handleSend(res.data.canonical_text);
         }}
         disabled={isSending || isSwitching || (isAgentMode && historyReadOnly) || isSwitchingSession}
         placeholder={inputPlaceholder}
