@@ -19,7 +19,7 @@ import {
   resolveSpacePanels,
 } from '@/lib/spaces/panels';
 import { resolveSpaceJobId } from '@/lib/spaces/space-context';
-import { useSpaceStore } from '@/lib/store';
+import { useSpaceStore, useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { SpaceDetail } from '@/types/spaces';
 
@@ -172,9 +172,13 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
               <ChatInput
                 onSend={(text) => void sendMessage(text)}
                 onSendAudio={async (blob) => {
-                  const file = new File([blob], `voice_${Date.now()}.webm`, { type: blob.type || 'audio/webm' });
-                  await uploadFile(file, 'documents', { spaceId: space.id });
-                  void sendMessage('[Voice message]');
+                  try {
+                    const file = new File([blob], `voice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.webm`, { type: blob.type || 'audio/webm' });
+                    await uploadFile(file, 'documents', { spaceId: space.id });
+                    void sendMessage('[Voice message]');
+                  } catch {
+                    useUIStore.getState().showToast(t('voiceUploadFailed') || 'Voice upload failed', 'error');
+                  }
                 }}
                 disabled={muted || isSending || !spaceSessionReady}
                 placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}

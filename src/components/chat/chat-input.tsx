@@ -267,7 +267,7 @@ export function ChatInput({
             disabled={inputDisabled}
             rows={1}
             className={cn(
-              "min-h-[32px] max-h-32 flex-1 resize-none bg-transparent py-1 text-sm leading-5",
+              "min-h-[36px] max-h-32 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5",
               "placeholder:text-[#86909C] focus:outline-none",
               "disabled:cursor-not-allowed"
             )}
