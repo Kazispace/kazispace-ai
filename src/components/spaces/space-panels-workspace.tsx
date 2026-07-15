@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 
 import { ChatInput } from '@/components/chat/chat-input';
 import { SpaceChatPane } from '@/components/spaces/space-chat-pane';
-import { uploadFile } from '@/lib/file-api';
+import { transcribeVoice } from '@/lib/voice-input-api';
 import { SpacePanelHost } from '@/components/spaces/panels/space-panel-host';
 import {
   SpacePanelTabs,
@@ -172,13 +172,15 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
               <ChatInput
                 onSend={(text) => void sendMessage(text)}
                 onSendAudio={async (blob) => {
-                  try {
-                    const file = new File([blob], `voice_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.webm`, { type: blob.type || 'audio/webm' });
-                    await uploadFile(file, 'documents', { spaceId: space.id });
-                    void sendMessage('[Voice message]');
-                  } catch {
-                    useUIStore.getState().showToast(t('voiceUploadFailed') || 'Voice upload failed', 'error');
+                  const res = await transcribeVoice(blob);
+                  if (!res.success || !res.data) {
+                    const msg = res.errorCode === 'EMPTY_TRANSCRIPTION'
+                      ? t('voiceEmpty')
+                      : (res.error ?? t('voiceUploadFailed'));
+                    useUIStore.getState().showToast(msg, 'error');
+                    return;
                   }
+                  void sendMessage(res.data.canonical_text);
                 }}
                 disabled={muted || isSending || !spaceSessionReady}
                 placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
