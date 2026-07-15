@@ -104,10 +104,10 @@ export function VoiceRecordButton({
       <button
         type="button"
         disabled
-        className="h-10 w-10 shrink-0 rounded-full bg-red-50 text-red-400"
+        className="h-8 w-8 shrink-0 rounded-full bg-red-50 text-red-400"
         aria-label="Microphone access denied"
       >
-        <Mic className="mx-auto h-5 w-5" />
+        <Mic className="mx-auto h-4 w-4" />
       </button>
     );
   }
@@ -160,13 +160,13 @@ export function VoiceRecordButton({
       onTouchStart={handleTouchStart}
       onMouseDown={handleMouseDown}
       className={cn(
-        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#86909C]',
+        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#86909C]',
         'hover:bg-orange-50 hover:text-kazi-orange transition-colors',
         'disabled:opacity-50 disabled:cursor-not-allowed'
       )}
       aria-label={t('holdToTalk')}
     >
-      <Mic className="h-5 w-5" />
+      <Mic className="h-4 w-4" />
     </button>
   );
 }

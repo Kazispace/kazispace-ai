@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 
 import { ChatInput } from '@/components/chat/chat-input';
 import { SpaceChatPane } from '@/components/spaces/space-chat-pane';
+import { uploadFile } from '@/lib/file-api';
 import { SpacePanelHost } from '@/components/spaces/panels/space-panel-host';
 import {
   SpacePanelTabs,
@@ -170,9 +171,15 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             composer={({ sendMessage, isSending, spaceSessionReady }) => (
               <ChatInput
                 onSend={(text) => void sendMessage(text)}
+                onSendAudio={async (blob) => {
+                  const file = new File([blob], `voice_${Date.now()}.webm`, { type: blob.type || 'audio/webm' });
+                  await uploadFile(file, 'documents', { spaceId: space.id });
+                  void sendMessage('[Voice message]');
+                }}
                 disabled={muted || isSending || !spaceSessionReady}
                 placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
                 showAttachButton
+                showMicButton
               />
             )}
           />
