@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SessionHeaderDrawer } from '@/components/session-nav/session-header-drawer';
 import type { CurrentSessionsByAgent } from '@/lib/current-agent-sessions';
 import {
@@ -76,6 +77,7 @@ export function SessionContextHeader({
   const { run: runLifecycle, pendingAction } = useSpaceLifecycle(locale);
   const [drawer, setDrawer] = useState<HeaderDrawer>(null);
   const [sessionSearchQuery, setSessionSearchQuery] = useState('');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const { files, isLoading: filesLoading } = useSessionFiles(
     currentSession?.session_id ?? null,
@@ -182,6 +184,15 @@ export function SessionContextHeader({
   const closeDrawer = () => {
     setDrawer(null);
     setSessionSearchQuery('');
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!space) return;
+    setDeleteConfirmOpen(false);
+    void (async () => {
+      await runLifecycle(space.id, 'delete');
+      closeDrawer();
+    })();
   };
 
   const handleOpenSessionFile = (file: SessionLibraryFile) => {
@@ -385,16 +396,14 @@ export function SessionContextHeader({
                       type="button"
                       disabled={pendingAction != null}
                       onClick={() => {
+                        if (action === 'delete') {
+                          setDeleteConfirmOpen(true);
+                          return;
+                        }
                         void (async () => {
-                          if (action === 'delete') {
-                            const confirmed = window.confirm(
-                              tSpaces('lifecycleDeleteConfirm')
-                            );
-                            if (!confirmed) return;
-                          }
                           const result = await runLifecycle(space.id, action);
                           closeDrawer();
-                          if (result.ok && action !== 'delete') {
+                          if (result.ok) {
                             await refreshSpace();
                           }
                         })();
@@ -412,6 +421,17 @@ export function SessionContextHeader({
           ) : null}
         </div>
       </SessionHeaderDrawer>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title={tSpaces('lifecycleDeleteTitle')}
+        description={tSpaces('lifecycleDeleteConfirm')}
+        confirmLabel={tSpaces('lifecycleDeleteAction')}
+        cancelLabel={tSpaces('lifecycleDeleteCancel')}
+        destructive
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
     </div>
   );
 }

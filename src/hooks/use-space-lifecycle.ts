@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import {
@@ -13,6 +13,7 @@ import {
 import {
   type SpaceLifecycleAction,
 } from '@/lib/spaces/lifecycle';
+import { resolveSpaceIdFromPathname } from '@/lib/space-nav';
 import { publishSpacesListInvalidate } from '@/lib/spaces-list-invalidate';
 import { useSpaceStore, useUIStore } from '@/lib/store';
 
@@ -25,16 +26,19 @@ export {
 /** Mutations for BE lifecycle 联调 (KAZI-176 endpoints). */
 export function useSpaceLifecycle(locale: string) {
   const router = useRouter();
+  const pathname = usePathname();
   const t = useTranslations('spaces');
   const showToast = useUIStore((s) => s.showToast);
   const clearSpaceSlice = useSpaceStore((s) => s.clearSpaceSlice);
   const [pendingAction, setPendingAction] = useState<SpaceLifecycleAction | null>(
     null
   );
+  const [pendingSpaceId, setPendingSpaceId] = useState<string | null>(null);
 
   const run = useCallback(
     async (spaceId: string, action: SpaceLifecycleAction) => {
       setPendingAction(action);
+      setPendingSpaceId(spaceId);
       try {
         const res =
           action === 'complete'
@@ -61,16 +65,20 @@ export function useSpaceLifecycle(locale: string) {
 
         if (action === 'delete') {
           clearSpaceSlice(spaceId);
-          router.push(`/${locale}/chat`);
+          // Only leave the page when the deleted space is the one being viewed.
+          if (resolveSpaceIdFromPathname(pathname) === spaceId) {
+            router.push(`/${locale}/chat`);
+          }
         }
 
         return { ok: true as const, space: res.data };
       } finally {
         setPendingAction(null);
+        setPendingSpaceId(null);
       }
     },
-    [clearSpaceSlice, locale, router, showToast, t]
+    [clearSpaceSlice, locale, pathname, router, showToast, t]
   );
 
-  return { run, pendingAction };
+  return { run, pendingAction, pendingSpaceId };
 }
