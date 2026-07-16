@@ -940,6 +940,27 @@ export interface components {
             /** File */
             file?: string | null;
         };
+        /**
+         * CreateInputResponse
+         * @description POST /api/v1/inputs response (text or voice). Voice: FE sends chat only when asr_fallback_triggered is false and canonical_text is non-empty (KAZI-214).
+         */
+        CreateInputResponse: {
+            /** Input Id */
+            input_id: number;
+            /** Input Mode */
+            input_mode: string;
+            /** Canonical Text */
+            canonical_text: string;
+            /** Transcription Confidence */
+            transcription_confidence?: number | null;
+            /** Duration Seconds */
+            duration_seconds?: number | null;
+            /**
+             * Asr Fallback Triggered
+             * @description When true, FE must not send chat; prompt user to re-record or type.
+             */
+            asr_fallback_triggered?: boolean;
+        };
         /** CreateOrderRequest */
         CreateOrderRequest: {
             /** Package Id */
@@ -2431,7 +2452,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CreateInputResponse"];
                 };
             };
             /** @description Validation Error */

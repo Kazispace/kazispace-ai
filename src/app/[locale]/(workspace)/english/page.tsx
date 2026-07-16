@@ -9,7 +9,7 @@ import {
   useAgentTransition,
 } from "@/components/agent-transition/agent-transition-provider";
 import { AssistantTurn } from "@/components/chat/assistant-turn";
-import { ChatInput } from "@/components/chat/chat-input";
+import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
 import { MessageBubble } from "@/components/clinic/message-bubble";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { EnglishWorkspace } from "@/components/english/english-workspace";
@@ -180,7 +180,7 @@ function EnglishPageContent({ locale }: { locale: string }) {
               ) : undefined
             }
             input={
-              <ChatInput
+              <VoiceEnabledChatInput
                 onSend={(text) => void sendMessage(text)}
                 disabled={inputDisabled}
                 placeholder={t("chatPlaceholder")}
