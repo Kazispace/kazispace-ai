@@ -28,9 +28,15 @@ import {
 } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import type { SessionNavPanelMode } from '@/lib/session-nav';
-import { buildSpaceNavRows, resolveSpaceIdFromPathname, shouldPinWorkspaceNavPanel } from '@/lib/space-nav';
+import {
+  buildSpaceNavRowsFiltered,
+  resolveSpaceIdFromPathname,
+  shouldPinWorkspaceNavPanel,
+  type SpaceNavFilter,
+} from '@/lib/space-nav';
 import { CLINIC_SPACE_ID, isSpacesEnabled } from '@/lib/spaces/constants';
 import { createSpace } from '@/lib/spaces-api';
+import { useSpaceLifecycle } from '@/hooks/use-space-lifecycle';
 import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
 import { isTelegramWebApp } from '@/lib/telegram';
 import { WorkspaceShellProvider } from '@/lib/workspace-shell-context';
@@ -91,6 +97,8 @@ function SessionNavShellLayout({
   const activeHubAgentId = getDedicatedHubAgentFromPathname(pathname);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [isCreatingSpace, setIsCreatingSpace] = useState(false);
+  const [spaceFilter, setSpaceFilter] = useState<SpaceNavFilter>('active');
+  const { run: runSidebarLifecycle, pendingAction: sidebarPendingAction } = useSpaceLifecycle(locale);
 
   const {
     panelOpen,
@@ -246,8 +254,18 @@ function SessionNavShellLayout({
   );
 
   const spaceNavRows = useMemo(
-    () => (spacesEnabled ? buildSpaceNavRows(spaces, locale, t('clinic')) : []),
-    [locale, spaces, spacesEnabled, t]
+    () => (spacesEnabled ? buildSpaceNavRowsFiltered(spaces, locale, t('clinic'), spaceFilter) : []),
+    [locale, spaceFilter, spaces, spacesEnabled, t]
+  );
+
+  const handleSidebarSpaceAction = useCallback(
+    async (spaceId: string, action: Parameters<typeof runSidebarLifecycle>[1]) => {
+      const result = await runSidebarLifecycle(spaceId, action);
+      if (result.ok) {
+        void refreshSpaces(true);
+      }
+    },
+    [refreshSpaces, runSidebarLifecycle]
   );
 
   const handleCreateSpace = useCallback(
@@ -314,7 +332,12 @@ function SessionNavShellLayout({
             onExitSession={(agentId) => void handleExitSession(agentId)}
             spacesMode={spacesEnabled}
             spaceRows={spaceNavRows}
+            spaces={spaces}
             onNewSpace={() => setTemplatePickerOpen(true)}
+            onSpaceAction={handleSidebarSpaceAction}
+            spaceActionPending={sidebarPendingAction}
+            spaceFilter={spaceFilter}
+            onSpaceFilterChange={setSpaceFilter}
           />
         ) : null}
 

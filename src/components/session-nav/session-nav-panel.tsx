@@ -1,11 +1,24 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, ChevronRight, PanelLeftClose, Plus, Search, X } from 'lucide-react';
+import {
+  Archive,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  MoreVertical,
+  PanelLeftClose,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+  X,
+} from 'lucide-react';
 
 import { AgentSessionList } from '@/components/agent/agent-session-list';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import type { CurrentSessionsByAgent } from '@/lib/current-agent-sessions';
 import { useAgentSessionList } from '@/hooks/use-agent-session-list';
 import {
@@ -25,8 +38,10 @@ import {
   type SessionNavViewTab,
   type SessionViewRow,
 } from '@/lib/session-nav';
-import { filterSpaceNavRows } from '@/lib/space-nav';
+import { filterSpaceNavRows, type SpaceNavFilter } from '@/lib/space-nav';
+import { canRunSpaceLifecycle, type SpaceLifecycleAction } from '@/lib/spaces/lifecycle';
 import { cn } from '@/lib/utils';
+import type { SpaceSummary } from '@/types/spaces';
 
 interface SessionNavPanelProps {
   locale: string;
@@ -47,7 +62,13 @@ interface SessionNavPanelProps {
   /** ADR-006: Spaces list mode (replaces agent/session tabs). */
   spacesMode?: boolean;
   spaceRows?: SessionNavRow[];
+  spaces?: SpaceSummary[];
   onNewSpace?: () => void;
+  onSpaceAction?: (spaceId: string, action: SpaceLifecycleAction) => Promise<void>;
+  spaceActionPending?: SpaceLifecycleAction | null;
+  /** Current status filter for the space list. */
+  spaceFilter?: SpaceNavFilter;
+  onSpaceFilterChange?: (filter: SpaceNavFilter) => void;
 }
 
 function rowBadgeText(
@@ -102,12 +123,21 @@ export function SessionNavPanel({
   onExitSession,
   spacesMode = false,
   spaceRows = [],
+  spaces = [],
   onNewSpace,
+  onSpaceAction,
+  spaceActionPending = null,
+  spaceFilter = 'active',
+  onSpaceFilterChange,
 }: SessionNavPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
+  const tSpaces = useTranslations('spaces');
   const [listQuery, setListQuery] = useState('');
+  const [contextMenuId, setContextMenuId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const agentRows = useMemo(() => {
     const base = buildSessionNavRows(locale, t('clinic'));
@@ -128,6 +158,17 @@ export function SessionNavPanel({
     [listQuery, locale, sessionsByAgent, t]
   );
 
+  const spaceLookup = useMemo(() => {
+    const map = new Map<string, SpaceSummary>();
+    for (const s of spaces) map.set(s.id, s);
+    return map;
+  }, [spaces]);
+
+  const hasArchivedSpaces = useMemo(
+    () => spaces.some((s) => !s.is_entry_point && (s.status === 'archived' || s.status === 'deleted')),
+    [spaces]
+  );
+
   const activeId = resolveActiveNavRowId(pathname);
   const showHubActions =
     !spacesMode && Boolean(activeHubAgentId) && viewTab === 'agent';
@@ -141,6 +182,35 @@ export function SessionNavPanel({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [mobileDrawer, onClose]);
+
+  useEffect(() => {
+    if (!contextMenuId) return;
+    const onClick = (e: MouseEvent) => {
+      if (contextMenuRef.current && !contextMenuRef.current.contains(e.target as Node)) {
+        setContextMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [contextMenuId]);
+
+  const handleSpaceAction = useCallback(
+    (spaceId: string, action: SpaceLifecycleAction) => {
+      setContextMenuId(null);
+      if (action === 'delete') {
+        setDeleteConfirmId(spaceId);
+        return;
+      }
+      void onSpaceAction?.(spaceId, action);
+    },
+    [onSpaceAction]
+  );
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!deleteConfirmId) return;
+    void onSpaceAction?.(deleteConfirmId, 'delete');
+    setDeleteConfirmId(null);
+  }, [deleteConfirmId, onSpaceAction]);
 
   const renderAgentRow = (row: SessionNavRow) => {
     const isActive = row.id === activeId;
@@ -335,6 +405,34 @@ export function SessionNavPanel({
             <Plus className="h-3.5 w-3.5" />
             {t('newSpace')}
           </button>
+          {hasArchivedSpaces && onSpaceFilterChange ? (
+            <div className="mt-1.5 flex rounded-lg bg-[#F2F3F5] p-0.5">
+              <button
+                type="button"
+                onClick={() => onSpaceFilterChange('active')}
+                className={cn(
+                  'flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                  spaceFilter === 'active'
+                    ? 'bg-white text-[#1D2129] shadow-sm'
+                    : 'text-[#86909C]'
+                )}
+              >
+                {tSpaces('filterActive')}
+              </button>
+              <button
+                type="button"
+                onClick={() => onSpaceFilterChange('archived')}
+                className={cn(
+                  'flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors',
+                  spaceFilter === 'archived'
+                    ? 'bg-white text-[#1D2129] shadow-sm'
+                    : 'text-[#86909C]'
+                )}
+              >
+                {tSpaces('filterArchived')}
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -373,35 +471,97 @@ export function SessionNavPanel({
             listRows.map((row) => {
               const isActive = row.id === activeId;
               const badge = rowBadgeText(row.badge, row.badgeDetail, t);
+              const space = spaceLookup.get(row.id);
+              const showMenu = space && !space.is_entry_point && !space.is_system && onSpaceAction;
+              const isMenuOpen = contextMenuId === row.id;
+
+              const lifecycleActions: { action: SpaceLifecycleAction; labelKey: string; icon: typeof Archive; destructive?: boolean }[] = [
+                { action: 'complete', labelKey: 'lifecycleComplete', icon: CheckCircle2 },
+                { action: 'archive', labelKey: 'lifecycleArchive', icon: Archive },
+                { action: 'restore', labelKey: 'lifecycleRestore', icon: RotateCcw },
+                { action: 'delete', labelKey: 'lifecycleDelete', icon: Trash2, destructive: true },
+              ];
+
               return (
-                <li key={row.id}>
-                  <button
-                    type="button"
-                    disabled={row.disabled}
-                    onClick={() => {
-                      navigateToSessionNavTarget(router, row);
-                      if (mobileDrawer) onClose();
-                    }}
+                <li key={row.id} className="relative">
+                  <div
                     className={cn(
-                      'w-full rounded-lg px-3 py-2.5 text-left transition-colors',
+                      'group flex items-center rounded-lg transition-colors',
                       isActive && 'bg-[#FFF4EC]',
-                      row.disabled
-                        ? 'cursor-not-allowed opacity-60'
-                        : 'hover:bg-[#F2F3F5] text-[#1D2129]'
+                      !isActive && !row.disabled && 'hover:bg-[#F2F3F5]'
                     )}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-base" aria-hidden>
-                        {row.emoji}
-                      </span>
-                      <span className="flex-1 truncate text-sm font-medium">
-                        {row.displayName}
-                      </span>
-                    </div>
-                    {badge ? (
-                      <p className="mt-0.5 pl-7 text-xs text-[#86909C]">{badge}</p>
+                    <button
+                      type="button"
+                      disabled={row.disabled}
+                      onClick={() => {
+                        navigateToSessionNavTarget(router, row);
+                        if (mobileDrawer) onClose();
+                      }}
+                      onContextMenu={(e) => {
+                        if (!showMenu) return;
+                        e.preventDefault();
+                        setContextMenuId(isMenuOpen ? null : row.id);
+                      }}
+                      className={cn(
+                        'min-w-0 flex-1 rounded-lg px-3 py-2.5 text-left',
+                        row.disabled && 'cursor-not-allowed opacity-60'
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-base" aria-hidden>
+                          {row.emoji}
+                        </span>
+                        <span className="flex-1 truncate text-sm font-medium text-[#1D2129]">
+                          {row.displayName}
+                        </span>
+                      </div>
+                      {badge ? (
+                        <p className="mt-0.5 pl-7 text-xs text-[#86909C]">{badge}</p>
+                      ) : null}
+                    </button>
+                    {showMenu ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setContextMenuId(isMenuOpen ? null : row.id);
+                        }}
+                        className={cn(
+                          'mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#86909C] transition-opacity',
+                          'hover:bg-[#E5E6EB] hover:text-[#1D2129]',
+                          isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                        )}
+                        aria-label={tSpaces('spaceActions')}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
                     ) : null}
-                  </button>
+                  </div>
+                  {isMenuOpen && space ? (
+                    <div
+                      ref={contextMenuRef}
+                      className="absolute right-2 top-full z-30 mt-1 w-44 rounded-lg border border-[#E5E6EB] bg-white py-1 shadow-lg"
+                    >
+                      {lifecycleActions
+                        .filter(({ action }) => canRunSpaceLifecycle(space, action))
+                        .map(({ action, labelKey, icon: Icon, destructive }) => (
+                          <button
+                            key={action}
+                            type="button"
+                            disabled={spaceActionPending != null}
+                            onClick={() => handleSpaceAction(space.id, action)}
+                            className={cn(
+                              'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[#F2F3F5] disabled:opacity-50',
+                              destructive ? 'text-red-600' : 'text-[#1D2129]'
+                            )}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {tSpaces(labelKey)}
+                          </button>
+                        ))}
+                    </div>
+                  ) : null}
                 </li>
               );
             })
@@ -448,6 +608,17 @@ export function SessionNavPanel({
           ) : null}
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={deleteConfirmId != null}
+        title={tSpaces('lifecycleDeleteTitle')}
+        description={tSpaces('lifecycleDeleteConfirm')}
+        confirmLabel={tSpaces('lifecycleDeleteAction')}
+        cancelLabel={tSpaces('lifecycleDeleteCancel')}
+        destructive
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
     </div>
   );
 

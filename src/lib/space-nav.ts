@@ -106,6 +106,25 @@ export function buildSpaceNavRows(
     .map((space) => spaceSummaryToNavRow(space, locale, clinicLabel));
 }
 
+export type SpaceNavFilter = 'active' | 'archived';
+
+/** Build nav rows, optionally filtering by lifecycle status group. */
+export function buildSpaceNavRowsFiltered(
+  spaces: SpaceSummary[],
+  locale: string,
+  clinicLabel: string,
+  filter: SpaceNavFilter = 'active'
+): SessionNavRow[] {
+  const filtered = spaces.filter((s) => {
+    if (s.is_entry_point || s.id === CLINIC_SPACE_ID) return true;
+    if (filter === 'archived') return s.status === 'archived' || s.status === 'deleted';
+    return s.status === 'active' || s.status === 'completed';
+  });
+  return filtered
+    .sort(compareSpaces)
+    .map((space) => spaceSummaryToNavRow(space, locale, clinicLabel));
+}
+
 export function filterSpaceNavRows(
   rows: SessionNavRow[],
   query: string
