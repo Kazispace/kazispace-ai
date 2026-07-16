@@ -348,6 +348,7 @@
 		"voiceTranscribing": "Transcribing…",
 		"voiceTimeout": "Voice recognition timed out. Please try again.",
 		"voiceTooLong": "Recording is too long (max {seconds}s). Try a shorter clip.",
+		"voiceMaxDurationReached": "Recording stopped — max {seconds}s reached.",
 		"send": "Send",
 		"attachFile": "Attach file",
 		"attachPhoto": "Photo or Video",

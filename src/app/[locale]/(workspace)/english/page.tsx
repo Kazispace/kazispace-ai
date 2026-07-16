@@ -182,6 +182,7 @@ function EnglishPageContent({ locale }: { locale: string }) {
             input={
               <VoiceEnabledChatInput
                 onSend={(text) => void sendMessage(text)}
+                contextModule={ENGLISH_TUTOR_AGENT_ID}
                 disabled={inputDisabled}
                 placeholder={t("chatPlaceholder")}
                 showAgentButton

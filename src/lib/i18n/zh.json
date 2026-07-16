@@ -266,6 +266,7 @@
 		"voiceTranscribing": "正在转写…",
 		"voiceTimeout": "语音识别超时，请重试",
 		"voiceTooLong": "录音过长（最多 {seconds} 秒），请缩短后重试",
+		"voiceMaxDurationReached": "已达最长 {seconds} 秒，录音已停止",
 		"send": "发送",
 		"attachFile": "添加附件",
 		"attachPhoto": "照片或视频",

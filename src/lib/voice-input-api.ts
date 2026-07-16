@@ -8,7 +8,11 @@ import type { components } from '@/types/api.generated';
 /** Chat mic ASR timeout — Whisper + network; keep UI responsive. */
 export const VOICE_ASR_TIMEOUT_MS = 45_000;
 
-/** Hold-to-talk cap for ordinary chat mic (not mock-interview long audio). */
+/**
+ * Hold-to-talk UX cap for ordinary chat mic (not mock-interview long audio).
+ * Stricter than BE `MAX_VOICE_DURATION_SEC` (120) — backend is a safety net;
+ * FE stops earlier so users get a predictable short-clip experience.
+ */
 export const MAX_VOICE_RECORDING_SECONDS = 60;
 
 export type VoiceInputResponse = components['schemas']['CreateInputResponse'];
@@ -21,6 +25,15 @@ export type VoiceAsrErrorCode =
   | 'VOICE_ASR_FAILED'
   | 'SERVER_ERROR'
   | 'NETWORK_ERROR';
+
+export interface TranscribeVoiceOptions {
+  /**
+   * Optional multipart `context_module` (e.g. `clinic`, `english_tutor`, `space:{id}`).
+   * TODO(KAZI-213, priority: medium): BE does not accept `space_id` yet — until then,
+   * Spaces pass `space:{id}` via context_module so user_inputs remain attributable.
+   */
+  contextModule?: string;
+}
 
 const MIME_TO_EXT: Record<string, string> = {
   'audio/webm': 'webm',
@@ -37,12 +50,18 @@ function resolveExt(mime: string): string {
   return MIME_TO_EXT[mime] ?? MIME_TO_EXT[base] ?? 'webm';
 }
 
-function buildVoiceForm(audioBlob: Blob): FormData {
+function buildVoiceForm(
+  audioBlob: Blob,
+  options?: TranscribeVoiceOptions,
+): FormData {
   const ext = resolveExt(audioBlob.type);
   const form = new FormData();
   form.append('source_channel', 'web');
   form.append('input_mode', 'voice');
   form.append('device_id', getDeviceId());
+  if (options?.contextModule?.trim()) {
+    form.append('context_module', options.contextModule.trim());
+  }
   // Contract (KAZI-214): prefer a clear extension, e.g. voice.webm
   form.append('file', audioBlob, `voice.${ext}`);
   return form;
@@ -71,9 +90,6 @@ function parseErrorMessage(err: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
-// TODO(KAZI-213): /api/v1/inputs does not accept spaceId yet.
-// If space-scoped quotas / auditing are needed, add context_module or space_id param.
-
 /**
  * POST audio blob to /api/v1/inputs (input_mode=voice).
  * Backend runs Whisper ASR and returns canonical_text.
@@ -83,6 +99,7 @@ function parseErrorMessage(err: Record<string, unknown>): string | undefined {
  */
 export async function transcribeVoice(
   audioBlob: Blob,
+  options?: TranscribeVoiceOptions,
 ): Promise<ApiResponse<VoiceInputResponse>> {
   const url = `${API_BASE_URL}/api/v1/inputs`;
   const controller = new AbortController();
@@ -92,7 +109,7 @@ export async function transcribeVoice(
     const res = await fetch(url, {
       method: 'POST',
       headers: buildHeaders(),
-      body: buildVoiceForm(audioBlob),
+      body: buildVoiceForm(audioBlob, options),
       signal: controller.signal,
     });
     if (!res.ok) {

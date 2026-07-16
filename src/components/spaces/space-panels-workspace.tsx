@@ -170,6 +170,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             composer={({ sendMessage, isSending, spaceSessionReady }) => (
               <VoiceEnabledChatInput
                 onSend={(text) => void sendMessage(text)}
+                contextModule={`space:${space.id}`}
                 disabled={muted || isSending || !spaceSessionReady}
                 placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
                 showAttachButton

@@ -821,6 +821,7 @@
 		"voiceTranscribing": "Распознавание…",
 		"voiceTimeout": "Распознавание голоса истекло. Попробуйте ещё раз.",
 		"voiceTooLong": "Слишком длинная запись (макс. {seconds} с). Сократите клип.",
+		"voiceMaxDurationReached": "Запись остановлена — достигнут лимит {seconds} с.",
 		"lifecycleComplete": "Отметить завершённым",
 		"lifecycleArchive": "В архив",
 		"lifecycleRestore": "Восстановить",

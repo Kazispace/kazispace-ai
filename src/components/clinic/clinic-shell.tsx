@@ -1165,6 +1165,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       <VoiceEnabledChatInput
         onSend={handleSend}
         beforeTranscribe={beforeVoiceTranscribe}
+        contextModule="clinic"
         disabled={isSending || isSwitching || (isAgentMode && historyReadOnly) || isSwitchingSession}
         placeholder={inputPlaceholder}
         showAttachButton

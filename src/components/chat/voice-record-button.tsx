@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 
 import { useVoiceRecorder } from '@/hooks/use-voice-recorder';
 import { MAX_VOICE_RECORDING_SECONDS } from '@/lib/voice-input-api';
+import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 interface VoiceRecordButtonProps {
@@ -48,6 +49,7 @@ export function VoiceRecordButton({
   disabled,
 }: VoiceRecordButtonProps) {
   const t = useTranslations('spaces');
+  const showToast = useUIStore((s) => s.showToast);
   const {
     isRecording,
     duration,
@@ -69,9 +71,13 @@ export function VoiceRecordButton({
     autoStoppedRef.current = true;
     void (async () => {
       const blob = await stopRecording();
+      showToast(
+        t('voiceMaxDurationReached', { seconds: MAX_VOICE_RECORDING_SECONDS }),
+        'info',
+      );
       if (blob) onRecordComplete(blob);
     })();
-  }, [duration, isRecording, stopRecording, onRecordComplete]);
+  }, [duration, isRecording, stopRecording, onRecordComplete, showToast, t]);
 
   const handleTouchStart = useCallback(
 

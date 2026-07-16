@@ -18,6 +18,8 @@ export interface UseVoiceToChatOptions {
    * Return false to abort without calling /inputs.
    */
   beforeTranscribe?: () => boolean | Promise<boolean>;
+  /** Forwarded to POST /inputs as `context_module` (see TranscribeVoiceOptions). */
+  contextModule?: string;
 }
 
 function voiceErrorMessage(
@@ -33,6 +35,11 @@ function voiceErrorMessage(
       return t('voiceTimeout');
     case 'TOO_LONG':
       return t('voiceTooLong', { seconds: MAX_VOICE_RECORDING_SECONDS });
+    case 'VOICE_ASR_FAILED':
+    case 'SERVER_ERROR':
+    case 'NETWORK_ERROR':
+      // voiceUploadFailed copy is recognition-oriented (not file-upload).
+      return fallback?.trim() || t('voiceUploadFailed');
     default:
       return fallback?.trim() || t('voiceUploadFailed');
   }
@@ -45,10 +52,13 @@ function voiceErrorMessage(
 export function useVoiceToChat({
   onSendText,
   beforeTranscribe,
+  contextModule,
 }: UseVoiceToChatOptions) {
   const t = useTranslations('spaces');
   const showToast = useUIStore((s) => s.showToast);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  // Ref guards re-entry synchronously; state drives UI (spinner / disabled).
+  // Reading isTranscribing alone would allow a second click before the next render.
   const inFlightRef = useRef(false);
 
   const handleSendAudio = useCallback(
@@ -59,7 +69,7 @@ export function useVoiceToChat({
       inFlightRef.current = true;
       setIsTranscribing(true);
       try {
-        const res = await transcribeVoice(audioBlob);
+        const res = await transcribeVoice(audioBlob, { contextModule });
         if (!res.success || !res.data?.canonical_text?.trim()) {
           showToast(
             voiceErrorMessage(t, res.errorCode, res.error),
@@ -73,7 +83,7 @@ export function useVoiceToChat({
         setIsTranscribing(false);
       }
     },
-    [beforeTranscribe, onSendText, showToast, t],
+    [beforeTranscribe, contextModule, onSendText, showToast, t],
   );
 
   return { handleSendAudio, isTranscribing };
