@@ -98,7 +98,10 @@ function SessionNavShellLayout({
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [isCreatingSpace, setIsCreatingSpace] = useState(false);
   const [spaceFilter, setSpaceFilter] = useState<SpaceNavFilter>('active');
-  const { run: runSidebarLifecycle, pendingAction: sidebarPendingAction } = useSpaceLifecycle(locale);
+  const {
+    run: runSidebarLifecycle,
+    pendingSpaceId: sidebarPendingSpaceId,
+  } = useSpaceLifecycle(locale);
 
   const {
     panelOpen,
@@ -258,6 +261,15 @@ function SessionNavShellLayout({
     [locale, spaceFilter, spaces, spacesEnabled, t]
   );
 
+  // P2-3: if Archived tab is empty after restore/delete, fall back to Current.
+  useEffect(() => {
+    if (spaceFilter !== 'archived') return;
+    const hasArchived = spaces.some(
+      (s) => !s.is_entry_point && (s.status === 'archived' || s.status === 'deleted')
+    );
+    if (!hasArchived) setSpaceFilter('active');
+  }, [spaceFilter, spaces]);
+
   const handleSidebarSpaceAction = useCallback(
     async (spaceId: string, action: Parameters<typeof runSidebarLifecycle>[1]) => {
       const result = await runSidebarLifecycle(spaceId, action);
@@ -335,7 +347,7 @@ function SessionNavShellLayout({
             spaces={spaces}
             onNewSpace={() => setTemplatePickerOpen(true)}
             onSpaceAction={handleSidebarSpaceAction}
-            spaceActionPending={sidebarPendingAction}
+            spaceActionPendingId={sidebarPendingSpaceId}
             spaceFilter={spaceFilter}
             onSpaceFilterChange={setSpaceFilter}
           />

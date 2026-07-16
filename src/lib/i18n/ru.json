@@ -825,7 +825,7 @@
 		"lifecycleDeleteTitle": "Удалить пространство",
 		"lifecycleDeleteCancel": "Отмена",
 		"lifecycleDeleteAction": "Удалить",
-		"filterActive": "Активные",
+		"filterActive": "Текущие",
 		"filterArchived": "Архив",
 		"spaceActions": "Действия",
 		"lifecycleFailed": "Не удалось обновить пространство",

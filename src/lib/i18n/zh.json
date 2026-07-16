@@ -283,7 +283,7 @@
 		"lifecycleDeleteTitle": "删除空间",
 		"lifecycleDeleteCancel": "取消",
 		"lifecycleDeleteAction": "删除",
-		"filterActive": "活跃",
+		"filterActive": "当前",
 		"filterArchived": "已归档",
 		"spaceActions": "空间操作",
 		"lifecycleFailed": "无法更新空间",

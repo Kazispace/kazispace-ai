@@ -65,7 +65,8 @@ interface SessionNavPanelProps {
   spaces?: SpaceSummary[];
   onNewSpace?: () => void;
   onSpaceAction?: (spaceId: string, action: SpaceLifecycleAction) => Promise<void>;
-  spaceActionPending?: SpaceLifecycleAction | null;
+  /** Space currently running a lifecycle action (null = none). */
+  spaceActionPendingId?: string | null;
   /** Current status filter for the space list. */
   spaceFilter?: SpaceNavFilter;
   onSpaceFilterChange?: (filter: SpaceNavFilter) => void;
@@ -126,7 +127,7 @@ export function SessionNavPanel({
   spaces = [],
   onNewSpace,
   onSpaceAction,
-  spaceActionPending = null,
+  spaceActionPendingId = null,
   spaceFilter = 'active',
   onSpaceFilterChange,
 }: SessionNavPanelProps) {
@@ -138,6 +139,7 @@ export function SessionNavPanel({
   const [contextMenuId, setContextMenuId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const listScrollRef = useRef<HTMLUListElement>(null);
 
   const agentRows = useMemo(() => {
     const base = buildSessionNavRows(locale, t('clinic'));
@@ -190,9 +192,25 @@ export function SessionNavPanel({
         setContextMenuId(null);
       }
     };
+    const onScroll = () => setContextMenuId(null);
     document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
+    const listEl = listScrollRef.current;
+    listEl?.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      listEl?.removeEventListener('scroll', onScroll);
+      window.removeEventListener('scroll', onScroll, true);
+    };
   }, [contextMenuId]);
+
+  const handleFilterChange = useCallback(
+    (filter: SpaceNavFilter) => {
+      setListQuery('');
+      onSpaceFilterChange?.(filter);
+    },
+    [onSpaceFilterChange]
+  );
 
   const handleSpaceAction = useCallback(
     (spaceId: string, action: SpaceLifecycleAction) => {
@@ -409,7 +427,7 @@ export function SessionNavPanel({
             <div className="mt-1.5 flex rounded-lg bg-[#F2F3F5] p-0.5">
               <button
                 type="button"
-                onClick={() => onSpaceFilterChange('active')}
+                onClick={() => handleFilterChange('active')}
                 className={cn(
                   'flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors',
                   spaceFilter === 'active'
@@ -421,7 +439,7 @@ export function SessionNavPanel({
               </button>
               <button
                 type="button"
-                onClick={() => onSpaceFilterChange('archived')}
+                onClick={() => handleFilterChange('archived')}
                 className={cn(
                   'flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors',
                   spaceFilter === 'archived'
@@ -449,7 +467,7 @@ export function SessionNavPanel({
         </label>
       </div>
 
-      <ul className="flex-1 space-y-1 overflow-y-auto p-2">
+      <ul ref={listScrollRef} className="flex-1 space-y-1 overflow-y-auto p-2">
         {isLoading &&
         (spacesMode
           ? listRows.length === 0
@@ -474,6 +492,7 @@ export function SessionNavPanel({
               const space = spaceLookup.get(row.id);
               const showMenu = space && !space.is_entry_point && !space.is_system && onSpaceAction;
               const isMenuOpen = contextMenuId === row.id;
+              const rowPending = spaceActionPendingId === row.id;
 
               const lifecycleActions: { action: SpaceLifecycleAction; labelKey: string; icon: typeof Archive; destructive?: boolean }[] = [
                 { action: 'complete', labelKey: 'lifecycleComplete', icon: CheckCircle2 },
@@ -533,6 +552,8 @@ export function SessionNavPanel({
                           isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                         )}
                         aria-label={tSpaces('spaceActions')}
+                        aria-haspopup="menu"
+                        aria-expanded={isMenuOpen}
                       >
                         <MoreVertical className="h-4 w-4" />
                       </button>
@@ -541,6 +562,7 @@ export function SessionNavPanel({
                   {isMenuOpen && space ? (
                     <div
                       ref={contextMenuRef}
+                      role="menu"
                       className="absolute right-2 top-full z-30 mt-1 w-44 rounded-lg border border-[#E5E6EB] bg-white py-1 shadow-lg"
                     >
                       {lifecycleActions
@@ -549,7 +571,8 @@ export function SessionNavPanel({
                           <button
                             key={action}
                             type="button"
-                            disabled={spaceActionPending != null}
+                            role="menuitem"
+                            disabled={rowPending}
                             onClick={() => handleSpaceAction(space.id, action)}
                             className={cn(
                               'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[#F2F3F5] disabled:opacity-50',

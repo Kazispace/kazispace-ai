@@ -91,6 +91,7 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
       >
         <button
           type="button"
@@ -106,7 +107,10 @@ export function ConfirmDialog({
         >
           {title}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#4E5969]">
+        <p
+          id="confirm-dialog-description"
+          className="mt-2 text-sm leading-relaxed text-[#4E5969]"
+        >
           {description}
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

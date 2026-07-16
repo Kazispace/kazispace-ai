@@ -365,7 +365,7 @@
 		"lifecycleDeleteTitle": "Delete space",
 		"lifecycleDeleteCancel": "Cancel",
 		"lifecycleDeleteAction": "Delete",
-		"filterActive": "Active",
+		"filterActive": "Current",
 		"filterArchived": "Archived",
 		"spaceActions": "Space actions",
 		"lifecycleFailed": "Could not update space",
