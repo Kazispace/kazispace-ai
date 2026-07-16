@@ -48,6 +48,7 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
           strong: ({ children }) => (
             <strong className="font-semibold">{children}</strong>
           ),
+          // TODO(dark-mode): table grays are light-theme only; swap to tokens when Clinic supports dark.
           table: ({ children }) => (
             <div className="my-2 max-w-full overflow-x-auto rounded-lg border border-gray-200">
               <table className="w-full min-w-[16rem] border-collapse text-sm">
@@ -66,7 +67,9 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
             <th className="px-3 py-2 font-semibold text-gray-700">{children}</th>
           ),
           td: ({ children }) => (
-            <td className="px-3 py-2 align-top text-gray-800">{children}</td>
+            <td className="break-words px-3 py-2 align-top text-gray-800">
+              {children}
+            </td>
           ),
           code: ({ className: codeClass, children }) => {
             const isBlock = codeClass?.includes("language-");
@@ -89,7 +92,7 @@ export function MarkdownContent({ content, className }: MarkdownContentProps) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-kazi-orange underline"
+              className="break-words text-kazi-orange underline underline-offset-2 hover:text-kazi-orange/80"
             >
               {children}
             </a>
