@@ -120,6 +120,7 @@ export async function apiRequest<T>(
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Network error',
+      errorCode: 'NETWORK_ERROR',
     };
   }
 }

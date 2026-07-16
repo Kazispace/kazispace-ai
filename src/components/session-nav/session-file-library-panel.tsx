@@ -6,15 +6,18 @@ import {
   FileAudio,
   FileText,
   FolderOpen,
-  Loader2,
   PanelLeftClose,
+  RefreshCw,
   Trash2,
   X,
 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 
 import { useUserFiles } from '@/hooks/use-user-files';
+import { getAuthToken } from '@/lib/auth';
 import { FILE_CATEGORY_TABS, formatFileDate, formatFileSize, resolveFileIconType } from '@/lib/file-utils';
+import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { FileCategory, UserFile } from '@/types/user-files';
 
@@ -165,14 +168,27 @@ function SkeletonRow() {
 }
 
 export function SessionFileLibraryPanel({
+  locale: localeProp,
   open,
   mobileDrawer,
   onClose,
 }: SessionFileLibraryPanelProps) {
   const t = useTranslations('sessionNav');
-  const locale = useLocale();
-  const { files, isLoading, error, activeCategory, setActiveCategory, downloadFile, removeFile } =
-    useUserFiles();
+  const locale = useLocale() || localeProp;
+  const router = useRouter();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  // Prefer token (sync from localStorage) so we don't flash login before zustand hydrate.
+  const canFetchFiles = isLoggedIn || Boolean(getAuthToken());
+  const {
+    files,
+    isLoading,
+    error,
+    activeCategory,
+    setActiveCategory,
+    downloadFile,
+    removeFile,
+    refresh,
+  } = useUserFiles(undefined, { enabled: canFetchFiles });
 
   const handleCategoryChange = useCallback(
     (catId: string) => {
@@ -196,7 +212,7 @@ export function SessionFileLibraryPanel({
       </div>
 
       {/* Category tabs */}
-      <div className="flex gap-1 border-b border-[#E5E6EB] px-3 py-1.5">
+      <div className="flex flex-wrap gap-1 border-b border-[#E5E6EB] px-3 py-1.5">
         {FILE_CATEGORY_TABS.map((tab) => {
           const isActive =
             tab.id === 'all' ? activeCategory === undefined : activeCategory === tab.id;
@@ -220,15 +236,40 @@ export function SessionFileLibraryPanel({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-1 py-1">
-        {isLoading ? (
+        {!canFetchFiles ? (
+          <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
+            <FolderOpen className="h-10 w-10 text-[#C9CDD4]" />
+            <p className="text-sm font-medium text-[#86909C]">{t('filesLoginRequired')}</p>
+            <button
+              type="button"
+              onClick={() => router.push(`/${locale}/login`)}
+              className="rounded-lg bg-kazi-orange px-3 py-1.5 text-xs font-medium text-white hover:bg-kazi-orange/90"
+            >
+              {t('filesLoginCta')}
+            </button>
+          </div>
+        ) : isLoading ? (
           <div className="space-y-1">
             <SkeletonRow />
             <SkeletonRow />
             <SkeletonRow />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
+          <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
             <p className="text-xs text-red-500">{t('loadFilesFailed')}</p>
+            {error !== 'Failed to load files' ? (
+              <p className="max-w-[200px] truncate text-[10px] text-[#C9CDD4]" title={error}>
+                {error}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E6EB] px-3 py-1.5 text-xs font-medium text-[#1D2129] hover:bg-[#F2F3F5]"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              {t('retryLoadFiles')}
+            </button>
           </div>
         ) : files.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">

@@ -7,6 +7,11 @@ import {
 } from '@/lib/file-api';
 import type { FileCategory, UserFile } from '@/types/user-files';
 
+interface UseUserFilesOptions {
+  /** Skip fetching until auth is ready / user is logged in. */
+  enabled?: boolean;
+}
+
 interface UseUserFilesReturn {
   files: UserFile[];
   isLoading: boolean;
@@ -18,9 +23,36 @@ interface UseUserFilesReturn {
   removeFile: (fileId: string) => Promise<boolean>;
 }
 
+function normalizeItems(data: unknown): UserFile[] {
+  if (!data || typeof data !== 'object') return [];
+  const items = (data as { items?: unknown }).items;
+  return Array.isArray(items) ? (items as UserFile[]) : [];
+}
+
+async function fetchWithRetry(
+  category: FileCategory | undefined,
+  attempts = 2
+): Promise<Awaited<ReturnType<typeof fetchUserFiles>>> {
+  let last = await fetchUserFiles(category);
+  for (let i = 1; i < attempts; i++) {
+    if (last.success && last.data) return last;
+    const status = last.status;
+    const retryable =
+      last.errorCode === 'NETWORK_ERROR' ||
+      (typeof status === 'number' && status >= 500) ||
+      (typeof last.error === 'string' && /HTTP 5\d\d|Network|Failed to fetch/i.test(last.error));
+    if (!retryable) return last;
+    await new Promise((r) => setTimeout(r, 400 * i));
+    last = await fetchUserFiles(category);
+  }
+  return last;
+}
+
 export function useUserFiles(
-  initialCategory?: FileCategory
+  initialCategory?: FileCategory,
+  options?: UseUserFilesOptions
 ): UseUserFilesReturn {
+  const enabled = options?.enabled ?? true;
   const [files, setFiles] = useState<UserFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,16 +61,24 @@ export function useUserFiles(
   );
 
   const loadFiles = useCallback(async () => {
+    if (!enabled) {
+      setFiles([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
-    const res = await fetchUserFiles(activeCategory);
+    const res = await fetchWithRetry(activeCategory);
     if (res.success && res.data) {
-      setFiles(res.data.items);
+      setFiles(normalizeItems(res.data));
+      setError(null);
     } else {
+      setFiles([]);
       setError(res.error ?? 'Failed to load files');
     }
     setIsLoading(false);
-  }, [activeCategory]);
+  }, [activeCategory, enabled]);
 
   useEffect(() => {
     void loadFiles();
