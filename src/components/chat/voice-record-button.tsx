@@ -1,10 +1,12 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Mic, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { useVoiceRecorder } from '@/hooks/use-voice-recorder';
+import { MAX_VOICE_RECORDING_SECONDS } from '@/lib/voice-input-api';
+import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 interface VoiceRecordButtonProps {
@@ -47,6 +49,7 @@ export function VoiceRecordButton({
   disabled,
 }: VoiceRecordButtonProps) {
   const t = useTranslations('spaces');
+  const showToast = useUIStore((s) => s.showToast);
   const {
     isRecording,
     duration,
@@ -59,12 +62,30 @@ export function VoiceRecordButton({
 
   const [isCancelling, setIsCancelling] = useState(false);
   const touchStartY = useRef(0);
+  const autoStoppedRef = useRef(false);
+
+  // Cap ordinary chat mic; mock-interview long audio uses a separate recorder.
+  useEffect(() => {
+    if (!isRecording || duration < MAX_VOICE_RECORDING_SECONDS) return;
+    if (autoStoppedRef.current) return;
+    autoStoppedRef.current = true;
+    void (async () => {
+      const blob = await stopRecording();
+      showToast(
+        t('voiceMaxDurationReached', { seconds: MAX_VOICE_RECORDING_SECONDS }),
+        'info',
+      );
+      if (blob) onRecordComplete(blob);
+    })();
+  }, [duration, isRecording, stopRecording, onRecordComplete, showToast, t]);
 
   const handleTouchStart = useCallback(
+
     (e: React.TouchEvent) => {
       if (disabled) return;
       touchStartY.current = e.touches[0].clientY;
       setIsCancelling(false);
+      autoStoppedRef.current = false;
       void startRecording();
     },
     [disabled, startRecording]
@@ -90,6 +111,7 @@ export function VoiceRecordButton({
   const handleMouseDown = useCallback(() => {
     if (disabled) return;
     setIsCancelling(false);
+    autoStoppedRef.current = false;
     void startRecording();
   }, [disabled, startRecording]);
 

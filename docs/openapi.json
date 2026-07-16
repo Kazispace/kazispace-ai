@@ -1033,7 +1033,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CreateInputResponse"
+                }
               }
             }
           },
@@ -2169,6 +2171,57 @@
           "input_mode"
         ],
         "title": "Body_create_input_api_v1_inputs_post"
+      },
+      "CreateInputResponse": {
+        "type": "object",
+        "title": "CreateInputResponse",
+        "description": "POST /api/v1/inputs response (text or voice). Voice: FE sends chat only when asr_fallback_triggered is false and canonical_text is non-empty (KAZI-214).",
+        "properties": {
+          "input_id": {
+            "type": "integer",
+            "title": "Input Id"
+          },
+          "input_mode": {
+            "type": "string",
+            "title": "Input Mode"
+          },
+          "canonical_text": {
+            "type": "string",
+            "title": "Canonical Text"
+          },
+          "transcription_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transcription Confidence"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "asr_fallback_triggered": {
+            "type": "boolean",
+            "title": "Asr Fallback Triggered",
+            "description": "When true, FE must not send chat; prompt user to re-record or type."
+          }
+        },
+        "required": [
+          "input_id",
+          "input_mode",
+          "canonical_text"
+        ]
       },
       "CreateOrderRequest": {
         "properties": {

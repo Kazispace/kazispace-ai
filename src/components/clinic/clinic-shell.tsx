@@ -14,8 +14,7 @@ import { AgentSwitchDialog } from "./agent-switch-dialog";
 import { QuickReplies } from "./quick-replies";
 import { AgentSwitcher } from "./agent-switcher";
 import { ReferralPrompt } from "./referral-prompt";
-import { ChatInput } from "@/components/chat/chat-input";
-import { transcribeVoice } from "@/lib/voice-input-api";
+import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { useActiveAgentSessions } from "@/hooks/use-active-agent-sessions";
 import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
@@ -691,6 +690,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     void handleSend(text);
   };
 
+  const beforeVoiceTranscribe = useCallback(() => {
+    if (!isLoggedIn) {
+      showToast(tClinic("loginToChat"), "info");
+      router.push(`/${locale}/login`);
+      return false;
+    }
+    return true;
+  }, [isLoggedIn, locale, router, showToast, tClinic]);
+
   const handleSend = async (text: string) => {
     if (!isLoggedIn) {
       showToast(tClinic("loginToChat"), "info");
@@ -1154,28 +1162,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         );
       })()}
 
-      <ChatInput
+      <VoiceEnabledChatInput
         onSend={handleSend}
-        onSendAudio={async (blob) => {
-          if (!isLoggedIn) {
-            showToast(tClinic("loginToChat"), "info");
-            router.push(`/${locale}/login`);
-            return;
-          }
-          const res = await transcribeVoice(blob);
-          if (!res.success || !res.data) {
-            const msg = res.errorCode === 'EMPTY_TRANSCRIPTION'
-              ? tClinic("voiceEmpty")
-              : (res.error ?? tClinic("voiceUploadFailed"));
-            showToast(msg, "error");
-            return;
-          }
-          void handleSend(res.data.canonical_text);
-        }}
+        beforeTranscribe={beforeVoiceTranscribe}
+        contextModule="clinic"
         disabled={isSending || isSwitching || (isAgentMode && historyReadOnly) || isSwitchingSession}
         placeholder={inputPlaceholder}
         showAttachButton
-        showMicButton
         showAgentButton={isLoggedIn}
         onOpenAgents={() => setSwitcherOpen(true)}
       />

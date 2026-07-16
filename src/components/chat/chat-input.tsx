@@ -43,6 +43,8 @@ interface ChatInputProps {
   showAttachButton?: boolean;
   showMicButton?: boolean;
   isUploading?: boolean;
+  /** True while POST /inputs ASR is in flight (mic → chat). */
+  isTranscribing?: boolean;
 }
 
 function isAllowedMime(mime: string): boolean {
@@ -59,6 +61,7 @@ export function ChatInput({
   showAttachButton = false,
   showMicButton = false,
   isUploading,
+  isTranscribing,
 }: ChatInputProps) {
   const t = useTranslations("spaces");
   const [message, setMessage] = useState("");
@@ -66,7 +69,7 @@ export function ChatInput({
   const [attachMenuOpen, setAttachMenuOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const inputDisabled = disabled || isUploading;
+  const inputDisabled = disabled || isUploading || isTranscribing;
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -262,7 +265,11 @@ export function ChatInput({
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={
-              isUploading ? t("uploading") : placeholder || "Ask Kazi anything..."
+              isTranscribing
+                ? t("voiceTranscribing")
+                : isUploading
+                  ? t("uploading")
+                  : placeholder || "Ask Kazi anything..."
             }
             disabled={inputDisabled}
             rows={1}
@@ -275,10 +282,19 @@ export function ChatInput({
 
           {/* Right: mic or send — inside the box */}
           {showMicButton && !hasContent && onSendAudio ? (
-            <VoiceRecordButton
-              onRecordComplete={onSendAudio}
-              disabled={inputDisabled}
-            />
+            isTranscribing ? (
+              <div
+                className="flex h-8 w-8 shrink-0 items-center justify-center text-kazi-orange"
+                aria-label={t("voiceTranscribing")}
+              >
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : (
+              <VoiceRecordButton
+                onRecordComplete={onSendAudio}
+                disabled={inputDisabled}
+              />
+            )
           ) : (
             <button
               type="submit"

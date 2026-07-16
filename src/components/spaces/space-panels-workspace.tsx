@@ -4,9 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
-import { ChatInput } from '@/components/chat/chat-input';
+import { VoiceEnabledChatInput } from '@/components/chat/voice-enabled-chat-input';
 import { SpaceChatPane } from '@/components/spaces/space-chat-pane';
-import { transcribeVoice } from '@/lib/voice-input-api';
 import { SpacePanelHost } from '@/components/spaces/panels/space-panel-host';
 import {
   SpacePanelTabs,
@@ -19,7 +18,7 @@ import {
   resolveSpacePanels,
 } from '@/lib/spaces/panels';
 import { resolveSpaceJobId } from '@/lib/spaces/space-context';
-import { useSpaceStore, useUIStore } from '@/lib/store';
+import { useSpaceStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { SpaceDetail } from '@/types/spaces';
 
@@ -169,23 +168,12 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             space={space}
             welcomeKey={welcomeKey}
             composer={({ sendMessage, isSending, spaceSessionReady }) => (
-              <ChatInput
+              <VoiceEnabledChatInput
                 onSend={(text) => void sendMessage(text)}
-                onSendAudio={async (blob) => {
-                  const res = await transcribeVoice(blob);
-                  if (!res.success || !res.data) {
-                    const msg = res.errorCode === 'EMPTY_TRANSCRIPTION'
-                      ? t('voiceEmpty')
-                      : (res.error ?? t('voiceUploadFailed'));
-                    useUIStore.getState().showToast(msg, 'error');
-                    return;
-                  }
-                  void sendMessage(res.data.canonical_text);
-                }}
+                contextModule={`space:${space.id}`}
                 disabled={muted || isSending || !spaceSessionReady}
                 placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
                 showAttachButton
-                showMicButton
               />
             )}
           />
