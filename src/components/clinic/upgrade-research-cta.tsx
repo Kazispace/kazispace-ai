@@ -17,7 +17,7 @@ export function UpgradeResearchCta({
   disabled,
 }: UpgradeResearchCtaProps) {
   const t = useTranslations("chat.upgradeResearch");
-  const label = cta.label.trim() || t("cta");
+  const label = cta.label ?? t("cta");
 
   return (
     <div className="mt-3 pt-3 border-t border-gray-200/80 flex flex-col gap-2">

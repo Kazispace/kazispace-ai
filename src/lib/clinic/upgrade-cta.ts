@@ -17,12 +17,18 @@ export type UpgradeCtaSeed = {
 
 export type UpgradeCtaPayload = {
   upgrade_to: 'research';
-  label: string;
+  /** BE label when present; UI falls back to i18n `chat.upgradeResearch.cta`. */
+  label?: string;
   seed: UpgradeCtaSeed;
-  /** Cleared after the user taps the CTA (same-thread handoff). */
+  /** Cleared after a successful same-thread handoff. */
   dismissed?: boolean;
 };
 
+/**
+ * Mirror of BE `router._EXPLICIT_RESEARCH_MARKERS` (MVP optimistic waiting copy).
+ * TODO(KAZI-233 follow-up): temporary FE guess — long-term BE should announce
+ * the resolved capability on the first response frame so FE does not drift.
+ */
 const EXPLICIT_RESEARCH_MARKERS = [
   '深入研究',
   '深度研究',
@@ -37,6 +43,9 @@ const EXPLICIT_RESEARCH_MARKERS = [
   '需要更深入研究',
   '帮我深入研究',
 ] as const;
+
+/** Match BE `build_upgrade_cta` citations[:8] seed cap. */
+const MAX_SEED_CITATIONS = 8;
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -80,7 +89,7 @@ export function parseUpgradeCta(meta: unknown): UpgradeCtaPayload | null {
   const label =
     typeof raw.label === 'string' && raw.label.trim()
       ? raw.label.trim()
-      : '';
+      : undefined;
 
   const playbook =
     typeof seedRaw.playbook_id === 'string' && seedRaw.playbook_id.trim()
@@ -91,7 +100,7 @@ export function parseUpgradeCta(meta: unknown): UpgradeCtaPayload | null {
 
   return {
     upgrade_to: 'research',
-    label,
+    ...(label ? { label } : {}),
     seed: {
       question: seedRaw.question.trim(),
       ...(playbook !== undefined ? { playbook_id: playbook } : {}),
@@ -121,7 +130,9 @@ export function buildResearchHandoffMessage(
     ? `帮我深入研究：${question}`
     : `Please do in-depth research: ${question}`;
 
-  const citations = seed.citations.filter((c) => c.url.trim()).slice(0, 8);
+  const citations = seed.citations
+    .filter((c) => c.url.trim())
+    .slice(0, MAX_SEED_CITATIONS);
   if (citations.length === 0) return header;
 
   const sourcesLabel = isZh

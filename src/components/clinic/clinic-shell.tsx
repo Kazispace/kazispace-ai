@@ -985,12 +985,16 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       if (!cta || cta.dismissed) return;
 
       const handoffText = buildResearchHandoffMessage(cta.seed, locale);
-      dismissMessageUpgradeCta(messageId);
       pinToLatestOnSend();
+      // Dismiss only after success so paywall / network failures keep the CTA for retry.
       const result = await sendClinicMessage(handoffText, {
         pendingCapability: "research",
       });
-      if (!result.ok && !("toastShown" in result && result.toastShown)) {
+      if (result.ok) {
+        dismissMessageUpgradeCta(messageId);
+        return;
+      }
+      if (!("toastShown" in result && result.toastShown)) {
         showToast(result.error ?? tClinic("sendFailed"), "error");
       }
     },
@@ -1136,6 +1140,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 nextActions={msg.nextActions}
                 cards={msg.cards}
                 citations={msg.citations}
+                // Clinic-only: Agent Hub owns its own depth / tooling; do not surface
+                // L1 web_search→research Handoff CTAs while an Agent session is active.
                 upgradeCta={!isAgentMode ? msg.upgradeCta : undefined}
                 pendingCapability={
                   !isAgentMode ? msg.pendingCapability : undefined

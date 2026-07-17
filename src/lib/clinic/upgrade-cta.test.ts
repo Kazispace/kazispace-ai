@@ -57,6 +57,17 @@ describe('parseUpgradeCta (KAZI-233)', () => {
       })
     ).toBeNull();
   });
+
+  it('omits empty label so UI can fall back to i18n', () => {
+    const cta = parseUpgradeCta({
+      upgrade_cta: {
+        upgrade_to: 'research',
+        label: '   ',
+        seed: { question: 'q', citations: [] },
+      },
+    });
+    expect(cta?.label).toBeUndefined();
+  });
 });
 
 describe('parseAssistantEnvelope upgrade_cta', () => {

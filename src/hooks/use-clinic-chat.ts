@@ -179,7 +179,7 @@ export function useClinicChat(locale?: string) {
       const userMsgId = options?.retryMessageId ?? `user_${Date.now()}`;
       const pendingCapability =
         options?.pendingCapability ??
-        (looksLikeResearchRequest(text) ? 'research' : 'web_search');
+        (looksLikeResearchRequest(text) ? 'research' : undefined);
 
       if (options?.retryMessageId) {
         updateMessage(userMsgId, { status: 'sending', content: text });
