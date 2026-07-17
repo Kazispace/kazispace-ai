@@ -6,11 +6,12 @@ import { useTranslations } from 'next-intl';
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
 import { SpaceShell } from '@/components/spaces/space-shell';
-import { useSpaceChatScroll } from '@/hooks/use-space-chat-scroll';
+import { useChatScroll } from '@/hooks/use-chat-scroll';
 import {
   useSpaceTurn,
   type SpaceSendResult,
 } from '@/hooks/use-space-turn';
+import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
 import { cn } from '@/lib/utils';
 
@@ -51,8 +52,8 @@ export function SpaceChatPane({
 
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
-  const scrollReady =
-    spaceSessionReady && !(isHydrating && messages.length === 0);
+  // Wait until history fetch finishes — restoring on a mid-hydrate height sticks to a false bottom.
+  const scrollReady = spaceSessionReady && !isHydrating;
 
   const {
     scrollRef,
@@ -60,8 +61,8 @@ export function SpaceChatPane({
     handleScroll,
     jumpToLatest,
     pinToLatestOnSend,
-  } = useSpaceChatScroll({
-    spaceId: space.id,
+  } = useChatScroll({
+    storageKey: spaceChatScrollStorageKey(space.id),
     messageCount: messages.length,
     isSending,
     ready: scrollReady,
