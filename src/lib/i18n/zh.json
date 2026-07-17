@@ -260,6 +260,7 @@
 		"templateWorkspaceComingSoon": "该模板的多面板工作区即将推出。",
 		"composerPlaceholder": "输入消息…",
 		"composerMuted": "此空间已归档或在回收站中——恢复后可继续对话。",
+		"scrollToLatest": "跳转到最新消息",
 		"voiceUploadFailed": "语音识别失败，请重试",
 		"voiceEmpty": "没有听清，请再试一次",
 		"voiceFallback": "没听清——请打字或重新录音",
