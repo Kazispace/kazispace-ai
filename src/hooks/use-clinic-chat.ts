@@ -12,6 +12,7 @@ import { isPaywallError, isProfileIncomplete, isLlmBusy } from '@/lib/api-errors
 import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
 import { ensureMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
+import { looksLikeResearchRequest } from '@/lib/clinic/upgrade-cta';
 import { isPlaceholderReply, resolveSpaceTurnReply } from '@/lib/spaces/turn';
 import type { ChatMessage } from '@/types';
 
@@ -164,11 +165,21 @@ export function useClinicChat(locale?: string) {
   }, []);
 
   const sendMessage = useCallback(
-    async (text: string, options?: { retryMessageId?: string }) => {
+    async (
+      text: string,
+      options?: {
+        retryMessageId?: string;
+        /** Prefer research waiting copy (CTA handoff / explicit research). */
+        pendingCapability?: 'web_search' | 'research';
+      }
+    ) => {
       // Clinic Phase 1 path is a single long HTTP POST (not mid-stream SSE).
       // LLM_BUSY surfaces on the response envelope via handleApiFailure + toastShown.
       const sessionId = await ensureMasterSession();
       const userMsgId = options?.retryMessageId ?? `user_${Date.now()}`;
+      const pendingCapability =
+        options?.pendingCapability ??
+        (looksLikeResearchRequest(text) ? 'research' : undefined);
 
       if (options?.retryMessageId) {
         updateMessage(userMsgId, { status: 'sending', content: text });
@@ -193,6 +204,7 @@ export function useClinicChat(locale?: string) {
         timestamp: new Date().toISOString(),
         sessionId,
         streamComplete: false,
+        pendingCapability,
       });
       setStreaming(true);
 
@@ -220,8 +232,17 @@ export function useClinicChat(locale?: string) {
           };
         }
 
-        let { reply, intent, referral, spaceNudge, nextActions, cards, citations, routedToAgent } =
-          parseClinicReply(res.data);
+        let {
+          reply,
+          intent,
+          referral,
+          spaceNudge,
+          nextActions,
+          cards,
+          citations,
+          upgradeCta,
+          routedToAgent,
+        } = parseClinicReply(res.data);
 
         if (isPlaceholderReply(reply)) {
           try {
@@ -250,6 +271,8 @@ export function useClinicChat(locale?: string) {
           ...(nextActions.length > 0 ? { nextActions } : {}),
           ...(cards.length > 0 ? { cards } : {}),
           ...(citations && citations.length > 0 ? { citations } : {}),
+          ...(upgradeCta ? { upgradeCta } : {}),
+          pendingCapability: undefined,
           streamComplete: false,
         });
 
@@ -297,6 +320,17 @@ export function useClinicChat(locale?: string) {
     [updateMessage]
   );
 
+  const dismissMessageUpgradeCta = useCallback(
+    (messageId: string) => {
+      const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
+      if (!msg?.upgradeCta) return;
+      updateMessage(messageId, {
+        upgradeCta: { ...msg.upgradeCta, dismissed: true },
+      });
+    },
+    [updateMessage]
+  );
+
   const retryMessage = useCallback(
     async (messageId: string) => {
       const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
@@ -318,5 +352,6 @@ export function useClinicChat(locale?: string) {
     markStreamComplete,
     dismissMessageReferral,
     dismissMessageSpaceNudge,
+    dismissMessageUpgradeCta,
   };
 }

@@ -315,6 +315,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   nextActions: ChatNextAction[];
   cards: ChatJobCard[];
   citations?: import('@/lib/clinic/citation-list').CitationItem[];
+  upgradeCta?: import('@/lib/clinic/upgrade-cta').UpgradeCtaPayload;
   routedToAgent?: { agentId: string; sessionId?: string };
 } {
   if (!data) {
@@ -366,6 +367,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
     nextActions: envelope.nextActions,
     cards: envelope.cards,
     ...(envelope.citations?.length ? { citations: envelope.citations } : {}),
+    ...(envelope.upgradeCta ? { upgradeCta: envelope.upgradeCta } : {}),
     routedToAgent,
   };
 }
