@@ -5,6 +5,11 @@
 
 export type SearchCapabilityId = 'web_search' | 'research';
 
+/**
+ * Known L1 search capabilities shown as Clinic chips.
+ * Keep in sync with BE capability registry (`web_search` / `research`);
+ * unknown ids fall through to the raw intent badge.
+ */
 const KNOWN: ReadonlySet<string> = new Set(['web_search', 'research']);
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -58,4 +63,19 @@ export function isSearchCapability(
   value: string | undefined | null,
 ): value is SearchCapabilityId {
   return value === 'web_search' || value === 'research';
+}
+
+/**
+ * Tooltip for playbook chip.
+ * - `undefined` → BE omitted the field (no tooltip)
+ * - `null` → unbound / general search
+ * - `string` → bound playbook id
+ */
+export function playbookChipTitle(
+  playbookId: string | null | undefined,
+  labels: { bound: (id: string) => string; unbound: string },
+): string | undefined {
+  if (playbookId === undefined) return undefined;
+  if (playbookId === null) return labels.unbound;
+  return labels.bound(playbookId);
 }

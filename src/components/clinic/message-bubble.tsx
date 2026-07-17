@@ -133,13 +133,16 @@ export function MessageBubble({
   const isWebSearchShortAnswer = capabilityId === "web_search";
   const showCapabilityChip =
     !isUser && showEnrichment && isSearchCapability(capabilityId);
+  // Search intents use the capability chip when resolved; keep the raw intent
+  // badge only for non-search intents (or history rows without capabilityId).
+  const intentCoveredByCapabilityChip =
+    showCapabilityChip && isSearchCapability(intent);
   const showIntentBadge =
     !isUser &&
     Boolean(intent) &&
     intent !== "CHITCHAT" &&
     !intent!.startsWith("REFERRAL_") &&
-    // Prefer capability chip over raw web_search/research intent string.
-    !(showCapabilityChip && isSearchCapability(intent));
+    !intentCoveredByCapabilityChip;
   const markdownContent =
     showCitations && content
       ? stripMarkdownSourcesSection(content)
@@ -215,8 +218,8 @@ export function MessageBubble({
         <div
           className={cn(
             "px-4 py-3 rounded-[18px] text-[15px] leading-relaxed break-words",
-            // web_search: slightly denser short-answer bubble (KAZI-234).
-            // research keeps default Markdown long-form spacing (KAZI-225).
+            // web_search short-answer: denser body only. CitationList keeps its own
+            // text-sm; research keeps default Markdown long-form spacing (KAZI-225).
             isWebSearchShortAnswer && "text-[14px] leading-snug",
             isUser
             ? isFailed

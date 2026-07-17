@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveSearchCapability } from '@/lib/clinic/search-capability';
+import { playbookChipTitle, resolveSearchCapability } from '@/lib/clinic/search-capability';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 
 describe('resolveSearchCapability (KAZI-234)', () => {
@@ -39,6 +39,27 @@ describe('resolveSearchCapability (KAZI-234)', () => {
     expect(
       resolveSearchCapability({ meta: { capability_id: 'job_search' } })
     ).toEqual({});
+  });
+});
+
+describe('playbookChipTitle', () => {
+  const labels = {
+    bound: (id: string) => `Playbook: ${id}`,
+    unbound: 'General search',
+  };
+
+  it('omits tooltip when playbookId is undefined', () => {
+    expect(playbookChipTitle(undefined, labels)).toBeUndefined();
+  });
+
+  it('uses unbound label for null', () => {
+    expect(playbookChipTitle(null, labels)).toBe('General search');
+  });
+
+  it('uses bound label for string id', () => {
+    expect(playbookChipTitle('office_entry_policy', labels)).toBe(
+      'Playbook: office_entry_policy'
+    );
   });
 });
 

@@ -2,7 +2,10 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import type { SearchCapabilityId } from "@/lib/clinic/search-capability";
+import {
+  playbookChipTitle,
+  type SearchCapabilityId,
+} from "@/lib/clinic/search-capability";
 
 interface SearchCapabilityChipProps {
   capabilityId: SearchCapabilityId;
@@ -20,12 +23,10 @@ export function SearchCapabilityChip({
   const t = useTranslations("chat.capability");
   const label =
     capabilityId === "web_search" ? t("web_search") : t("research");
-  const title =
-    playbookId === undefined
-      ? undefined
-      : playbookId
-        ? t("playbookHint", { id: playbookId })
-        : t("playbookUnbound");
+  const title = playbookChipTitle(playbookId, {
+    bound: (id) => t("playbookHint", { id }),
+    unbound: t("playbookUnbound"),
+  });
 
   return (
     <span
