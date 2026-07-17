@@ -458,6 +458,12 @@
 			"hint": "Upgrade to a multi-source research report",
 			"cta": "Deep research"
 		},
+		"capability": {
+			"web_search": "Quick search",
+			"research": "Deep research",
+			"playbookHint": "Playbook: {id}",
+			"playbookUnbound": "General search (no vertical playbook)"
+		},
 		"messageActions": {
 			"quote": "Quote",
 			"thumbsUp": "Helpful",

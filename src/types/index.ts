@@ -64,6 +64,10 @@ export interface ChatMessage {
   citations?: import('@/lib/clinic/citation-list').CitationItem[];
   /** web_search → research upgrade CTA (KAZI-233). */
   upgradeCta?: import('@/lib/clinic/upgrade-cta').UpgradeCtaPayload;
+  /** Search capability for chip / short-answer density (KAZI-234). */
+  capabilityId?: import('@/lib/clinic/search-capability').SearchCapabilityId;
+  /** Bound playbook id from BE meta (tooltip only). */
+  playbookId?: string | null;
   /**
    * Waiting-copy hint while the assistant placeholder is empty (KAZI-233).
    * Cleared when the reply arrives.

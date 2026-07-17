@@ -1,5 +1,6 @@
 import type { SupportedLocale } from '@/lib/constants';
 import { parseCitationList } from '@/lib/clinic/citation-list';
+import { resolveSearchCapability } from '@/lib/clinic/search-capability';
 import { parseUpgradeCta } from '@/lib/clinic/upgrade-cta';
 import type {
   AssistantWorkflow,
@@ -218,18 +219,28 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
 
   const upgradeCta = parseUpgradeCta(meta);
 
+  const intent =
+    typeof raw.intent === 'string'
+      ? raw.intent
+      : typeof assistant?.intent === 'string'
+        ? assistant.intent
+        : undefined;
+
+  const { capabilityId, playbookId } = resolveSearchCapability({
+    meta,
+    intent,
+    topLevelCapabilityId: raw.capability_id,
+  });
+
   return {
     reply,
-    intent:
-      typeof raw.intent === 'string'
-        ? raw.intent
-        : typeof assistant?.intent === 'string'
-          ? assistant.intent
-          : undefined,
+    intent,
     nextActions,
     cards: cards.filter((card) => card.type === 'job'),
     ...(citationList ? { citations: citationList.items } : {}),
     ...(upgradeCta ? { upgradeCta } : {}),
+    ...(capabilityId ? { capabilityId } : {}),
+    ...(playbookId !== undefined ? { playbookId } : {}),
     workflow,
     exited: exited || undefined,
     exitedAgent,

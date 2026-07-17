@@ -11,12 +11,17 @@ import { MessageActions } from "./message-actions";
 import { ReferralPrompt } from "./referral-prompt";
 import { SpaceNudgePrompt } from "./space-nudge-prompt";
 import { UpgradeResearchCta } from "./upgrade-research-cta";
+import { SearchCapabilityChip } from "./search-capability-chip";
 import { StreamingText } from "@/components/chat/streaming-text";
 import {
   stripMarkdownSourcesSection,
   type CitationItem,
 } from "@/lib/clinic/citation-list";
 import type { UpgradeCtaPayload } from "@/lib/clinic/upgrade-cta";
+import {
+  isSearchCapability,
+  type SearchCapabilityId,
+} from "@/lib/clinic/search-capability";
 import type { ComposerInsertTarget } from "@/lib/store";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
@@ -39,6 +44,8 @@ interface MessageBubbleProps {
   cards?: ChatJobCard[];
   citations?: CitationItem[];
   upgradeCta?: UpgradeCtaPayload;
+  capabilityId?: SearchCapabilityId;
+  playbookId?: string | null;
   /** Waiting-copy hint while placeholder is empty (KAZI-233). */
   pendingCapability?: "web_search" | "research";
   /** Quote insert target for MessageActions (clinic vs space). */
@@ -76,6 +83,8 @@ export function MessageBubble({
   cards,
   citations,
   upgradeCta,
+  capabilityId,
+  playbookId,
   pendingCapability,
   composerTarget,
   locale = "en",
@@ -128,6 +137,19 @@ export function MessageBubble({
     !isUser &&
     Boolean(composerTarget);
   const isWorkspace = surface === "workspace";
+  const isWebSearchShortAnswer = capabilityId === "web_search";
+  const showCapabilityChip =
+    !isUser && showEnrichment && isSearchCapability(capabilityId);
+  // Search intents use the capability chip when resolved; keep the raw intent
+  // badge only for non-search intents (or history rows without capabilityId).
+  const intentCoveredByCapabilityChip =
+    showCapabilityChip && isSearchCapability(intent);
+  const showIntentBadge =
+    !isUser &&
+    Boolean(intent) &&
+    intent !== "CHITCHAT" &&
+    !intent!.startsWith("REFERRAL_") &&
+    !intentCoveredByCapabilityChip;
   const markdownContent =
     showCitations && content
       ? stripMarkdownSourcesSection(content)
@@ -203,6 +225,9 @@ export function MessageBubble({
         <div
           className={cn(
             "px-4 py-3 rounded-[18px] text-[15px] leading-relaxed break-words",
+            // web_search short-answer: denser body only. CitationList keeps its own
+            // text-sm; research keeps default Markdown long-form spacing (KAZI-225).
+            isWebSearchShortAnswer && "text-[14px] leading-snug",
             isUser
             ? isFailed
               ? "bg-red-950/40 text-red-200 border border-red-800/60 rounded-br-[4px]"
@@ -220,7 +245,12 @@ export function MessageBubble({
         >
           {renderAssistantContent()}
           {showCitations && citations ? (
-            <CitationList items={citations} />
+            <CitationList
+              items={citations}
+              className={
+                isWebSearchShortAnswer ? "max-h-40 [&_ul]:max-h-32" : undefined
+              }
+            />
           ) : null}
           {showJobCards && (
             <ChatJobTeasers
@@ -281,7 +311,13 @@ export function MessageBubble({
             {t("retry")}
           </button>
         )}
-        {intent && !isUser && intent !== "CHITCHAT" && !intent.startsWith("REFERRAL_") && (
+        {showCapabilityChip && capabilityId ? (
+          <SearchCapabilityChip
+            capabilityId={capabilityId}
+            playbookId={playbookId}
+          />
+        ) : null}
+        {showIntentBadge && (
           <span className="text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-orange-100 text-kazi-orange">
             {intent === "RESUME_OPTIMIZE" ? "📄 Resume Mode" : intent}
           </span>
