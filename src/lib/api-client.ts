@@ -316,6 +316,8 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   cards: ChatJobCard[];
   citations?: import('@/lib/clinic/citation-list').CitationItem[];
   upgradeCta?: import('@/lib/clinic/upgrade-cta').UpgradeCtaPayload;
+  capabilityId?: import('@/lib/clinic/search-capability').SearchCapabilityId;
+  playbookId?: string | null;
   routedToAgent?: { agentId: string; sessionId?: string };
 } {
   if (!data) {
@@ -368,6 +370,10 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
     cards: envelope.cards,
     ...(envelope.citations?.length ? { citations: envelope.citations } : {}),
     ...(envelope.upgradeCta ? { upgradeCta: envelope.upgradeCta } : {}),
+    ...(envelope.capabilityId ? { capabilityId: envelope.capabilityId } : {}),
+    ...(envelope.playbookId !== undefined
+      ? { playbookId: envelope.playbookId }
+      : {}),
     routedToAgent,
   };
 }

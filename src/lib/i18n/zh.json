@@ -329,6 +329,12 @@
 			"hint": "可升级为多源深度研究报告",
 			"cta": "深入研究"
 		},
+		"capability": {
+			"web_search": "快速检索",
+			"research": "深度研究",
+			"playbookHint": "策略：{id}",
+			"playbookUnbound": "通用检索（未绑定垂直策略）"
+		},
 		"messageActions": {
 			"quote": "引用",
 			"thumbsUp": "有帮助",
