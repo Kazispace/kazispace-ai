@@ -50,11 +50,12 @@ function ActionButton({
       title={label}
       aria-pressed={pressed}
       className={cn(
-        'flex h-7 w-7 items-center justify-center rounded-md text-[#86909C]',
+        'flex h-7 w-7 items-center justify-center rounded-md',
+        'bg-transparent text-[#86909C]',
         'transition-colors hover:bg-gray-100 hover:text-[#1D2129]',
         'disabled:cursor-not-allowed disabled:opacity-40',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
-        pressed && 'bg-orange-50 text-kazi-orange hover:bg-orange-50 hover:text-kazi-orange',
+        pressed && 'bg-gray-100 text-[#1D2129]',
       )}
     >
       {children}
