@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -16,6 +16,9 @@ import { AgentSwitcher } from "./agent-switcher";
 import { ReferralPrompt } from "./referral-prompt";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
+import { useChatScroll } from "@/hooks/use-chat-scroll";
+import { clinicChatScrollStorageKey } from "@/lib/spaces/chat-scroll";
+import { cn } from "@/lib/utils";
 import { useActiveAgentSessions } from "@/hooks/use-active-agent-sessions";
 import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
 import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
@@ -279,7 +282,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const [sessionPanelOpen, setSessionPanelOpen] = useState(false);
   const [historyReadOnly, setHistoryReadOnly] = useState(false);
   const [isSwitchingSession, setIsSwitchingSession] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const sessionHistoryTriggerRef = useRef<HTMLElement | null>(null);
   const manualSessionSelectRef = useRef(false);
   const sessionSwitchGenRef = useRef(0);
@@ -673,10 +675,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   ]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isSending, isSwitching]);
-
-  useEffect(() => {
     if (isClinicSending || !pendingClinicHistoryReloadRef.current) return;
     pendingClinicHistoryReloadRef.current = false;
     void loadHistory();
@@ -700,6 +698,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   }, [isLoggedIn, locale, router, showToast, tClinic]);
 
   const handleSend = async (text: string) => {
+    pinToLatestOnSend();
     if (!isLoggedIn) {
       showToast(tClinic("loginToChat"), "info");
       router.push(`/${locale}/login`);
@@ -951,6 +950,28 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const showWelcome = clinicIdleReady && clinicMessages.length === 0;
 
+  const scrollStorageKey = isAgentMode
+    ? clinicChatScrollStorageKey(
+        `agent:${activeAgentId ?? "none"}:${agentSessionId ?? "none"}`,
+      )
+    : clinicChatScrollStorageKey("main");
+
+  // Wait until history settle — same race as Spaces (false bottom on partial height).
+  const scrollReady =
+    layerReady && !isSwitchingSession && !isHistoryLoading && !showWelcome;
+
+  const {
+    scrollRef,
+    showJumpToLatest,
+    handleScroll,
+    jumpToLatest,
+    pinToLatestOnSend,
+  } = useChatScroll({
+    storageKey: scrollStorageKey,
+    messageCount: messages.length,
+    isSending: isSending || isSwitching,
+    ready: scrollReady,
+  });
 
   // Fills SessionNavShell `<main className="min-h-0 flex-1">` — not viewport `h-screen`.
   return (
@@ -1027,7 +1048,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         </p>
       ) : null}
 
+      <div className="relative flex min-h-0 flex-1 flex-col">
       <div
+        ref={scrollRef}
+        onScroll={handleScroll}
         className={`flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0 ${
           isAgentMode ? "" : "p-4"
         }`}
@@ -1036,7 +1060,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           <HubWorkflowStrip workflow={agentActiveWorkflow} locale={locale} />
         ) : null}
         <div
-          className={`flex flex-col gap-3 flex-1 min-h-0 ${
+          className={`flex flex-col gap-3 min-h-0 ${
             isAgentMode ? "p-4" : ""
           }`}
         >
@@ -1091,7 +1115,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 }
                 onRetry={
                   !isAgentMode && msg.role === "user" && msg.status === "failed"
-                    ? () => void retryMessage(msg.id)
+                    ? () => {
+                        pinToLatestOnSend();
+                        void retryMessage(msg.id);
+                      }
                     : undefined
                 }
                 onStreamComplete={
@@ -1131,8 +1158,23 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             );
           })
         )}
-        <div ref={messagesEndRef} />
         </div>
+      </div>
+      {showJumpToLatest ? (
+        <button
+          type="button"
+          onClick={jumpToLatest}
+          className={cn(
+            "absolute bottom-3 left-1/2 z-20 flex h-10 w-10 -translate-x-1/2",
+            "items-center justify-center rounded-full border border-gray-100 bg-white",
+            "shadow-[0_2px_8px_rgba(0,0,0,0.12)] transition-opacity hover:bg-gray-50",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40",
+          )}
+          aria-label={tSpaces("scrollToLatest")}
+        >
+          <ChevronDown className="h-5 w-5 text-[#1D2129]" strokeWidth={2} aria-hidden />
+        </button>
+      ) : null}
       </div>
 
       {isAgentMode && quickReplies.length > 0 && (

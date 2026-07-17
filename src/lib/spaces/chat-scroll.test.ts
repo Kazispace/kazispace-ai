@@ -2,13 +2,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CHAT_NEAR_BOTTOM_PX,
+  clampScrollTop,
   isNearBottom,
-  readSpaceChatScrollTop,
+  readChatScrollTop,
   spaceChatScrollStorageKey,
-  writeSpaceChatScrollTop,
+  writeChatScrollTop,
 } from '@/lib/spaces/chat-scroll';
 
-describe('space chat-scroll helpers', () => {
+describe('chat-scroll helpers', () => {
   const store = new Map<string, string>();
 
   afterEach(() => {
@@ -30,7 +31,7 @@ describe('space chat-scroll helpers', () => {
     });
   }
 
-  it('builds a stable sessionStorage key', () => {
+  it('builds a stable space sessionStorage key', () => {
     expect(spaceChatScrollStorageKey('sp_1')).toBe('kazi:space-chat-scroll:sp_1');
   });
 
@@ -63,18 +64,31 @@ describe('space chat-scroll helpers', () => {
     ).toBe(true);
   });
 
+  it('clamps saved scrollTop into range', () => {
+    const el = {
+      scrollHeight: 1000,
+      clientHeight: 200,
+      scrollTop: 0,
+    } as HTMLElement;
+    expect(clampScrollTop(el, 5000)).toBe(800);
+    expect(clampScrollTop(el, -20)).toBe(0);
+    expect(clampScrollTop(el, 100)).toBe(100);
+  });
+
   it('round-trips scrollTop via sessionStorage', () => {
     stubSessionStorage();
-    expect(readSpaceChatScrollTop('sp_a')).toBeNull();
-    writeSpaceChatScrollTop('sp_a', 420.6);
-    expect(readSpaceChatScrollTop('sp_a')).toBe(421);
-    writeSpaceChatScrollTop('sp_a', -10);
-    expect(readSpaceChatScrollTop('sp_a')).toBe(0);
+    const key = spaceChatScrollStorageKey('sp_a');
+    expect(readChatScrollTop(key)).toBeNull();
+    writeChatScrollTop(key, 420.6);
+    expect(readChatScrollTop(key)).toBe(421);
+    writeChatScrollTop(key, -10);
+    expect(readChatScrollTop(key)).toBe(0);
   });
 
   it('ignores corrupt storage values', () => {
     stubSessionStorage();
-    store.set(spaceChatScrollStorageKey('sp_b'), 'nope');
-    expect(readSpaceChatScrollTop('sp_b')).toBeNull();
+    const key = spaceChatScrollStorageKey('sp_b');
+    store.set(key, 'nope');
+    expect(readChatScrollTop(key)).toBeNull();
   });
 });

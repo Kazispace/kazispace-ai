@@ -1,16 +1,25 @@
-const STORAGE_PREFIX = 'kazi:space-chat-scroll:';
+const STORAGE_PREFIX = 'kazi:chat-scroll:';
 
 /** Distance from bottom (px) treated as "viewing latest". */
 export const CHAT_NEAR_BOTTOM_PX = 80;
 
+/** @deprecated Prefer chatScrollStorageKey — kept for existing Space keys. */
 export function spaceChatScrollStorageKey(spaceId: string): string {
-  return `${STORAGE_PREFIX}${spaceId}`;
+  return `kazi:space-chat-scroll:${spaceId}`;
 }
 
-export function readSpaceChatScrollTop(spaceId: string): number | null {
+export function chatScrollStorageKey(scope: string): string {
+  return `${STORAGE_PREFIX}${scope}`;
+}
+
+export function clinicChatScrollStorageKey(scope: string): string {
+  return chatScrollStorageKey(`clinic:${scope}`);
+}
+
+export function readChatScrollTop(storageKey: string): number | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = window.sessionStorage.getItem(spaceChatScrollStorageKey(spaceId));
+    const raw = window.sessionStorage.getItem(storageKey);
     if (raw == null) return null;
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 ? n : null;
@@ -19,16 +28,26 @@ export function readSpaceChatScrollTop(spaceId: string): number | null {
   }
 }
 
-export function writeSpaceChatScrollTop(spaceId: string, scrollTop: number): void {
+export function writeChatScrollTop(storageKey: string, scrollTop: number): void {
   if (typeof window === 'undefined') return;
   try {
     window.sessionStorage.setItem(
-      spaceChatScrollStorageKey(spaceId),
+      storageKey,
       String(Math.max(0, Math.round(scrollTop))),
     );
   } catch {
     // private mode / quota — ignore
   }
+}
+
+/** @deprecated Use readChatScrollTop(spaceChatScrollStorageKey(id)) */
+export function readSpaceChatScrollTop(spaceId: string): number | null {
+  return readChatScrollTop(spaceChatScrollStorageKey(spaceId));
+}
+
+/** @deprecated Use writeChatScrollTop(spaceChatScrollStorageKey(id), top) */
+export function writeSpaceChatScrollTop(spaceId: string, scrollTop: number): void {
+  writeChatScrollTop(spaceChatScrollStorageKey(spaceId), scrollTop);
 }
 
 export function isNearBottom(
@@ -43,4 +62,10 @@ export function scrollElementToBottom(
   behavior: ScrollBehavior = 'smooth',
 ): void {
   el.scrollTo({ top: el.scrollHeight, behavior });
+}
+
+/** Clamp a saved scrollTop into the element's current scroll range. */
+export function clampScrollTop(el: HTMLElement, saved: number): number {
+  const max = Math.max(0, el.scrollHeight - el.clientHeight);
+  return Math.min(Math.max(0, saved), max);
 }
