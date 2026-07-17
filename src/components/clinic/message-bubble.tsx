@@ -22,6 +22,8 @@ import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
+  /** Message id — used for future thumbs feedback / corpus. */
+  messageId?: string;
   name?: string;
   intent?: string;
   isStreaming?: boolean;
@@ -52,6 +54,7 @@ interface MessageBubbleProps {
 export function MessageBubble({
   role,
   content,
+  messageId,
   name,
   intent,
   isStreaming,
@@ -228,6 +231,7 @@ export function MessageBubble({
         {showMessageActions ? (
           <MessageActions
             content={content}
+            messageId={messageId}
             disabled={actionsDisabled}
             className="px-1"
           />

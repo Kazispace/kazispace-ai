@@ -1,15 +1,4 @@
-/** Helpers for assistant message action toolbar (quote / emoji / copy / save doc). */
-
-export const QUICK_REPLY_EMOJIS = [
-  '👍',
-  '❤️',
-  '😊',
-  '🎉',
-  '👏',
-  '🔥',
-  '🤔',
-  '👀',
-] as const;
+/** Helpers for assistant message action toolbar (quote / feedback / copy / save doc). */
 
 /** Quote block for composer insert (Markdown-style). */
 export function formatQuotedMessage(content: string): string {

@@ -133,6 +133,7 @@ export function SpaceChatPane({
               key={message.id}
               role={message.role}
               content={message.content}
+              messageId={message.id}
               status={message.status}
               locale={locale}
               variant="clinic"

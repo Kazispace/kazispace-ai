@@ -1097,6 +1097,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 key={msg.id}
                 role={msg.role === "user" ? "user" : "assistant"}
                 content={msg.content}
+                messageId={msg.id}
                 intent={msg.intent}
                 status={msg.status}
                 referral={msg.referral}

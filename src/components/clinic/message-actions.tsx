@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   Copy,
   FileDown,
   MessageSquareQuote,
-  SmilePlus,
+  ThumbsDown,
+  ThumbsUp,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import {
-  QUICK_REPLY_EMOJIS,
   copyTextToClipboard,
   downloadMessageAsMarkdown,
   formatQuotedMessage,
@@ -18,8 +18,12 @@ import {
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
+export type MessageFeedbackVote = 'up' | 'down';
+
 type MessageActionsProps = {
   content: string;
+  /** Optional id for future feedback / corpus API. */
+  messageId?: string;
   disabled?: boolean;
   className?: string;
 };
@@ -27,11 +31,13 @@ type MessageActionsProps = {
 function ActionButton({
   label,
   disabled,
+  pressed,
   onClick,
   children,
 }: {
   label: string;
   disabled?: boolean;
+  pressed?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -42,11 +48,13 @@ function ActionButton({
       onClick={onClick}
       aria-label={label}
       title={label}
+      aria-pressed={pressed}
       className={cn(
         'flex h-7 w-7 items-center justify-center rounded-md text-[#86909C]',
         'transition-colors hover:bg-gray-100 hover:text-[#1D2129]',
         'disabled:cursor-not-allowed disabled:opacity-40',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+        pressed && 'bg-orange-50 text-kazi-orange hover:bg-orange-50 hover:text-kazi-orange',
       )}
     >
       {children}
@@ -55,30 +63,19 @@ function ActionButton({
 }
 
 /**
- * Assistant bubble toolbar: quote · emoji quick-reply · copy · save as document.
- * Quote / emoji insert into the shared composer via UI store.
+ * Assistant bubble toolbar: quote · thumbs up/down · copy · save as document.
+ * Thumbs feedback is local for now — TODO(corpus): POST rating for training data.
  */
 export function MessageActions({
   content,
+  messageId,
   disabled,
   className,
 }: MessageActionsProps) {
   const t = useTranslations('chat');
   const showToast = useUIStore((s) => s.showToast);
   const requestComposerInsert = useUIStore((s) => s.requestComposerInsert);
-  const [emojiOpen, setEmojiOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!emojiOpen) return;
-    const onPointer = (e: MouseEvent) => {
-      if (!popoverRef.current?.contains(e.target as Node)) {
-        setEmojiOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onPointer);
-    return () => document.removeEventListener('mousedown', onPointer);
-  }, [emojiOpen]);
+  const [vote, setVote] = useState<MessageFeedbackVote | null>(null);
 
   const text = content.trim();
   if (!text) return null;
@@ -90,10 +87,17 @@ export function MessageActions({
     showToast(t('messageActions.quoted'), 'info');
   };
 
-  const handleEmoji = (emoji: string) => {
-    requestComposerInsert(`${emoji} `);
-    setEmojiOpen(false);
-    showToast(t('messageActions.emojiInserted'), 'info');
+  const handleFeedback = (next: MessageFeedbackVote) => {
+    const cleared = vote === next;
+    const selected = cleared ? null : next;
+    setVote(selected);
+    // TODO(corpus): send { messageId, vote: selected, contentHash } to feedback API.
+    void messageId;
+    if (selected === 'up') {
+      showToast(t('messageActions.feedbackThanksUp'), 'info');
+    } else if (selected === 'down') {
+      showToast(t('messageActions.feedbackThanksDown'), 'info');
+    }
   };
 
   const handleCopy = async () => {
@@ -113,10 +117,7 @@ export function MessageActions({
   };
 
   return (
-    <div
-      className={cn('relative flex items-center gap-0.5', className)}
-      ref={popoverRef}
-    >
+    <div className={cn('relative flex items-center gap-0.5', className)}>
       <ActionButton
         label={t('messageActions.quote')}
         disabled={disabled}
@@ -126,11 +127,21 @@ export function MessageActions({
       </ActionButton>
 
       <ActionButton
-        label={t('messageActions.quickReply')}
+        label={t('messageActions.thumbsUp')}
         disabled={disabled}
-        onClick={() => setEmojiOpen((v) => !v)}
+        pressed={vote === 'up'}
+        onClick={() => handleFeedback('up')}
       >
-        <SmilePlus className="h-3.5 w-3.5" strokeWidth={2} />
+        <ThumbsUp className="h-3.5 w-3.5" strokeWidth={2} />
+      </ActionButton>
+
+      <ActionButton
+        label={t('messageActions.thumbsDown')}
+        disabled={disabled}
+        pressed={vote === 'down'}
+        onClick={() => handleFeedback('down')}
+      >
+        <ThumbsDown className="h-3.5 w-3.5" strokeWidth={2} />
       </ActionButton>
 
       <ActionButton
@@ -148,28 +159,6 @@ export function MessageActions({
       >
         <FileDown className="h-3.5 w-3.5" strokeWidth={2} />
       </ActionButton>
-
-      {emojiOpen ? (
-        <div
-          role="listbox"
-          aria-label={t('messageActions.quickReply')}
-          className="absolute bottom-full left-0 z-30 mb-1 flex gap-0.5 rounded-xl border border-gray-200 bg-white p-1 shadow-lg"
-        >
-          {QUICK_REPLY_EMOJIS.map((emoji) => (
-            <button
-              key={emoji}
-              type="button"
-              role="option"
-              disabled={disabled}
-              onClick={() => handleEmoji(emoji)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-base hover:bg-gray-50 disabled:opacity-40"
-              aria-label={emoji}
-            >
-              {emoji}
-            </button>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
