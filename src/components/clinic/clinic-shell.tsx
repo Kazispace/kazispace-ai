@@ -1146,6 +1146,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 pendingCapability={
                   !isAgentMode ? msg.pendingCapability : undefined
                 }
+                composerTarget="clinic"
                 locale={locale}
                 streamComplete={msg.streamComplete ?? true}
                 isStreaming={isStreaming && msg.content === ""}
@@ -1258,6 +1259,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         onSend={handleSend}
         beforeTranscribe={beforeVoiceTranscribe}
         contextModule="clinic"
+        composerTarget="clinic"
         disabled={isSending || isSwitching || (isAgentMode && historyReadOnly) || isSwitchingSession}
         placeholder={inputPlaceholder}
         showAttachButton

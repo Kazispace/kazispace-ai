@@ -4,7 +4,10 @@
 export function formatQuotedMessage(content: string): string {
   const trimmed = content.trim();
   if (!trimmed) return '';
-  const lines = trimmed.split('\n').map((line) => `> ${line}`);
+  // Don't double-prefix lines that are already quoted (PR #126 P3).
+  const lines = trimmed.split('\n').map((line) =>
+    /^>\s?/.test(line) ? line : `> ${line}`,
+  );
   return `${lines.join('\n')}\n\n`;
 }
 
@@ -38,7 +41,7 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
 /** Download assistant reply as a Markdown file (BE file API does not accept text/* yet). */
 export function downloadMessageAsMarkdown(
   content: string,
-  filenamePrefix = 'kazi-note',
+  filenamePrefix = 'kazispace-note',
 ): boolean {
   const body = content.trim();
   if (!body || typeof document === 'undefined') return false;

@@ -96,12 +96,19 @@ export const useChatStore = create<ChatStore>()((set) => ({
 // ---- UI Store ----
 export type PaywallTrigger = 'INSUFFICIENT_CREDITS' | 'PRO_FEATURE_LOCKED' | string;
 
+/** Which ChatInput should consume a quote / composer insert (PR #126 P2). */
+export type ComposerInsertTarget = 'clinic' | 'space';
+
 interface UIStore {
   locale: string;
   sidebarOpen: boolean;
   toast: { message: string; type: 'error' | 'info' } | null;
-  /** Insert into active ChatInput (quote / emoji quick-reply). */
-  composerInsert: { text: string; nonce: number } | null;
+  /** Insert into the matching ChatInput only (clinic vs space). */
+  composerInsert: {
+    text: string;
+    nonce: number;
+    target: ComposerInsertTarget;
+  } | null;
   paywallModalOpen: boolean;
   paywallTrigger: PaywallTrigger | null;
   isTelegramMiniApp: boolean;
@@ -110,7 +117,7 @@ interface UIStore {
   toggleSidebar: () => void;
   showToast: (message: string, type?: 'error' | 'info') => void;
   clearToast: () => void;
-  requestComposerInsert: (text: string) => void;
+  requestComposerInsert: (text: string, target: ComposerInsertTarget) => void;
   clearComposerInsert: () => void;
   openPaywall: (trigger: PaywallTrigger) => void;
   closePaywall: () => void;
@@ -131,10 +138,11 @@ export const useUIStore = create<UIStore>()((set) => ({
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   showToast: (message, type = 'info') => set({ toast: { message, type } }),
   clearToast: () => set({ toast: null }),
-  requestComposerInsert: (text) =>
+  requestComposerInsert: (text, target) =>
     set((state) => ({
       composerInsert: {
         text,
+        target,
         nonce: (state.composerInsert?.nonce ?? 0) + 1,
       },
     })),
