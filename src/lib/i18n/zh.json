@@ -322,7 +322,21 @@
 		},
 		"retry": "重试",
 		"processing": "处理中…",
-		"sources": "来源"
+		"sources": "来源",
+		"messageActions": {
+			"quote": "引用",
+			"thumbsUp": "有帮助",
+			"thumbsDown": "没帮助",
+			"copy": "复制",
+			"saveDocument": "转成文档",
+			"quoted": "已引用到输入框",
+			"feedbackThanksUp": "感谢反馈",
+			"feedbackThanksDown": "已记录，我们会改进",
+			"copied": "已复制",
+			"copyFailed": "复制失败",
+			"savedDocument": "已下载为 Markdown 文档",
+			"saveFailed": "保存文档失败"
+		}
 	},
 	"errors": {
 		"network": "网络错误，请重试。",

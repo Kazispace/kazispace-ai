@@ -452,6 +452,20 @@
 		"retry": "Retry",
 		"processing": "Processing…",
 		"sources": "Sources",
+		"messageActions": {
+			"quote": "Quote",
+			"thumbsUp": "Helpful",
+			"thumbsDown": "Not helpful",
+			"copy": "Copy",
+			"saveDocument": "Save as document",
+			"quoted": "Quoted into the input",
+			"feedbackThanksUp": "Thanks for the feedback",
+			"feedbackThanksDown": "Got it — we'll improve",
+			"copied": "Copied",
+			"copyFailed": "Copy failed",
+			"savedDocument": "Downloaded as Markdown",
+			"saveFailed": "Could not save document"
+		},
 		"actions": {
 			"open_list": "View job recommendations",
 			"view_job_recommendations": "View job recommendations",

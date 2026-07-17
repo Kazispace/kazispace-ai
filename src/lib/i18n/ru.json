@@ -293,6 +293,20 @@
 		"retry": "Повторить",
 		"processing": "Обработка…",
 		"sources": "Источники",
+		"messageActions": {
+			"quote": "Цитировать",
+			"thumbsUp": "Полезно",
+			"thumbsDown": "Не полезно",
+			"copy": "Копировать",
+			"saveDocument": "Сохранить как документ",
+			"quoted": "Добавлено в поле ввода",
+			"feedbackThanksUp": "Спасибо за отзыв",
+			"feedbackThanksDown": "Принято — улучшим",
+			"copied": "Скопировано",
+			"copyFailed": "Не удалось скопировать",
+			"savedDocument": "Скачано как Markdown",
+			"saveFailed": "Не удалось сохранить документ"
+		},
 		"actions": {
 			"open_list": "Смотреть рекомендации",
 			"view_job_recommendations": "Смотреть рекомендации",

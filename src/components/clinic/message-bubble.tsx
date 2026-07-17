@@ -7,6 +7,7 @@ import { CitationList } from "./citation-list";
 import { ChatJobTeasers } from "./chat-job-teasers";
 import { ChatNextActions } from "./chat-next-actions";
 import { MarkdownContent } from "./markdown-content";
+import { MessageActions } from "./message-actions";
 import { ReferralPrompt } from "./referral-prompt";
 import { SpaceNudgePrompt } from "./space-nudge-prompt";
 import { StreamingText } from "@/components/chat/streaming-text";
@@ -21,6 +22,8 @@ import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
+  /** Message id — used for future thumbs feedback / corpus. */
+  messageId?: string;
   name?: string;
   intent?: string;
   isStreaming?: boolean;
@@ -51,6 +54,7 @@ interface MessageBubbleProps {
 export function MessageBubble({
   role,
   content,
+  messageId,
   name,
   intent,
   isStreaming,
@@ -100,6 +104,8 @@ export function MessageBubble({
   const showNextActions =
     showEnrichment && (nextActions?.length ?? 0) > 0 && onNextAction;
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
+  const showMessageActions =
+    showEnrichment && Boolean(content?.trim()) && !isUser;
   const isWorkspace = surface === "workspace";
   const markdownContent =
     showCitations && content
@@ -222,6 +228,14 @@ export function MessageBubble({
             />
           )}
         </div>
+        {showMessageActions ? (
+          <MessageActions
+            content={content}
+            messageId={messageId}
+            disabled={actionsDisabled}
+            className="px-1"
+          />
+        ) : null}
         {isFailed && onRetry && (
           <button
             type="button"
