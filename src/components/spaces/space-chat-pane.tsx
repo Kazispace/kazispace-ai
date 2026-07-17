@@ -44,6 +44,7 @@ export function SpaceChatPane({
   const {
     messages,
     isHydrating,
+    historyReady,
     isSending,
     replyNotice,
     sendMessage,
@@ -52,8 +53,8 @@ export function SpaceChatPane({
 
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
-  // Wait until history fetch finishes — restoring on a mid-hydrate height sticks to a false bottom.
-  const scrollReady = spaceSessionReady && !isHydrating;
+  // Use mount-local historyReady — store !isHydrating is stale-false on remount first paint.
+  const scrollReady = spaceSessionReady && historyReady;
 
   const {
     scrollRef,

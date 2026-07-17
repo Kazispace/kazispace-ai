@@ -39,6 +39,8 @@ export function useChatScroll({
   const stickToBottomRef = useRef(true);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastScrollTopRef = useRef(0);
+  const readyRef = useRef(ready);
+  readyRef.current = ready;
   /** null until first follow-effect sync after restore — prevents restore→follow overwrite. */
   const followBaselineCountRef = useRef<number | null>(null);
   const followBaselineSendingRef = useRef(false);
@@ -94,6 +96,15 @@ export function useChatScroll({
     setShowJumpToLatest(false);
   }, [storageKey]);
 
+  // History re-fetch / layer unload: allow a fresh restore; do not wipe sessionStorage
+  // (ready flickering used to flush lastScrollTop=0 and destroy the saved position).
+  useEffect(() => {
+    if (ready) return;
+    restoredRef.current = false;
+    followBaselineCountRef.current = null;
+    followBaselineSendingRef.current = false;
+  }, [ready]);
+
   // Restore after history is ready — never mark restored while messageCount is still 0 mid-hydrate.
   useEffect(() => {
     if (!ready || restoredRef.current) return;
@@ -110,7 +121,8 @@ export function useChatScroll({
     }
 
     const apply = () => {
-      if (restoredRef.current || !scrollRef.current) return;
+      // ready may have flipped false between schedule and rAF (re-hydrate).
+      if (!readyRef.current || restoredRef.current || !scrollRef.current) return;
       const node = scrollRef.current;
       // Height may still be settling — re-read after a second frame if needed.
       const saved = readChatScrollTop(storageKey);
@@ -172,14 +184,15 @@ export function useChatScroll({
     setShowJumpToLatest(false);
   }, [messageCount, isSending, ready, updateJumpVisibility]);
 
-  // Flush on scope change or when ready flips false (e.g. session switch) —
-  // do not gate on `ready`, or the last position is dropped mid-transition.
+  // Flush only when leaving a conversation scope (key change / unmount).
+  // Skip if we never restored — avoids wiping a prior saved position with 0 on quick leave.
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      if (!restoredRef.current) return;
       writeChatScrollTop(storageKey, lastScrollTopRef.current);
     };
-  }, [storageKey, ready]);
+  }, [storageKey]);
 
   return {
     scrollRef,

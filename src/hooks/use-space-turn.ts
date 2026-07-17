@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { fetchChatHistory } from '@/lib/api-client';
@@ -96,6 +96,12 @@ export function useSpaceTurn(
 
   /** Generation counter — skip stale async store writes when the user navigates away. */
   const sendGenerationRef = useRef(0);
+  /**
+   * Mount-local settle flag for scroll restore.
+   * Store `isHydrating` can still be false on the first paint after remount (leftover from
+   * the previous visit), which would restore against cached height and lock restoredRef.
+   */
+  const [historyReady, setHistoryReady] = useState(false);
 
   const messages = slice?.messages ?? [];
   const isHydrating = slice?.isHydrating ?? false;
@@ -132,6 +138,7 @@ export function useSpaceTurn(
 
   useEffect(() => {
     if (!enabled || !spaceId) {
+      setHistoryReady(false);
       return;
     }
 
@@ -139,10 +146,12 @@ export function useSpaceTurn(
     if (!resolvedMasterId) {
       setSpaceMessages(spaceId, []);
       setSpaceHydrating(spaceId, false);
+      setHistoryReady(true);
       return;
     }
 
     let cancelled = false;
+    setHistoryReady(false);
     setSpaceHydrating(spaceId, true);
 
     void (async () => {
@@ -150,6 +159,7 @@ export function useSpaceTurn(
       if (cancelled) return;
       setSpaceMessages(spaceId, next);
       setSpaceHydrating(spaceId, false);
+      setHistoryReady(true);
     })();
 
     return () => {
@@ -358,6 +368,8 @@ export function useSpaceTurn(
   return {
     messages,
     isHydrating,
+    /** True only after this mount's history fetch settles — safer than `!isHydrating` for scroll. */
+    historyReady,
     isSending,
     sendError: replyNotice?.kind === 'error' ? replyNotice.message : null,
     replyNotice,
