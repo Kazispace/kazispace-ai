@@ -285,7 +285,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const sessionHistoryTriggerRef = useRef<HTMLElement | null>(null);
   const manualSessionSelectRef = useRef(false);
   const sessionSwitchGenRef = useRef(0);
-  const pinToLatestOnSendRef = useRef<() => void>(() => {});
 
   const {
     sessions: agentSessions,
@@ -699,7 +698,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   }, [isLoggedIn, locale, router, showToast, tClinic]);
 
   const handleSend = async (text: string) => {
-    pinToLatestOnSendRef.current();
+    pinToLatestOnSend();
     if (!isLoggedIn) {
       showToast(tClinic("loginToChat"), "info");
       router.push(`/${locale}/login`);
@@ -973,7 +972,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     isSending: isSending || isSwitching,
     ready: scrollReady,
   });
-  pinToLatestOnSendRef.current = pinToLatestOnSend;
 
   // Fills SessionNavShell `<main className="min-h-0 flex-1">` — not viewport `h-screen`.
   return (
@@ -1118,7 +1116,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 onRetry={
                   !isAgentMode && msg.role === "user" && msg.status === "failed"
                     ? () => {
-                        pinToLatestOnSendRef.current();
+                        pinToLatestOnSend();
                         void retryMessage(msg.id);
                       }
                     : undefined

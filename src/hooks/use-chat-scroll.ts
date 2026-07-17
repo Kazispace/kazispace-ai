@@ -172,12 +172,14 @@ export function useChatScroll({
     setShowJumpToLatest(false);
   }, [messageCount, isSending, ready, updateJumpVisibility]);
 
+  // Flush on scope change or when ready flips false (e.g. session switch) —
+  // do not gate on `ready`, or the last position is dropped mid-transition.
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      persistScroll(lastScrollTopRef.current);
+      writeChatScrollTop(storageKey, lastScrollTopRef.current);
     };
-  }, [persistScroll]);
+  }, [storageKey, ready]);
 
   return {
     scrollRef,
@@ -189,14 +191,3 @@ export function useChatScroll({
     },
   };
 }
-
-/** @deprecated Use useChatScroll */
-export const useSpaceChatScroll = (
-  options: Omit<UseChatScrollOptions, 'storageKey'> & { spaceId: string },
-) =>
-  useChatScroll({
-    storageKey: `kazi:space-chat-scroll:${options.spaceId}`,
-    messageCount: options.messageCount,
-    isSending: options.isSending,
-    ready: options.ready,
-  });
