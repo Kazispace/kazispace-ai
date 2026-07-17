@@ -1,11 +1,12 @@
 'use client';
 
-import { type ReactNode, useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
+import { type ReactNode, useCallback } from 'react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
 import { SpaceShell } from '@/components/spaces/space-shell';
+import { useSpaceChatScroll } from '@/hooks/use-space-chat-scroll';
 import {
   useSpaceTurn,
   type SpaceSendResult,
@@ -47,31 +48,74 @@ export function SpaceChatPane({
     sendMessage,
     retryMessage,
   } = useSpaceTurn(space.id, space.master_session_id, locale, space.space_state);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
+  const scrollReady =
+    spaceSessionReady && !(isHydrating && messages.length === 0);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length, isSending]);
+  const {
+    scrollRef,
+    showJumpToLatest,
+    handleScroll,
+    jumpToLatest,
+    pinToLatestOnSend,
+  } = useSpaceChatScroll({
+    spaceId: space.id,
+    messageCount: messages.length,
+    isSending,
+    ready: scrollReady,
+  });
+
+  const sendAndPin = useCallback(
+    async (text: string) => {
+      pinToLatestOnSend();
+      return sendMessage(text);
+    },
+    [pinToLatestOnSend, sendMessage],
+  );
 
   const composerNode =
     typeof composer === 'function'
-      ? composer({ sendMessage, isSending, spaceSessionReady })
+      ? composer({
+          sendMessage: sendAndPin,
+          isSending,
+          spaceSessionReady,
+        })
       : composer;
 
   const handleRetryNotice = () => {
     if (!replyNotice?.retryMessageId) return;
+    pinToLatestOnSend();
     void retryMessage(replyNotice.retryMessageId);
   };
+
+  const jumpOverlay = showJumpToLatest ? (
+    <button
+      type="button"
+      onClick={jumpToLatest}
+      className={cn(
+        'absolute bottom-3 left-1/2 z-20 flex h-10 w-10 -translate-x-1/2',
+        'items-center justify-center rounded-full border border-gray-100 bg-white',
+        'shadow-[0_2px_8px_rgba(0,0,0,0.12)] transition-opacity hover:bg-gray-50',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+      )}
+      aria-label={t('scrollToLatest')}
+    >
+      <ChevronDown className="h-5 w-5 text-[#1D2129]" strokeWidth={2} aria-hidden />
+    </button>
+  ) : null;
 
   return (
     <SpaceShell
       locale={locale}
       space={space}
       footer={composerNode ?? null}
+      scrollRef={scrollRef}
+      onScroll={handleScroll}
+      scrollOverlay={jumpOverlay}
     >
-      <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-1 flex-col gap-3">
+      <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-col gap-3">
         {!spaceSessionReady ? (
           <p className="py-8 text-center text-sm text-red-600">{t('spaceNotReady')}</p>
         ) : isHydrating && messages.length === 0 ? (
@@ -93,7 +137,10 @@ export function SpaceChatPane({
               streamComplete
               onRetry={
                 message.role === 'user' && message.status === 'failed'
-                  ? () => void retryMessage(message.id)
+                  ? () => {
+                      pinToLatestOnSend();
+                      void retryMessage(message.id);
+                    }
                   : undefined
               }
             />
@@ -131,7 +178,6 @@ export function SpaceChatPane({
             ) : null}
           </div>
         ) : null}
-        <div ref={messagesEndRef} />
       </div>
     </SpaceShell>
   );

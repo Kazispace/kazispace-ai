@@ -342,6 +342,7 @@
 		"templateWorkspaceComingSoon": "The multi-panel workspace for this template is coming soon.",
 		"composerPlaceholder": "Type a message…",
 		"composerMuted": "This space is archived or in trash — restore to continue chatting.",
+		"scrollToLatest": "Jump to latest messages",
 		"voiceUploadFailed": "Voice recognition failed. Please try again.",
 		"voiceEmpty": "Didn't catch that — please try again.",
 		"voiceFallback": "Couldn't understand that — type it out or try recording again.",
