@@ -3,12 +3,17 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
+import { CitationList } from "./citation-list";
 import { ChatJobTeasers } from "./chat-job-teasers";
 import { ChatNextActions } from "./chat-next-actions";
 import { MarkdownContent } from "./markdown-content";
 import { ReferralPrompt } from "./referral-prompt";
 import { SpaceNudgePrompt } from "./space-nudge-prompt";
 import { StreamingText } from "@/components/chat/streaming-text";
+import {
+  stripMarkdownSourcesSection,
+  type CitationItem,
+} from "@/lib/clinic/citation-list";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
@@ -26,6 +31,7 @@ interface MessageBubbleProps {
   spaceNudge?: SpaceNudgePayload;
   nextActions?: ChatNextAction[];
   cards?: ChatJobCard[];
+  citations?: CitationItem[];
   locale?: string;
   streamComplete?: boolean;
   agentEmoji?: string;
@@ -55,6 +61,7 @@ export function MessageBubble({
   spaceNudge,
   nextActions,
   cards,
+  citations,
   locale = "en",
   streamComplete = true,
   agentEmoji,
@@ -92,7 +99,12 @@ export function MessageBubble({
   const showJobCards = showEnrichment && jobCards.length > 0;
   const showNextActions =
     showEnrichment && (nextActions?.length ?? 0) > 0 && onNextAction;
+  const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
   const isWorkspace = surface === "workspace";
+  const markdownContent =
+    showCitations && content
+      ? stripMarkdownSourcesSection(content)
+      : content;
 
   const renderAssistantContent = () => {
     // Empty or BE placeholder ("…") while waiting — show Processing… (KAZI-186).
@@ -116,7 +128,7 @@ export function MessageBubble({
     }
 
     if (!isUser && content) {
-      return <MarkdownContent content={content} />;
+      return <MarkdownContent content={markdownContent} />;
     }
 
     return <span className="whitespace-pre-wrap">{content}</span>;
@@ -173,6 +185,9 @@ export function MessageBubble({
           )}
         >
           {renderAssistantContent()}
+          {showCitations && citations ? (
+            <CitationList items={citations} />
+          ) : null}
           {showJobCards && (
             <ChatJobTeasers
               cards={jobCards}

@@ -321,7 +321,8 @@
 			"placeholder": "和我聊聊你的职业问题…"
 		},
 		"retry": "重试",
-		"processing": "处理中…"
+		"processing": "处理中…",
+		"sources": "来源"
 	},
 	"errors": {
 		"network": "网络错误，请重试。",

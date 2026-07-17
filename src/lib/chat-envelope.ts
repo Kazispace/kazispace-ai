@@ -1,4 +1,5 @@
 import type { SupportedLocale } from '@/lib/constants';
+import { parseCitationList } from '@/lib/clinic/citation-list';
 import type {
   AssistantWorkflow,
   ChatJobCard,
@@ -208,6 +209,12 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
   const metaRaw = assistant?.meta ?? response?.meta ?? raw.meta;
   const meta = asRecord(metaRaw);
 
+  const citationList = parseCitationList(
+    assistant?.custom_components ??
+      response?.custom_components ??
+      raw.custom_components,
+  );
+
   return {
     reply,
     intent:
@@ -218,6 +225,7 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
           : undefined,
     nextActions,
     cards: cards.filter((card) => card.type === 'job'),
+    ...(citationList ? { citations: citationList.items } : {}),
     workflow,
     exited: exited || undefined,
     exitedAgent,

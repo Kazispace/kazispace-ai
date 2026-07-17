@@ -220,7 +220,7 @@ export function useClinicChat(locale?: string) {
           };
         }
 
-        let { reply, intent, referral, spaceNudge, nextActions, cards, routedToAgent } =
+        let { reply, intent, referral, spaceNudge, nextActions, cards, citations, routedToAgent } =
           parseClinicReply(res.data);
 
         if (isPlaceholderReply(reply)) {
@@ -249,6 +249,7 @@ export function useClinicChat(locale?: string) {
           ...(spaceNudge ? { spaceNudge } : {}),
           ...(nextActions.length > 0 ? { nextActions } : {}),
           ...(cards.length > 0 ? { cards } : {}),
+          ...(citations && citations.length > 0 ? { citations } : {}),
           streamComplete: false,
         });
 

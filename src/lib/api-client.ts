@@ -314,6 +314,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   spaceNudge?: SpaceNudgePayload;
   nextActions: ChatNextAction[];
   cards: ChatJobCard[];
+  citations?: import('@/lib/clinic/citation-list').CitationItem[];
   routedToAgent?: { agentId: string; sessionId?: string };
 } {
   if (!data) {
@@ -364,6 +365,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
     ...(spaceNudge ? { spaceNudge } : {}),
     nextActions: envelope.nextActions,
     cards: envelope.cards,
+    ...(envelope.citations?.length ? { citations: envelope.citations } : {}),
     routedToAgent,
   };
 }

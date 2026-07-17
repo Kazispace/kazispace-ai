@@ -48,6 +48,8 @@ export interface ParsedAssistantEnvelope {
   intent?: string;
   nextActions: ChatNextAction[];
   cards: ChatJobCard[];
+  /** Research citation_list custom_component items (KAZI-223). */
+  citations?: import('@/lib/clinic/citation-list').CitationItem[];
   workflow?: AssistantWorkflow;
   exited?: boolean;
   exitedAgent?: string;

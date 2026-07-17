@@ -451,6 +451,7 @@
 		},
 		"retry": "Retry",
 		"processing": "Processing…",
+		"sources": "Sources",
 		"actions": {
 			"open_list": "View job recommendations",
 			"view_job_recommendations": "View job recommendations",
