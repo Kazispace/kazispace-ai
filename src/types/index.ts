@@ -60,6 +60,8 @@ export interface ChatMessage {
   spaceNudge?: import('@/lib/spaces/space-nudge').SpaceNudgePayload;
   nextActions?: ChatNextAction[];
   cards?: ChatJobCard[];
+  /** Research sources from citation_list custom_component (KAZI-223). */
+  citations?: import('@/lib/clinic/citation-list').CitationItem[];
   workflow?: import('./chat-envelope').AssistantWorkflow;
   streamComplete?: boolean;
 }

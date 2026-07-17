@@ -1103,6 +1103,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 spaceNudge={!isAgentMode ? msg.spaceNudge : undefined}
                 nextActions={msg.nextActions}
                 cards={msg.cards}
+                citations={msg.citations}
                 locale={locale}
                 streamComplete={msg.streamComplete ?? true}
                 isStreaming={isStreaming && msg.content === ""}

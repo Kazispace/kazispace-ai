@@ -292,6 +292,7 @@
 		},
 		"retry": "Повторить",
 		"processing": "Обработка…",
+		"sources": "Источники",
 		"actions": {
 			"open_list": "Смотреть рекомендации",
 			"view_job_recommendations": "Смотреть рекомендации",

@@ -31,6 +31,23 @@ describe('parseAssistantEnvelope workflow', () => {
     expect(parsed.workflow?.progress_pct).toBe(40);
     expect(parsed.workflow?.steps[1]?.status).toBe('current');
   });
+
+  it('parses citation_list custom_components (KAZI-223)', () => {
+    const parsed = parseAssistantEnvelope({
+      assistant_response: {
+        content: 'Answer\n\n## 信息来源\n- [x](https://x.example)',
+        custom_components: [
+          {
+            type: 'citation_list',
+            items: [{ url: 'https://park.example', title: '官网' }],
+          },
+        ],
+      },
+    });
+    expect(parsed.citations).toEqual([
+      { url: 'https://park.example', title: '官网' },
+    ]);
+  });
 });
 
 describe('parseAssistantEnvelope next_actions and exit', () => {
