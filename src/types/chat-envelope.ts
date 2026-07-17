@@ -50,6 +50,8 @@ export interface ParsedAssistantEnvelope {
   cards: ChatJobCard[];
   /** Research citation_list custom_component items (KAZI-223). */
   citations?: import('@/lib/clinic/citation-list').CitationItem[];
+  /** web_search → research upgrade CTA (KAZI-233). */
+  upgradeCta?: import('@/lib/clinic/upgrade-cta').UpgradeCtaPayload;
   workflow?: AssistantWorkflow;
   exited?: boolean;
   exitedAgent?: string;

@@ -77,6 +77,7 @@ import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { API_BASE_URL } from "@/lib/constants";
 import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
+import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
 
 interface ClinicShellProps {
   locale: string;
@@ -148,6 +149,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     markStreamComplete,
     dismissMessageReferral,
     dismissMessageSpaceNudge,
+    dismissMessageUpgradeCta,
   } = useClinicChat(locale);
 
   const {
@@ -973,6 +975,35 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     ready: scrollReady,
   });
 
+  /** Same-thread research handoff from web_search upgrade CTA (KAZI-233). */
+  const handleUpgradeResearch = useCallback(
+    async (messageId: string) => {
+      const msg = useChatStore
+        .getState()
+        .messages.find((m) => m.id === messageId);
+      const cta = msg?.upgradeCta;
+      if (!cta || cta.dismissed) return;
+
+      const handoffText = buildResearchHandoffMessage(cta.seed, locale);
+      dismissMessageUpgradeCta(messageId);
+      pinToLatestOnSend();
+      const result = await sendClinicMessage(handoffText, {
+        pendingCapability: "research",
+      });
+      if (!result.ok && !("toastShown" in result && result.toastShown)) {
+        showToast(result.error ?? tClinic("sendFailed"), "error");
+      }
+    },
+    [
+      dismissMessageUpgradeCta,
+      locale,
+      pinToLatestOnSend,
+      sendClinicMessage,
+      showToast,
+      tClinic,
+    ]
+  );
+
   // Fills SessionNavShell `<main className="min-h-0 flex-1">` — not viewport `h-screen`.
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
@@ -1105,6 +1136,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 nextActions={msg.nextActions}
                 cards={msg.cards}
                 citations={msg.citations}
+                upgradeCta={!isAgentMode ? msg.upgradeCta : undefined}
+                pendingCapability={
+                  !isAgentMode ? msg.pendingCapability : undefined
+                }
                 locale={locale}
                 streamComplete={msg.streamComplete ?? true}
                 isStreaming={isStreaming && msg.content === ""}
@@ -1150,6 +1185,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                   msg.spaceNudge &&
                   !msg.spaceNudge.dismissed
                     ? () => handleSpaceNudgeDismiss(msg.spaceNudge!, msg.id)
+                    : undefined
+                }
+                onUpgradeResearch={
+                  !isAgentMode &&
+                  msg.upgradeCta &&
+                  !msg.upgradeCta.dismissed
+                    ? () => void handleUpgradeResearch(msg.id)
                     : undefined
                 }
                 referralDisabled={isSending || isSwitching || spaceNudgeBusy}

@@ -62,6 +62,13 @@ export interface ChatMessage {
   cards?: ChatJobCard[];
   /** Research sources from citation_list custom_component (KAZI-223). */
   citations?: import('@/lib/clinic/citation-list').CitationItem[];
+  /** web_search → research upgrade CTA (KAZI-233). */
+  upgradeCta?: import('@/lib/clinic/upgrade-cta').UpgradeCtaPayload;
+  /**
+   * Waiting-copy hint while the assistant placeholder is empty (KAZI-233).
+   * Cleared when the reply arrives.
+   */
+  pendingCapability?: 'web_search' | 'research';
   workflow?: import('./chat-envelope').AssistantWorkflow;
   streamComplete?: boolean;
 }

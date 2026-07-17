@@ -1,5 +1,6 @@
 import type { SupportedLocale } from '@/lib/constants';
 import { parseCitationList } from '@/lib/clinic/citation-list';
+import { parseUpgradeCta } from '@/lib/clinic/upgrade-cta';
 import type {
   AssistantWorkflow,
   ChatJobCard,
@@ -215,6 +216,8 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
       raw.custom_components,
   );
 
+  const upgradeCta = parseUpgradeCta(meta);
+
   return {
     reply,
     intent:
@@ -226,6 +229,7 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
     nextActions,
     cards: cards.filter((card) => card.type === 'job'),
     ...(citationList ? { citations: citationList.items } : {}),
+    ...(upgradeCta ? { upgradeCta } : {}),
     workflow,
     exited: exited || undefined,
     exitedAgent,

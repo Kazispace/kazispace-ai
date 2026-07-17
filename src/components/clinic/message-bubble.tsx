@@ -10,11 +10,13 @@ import { MarkdownContent } from "./markdown-content";
 import { MessageActions } from "./message-actions";
 import { ReferralPrompt } from "./referral-prompt";
 import { SpaceNudgePrompt } from "./space-nudge-prompt";
+import { UpgradeResearchCta } from "./upgrade-research-cta";
 import { StreamingText } from "@/components/chat/streaming-text";
 import {
   stripMarkdownSourcesSection,
   type CitationItem,
 } from "@/lib/clinic/citation-list";
+import type { UpgradeCtaPayload } from "@/lib/clinic/upgrade-cta";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
@@ -35,6 +37,9 @@ interface MessageBubbleProps {
   nextActions?: ChatNextAction[];
   cards?: ChatJobCard[];
   citations?: CitationItem[];
+  upgradeCta?: UpgradeCtaPayload;
+  /** Waiting-copy hint while placeholder is empty (KAZI-233). */
+  pendingCapability?: "web_search" | "research";
   locale?: string;
   streamComplete?: boolean;
   agentEmoji?: string;
@@ -44,6 +49,7 @@ interface MessageBubbleProps {
   onReferralDismiss?: () => void;
   onSpaceNudgeAccept?: () => void;
   onSpaceNudgeDismiss?: () => void;
+  onUpgradeResearch?: () => void;
   onNextAction?: (action: ChatNextAction) => void;
   onJobCardClick?: (card: ChatJobCard) => void;
   referralDisabled?: boolean;
@@ -66,6 +72,8 @@ export function MessageBubble({
   nextActions,
   cards,
   citations,
+  upgradeCta,
+  pendingCapability,
   locale = "en",
   streamComplete = true,
   agentEmoji,
@@ -75,6 +83,7 @@ export function MessageBubble({
   onReferralDismiss,
   onSpaceNudgeAccept,
   onSpaceNudgeDismiss,
+  onUpgradeResearch,
   onNextAction,
   onJobCardClick,
   referralDisabled,
@@ -104,6 +113,11 @@ export function MessageBubble({
   const showNextActions =
     showEnrichment && (nextActions?.length ?? 0) > 0 && onNextAction;
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
+  const showUpgradeCta =
+    showEnrichment &&
+    upgradeCta &&
+    !upgradeCta.dismissed &&
+    onUpgradeResearch;
   const showMessageActions =
     showEnrichment && Boolean(content?.trim()) && !isUser;
   const isWorkspace = surface === "workspace";
@@ -111,6 +125,13 @@ export function MessageBubble({
     showCitations && content
       ? stripMarkdownSourcesSection(content)
       : content;
+
+  const processingLabel =
+    pendingCapability === "research"
+      ? t("processingResearch")
+      : pendingCapability === "web_search"
+        ? t("processingWebSearch")
+        : t("processing");
 
   const renderAssistantContent = () => {
     // Empty or BE placeholder ("…") while waiting — show Processing… (KAZI-186).
@@ -122,7 +143,7 @@ export function MessageBubble({
             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.15s]" />
             <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.3s]" />
           </span>
-          <span>{t("processing")}</span>
+          <span>{processingLabel}</span>
         </span>
       );
     }
@@ -206,6 +227,13 @@ export function MessageBubble({
               actions={nextActions!}
               locale={locale}
               onAction={onNextAction!}
+              disabled={actionsDisabled}
+            />
+          )}
+          {showUpgradeCta && (
+            <UpgradeResearchCta
+              cta={upgradeCta!}
+              onUpgrade={onUpgradeResearch!}
               disabled={actionsDisabled}
             />
           )}

@@ -451,7 +451,13 @@
 		},
 		"retry": "Retry",
 		"processing": "Processing…",
+		"processingWebSearch": "Quick lookup…",
+		"processingResearch": "Deep research in progress — this may take a minute…",
 		"sources": "Sources",
+		"upgradeResearch": {
+			"hint": "Upgrade to a multi-source research report",
+			"cta": "Deep research"
+		},
 		"messageActions": {
 			"quote": "Quote",
 			"thumbsUp": "Helpful",

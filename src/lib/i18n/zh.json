@@ -322,7 +322,13 @@
 		},
 		"retry": "重试",
 		"processing": "处理中…",
+		"processingWebSearch": "正在快速检索…",
+		"processingResearch": "正在深度研究，请稍候…",
 		"sources": "来源",
+		"upgradeResearch": {
+			"hint": "可升级为多源深度研究报告",
+			"cta": "深入研究"
+		},
 		"messageActions": {
 			"quote": "引用",
 			"thumbsUp": "有帮助",
