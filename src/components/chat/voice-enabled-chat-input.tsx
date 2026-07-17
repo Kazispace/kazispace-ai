@@ -2,6 +2,7 @@
 
 import { ChatInput } from '@/components/chat/chat-input';
 import { useVoiceToChat } from '@/hooks/use-voice-to-chat';
+import type { ComposerInsertTarget } from '@/lib/store';
 
 /** Mirrors ChatInput `onSend` (single optional File attachment, not File[]). */
 type ChatSendHandler = (message: string, attachment?: File) => void;
@@ -18,6 +19,8 @@ interface VoiceEnabledChatInputProps {
   beforeTranscribe?: () => boolean | Promise<boolean>;
   /** POST /inputs `context_module` (e.g. `clinic`, `space:{id}`). */
   contextModule?: string;
+  /** Quote insert routing — clinic vs space (PR #126 P2). */
+  composerTarget?: ComposerInsertTarget;
 }
 
 /**
@@ -28,6 +31,7 @@ export function VoiceEnabledChatInput({
   onSend,
   beforeTranscribe,
   contextModule,
+  composerTarget,
   ...rest
 }: VoiceEnabledChatInputProps) {
   const { handleSendAudio, isTranscribing } = useVoiceToChat({
@@ -43,6 +47,7 @@ export function VoiceEnabledChatInput({
       onSendAudio={handleSendAudio}
       isTranscribing={isTranscribing}
       showMicButton
+      composerTarget={composerTarget}
     />
   );
 }

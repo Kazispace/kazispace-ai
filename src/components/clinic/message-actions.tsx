@@ -15,15 +15,20 @@ import {
   downloadMessageAsMarkdown,
   formatQuotedMessage,
 } from '@/lib/clinic/message-actions';
-import { useUIStore } from '@/lib/store';
+import { useUIStore, type ComposerInsertTarget } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 export type MessageFeedbackVote = 'up' | 'down';
 
+/** Session-local vote memory so remount after scroll keeps pressed state (PR #126 P3). */
+const feedbackVotesByMessageId = new Map<string, MessageFeedbackVote>();
+
 type MessageActionsProps = {
   content: string;
-  /** Optional id for future feedback / corpus API. */
+  /** Optional id for future feedback / corpus API + local vote persistence. */
   messageId?: string;
+  /** Which composer should receive quote inserts (clinic vs space). */
+  composerTarget: ComposerInsertTarget;
   disabled?: boolean;
   className?: string;
 };
@@ -70,13 +75,16 @@ function ActionButton({
 export function MessageActions({
   content,
   messageId,
+  composerTarget,
   disabled,
   className,
 }: MessageActionsProps) {
   const t = useTranslations('chat');
   const showToast = useUIStore((s) => s.showToast);
   const requestComposerInsert = useUIStore((s) => s.requestComposerInsert);
-  const [vote, setVote] = useState<MessageFeedbackVote | null>(null);
+  const [vote, setVote] = useState<MessageFeedbackVote | null>(() =>
+    messageId ? feedbackVotesByMessageId.get(messageId) ?? null : null,
+  );
 
   const text = content.trim();
   if (!text) return null;
@@ -84,7 +92,7 @@ export function MessageActions({
   const handleQuote = () => {
     const quoted = formatQuotedMessage(text);
     if (!quoted) return;
-    requestComposerInsert(quoted);
+    requestComposerInsert(quoted, composerTarget);
     showToast(t('messageActions.quoted'), 'info');
   };
 
@@ -92,8 +100,11 @@ export function MessageActions({
     const cleared = vote === next;
     const selected = cleared ? null : next;
     setVote(selected);
+    if (messageId) {
+      if (selected) feedbackVotesByMessageId.set(messageId, selected);
+      else feedbackVotesByMessageId.delete(messageId);
+    }
     // TODO(corpus): send { messageId, vote: selected, contentHash } to feedback API.
-    void messageId;
     if (selected === 'up') {
       showToast(t('messageActions.feedbackThanksUp'), 'info');
     } else if (selected === 'down') {

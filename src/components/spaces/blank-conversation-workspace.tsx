@@ -26,6 +26,7 @@ export function BlankConversationWorkspace({ space }: BlankConversationWorkspace
         <VoiceEnabledChatInput
           onSend={(text) => void sendMessage(text)}
           contextModule={`space:${space.id}`}
+          composerTarget="space"
           disabled={muted || isSending || !spaceSessionReady}
           placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
           showAttachButton

@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 
 import { VoiceRecordButton } from "@/components/chat/voice-record-button";
 import { formatFileSize } from "@/lib/file-utils";
-import { useUIStore } from "@/lib/store";
+import { useUIStore, type ComposerInsertTarget } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB — matches BE MAX_FILE_SIZE_BYTES
@@ -46,6 +46,11 @@ interface ChatInputProps {
   isUploading?: boolean;
   /** True while POST /inputs ASR is in flight (mic → chat). */
   isTranscribing?: boolean;
+  /**
+   * Only consume composerInsert events for this target (PR #126 P2).
+   * Omit on non-clinic/space composers so they ignore quote inserts.
+   */
+  composerTarget?: ComposerInsertTarget;
 }
 
 function isAllowedMime(mime: string): boolean {
@@ -63,6 +68,7 @@ export function ChatInput({
   showMicButton = false,
   isUploading,
   isTranscribing,
+  composerTarget,
 }: ChatInputProps) {
   const t = useTranslations("spaces");
   const [message, setMessage] = useState("");
@@ -77,6 +83,7 @@ export function ChatInput({
 
   useEffect(() => {
     if (!composerInsert) return;
+    if (!composerTarget || composerInsert.target !== composerTarget) return;
     setMessage((prev) => {
       const chunk = composerInsert.text;
       if (!prev.trim()) return chunk;
@@ -92,7 +99,7 @@ export function ChatInput({
       const end = el.value.length;
       el.setSelectionRange(end, end);
     });
-  }, [composerInsert, clearComposerInsert]);
+  }, [composerInsert, clearComposerInsert, composerTarget]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {

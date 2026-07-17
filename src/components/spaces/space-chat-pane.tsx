@@ -137,6 +137,8 @@ export function SpaceChatPane({
               status={message.status}
               locale={locale}
               variant="clinic"
+              surface="workspace"
+              composerTarget="space"
               streamComplete
               onRetry={
                 message.role === 'user' && message.status === 'failed'

@@ -343,7 +343,7 @@
 			"saveDocument": "转成文档",
 			"quoted": "已引用到输入框",
 			"feedbackThanksUp": "感谢反馈",
-			"feedbackThanksDown": "已记录，我们会改进",
+			"feedbackThanksDown": "已收到反馈",
 			"copied": "已复制",
 			"copyFailed": "复制失败",
 			"savedDocument": "已下载为 Markdown 文档",

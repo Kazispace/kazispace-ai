@@ -22,6 +22,7 @@ import {
   isSearchCapability,
   type SearchCapabilityId,
 } from "@/lib/clinic/search-capability";
+import type { ComposerInsertTarget } from "@/lib/store";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
@@ -47,6 +48,8 @@ interface MessageBubbleProps {
   playbookId?: string | null;
   /** Waiting-copy hint while placeholder is empty (KAZI-233). */
   pendingCapability?: "web_search" | "research";
+  /** Quote insert target for MessageActions (clinic vs space). */
+  composerTarget?: ComposerInsertTarget;
   locale?: string;
   streamComplete?: boolean;
   agentEmoji?: string;
@@ -83,6 +86,7 @@ export function MessageBubble({
   capabilityId,
   playbookId,
   pendingCapability,
+  composerTarget,
   locale = "en",
   streamComplete = true,
   agentEmoji,
@@ -128,7 +132,10 @@ export function MessageBubble({
     !upgradeCta.dismissed &&
     onUpgradeResearch;
   const showMessageActions =
-    showEnrichment && Boolean(content?.trim()) && !isUser;
+    showEnrichment &&
+    Boolean(content?.trim()) &&
+    !isUser &&
+    Boolean(composerTarget);
   const isWorkspace = surface === "workspace";
   const isWebSearchShortAnswer = capabilityId === "web_search";
   const showCapabilityChip =
@@ -286,10 +293,11 @@ export function MessageBubble({
             />
           )}
         </div>
-        {showMessageActions ? (
+        {showMessageActions && composerTarget ? (
           <MessageActions
             content={content}
             messageId={messageId}
+            composerTarget={composerTarget}
             disabled={actionsDisabled}
             className="px-1"
           />
