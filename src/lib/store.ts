@@ -100,6 +100,8 @@ interface UIStore {
   locale: string;
   sidebarOpen: boolean;
   toast: { message: string; type: 'error' | 'info' } | null;
+  /** Insert into active ChatInput (quote / emoji quick-reply). */
+  composerInsert: { text: string; nonce: number } | null;
   paywallModalOpen: boolean;
   paywallTrigger: PaywallTrigger | null;
   isTelegramMiniApp: boolean;
@@ -108,6 +110,8 @@ interface UIStore {
   toggleSidebar: () => void;
   showToast: (message: string, type?: 'error' | 'info') => void;
   clearToast: () => void;
+  requestComposerInsert: (text: string) => void;
+  clearComposerInsert: () => void;
   openPaywall: (trigger: PaywallTrigger) => void;
   closePaywall: () => void;
   setTelegramMiniApp: (value: boolean) => void;
@@ -118,6 +122,7 @@ export const useUIStore = create<UIStore>()((set) => ({
   locale: 'en',
   sidebarOpen: false,
   toast: null,
+  composerInsert: null,
   paywallModalOpen: false,
   paywallTrigger: null,
   isTelegramMiniApp: false,
@@ -126,6 +131,14 @@ export const useUIStore = create<UIStore>()((set) => ({
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   showToast: (message, type = 'info') => set({ toast: { message, type } }),
   clearToast: () => set({ toast: null }),
+  requestComposerInsert: (text) =>
+    set((state) => ({
+      composerInsert: {
+        text,
+        nonce: (state.composerInsert?.nonce ?? 0) + 1,
+      },
+    })),
+  clearComposerInsert: () => set({ composerInsert: null }),
   openPaywall: (trigger) => set({ paywallModalOpen: true, paywallTrigger: trigger }),
   closePaywall: () => set({ paywallModalOpen: false, paywallTrigger: null }),
   setTelegramMiniApp: (value) => set({ isTelegramMiniApp: value }),

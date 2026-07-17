@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Camera,
   FileText,
@@ -14,6 +14,7 @@ import { useTranslations } from "next-intl";
 
 import { VoiceRecordButton } from "@/components/chat/voice-record-button";
 import { formatFileSize } from "@/lib/file-utils";
+import { useUIStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB — matches BE MAX_FILE_SIZE_BYTES
@@ -69,7 +70,29 @@ export function ChatInput({
   const [attachMenuOpen, setAttachMenuOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputDisabled = disabled || isUploading || isTranscribing;
+  const composerInsert = useUIStore((s) => s.composerInsert);
+  const clearComposerInsert = useUIStore((s) => s.clearComposerInsert);
+
+  useEffect(() => {
+    if (!composerInsert) return;
+    setMessage((prev) => {
+      const chunk = composerInsert.text;
+      if (!prev.trim()) return chunk;
+      // Quote blocks already end with blank lines; emoji is a short prefix.
+      const needsGap = !prev.endsWith("\n") && !chunk.startsWith("\n");
+      return needsGap ? `${prev}\n\n${chunk}` : `${prev}${chunk}`;
+    });
+    clearComposerInsert();
+    window.requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.focus();
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    });
+  }, [composerInsert, clearComposerInsert]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -261,6 +284,7 @@ export function ChatInput({
 
           {/* Center: textarea */}
           <textarea
+            ref={textareaRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}

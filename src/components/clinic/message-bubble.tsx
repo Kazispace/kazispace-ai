@@ -7,6 +7,7 @@ import { CitationList } from "./citation-list";
 import { ChatJobTeasers } from "./chat-job-teasers";
 import { ChatNextActions } from "./chat-next-actions";
 import { MarkdownContent } from "./markdown-content";
+import { MessageActions } from "./message-actions";
 import { ReferralPrompt } from "./referral-prompt";
 import { SpaceNudgePrompt } from "./space-nudge-prompt";
 import { StreamingText } from "@/components/chat/streaming-text";
@@ -100,6 +101,8 @@ export function MessageBubble({
   const showNextActions =
     showEnrichment && (nextActions?.length ?? 0) > 0 && onNextAction;
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
+  const showMessageActions =
+    showEnrichment && Boolean(content?.trim()) && !isUser;
   const isWorkspace = surface === "workspace";
   const markdownContent =
     showCitations && content
@@ -222,6 +225,13 @@ export function MessageBubble({
             />
           )}
         </div>
+        {showMessageActions ? (
+          <MessageActions
+            content={content}
+            disabled={actionsDisabled}
+            className="px-1"
+          />
+        ) : null}
         {isFailed && onRetry && (
           <button
             type="button"

@@ -293,6 +293,18 @@
 		"retry": "Повторить",
 		"processing": "Обработка…",
 		"sources": "Источники",
+		"messageActions": {
+			"quote": "Цитировать",
+			"quickReply": "Быстрый ответ",
+			"copy": "Копировать",
+			"saveDocument": "Сохранить как документ",
+			"quoted": "Добавлено в поле ввода",
+			"emojiInserted": "Эмодзи вставлено",
+			"copied": "Скопировано",
+			"copyFailed": "Не удалось скопировать",
+			"savedDocument": "Скачано как Markdown",
+			"saveFailed": "Не удалось сохранить документ"
+		},
 		"actions": {
 			"open_list": "Смотреть рекомендации",
 			"view_job_recommendations": "Смотреть рекомендации",
