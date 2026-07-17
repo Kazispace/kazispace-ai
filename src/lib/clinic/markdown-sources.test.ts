@@ -45,4 +45,27 @@ describe('splitMarkdownSources', () => {
     expect(result.sourcesSummary).toBe('📚 共 2 个来源');
     expect(result.sourcesBody).toContain('[One](https://a.example)');
   });
+
+  it('uses the last sources heading when one appears mid-body', () => {
+    // Mid-body H2 also matches — take the last block only.
+    const midHeading = [
+      '## 说明',
+      '',
+      '前文',
+      '',
+      '## 信息来源',
+      '',
+      '仍属正文段落',
+      '',
+      '## 信息来源',
+      '📚 共 1 个来源',
+      '- [官网](https://a.example)',
+    ].join('\n');
+
+    const result = splitMarkdownSources(midHeading);
+    expect(result.body).toContain('仍属正文段落');
+    expect(result.body).toContain('## 信息来源');
+    expect(result.sourcesSummary).toBe('📚 共 1 个来源');
+    expect(result.sourcesBody).toContain('[官网](https://a.example)');
+  });
 });

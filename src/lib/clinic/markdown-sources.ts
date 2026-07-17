@@ -4,7 +4,7 @@
  */
 
 const SOURCES_HEADING_RE =
-  /(?:^|\n)##\s*(信息来源|Sources|Information sources|Источники)\s*\n/i;
+  /(?:^|\n)##\s*(信息来源|Sources|Information sources|Источники)\s*\n/gi;
 
 export type SplitMarkdownSources = {
   body: string;
@@ -14,16 +14,31 @@ export type SplitMarkdownSources = {
   sourcesSummary: string | null;
 };
 
+/** Prefer the last heading — sources belong at the end; mid-body false positives stay in body. */
+function findLastSourcesHeading(
+  text: string,
+): { index: number; match: string } | null {
+  let last: { index: number; match: string } | null = null;
+  const re = new RegExp(SOURCES_HEADING_RE.source, SOURCES_HEADING_RE.flags);
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    last = { index: m.index, match: m[0] };
+    // Avoid zero-length loops if a future pattern could match empty.
+    if (m[0].length === 0) re.lastIndex += 1;
+  }
+  return last;
+}
+
 export function splitMarkdownSources(content: string): SplitMarkdownSources {
   const text = content ?? '';
-  const match = SOURCES_HEADING_RE.exec(text);
-  if (!match || match.index == null) {
+  const hit = findLastSourcesHeading(text);
+  if (!hit) {
     return { body: text, sourcesBody: null, sourcesSummary: null };
   }
 
-  const splitAt = match[0].startsWith('\n') ? match.index + 1 : match.index;
+  const splitAt = hit.match.startsWith('\n') ? hit.index + 1 : hit.index;
   const body = text.slice(0, splitAt).trimEnd();
-  const sourcesRaw = text.slice(match.index + match[0].length).trim();
+  const sourcesRaw = text.slice(hit.index + hit.match.length).trim();
   if (!sourcesRaw) {
     return { body: body || text, sourcesBody: null, sourcesSummary: null };
   }
