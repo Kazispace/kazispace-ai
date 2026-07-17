@@ -36,25 +36,34 @@ export function useSpaceChatScroll({
   const restoredRef = useRef(false);
   const stickToBottomRef = useRef(true);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Last known scrollTop — persist on unmount even if scroll node is detached. */
+  const lastScrollTopRef = useRef(0);
 
   const updateJumpVisibility = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
+    lastScrollTopRef.current = el.scrollTop;
     const near = isNearBottom(el);
     stickToBottomRef.current = near;
     setShowJumpToLatest(!near && el.scrollHeight > el.clientHeight + 8);
   }, []);
 
-  const persistScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el || !ready) return;
-    writeSpaceChatScrollTop(spaceId, el.scrollTop);
-  }, [ready, spaceId]);
+  const persistScroll = useCallback(
+    (scrollTop?: number) => {
+      if (!ready) return;
+      const top =
+        scrollTop ??
+        scrollRef.current?.scrollTop ??
+        lastScrollTopRef.current;
+      writeSpaceChatScrollTop(spaceId, top);
+    },
+    [ready, spaceId],
+  );
 
   const handleScroll = useCallback(() => {
     updateJumpVisibility();
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(persistScroll, 120);
+    saveTimerRef.current = setTimeout(() => persistScroll(), 120);
   }, [persistScroll, updateJumpVisibility]);
 
   const jumpToLatest = useCallback(() => {
@@ -65,6 +74,9 @@ export function useSpaceChatScroll({
     setShowJumpToLatest(false);
     // Persist after smooth scroll settles
     window.setTimeout(() => {
+      if (scrollRef.current) {
+        lastScrollTopRef.current = scrollRef.current.scrollTop;
+      }
       persistScroll();
     }, 350);
   }, [persistScroll]);
@@ -73,6 +85,7 @@ export function useSpaceChatScroll({
   useEffect(() => {
     restoredRef.current = false;
     stickToBottomRef.current = true;
+    lastScrollTopRef.current = 0;
     setShowJumpToLatest(false);
   }, [spaceId]);
 
@@ -93,6 +106,7 @@ export function useSpaceChatScroll({
         scrollElementToBottom(node, 'auto');
         stickToBottomRef.current = true;
       }
+      lastScrollTopRef.current = node.scrollTop;
       restoredRef.current = true;
       updateJumpVisibility();
     };
@@ -113,13 +127,15 @@ export function useSpaceChatScroll({
     const el = scrollRef.current;
     if (!el) return;
     scrollElementToBottom(el, 'smooth');
+    lastScrollTopRef.current = el.scrollTop;
     setShowJumpToLatest(false);
   }, [messageCount, isSending, ready, updateJumpVisibility]);
 
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-      persistScroll();
+      // Prefer last known value — scroll node may already be detached on unmount.
+      persistScroll(lastScrollTopRef.current);
     };
   }, [persistScroll]);
 

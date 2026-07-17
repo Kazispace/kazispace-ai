@@ -10,7 +10,7 @@ export function spaceChatScrollStorageKey(spaceId: string): string {
 export function readSpaceChatScrollTop(spaceId: string): number | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(spaceChatScrollStorageKey(spaceId));
+    const raw = window.sessionStorage.getItem(spaceChatScrollStorageKey(spaceId));
     if (raw == null) return null;
     const n = Number(raw);
     return Number.isFinite(n) && n >= 0 ? n : null;
@@ -22,7 +22,7 @@ export function readSpaceChatScrollTop(spaceId: string): number | null {
 export function writeSpaceChatScrollTop(spaceId: string, scrollTop: number): void {
   if (typeof window === 'undefined') return;
   try {
-    sessionStorage.setItem(
+    window.sessionStorage.setItem(
       spaceChatScrollStorageKey(spaceId),
       String(Math.max(0, Math.round(scrollTop))),
     );
