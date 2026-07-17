@@ -52,6 +52,10 @@ export interface ParsedAssistantEnvelope {
   citations?: import('@/lib/clinic/citation-list').CitationItem[];
   /** web_search → research upgrade CTA (KAZI-233). */
   upgradeCta?: import('@/lib/clinic/upgrade-cta').UpgradeCtaPayload;
+  /** Search capability from meta / intent (KAZI-234). */
+  capabilityId?: import('@/lib/clinic/search-capability').SearchCapabilityId;
+  /** Vertical playbook id when BE binds one (KAZI-234; chip tooltip). */
+  playbookId?: string | null;
   workflow?: AssistantWorkflow;
   exited?: boolean;
   exitedAgent?: string;

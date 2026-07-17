@@ -1143,6 +1143,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 // Clinic-only: Agent Hub owns its own depth / tooling; do not surface
                 // L1 web_search→research Handoff CTAs while an Agent session is active.
                 upgradeCta={!isAgentMode ? msg.upgradeCta : undefined}
+                capabilityId={!isAgentMode ? msg.capabilityId : undefined}
+                playbookId={!isAgentMode ? msg.playbookId : undefined}
                 pendingCapability={
                   !isAgentMode ? msg.pendingCapability : undefined
                 }

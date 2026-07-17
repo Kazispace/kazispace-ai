@@ -241,6 +241,8 @@ export function useClinicChat(locale?: string) {
           cards,
           citations,
           upgradeCta,
+          capabilityId,
+          playbookId,
           routedToAgent,
         } = parseClinicReply(res.data);
 
@@ -272,6 +274,8 @@ export function useClinicChat(locale?: string) {
           ...(cards.length > 0 ? { cards } : {}),
           ...(citations && citations.length > 0 ? { citations } : {}),
           ...(upgradeCta ? { upgradeCta } : {}),
+          ...(capabilityId ? { capabilityId } : {}),
+          ...(playbookId !== undefined ? { playbookId } : {}),
           pendingCapability: undefined,
           streamComplete: false,
         });
