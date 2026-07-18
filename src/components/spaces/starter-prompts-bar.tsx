@@ -108,7 +108,7 @@ export function StarterPromptsBar({
       </div>
 
       {cfg.capabilities.length > 0 ? (
-        <div className="-mx-0.5 mb-2 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5">
+        <div className="mb-2.5 flex w-full gap-2">
           {cfg.capabilities.map((cap) => (
             <button
               key={cap.id}
@@ -119,38 +119,38 @@ export function StarterPromptsBar({
                 requestComposerInsert(t(cap.insertTextKey), 'space', 'replace')
               }
               className={cn(
-                'shrink-0 rounded border border-gray-200 bg-white px-2.5 py-1',
-                'text-[11px] text-[#1D2129] transition-colors',
-                'hover:border-kazi-orange hover:bg-white hover:text-kazi-orange',
+                'min-w-0 flex-1 rounded-md border border-gray-200/90 bg-white px-2 py-1.5',
+                'text-center text-[11px] leading-tight text-[#1D2129] transition-colors',
+                'hover:border-kazi-orange hover:text-kazi-orange',
                 'disabled:opacity-50'
               )}
             >
-              {t(cap.labelKey)}
+              <span className="block truncate">{t(cap.labelKey)}</span>
             </button>
           ))}
         </div>
       ) : null}
 
       {cfg.examples.length > 0 ? (
-        <div className="space-y-1">
-          <p className="text-[11px] font-medium text-[#86909C]">
+        <div>
+          <p className="mb-1.5 text-[11px] font-medium text-[#86909C]">
             {t('starter.examplesHeading')}
           </p>
-          <ul className="space-y-1">
+          <ul className="flex flex-wrap gap-1.5">
             {cfg.examples.map((ex) => (
-              <li key={ex.id}>
+              <li key={ex.id} className="min-w-0 flex-[1_1_14rem] max-w-full">
                 <button
                   type="button"
                   disabled={disabled}
                   onClick={() => onSendExample(t(ex.promptKey))}
                   className={cn(
-                    'w-full rounded-md border border-transparent px-2 py-1.5 text-left',
-                    'text-[12px] leading-snug text-[#4E5969]',
-                    'transition-colors hover:border-gray-200 hover:bg-white hover:text-[#1D2129]',
+                    'h-full w-full rounded-md border border-gray-200/90 bg-white px-2.5 py-1.5',
+                    'text-left text-[11px] leading-snug text-[#4E5969]',
+                    'transition-colors hover:border-kazi-orange/50 hover:text-[#1D2129]',
                     'disabled:opacity-50'
                   )}
                 >
-                  <span className="line-clamp-2">“{t(ex.promptKey)}”</span>
+                  <span className="line-clamp-2">{t(ex.promptKey)}</span>
                 </button>
               </li>
             ))}
