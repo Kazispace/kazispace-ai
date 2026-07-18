@@ -21,7 +21,10 @@ export interface StarterCapabilityDef {
 
 export interface StarterExampleDef {
   id: string;
+  /** Full prompt sent on click */
   promptKey: string;
+  /** Compact label above composer (Doubao-style); falls back to promptKey */
+  shortLabelKey?: string;
   /** Same as capability chips — validation / analytics only; not FE routing. */
   capability_id?: string;
   /** P1 reserved: strong playbook bind on `/turn` (ignored in MVP). */

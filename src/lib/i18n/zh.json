@@ -298,8 +298,11 @@
 				},
 				"examples": {
 					"transformer": "用大白话解释 Transformer 的工作原理，假设我只有高中数学基础。",
+					"transformerShort": "解释 Transformer",
 					"email": "帮我写一封商务邮件，说明项目延期并致歉，语气专业礼貌。",
-					"translatePaste": "翻译下面这段英文为中文，保持专业术语准确：\n\n"
+					"emailShort": "写延期致歉邮件",
+					"translatePaste": "翻译下面这段英文为中文，保持专业术语准确：\n\n",
+					"translatePasteShort": "英译中（术语准确）"
 				}
 			},
 			"job": {
@@ -332,8 +335,11 @@
 				},
 				"examples": {
 					"optimizeCv": "帮我优化这份 IT specialist 简历，目标中级后端岗，突出项目量化结果：\n\n",
+					"optimizeCvShort": "优化后端简历",
 					"mockInterview": "模拟一场 senior backend 技术面试，你当面试官，先问系统设计。",
-					"matchRoles": "根据我的背景，帮我筛选 3 个更匹配的岗位方向并说明理由。"
+					"mockInterviewShort": "模拟技术面试",
+					"matchRoles": "根据我的背景，帮我筛选 3 个更匹配的岗位方向并说明理由。",
+					"matchRolesShort": "匹配岗位方向"
 				}
 			},
 			"ielts": {
@@ -366,8 +372,11 @@
 				},
 				"examples": {
 					"speakingPart2": "我当考生，你当雅思口语考官，Part 2 随机抽题，结束后按四维打分。",
+					"speakingPart2Short": "口语 Part 2 模考",
 					"task2": "批改这篇 Task 2 作文并给出升分改写：\n\n",
-					"eightWeek": "帮我制定 8 周雅思备考计划，每周可投入 10 小时，目标 7.0。"
+					"task2Short": "批改 Task 2",
+					"eightWeek": "帮我制定 8 周雅思备考计划，每周可投入 10 小时，目标 7.0。",
+					"eightWeekShort": "8 周备考计划"
 				}
 			}
 		},

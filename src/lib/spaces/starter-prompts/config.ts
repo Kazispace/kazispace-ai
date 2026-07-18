@@ -60,18 +60,21 @@ const BLANK: SpaceStarterConfig = {
     {
       id: 'transformer',
       promptKey: 'starter.blank.examples.transformer',
+      shortLabelKey: 'starter.blank.examples.transformerShort',
       capability_id: 'generic_chat',
       priority: 10,
     },
     {
       id: 'email',
       promptKey: 'starter.blank.examples.email',
+      shortLabelKey: 'starter.blank.examples.emailShort',
       capability_id: 'generic_chat',
       priority: 20,
     },
     {
       id: 'translatePaste',
       promptKey: 'starter.blank.examples.translatePaste',
+      shortLabelKey: 'starter.blank.examples.translatePasteShort',
       capability_id: 'generic_chat',
       priority: 30,
     },
@@ -126,18 +129,21 @@ const JOB: SpaceStarterConfig = {
     {
       id: 'optimizeCv',
       promptKey: 'starter.job.examples.optimizeCv',
+      shortLabelKey: 'starter.job.examples.optimizeCvShort',
       capability_id: 'cv_builder',
       priority: 10,
     },
     {
       id: 'mockInterview',
       promptKey: 'starter.job.examples.mockInterview',
+      shortLabelKey: 'starter.job.examples.mockInterviewShort',
       capability_id: 'mock_interview',
       priority: 20,
     },
     {
       id: 'matchRoles',
       promptKey: 'starter.job.examples.matchRoles',
+      shortLabelKey: 'starter.job.examples.matchRolesShort',
       capability_id: 'job_search',
       priority: 30,
     },
@@ -192,18 +198,21 @@ const IELTS: SpaceStarterConfig = {
     {
       id: 'speakingPart2',
       promptKey: 'starter.ielts.examples.speakingPart2',
+      shortLabelKey: 'starter.ielts.examples.speakingPart2Short',
       capability_id: 'english_tutor',
       priority: 10,
     },
     {
       id: 'task2',
       promptKey: 'starter.ielts.examples.task2',
+      shortLabelKey: 'starter.ielts.examples.task2Short',
       capability_id: 'english_tutor',
       priority: 20,
     },
     {
       id: 'eightWeek',
       promptKey: 'starter.ielts.examples.eightWeek',
+      shortLabelKey: 'starter.ielts.examples.eightWeekShort',
       capability_id: 'english_tutor',
       priority: 30,
     },
@@ -251,6 +260,14 @@ export function assertStarterAllowlist(
     if (!allow.has(id)) {
       throw new Error(
         `[starter-prompts] ${templateId}: capability_id "${id}" not in allowlist [${Array.from(allow).join(', ')}]`
+      );
+    }
+  }
+
+  for (const ex of cfg.examples) {
+    if (!ex.shortLabelKey) {
+      console.warn(
+        `[starter-prompts] ${templateId}: example "${ex.id}" missing shortLabelKey (falls back to promptKey)`
       );
     }
   }

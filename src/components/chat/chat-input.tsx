@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Camera,
   FileText,
@@ -51,6 +51,13 @@ interface ChatInputProps {
    * Omit on non-clinic/space composers so they ignore quote inserts.
    */
   composerTarget?: ComposerInsertTarget;
+  /**
+   * `bar` — full-bleed clinic/space footer (default).
+   * `card` — Doubao-style framed card; pair with outer max-w column.
+   */
+  variant?: "bar" | "card";
+  /** Extra row inside the card (e.g. capability chips). Only used with `card`. */
+  toolbar?: ReactNode;
 }
 
 function isAllowedMime(mime: string): boolean {
@@ -69,6 +76,8 @@ export function ChatInput({
   isUploading,
   isTranscribing,
   composerTarget,
+  variant = "bar",
+  toolbar,
 }: ChatInputProps) {
   const t = useTranslations("spaces");
   const [message, setMessage] = useState("");
@@ -165,12 +174,178 @@ export function ChatInput({
 
   const hasContent = message.trim() || attachment;
   const showPlus = showAttachButton || (showAgentButton && onOpenAgents);
+  const isCard = variant === "card";
+
+  const openAttachOrAgents = () => {
+    if (showAttachButton) {
+      setAttachMenuOpen(!attachMenuOpen);
+      setFileError(null);
+    } else if (onOpenAgents) {
+      onOpenAgents();
+    }
+  };
+
+  const plusButton = showPlus ? (
+    <button
+      type="button"
+      onClick={openAttachOrAgents}
+      disabled={inputDisabled}
+      className={cn(
+        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#86909C]",
+        "hover:bg-gray-200/60 hover:text-[#1D2129] transition-colors",
+        "disabled:cursor-not-allowed disabled:opacity-50"
+      )}
+      aria-label={t("attachFile")}
+    >
+      <Plus
+        className={cn(
+          "h-[18px] w-[18px] transition-transform",
+          attachMenuOpen && "rotate-45"
+        )}
+      />
+    </button>
+  ) : null;
+
+  const sendOrMic = (
+    <>
+      {showMicButton && !hasContent && onSendAudio ? (
+        isTranscribing ? (
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center text-kazi-orange"
+            aria-label={t("voiceTranscribing")}
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        ) : (
+          <VoiceRecordButton
+            onRecordComplete={onSendAudio}
+            disabled={inputDisabled}
+          />
+        )
+      ) : (
+        <button
+          type="submit"
+          disabled={!hasContent || inputDisabled}
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
+            hasContent && !inputDisabled
+              ? "bg-kazi-orange text-white hover:bg-kazi-orange/90"
+              : "text-[#C9CDD4] cursor-not-allowed"
+          )}
+        >
+          {isUploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+        </button>
+      )}
+    </>
+  );
+
+  const textarea = (
+    <textarea
+      ref={textareaRef}
+      value={message}
+      onChange={(e) => setMessage(e.target.value)}
+      onKeyDown={handleKeyDown}
+      placeholder={
+        isTranscribing
+          ? t("voiceTranscribing")
+          : isUploading
+            ? t("uploading")
+            : placeholder || "Ask Kazi anything..."
+      }
+      disabled={inputDisabled}
+      rows={1}
+      className={cn(
+        "min-h-[36px] max-h-32 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5",
+        "placeholder:text-[#86909C] focus:outline-none",
+        "disabled:cursor-not-allowed"
+      )}
+    />
+  );
+
+  const openFilePicker = (opts: {
+    accept: string;
+    capture?: boolean;
+  }) => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.accept = opts.accept;
+    if (opts.capture) {
+      fileInputRef.current.setAttribute("capture", "environment");
+    } else {
+      fileInputRef.current.removeAttribute("capture");
+    }
+    fileInputRef.current.click();
+    setAttachMenuOpen(false);
+  };
+
+  const attachMenu = attachMenuOpen ? (
+    <>
+      <button
+        type="button"
+        className="fixed inset-0 z-40"
+        onClick={() => setAttachMenuOpen(false)}
+        aria-label="Close menu"
+      />
+      <div
+        className={cn(
+          "z-50 rounded-xl border border-gray-200 bg-white p-1 shadow-lg",
+          isCard
+            ? "absolute bottom-full left-0 mb-1.5 w-56"
+            : "relative mx-4 mt-2"
+        )}
+      >
+        <button
+          type="button"
+          onClick={() =>
+            openFilePicker({ accept: "image/jpeg,image/png" })
+          }
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
+        >
+          <ImageIcon className="h-5 w-5 text-green-500" />
+          {t("attachPhoto")}
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            openFilePicker({
+              accept:
+                "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            })
+          }
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
+        >
+          <FileText className="h-5 w-5 text-blue-500" />
+          {t("attachDocument")}
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            openFilePicker({
+              accept: "image/jpeg,image/png",
+              capture: true,
+            })
+          }
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
+        >
+          <Camera className="h-5 w-5 text-orange-500" />
+          {t("attachCamera")}
+        </button>
+      </div>
+    </>
+  ) : null;
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border-t border-gray-200/80">
-      {/* Attachment preview — above the input box */}
+    <form
+      onSubmit={handleSubmit}
+      className={cn(
+        isCard ? "bg-transparent" : "border-t border-gray-200/80 bg-white"
+      )}
+    >
       {attachment && (
-        <div className="flex items-center gap-3 px-4 pt-3">
+        <div className={cn("flex items-center gap-3 pt-3", isCard ? "px-1" : "px-4")}>
           <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
             <FileText className="h-4 w-4 shrink-0 text-[#86909C]" />
             <span className="max-w-[180px] truncate text-[#1D2129]">
@@ -195,69 +370,13 @@ export function ChatInput({
         </div>
       )}
 
-      {/* File error */}
       {fileError && (
-        <div className="px-4 pt-2">
+        <div className={cn("pt-2", isCard ? "px-1" : "px-4")}>
           <p className="text-xs text-red-500">{fileError}</p>
         </div>
       )}
 
-      {/* Attach menu popover */}
-      {attachMenuOpen && (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-40"
-            onClick={() => setAttachMenuOpen(false)}
-            aria-label="Close menu"
-          />
-          <div className="relative z-50 mx-4 mt-2 rounded-xl border border-gray-200 bg-white p-1 shadow-lg">
-            <button
-              type="button"
-              onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.accept = "image/jpeg,image/png";
-                  fileInputRef.current.removeAttribute("capture");
-                  fileInputRef.current.click();
-                }
-              }}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
-            >
-              <ImageIcon className="h-5 w-5 text-green-500" />
-              {t("attachPhoto")}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.accept =
-                    "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-                  fileInputRef.current.removeAttribute("capture");
-                  fileInputRef.current.click();
-                }
-              }}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
-            >
-              <FileText className="h-5 w-5 text-blue-500" />
-              {t("attachDocument")}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.accept = "image/jpeg,image/png";
-                  fileInputRef.current.setAttribute("capture", "environment");
-                  fileInputRef.current.click();
-                }
-              }}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
-            >
-              <Camera className="h-5 w-5 text-orange-500" />
-              {t("attachCamera")}
-            </button>
-          </div>
-        </>
-      )}
+      {!isCard && attachMenu}
 
       <input
         ref={fileInputRef}
@@ -268,96 +387,51 @@ export function ChatInput({
         tabIndex={-1}
       />
 
-      {/* ── Unified input bar: [+] textarea [mic|send] ── */}
-      <div className="p-3">
+      {isCard ? (
         <div
           className={cn(
-            "flex items-end gap-1 rounded-2xl border bg-gray-50 px-2 py-1.5 transition-colors",
-            "focus-within:border-kazi-orange focus-within:bg-white",
-            inputDisabled ? "opacity-50" : "border-gray-200"
+            "rounded-2xl border border-[#D0E3FF]/90 bg-white",
+            "shadow-[0_0_0_1px_rgba(208,227,255,0.35),0_8px_24px_-12px_rgba(15,23,42,0.18)]",
+            "transition-shadow focus-within:border-kazi-orange/50 focus-within:shadow-[0_0_0_1px_rgba(244,121,32,0.25),0_8px_24px_-12px_rgba(244,121,32,0.2)]",
+            inputDisabled && "opacity-50"
           )}
         >
-          {/* Left: "+" inside the box */}
-          {showPlus && (
-            <button
-              type="button"
-              onClick={() => {
-                if (showAttachButton) {
-                  setAttachMenuOpen(!attachMenuOpen);
-                  setFileError(null);
-                } else if (onOpenAgents) {
-                  onOpenAgents();
-                }
-              }}
-              disabled={inputDisabled}
-              className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#86909C]",
-                "hover:bg-gray-200/60 hover:text-[#1D2129] transition-colors",
-                "disabled:cursor-not-allowed disabled:opacity-50"
-              )}
-              aria-label={t("attachFile")}
-            >
-              <Plus className={cn("h-[18px] w-[18px] transition-transform", attachMenuOpen && "rotate-45")} />
-            </button>
-          )}
-
-          {/* Center: textarea */}
-          <textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={
-              isTranscribing
-                ? t("voiceTranscribing")
-                : isUploading
-                  ? t("uploading")
-                  : placeholder || "Ask Kazi anything..."
-            }
-            disabled={inputDisabled}
-            rows={1}
-            className={cn(
-              "min-h-[36px] max-h-32 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5",
-              "placeholder:text-[#86909C] focus:outline-none",
-              "disabled:cursor-not-allowed"
-            )}
-          />
-
-          {/* Right: mic or send — inside the box */}
-          {showMicButton && !hasContent && onSendAudio ? (
-            isTranscribing ? (
+          <div className="flex items-end gap-1 px-3 pt-3 pb-1">
+            {textarea}
+            {sendOrMic}
+          </div>
+          <div className="relative flex items-center gap-1.5 px-2 pb-2.5 pt-1">
+            {plusButton}
+            {attachMenu}
+            {toolbar ? (
               <div
-                className="flex h-8 w-8 shrink-0 items-center justify-center text-kazi-orange"
-                aria-label={t("voiceTranscribing")}
+                className={cn(
+                  "min-w-0 flex-1 overflow-x-auto",
+                  "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                )}
               >
-                <Loader2 className="h-4 w-4 animate-spin" />
+                {toolbar}
               </div>
             ) : (
-              <VoiceRecordButton
-                onRecordComplete={onSendAudio}
-                disabled={inputDisabled}
-              />
-            )
-          ) : (
-            <button
-              type="submit"
-              disabled={!hasContent || inputDisabled}
-              className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
-                hasContent && !inputDisabled
-                  ? "bg-kazi-orange text-white hover:bg-kazi-orange/90"
-                  : "text-[#C9CDD4] cursor-not-allowed"
-              )}
-            >
-              {isUploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </button>
-          )}
+              <div className="flex-1" />
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="p-3">
+          <div
+            className={cn(
+              "flex items-end gap-1 rounded-2xl border bg-gray-50 px-2 py-1.5 transition-colors",
+              "focus-within:border-kazi-orange focus-within:bg-white",
+              inputDisabled ? "opacity-50" : "border-gray-200"
+            )}
+          >
+            {plusButton}
+            {textarea}
+            {sendOrMic}
+          </div>
+        </div>
+      )}
     </form>
   );
 }

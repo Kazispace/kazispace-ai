@@ -1,5 +1,7 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 import { ChatInput } from '@/components/chat/chat-input';
 import { useVoiceToChat } from '@/hooks/use-voice-to-chat';
 import type { ComposerInsertTarget } from '@/lib/store';
@@ -21,6 +23,8 @@ interface VoiceEnabledChatInputProps {
   contextModule?: string;
   /** Quote insert routing — clinic vs space (PR #126 P2). */
   composerTarget?: ComposerInsertTarget;
+  variant?: 'bar' | 'card';
+  toolbar?: ReactNode;
 }
 
 /**
