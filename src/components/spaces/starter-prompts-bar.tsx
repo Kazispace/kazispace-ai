@@ -122,7 +122,7 @@ export function StarterExampleStrip({
         aria-controls={panelId}
         onClick={() => onToggleCollapsed(false)}
         className={cn(
-          'group flex w-full items-center justify-between gap-2 rounded-xl',
+          'group flex w-full items-center justify-between gap-2 rounded-full',
           'border border-[#E5E6EB]/80 bg-white/70 px-3 py-1.5',
           'text-left text-[12px] text-[#4E5969]',
           'transition-colors hover:border-kazi-orange/35 hover:text-[#1D2129]',
@@ -179,34 +179,5 @@ export function StarterExampleStrip({
         ))}
       </div>
     </div>
-  );
-}
-
-/**
- * @deprecated Prefer SpaceComposerWithStarter Doubao layout.
- * Kept for any residual imports during transition.
- */
-export function StarterPromptsBar(props: {
-  spaceId: string;
-  templateId: string;
-  hasUserMessage: boolean;
-  disabled?: boolean;
-  onSendExample: (text: string) => void;
-}) {
-  const ctrl = useStarterPromptsController(
-    props.spaceId,
-    props.templateId,
-    props.hasUserMessage
-  );
-  if (!ctrl?.hydrated) return null;
-  return (
-    <StarterExampleStrip
-      cfg={ctrl.cfg}
-      panelId={ctrl.panelId}
-      collapsed={ctrl.examplesCollapsed}
-      disabled={props.disabled}
-      onToggleCollapsed={ctrl.setExamplesCollapsed}
-      onSendExample={props.onSendExample}
-    />
   );
 }

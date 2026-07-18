@@ -266,6 +266,77 @@ export function ChatInput({
     />
   );
 
+  const openFilePicker = (opts: {
+    accept: string;
+    capture?: boolean;
+  }) => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.accept = opts.accept;
+    if (opts.capture) {
+      fileInputRef.current.setAttribute("capture", "environment");
+    } else {
+      fileInputRef.current.removeAttribute("capture");
+    }
+    fileInputRef.current.click();
+    setAttachMenuOpen(false);
+  };
+
+  const attachMenu = attachMenuOpen ? (
+    <>
+      <button
+        type="button"
+        className="fixed inset-0 z-40"
+        onClick={() => setAttachMenuOpen(false)}
+        aria-label="Close menu"
+      />
+      <div
+        className={cn(
+          "z-50 rounded-xl border border-gray-200 bg-white p-1 shadow-lg",
+          isCard
+            ? "absolute bottom-full left-0 mb-1.5 w-56"
+            : "relative mx-4 mt-2"
+        )}
+      >
+        <button
+          type="button"
+          onClick={() =>
+            openFilePicker({ accept: "image/jpeg,image/png" })
+          }
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
+        >
+          <ImageIcon className="h-5 w-5 text-green-500" />
+          {t("attachPhoto")}
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            openFilePicker({
+              accept:
+                "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            })
+          }
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
+        >
+          <FileText className="h-5 w-5 text-blue-500" />
+          {t("attachDocument")}
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            openFilePicker({
+              accept: "image/jpeg,image/png",
+              capture: true,
+            })
+          }
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
+        >
+          <Camera className="h-5 w-5 text-orange-500" />
+          {t("attachCamera")}
+        </button>
+      </div>
+    </>
+  ) : null;
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -305,66 +376,7 @@ export function ChatInput({
         </div>
       )}
 
-      {attachMenuOpen && (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-40"
-            onClick={() => setAttachMenuOpen(false)}
-            aria-label="Close menu"
-          />
-          <div
-            className={cn(
-              "relative z-50 mt-2 rounded-xl border border-gray-200 bg-white p-1 shadow-lg",
-              isCard ? "mx-1" : "mx-4"
-            )}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.accept = "image/jpeg,image/png";
-                  fileInputRef.current.removeAttribute("capture");
-                  fileInputRef.current.click();
-                }
-              }}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
-            >
-              <ImageIcon className="h-5 w-5 text-green-500" />
-              {t("attachPhoto")}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.accept =
-                    "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-                  fileInputRef.current.removeAttribute("capture");
-                  fileInputRef.current.click();
-                }
-              }}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
-            >
-              <FileText className="h-5 w-5 text-blue-500" />
-              {t("attachDocument")}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (fileInputRef.current) {
-                  fileInputRef.current.accept = "image/jpeg,image/png";
-                  fileInputRef.current.setAttribute("capture", "environment");
-                  fileInputRef.current.click();
-                }
-              }}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
-            >
-              <Camera className="h-5 w-5 text-orange-500" />
-              {t("attachCamera")}
-            </button>
-          </div>
-        </>
-      )}
+      {!isCard && attachMenu}
 
       <input
         ref={fileInputRef}
@@ -388,10 +400,18 @@ export function ChatInput({
             {textarea}
             {sendOrMic}
           </div>
-          <div className="flex items-center gap-1.5 px-2 pb-2.5 pt-1">
+          <div className="relative flex items-center gap-1.5 px-2 pb-2.5 pt-1">
             {plusButton}
+            {attachMenu}
             {toolbar ? (
-              <div className="min-w-0 flex-1 overflow-x-auto">{toolbar}</div>
+              <div
+                className={cn(
+                  "min-w-0 flex-1 overflow-x-auto",
+                  "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                )}
+              >
+                {toolbar}
+              </div>
             ) : (
               <div className="flex-1" />
             )}

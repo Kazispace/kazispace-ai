@@ -263,6 +263,14 @@ export function assertStarterAllowlist(
       );
     }
   }
+
+  for (const ex of cfg.examples) {
+    if (!ex.shortLabelKey) {
+      console.warn(
+        `[starter-prompts] ${templateId}: example "${ex.id}" missing shortLabelKey (falls back to promptKey)`
+      );
+    }
+  }
 }
 
 /**
