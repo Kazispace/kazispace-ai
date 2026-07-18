@@ -14,6 +14,7 @@ import {
   shouldHideClinicStarterForQuickReplies,
   writeClinicStarterCollapsed,
 } from '@/lib/clinic/starter-prompts/config';
+import type { SpaceStarterConfig } from '@/lib/spaces/starter-prompts/types';
 import { readCachedMasterSessionId } from '@/lib/master-session';
 import { useChatStore } from '@/lib/store';
 
@@ -61,7 +62,7 @@ export function ClinicStarterCapabilityToolbar({
   cfg,
   disabled,
 }: {
-  cfg: NonNullable<ReturnType<typeof resolveClinicStarterConfig>>;
+  cfg: SpaceStarterConfig;
   disabled?: boolean;
 }) {
   return (
@@ -82,7 +83,7 @@ export function ClinicStarterExampleStrip({
   onToggleCollapsed,
   onSendExample,
 }: {
-  cfg: NonNullable<ReturnType<typeof resolveClinicStarterConfig>>;
+  cfg: SpaceStarterConfig;
   panelId: string;
   collapsed: boolean;
   disabled?: boolean;

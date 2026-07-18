@@ -462,7 +462,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       ? AGENT_QUICK_REPLIES[activeAgentId]?.[locale as SupportedLocale] ?? []
       : [];
 
-  /** Clinic-layer NBA strip (Phase B mutex). Agent Hub keeps its own QR above. */
+  // Phase B: clinic-layer NBA options for Starter mutex (PRD §3.4.2).
+  // TODO(KAZI-258): populate from clinic next_actions / NBA when BE exposes them
+  // on the outpatient layer. Agent Hub QR stays AgentMode-only (below) — never
+  // co-rendered with Clinic Starter (`showClinicStarter` requires !isAgentMode).
   const clinicNbaOptions: string[] = [];
   const hasClinicUserMessage = clinicMessages.some((m) => m.role === "user");
   const clinicStarter = useClinicStarterPromptsController(hasClinicUserMessage);
@@ -474,7 +477,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const showClinicQuickReplies =
     !isAgentMode && clinicNbaOptions.length > 0;
   const clinicInputDisabled =
-    isSending || isSwitching || isSwitchingSession;
+    isSending || isSwitching || isSwitchingSession || historyReadOnly;
 
   useEffect(() => {
     setEnglishLevelState(getEnglishLevel());
