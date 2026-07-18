@@ -70,9 +70,9 @@ export function StarterPromptsBar({
           aria-controls={panelId}
           onClick={() => setCollapsedPersist(false)}
           className={cn(
-            'flex w-full items-center justify-between gap-2 rounded-md border border-gray-200',
-            'bg-white px-3 py-1.5 text-left text-[12px] text-[#4E5969]',
-            'transition-colors hover:border-kazi-orange/40 hover:text-[#1D2129]',
+            'flex w-full items-center justify-between gap-2 rounded-md border border-gray-200/80',
+            'bg-white/45 px-3 py-1.5 text-left text-[12px] text-[#4E5969]',
+            'backdrop-blur-[2px] transition-colors hover:border-kazi-orange/40 hover:bg-white/60 hover:text-[#1D2129]',
             'disabled:opacity-50'
           )}
         >
@@ -88,9 +88,9 @@ export function StarterPromptsBar({
       id={panelId}
       role="region"
       aria-label={t('starter.regionLabel')}
-      className="bg-gray-bg px-3 pb-1.5 pt-1"
+      className="bg-gray-bg px-3 pb-1 pt-0.5"
     >
-      <div className="mb-1.5 flex items-center justify-between gap-2">
+      <div className="mb-1 flex items-center justify-between gap-2">
         <p className="text-[11px] font-medium text-[#86909C]">
           {t('starter.capabilitiesHeading')}
         </p>
@@ -108,7 +108,12 @@ export function StarterPromptsBar({
       </div>
 
       {cfg.capabilities.length > 0 ? (
-        <div className="mb-2.5 flex w-full gap-2">
+        <div
+          className={cn(
+            'flex w-full gap-1.5',
+            cfg.examples.length > 0 ? 'mb-1.5' : null
+          )}
+        >
           {cfg.capabilities.map((cap) => (
             <button
               key={cap.id}
@@ -119,9 +124,10 @@ export function StarterPromptsBar({
                 requestComposerInsert(t(cap.insertTextKey), 'space', 'replace')
               }
               className={cn(
-                'min-w-0 flex-1 rounded-md border border-gray-200/90 bg-white px-2 py-1.5',
-                'text-center text-[11px] leading-tight text-[#1D2129] transition-colors',
-                'hover:border-kazi-orange hover:text-kazi-orange',
+                'min-w-0 flex-1 rounded-md border border-gray-200/70 bg-white/45 px-2 py-1.5',
+                'text-center text-[11px] leading-tight text-[#1D2129]',
+                'backdrop-blur-[2px] transition-colors',
+                'hover:border-kazi-orange hover:bg-white/65 hover:text-kazi-orange',
                 'disabled:opacity-50'
               )}
             >
@@ -132,30 +138,26 @@ export function StarterPromptsBar({
       ) : null}
 
       {cfg.examples.length > 0 ? (
-        <div>
-          <p className="mb-1.5 text-[11px] font-medium text-[#86909C]">
-            {t('starter.examplesHeading')}
-          </p>
-          <ul className="flex flex-wrap gap-1.5">
-            {cfg.examples.map((ex) => (
-              <li key={ex.id} className="min-w-0 flex-[1_1_14rem] max-w-full">
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => onSendExample(t(ex.promptKey))}
-                  className={cn(
-                    'h-full w-full rounded-md border border-gray-200/90 bg-white px-2.5 py-1.5',
-                    'text-left text-[11px] leading-snug text-[#4E5969]',
-                    'transition-colors hover:border-kazi-orange/50 hover:text-[#1D2129]',
-                    'disabled:opacity-50'
-                  )}
-                >
-                  <span className="line-clamp-2">{t(ex.promptKey)}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ul className="flex flex-wrap gap-1.5">
+          {cfg.examples.map((ex) => (
+            <li key={ex.id} className="min-w-0 flex-[1_1_14rem] max-w-full">
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onSendExample(t(ex.promptKey))}
+                className={cn(
+                  'h-full w-full rounded-md border border-gray-200/70 bg-white/45 px-2.5 py-1.5',
+                  'text-left text-[11px] leading-snug text-[#4E5969]',
+                  'backdrop-blur-[2px] transition-colors',
+                  'hover:border-kazi-orange/50 hover:bg-white/65 hover:text-[#1D2129]',
+                  'disabled:opacity-50'
+                )}
+              >
+                <span className="line-clamp-2">{t(ex.promptKey)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
       ) : null}
     </div>
   );
