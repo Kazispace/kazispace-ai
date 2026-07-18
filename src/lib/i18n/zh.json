@@ -261,6 +261,115 @@
 		"composerPlaceholder": "输入消息…",
 		"composerMuted": "此空间已归档或在回收站中——恢复后可继续对话。",
 		"scrollToLatest": "跳转到最新消息",
+		"starter": {
+			"regionLabel": "推荐提问",
+			"capabilitiesHeading": "常用能力",
+			"examplesHeading": "你可以试试",
+			"tryThese": "试试这些",
+			"collapse": "收起",
+			"blank": {
+				"caps": {
+					"ask": {
+						"label": "自由提问",
+						"insert": "我想问：",
+						"desc": "开放式自由对话"
+					},
+					"translate": {
+						"label": "翻译润色",
+						"insert": "请翻译以下内容，并保持专业术语准确：\n\n",
+						"desc": "翻译与润色"
+					},
+					"write": {
+						"label": "写作助手",
+						"insert": "帮我写",
+						"desc": "邮件、文案或笔记"
+					},
+					"brainstorm": {
+						"label": "头脑风暴",
+						"insert": "帮我头脑风暴：",
+						"desc": "发散想法与选项"
+					},
+					"explain": {
+						"label": "解释概念",
+						"insert": "用大白话解释：",
+						"desc": "通俗讲解"
+					}
+				},
+				"examples": {
+					"transformer": "用大白话解释 Transformer 的工作原理，假设我只有高中数学基础。",
+					"email": "帮我写一封商务邮件，说明项目延期并致歉，语气专业礼貌。",
+					"translatePaste": "翻译下面这段英文为中文，保持专业术语准确：\n\n"
+				}
+			},
+			"job": {
+				"caps": {
+					"cv": {
+						"label": "优化简历",
+						"insert": "帮我优化简历，目标岗位是",
+						"desc": "简历结构与措辞"
+					},
+					"cover": {
+						"label": "写求职信",
+						"insert": "帮我写一封求职信，应聘",
+						"desc": "Cover letter"
+					},
+					"interview": {
+						"label": "模拟面试",
+						"insert": "模拟一场面试，岗位是",
+						"desc": "面试练习"
+					},
+					"salary": {
+						"label": "谈薪准备",
+						"insert": "帮我准备谈薪话术，岗位是",
+						"desc": "面试场景下的谈薪演练"
+					},
+					"match": {
+						"label": "职位匹配",
+						"insert": "根据我的背景，帮我匹配岗位方向：",
+						"desc": "岗位匹配"
+					}
+				},
+				"examples": {
+					"optimizeCv": "帮我优化这份 IT specialist 简历，目标中级后端岗，突出项目量化结果：\n\n",
+					"mockInterview": "模拟一场 senior backend 技术面试，你当面试官，先问系统设计。",
+					"matchRoles": "根据我的背景，帮我筛选 3 个更匹配的岗位方向并说明理由。"
+				}
+			},
+			"ielts": {
+				"caps": {
+					"speaking": {
+						"label": "口语练习",
+						"insert": "我们练习雅思口语，你当考官，从 Part ",
+						"desc": "口语考试练习"
+					},
+					"writing": {
+						"label": "写作批改",
+						"insert": "请批改这篇雅思 Task 2 作文并给出升分改写：\n\n",
+						"desc": "写作批改"
+					},
+					"plan": {
+						"label": "备考规划",
+						"insert": "帮我制定雅思备考计划，目标分数 ",
+						"desc": "学习计划"
+					},
+					"grammar": {
+						"label": "语法纠错",
+						"insert": "请纠正以下语法并解释错误：\n\n",
+						"desc": "语法纠正"
+					},
+					"topics": {
+						"label": "话题拓展",
+						"insert": "给我一些雅思口语话题与提纲，主题是",
+						"desc": "话题拓展"
+					}
+				},
+				"examples": {
+					"speakingPart2": "我当考生，你当雅思口语考官，Part 2 随机抽题，结束后按四维打分。",
+					"task2": "批改这篇 Task 2 作文并给出升分改写：\n\n",
+					"eightWeek": "帮我制定 8 周雅思备考计划，每周可投入 10 小时，目标 7.0。"
+				}
+			}
+		},
 		"voiceUploadFailed": "语音识别失败，请重试",
 		"voiceEmpty": "没有听清，请再试一次",
 		"voiceFallback": "没听清——请打字或重新录音",

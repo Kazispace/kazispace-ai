@@ -343,6 +343,115 @@
 		"composerPlaceholder": "Type a message…",
 		"composerMuted": "This space is archived or in trash — restore to continue chatting.",
 		"scrollToLatest": "Jump to latest messages",
+		"starter": {
+			"regionLabel": "Suggested starters",
+			"capabilitiesHeading": "Try these capabilities",
+			"examplesHeading": "You could ask",
+			"tryThese": "Try these",
+			"collapse": "Collapse",
+			"blank": {
+				"caps": {
+					"ask": {
+						"label": "Ask anything",
+						"insert": "I have a question: ",
+						"desc": "Open-ended free-form chat"
+					},
+					"translate": {
+						"label": "Translate",
+						"insert": "Translate the following and keep technical terms accurate:\n\n",
+						"desc": "Translation and polish"
+					},
+					"write": {
+						"label": "Writing help",
+						"insert": "Help me write ",
+						"desc": "Draft emails, notes, or copy"
+					},
+					"brainstorm": {
+						"label": "Brainstorm",
+						"insert": "Brainstorm ideas for ",
+						"desc": "Ideation and options"
+					},
+					"explain": {
+						"label": "Explain a concept",
+						"insert": "Explain in plain language: ",
+						"desc": "Simple explanations"
+					}
+				},
+				"examples": {
+					"transformer": "Explain how Transformers work in plain language, assuming I only have high-school math.",
+					"email": "Help me write a professional email explaining a project delay and apologizing politely.",
+					"translatePaste": "Translate the following English into Chinese and keep technical terms accurate:\n\n"
+				}
+			},
+			"job": {
+				"caps": {
+					"cv": {
+						"label": "Polish CV",
+						"insert": "Help me improve my CV for ",
+						"desc": "Resume structure and wording"
+					},
+					"cover": {
+						"label": "Cover letter",
+						"insert": "Help me write a cover letter for ",
+						"desc": "Cover letter draft"
+					},
+					"interview": {
+						"label": "Mock interview",
+						"insert": "Run a mock interview for the role of ",
+						"desc": "Practice interview"
+					},
+					"salary": {
+						"label": "Salary prep",
+						"insert": "Help me prepare for salary negotiation for ",
+						"desc": "Negotiation practice in interview context"
+					},
+					"match": {
+						"label": "Role match",
+						"insert": "Based on my background, suggest matching job directions for ",
+						"desc": "Job matching"
+					}
+				},
+				"examples": {
+					"optimizeCv": "Help me optimize this IT specialist CV for a mid-level backend role; highlight quantified project impact:\n\n",
+					"mockInterview": "Simulate a senior backend technical interview. You are the interviewer — start with system design.",
+					"matchRoles": "Based on my background, suggest 3 better-matching job directions and explain why."
+				}
+			},
+			"ielts": {
+				"caps": {
+					"speaking": {
+						"label": "Speaking practice",
+						"insert": "Let's practice IELTS speaking. You are the examiner. Start with Part ",
+						"desc": "Speaking exam practice"
+					},
+					"writing": {
+						"label": "Writing feedback",
+						"insert": "Please mark this IELTS Task 2 essay and suggest a higher-band rewrite:\n\n",
+						"desc": "Writing correction"
+					},
+					"plan": {
+						"label": "Study plan",
+						"insert": "Help me build an IELTS study plan targeting band ",
+						"desc": "Prep schedule"
+					},
+					"grammar": {
+						"label": "Grammar fix",
+						"insert": "Correct the grammar in the following and explain the mistakes:\n\n",
+						"desc": "Grammar correction"
+					},
+					"topics": {
+						"label": "Topic ideas",
+						"insert": "Give me IELTS speaking topic ideas and sample outlines for ",
+						"desc": "Topic expansion"
+					}
+				},
+				"examples": {
+					"speakingPart2": "I am the candidate; you are the IELTS speaking examiner. Pick a random Part 2 cue card, then score me on the four criteria.",
+					"task2": "Please mark this Task 2 essay and give a higher-band rewrite:\n\n",
+					"eightWeek": "Build an 8-week IELTS plan for band 7.0 with about 10 hours per week."
+				}
+			}
+		},
 		"voiceUploadFailed": "Voice recognition failed. Please try again.",
 		"voiceEmpty": "Didn't catch that — please try again.",
 		"voiceFallback": "Couldn't understand that — type it out or try recording again.",

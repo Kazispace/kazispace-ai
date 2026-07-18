@@ -21,6 +21,8 @@ export type SpaceComposerRenderProps = {
   sendMessage: (text: string) => Promise<SpaceSendResult>;
   isSending: boolean;
   spaceSessionReady: boolean;
+  /** True when the space thread has ≥1 user message (Starter collapse scheme A). */
+  hasUserMessage: boolean;
 };
 
 interface SpaceChatPaneProps {
@@ -55,6 +57,7 @@ export function SpaceChatPane({
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
   // Use mount-local historyReady — store !isHydrating is stale-false on remount first paint.
   const scrollReady = spaceSessionReady && historyReady;
+  const hasUserMessage = messages.some((m) => m.role === 'user');
 
   const {
     scrollRef,
@@ -83,6 +86,7 @@ export function SpaceChatPane({
           sendMessage: sendAndPin,
           isSending,
           spaceSessionReady,
+          hasUserMessage,
         })
       : composer;
 

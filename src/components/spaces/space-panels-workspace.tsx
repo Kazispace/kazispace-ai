@@ -11,6 +11,7 @@ import {
   SpacePanelTabs,
   type SpaceWorkspaceView,
 } from '@/components/spaces/space-panel-tabs';
+import { StarterPromptsBar } from '@/components/spaces/starter-prompts-bar';
 import { isSpaceComposerMuted } from '@/lib/spaces/lifecycle';
 import {
   isValidPanelId,
@@ -167,16 +168,28 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             locale={locale}
             space={space}
             welcomeKey={welcomeKey}
-            composer={({ sendMessage, isSending, spaceSessionReady }) => (
-              <VoiceEnabledChatInput
-                onSend={(text) => void sendMessage(text)}
-                contextModule={`space:${space.id}`}
-                composerTarget="space"
-                disabled={muted || isSending || !spaceSessionReady}
-                placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
-                showAttachButton
-              />
-            )}
+            composer={({ sendMessage, isSending, spaceSessionReady, hasUserMessage }) => {
+              const inputDisabled = muted || isSending || !spaceSessionReady;
+              return (
+                <>
+                  <StarterPromptsBar
+                    spaceId={space.id}
+                    templateId={space.template_id}
+                    hasUserMessage={hasUserMessage}
+                    disabled={inputDisabled}
+                    onSendExample={(text) => void sendMessage(text)}
+                  />
+                  <VoiceEnabledChatInput
+                    onSend={(text) => void sendMessage(text)}
+                    contextModule={`space:${space.id}`}
+                    composerTarget="space"
+                    disabled={inputDisabled}
+                    placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
+                    showAttachButton
+                  />
+                </>
+              );
+            }}
           />
         </section>
 

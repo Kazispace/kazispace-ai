@@ -84,9 +84,10 @@ export function ChatInput({
   useEffect(() => {
     if (!composerInsert) return;
     if (!composerTarget || composerInsert.target !== composerTarget) return;
+    const chunk = composerInsert.text;
+    const mode = composerInsert.mode ?? 'append';
     setMessage((prev) => {
-      const chunk = composerInsert.text;
-      if (!prev.trim()) return chunk;
+      if (mode === 'replace' || !prev.trim()) return chunk;
       // Quote blocks already end with blank lines; emoji is a short prefix.
       const needsGap = !prev.endsWith("\n") && !chunk.startsWith("\n");
       return needsGap ? `${prev}\n\n${chunk}` : `${prev}${chunk}`;
