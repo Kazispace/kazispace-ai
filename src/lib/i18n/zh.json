@@ -512,6 +512,41 @@
 			"jobsText": "哈萨克斯坦有哪些热门岗位？",
 			"interviewText": "如何准备求职面试？"
 		},
+		"starter": {
+			"regionLabel": "门诊推荐提问",
+			"tryThese": "试试这些",
+			"collapse": "收起",
+			"caps": {
+				"ask": {
+					"label": "自由提问",
+					"insert": "我想问：",
+					"desc": "职业相关的开放式问题"
+				},
+				"cv": {
+					"label": "改简历",
+					"insert": "帮我优化简历：",
+					"desc": "简历优化与求职材料"
+				},
+				"jobs": {
+					"label": "找工作",
+					"insert": "帮我找工作：",
+					"desc": "岗位推荐与求职方向"
+				},
+				"interview": {
+					"label": "练面试",
+					"insert": "帮我准备面试：",
+					"desc": "面试技巧与模拟练习"
+				}
+			},
+			"examples": {
+				"cvOptimize": "帮我优化简历，突出适合哈萨克斯坦市场的经历",
+				"cvOptimizeShort": "优化简历",
+				"kzJobs": "哈萨克斯坦现在有哪些适合我的热门岗位？",
+				"kzJobsShort": "热门岗位",
+				"interviewPrep": "如何准备下一场求职面试？给我一份清单",
+				"interviewPrepShort": "面试清单"
+			}
+		},
 		"sendFailed": "发送失败",
 		"switching": "正在切换专家…",
 		"switchExpert": "选择专家",

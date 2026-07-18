@@ -11,7 +11,7 @@ import {
   writeStarterCollapsed,
 } from '@/lib/spaces/starter-prompts/config';
 import type { SpaceStarterConfig } from '@/lib/spaces/starter-prompts/types';
-import { useUIStore } from '@/lib/store';
+import { useUIStore, type ComposerInsertTarget } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 export interface StarterPromptsController {
@@ -60,11 +60,16 @@ export function useStarterPromptsController(
 export function StarterCapabilityToolbar({
   cfg,
   disabled,
+  insertTarget = 'space',
+  i18nNamespace = 'spaces',
 }: {
   cfg: SpaceStarterConfig;
   disabled?: boolean;
+  insertTarget?: ComposerInsertTarget;
+  /** next-intl namespace — Space: `spaces`, Clinic: `clinic` */
+  i18nNamespace?: 'spaces' | 'clinic';
 }) {
-  const t = useTranslations('spaces');
+  const t = useTranslations(i18nNamespace);
   const requestComposerInsert = useUIStore((s) => s.requestComposerInsert);
 
   if (cfg.capabilities.length === 0) return null;
@@ -78,7 +83,7 @@ export function StarterCapabilityToolbar({
           disabled={disabled}
           title={cap.descriptionKey ? t(cap.descriptionKey) : undefined}
           onClick={() =>
-            requestComposerInsert(t(cap.insertTextKey), 'space', 'replace')
+            requestComposerInsert(t(cap.insertTextKey), insertTarget, 'replace')
           }
           className={cn(
             'shrink-0 rounded-full border border-[#E5E6EB]/90 bg-[#F7F8FA]/90',
@@ -101,6 +106,7 @@ export function StarterExampleStrip({
   disabled,
   onToggleCollapsed,
   onSendExample,
+  i18nNamespace = 'spaces',
 }: {
   cfg: SpaceStarterConfig;
   panelId: string;
@@ -108,8 +114,9 @@ export function StarterExampleStrip({
   disabled?: boolean;
   onToggleCollapsed: (next: boolean) => void;
   onSendExample: (text: string) => void;
+  i18nNamespace?: 'spaces' | 'clinic';
 }) {
-  const t = useTranslations('spaces');
+  const t = useTranslations(i18nNamespace);
 
   if (cfg.examples.length === 0) return null;
 

@@ -14,6 +14,12 @@ import { AgentSwitchDialog } from "./agent-switch-dialog";
 import { QuickReplies } from "./quick-replies";
 import { AgentSwitcher } from "./agent-switcher";
 import { ReferralPrompt } from "./referral-prompt";
+import {
+  ClinicStarterCapabilityToolbar,
+  ClinicStarterExampleStrip,
+  shouldHideClinicStarterForQuickReplies,
+  useClinicStarterPromptsController,
+} from "./clinic-starter";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
@@ -455,6 +461,20 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     isAgentMode && activeAgentId
       ? AGENT_QUICK_REPLIES[activeAgentId]?.[locale as SupportedLocale] ?? []
       : [];
+
+  /** Clinic-layer NBA strip (Phase B mutex). Agent Hub keeps its own QR above. */
+  const clinicNbaOptions: string[] = [];
+  const hasClinicUserMessage = clinicMessages.some((m) => m.role === "user");
+  const clinicStarter = useClinicStarterPromptsController(hasClinicUserMessage);
+  const showClinicStarter =
+    !isAgentMode &&
+    Boolean(clinicStarter?.hydrated) &&
+    clinicStarter != null &&
+    !shouldHideClinicStarterForQuickReplies(clinicNbaOptions);
+  const showClinicQuickReplies =
+    !isAgentMode && clinicNbaOptions.length > 0;
+  const clinicInputDisabled =
+    isSending || isSwitching || isSwitchingSession;
 
   useEffect(() => {
     setEnglishLevelState(getEnglishLevel());
@@ -1238,6 +1258,14 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         />
       )}
 
+      {showClinicQuickReplies && (
+        <QuickReplies
+          options={clinicNbaOptions}
+          disabled={clinicInputDisabled}
+          onSelect={handleSend}
+        />
+      )}
+
       {pendingReferral && !isAgentMode && (() => {
         const entry = AGENT_REGISTRY.find((a) => a.agentId === pendingReferral.agentId);
         if (!entry) return null;
@@ -1257,17 +1285,59 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         );
       })()}
 
-      <VoiceEnabledChatInput
-        onSend={handleSend}
-        beforeTranscribe={beforeVoiceTranscribe}
-        contextModule="clinic"
-        composerTarget="clinic"
-        disabled={isSending || isSwitching || (isAgentMode && historyReadOnly) || isSwitchingSession}
-        placeholder={inputPlaceholder}
-        showAttachButton
-        showAgentButton={isLoggedIn}
-        onOpenAgents={() => setSwitcherOpen(true)}
-      />
+      {isAgentMode ? (
+        <VoiceEnabledChatInput
+          onSend={handleSend}
+          beforeTranscribe={beforeVoiceTranscribe}
+          contextModule="clinic"
+          composerTarget="clinic"
+          disabled={
+            isSending ||
+            isSwitching ||
+            (isAgentMode && historyReadOnly) ||
+            isSwitchingSession
+          }
+          placeholder={inputPlaceholder}
+          showAttachButton
+          showAgentButton={isLoggedIn}
+          onOpenAgents={() => setSwitcherOpen(true)}
+        />
+      ) : (
+        <div className="bg-gray-bg px-4 pb-3 pt-2">
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
+            {showClinicStarter && clinicStarter ? (
+              <ClinicStarterExampleStrip
+                cfg={clinicStarter.cfg}
+                panelId={clinicStarter.panelId}
+                collapsed={clinicStarter.examplesCollapsed}
+                disabled={clinicInputDisabled}
+                onToggleCollapsed={clinicStarter.setExamplesCollapsed}
+                onSendExample={(text) => void handleSend(text)}
+              />
+            ) : null}
+            <VoiceEnabledChatInput
+              onSend={handleSend}
+              beforeTranscribe={beforeVoiceTranscribe}
+              contextModule="clinic"
+              composerTarget="clinic"
+              disabled={clinicInputDisabled}
+              placeholder={inputPlaceholder}
+              showAttachButton
+              showAgentButton={isLoggedIn}
+              onOpenAgents={() => setSwitcherOpen(true)}
+              variant="card"
+              toolbar={
+                showClinicStarter && clinicStarter ? (
+                  <ClinicStarterCapabilityToolbar
+                    cfg={clinicStarter.cfg}
+                    disabled={clinicInputDisabled}
+                  />
+                ) : null
+              }
+            />
+          </div>
+        </div>
+      )}
 
       <AgentSwitcher
         locale={locale}

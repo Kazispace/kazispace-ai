@@ -668,6 +668,41 @@
 			"jobsText": "What jobs are in demand in Kazakhstan?",
 			"interviewText": "How do I prepare for a job interview?"
 		},
+		"starter": {
+			"regionLabel": "Clinic suggested starters",
+			"tryThese": "Try these",
+			"collapse": "Collapse",
+			"caps": {
+				"ask": {
+					"label": "Ask anything",
+					"insert": "I have a question: ",
+					"desc": "Open-ended career questions"
+				},
+				"cv": {
+					"label": "Improve CV",
+					"insert": "Help me improve my resume: ",
+					"desc": "Resume and job materials"
+				},
+				"jobs": {
+					"label": "Find jobs",
+					"insert": "Help me find jobs: ",
+					"desc": "Job search and career direction"
+				},
+				"interview": {
+					"label": "Interview prep",
+					"insert": "Help me prepare for interviews: ",
+					"desc": "Interview tips and practice"
+				}
+			},
+			"examples": {
+				"cvOptimize": "Help me improve my resume for the Kazakhstan job market",
+				"cvOptimizeShort": "Improve resume",
+				"kzJobs": "What jobs are in demand in Kazakhstan for someone like me?",
+				"kzJobsShort": "In-demand jobs",
+				"interviewPrep": "How do I prepare for my next job interview? Give me a checklist",
+				"interviewPrepShort": "Interview checklist"
+			}
+		},
 		"sendFailed": "Failed to send message",
 		"switching": "Switching expert…",
 		"switchExpert": "Choose an expert",

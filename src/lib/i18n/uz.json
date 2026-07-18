@@ -359,6 +359,41 @@
 			"jobsText": "Qozog'istonda qanday ishlar talab qilinmoqda?",
 			"interviewText": "Ish suhbatiga qanday tayyorlanish kerak?"
 		},
+		"starter": {
+			"regionLabel": "Klinika takliflari",
+			"tryThese": "Bularni sinab ko'ring",
+			"collapse": "Yig'ish",
+			"caps": {
+				"ask": {
+					"label": "Erkin savol",
+					"insert": "Savolim bor: ",
+					"desc": "Ochiq karyera savoli"
+				},
+				"cv": {
+					"label": "Rezyume",
+					"insert": "Rezyumeni yaxshilashga yordam bering: ",
+					"desc": "Rezyume va materiallar"
+				},
+				"jobs": {
+					"label": "Ish qidirish",
+					"insert": "Ish topishga yordam bering: ",
+					"desc": "Ish qidirish va yo'nalish"
+				},
+				"interview": {
+					"label": "Suhbat",
+					"insert": "Suhbatga tayyorlanishga yordam bering: ",
+					"desc": "Suhbat maslahatlari va mashq"
+				}
+			},
+			"examples": {
+				"cvOptimize": "Qozog'iston bozori uchun rezyumemni yaxshilashga yordam bering",
+				"cvOptimizeShort": "Rezyume",
+				"kzJobs": "Qozog'istonda men uchun qanday ishlar talab qilinmoqda?",
+				"kzJobsShort": "Talab ishlar",
+				"interviewPrep": "Keyingi ish suhbatiga qanday tayyorlanaman? Ro'yxat bering",
+				"interviewPrepShort": "Suhbat ro'yxati"
+			}
+		},
 		"sendFailed": "Xabar yuborilmadi",
 		"switching": "Mutaxassis almashtirilmoqda…",
 		"switchExpert": "Mutaxassis tanlang",
