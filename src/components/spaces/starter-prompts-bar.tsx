@@ -70,9 +70,9 @@ export function StarterPromptsBar({
           aria-controls={panelId}
           onClick={() => setCollapsedPersist(false)}
           className={cn(
-            'flex w-full items-center justify-between gap-2 rounded-md border border-gray-200',
-            'bg-white px-3 py-1.5 text-left text-[12px] text-[#4E5969]',
-            'transition-colors hover:border-kazi-orange/40 hover:text-[#1D2129]',
+            'flex w-full items-center justify-between gap-2 rounded-md border border-gray-200/80',
+            'bg-white/45 px-3 py-1.5 text-left text-[12px] text-[#4E5969]',
+            'backdrop-blur-[2px] transition-colors hover:border-kazi-orange/40 hover:bg-white/60 hover:text-[#1D2129]',
             'disabled:opacity-50'
           )}
         >
@@ -124,9 +124,10 @@ export function StarterPromptsBar({
                 requestComposerInsert(t(cap.insertTextKey), 'space', 'replace')
               }
               className={cn(
-                'min-w-0 flex-1 rounded-md border border-gray-200/90 bg-white px-2 py-1.5',
-                'text-center text-[11px] leading-tight text-[#1D2129] transition-colors',
-                'hover:border-kazi-orange hover:text-kazi-orange',
+                'min-w-0 flex-1 rounded-md border border-gray-200/70 bg-white/45 px-2 py-1.5',
+                'text-center text-[11px] leading-tight text-[#1D2129]',
+                'backdrop-blur-[2px] transition-colors',
+                'hover:border-kazi-orange hover:bg-white/65 hover:text-kazi-orange',
                 'disabled:opacity-50'
               )}
             >
@@ -145,9 +146,10 @@ export function StarterPromptsBar({
                 disabled={disabled}
                 onClick={() => onSendExample(t(ex.promptKey))}
                 className={cn(
-                  'h-full w-full rounded-md border border-gray-200/90 bg-white px-2.5 py-1.5',
+                  'h-full w-full rounded-md border border-gray-200/70 bg-white/45 px-2.5 py-1.5',
                   'text-left text-[11px] leading-snug text-[#4E5969]',
-                  'transition-colors hover:border-kazi-orange/50 hover:text-[#1D2129]',
+                  'backdrop-blur-[2px] transition-colors',
+                  'hover:border-kazi-orange/50 hover:bg-white/65 hover:text-[#1D2129]',
                   'disabled:opacity-50'
                 )}
               >
