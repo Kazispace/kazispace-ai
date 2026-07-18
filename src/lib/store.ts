@@ -98,6 +98,8 @@ export type PaywallTrigger = 'INSUFFICIENT_CREDITS' | 'PRO_FEATURE_LOCKED' | str
 
 /** Which ChatInput should consume a quote / composer insert (PR #126 P2). */
 export type ComposerInsertTarget = 'clinic' | 'space';
+/** `append` = quote/emoji (default); `replace` = starter capability chips (PRD). */
+export type ComposerInsertMode = 'append' | 'replace';
 
 interface UIStore {
   locale: string;
@@ -108,6 +110,7 @@ interface UIStore {
     text: string;
     nonce: number;
     target: ComposerInsertTarget;
+    mode: ComposerInsertMode;
   } | null;
   paywallModalOpen: boolean;
   paywallTrigger: PaywallTrigger | null;
@@ -117,7 +120,11 @@ interface UIStore {
   toggleSidebar: () => void;
   showToast: (message: string, type?: 'error' | 'info') => void;
   clearToast: () => void;
-  requestComposerInsert: (text: string, target: ComposerInsertTarget) => void;
+  requestComposerInsert: (
+    text: string,
+    target: ComposerInsertTarget,
+    mode?: ComposerInsertMode
+  ) => void;
   clearComposerInsert: () => void;
   openPaywall: (trigger: PaywallTrigger) => void;
   closePaywall: () => void;
@@ -138,11 +145,12 @@ export const useUIStore = create<UIStore>()((set) => ({
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   showToast: (message, type = 'info') => set({ toast: { message, type } }),
   clearToast: () => set({ toast: null }),
-  requestComposerInsert: (text, target) =>
+  requestComposerInsert: (text, target, mode = 'append') =>
     set((state) => ({
       composerInsert: {
         text,
         target,
+        mode,
         nonce: (state.composerInsert?.nonce ?? 0) + 1,
       },
     })),

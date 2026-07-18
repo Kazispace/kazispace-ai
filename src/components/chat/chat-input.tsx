@@ -80,17 +80,29 @@ export function ChatInput({
   const inputDisabled = disabled || isUploading || isTranscribing;
   const composerInsert = useUIStore((s) => s.composerInsert);
   const clearComposerInsert = useUIStore((s) => s.clearComposerInsert);
+  const showToast = useUIStore((s) => s.showToast);
 
   useEffect(() => {
     if (!composerInsert) return;
     if (!composerTarget || composerInsert.target !== composerTarget) return;
+    const chunk = composerInsert.text;
+    const mode = composerInsert.mode ?? 'append';
+    let replacedDraft = false;
     setMessage((prev) => {
-      const chunk = composerInsert.text;
+      if (mode === 'replace') {
+        // TODO(KAZI-238): replace silently drops in-progress drafts (PRD replace-fill).
+        // Follow-up: confirm / undo stack when prev.trim() is non-empty.
+        replacedDraft = Boolean(prev.trim());
+        return chunk;
+      }
       if (!prev.trim()) return chunk;
       // Quote blocks already end with blank lines; emoji is a short prefix.
       const needsGap = !prev.endsWith("\n") && !chunk.startsWith("\n");
       return needsGap ? `${prev}\n\n${chunk}` : `${prev}${chunk}`;
     });
+    if (replacedDraft) {
+      showToast(t('starter.draftReplaced'), 'info');
+    }
     clearComposerInsert();
     window.requestAnimationFrame(() => {
       const el = textareaRef.current;
@@ -99,7 +111,7 @@ export function ChatInput({
       const end = el.value.length;
       el.setSelectionRange(end, end);
     });
-  }, [composerInsert, clearComposerInsert, composerTarget]);
+  }, [composerInsert, clearComposerInsert, composerTarget, showToast, t]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
