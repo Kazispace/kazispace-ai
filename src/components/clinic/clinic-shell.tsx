@@ -705,14 +705,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     void loadHistory();
   }, [isClinicSending, loadHistory]);
 
-  const handleQuickPrompt = (text: string) => {
-    if (text === tClinic("prompts.cvText")) {
-      void handleAgentSelect(CV_BUILDER_AGENT_ID);
-      return;
-    }
-    void handleSend(text);
-  };
-
   const beforeVoiceTranscribe = useCallback(() => {
     if (!isLoggedIn) {
       showToast(tClinic("loginToChat"), "info");
@@ -1135,7 +1127,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             selectedLevel={englishLevel}
             onLevelChange={setEnglishLevelState}
             onAgentSelect={handleAgentSelect}
-            onQuickPrompt={handleQuickPrompt}
             nbaAction={nbaResponse?.next_best_action ?? null}
             nbaLoading={nbaLoading}
             sessionsByAgent={sessionsByAgent}

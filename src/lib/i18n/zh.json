@@ -504,14 +504,6 @@
 			"intermediate": "中级",
 			"fluent": "流利"
 		},
-		"prompts": {
-			"cv": "✏️ 优化简历",
-			"jobs": "🇰🇿 哈萨克斯坦岗位",
-			"interview": "🎯 面试技巧",
-			"cvText": "帮我优化简历",
-			"jobsText": "哈萨克斯坦有哪些热门岗位？",
-			"interviewText": "如何准备求职面试？"
-		},
 		"starter": {
 			"regionLabel": "门诊推荐提问",
 			"tryThese": "试试这些",

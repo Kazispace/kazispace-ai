@@ -660,14 +660,6 @@
 			"intermediate": "Intermediate",
 			"fluent": "Fluent"
 		},
-		"prompts": {
-			"cv": "✏️ Improve my resume",
-			"jobs": "🇰🇿 Jobs in Kazakhstan",
-			"interview": "🎯 Interview tips",
-			"cvText": "Help me improve my resume",
-			"jobsText": "What jobs are in demand in Kazakhstan?",
-			"interviewText": "How do I prepare for a job interview?"
-		},
 		"starter": {
 			"regionLabel": "Clinic suggested starters",
 			"tryThese": "Try these",
