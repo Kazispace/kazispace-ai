@@ -43,7 +43,7 @@ export function SpaceComposerWithStarter({
   );
 
   return (
-    <div className="border-t border-gray-200/60 bg-gray-bg px-4 pb-3 pt-2">
+    <div className="bg-gray-bg px-4 pb-3 pt-2">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
         {starter?.hydrated ? (
           <StarterExampleStrip
