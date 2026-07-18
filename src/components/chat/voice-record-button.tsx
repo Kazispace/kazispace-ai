@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils';
 interface VoiceRecordButtonProps {
   onRecordComplete: (audioBlob: Blob) => void;
   disabled?: boolean;
+  /** Match denser Doubao card composer controls (~h-7). */
+  compact?: boolean;
 }
 
 function formatDuration(seconds: number): string {
@@ -47,6 +49,7 @@ const CANCEL_THRESHOLD_Y = -60;
 export function VoiceRecordButton({
   onRecordComplete,
   disabled,
+  compact = false,
 }: VoiceRecordButtonProps) {
   const t = useTranslations('spaces');
   const showToast = useUIStore((s) => s.showToast);
@@ -126,7 +129,10 @@ export function VoiceRecordButton({
       <button
         type="button"
         disabled
-        className="h-8 w-8 shrink-0 rounded-full bg-red-50 text-red-400"
+        className={cn(
+          'shrink-0 rounded-full bg-red-50 text-red-400',
+          compact ? 'h-7 w-7' : 'h-8 w-8'
+        )}
         aria-label="Microphone access denied"
       >
         <Mic className="mx-auto h-4 w-4" />
@@ -182,7 +188,8 @@ export function VoiceRecordButton({
       onTouchStart={handleTouchStart}
       onMouseDown={handleMouseDown}
       className={cn(
-        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#86909C]',
+        'flex shrink-0 items-center justify-center rounded-full text-[#86909C]',
+        compact ? 'h-7 w-7' : 'h-8 w-8',
         'hover:bg-orange-50 hover:text-kazi-orange transition-colors',
         'disabled:opacity-50 disabled:cursor-not-allowed'
       )}
