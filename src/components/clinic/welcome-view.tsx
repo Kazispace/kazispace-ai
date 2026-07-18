@@ -24,31 +24,27 @@ interface WelcomeViewProps {
   selectedLevel: string | null;
   onLevelChange: (level: string) => void;
   onAgentSelect: (agentId: string) => void;
-  onQuickPrompt: (text: string) => void;
   nbaAction?: NextBestActionItem | null;
   nbaLoading?: boolean;
   sessionsByAgent?: CurrentSessionsByAgent;
 }
 
+/**
+ * Clinic empty-state welcome (greeting + agents + English level).
+ * Prompt education lives on Clinic Starter (composer), not duplicate pills here.
+ */
 export function WelcomeView({
   locale,
   isLoggedIn,
   selectedLevel,
   onLevelChange,
   onAgentSelect,
-  onQuickPrompt,
   nbaAction,
   nbaLoading,
   sessionsByAgent,
 }: WelcomeViewProps) {
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
-
-  const quickPrompts = [
-    { label: tClinic("prompts.cv"), text: tClinic("prompts.cvText") },
-    { label: tClinic("prompts.jobs"), text: tClinic("prompts.jobsText") },
-    { label: tClinic("prompts.interview"), text: tClinic("prompts.interviewText") },
-  ];
 
   return (
     <div className="flex flex-col items-center w-full max-w-3xl mx-auto py-6 px-2">
@@ -85,19 +81,6 @@ export function WelcomeView({
             />
           );
         })}
-      </div>
-
-      <div className="flex flex-wrap gap-2 justify-center w-full mb-6">
-        {quickPrompts.map((p) => (
-          <button
-            key={p.text}
-            type="button"
-            onClick={() => onQuickPrompt(p.text)}
-            className="bg-white border border-gray-200 text-sm px-4 py-2 rounded-full hover:border-kazi-orange hover:text-kazi-orange transition-colors"
-          >
-            {p.label}
-          </button>
-        ))}
       </div>
 
       <div className="flex flex-wrap gap-2 justify-center">
