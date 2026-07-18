@@ -142,21 +142,13 @@ export function StarterExampleStrip({
   }
 
   return (
-    <div id={panelId} role="region" aria-label={t('starter.regionLabel')}>
-      <div className="mb-1 flex justify-start px-0.5">
-        <button
-          type="button"
-          disabled={disabled}
-          aria-expanded={true}
-          aria-controls={panelId}
-          onClick={() => onToggleCollapsed(true)}
-          className="inline-flex items-center gap-0.5 text-[11px] text-[#86909C] hover:text-[#1D2129] disabled:opacity-50"
-        >
-          {t('starter.collapse')}
-          <ChevronUp className="h-3 w-3" aria-hidden />
-        </button>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
+    <div
+      id={panelId}
+      role="region"
+      aria-label={t('starter.regionLabel')}
+      className="flex w-full min-w-0 items-start gap-2"
+    >
+      <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
         {cfg.examples.map((ex) => (
           <button
             key={ex.id}
@@ -175,6 +167,17 @@ export function StarterExampleStrip({
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        disabled={disabled}
+        aria-expanded={true}
+        aria-controls={panelId}
+        onClick={() => onToggleCollapsed(true)}
+        className="inline-flex shrink-0 items-center gap-0.5 pt-0.5 text-[11px] text-[#86909C] hover:text-[#1D2129] disabled:opacity-50"
+      >
+        {t('starter.collapse')}
+        <ChevronUp className="h-3 w-3" aria-hidden />
+      </button>
     </div>
   );
 }
