@@ -380,8 +380,11 @@
 				},
 				"examples": {
 					"transformer": "Explain how Transformers work in plain language, assuming I only have high-school math.",
+					"transformerShort": "Explain Transformers",
 					"email": "Help me write a professional email explaining a project delay and apologizing politely.",
-					"translatePaste": "Translate the following English into Chinese and keep technical terms accurate:\n\n"
+					"emailShort": "Delay apology email",
+					"translatePaste": "Translate the following English into Chinese and keep technical terms accurate:\n\n",
+					"translatePasteShort": "EN → ZH (precise terms)"
 				}
 			},
 			"job": {
@@ -414,8 +417,11 @@
 				},
 				"examples": {
 					"optimizeCv": "Help me optimize this IT specialist CV for a mid-level backend role; highlight quantified project impact:\n\n",
+					"optimizeCvShort": "Polish backend CV",
 					"mockInterview": "Simulate a senior backend technical interview. You are the interviewer — start with system design.",
-					"matchRoles": "Based on my background, suggest 3 better-matching job directions and explain why."
+					"mockInterviewShort": "Mock tech interview",
+					"matchRoles": "Based on my background, suggest 3 better-matching job directions and explain why.",
+					"matchRolesShort": "Match job directions"
 				}
 			},
 			"ielts": {
@@ -448,8 +454,11 @@
 				},
 				"examples": {
 					"speakingPart2": "I am the candidate; you are the IELTS speaking examiner. Pick a random Part 2 cue card, then score me on the four criteria.",
+					"speakingPart2Short": "Speaking Part 2 mock",
 					"task2": "Please mark this Task 2 essay and give a higher-band rewrite:\n\n",
-					"eightWeek": "Build an 8-week IELTS plan for band 7.0 with about 10 hours per week."
+					"task2Short": "Mark Task 2",
+					"eightWeek": "Build an 8-week IELTS plan for band 7.0 with about 10 hours per week.",
+					"eightWeekShort": "8-week study plan"
 				}
 			}
 		},
