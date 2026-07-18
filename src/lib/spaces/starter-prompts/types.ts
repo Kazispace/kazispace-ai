@@ -11,7 +11,10 @@ export interface StarterCapabilityDef {
   labelKey: string;
   insertTextKey: string;
   descriptionKey?: string;
-  /** Must be ⊆ template allowlist when set */
+  /**
+   * Template allowlist tag + future analytics.
+   * Does **not** force FE routing — send path is plain text → `/turn` intent.
+   */
   capability_id?: string;
   priority: number;
 }
@@ -19,7 +22,9 @@ export interface StarterCapabilityDef {
 export interface StarterExampleDef {
   id: string;
   promptKey: string;
+  /** Same as capability chips — validation / analytics only; not FE routing. */
   capability_id?: string;
+  /** P1 reserved: strong playbook bind on `/turn` (ignored in MVP). */
   playbook_id?: string;
   priority: number;
 }

@@ -211,10 +211,18 @@ const IELTS: SpaceStarterConfig = {
 };
 
 export const STARTER_BY_TEMPLATE: Record<SpaceTemplateId, SpaceStarterConfig> = {
-  blank_conversation: BLANK,
-  job_sprint: JOB,
-  ielts_prep: IELTS,
+  blank_conversation: sortStarterConfig(BLANK),
+  job_sprint: sortStarterConfig(JOB),
+  ielts_prep: sortStarterConfig(IELTS),
 };
+
+function sortStarterConfig(cfg: SpaceStarterConfig): SpaceStarterConfig {
+  return {
+    ...cfg,
+    capabilities: [...cfg.capabilities].sort((a, b) => a.priority - b.priority),
+    examples: [...cfg.examples].sort((a, b) => a.priority - b.priority),
+  };
+}
 
 export function isSpaceTemplateId(id: string): id is SpaceTemplateId {
   return id in STARTER_BY_TEMPLATE;
@@ -251,6 +259,7 @@ export function assertStarterAllowlist(
 /**
  * Resolve starter config for a space template.
  * Returns null when disabled, unknown template, or empty shell.
+ * Lists are pre-sorted at module load (priority ASC).
  */
 export function resolveStarterConfig(
   templateId: string,
@@ -265,11 +274,7 @@ export function resolveStarterConfig(
     assertStarterAllowlist(templateId, cfg);
   }
 
-  return {
-    ...cfg,
-    capabilities: [...cfg.capabilities].sort((a, b) => a.priority - b.priority),
-    examples: [...cfg.examples].sort((a, b) => a.priority - b.priority),
-  };
+  return cfg;
 }
 
 export function starterCollapseStorageKey(spaceId: string): string {

@@ -57,6 +57,8 @@ export function SpaceChatPane({
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
   // Use mount-local historyReady — store !isHydrating is stale-false on remount first paint.
   const scrollReady = spaceSessionReady && historyReady;
+  // Spaces hydrate full master-session history (not infinite-scroll pages) — safe for Starter.
+  // If history ever becomes windowed, replace with a BE/meta flag (PR #130 P3).
   const hasUserMessage = messages.some((m) => m.role === 'user');
 
   const {

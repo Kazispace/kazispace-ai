@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -35,26 +35,25 @@ export function StarterPromptsBar({
   const t = useTranslations('spaces');
   const requestComposerInsert = useUIStore((s) => s.requestComposerInsert);
   const panelId = useId();
-  const cfg = resolveStarterConfig(templateId);
-  const [collapsed, setCollapsed] = useState(() =>
-    resolveStarterCollapsed({
-      hasUserMessage,
-      stored: readStarterCollapsed(spaceId),
-    })
-  );
+  const cfg = useMemo(() => resolveStarterConfig(templateId), [templateId]);
 
-  // Sync when space changes or first user message arrives without preference.
+  // Avoid SSR→client flash: wait for localStorage read before painting (PR #130 P3).
+  const [hydrated, setHydrated] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
   useEffect(() => {
     const stored = readStarterCollapsed(spaceId);
     const next = resolveStarterCollapsed({ hasUserMessage, stored });
     setCollapsed(next);
     // Persist first auto-fold (0→1) so refresh keeps scheme A default.
+    // Also covers example-send path — single writer (no onClick duplicate).
     if (stored === null && hasUserMessage && next) {
       writeStarterCollapsed(spaceId, true);
     }
+    setHydrated(true);
   }, [spaceId, hasUserMessage]);
 
-  if (!cfg) return null;
+  if (!cfg || !hydrated) return null;
 
   const setCollapsedPersist = (next: boolean) => {
     setCollapsed(next);
@@ -63,7 +62,7 @@ export function StarterPromptsBar({
 
   if (collapsed) {
     return (
-      <div className="bg-gray-bg px-3 pb-1.5 pt-1">
+      <div className="bg-gray-bg px-3 pb-0.5 pt-0.5">
         <button
           type="button"
           disabled={disabled}
@@ -72,7 +71,7 @@ export function StarterPromptsBar({
           onClick={() => setCollapsedPersist(false)}
           className={cn(
             'flex w-full items-center justify-between gap-2 rounded-md border border-gray-200',
-            'bg-white px-3 py-2 text-left text-[12px] text-[#4E5969]',
+            'bg-white px-3 py-1.5 text-left text-[12px] text-[#4E5969]',
             'transition-colors hover:border-kazi-orange/40 hover:text-[#1D2129]',
             'disabled:opacity-50'
           )}
@@ -143,13 +142,7 @@ export function StarterPromptsBar({
                 <button
                   type="button"
                   disabled={disabled}
-                  onClick={() => {
-                    // First auto-fold if no preference yet (scheme A).
-                    if (readStarterCollapsed(spaceId) === null) {
-                      setCollapsedPersist(true);
-                    }
-                    onSendExample(t(ex.promptKey));
-                  }}
+                  onClick={() => onSendExample(t(ex.promptKey))}
                   className={cn(
                     'w-full rounded-md border border-transparent px-2 py-1.5 text-left',
                     'text-[12px] leading-snug text-[#4E5969]',

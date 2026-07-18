@@ -349,6 +349,7 @@
 			"examplesHeading": "You could ask",
 			"tryThese": "Try these",
 			"collapse": "Collapse",
+			"draftReplaced": "Composer draft replaced with starter prompt",
 			"blank": {
 				"caps": {
 					"ask": {
