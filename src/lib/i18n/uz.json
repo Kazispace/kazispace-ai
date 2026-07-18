@@ -351,14 +351,6 @@
 			"intermediate": "O'rta",
 			"fluent": "Erkin"
 		},
-		"prompts": {
-			"cv": "✏️ Rezyumeni yaxshilash",
-			"jobs": "🇰🇿 Qozog'istondagi ishlar",
-			"interview": "🎯 Suhbat maslahatlari",
-			"cvText": "Rezyumemni yaxshilashga yordam bering",
-			"jobsText": "Qozog'istonda qanday ishlar talab qilinmoqda?",
-			"interviewText": "Ish suhbatiga qanday tayyorlanish kerak?"
-		},
 		"starter": {
 			"regionLabel": "Klinika takliflari",
 			"tryThese": "Bularni sinab ko'ring",
