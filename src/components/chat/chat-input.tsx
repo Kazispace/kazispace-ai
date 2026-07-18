@@ -175,6 +175,8 @@ export function ChatInput({
   const hasContent = message.trim() || attachment;
   const showPlus = showAttachButton || (showAgentButton && onOpenAgents);
   const isCard = variant === "card";
+  /** Card composer ~15% denser than bar control sizes. */
+  const iconBtn = isCard ? "h-7 w-7" : "h-8 w-8";
 
   const openAttachOrAgents = () => {
     if (showAttachButton) {
@@ -191,7 +193,8 @@ export function ChatInput({
       onClick={openAttachOrAgents}
       disabled={inputDisabled}
       className={cn(
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#86909C]",
+        "flex shrink-0 items-center justify-center rounded-full text-[#86909C]",
+        iconBtn,
         "hover:bg-gray-200/60 hover:text-[#1D2129] transition-colors",
         "disabled:cursor-not-allowed disabled:opacity-50"
       )}
@@ -199,7 +202,8 @@ export function ChatInput({
     >
       <Plus
         className={cn(
-          "h-[18px] w-[18px] transition-transform",
+          isCard ? "h-4 w-4" : "h-[18px] w-[18px]",
+          "transition-transform",
           attachMenuOpen && "rotate-45"
         )}
       />
@@ -211,7 +215,10 @@ export function ChatInput({
       {showMicButton && !hasContent && onSendAudio ? (
         isTranscribing ? (
           <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center text-kazi-orange"
+            className={cn(
+              "flex shrink-0 items-center justify-center text-kazi-orange",
+              iconBtn
+            )}
             aria-label={t("voiceTranscribing")}
           >
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -220,6 +227,7 @@ export function ChatInput({
           <VoiceRecordButton
             onRecordComplete={onSendAudio}
             disabled={inputDisabled}
+            compact={isCard}
           />
         )
       ) : (
@@ -227,7 +235,8 @@ export function ChatInput({
           type="submit"
           disabled={!hasContent || inputDisabled}
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors",
+            "flex shrink-0 items-center justify-center rounded-full transition-colors",
+            iconBtn,
             hasContent && !inputDisabled
               ? "bg-kazi-orange text-white hover:bg-kazi-orange/90"
               : "text-[#C9CDD4] cursor-not-allowed"
@@ -259,7 +268,10 @@ export function ChatInput({
       disabled={inputDisabled}
       rows={1}
       className={cn(
-        "min-h-[36px] max-h-32 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5",
+        "max-h-32 flex-1 resize-none bg-transparent text-sm leading-5",
+        isCard
+          ? "min-h-[30px] py-1"
+          : "min-h-[36px] py-1.5",
         "placeholder:text-[#86909C] focus:outline-none",
         "disabled:cursor-not-allowed"
       )}
@@ -396,10 +408,10 @@ export function ChatInput({
             inputDisabled && "opacity-50"
           )}
         >
-          <div className="px-3 pt-3 pb-1">
+          <div className="px-3 pt-2.5 pb-0.5">
             {textarea}
           </div>
-          <div className="relative flex items-center gap-1.5 px-2 pb-2.5 pt-1">
+          <div className="relative flex items-center gap-1.5 px-2 pb-2 pt-0.5">
             {plusButton}
             {attachMenu}
             {toolbar ? (
