@@ -396,9 +396,8 @@ export function ChatInput({
             inputDisabled && "opacity-50"
           )}
         >
-          <div className="flex items-end gap-1 px-3 pt-3 pb-1">
+          <div className="px-3 pt-3 pb-1">
             {textarea}
-            {sendOrMic}
           </div>
           <div className="relative flex items-center gap-1.5 px-2 pb-2.5 pt-1">
             {plusButton}
@@ -415,6 +414,7 @@ export function ChatInput({
             ) : (
               <div className="flex-1" />
             )}
+            {sendOrMic}
           </div>
         </div>
       ) : (
