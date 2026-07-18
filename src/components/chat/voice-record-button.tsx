@@ -188,7 +188,8 @@ export function VoiceRecordButton({
       onTouchStart={handleTouchStart}
       onMouseDown={handleMouseDown}
       className={cn(
-        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#86909C]',
+        'flex shrink-0 items-center justify-center rounded-full text-[#86909C]',
+        compact ? 'h-7 w-7' : 'h-8 w-8',
         'hover:bg-orange-50 hover:text-kazi-orange transition-colors',
         'disabled:opacity-50 disabled:cursor-not-allowed'
       )}
