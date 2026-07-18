@@ -143,7 +143,7 @@ export function StarterExampleStrip({
 
   return (
     <div id={panelId} role="region" aria-label={t('starter.regionLabel')}>
-      <div className="mb-1 flex justify-end px-0.5">
+      <div className="mb-1 flex justify-start px-0.5">
         <button
           type="button"
           disabled={disabled}
