@@ -21,6 +21,7 @@ import {
   latestAssistantAfterLastUser,
   mapSpaceHistoryMessages,
   mergeSpaceMessagesAfterSend,
+  resolveSpaceTurnCards,
   resolveSpaceTurnReply,
   type SpaceChatMessage,
 } from '@/lib/spaces/turn';
@@ -262,6 +263,7 @@ export function useSpaceTurn(
         }
 
         let reply = resolveSpaceTurnReply(res.data);
+        const turnCards = resolveSpaceTurnCards(res.data);
         let history: SpaceChatMessage[] = [];
         let recoveredFromHistory = false;
 
@@ -320,6 +322,7 @@ export function useSpaceTurn(
             id: localAssistantId,
             role: 'assistant',
             content: reply,
+            ...(turnCards.length > 0 ? { cards: turnCards } : {}),
             ...(isServerAssistantMessageId(assistantMessageId)
               ? { serverMessageId: assistantMessageId }
               : {}),

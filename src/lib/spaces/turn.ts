@@ -1,5 +1,6 @@
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
+import type { ChatJobCard } from '@/types/chat-envelope';
 
 /** Unicode ellipsis (U+2026) and ASCII three-dot placeholder. */
 const PLACEHOLDER_REPLIES = new Set(['…', '...']);
@@ -11,8 +12,9 @@ export function isPlaceholderReply(text: string): boolean {
 
 /**
  * Extract text components from ADR-006 SpaceTurnEnvelope.
- * MVP: only `type: "text"` is rendered in Space chat; tool_call / card / referral
- * components are ignored until the pane supports rich envelopes.
+ * Text still prefers `components[].type=text` for reply copy; job cards are read
+ * from `assistant_response.cards` (see `resolveSpaceTurnCards`) — not from
+ * envelope.components card entries yet.
  */
 export function extractSpaceTurnEnvelopeText(envelope: unknown): string {
   if (!envelope || typeof envelope !== 'object') return '';
@@ -66,10 +68,32 @@ export function resolveSpaceTurnReply(data: unknown): string {
   return '';
 }
 
+/**
+ * Job cards from Space turn / history.
+ * Prefers `assistant_response.cards` (BE passthrough); envelope.components alone
+ * often only carries text — cards live on assistant_response.
+ */
+export function resolveSpaceTurnCards(data: unknown): ChatJobCard[] {
+  if (!data || typeof data !== 'object') return [];
+  const raw = data as Record<string, unknown>;
+
+  const fromRoot = parseAssistantEnvelope(data).cards;
+  if (fromRoot.length > 0) return fromRoot;
+
+  if (raw.envelope) {
+    const fromEnvelope = parseAssistantEnvelope(raw.envelope).cards;
+    if (fromEnvelope.length > 0) return fromEnvelope;
+  }
+
+  return [];
+}
+
 export type SpaceChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  /** Job teasers from assistant_response.cards (Space job_search turns). */
+  cards?: ChatJobCard[];
   /** Present on optimistic local turns (KAZI-186 retry). */
   status?: 'sending' | 'sent' | 'failed';
   /** Persisted chat_messages.id for feedback (KAZI-254). */
@@ -117,10 +141,14 @@ export function normalizeSpaceHistoryMessage(
         ? raw.message_id
         : stableMessageIdFallback(role, content, index);
 
+  const cards =
+    role === 'assistant' ? resolveSpaceTurnCards(raw) : [];
+
   return {
     id,
     role,
     content,
+    ...(cards.length > 0 ? { cards } : {}),
     ...(role === 'assistant' && isServerAssistantMessageId(id)
       ? { serverMessageId: id }
       : {}),
@@ -182,8 +210,27 @@ export function mergeSpaceMessagesAfterSend(
 ): SpaceChatMessage[] {
   if (fromServer.length === 0) return local;
 
+  const localCardsByContent = new Map<string, ChatJobCard[]>();
+  for (const message of local) {
+    if (
+      message.role === 'assistant' &&
+      message.cards &&
+      message.cards.length > 0
+    ) {
+      localCardsByContent.set(assistantContentKey(message.content), message.cards);
+    }
+  }
+
+  // History rows often omit cards; keep turn-response cards on matching content.
+  const enrichedServer = fromServer.map((message) => {
+    if (message.role !== 'assistant') return message;
+    if (message.cards && message.cards.length > 0) return message;
+    const cards = localCardsByContent.get(assistantContentKey(message.content));
+    return cards ? { ...message, cards } : message;
+  });
+
   const serverAssistantContents = new Set(
-    fromServer
+    enrichedServer
       .filter((message) => message.role === 'assistant')
       .map((message) => assistantContentKey(message.content))
   );
@@ -194,7 +241,7 @@ export function mergeSpaceMessagesAfterSend(
       !serverAssistantContents.has(assistantContentKey(message.content))
   );
 
-  if (missingAssistants.length === 0) return fromServer;
+  if (missingAssistants.length === 0) return enrichedServer;
 
-  return [...fromServer, ...missingAssistants];
+  return [...enrichedServer, ...missingAssistants];
 }

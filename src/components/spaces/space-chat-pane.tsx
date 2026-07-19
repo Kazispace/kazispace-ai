@@ -2,6 +2,7 @@
 
 import { type ReactNode, useCallback } from 'react';
 import { ChevronDown, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
@@ -13,6 +14,7 @@ import {
 } from '@/hooks/use-space-turn';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
+import type { ChatJobCard } from '@/types/chat-envelope';
 import { cn } from '@/lib/utils';
 
 type SpaceWelcomeKey = 'blankWelcome' | 'jobSprintWelcome' | 'ieltsWelcome';
@@ -43,6 +45,7 @@ export function SpaceChatPane({
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
   const tChat = useTranslations('chat');
+  const router = useRouter();
   const {
     messages,
     isHydrating,
@@ -52,6 +55,17 @@ export function SpaceChatPane({
     sendMessage,
     retryMessage,
   } = useSpaceTurn(space.id, space.master_session_id, locale, space.space_state);
+
+  const handleJobCardClick = useCallback(
+    (card: ChatJobCard) => {
+      if (card.job_id) {
+        router.push(`/${locale}/jobs/${encodeURIComponent(card.job_id)}`);
+        return;
+      }
+      router.push(`/${locale}/jobs`);
+    },
+    [locale, router]
+  );
 
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
@@ -142,11 +156,17 @@ export function SpaceChatPane({
               messageId={message.id}
               serverMessageId={message.serverMessageId}
               status={message.status}
+              cards={message.cards}
               locale={locale}
               variant="clinic"
               surface="workspace"
               composerTarget="space"
               streamComplete
+              onJobCardClick={
+                message.cards && message.cards.length > 0
+                  ? handleJobCardClick
+                  : undefined
+              }
               onRetry={
                 message.role === 'user' && message.status === 'failed'
                   ? () => {
