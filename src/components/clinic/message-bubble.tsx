@@ -196,8 +196,7 @@ export function MessageBubble({
     return <span className="whitespace-pre-wrap">{content}</span>;
   };
 
-  // Job teasers sit outside the 78% bubble so they can approach composer width
-  // (still capped under max-w-3xl) and read as a centered list, not a thin left stick.
+  // Assistant-only: job cards never attach to user turns, so this never widens user bubbles.
   const widenForJobCards = showJobCards;
 
   return (
@@ -341,6 +340,7 @@ export function MessageBubble({
         </div>
       </div>
       {showJobCards ? (
+        // pl-11 = avatar w-8 (32px) + gap-3 (12px) so teasers align with bubble text column.
         <div className="w-full pl-11">
           <ChatJobTeasers
             cards={jobCards}

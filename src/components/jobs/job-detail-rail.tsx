@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -20,7 +21,13 @@ export function JobDetailRail({
   onClose,
   className,
 }: JobDetailRailProps) {
+  const router = useRouter();
   const t = useTranslations('jobs');
+
+  const handleNavigate = (href: string) => {
+    onClose();
+    router.push(href);
+  };
 
   return (
     <div
@@ -43,7 +50,12 @@ export function JobDetailRail({
         </button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <JobDetailBody jobId={jobId} locale={locale} density="rail" />
+        <JobDetailBody
+          jobId={jobId}
+          locale={locale}
+          density="rail"
+          onNavigate={handleNavigate}
+        />
       </div>
     </div>
   );

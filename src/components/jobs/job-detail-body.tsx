@@ -28,6 +28,11 @@ interface JobDetailBodyProps {
   className?: string;
   /** Compact padding for side rail vs full page. */
   density?: 'page' | 'rail';
+  /**
+   * When set (rail), called instead of raw `router.push` for primary CTAs so the
+   * host can close the rail before navigating.
+   */
+  onNavigate?: (href: string) => void;
 }
 
 /** Shared job detail body for `/jobs/[id]` and in-chat detail rail. */
@@ -36,6 +41,7 @@ export function JobDetailBody({
   locale,
   className,
   density = 'page',
+  onNavigate,
 }: JobDetailBodyProps) {
   const router = useRouter();
   const t = useTranslations('jobs');
@@ -48,13 +54,21 @@ export function JobDetailBody({
   const applyUrl = job ? getJobApplyUrl(job) : null;
   const isRail = density === 'rail';
 
+  const navigateTo = (href: string) => {
+    if (onNavigate) {
+      onNavigate(href);
+      return;
+    }
+    router.push(href);
+  };
+
   const handlePrimaryCta = (cta: string, id: string) => {
     if (cta === 'unlock_pro') {
       openPaywall('PRO_FEATURE_LOCKED');
       return;
     }
     const href = getJobCtaHref(locale, cta, id);
-    if (href) router.push(href);
+    if (href) navigateTo(href);
   };
 
   return (
@@ -62,7 +76,7 @@ export function JobDetailBody({
       {needsLogin ? (
         <div className="rounded-xl border border-orange-100 bg-orange-50 p-6 text-center">
           <p className="mb-4 text-sm text-gray-700">{t('loginBanner')}</p>
-          <Button size="sm" onClick={() => router.push(`/${locale}/login`)}>
+          <Button size="sm" onClick={() => navigateTo(`/${locale}/login`)}>
             {t('signIn')}
           </Button>
         </div>
