@@ -261,6 +261,7 @@
 		"detailLoading": "Загрузка…",
 		"detailError": "Вакансия не найдена",
 		"closeDetail": "Закрыть описание",
+		"resizeDetail": "Изменить ширину описания",
 		"apply": "Откликнуться",
 		"proLocked": "Доступно в Pro",
 		"whyMatched": "Почему подходит",
