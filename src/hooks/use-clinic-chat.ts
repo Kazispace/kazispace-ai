@@ -14,6 +14,7 @@ import { ensureMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
 import { looksLikeResearchRequest } from '@/lib/clinic/upgrade-cta';
 import { isPlaceholderReply, resolveSpaceTurnReply } from '@/lib/spaces/turn';
+import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
 import type { ChatMessage } from '@/types';
 
 function extractHistoryMessageContent(
@@ -48,14 +49,24 @@ function normalizeHistoryMessage(
   if (!content) return null;
   if (role === 'assistant' && isPlaceholderReply(content)) return null;
 
+  const id =
+    (typeof raw.id === 'string' && raw.id) ||
+    (typeof raw.message_id === 'string' && raw.message_id) ||
+    (typeof raw.id === 'number' ? String(raw.id) : '') ||
+    (typeof raw.message_id === 'number' ? String(raw.message_id) : '') ||
+    crypto.randomUUID();
+
   return {
-    id: (raw.id as string) ?? (raw.message_id as string) ?? crypto.randomUUID(),
+    id,
     role,
     content,
     timestamp: (raw.timestamp as string) ?? (raw.created_at as string) ?? new Date().toISOString(),
     sessionId,
     status: 'sent',
     streamComplete: true,
+    ...(role === 'assistant' && isServerAssistantMessageId(id)
+      ? { serverMessageId: id }
+      : {}),
   };
 }
 
@@ -244,6 +255,7 @@ export function useClinicChat(locale?: string) {
           capabilityId,
           playbookId,
           routedToAgent,
+          assistantMessageId,
         } = parseClinicReply(res.data);
 
         if (isPlaceholderReply(reply)) {
@@ -276,6 +288,9 @@ export function useClinicChat(locale?: string) {
           ...(upgradeCta ? { upgradeCta } : {}),
           ...(capabilityId ? { capabilityId } : {}),
           ...(playbookId !== undefined ? { playbookId } : {}),
+          ...(isServerAssistantMessageId(assistantMessageId)
+            ? { serverMessageId: assistantMessageId }
+            : {}),
           pendingCapability: undefined,
           streamComplete: false,
         });

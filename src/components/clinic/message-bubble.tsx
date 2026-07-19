@@ -30,8 +30,12 @@ import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
-  /** Message id — used for future thumbs feedback / corpus. */
+  /** Local / display message id. */
   messageId?: string;
+  /** Persisted chat_messages.id for feedback API (KAZI-254). */
+  serverMessageId?: string;
+  /** Agent Hub: hide thumbs until OQ-1 (surface:agent). */
+  feedbackEnabled?: boolean;
   name?: string;
   intent?: string;
   isStreaming?: boolean;
@@ -71,6 +75,8 @@ export function MessageBubble({
   role,
   content,
   messageId,
+  serverMessageId,
+  feedbackEnabled = true,
   name,
   intent,
   isStreaming,
@@ -297,6 +303,8 @@ export function MessageBubble({
           <MessageActions
             content={content}
             messageId={messageId}
+            serverMessageId={serverMessageId}
+            feedbackEnabled={feedbackEnabled}
             composerTarget={composerTarget}
             disabled={actionsDisabled}
             className="px-1"

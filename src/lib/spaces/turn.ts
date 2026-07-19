@@ -1,4 +1,5 @@
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
 
 /** Unicode ellipsis (U+2026) and ASCII three-dot placeholder. */
 const PLACEHOLDER_REPLIES = new Set(['…', '...']);
@@ -71,6 +72,8 @@ export type SpaceChatMessage = {
   content: string;
   /** Present on optimistic local turns (KAZI-186 retry). */
   status?: 'sending' | 'sent' | 'failed';
+  /** Persisted chat_messages.id for feedback (KAZI-254). */
+  serverMessageId?: string;
 };
 
 function stableMessageIdFallback(
@@ -114,7 +117,14 @@ export function normalizeSpaceHistoryMessage(
         ? raw.message_id
         : stableMessageIdFallback(role, content, index);
 
-  return { id, role, content };
+  return {
+    id,
+    role,
+    content,
+    ...(role === 'assistant' && isServerAssistantMessageId(id)
+      ? { serverMessageId: id }
+      : {}),
+  };
 }
 
 export function mapSpaceHistoryMessages(messages: unknown[]): SpaceChatMessage[] {

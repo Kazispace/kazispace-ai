@@ -140,6 +140,7 @@ export function SpaceChatPane({
               role={message.role}
               content={message.content}
               messageId={message.id}
+              serverMessageId={message.serverMessageId}
               status={message.status}
               locale={locale}
               variant="clinic"

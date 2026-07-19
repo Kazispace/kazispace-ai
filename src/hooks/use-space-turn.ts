@@ -6,6 +6,10 @@ import { useTranslations } from 'next-intl';
 import { fetchChatHistory } from '@/lib/api-client';
 import { isLlmBusy } from '@/lib/api-errors';
 import { sendSpaceTurn } from '@/lib/spaces-api';
+import {
+  extractAssistantMessageId,
+  isServerAssistantMessageId,
+} from '@/lib/clinic/message-feedback';
 import { resolveActivePanelFromTurn } from '@/lib/spaces/active-panel';
 import {
   resolveActiveCapability,
@@ -304,13 +308,22 @@ export function useSpaceTurn(
           return { ok: true as const, pending: true as const };
         }
 
+        const assistantMessageId = extractAssistantMessageId(res.data);
+        const localAssistantId = `assistant_${Date.now()}`;
         nextMessages = [
           ...nextMessages.map((messageRow) =>
             messageRow.id === userId
               ? { ...messageRow, status: 'sent' as const }
               : messageRow
           ),
-          { id: `assistant_${Date.now()}`, role: 'assistant', content: reply },
+          {
+            id: localAssistantId,
+            role: 'assistant',
+            content: reply,
+            ...(isServerAssistantMessageId(assistantMessageId)
+              ? { serverMessageId: assistantMessageId }
+              : {}),
+          },
         ];
         setSpaceMessages(spaceId, nextMessages);
 

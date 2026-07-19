@@ -61,6 +61,9 @@ export interface SpaceTurnResponse {
   reply_text?: string;
   envelope?: unknown;
   meta?: Record<string, unknown>;
+  /** KAZI-254 — same chat_messages id as Clinic feedback path. */
+  assistant_message_id?: string;
+  routing?: Record<string, unknown>;
 }
 
 /** ADR-006 rendering.panels[] — maps to template-internal surfaces. */
