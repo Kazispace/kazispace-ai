@@ -172,7 +172,12 @@ export function useSpaceTurn(
       if (cancelled) return;
       setSpaceMessages(
         spaceId,
-        rehydrateSpaceMessagesWithCards(spaceId, next, previous)
+        rehydrateSpaceMessagesWithCards(
+          spaceId,
+          resolvedMasterId,
+          next,
+          previous
+        )
       );
       setSpaceHydrating(spaceId, false);
       setHistoryReady(true);
@@ -340,7 +345,7 @@ export function useSpaceTurn(
           },
         ];
         setSpaceMessages(spaceId, nextMessages);
-        rememberSpaceJobCards(spaceId, nextMessages);
+        rememberSpaceJobCards(spaceId, resolvedMasterId, nextMessages);
 
         try {
           if (!recoveredFromHistory) {
@@ -352,9 +357,10 @@ export function useSpaceTurn(
           if (history.length > 0) {
             const merged = applyCachedSpaceJobCards(
               spaceId,
+              resolvedMasterId,
               mergeSpaceMessagesAfterSend(nextMessages, history)
             );
-            rememberSpaceJobCards(spaceId, merged);
+            rememberSpaceJobCards(spaceId, resolvedMasterId, merged);
             setSpaceMessages(spaceId, merged);
           }
         } catch (error) {

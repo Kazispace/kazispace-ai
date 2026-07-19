@@ -2,12 +2,14 @@ import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 
 import {
   applyCachedSpaceJobCards,
+  enrichHistoryWithPreviousCards,
   rehydrateSpaceMessagesWithCards,
   rememberSpaceJobCards,
 } from '@/lib/spaces/space-job-cards-cache';
 import type { SpaceChatMessage } from '@/lib/spaces/turn';
 
 const spaceId = 'sp_test_cards';
+const masterSessionId = 'ms_test_1';
 
 describe('space-job-cards-cache', () => {
   const store = new Map<string, string>();
@@ -43,7 +45,7 @@ describe('space-job-cards-cache', () => {
         serverMessageId: '10482',
       },
     ];
-    rememberSpaceJobCards(spaceId, withCards);
+    rememberSpaceJobCards(spaceId, masterSessionId, withCards);
 
     const historyOnlyText: SpaceChatMessage[] = [
       { id: 'u1', role: 'user', content: '帮我求职' },
@@ -57,6 +59,7 @@ describe('space-job-cards-cache', () => {
 
     const rehydrated = rehydrateSpaceMessagesWithCards(
       spaceId,
+      masterSessionId,
       historyOnlyText,
       []
     );
@@ -77,16 +80,134 @@ describe('space-job-cards-cache', () => {
     ];
     const rehydrated = rehydrateSpaceMessagesWithCards(
       spaceId,
+      masterSessionId,
       history,
       previous
     );
     expect(rehydrated[1]?.cards).toEqual(cards);
   });
 
+  it('does not resurrect previous-only messages after server delete', () => {
+    const cards = [
+      { type: 'job', job_id: 'j3', title: 'Gone', company: 'X' },
+    ];
+    const previous: SpaceChatMessage[] = [
+      { id: 'u1', role: 'user', content: 'old' },
+      { id: 'a1', role: 'assistant', content: 'deleted turn', cards },
+      { id: 'u2', role: 'user', content: 'keep' },
+      { id: 'a2', role: 'assistant', content: 'kept', cards },
+    ];
+    const history: SpaceChatMessage[] = [
+      { id: 'u2', role: 'user', content: 'keep' },
+      { id: 'a2', role: 'assistant', content: 'kept' },
+    ];
+    const enriched = enrichHistoryWithPreviousCards(history, previous);
+    expect(enriched).toHaveLength(2);
+    expect(enriched[1]?.cards).toEqual(cards);
+    expect(enriched.some((m) => m.content === 'deleted turn')).toBe(false);
+  });
+
+  it('applies byOrdinal only when content prefix matches', () => {
+    const cards = [
+      { type: 'job', job_id: 'j4', title: 'A', company: 'B' },
+    ];
+    rememberSpaceJobCards(spaceId, masterSessionId, [
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: '为「贸易经理」找到 10 个岗位。',
+        cards,
+      },
+    ]);
+
+    const mismatched = applyCachedSpaceJobCards(spaceId, masterSessionId, [
+      {
+        id: 'a2',
+        role: 'assistant',
+        content: '完全不同的回复内容',
+      },
+    ]);
+    expect(mismatched[0]?.cards).toBeUndefined();
+
+    const matched = applyCachedSpaceJobCards(spaceId, masterSessionId, [
+      {
+        id: 'a3',
+        role: 'assistant',
+        content: '为「贸易经理」找到 10 个岗位。',
+      },
+    ]);
+    expect(matched[0]?.cards).toEqual(cards);
+  });
+
+  it('matches short content prefixes under the length limit', () => {
+    const cards = [
+      { type: 'job', job_id: 'j4b', title: 'Short', company: 'S' },
+    ];
+    rememberSpaceJobCards(spaceId, masterSessionId, [
+      { id: 'a1', role: 'assistant', content: '短回复十', cards },
+    ]);
+    const matched = applyCachedSpaceJobCards(spaceId, masterSessionId, [
+      { id: 'a2', role: 'assistant', content: '短回复十' },
+    ]);
+    expect(matched[0]?.cards).toEqual(cards);
+  });
+
+  it('purges legacy v1 cache keys on load', () => {
+    store.set(`ks.space.jobCards.v1.${spaceId}`, '{"byOrdinal":[]}');
+    rememberSpaceJobCards(spaceId, masterSessionId, [
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: 'hello',
+        cards: [{ type: 'job', job_id: 'j', title: 'T', company: 'C' }],
+      },
+    ]);
+    expect(store.has(`ks.space.jobCards.v1.${spaceId}`)).toBe(false);
+  });
+
+  it('treats empty-string masterSessionId like null', () => {
+    const cards = [
+      { type: 'job', job_id: 'j6', title: 'N', company: 'M' },
+    ];
+    rememberSpaceJobCards(spaceId, '', [
+      { id: 'a1', role: 'assistant', content: 'none session', cards },
+    ]);
+    const fromNull = applyCachedSpaceJobCards(spaceId, null, [
+      { id: 'a1', role: 'assistant', content: 'none session' },
+    ]);
+    expect(fromNull[0]?.cards).toEqual(cards);
+  });
+
+  it('isolates cache by masterSessionId', () => {
+    const cards = [
+      { type: 'job', job_id: 'j5', title: 'X', company: 'Y' },
+    ];
+    rememberSpaceJobCards(spaceId, 'ms_old', [
+      { id: 'a1', role: 'assistant', content: 'hello cards', cards },
+    ]);
+
+    const otherSession = applyCachedSpaceJobCards(spaceId, 'ms_new', [
+      { id: 'a1', role: 'assistant', content: 'hello cards' },
+    ]);
+    expect(otherSession[0]?.cards).toBeUndefined();
+  });
+
+  it('treats corrupt sessionStorage as empty cache', () => {
+    store.set(`ks.space.jobCards.v2.${spaceId}.${masterSessionId}`, '{not-json');
+    const messages: SpaceChatMessage[] = [
+      { id: 'a1', role: 'assistant', content: 'hello' },
+    ];
+    expect(applyCachedSpaceJobCards(spaceId, masterSessionId, messages)).toEqual(
+      messages
+    );
+  });
+
   it('applyCachedSpaceJobCards is a no-op without cache', () => {
     const messages: SpaceChatMessage[] = [
       { id: 'a1', role: 'assistant', content: 'hello' },
     ];
-    expect(applyCachedSpaceJobCards(spaceId, messages)).toEqual(messages);
+    expect(
+      applyCachedSpaceJobCards(spaceId, masterSessionId, messages)
+    ).toEqual(messages);
   });
 });
