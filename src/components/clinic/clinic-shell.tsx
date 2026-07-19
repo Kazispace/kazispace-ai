@@ -1147,6 +1147,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 role={msg.role === "user" ? "user" : "assistant"}
                 content={msg.content}
                 messageId={msg.id}
+                serverMessageId={msg.serverMessageId}
+                feedbackEnabled={!isAgentMode}
                 intent={msg.intent}
                 status={msg.status}
                 referral={msg.referral}

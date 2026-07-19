@@ -291,6 +291,37 @@
 			"placeholder": "Мансап туралы жазыңыз…"
 		},
 		"retry": "Қайталау",
+		"messageActions": {
+			"quote": "Дәйексөз",
+			"thumbsUp": "Пайдалы",
+			"thumbsDown": "Пайдасыз",
+			"copy": "Көшіру",
+			"saveDocument": "Құжат ретінде сақтау",
+			"quoted": "Енгізу жолағына қосылды",
+			"feedbackThanksUp": "Пікіріңізге рахмет",
+			"feedbackThanksDown": "Пікір қабылданды",
+			"feedbackRecorded": "Пікір жазылды",
+			"feedbackUnavailable": "Жауап сақталғаннан кейін бағалауға болады",
+			"feedbackNotReady": "Жауап аяқталғанша күтіңіз",
+			"feedbackFailed": "Пікір жіберілмеді",
+			"feedbackNeedReason": "Кемінде бір себеп таңдаңыз",
+			"feedbackNoteTooLong": "Ескертпе 500 таңбадан аспауы керек",
+			"feedbackReasonsLabel": "Неге пайдасыз болды?",
+			"feedbackReasonsHint": "Бірнешеуін таңдауға болады",
+			"feedbackNotePlaceholder": "Қосымша ескертпе (міндетті емес)",
+			"feedbackCancel": "Бас тарту",
+			"feedbackSubmit": "Жіберу",
+			"reasons": {
+				"off_topic": "Тақырыптан тыс",
+				"inaccurate": "Дәл емес",
+				"shallow": "Үстірт",
+				"other": "Басқа"
+			},
+			"copied": "Көшірілді",
+			"copyFailed": "Көшіру сәтсіз",
+			"savedDocument": "Markdown ретінде жүктелді",
+			"saveFailed": "Құжатты сақтау сәтсіз"
+		},
 		"actions": {
 			"open_list": "Жұмыс ұсыныстарын көру",
 			"view_job_recommendations": "Жұмыс ұсыныстарын көру",

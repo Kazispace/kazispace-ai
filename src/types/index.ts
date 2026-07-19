@@ -75,6 +75,11 @@ export interface ChatMessage {
   pendingCapability?: 'web_search' | 'research';
   workflow?: import('./chat-envelope').AssistantWorkflow;
   streamComplete?: boolean;
+  /**
+   * Persisted `chat_messages.id` from BE (KAZI-254).
+   * Local optimistic ids stay on `id` until history merge; feedback uses this.
+   */
+  serverMessageId?: string;
 }
 
 export interface ChatSession {

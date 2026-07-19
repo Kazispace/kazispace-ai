@@ -11,6 +11,7 @@ import {
 } from './spaces/space-nudge';
 import { isSpacesEnabled } from './spaces/constants';
 import { isPlaceholderReply, resolveSpaceTurnReply } from './spaces/turn';
+import { extractAssistantMessageId } from './clinic/message-feedback';
 import { getTmaClientHeaders } from './telegram';
 import { parseRetryAfterSeconds } from './retry-after';
 import type {
@@ -218,6 +219,9 @@ export interface ClinicChatResponse {
   };
   message_id?: string;
   messageId?: string;
+  /** KAZI-254 — persisted assistant row id for feedback attribution. */
+  assistant_message_id?: string;
+  routing?: Record<string, unknown>;
   intent?: string;
   referral_agent_id?: string;
   referral_reason?: string;
@@ -319,6 +323,7 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   capabilityId?: import('@/lib/clinic/search-capability').SearchCapabilityId;
   playbookId?: string | null;
   routedToAgent?: { agentId: string; sessionId?: string };
+  assistantMessageId?: string;
 } {
   if (!data) {
     return { reply: '', nextActions: [], cards: [] };
@@ -361,6 +366,8 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
     }
   }
 
+  const assistantMessageId = extractAssistantMessageId(data);
+
   return {
     reply,
     intent: data.intent ?? envelope.intent,
@@ -375,5 +382,6 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
       ? { playbookId: envelope.playbookId }
       : {}),
     routedToAgent,
+    ...(assistantMessageId ? { assistantMessageId } : {}),
   };
 }
