@@ -260,6 +260,7 @@
 		"detailTitle": "Описание вакансии",
 		"detailLoading": "Загрузка…",
 		"detailError": "Вакансия не найдена",
+		"closeDetail": "Закрыть описание",
 		"apply": "Откликнуться",
 		"proLocked": "Доступно в Pro",
 		"whyMatched": "Почему подходит",

@@ -23,6 +23,7 @@ import {
 import { ClinicParkedCapabilityBanner } from "./clinic-parked-capability-banner";
 import { ConfirmAbandonSessionDialog } from "@/components/session-nav/confirm-abandon-session-dialog";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
+import { JobDetailRail } from "@/components/jobs/job-detail-rail";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
 import { clinicChatScrollStorageKey } from "@/lib/spaces/chat-scroll";
@@ -323,6 +324,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const [layerReady, setLayerReady] = useState(false);
   const [switchConfirming, setSwitchConfirming] = useState(false);
   const [sessionPanelOpen, setSessionPanelOpen] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [historyReadOnly, setHistoryReadOnly] = useState(false);
   const [isSwitchingSession, setIsSwitchingSession] = useState(false);
   const sessionHistoryTriggerRef = useRef<HTMLElement | null>(null);
@@ -1108,12 +1110,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const handleJobCardClick = useCallback(
     (card: ChatJobCard) => {
       if (card.job_id) {
-        router.push(`/${locale}/jobs/${encodeURIComponent(card.job_id)}`);
+        setSelectedJobId(card.job_id);
         return;
       }
-      router.push(`/${locale}/jobs`);
+      setSelectedJobId(null);
     },
-    [locale, router]
+    []
   );
 
   const clinicShellReady =
@@ -1267,6 +1269,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         </p>
       ) : null}
 
+      <div className="relative flex min-h-0 flex-1">
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
       <div className="relative flex min-h-0 flex-1 flex-col">
       <div
         ref={scrollRef}
@@ -1514,6 +1518,32 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           </div>
         </div>
       )}
+      </div>
+
+      {selectedJobId ? (
+        <>
+          <aside
+            className={cn(
+              "hidden min-h-0 shrink-0 flex-col border-l border-gray-200/80 bg-white",
+              "lg:flex lg:w-[min(480px,40vw)]"
+            )}
+          >
+            <JobDetailRail
+              jobId={selectedJobId}
+              locale={locale}
+              onClose={() => setSelectedJobId(null)}
+            />
+          </aside>
+          <div className="absolute inset-0 z-30 flex flex-col bg-white lg:hidden">
+            <JobDetailRail
+              jobId={selectedJobId}
+              locale={locale}
+              onClose={() => setSelectedJobId(null)}
+            />
+          </div>
+        </>
+      ) : null}
+      </div>
 
       <AgentSwitcher
         locale={locale}
