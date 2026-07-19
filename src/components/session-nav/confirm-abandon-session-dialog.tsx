@@ -71,7 +71,12 @@ export function ConfirmAbandonSessionDialog({
     };
   }, [open, onCancel]);
 
-  if (!open || !agentId) return null;
+  if (!open) return null;
+
+  const title = t('confirmAbandonTitle');
+  const body = t('confirmAbandonBody', {
+    agent: agentName ?? t('confirmAbandonFallbackAgent'),
+  });
 
   return (
     <div
@@ -100,11 +105,9 @@ export function ConfirmAbandonSessionDialog({
           <X className="h-5 w-5" />
         </button>
         <h2 id="confirm-abandon-title" className="pr-8 text-lg font-semibold text-[#1D2129]">
-          {t('confirmAbandonTitle')}
+          {title}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#4E5969]">
-          {t('confirmAbandonBody', { agent: agentName ?? '' })}
-        </p>
+        <p className="mt-2 text-sm leading-relaxed text-[#4E5969]">{body}</p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button ref={cancelButtonRef} variant="ghost" onClick={onCancel}>
             {t('confirmAbandonCancel')}

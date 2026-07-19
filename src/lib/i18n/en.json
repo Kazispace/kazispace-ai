@@ -267,6 +267,7 @@
 		"confirmAbandonBody": "Your current {agent} session is still in progress. Starting new will archive it.",
 		"confirmAbandonAction": "Start new",
 		"confirmAbandonCancel": "Cancel",
+		"confirmAbandonFallbackAgent": "task",
 		"newSessionStarted": "New {agent} session started",
 		"newSessionFailed": "Could not start a new session",
 		"exitSessionDone": "Session ended",

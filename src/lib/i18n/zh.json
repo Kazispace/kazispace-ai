@@ -185,6 +185,7 @@
 		"confirmAbandonBody": "当前 {agent} 会话仍在进行中，新建将归档当前会话。",
 		"confirmAbandonAction": "新建",
 		"confirmAbandonCancel": "取消",
+		"confirmAbandonFallbackAgent": "任务",
 		"newSessionStarted": "已新建 {agent} 会话",
 		"newSessionFailed": "无法新建会话",
 		"exitSessionDone": "会话已结束",

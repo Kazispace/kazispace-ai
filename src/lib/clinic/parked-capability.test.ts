@@ -4,6 +4,7 @@ import {
   isParkInteractiveAgentId,
   isParkedInteractiveSession,
   needsParkReplaceConfirm,
+  selectCurrentInteractiveSession,
   selectParkedInteractiveSession,
 } from '@/lib/clinic/parked-capability';
 import type { AgentSessionSummary } from '@/types';
@@ -82,6 +83,39 @@ describe('selectParkedInteractiveSession', () => {
       }),
     ]);
     expect(picked?.session_id).toBe('b');
+  });
+});
+
+describe('selectCurrentInteractiveSession', () => {
+  it('prefers parked over non-parked current', () => {
+    const picked = selectCurrentInteractiveSession([
+      session({
+        session_id: 'a',
+        agent_id: 'job_search',
+        parked: false,
+        lifecycle_kind: 'interactive',
+        updated_at: '2026-07-03T00:00:00Z',
+      }),
+      session({
+        session_id: 'b',
+        agent_id: 'cv_builder',
+        parked: true,
+        updated_at: '2026-07-01T00:00:00Z',
+      }),
+    ]);
+    expect(picked?.session_id).toBe('b');
+  });
+
+  it('falls back to active interactive when none parked', () => {
+    const picked = selectCurrentInteractiveSession([
+      session({
+        session_id: 'a',
+        agent_id: 'cv_builder',
+        parked: false,
+        lifecycle_kind: 'interactive',
+      }),
+    ]);
+    expect(picked?.agent_id).toBe('cv_builder');
   });
 });
 

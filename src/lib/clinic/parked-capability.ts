@@ -64,6 +64,46 @@ export function selectParkedInteractiveFromMap(
 }
 
 /**
+ * Current interactive for ConfirmAbandon copy (Parked or still focused Current).
+ * Prefer parked; else any active interactive-kind / known interactive agent id.
+ */
+export function isCurrentInteractiveSession(
+  session: AgentSessionSummary | null | undefined
+): boolean {
+  if (!session) return false;
+  if (session.status !== 'active') return false;
+  if (session.lifecycle_kind === 'delivery') return false;
+  if (session.lifecycle_kind === 'interactive') return true;
+  if (session.parked === true) return true;
+  return isParkInteractiveAgentId(session.agent_id);
+}
+
+export function selectCurrentInteractiveSession(
+  sessions: Iterable<AgentSessionSummary>
+): AgentSessionSummary | null {
+  const parked = selectParkedInteractiveSession(sessions);
+  if (parked) return parked;
+  let best: AgentSessionSummary | null = null;
+  let bestTs = -1;
+  for (const session of Array.from(sessions)) {
+    if (!isCurrentInteractiveSession(session)) continue;
+    const ts = session.updated_at ? Date.parse(session.updated_at) : 0;
+    const score = Number.isFinite(ts) ? ts : 0;
+    if (!best || score >= bestTs) {
+      best = session;
+      bestTs = score;
+    }
+  }
+  return best;
+}
+
+export function selectCurrentInteractiveFromMap(
+  sessionsByAgent: Map<string, AgentSessionSummary>
+): AgentSessionSummary | null {
+  return selectCurrentInteractiveSession(sessionsByAgent.values());
+}
+
+/**
  * Starting `targetAgentId` would replace a parked interactive (INV-P2).
  * Same agent resume uses `sessions/open` — no confirm.
  */

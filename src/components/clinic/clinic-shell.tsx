@@ -30,9 +30,10 @@ import { cn } from "@/lib/utils";
 import { useActiveAgentSessions } from "@/hooks/use-active-agent-sessions";
 import {
   needsParkReplaceConfirm,
+  selectCurrentInteractiveFromMap,
   selectParkedInteractiveFromMap,
 } from "@/lib/clinic/parked-capability";
-import { newAgentSession } from "@/lib/agent-api";
+import { exitAgentSession, newAgentSession } from "@/lib/agent-api";
 import { openHubAgentSession } from "@/lib/hub-agent-open";
 import { getAgentHubPath } from "@/lib/agent-transition/surfaces";
 import { publishSessionNavInvalidate } from "@/lib/session-nav-invalidate";
@@ -191,11 +192,24 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     [sessionsByAgent]
   );
 
+  const currentInteractive = useMemo(
+    () => selectCurrentInteractiveFromMap(sessionsByAgent),
+    [sessionsByAgent]
+  );
+
   /** INV-P2: open a different interactive while one is parked → ConfirmAbandon. */
   const [parkReplaceTargetId, setParkReplaceTargetId] = useState<string | null>(
     null
   );
   const [parkReplaceBusy, setParkReplaceBusy] = useState(false);
+
+  /** KAZI-272: Clinic NL → interactive hit INTERACTIVE_IN_PROGRESS. */
+  const [clinicNlConfirm, setClinicNlConfirm] = useState<{
+    text: string;
+    retryMessageId: string;
+    agentId: string | null;
+  } | null>(null);
+  const [clinicNlConfirmBusy, setClinicNlConfirmBusy] = useState(false);
 
   // Active-session multi-badge banner removed (KAZI-198); Park chip is KAZI-269.
   const requestAgentSwitchRef = useRef(requestAgentSwitch);
@@ -780,6 +794,17 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     const result = await sendClinicMessage(text);
 
+    if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
+      void refreshCurrentSessions(true);
+      setClinicNlConfirm({
+        text,
+        retryMessageId: result.retryMessageId,
+        agentId:
+          currentInteractive?.agent_id ?? parkedInteractive?.agent_id ?? null,
+      });
+      return;
+    }
+
     if (result.ok) {
       // Park may appear after yield (news/greeting) — refresh Current+parked.
       void refreshCurrentSessions(true);
@@ -847,9 +872,104 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         await reloadClinicIfNeeded(exitResult);
         return;
       }
-      // Hook already toasted special cases (LLM_BUSY / profile / paywall).
+      // Hook already toasted special cases (LLM_BUSY / profile / paywall / INV-P2).
       if ("toastShown" in result && result.toastShown) return;
       showToast(result.error ?? tClinic("sendFailed"), "error");
+    }
+  };
+
+  const handleConfirmClinicNlAbandon = async () => {
+    if (!clinicNlConfirm) return;
+    const { text, retryMessageId } = clinicNlConfirm;
+    setClinicNlConfirmBusy(true);
+    try {
+      const conflictingId =
+        clinicNlConfirm.agentId ??
+        currentInteractive?.agent_id ??
+        selectCurrentInteractiveFromMap(sessionsByAgent)?.agent_id;
+      if (conflictingId) {
+        const exitRes = await exitAgentSession(conflictingId, locale);
+        if (!exitRes.success) {
+          showToast(tClinic("activateFailed"), "error");
+          return;
+        }
+        void refreshCurrentSessions(true);
+        publishSessionNavInvalidate();
+      }
+
+      const result = await sendClinicMessage(text, {
+        retryMessageId,
+        confirmAbandon: true,
+      });
+
+      if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
+        showToast(tClinic("activateFailed"), "error");
+        return;
+      }
+
+      setClinicNlConfirm(null);
+
+      if (result.ok) {
+        void refreshCurrentSessions(true);
+        const msg = useChatStore
+          .getState()
+          .messages.find((m) => m.id === result.assistantId);
+
+        if (
+          msg &&
+          shouldClinicReplyRouteToInterviewHub({
+            intent: msg.intent,
+            nextActions: msg.nextActions,
+            userText: text,
+          })
+        ) {
+          markStreamComplete(result.assistantId);
+          await activateMockInterviewHub();
+          return;
+        }
+
+        if (
+          shouldRouteToEnglishEpp({
+            intent: msg?.intent,
+            nextActions: msg?.nextActions,
+            routedAgentId: result.routedToAgent?.agentId,
+          })
+        ) {
+          markStreamComplete(result.assistantId);
+          routeEnglishPage();
+          return;
+        }
+
+        if (result.routedToAgent) {
+          if (isCvBuilderAgent(result.routedToAgent.agentId)) {
+            setCvAgentHandoff({
+              sessionId: result.routedToAgent.sessionId,
+              greeting: msg?.content?.trim() || undefined,
+            });
+            markStreamComplete(result.assistantId);
+            routeCvBuilderPage();
+            return;
+          }
+          if (msg?.role === "assistant") {
+            const syncResult = await syncActiveAgentFromGateway(
+              result.routedToAgent.agentId,
+              {
+                ...msg,
+                sessionId: result.routedToAgent.sessionId ?? msg.sessionId,
+              }
+            );
+            if (syncResult && !syncResult.ok) {
+              showToast(tClinic("activateFailed"), "error");
+            }
+          }
+        }
+        return;
+      }
+
+      if ("toastShown" in result && result.toastShown) return;
+      showToast(result.error ?? tClinic("sendFailed"), "error");
+    } finally {
+      setClinicNlConfirmBusy(false);
     }
   };
 
@@ -1077,14 +1197,27 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         dismissMessageUpgradeCta(messageId);
         return;
       }
+      if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
+        void refreshCurrentSessions(true);
+        setClinicNlConfirm({
+          text: handoffText,
+          retryMessageId: result.retryMessageId,
+          agentId:
+            currentInteractive?.agent_id ?? parkedInteractive?.agent_id ?? null,
+        });
+        return;
+      }
       if (!("toastShown" in result && result.toastShown)) {
         showToast(result.error ?? tClinic("sendFailed"), "error");
       }
     },
     [
+      currentInteractive?.agent_id,
       dismissMessageUpgradeCta,
       locale,
+      parkedInteractive?.agent_id,
       pinToLatestOnSend,
+      refreshCurrentSessions,
       sendClinicMessage,
       showToast,
       tClinic,
@@ -1425,12 +1558,23 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       />
 
       <ConfirmAbandonSessionDialog
-        open={Boolean(parkReplaceTargetId)}
-        agentId={parkedInteractive?.agent_id ?? null}
+        open={Boolean(parkReplaceTargetId) || Boolean(clinicNlConfirm)}
+        agentId={
+          parkReplaceTargetId
+            ? (parkedInteractive?.agent_id ?? null)
+            : (clinicNlConfirm?.agentId ??
+              currentInteractive?.agent_id ??
+              null)
+        }
         locale={locale}
-        onConfirm={() => void handleConfirmParkReplace()}
+        onConfirm={() => {
+          if (clinicNlConfirm) void handleConfirmClinicNlAbandon();
+          else void handleConfirmParkReplace();
+        }}
         onCancel={() => {
-          if (!parkReplaceBusy) setParkReplaceTargetId(null);
+          if (parkReplaceBusy || clinicNlConfirmBusy) return;
+          if (clinicNlConfirm) setClinicNlConfirm(null);
+          else setParkReplaceTargetId(null);
         }}
       />
 

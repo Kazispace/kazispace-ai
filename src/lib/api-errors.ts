@@ -42,3 +42,21 @@ export function isLlmBusy(res: ErrorLike): boolean {
   }
   return false;
 }
+
+/**
+ * Lifecycle-Park INV-P2 — another interactive Capability is still Current.
+ * Prefer `error_code=INTERACTIVE_IN_PROGRESS` (M2+); tolerate legacy `SESSION_IN_PROGRESS`.
+ * Do not treat bare HTTP 409 as a match (other codes e.g. FEEDBACK_NOT_READY also use 409).
+ */
+export function isInteractiveInProgress(res: ErrorLike): boolean {
+  if (res.errorCode === 'INTERACTIVE_IN_PROGRESS') return true;
+  if (res.errorCode === 'SESSION_IN_PROGRESS') return true;
+  if (
+    typeof res.error === 'string' &&
+    (res.error.includes('INTERACTIVE_IN_PROGRESS') ||
+      res.error.includes('SESSION_IN_PROGRESS'))
+  ) {
+    return true;
+  }
+  return false;
+}
