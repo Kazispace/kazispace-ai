@@ -122,6 +122,10 @@ export function resolveSessionNavBadge(
 ): { kind: SessionNavBadgeKind; detail?: string | null } | null {
   if (!session) return { kind: 'notStarted' };
   if (session.status === 'archived') return { kind: 'archived' };
+  // Parked Current still counts as in-progress (Lifecycle-Park / KAZI-269).
+  if (session.status === 'active' && session.parked === true) {
+    return { kind: 'inProgress', detail: session.title ?? null };
+  }
   if (session.status === 'active' && session.pipeline_state) {
     return { kind: 'pipeline', detail: session.pipeline_state };
   }

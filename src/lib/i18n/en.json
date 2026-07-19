@@ -730,7 +730,11 @@
 		"switchConfirmAction": "Switch to {targetName}",
 		"switchConfirmCancel": "Stay here",
 		"activeSessionsTitle": "Continue where you left off",
-		"activeSessionsContinue": "Continue {agent}"
+		"activeSessionsContinue": "Continue {agent}",
+		"parkInProgress": "{agent} in progress",
+		"parkContinue": "Continue",
+		"parkResumed": "Resumed {agent}",
+		"parkResumeFailed": "Could not resume the task"
 	},
 	"subscription": {
 		"title": "Upgrade to PRO / Sprint",

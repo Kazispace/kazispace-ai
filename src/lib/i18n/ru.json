@@ -451,7 +451,11 @@
 		"switchConfirmTitle": "Сменить эксперта?",
 		"switchConfirmBody": "Сейчас активен {currentName}. Выйти и открыть {targetName}?",
 		"switchConfirmAction": "Перейти к {targetName}",
-		"switchConfirmCancel": "Остаться"
+		"switchConfirmCancel": "Остаться",
+		"parkInProgress": "Задача {agent} в процессе",
+		"parkContinue": "Продолжить",
+		"parkResumed": "Продолжаем {agent}",
+		"parkResumeFailed": "Не удалось продолжить задачу"
 	},
 	"subscription": {
 		"title": "Перейти на PRO / Sprint",

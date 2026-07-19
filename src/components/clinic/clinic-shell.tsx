@@ -20,12 +20,22 @@ import {
   shouldHideClinicStarterForQuickReplies,
   useClinicStarterPromptsController,
 } from "./clinic-starter";
+import { ClinicParkedCapabilityBanner } from "./clinic-parked-capability-banner";
+import { ConfirmAbandonSessionDialog } from "@/components/session-nav/confirm-abandon-session-dialog";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
 import { clinicChatScrollStorageKey } from "@/lib/spaces/chat-scroll";
 import { cn } from "@/lib/utils";
 import { useActiveAgentSessions } from "@/hooks/use-active-agent-sessions";
+import {
+  needsParkReplaceConfirm,
+  selectParkedInteractiveFromMap,
+} from "@/lib/clinic/parked-capability";
+import { newAgentSession } from "@/lib/agent-api";
+import { openHubAgentSession } from "@/lib/hub-agent-open";
+import { getAgentHubPath } from "@/lib/agent-transition/surfaces";
+import { publishSessionNavInvalidate } from "@/lib/session-nav-invalidate";
 import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
 import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
@@ -173,10 +183,21 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     exitToClinic,
   } = useAgentSwitch(locale, switchContext);
 
-  const { sessionsByAgent } = useActiveAgentSessions();
+  const { sessionsByAgent, refresh: refreshCurrentSessions } =
+    useActiveAgentSessions();
 
-  // Active-session banner removed (KAZI-198) — progress tracked per-space.
+  const parkedInteractive = useMemo(
+    () => selectParkedInteractiveFromMap(sessionsByAgent),
+    [sessionsByAgent]
+  );
 
+  /** INV-P2: open a different interactive while one is parked → ConfirmAbandon. */
+  const [parkReplaceTargetId, setParkReplaceTargetId] = useState<string | null>(
+    null
+  );
+  const [parkReplaceBusy, setParkReplaceBusy] = useState(false);
+
+  // Active-session multi-badge banner removed (KAZI-198); Park chip is KAZI-269.
   const requestAgentSwitchRef = useRef(requestAgentSwitch);
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
   const resumeActiveAgentSilentlyRef = useRef(resumeActiveAgentSilently);
@@ -760,6 +781,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     const result = await sendClinicMessage(text);
 
     if (result.ok) {
+      // Park may appear after yield (news/greeting) — refresh Current+parked.
+      void refreshCurrentSessions(true);
+
       const msg = useChatStore
         .getState()
         .messages.find((m) => m.id === result.assistantId);
@@ -835,10 +859,50 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       router.push(`/${locale}/login`);
       return;
     }
+    if (needsParkReplaceConfirm(parkedInteractive, agentId)) {
+      setParkReplaceTargetId(agentId);
+      return;
+    }
     const result = await requestAgentSwitch(agentId);
     if (result && !result.ok && result.needsConfirm) return;
     if (result && !result.ok) {
       showToast(result.error ?? tClinic("activateFailed"), "error");
+    }
+  };
+
+  const handleConfirmParkReplace = async () => {
+    if (!parkReplaceTargetId) return;
+    const targetId = parkReplaceTargetId;
+    setParkReplaceBusy(true);
+    try {
+      const res = await newAgentSession(targetId, locale, {
+        confirm_abandon: true,
+      });
+      if (!res.success || !res.data) {
+        showToast(res.error ?? tClinic("activateFailed"), "error");
+        return;
+      }
+      setParkReplaceTargetId(null);
+      void refreshCurrentSessions(true);
+      publishSessionNavInvalidate();
+
+      const hubPath = getAgentHubPath(locale, targetId);
+      if (hubPath) {
+        const open = await openHubAgentSession(targetId, locale);
+        if (!open.ok) {
+          showToast(open.error ?? tClinic("activateFailed"), "error");
+          return;
+        }
+        router.push(hubPath);
+        return;
+      }
+
+      const result = await requestAgentSwitch(targetId);
+      if (result && !result.ok && !result.needsConfirm) {
+        showToast(result.error ?? tClinic("activateFailed"), "error");
+      }
+    } finally {
+      setParkReplaceBusy(false);
     }
   };
 
@@ -1301,6 +1365,17 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       ) : (
         <div className="bg-gray-bg px-4 pb-3 pt-2">
           <div className="mx-auto flex w-full max-w-3xl flex-col gap-2">
+            {!isAgentMode && parkedInteractive ? (
+              <ClinicParkedCapabilityBanner
+                locale={locale}
+                session={parkedInteractive}
+                disabled={clinicInputDisabled || parkReplaceBusy}
+                onResumed={() => {
+                  void refreshCurrentSessions(true);
+                  publishSessionNavInvalidate();
+                }}
+              />
+            ) : null}
             {showClinicStarter && clinicStarter ? (
               <ClinicStarterExampleStrip
                 cfg={clinicStarter.cfg}
@@ -1343,6 +1418,16 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         sessionsByAgent={sessionsByAgent}
         onClose={() => setSwitcherOpen(false)}
         onSelect={handleAgentSelect}
+      />
+
+      <ConfirmAbandonSessionDialog
+        open={Boolean(parkReplaceTargetId)}
+        agentId={parkedInteractive?.agent_id ?? null}
+        locale={locale}
+        onConfirm={() => void handleConfirmParkReplace()}
+        onCancel={() => {
+          if (!parkReplaceBusy) setParkReplaceTargetId(null);
+        }}
       />
 
       {pendingAgentSwitch ? (
