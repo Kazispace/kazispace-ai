@@ -11,9 +11,12 @@ import type { ChatJobCard } from '@/types/chat-envelope';
 import type { SpaceChatMessage } from '@/lib/spaces/turn';
 
 const STORAGE_PREFIX = 'ks.space.jobCards.v2.';
+/** Pre-#146 key shape — removed on read so sessionStorage does not accumulate junk. */
+const LEGACY_V1_PREFIX = 'ks.space.jobCards.v1.';
+const CONTENT_PREFIX_LENGTH = 48;
 
 type OrdinalEntry = {
-  /** Light guard against ordinal drift (first 48 chars of trimmed content). */
+  /** Light guard against ordinal drift (trimmed content prefix). */
   contentPrefix: string;
   cards: ChatJobCard[];
 };
@@ -26,12 +29,18 @@ type SpaceJobCardsCache = {
   byMessageId: Record<string, ChatJobCard[]>;
 };
 
+function normalizeMasterSessionId(
+  masterSessionId: string | null | undefined
+): string | null {
+  return masterSessionId?.trim() || null;
+}
+
 function contentPrefix(content: string): string {
-  return content.trim().slice(0, 48);
+  return content.trim().slice(0, CONTENT_PREFIX_LENGTH);
 }
 
 function storageKey(spaceId: string, masterSessionId: string | null): string {
-  const sessionPart = masterSessionId?.trim() || '_none';
+  const sessionPart = masterSessionId || '_none';
   return `${STORAGE_PREFIX}${spaceId}.${sessionPart}`;
 }
 
@@ -48,26 +57,37 @@ function getSessionStorage(): Storage | null {
   }
 }
 
+function purgeLegacyV1Cache(storage: Storage, spaceId: string): void {
+  try {
+    storage.removeItem(`${LEGACY_V1_PREFIX}${spaceId}`);
+  } catch {
+    // ignore
+  }
+}
+
 export function loadSpaceJobCardsCache(
   spaceId: string,
   masterSessionId: string | null
 ): SpaceJobCardsCache {
+  const normalizedSessionId = normalizeMasterSessionId(masterSessionId);
   const storage = getSessionStorage();
-  if (!storage) return emptyCache(masterSessionId);
+  if (!storage) return emptyCache(normalizedSessionId);
+  purgeLegacyV1Cache(storage, spaceId);
   try {
-    const raw = storage.getItem(storageKey(spaceId, masterSessionId));
-    if (!raw) return emptyCache(masterSessionId);
+    const raw = storage.getItem(storageKey(spaceId, normalizedSessionId));
+    if (!raw) return emptyCache(normalizedSessionId);
     const parsed = JSON.parse(raw) as Partial<SpaceJobCardsCache>;
+    const parsedSessionId = normalizeMasterSessionId(parsed.masterSessionId);
     // Reject stale cache if master session was rebound under the same spaceId.
     if (
-      (parsed.masterSessionId ?? null) !== (masterSessionId?.trim() || null) &&
-      parsed.masterSessionId != null &&
-      masterSessionId?.trim()
+      parsedSessionId !== normalizedSessionId &&
+      parsedSessionId != null &&
+      normalizedSessionId != null
     ) {
-      return emptyCache(masterSessionId);
+      return emptyCache(normalizedSessionId);
     }
     return {
-      masterSessionId: masterSessionId,
+      masterSessionId: normalizedSessionId,
       byOrdinal: Array.isArray(parsed.byOrdinal) ? parsed.byOrdinal : [],
       byMessageId:
         parsed.byMessageId && typeof parsed.byMessageId === 'object'
@@ -75,7 +95,7 @@ export function loadSpaceJobCardsCache(
           : {},
     };
   } catch {
-    return emptyCache(masterSessionId);
+    return emptyCache(normalizedSessionId);
   }
 }
 
@@ -84,12 +104,14 @@ function saveSpaceJobCardsCache(
   masterSessionId: string | null,
   cache: SpaceJobCardsCache
 ): void {
+  const normalizedSessionId = normalizeMasterSessionId(masterSessionId);
   const storage = getSessionStorage();
   if (!storage) return;
+  purgeLegacyV1Cache(storage, spaceId);
   try {
     storage.setItem(
-      storageKey(spaceId, masterSessionId),
-      JSON.stringify({ ...cache, masterSessionId })
+      storageKey(spaceId, normalizedSessionId),
+      JSON.stringify({ ...cache, masterSessionId: normalizedSessionId })
     );
   } catch {
     // Quota / private mode — cards still work until remount.
@@ -102,7 +124,8 @@ export function rememberSpaceJobCards(
   masterSessionId: string | null,
   messages: SpaceChatMessage[]
 ): void {
-  const prev = loadSpaceJobCardsCache(spaceId, masterSessionId);
+  const normalizedSessionId = normalizeMasterSessionId(masterSessionId);
+  const prev = loadSpaceJobCardsCache(spaceId, normalizedSessionId);
   const byOrdinal: (OrdinalEntry | null)[] = [];
   const byMessageId = { ...prev.byMessageId };
 
@@ -128,8 +151,8 @@ export function rememberSpaceJobCards(
     ordinal += 1;
   }
 
-  saveSpaceJobCardsCache(spaceId, masterSessionId, {
-    masterSessionId,
+  saveSpaceJobCardsCache(spaceId, normalizedSessionId, {
+    masterSessionId: normalizedSessionId,
     byOrdinal,
     byMessageId,
   });
@@ -179,6 +202,10 @@ export function applyCachedSpaceJobCards(
  * Copy cards from in-memory previous onto history rows only.
  * Does **not** append previous-only messages (unlike mergeSpaceMessagesAfterSend).
  * History is SSOT for which turns exist.
+ *
+ * Ordinal fallback assumes the nth assistant in `history` corresponds to the nth
+ * assistant in `previous`. If that drifts (e.g. a user turn dropped on the server),
+ * contentPrefix must still match or cards are not copied.
  */
 export function enrichHistoryWithPreviousCards(
   history: SpaceChatMessage[],

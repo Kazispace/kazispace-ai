@@ -139,6 +139,45 @@ describe('space-job-cards-cache', () => {
     expect(matched[0]?.cards).toEqual(cards);
   });
 
+  it('matches short content prefixes under the length limit', () => {
+    const cards = [
+      { type: 'job', job_id: 'j4b', title: 'Short', company: 'S' },
+    ];
+    rememberSpaceJobCards(spaceId, masterSessionId, [
+      { id: 'a1', role: 'assistant', content: '短回复十', cards },
+    ]);
+    const matched = applyCachedSpaceJobCards(spaceId, masterSessionId, [
+      { id: 'a2', role: 'assistant', content: '短回复十' },
+    ]);
+    expect(matched[0]?.cards).toEqual(cards);
+  });
+
+  it('purges legacy v1 cache keys on load', () => {
+    store.set(`ks.space.jobCards.v1.${spaceId}`, '{"byOrdinal":[]}');
+    rememberSpaceJobCards(spaceId, masterSessionId, [
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: 'hello',
+        cards: [{ type: 'job', job_id: 'j', title: 'T', company: 'C' }],
+      },
+    ]);
+    expect(store.has(`ks.space.jobCards.v1.${spaceId}`)).toBe(false);
+  });
+
+  it('treats empty-string masterSessionId like null', () => {
+    const cards = [
+      { type: 'job', job_id: 'j6', title: 'N', company: 'M' },
+    ];
+    rememberSpaceJobCards(spaceId, '', [
+      { id: 'a1', role: 'assistant', content: 'none session', cards },
+    ]);
+    const fromNull = applyCachedSpaceJobCards(spaceId, null, [
+      { id: 'a1', role: 'assistant', content: 'none session' },
+    ]);
+    expect(fromNull[0]?.cards).toEqual(cards);
+  });
+
   it('isolates cache by masterSessionId', () => {
     const cards = [
       { type: 'job', job_id: 'j5', title: 'X', company: 'Y' },
