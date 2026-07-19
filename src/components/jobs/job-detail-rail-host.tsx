@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   useCallback,
@@ -16,6 +17,7 @@ import { cn } from '@/lib/utils';
 const DEFAULT_RAIL_WIDTH = 480;
 const MIN_RAIL_WIDTH = 320;
 const MAX_RAIL_WIDTH = 720;
+const KEYBOARD_STEP_PX = 16;
 const WIDTH_STORAGE_KEY = 'ks.jobDetailRail.width.v1';
 
 interface JobDetailRailHostProps {
@@ -27,6 +29,8 @@ interface JobDetailRailHostProps {
 }
 
 function clampRailWidth(width: number, containerWidth: number): number {
+  // Cap at 55% of host so chat stays usable. Floor with MIN so a tiny host
+  // (should not happen at lg+) still keeps a usable rail floor.
   const maxForChat = Math.max(
     MIN_RAIL_WIDTH,
     Math.floor(containerWidth * 0.55)
@@ -68,16 +72,35 @@ export function JobDetailRailHost({
 }: JobDetailRailHostProps) {
   const t = useTranslations('jobs');
   const hostRef = useRef<HTMLDivElement>(null);
-  const [railWidth, setRailWidth] = useState(DEFAULT_RAIL_WIDTH);
+  const railWidthRef = useRef(DEFAULT_RAIL_WIDTH);
+  const [railWidth, setRailWidthState] = useState(DEFAULT_RAIL_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const setRailWidth = useCallback((next: number, persist = false) => {
+    const hostWidth = hostRef.current?.clientWidth ?? window.innerWidth;
+    const clamped = clampRailWidth(next, hostWidth);
+    railWidthRef.current = clamped;
+    setRailWidthState(clamped);
+    if (persist) writeStoredWidth(clamped);
+  }, []);
 
   useEffect(() => {
     const stored = readStoredWidth();
     if (stored == null) return;
-    const containerWidth = hostRef.current?.clientWidth ?? window.innerWidth;
-    setRailWidth(clampRailWidth(stored, containerWidth));
-  }, []);
+    setRailWidth(stored);
+  }, [setRailWidth]);
+
+  // Re-clamp when the host shrinks (e.g. window resize after a wide drag).
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      setRailWidth(railWidthRef.current);
+    });
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, [setRailWidth]);
 
   useEffect(() => {
     if (!jobId) return;
@@ -100,26 +123,21 @@ export function JobDetailRailHost({
     };
   }, [isResizing]);
 
-  const applyWidthFromClientX = useCallback((clientX: number) => {
-    const drag = dragRef.current;
-    const host = hostRef.current;
-    if (!drag || !host) return;
-    const delta = drag.startX - clientX;
-    const next = clampRailWidth(
-      drag.startWidth + delta,
-      host.clientWidth
-    );
-    setRailWidth(next);
-  }, []);
+  const applyWidthFromClientX = useCallback(
+    (clientX: number) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      const delta = drag.startX - clientX;
+      setRailWidth(drag.startWidth + delta);
+    },
+    [setRailWidth]
+  );
 
   const stopResize = useCallback(() => {
     if (!dragRef.current) return;
     dragRef.current = null;
     setIsResizing(false);
-    setRailWidth((current) => {
-      writeStoredWidth(current);
-      return current;
-    });
+    writeStoredWidth(railWidthRef.current);
   }, []);
 
   useEffect(() => {
@@ -128,22 +146,55 @@ export function JobDetailRailHost({
       applyWidthFromClientX(event.clientX);
     };
     const onUp = () => stopResize();
+    const onBlur = () => stopResize();
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
+    window.addEventListener('blur', onBlur);
     return () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('blur', onBlur);
     };
   }, [applyWidthFromClientX, isResizing, stopResize]);
 
   const onResizePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     event.preventDefault();
-    dragRef.current = { startX: event.clientX, startWidth: railWidth };
+    dragRef.current = {
+      startX: event.clientX,
+      startWidth: railWidthRef.current,
+    };
     setIsResizing(true);
     event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const onResizeKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const hostWidth = hostRef.current?.clientWidth ?? window.innerWidth;
+    const max = Math.min(
+      MAX_RAIL_WIDTH,
+      Math.max(MIN_RAIL_WIDTH, Math.floor(hostWidth * 0.55))
+    );
+    let next: number | null = null;
+    switch (event.key) {
+      case 'ArrowLeft':
+        next = railWidthRef.current + KEYBOARD_STEP_PX;
+        break;
+      case 'ArrowRight':
+        next = railWidthRef.current - KEYBOARD_STEP_PX;
+        break;
+      case 'Home':
+        next = MIN_RAIL_WIDTH;
+        break;
+      case 'End':
+        next = max;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    setRailWidth(next, true);
   };
 
   return (
@@ -168,16 +219,19 @@ export function JobDetailRailHost({
           >
             <div
               role="separator"
+              tabIndex={0}
               aria-orientation="vertical"
               aria-valuenow={railWidth}
               aria-valuemin={MIN_RAIL_WIDTH}
               aria-valuemax={MAX_RAIL_WIDTH}
               aria-label={t('resizeDetail')}
               onPointerDown={onResizePointerDown}
+              onKeyDown={onResizeKeyDown}
               className={cn(
                 'absolute inset-y-0 left-0 z-10 w-1.5 -translate-x-1/2 cursor-col-resize touch-none',
-                'bg-transparent hover:bg-kazi-orange/20',
-                isResizing && 'bg-kazi-orange/30'
+                'bg-gray-200/70 hover:bg-kazi-orange/35',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+                isResizing && 'bg-kazi-orange/40'
               )}
             />
             <JobDetailRail
