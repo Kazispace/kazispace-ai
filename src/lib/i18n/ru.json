@@ -370,6 +370,13 @@
 		"llmBusy": "ИИ сейчас занят. Попробуйте ещё раз чуть позже.",
 		"llmBusyWithRetry": "ИИ сейчас занят. Попробуйте снова через {seconds} с."
 	},
+	"sessionNav": {
+		"confirmAbandonTitle": "Начать новую сессию?",
+		"confirmAbandonBody": "Текущая сессия {agent} ещё активна. Новая сессия архивирует текущую.",
+		"confirmAbandonAction": "Начать новую",
+		"confirmAbandonCancel": "Отмена",
+		"confirmAbandonFallbackAgent": "задача"
+	},
 	"agentSessions": {
 		"sessionHistory": "История сессий",
 		"sessionHistoryFor": "Сессии: {agentName}",

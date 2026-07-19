@@ -65,7 +65,10 @@ export function selectParkedInteractiveFromMap(
 
 /**
  * Current interactive for ConfirmAbandon copy (Parked or still focused Current).
- * Prefer parked; else any active interactive-kind / known interactive agent id.
+ *
+ * Prefer parked: after Hub→Clinic cold-open the conflicting interactive is usually
+ * Parked (Current + parked), which is what the Park badge and INV-P2 conflict share.
+ * Fall back to any active interactive-kind / known interactive agent id.
  */
 export function isCurrentInteractiveSession(
   session: AgentSessionSummary | null | undefined
@@ -81,6 +84,7 @@ export function isCurrentInteractiveSession(
 export function selectCurrentInteractiveSession(
   sessions: Iterable<AgentSessionSummary>
 ): AgentSessionSummary | null {
+  // Product: Parked wins for dialog copy — same session the Park badge shows.
   const parked = selectParkedInteractiveSession(sessions);
   if (parked) return parked;
   let best: AgentSessionSummary | null = null;

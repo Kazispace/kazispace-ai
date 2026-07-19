@@ -233,7 +233,8 @@ export function useClinicChat(locale?: string) {
           updateMessage(userMsgId, { status: 'failed' });
           const interactiveConflict = isInteractiveInProgress(res);
           if (interactiveConflict) {
-            // Caller shows ConfirmAbandon — never toast raw BE engineering copy.
+            // Caller shows ConfirmAbandon. `toastShown` here means "do not toast"
+            // (UI already owned) — same suppress contract as LLM_BUSY / paywall.
             return {
               ok: false as const,
               needsConfirm: true as const,

@@ -749,172 +749,30 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     return true;
   }, [isLoggedIn, locale, router, showToast, tClinic]);
 
-  const handleSend = async (text: string) => {
-    pinToLatestOnSend();
-    if (!isLoggedIn) {
-      showToast(tClinic("loginToChat"), "info");
-      router.push(`/${locale}/login`);
-      return;
-    }
+  const resolveConflictAgentId = useCallback((): string | null => {
+    return (
+      currentInteractive?.agent_id ??
+      parkedInteractive?.agent_id ??
+      selectCurrentInteractiveFromMap(sessionsByAgent)?.agent_id ??
+      null
+    );
+  }, [currentInteractive?.agent_id, parkedInteractive?.agent_id, sessionsByAgent]);
 
-    if (isAgentMode) {
-      const result = await sendAgentMessage(text);
-      if (result?.ok && result.pendingTransition) {
-        if (pendingAgentSwitch) return;
-        if (result.assistantPlaceholderId && activeAgentId) {
-          useAgentStore
-            .getState()
-            .removeAgentMessage(activeAgentId, result.assistantPlaceholderId);
-        }
-        setPendingAgentSwitch(
-          toPendingAgentSwitch(result.pendingTransition, result.triggerMessage)
-        );
-        return;
-      }
-      if (result?.ok && result.escalation) {
-        const follow = await followAgentEscalation(result.escalation, {
-          activateAgentWithoutPrecheck,
-        });
-        if (!follow.ok) {
-          showToast(follow.error ?? tClinic("activateFailed"), "error");
-        }
-        return;
-      }
-      if (result && !result.ok) {
-        if (result.error?.includes("500")) {
-          showToast(tClinic("agentErrorFallback"), "error");
-          const exitResult = await exitToClinic();
-          await reloadClinicIfNeeded(exitResult);
-          return;
-        }
-        showToast(result.error ?? tClinic("sendFailed"), "error");
-      }
-      return;
-    }
-
-    const result = await sendClinicMessage(text);
-
-    if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
-      void refreshCurrentSessions(true);
-      setClinicNlConfirm({
-        text,
-        retryMessageId: result.retryMessageId,
-        agentId:
-          currentInteractive?.agent_id ?? parkedInteractive?.agent_id ?? null,
-      });
-      return;
-    }
-
-    if (result.ok) {
-      // Park may appear after yield (news/greeting) — refresh Current+parked.
-      void refreshCurrentSessions(true);
-
-      const msg = useChatStore
-        .getState()
-        .messages.find((m) => m.id === result.assistantId);
-
-      // Interim bridge (pre-KAZI-138): L2 still processes inline mock interview;
-      // remove this path once BE returns referral-only next_actions. See KAZI-138.
-      if (
-        msg &&
-        shouldClinicReplyRouteToInterviewHub({
-          intent: msg.intent,
-          nextActions: msg.nextActions,
-          userText: text,
-        })
-      ) {
-        markStreamComplete(result.assistantId);
-        await activateMockInterviewHub();
-        return;
-      }
-
-      if (
-        shouldRouteToEnglishEpp({
-          intent: msg?.intent,
-          nextActions: msg?.nextActions,
-          routedAgentId: result.routedToAgent?.agentId,
-        })
-      ) {
-        markStreamComplete(result.assistantId);
-        routeEnglishPage();
-        return;
-      }
-
-      if (result.routedToAgent) {
-        if (isCvBuilderAgent(result.routedToAgent.agentId)) {
-          setCvAgentHandoff({
-            sessionId: result.routedToAgent.sessionId,
-            greeting: msg?.content?.trim() || undefined,
-          });
-          markStreamComplete(result.assistantId);
-          routeCvBuilderPage();
-          return;
-        }
-        if (msg?.role === "assistant") {
-          const syncResult = await syncActiveAgentFromGateway(
-            result.routedToAgent.agentId,
-            {
-              ...msg,
-              sessionId: result.routedToAgent.sessionId ?? msg.sessionId,
-            }
-          );
-          if (syncResult && !syncResult.ok) {
-            showToast(tClinic("activateFailed"), "error");
-          }
-        }
-      }
-    }
-
-    if (!result.ok) {
-      if (result.error?.includes("500")) {
-        showToast(tClinic("agentErrorFallback"), "error");
-        const exitResult = await exitToClinic();
-        await reloadClinicIfNeeded(exitResult);
-        return;
-      }
-      // Hook already toasted special cases (LLM_BUSY / profile / paywall / INV-P2).
-      if ("toastShown" in result && result.toastShown) return;
-      showToast(result.error ?? tClinic("sendFailed"), "error");
-    }
-  };
-
-  const handleConfirmClinicNlAbandon = async () => {
-    if (!clinicNlConfirm) return;
-    const { text, retryMessageId } = clinicNlConfirm;
-    setClinicNlConfirmBusy(true);
-    try {
-      const conflictingId =
-        clinicNlConfirm.agentId ??
-        currentInteractive?.agent_id ??
-        selectCurrentInteractiveFromMap(sessionsByAgent)?.agent_id;
-      if (conflictingId) {
-        const exitRes = await exitAgentSession(conflictingId, locale);
-        if (!exitRes.success) {
-          showToast(tClinic("activateFailed"), "error");
-          return;
-        }
-        void refreshCurrentSessions(true);
-        publishSessionNavInvalidate();
-      }
-
-      const result = await sendClinicMessage(text, {
-        retryMessageId,
-        confirmAbandon: true,
-      });
-
-      if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
-        showToast(tClinic("activateFailed"), "error");
-        return;
-      }
-
-      setClinicNlConfirm(null);
-
+  const handleClinicSendOutcome = useCallback(
+    async (
+      text: string,
+      result: Awaited<ReturnType<typeof sendClinicMessage>>
+    ) => {
       if (result.ok) {
+        // Park may appear after yield (news/greeting) — refresh Current+parked.
         void refreshCurrentSessions(true);
+
         const msg = useChatStore
           .getState()
           .messages.find((m) => m.id === result.assistantId);
 
+        // Interim bridge (pre-KAZI-138): L2 still processes inline mock interview;
+        // remove this path once BE returns referral-only next_actions. See KAZI-138.
         if (
           msg &&
           shouldClinicReplyRouteToInterviewHub({
@@ -966,8 +824,118 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         return;
       }
 
+      if (result.error?.includes("500")) {
+        showToast(tClinic("agentErrorFallback"), "error");
+        const exitResult = await exitToClinic();
+        await reloadClinicIfNeeded(exitResult);
+        return;
+      }
+      // Hook already handled LLM_BUSY / profile / paywall / INV-P2 ConfirmAbandon.
       if ("toastShown" in result && result.toastShown) return;
       showToast(result.error ?? tClinic("sendFailed"), "error");
+    },
+    [
+      activateMockInterviewHub,
+      exitToClinic,
+      markStreamComplete,
+      refreshCurrentSessions,
+      reloadClinicIfNeeded,
+      routeCvBuilderPage,
+      routeEnglishPage,
+      setCvAgentHandoff,
+      showToast,
+      syncActiveAgentFromGateway,
+      tClinic,
+    ]
+  );
+
+  const handleSend = async (text: string) => {
+    pinToLatestOnSend();
+    if (!isLoggedIn) {
+      showToast(tClinic("loginToChat"), "info");
+      router.push(`/${locale}/login`);
+      return;
+    }
+
+    if (isAgentMode) {
+      const result = await sendAgentMessage(text);
+      if (result?.ok && result.pendingTransition) {
+        if (pendingAgentSwitch) return;
+        if (result.assistantPlaceholderId && activeAgentId) {
+          useAgentStore
+            .getState()
+            .removeAgentMessage(activeAgentId, result.assistantPlaceholderId);
+        }
+        setPendingAgentSwitch(
+          toPendingAgentSwitch(result.pendingTransition, result.triggerMessage)
+        );
+        return;
+      }
+      if (result?.ok && result.escalation) {
+        const follow = await followAgentEscalation(result.escalation, {
+          activateAgentWithoutPrecheck,
+        });
+        if (!follow.ok) {
+          showToast(follow.error ?? tClinic("activateFailed"), "error");
+        }
+        return;
+      }
+      if (result && !result.ok) {
+        if (result.error?.includes("500")) {
+          showToast(tClinic("agentErrorFallback"), "error");
+          const exitResult = await exitToClinic();
+          await reloadClinicIfNeeded(exitResult);
+          return;
+        }
+        showToast(result.error ?? tClinic("sendFailed"), "error");
+      }
+      return;
+    }
+
+    const result = await sendClinicMessage(text);
+
+    if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
+      void refreshCurrentSessions(true);
+      setClinicNlConfirm({
+        text,
+        retryMessageId: result.retryMessageId,
+        agentId: resolveConflictAgentId(),
+      });
+      return;
+    }
+
+    await handleClinicSendOutcome(text, result);
+  };
+
+  const handleConfirmClinicNlAbandon = async () => {
+    if (!clinicNlConfirm) return;
+    const { text, retryMessageId, agentId } = clinicNlConfirm;
+    setClinicNlConfirmBusy(true);
+    try {
+      // Prefer agentId captured at dialog open; resolve again only if still null.
+      const conflictingId = agentId ?? resolveConflictAgentId();
+      if (conflictingId) {
+        const exitRes = await exitAgentSession(conflictingId, locale);
+        if (!exitRes.success) {
+          showToast(tClinic("activateFailed"), "error");
+          return;
+        }
+        void refreshCurrentSessions(true);
+        publishSessionNavInvalidate();
+      }
+
+      const result = await sendClinicMessage(text, {
+        retryMessageId,
+        confirmAbandon: true,
+      });
+
+      if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
+        showToast(tClinic("activateFailed"), "error");
+        return;
+      }
+
+      setClinicNlConfirm(null);
+      await handleClinicSendOutcome(text, result);
     } finally {
       setClinicNlConfirmBusy(false);
     }
@@ -1198,12 +1166,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         return;
       }
       if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
+        // Same INV-P2 gate as Clinic NL: 409 only when BE tries to activate another
+        // interactive during this turn (research itself is delivery; ConfirmAbandon is still correct).
         void refreshCurrentSessions(true);
         setClinicNlConfirm({
           text: handoffText,
           retryMessageId: result.retryMessageId,
-          agentId:
-            currentInteractive?.agent_id ?? parkedInteractive?.agent_id ?? null,
+          agentId: resolveConflictAgentId(),
         });
         return;
       }
@@ -1212,12 +1181,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       }
     },
     [
-      currentInteractive?.agent_id,
       dismissMessageUpgradeCta,
       locale,
-      parkedInteractive?.agent_id,
       pinToLatestOnSend,
       refreshCurrentSessions,
+      resolveConflictAgentId,
       sendClinicMessage,
       showToast,
       tClinic,
@@ -1562,9 +1530,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         agentId={
           parkReplaceTargetId
             ? (parkedInteractive?.agent_id ?? null)
-            : (clinicNlConfirm?.agentId ??
-              currentInteractive?.agent_id ??
-              null)
+            : (clinicNlConfirm?.agentId ?? null)
         }
         locale={locale}
         onConfirm={() => {

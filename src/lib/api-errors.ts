@@ -47,6 +47,9 @@ export function isLlmBusy(res: ErrorLike): boolean {
  * Lifecycle-Park INV-P2 — another interactive Capability is still Current.
  * Prefer `error_code=INTERACTIVE_IN_PROGRESS` (M2+); tolerate legacy `SESSION_IN_PROGRESS`.
  * Do not treat bare HTTP 409 as a match (other codes e.g. FEEDBACK_NOT_READY also use 409).
+ *
+ * TODO(KAZI-272): drop message-string matching once BE always returns structured
+ * `error_code` on this path (see KAZI-271).
  */
 export function isInteractiveInProgress(res: ErrorLike): boolean {
   if (res.errorCode === 'INTERACTIVE_IN_PROGRESS') return true;

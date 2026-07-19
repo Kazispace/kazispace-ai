@@ -354,6 +354,13 @@
 	"errors": {
 		"profileIncomplete": "Жеке мүмкіндіктер үшін мансап профилін толықтырыңыз — мұнда сөйлесуді жалғастыра аласыз."
 	},
+	"sessionNav": {
+		"confirmAbandonTitle": "Жаңа сессияны бастау керек пе?",
+		"confirmAbandonBody": "Қазіргі {agent} сессиясы әлі жүріп жатыр. Жаңасын бастасаңыз, ол мұрағатталады.",
+		"confirmAbandonAction": "Жаңасын бастау",
+		"confirmAbandonCancel": "Бас тарту",
+		"confirmAbandonFallbackAgent": "тапсырма"
+	},
 	"agentSessions": {
 		"sessionHistory": "Сессия тарихы",
 		"sessionHistoryFor": "{agentName} сессиялары",
