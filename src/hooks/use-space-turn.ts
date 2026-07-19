@@ -17,6 +17,11 @@ import {
 } from '@/lib/spaces/capability';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
 import {
+  applyCachedSpaceJobCards,
+  rehydrateSpaceMessagesWithCards,
+  rememberSpaceJobCards,
+} from '@/lib/spaces/space-job-cards-cache';
+import {
   isPlaceholderReply,
   latestAssistantAfterLastUser,
   mapSpaceHistoryMessages,
@@ -160,9 +165,15 @@ export function useSpaceTurn(
     setSpaceHydrating(spaceId, true);
 
     void (async () => {
+      // Capture before await — SPA switch-away must not lose in-memory cards.
+      const previous =
+        useSpaceStore.getState().getSpaceSlice(spaceId)?.messages ?? [];
       const next = await loadSpaceHistory(resolvedMasterId);
       if (cancelled) return;
-      setSpaceMessages(spaceId, next);
+      setSpaceMessages(
+        spaceId,
+        rehydrateSpaceMessagesWithCards(spaceId, next, previous)
+      );
       setSpaceHydrating(spaceId, false);
       setHistoryReady(true);
     })();
@@ -329,6 +340,7 @@ export function useSpaceTurn(
           },
         ];
         setSpaceMessages(spaceId, nextMessages);
+        rememberSpaceJobCards(spaceId, nextMessages);
 
         try {
           if (!recoveredFromHistory) {
@@ -338,10 +350,12 @@ export function useSpaceTurn(
             return { ok: false as const, error: 'Navigated away' };
           }
           if (history.length > 0) {
-            setSpaceMessages(
+            const merged = applyCachedSpaceJobCards(
               spaceId,
               mergeSpaceMessagesAfterSend(nextMessages, history)
             );
+            rememberSpaceJobCards(spaceId, merged);
+            setSpaceMessages(spaceId, merged);
           }
         } catch (error) {
           console.warn('[useSpaceTurn] history refresh failed after send', error);
