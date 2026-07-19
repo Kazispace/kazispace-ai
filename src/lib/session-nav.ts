@@ -122,8 +122,12 @@ export function resolveSessionNavBadge(
 ): { kind: SessionNavBadgeKind; detail?: string | null } | null {
   if (!session) return { kind: 'notStarted' };
   if (session.status === 'archived') return { kind: 'archived' };
+  // Prefer pipeline detail when present; parked Current still counts as in-progress.
   if (session.status === 'active' && session.pipeline_state) {
     return { kind: 'pipeline', detail: session.pipeline_state };
+  }
+  if (session.status === 'active' && session.parked === true) {
+    return { kind: 'inProgress', detail: session.title ?? null };
   }
   if (session.status === 'active') return { kind: 'inProgress' };
   if (session.status === 'exited') return { kind: 'resumable' };

@@ -576,7 +576,11 @@
 		"switchConfirmAction": "切换到 {targetName}",
 		"switchConfirmCancel": "留在这里",
 		"activeSessionsTitle": "继续上次的进度",
-		"activeSessionsContinue": "继续 {agent}"
+		"activeSessionsContinue": "继续 {agent}",
+		"parkInProgress": "{agent} 任务进行中",
+		"parkContinue": "可继续",
+		"parkResumed": "已继续 {agent}",
+		"parkResumeFailed": "无法继续任务"
 	},
 	"cv": {
 		"title": "简历助手",

@@ -433,7 +433,11 @@
 		"switchConfirmTitle": "Маман ауыстыру керек пе?",
 		"switchConfirmBody": "Қазір {currentName} белсенді. Шығып, {targetName} ашу керек пе?",
 		"switchConfirmAction": "{targetName} ашу",
-		"switchConfirmCancel": "Қалу"
+		"switchConfirmCancel": "Қалу",
+		"parkInProgress": "{agent} тапсырмасы жүріп жатыр",
+		"parkContinue": "Жалғастыру",
+		"parkResumed": "{agent} жалғасты",
+		"parkResumeFailed": "Тапсырманы жалғастыру сәтсіз"
 	},
 	"subscription": {
 		"title": "PRO / Sprint жаңарту",

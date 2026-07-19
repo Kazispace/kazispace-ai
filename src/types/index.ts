@@ -216,6 +216,8 @@ export type OpenAgentSessionOptions = {
   master_session_id?: string;
   handoff_message?: string;
   job_id?: string;
+  /** Lifecycle-Park: clear parked / resume Current (sessions/open). */
+  space_id?: string;
 };
 
 export type NewAgentSessionOptions = OpenAgentSessionOptions & {
@@ -278,6 +280,13 @@ export interface AgentSessionSummary {
   title: string;
   created_at?: string | null;
   updated_at?: string | null;
+  /**
+   * KAZI-269 / Lifecycle-Park: Current session yielded to Clinic/delivery.
+   * Still `status=active`; not a separate status enum.
+   */
+  parked?: boolean;
+  /** When present, delivery sessions are never treated as Park UI targets. */
+  lifecycle_kind?: 'interactive' | 'delivery';
 }
 
 export interface AgentSessionsListResponse {

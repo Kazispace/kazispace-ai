@@ -559,6 +559,7 @@ export async function openAgentSession(
   if (options?.master_session_id) body.master_session_id = options.master_session_id;
   if (options?.handoff_message) body.handoff_message = options.handoff_message;
   if (options?.job_id) body.job_id = options.job_id;
+  if (options?.space_id) body.space_id = options.space_id;
 
   const masterSessionId =
     options?.master_session_id ??
