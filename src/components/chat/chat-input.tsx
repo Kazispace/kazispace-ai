@@ -101,12 +101,20 @@ export function ChatInput({
     el.style.height = "auto";
     const next = Math.min(el.scrollHeight, cap);
     el.style.height = `${next}px`;
+    // +1px slack: sub-pixel scrollHeight vs capped height can flicker overflowY.
     el.style.overflowY = el.scrollHeight > cap + 1 ? "auto" : "hidden";
   }, []);
 
   useEffect(() => {
     resizeTextarea();
   }, [message, resizeTextarea]);
+
+  // Recompute when the card width / viewport changes (wrap → height).
+  useEffect(() => {
+    const onResize = () => resizeTextarea();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [resizeTextarea]);
 
   useEffect(() => {
     if (!composerInsert) return;
@@ -294,6 +302,8 @@ export function ChatInput({
       rows={1}
       // Card layout is a block stack (not a flex row) — without w-full the
       // native cols≈20 width wins and text wraps early with empty space on the right.
+      // Line-height: card uses leading-6 (CJK-friendly in Doubao stack); bar keeps
+      // leading-5 to match the denser single-row footer alongside icon buttons.
       className={cn(
         "box-border w-full min-w-0 max-h-32 resize-none overflow-hidden",
         "bg-transparent text-sm leading-6 text-[#1D2129]",
