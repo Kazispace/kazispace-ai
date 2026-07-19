@@ -70,19 +70,17 @@ export function resolveSpaceTurnReply(data: unknown): string {
 
 /**
  * Job cards from Space turn / history.
- * Prefers `assistant_response.cards` (BE passthrough); envelope.components alone
- * often only carries text — cards live on assistant_response.
+ * Prefers `assistant_response.cards` (BE passthrough). `parseAssistantEnvelope`
+ * does not unwrap nested `envelope`, so we try root then `raw.envelope`.
  */
 export function resolveSpaceTurnCards(data: unknown): ChatJobCard[] {
   if (!data || typeof data !== 'object') return [];
   const raw = data as Record<string, unknown>;
 
-  const fromRoot = parseAssistantEnvelope(data).cards;
-  if (fromRoot.length > 0) return fromRoot;
-
-  if (raw.envelope) {
-    const fromEnvelope = parseAssistantEnvelope(raw.envelope).cards;
-    if (fromEnvelope.length > 0) return fromEnvelope;
+  for (const candidate of [data, raw.envelope]) {
+    if (!candidate) continue;
+    const cards = parseAssistantEnvelope(candidate).cards;
+    if (cards.length > 0) return cards;
   }
 
   return [];
@@ -92,7 +90,11 @@ export type SpaceChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  /** Job teasers from assistant_response.cards (Space job_search turns). */
+  /**
+   * Rich cards from assistant_response (today: job teasers via ChatJobCard).
+   * MessageBubble already filters `type === 'job'`; keep ChatJobCard[] so other
+   * card types can land here without a Space-only union rewrite.
+   */
   cards?: ChatJobCard[];
   /** Present on optimistic local turns (KAZI-186 retry). */
   status?: 'sending' | 'sent' | 'failed';
@@ -210,23 +212,23 @@ export function mergeSpaceMessagesAfterSend(
 ): SpaceChatMessage[] {
   if (fromServer.length === 0) return local;
 
-  const localCardsByContent = new Map<string, ChatJobCard[]>();
+  // Position-based: Nth local assistant → Nth server assistant (not content key —
+  // duplicate copy like「找到 10 个岗位」must not cross-attach cards).
+  const localAssistantCards: (ChatJobCard[] | undefined)[] = [];
   for (const message of local) {
-    if (
-      message.role === 'assistant' &&
-      message.cards &&
-      message.cards.length > 0
-    ) {
-      localCardsByContent.set(assistantContentKey(message.content), message.cards);
-    }
+    if (message.role !== 'assistant') continue;
+    localAssistantCards.push(
+      message.cards && message.cards.length > 0 ? message.cards : undefined
+    );
   }
 
-  // History rows often omit cards; keep turn-response cards on matching content.
+  let assistantOrdinal = 0;
   const enrichedServer = fromServer.map((message) => {
     if (message.role !== 'assistant') return message;
+    const localCards = localAssistantCards[assistantOrdinal];
+    assistantOrdinal += 1;
     if (message.cards && message.cards.length > 0) return message;
-    const cards = localCardsByContent.get(assistantContentKey(message.content));
-    return cards ? { ...message, cards } : message;
+    return localCards ? { ...message, cards: localCards } : message;
   });
 
   const serverAssistantContents = new Set(

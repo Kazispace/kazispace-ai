@@ -243,6 +243,31 @@ describe('mergeSpaceMessagesAfterSend', () => {
       },
     ]);
   });
+
+  it('pairs cards by assistant ordinal, not duplicate content', () => {
+    const cardsA = [
+      { type: 'job', job_id: 'a1', title: 'A', company: 'Acme' },
+    ];
+    const cardsB = [
+      { type: 'job', job_id: 'b1', title: 'B', company: 'Beta' },
+    ];
+    const copy = '为你找到 10 个岗位。';
+    const local = [
+      { id: 'u1', role: 'user' as const, content: '1' },
+      { id: 'la1', role: 'assistant' as const, content: copy, cards: cardsA },
+      { id: 'u2', role: 'user' as const, content: '2' },
+      { id: 'la2', role: 'assistant' as const, content: copy, cards: cardsB },
+    ];
+    const server = [
+      { id: 'u1', role: 'user' as const, content: '1' },
+      { id: 'sa1', role: 'assistant' as const, content: copy },
+      { id: 'u2', role: 'user' as const, content: '2' },
+      { id: 'sa2', role: 'assistant' as const, content: copy },
+    ];
+    const merged = mergeSpaceMessagesAfterSend(local, server);
+    expect(merged[1]?.cards).toEqual(cardsA);
+    expect(merged[3]?.cards).toEqual(cardsB);
+  });
 });
 
 describe('mapSpaceHistoryMessages', () => {

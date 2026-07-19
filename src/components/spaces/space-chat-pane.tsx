@@ -162,11 +162,7 @@ export function SpaceChatPane({
               surface="workspace"
               composerTarget="space"
               streamComplete
-              onJobCardClick={
-                message.cards && message.cards.length > 0
-                  ? handleJobCardClick
-                  : undefined
-              }
+              onJobCardClick={handleJobCardClick}
               onRetry={
                 message.role === 'user' && message.status === 'failed'
                   ? () => {
