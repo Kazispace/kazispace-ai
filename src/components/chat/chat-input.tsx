@@ -91,6 +91,31 @@ export function ChatInput({
   const clearComposerInsert = useUIStore((s) => s.clearComposerInsert);
   const showToast = useUIStore((s) => s.showToast);
 
+  /** Grow with content up to max-h-32; avoid internal scroll until capped. */
+  const resizeTextarea = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    // max-h-32 = 8rem; read computed so theme/root font-size stays correct.
+    const maxPx = Number.parseFloat(getComputedStyle(el).maxHeight);
+    const cap = Number.isFinite(maxPx) && maxPx > 0 ? maxPx : 128;
+    el.style.height = "auto";
+    const next = Math.min(el.scrollHeight, cap);
+    el.style.height = `${next}px`;
+    // +1px slack: sub-pixel scrollHeight vs capped height can flicker overflowY.
+    el.style.overflowY = el.scrollHeight > cap + 1 ? "auto" : "hidden";
+  }, []);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [message, resizeTextarea]);
+
+  // Recompute when the card width / viewport changes (wrap → height).
+  useEffect(() => {
+    const onResize = () => resizeTextarea();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [resizeTextarea]);
+
   useEffect(() => {
     if (!composerInsert) return;
     if (!composerTarget || composerInsert.target !== composerTarget) return;
@@ -119,8 +144,16 @@ export function ChatInput({
       el.focus();
       const end = el.value.length;
       el.setSelectionRange(end, end);
+      resizeTextarea();
     });
-  }, [composerInsert, clearComposerInsert, composerTarget, showToast, t]);
+  }, [
+    composerInsert,
+    clearComposerInsert,
+    composerTarget,
+    showToast,
+    t,
+    resizeTextarea,
+  ]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -267,11 +300,14 @@ export function ChatInput({
       }
       disabled={inputDisabled}
       rows={1}
+      // Card layout is a block stack (not a flex row) — without w-full the
+      // native cols≈20 width wins and text wraps early with empty space on the right.
+      // Line-height: card uses leading-6 (CJK-friendly in Doubao stack); bar keeps
+      // leading-5 to match the denser single-row footer alongside icon buttons.
       className={cn(
-        "max-h-32 flex-1 resize-none bg-transparent text-sm leading-5",
-        isCard
-          ? "min-h-[30px] py-1"
-          : "min-h-[36px] py-1.5",
+        "box-border w-full min-w-0 max-h-32 resize-none overflow-hidden",
+        "bg-transparent text-sm leading-6 text-[#1D2129]",
+        isCard ? "min-h-[40px] py-2" : "min-h-[36px] flex-1 py-1.5 leading-5",
         "placeholder:text-[#86909C] focus:outline-none",
         "disabled:cursor-not-allowed"
       )}
@@ -408,10 +444,10 @@ export function ChatInput({
             inputDisabled && "opacity-50"
           )}
         >
-          <div className="px-3 pt-2.5 pb-0.5">
+          <div className="px-3 pt-3 pb-1">
             {textarea}
           </div>
-          <div className="relative flex items-center gap-1.5 px-2 pb-2 pt-0.5">
+          <div className="relative flex items-center gap-1.5 px-2 pb-2.5 pt-1">
             {plusButton}
             {attachMenu}
             {toolbar ? (
