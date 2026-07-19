@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { JobDetailRail } from '@/components/jobs/job-detail-rail';
 import { cn } from '@/lib/utils';
@@ -65,6 +66,7 @@ export function JobDetailRailHost({
   children,
   className,
 }: JobDetailRailHostProps) {
+  const t = useTranslations('jobs');
   const hostRef = useRef<HTMLDivElement>(null);
   const [railWidth, setRailWidth] = useState(DEFAULT_RAIL_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
@@ -170,7 +172,7 @@ export function JobDetailRailHost({
               aria-valuenow={railWidth}
               aria-valuemin={MIN_RAIL_WIDTH}
               aria-valuemax={MAX_RAIL_WIDTH}
-              aria-label="Resize job details"
+              aria-label={t('resizeDetail')}
               onPointerDown={onResizePointerDown}
               className={cn(
                 'absolute inset-y-0 left-0 z-10 w-1.5 -translate-x-1/2 cursor-col-resize touch-none',
