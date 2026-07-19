@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Copy,
   FileDown,
@@ -19,6 +19,7 @@ import {
   FEEDBACK_REASONS,
   canSubmitDownFeedback,
   clearMessageFeedback,
+  getMessageFeedback,
   isFeedbackNotReady,
   normalizeFeedbackReasons,
   resolveFeedbackMessageId,
@@ -32,8 +33,26 @@ import { cn } from '@/lib/utils';
 
 export type MessageFeedbackVote = FeedbackVote;
 
-/** Session-local vote memory so remount after scroll keeps pressed state. */
-const feedbackVotesByMessageId = new Map<string, MessageFeedbackVote>();
+type FeedbackDraft = {
+  vote: MessageFeedbackVote | null;
+  reasons: FeedbackReason[];
+  note: string;
+  /** Session already synced from GET or a successful mutate. */
+  hydratedFromServer: boolean;
+};
+
+/** Session-local draft/vote memory so remount after scroll keeps state. */
+const feedbackDraftByMessageId = new Map<string, FeedbackDraft>();
+
+function readDraft(key: string | undefined): FeedbackDraft | undefined {
+  if (!key) return undefined;
+  return feedbackDraftByMessageId.get(key);
+}
+
+function writeDraft(key: string | undefined, draft: FeedbackDraft): void {
+  if (!key) return;
+  feedbackDraftByMessageId.set(key, draft);
+}
 
 type MessageActionsProps = {
   content: string;
@@ -106,24 +125,83 @@ export function MessageActions({
   const feedbackId = resolveFeedbackMessageId({ serverMessageId, messageId });
   const voteKey = feedbackId ?? messageId;
   const canSubmit = Boolean(feedbackId);
+  const cached = readDraft(voteKey);
 
-  const [vote, setVote] = useState<MessageFeedbackVote | null>(() =>
-    voteKey ? feedbackVotesByMessageId.get(voteKey) ?? null : null,
+  const [vote, setVote] = useState<MessageFeedbackVote | null>(
+    () => cached?.vote ?? null,
   );
   const [downOpen, setDownOpen] = useState(false);
-  const [reasons, setReasons] = useState<FeedbackReason[]>([]);
-  const [note, setNote] = useState('');
+  const [reasons, setReasons] = useState<FeedbackReason[]>(
+    () => cached?.reasons ?? [],
+  );
+  const [note, setNote] = useState(() => cached?.note ?? '');
   const [submitting, setSubmitting] = useState(false);
+
+  const persistDraft = (next: {
+    vote: MessageFeedbackVote | null;
+    reasons: FeedbackReason[];
+    note: string;
+    hydratedFromServer?: boolean;
+  }) => {
+    setVote(next.vote);
+    setReasons(next.reasons);
+    setNote(next.note);
+    const prev = readDraft(voteKey);
+    writeDraft(voteKey, {
+      vote: next.vote,
+      reasons: next.reasons,
+      note: next.note,
+      hydratedFromServer:
+        next.hydratedFromServer ?? prev?.hydratedFromServer ?? false,
+    });
+  };
+
+  // P2-1: hydrate vote from BE once per message id (viewport mount / refresh).
+  useEffect(() => {
+    if (!feedbackEnabled || !feedbackId || !voteKey) return;
+    const existing = readDraft(voteKey);
+    if (existing?.hydratedFromServer) return;
+
+    let cancelled = false;
+    void getMessageFeedback(feedbackId).then((res) => {
+      if (cancelled) return;
+      if (!res.success || !res.data) {
+        writeDraft(voteKey, {
+          vote: existing?.vote ?? null,
+          reasons: existing?.reasons ?? [],
+          note: existing?.note ?? '',
+          hydratedFromServer: true,
+        });
+        return;
+      }
+      const nextVote = res.data.vote;
+      const nextReasons = normalizeFeedbackReasons(res.data.reasons);
+      const nextNote = res.data.note?.trim() ?? '';
+      // Prefer in-progress local draft (reasons/note) if user already opened the panel.
+      const preferLocalDraft =
+        Boolean(existing) &&
+        ((existing?.reasons.length ?? 0) > 0 || Boolean(existing?.note));
+      const merged: FeedbackDraft = {
+        vote: nextVote,
+        reasons: preferLocalDraft ? (existing?.reasons ?? nextReasons) : nextReasons,
+        note: preferLocalDraft ? (existing?.note ?? nextNote) : nextNote,
+        hydratedFromServer: true,
+      };
+      writeDraft(voteKey, merged);
+      setVote(merged.vote);
+      if (!preferLocalDraft) {
+        setReasons(merged.reasons);
+        setNote(merged.note);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [feedbackEnabled, feedbackId, voteKey]);
 
   const text = content.trim();
   if (!text) return null;
-
-  const persistVote = (next: MessageFeedbackVote | null) => {
-    setVote(next);
-    if (!voteKey) return;
-    if (next) feedbackVotesByMessageId.set(voteKey, next);
-    else feedbackVotesByMessageId.delete(voteKey);
-  };
 
   const handleQuote = () => {
     const quoted = formatQuotedMessage(text);
@@ -149,11 +227,29 @@ export function MessageActions({
   };
 
   const toggleReason = (reason: FeedbackReason) => {
-    setReasons((prev) =>
-      prev.includes(reason)
+    setReasons((prev) => {
+      const next = prev.includes(reason)
         ? prev.filter((item) => item !== reason)
-        : [...prev, reason],
-    );
+        : [...prev, reason];
+      writeDraft(voteKey, {
+        vote,
+        reasons: next,
+        note,
+        hydratedFromServer: readDraft(voteKey)?.hydratedFromServer ?? false,
+      });
+      return next;
+    });
+  };
+
+  const updateNote = (value: string) => {
+    const next = value.slice(0, 500);
+    setNote(next);
+    writeDraft(voteKey, {
+      vote,
+      reasons,
+      note: next,
+      hydratedFromServer: readDraft(voteKey)?.hydratedFromServer ?? false,
+    });
   };
 
   const submitUp = async () => {
@@ -178,15 +274,13 @@ export function MessageActions({
         }
         return;
       }
-      persistVote('up');
-      setReasons([]);
-      setNote('');
-      showToast(
-        res.data?.attribution_missing
-          ? t('messageActions.feedbackRecorded')
-          : t('messageActions.feedbackThanksUp'),
-        'info',
-      );
+      persistDraft({
+        vote: 'up',
+        reasons: [],
+        note: '',
+        hydratedFromServer: true,
+      });
+      showToast(t('messageActions.feedbackThanksUp'), 'info');
     } finally {
       setSubmitting(false);
     }
@@ -224,14 +318,14 @@ export function MessageActions({
         }
         return;
       }
-      persistVote('down');
+      persistDraft({
+        vote: 'down',
+        reasons: [],
+        note: '',
+        hydratedFromServer: true,
+      });
       setDownOpen(false);
-      showToast(
-        res.data?.attribution_missing
-          ? t('messageActions.feedbackRecorded')
-          : t('messageActions.feedbackThanksDown'),
-        'info',
-      );
+      showToast(t('messageActions.feedbackThanksDown'), 'info');
     } finally {
       setSubmitting(false);
     }
@@ -239,10 +333,8 @@ export function MessageActions({
 
   const clearVote = async () => {
     if (!canSubmit || !feedbackId || submitting) {
-      persistVote(null);
+      persistDraft({ vote: null, reasons: [], note: '' });
       setDownOpen(false);
-      setReasons([]);
-      setNote('');
       return;
     }
     setSubmitting(true);
@@ -252,10 +344,13 @@ export function MessageActions({
         showToast(res.error ?? t('messageActions.feedbackFailed'), 'error');
         return;
       }
-      persistVote(null);
+      persistDraft({
+        vote: null,
+        reasons: [],
+        note: '',
+        hydratedFromServer: true,
+      });
       setDownOpen(false);
-      setReasons([]);
-      setNote('');
     } finally {
       setSubmitting(false);
     }
@@ -369,7 +464,7 @@ export function MessageActions({
           </div>
           <textarea
             value={note}
-            onChange={(event) => setNote(event.target.value.slice(0, 500))}
+            onChange={(event) => updateNote(event.target.value)}
             disabled={submitting}
             rows={2}
             maxLength={500}
@@ -386,8 +481,11 @@ export function MessageActions({
               disabled={submitting}
               onClick={() => {
                 setDownOpen(false);
-                setReasons([]);
-                setNote('');
+                persistDraft({
+                  vote,
+                  reasons: [],
+                  note: '',
+                });
               }}
               className="text-[11px] text-[#86909C] hover:text-[#1D2129]"
             >

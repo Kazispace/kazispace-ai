@@ -56,7 +56,11 @@ export type MessageFeedbackUpsertRequest = {
   client_message_id?: string | null;
 };
 
-/** DB `chat_messages.id` is a numeric string; local placeholders are not. */
+/**
+ * Persisted `chat_messages.id` is a decimal string (e.g. `"10482"`).
+ * Local optimistic ids use non-numeric prefixes (`assistant_*`, UUID, `msg_*`) —
+ * do not introduce purely numeric client ids or this heuristic breaks.
+ */
 export function isServerAssistantMessageId(
   id: string | undefined | null
 ): id is string {
@@ -101,18 +105,13 @@ export function extractAssistantMessageId(
   return undefined;
 }
 
+/** Dedupe and emit in canonical `FEEDBACK_REASONS` order (not click order). */
 export function normalizeFeedbackReasons(
   reasons: readonly string[] | undefined
 ): FeedbackReason[] {
   if (!reasons?.length) return [];
-  const allowed = new Set<string>(FEEDBACK_REASONS);
-  const unique: FeedbackReason[] = [];
-  for (const reason of reasons) {
-    if (!allowed.has(reason)) continue;
-    const typed = reason as FeedbackReason;
-    if (!unique.includes(typed)) unique.push(typed);
-  }
-  return unique;
+  const selected = new Set(reasons);
+  return FEEDBACK_REASONS.filter((reason) => selected.has(reason));
 }
 
 export function canSubmitDownFeedback(reasons: readonly FeedbackReason[]): boolean {
