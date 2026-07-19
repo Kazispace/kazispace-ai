@@ -46,6 +46,8 @@ export function ClinicParkedCapabilityBanner({
     if (disabled || busy) return;
     setBusy(true);
     try {
+      // openHubAgentSession → POST …/sessions/open (resume Current; clears parked).
+      // Named “Hub” historically; clinic-inline agents (job_search) stay on Clinic.
       const result = await openHubAgentSession(session.agent_id, locale);
       if (!result.ok) {
         showToast(result.error ?? t('parkResumeFailed'), 'error');

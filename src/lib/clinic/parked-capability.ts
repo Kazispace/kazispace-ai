@@ -48,6 +48,7 @@ export function selectParkedInteractiveSession(
     if (!isParkedInteractiveSession(session)) continue;
     const ts = session.updated_at ? Date.parse(session.updated_at) : 0;
     const score = Number.isFinite(ts) ? ts : 0;
+    // INV-P1 expects ≤1; if ties, prefer the later list entry (stable for Map.values).
     if (!best || score >= bestTs) {
       best = session;
       bestTs = score;

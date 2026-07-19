@@ -882,7 +882,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         showToast(res.error ?? tClinic("activateFailed"), "error");
         return;
       }
-      setParkReplaceTargetId(null);
       void refreshCurrentSessions(true);
       publishSessionNavInvalidate();
 
@@ -891,8 +890,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         const open = await openHubAgentSession(targetId, locale);
         if (!open.ok) {
           showToast(open.error ?? tClinic("activateFailed"), "error");
+          // Keep dialog open — parked may already be abandoned; user can retry nav.
           return;
         }
+        setParkReplaceTargetId(null);
         router.push(hubPath);
         return;
       }
@@ -900,7 +901,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const result = await requestAgentSwitch(targetId);
       if (result && !result.ok && !result.needsConfirm) {
         showToast(result.error ?? tClinic("activateFailed"), "error");
+        return;
       }
+      // Close only after switch succeeds (or needsConfirm hands off to AgentSwitchDialog).
+      setParkReplaceTargetId(null);
     } finally {
       setParkReplaceBusy(false);
     }

@@ -402,7 +402,11 @@
 		"switchConfirmTitle": "Mutaxassisni almashtirasizmi?",
 		"switchConfirmBody": "Hozir {currentName} faol. Chiqib, {targetName} ochilsinmi?",
 		"switchConfirmAction": "{targetName} ga o'tish",
-		"switchConfirmCancel": "Shu yerda qolish"
+		"switchConfirmCancel": "Shu yerda qolish",
+		"parkInProgress": "{agent} vazifasi davom etmoqda",
+		"parkContinue": "Davom etish",
+		"parkResumed": "{agent} davom ettirildi",
+		"parkResumeFailed": "Vazifani davom ettirib bo'lmadi"
 	},
 	"subscription": {
 		"title": "PRO / Sprint yangilash",

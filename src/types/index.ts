@@ -286,7 +286,7 @@ export interface AgentSessionSummary {
    */
   parked?: boolean;
   /** When present, delivery sessions are never treated as Park UI targets. */
-  lifecycle_kind?: 'interactive' | 'delivery' | string;
+  lifecycle_kind?: 'interactive' | 'delivery';
 }
 
 export interface AgentSessionsListResponse {
