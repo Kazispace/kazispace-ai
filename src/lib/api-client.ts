@@ -235,7 +235,12 @@ export async function sendChatMessage(
   sessionId: string,
   text: string,
   locale?: string,
-  options?: { routingMode?: 'clinic'; routingVersion?: number }
+  options?: {
+    routingMode?: 'clinic';
+    routingVersion?: number;
+    /** INV-P2 — abandon Current interactive before Clinic NL activates another. */
+    confirmAbandon?: boolean;
+  }
 ): Promise<ApiResponse<ClinicChatResponse>> {
   // API v2.10.6: routing.mode applies to POST /chat/messages (Clinic) only.
   // Hub expert chat uses POST /agents/chat with agent_id in the body — no routing.mode.
@@ -260,6 +265,7 @@ export async function sendChatMessage(
       ...(options?.routingMode
         ? { routing: { mode: options.routingMode } }
         : {}),
+      ...(options?.confirmAbandon ? { confirm_abandon: true } : {}),
     }),
   });
 }

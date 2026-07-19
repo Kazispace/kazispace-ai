@@ -323,6 +323,13 @@
 	"errors": {
 		"profileIncomplete": "Shaxsiylashtirish uchun profilni to'ldiring — bu yerda suhbatni davom ettira olasiz."
 	},
+	"sessionNav": {
+		"confirmAbandonTitle": "Yangi sessiya boshlansinmi?",
+		"confirmAbandonBody": "Joriy {agent} sessiyasi hali davom etmoqda. Yangisini boshlash uni arxivlaydi.",
+		"confirmAbandonAction": "Yangi boshlash",
+		"confirmAbandonCancel": "Bekor qilish",
+		"confirmAbandonFallbackAgent": "vazifa"
+	},
 	"agentSessions": {
 		"sessionHistory": "Sessiya tarixi",
 		"sessionHistoryFor": "{agentName} sessiyalari",

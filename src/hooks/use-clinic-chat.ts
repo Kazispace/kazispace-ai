@@ -8,7 +8,7 @@ import {
   fetchChatHistory,
   parseClinicReply,
 } from '@/lib/api-client';
-import { isPaywallError, isProfileIncomplete, isLlmBusy } from '@/lib/api-errors';
+import { isPaywallError, isProfileIncomplete, isLlmBusy, isInteractiveInProgress } from '@/lib/api-errors';
 import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
 import { ensureMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
@@ -182,6 +182,8 @@ export function useClinicChat(locale?: string) {
         retryMessageId?: string;
         /** Prefer research waiting copy (CTA handoff / explicit research). */
         pendingCapability?: 'web_search' | 'research';
+        /** INV-P2 — retry after ConfirmAbandon (KAZI-272). */
+        confirmAbandon?: boolean;
       }
     ) => {
       // Clinic Phase 1 path is a single long HTTP POST (not mid-stream SSE).
@@ -223,11 +225,24 @@ export function useClinicChat(locale?: string) {
         const res = await sendChatMessage(sessionId, text, locale, {
           routingMode: 'clinic',
           routingVersion: 2,
+          ...(options?.confirmAbandon ? { confirmAbandon: true } : {}),
         });
 
         if (!res.success || !res.data) {
           removeMessage(assistantId);
           updateMessage(userMsgId, { status: 'failed' });
+          const interactiveConflict = isInteractiveInProgress(res);
+          if (interactiveConflict) {
+            // Caller shows ConfirmAbandon. `toastShown` here means "do not toast"
+            // (UI already owned) — same suppress contract as LLM_BUSY / paywall.
+            return {
+              ok: false as const,
+              needsConfirm: true as const,
+              retryMessageId: userMsgId,
+              errorCode: res.errorCode ?? 'INTERACTIVE_IN_PROGRESS',
+              toastShown: true as const,
+            };
+          }
           handleApiFailure(res);
           const busy = isLlmBusy(res);
           return {
@@ -238,6 +253,7 @@ export function useClinicChat(locale?: string) {
                 : tErrors('llmBusy')
               : res.error,
             errorCode: res.errorCode ?? (busy ? 'LLM_BUSY' : undefined),
+            retryMessageId: userMsgId,
             // Explicit contract: caller must not toast again when true (KAZI-186 review).
             toastShown: busy || isProfileIncomplete(res) || isPaywallError(res),
           };
