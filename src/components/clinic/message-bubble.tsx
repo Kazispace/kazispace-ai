@@ -196,141 +196,159 @@ export function MessageBubble({
     return <span className="whitespace-pre-wrap">{content}</span>;
   };
 
+  // Assistant-only: job cards never attach to user turns, so this never widens user bubbles.
+  const widenForJobCards = showJobCards;
+
   return (
     <div
       className={cn(
-        "flex gap-3 max-w-[78%] animate-fade-up",
-        isUser ? "self-end flex-row-reverse" : "self-start"
+        "flex flex-col gap-2 animate-fade-up min-w-0",
+        widenForJobCards
+          ? "w-full max-w-[92%] self-center"
+          : cn(
+              "max-w-[78%]",
+              isUser ? "self-end" : "self-start"
+            )
       )}
     >
       <div
         className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm",
-          isUser
-            ? isWorkspace
-              ? "bg-workspace-input text-workspace-muted"
-              : "bg-gray-100 text-muted-foreground"
-            : isWorkspace
-              ? "bg-workspace-active text-kazi-orange"
-              : "bg-gradient-to-br from-kazi-orange to-amber-500"
+          "flex gap-3",
+          widenForJobCards && (isUser ? "self-end max-w-[85%]" : "self-start max-w-[85%]")
         )}
       >
-        {isUser ? "👤" : "🤖"}
-      </div>
-      <div className="flex flex-col gap-1 min-w-0">
-        {!isUser && displayName && (
-          <span
-            className={cn(
-              "text-xs font-medium px-1",
-              isWorkspace ? "text-workspace-muted" : "text-muted-foreground"
-            )}
-          >
-            {displayName}
-          </span>
-        )}
         <div
           className={cn(
-            "px-4 py-3 rounded-[18px] text-[15px] leading-relaxed break-words",
-            // web_search short-answer: denser body only. CitationList keeps its own
-            // text-sm; research keeps default Markdown long-form spacing (KAZI-225).
-            isWebSearchShortAnswer && "text-[14px] leading-snug",
+            "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm",
             isUser
-            ? isFailed
-              ? "bg-red-950/40 text-red-200 border border-red-800/60 rounded-br-[4px]"
-              : isWorkspace
-                ? "bg-workspace-accent text-white rounded-br-[4px]"
-                : "bg-kazi-orange text-white rounded-br-[4px]"
-            : variant === "agent"
               ? isWorkspace
-                ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-bl-[4px]"
-                : "bg-agent-bubble text-gray-900 border border-green-200/80 rounded-bl-[4px]"
+                ? "bg-workspace-input text-workspace-muted"
+                : "bg-gray-100 text-muted-foreground"
               : isWorkspace
-                ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-bl-[4px]"
-                : "bg-clinic-bubble text-gray-900 border border-gray-200/80 rounded-bl-[4px]"
+                ? "bg-workspace-active text-kazi-orange"
+                : "bg-gradient-to-br from-kazi-orange to-amber-500"
           )}
         >
-          {renderAssistantContent()}
-          {showCitations && citations ? (
-            <CitationList
-              items={citations}
-              className={
-                isWebSearchShortAnswer ? "max-h-40 [&_ul]:max-h-32" : undefined
-              }
+          {isUser ? "👤" : "🤖"}
+        </div>
+        <div className="flex flex-col gap-1 min-w-0">
+          {!isUser && displayName && (
+            <span
+              className={cn(
+                "text-xs font-medium px-1",
+                isWorkspace ? "text-workspace-muted" : "text-muted-foreground"
+              )}
+            >
+              {displayName}
+            </span>
+          )}
+          <div
+            className={cn(
+              "px-4 py-3 rounded-[18px] text-[15px] leading-relaxed break-words",
+              // web_search short-answer: denser body only. CitationList keeps its own
+              // text-sm; research keeps default Markdown long-form spacing (KAZI-225).
+              isWebSearchShortAnswer && "text-[14px] leading-snug",
+              isUser
+              ? isFailed
+                ? "bg-red-950/40 text-red-200 border border-red-800/60 rounded-br-[4px]"
+                : isWorkspace
+                  ? "bg-workspace-accent text-white rounded-br-[4px]"
+                  : "bg-kazi-orange text-white rounded-br-[4px]"
+              : variant === "agent"
+                ? isWorkspace
+                  ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-bl-[4px]"
+                  : "bg-agent-bubble text-gray-900 border border-green-200/80 rounded-bl-[4px]"
+                : isWorkspace
+                  ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-bl-[4px]"
+                  : "bg-clinic-bubble text-gray-900 border border-gray-200/80 rounded-bl-[4px]"
+            )}
+          >
+            {renderAssistantContent()}
+            {showCitations && citations ? (
+              <CitationList
+                items={citations}
+                className={
+                  isWebSearchShortAnswer ? "max-h-40 [&_ul]:max-h-32" : undefined
+                }
+              />
+            ) : null}
+            {showNextActions && (
+              <ChatNextActions
+                actions={nextActions!}
+                locale={locale}
+                onAction={onNextAction!}
+                disabled={actionsDisabled}
+              />
+            )}
+            {showUpgradeCta && (
+              <UpgradeResearchCta
+                cta={upgradeCta!}
+                onUpgrade={onUpgradeResearch!}
+                disabled={actionsDisabled}
+              />
+            )}
+            {showReferral && agentEmoji && agentName && (
+              <ReferralPrompt
+                agentEmoji={agentEmoji}
+                agentName={agentName}
+                reason={referral.reason}
+                onAccept={onReferralAccept}
+                onDismiss={onReferralDismiss}
+                disabled={referralDisabled}
+              />
+            )}
+            {showSpaceNudge && (
+              <SpaceNudgePrompt
+                nudge={spaceNudge}
+                onAccept={onSpaceNudgeAccept}
+                onDismiss={onSpaceNudgeDismiss}
+                disabled={referralDisabled || actionsDisabled}
+              />
+            )}
+          </div>
+          {showMessageActions && composerTarget ? (
+            <MessageActions
+              content={content}
+              messageId={messageId}
+              serverMessageId={serverMessageId}
+              feedbackEnabled={feedbackEnabled}
+              composerTarget={composerTarget}
+              disabled={actionsDisabled}
+              className="px-1"
             />
           ) : null}
-          {showJobCards && (
-            <ChatJobTeasers
-              cards={jobCards}
-              locale={locale}
-              onCardClick={onJobCardClick}
-            />
+          {isFailed && onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="text-xs text-red-600 hover:text-red-800 self-end px-1 underline-offset-2 hover:underline"
+            >
+              {t("retry")}
+            </button>
           )}
-          {showNextActions && (
-            <ChatNextActions
-              actions={nextActions!}
-              locale={locale}
-              onAction={onNextAction!}
-              disabled={actionsDisabled}
+          {showCapabilityChip && capabilityId ? (
+            <SearchCapabilityChip
+              capabilityId={capabilityId}
+              playbookId={playbookId}
             />
-          )}
-          {showUpgradeCta && (
-            <UpgradeResearchCta
-              cta={upgradeCta!}
-              onUpgrade={onUpgradeResearch!}
-              disabled={actionsDisabled}
-            />
-          )}
-          {showReferral && agentEmoji && agentName && (
-            <ReferralPrompt
-              agentEmoji={agentEmoji}
-              agentName={agentName}
-              reason={referral.reason}
-              onAccept={onReferralAccept}
-              onDismiss={onReferralDismiss}
-              disabled={referralDisabled}
-            />
-          )}
-          {showSpaceNudge && (
-            <SpaceNudgePrompt
-              nudge={spaceNudge}
-              onAccept={onSpaceNudgeAccept}
-              onDismiss={onSpaceNudgeDismiss}
-              disabled={referralDisabled || actionsDisabled}
-            />
+          ) : null}
+          {showIntentBadge && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-orange-100 text-kazi-orange">
+              {intent === "RESUME_OPTIMIZE" ? "📄 Resume Mode" : intent}
+            </span>
           )}
         </div>
-        {showMessageActions && composerTarget ? (
-          <MessageActions
-            content={content}
-            messageId={messageId}
-            serverMessageId={serverMessageId}
-            feedbackEnabled={feedbackEnabled}
-            composerTarget={composerTarget}
-            disabled={actionsDisabled}
-            className="px-1"
-          />
-        ) : null}
-        {isFailed && onRetry && (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="text-xs text-red-600 hover:text-red-800 self-end px-1 underline-offset-2 hover:underline"
-          >
-            {t("retry")}
-          </button>
-        )}
-        {showCapabilityChip && capabilityId ? (
-          <SearchCapabilityChip
-            capabilityId={capabilityId}
-            playbookId={playbookId}
-          />
-        ) : null}
-        {showIntentBadge && (
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-orange-100 text-kazi-orange">
-            {intent === "RESUME_OPTIMIZE" ? "📄 Resume Mode" : intent}
-          </span>
-        )}
       </div>
+      {showJobCards ? (
+        // pl-11 = avatar w-8 (32px) + gap-3 (12px) so teasers align with bubble text column.
+        <div className="w-full pl-11">
+          <ChatJobTeasers
+            cards={jobCards}
+            locale={locale}
+            onCardClick={onJobCardClick}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

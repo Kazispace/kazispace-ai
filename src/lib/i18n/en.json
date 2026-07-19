@@ -538,6 +538,7 @@
 		"detailTitle": "Job details",
 		"detailLoading": "Loading…",
 		"detailError": "Job not found",
+		"closeDetail": "Close job details",
 		"apply": "Apply",
 		"proLocked": "Pro features locked",
 		"whyMatched": "Why this fits you",

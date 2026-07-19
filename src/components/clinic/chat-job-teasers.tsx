@@ -19,7 +19,7 @@ export function ChatJobTeasers({ cards, locale, onCardClick }: ChatJobTeasersPro
   if (cards.length === 0) return null;
 
   return (
-    <div className="mt-3 pt-3 border-t border-gray-200/80 flex flex-col gap-2">
+    <div className="flex w-full flex-col gap-2 rounded-2xl border border-gray-200/80 bg-gray-50 p-3">
       {cards.map((card, index) => {
         const href = card.job_id
           ? `/${locale}/jobs/${encodeURIComponent(card.job_id)}`
@@ -64,13 +64,16 @@ export function ChatJobTeasers({ cards, locale, onCardClick }: ChatJobTeasersPro
           </>
         );
 
+        const cardClassName =
+          "flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:border-kazi-orange/40 hover:bg-orange-50/50";
+
         if (onCardClick) {
           return (
             <button
               key={key}
               type="button"
               onClick={() => onCardClick(card)}
-              className="flex items-center gap-3 w-full text-left rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 hover:border-kazi-orange/40 hover:bg-orange-50/50 transition-colors"
+              className={cardClassName}
             >
               {inner}
             </button>
@@ -78,11 +81,7 @@ export function ChatJobTeasers({ cards, locale, onCardClick }: ChatJobTeasersPro
         }
 
         return (
-          <Link
-            key={key}
-            href={href}
-            className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 hover:border-kazi-orange/40 hover:bg-orange-50/50 transition-colors"
-          >
+          <Link key={key} href={href} className={cardClassName}>
             {inner}
           </Link>
         );

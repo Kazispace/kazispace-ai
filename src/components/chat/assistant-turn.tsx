@@ -40,24 +40,26 @@ export function AssistantTurn({
   const showCards = streamComplete && !isStreaming && jobCards.length > 0;
 
   return (
-    <div className="flex flex-col gap-2 self-start max-w-[78%] w-full">
-      <MessageBubble
-        role="assistant"
-        content={content}
-        variant={variant}
-        locale={locale}
-        streamComplete={streamComplete}
-        isStreaming={isStreaming}
-      />
-
-      {showActions ? (
-        <ChatNextActions
-          actions={nextActions!}
+    <div className="flex w-full max-w-[92%] flex-col gap-2 self-center">
+      <div className="flex w-full max-w-[85%] flex-col gap-2 self-start">
+        <MessageBubble
+          role="assistant"
+          content={content}
+          variant={variant}
           locale={locale}
-          onAction={onNextAction!}
-          disabled={actionsDisabled}
+          streamComplete={streamComplete}
+          isStreaming={isStreaming}
         />
-      ) : null}
+
+        {showActions ? (
+          <ChatNextActions
+            actions={nextActions!}
+            locale={locale}
+            onAction={onNextAction!}
+            disabled={actionsDisabled}
+          />
+        ) : null}
+      </div>
 
       {showCards ? (
         <ChatJobTeasers
