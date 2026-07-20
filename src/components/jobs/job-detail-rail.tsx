@@ -20,6 +20,8 @@ interface JobDetailRailProps {
   locale: string;
   onClose: () => void;
   className?: string;
+  /** Close rail and start practice in the host chat (no /interview page). */
+  onPracticeForJob?: (ctx: { jobId: string; jobTitle?: string | null }) => void;
 }
 
 function createDetailView(): RailView {
@@ -32,6 +34,7 @@ export function JobDetailRail({
   locale,
   onClose,
   className,
+  onPracticeForJob,
 }: JobDetailRailProps) {
   const router = useRouter();
   const t = useTranslations('jobs');
@@ -159,6 +162,7 @@ export function JobDetailRail({
           <JobDetailRailReadinessView
             jobId={current.jobId}
             locale={locale}
+            onPracticeForJob={onPracticeForJob}
           />
         ) : null}
         {current.kind === 'external' ? (

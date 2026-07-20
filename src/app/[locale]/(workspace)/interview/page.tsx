@@ -356,7 +356,18 @@ function InterviewPageContent({ locale }: { locale: string }) {
             header={shellHeader}
             workspace={
               !needsLogin ? (
-                <InterviewWorkspace locale={locale} showProfileLink={irpEnabled} />
+                <InterviewWorkspace
+                  locale={locale}
+                  showProfileLink={irpEnabled}
+                  onPracticeInChat={(ctx) => {
+                    // Already on interview page — kick prep for this job in the chat column.
+                    if (ctx.jobTitle?.trim()) {
+                      void submitIntake(ctx.jobTitle.trim());
+                    } else if (jobId) {
+                      void startJobSession();
+                    }
+                  }}
+                />
               ) : undefined
             }
             composerPrefix={

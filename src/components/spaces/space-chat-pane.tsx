@@ -13,6 +13,7 @@ import {
   useSpaceTurn,
   type SpaceSendResult,
 } from '@/hooks/use-space-turn';
+import { buildJobPracticeChatPrompt } from '@/lib/jobs/practice-chat-prompt';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard } from '@/types/chat-envelope';
@@ -103,6 +104,14 @@ export function SpaceChatPane({
     [pinToLatestOnSend, sendMessage],
   );
 
+  const handlePracticeForJob = useCallback(
+    (ctx: { jobId: string; jobTitle?: string | null }) => {
+      closeJobDetail();
+      void sendAndPin(buildJobPracticeChatPrompt(ctx));
+    },
+    [closeJobDetail, sendAndPin]
+  );
+
   const composerNode =
     typeof composer === 'function'
       ? composer({
@@ -140,6 +149,7 @@ export function SpaceChatPane({
       jobId={selectedJobId}
       locale={locale}
       onClose={closeJobDetail}
+      onPracticeForJob={handlePracticeForJob}
       className="h-full w-full"
     >
       <SpaceShell

@@ -26,6 +26,7 @@ interface JobDetailRailHostProps {
   onClose: () => void;
   children: ReactNode;
   className?: string;
+  onPracticeForJob?: (ctx: { jobId: string; jobTitle?: string | null }) => void;
 }
 
 function clampRailWidth(width: number, containerWidth: number): number {
@@ -69,6 +70,7 @@ export function JobDetailRailHost({
   onClose,
   children,
   className,
+  onPracticeForJob,
 }: JobDetailRailHostProps) {
   const t = useTranslations('jobs');
   const hostRef = useRef<HTMLDivElement>(null);
@@ -238,6 +240,7 @@ export function JobDetailRailHost({
               jobId={jobId}
               locale={locale}
               onClose={onClose}
+              onPracticeForJob={onPracticeForJob}
             />
           </aside>
           <div
@@ -250,6 +253,7 @@ export function JobDetailRailHost({
               jobId={jobId}
               locale={locale}
               onClose={onClose}
+              onPracticeForJob={onPracticeForJob}
             />
           </div>
         </>
