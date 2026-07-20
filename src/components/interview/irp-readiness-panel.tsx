@@ -16,6 +16,11 @@ interface IrpReadinessPanelProps {
   isPro?: boolean;
   onRetry?: () => void;
   isLoading?: boolean;
+  /**
+   * When set, "Practice for this job" stays in the current chat/rail host
+   * instead of navigating to the full `/interview` page (avoids a 4th layer).
+   */
+  onPracticeForJob?: (jobId: string) => void;
 }
 
 function tierTone(tier?: ReadinessTier | null) {
@@ -41,6 +46,7 @@ export function IrpReadinessPanel({
   isPro = false,
   onRetry,
   isLoading,
+  onPracticeForJob,
 }: IrpReadinessPanelProps) {
   const t = useTranslations('interview.irp');
 
@@ -150,13 +156,18 @@ export function IrpReadinessPanel({
         )}
 
         <div className="flex flex-wrap gap-2 pt-1">
-          {jobId && (
-            <Button size="sm" asChild>
-              <Link href={`/${locale}/interview?job_id=${encodeURIComponent(jobId)}`}>
+          {jobId &&
+            (onPracticeForJob ? (
+              <Button size="sm" type="button" onClick={() => onPracticeForJob(jobId)}>
                 {t('readiness.practiceForJob')}
-              </Link>
-            </Button>
-          )}
+              </Button>
+            ) : (
+              <Button size="sm" asChild>
+                <Link href={`/${locale}/interview?job_id=${encodeURIComponent(jobId)}`}>
+                  {t('readiness.practiceForJob')}
+                </Link>
+              </Button>
+            ))}
           {onRetry && !showFreeLimit && (
             <Button size="sm" variant="outline" onClick={onRetry} disabled={isLoading}>
               {t('readiness.refresh')}

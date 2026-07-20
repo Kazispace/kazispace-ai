@@ -544,6 +544,8 @@
 		"navForward": "Forward",
 		"applyEmbedBlocked": "If this page looks blank, open it in a new tab.",
 		"applyOpenExternal": "Open in new tab",
+		"practiceChatPromptWithTitle": "Please run a mock interview practice for the role 「{title}」(job_id: {jobId}). Stay in this chat — ask prep questions here and start when I'm ready.",
+		"practiceChatPrompt": "Please run a mock interview practice for job_id {jobId}. Stay in this chat — ask prep questions here and start when I'm ready.",
 		"apply": "Apply",
 		"proLocked": "Pro features locked",
 		"whyMatched": "Why this fits you",

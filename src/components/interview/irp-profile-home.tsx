@@ -19,7 +19,13 @@ import type { InterviewProfile, IrpCtaHint } from '@/types';
 interface IrpProfileHomeProps {
   profile: InterviewProfile;
   locale: string;
+  /** Handles `start_training` (and href-less fallbacks). Always used for that CTA type. */
   onStartTraining: () => void;
+  /**
+   * Optional host navigation for non-training CTAs (growth / readiness / …).
+   * When set, those buttons call this instead of following `href` page hops.
+   * Does not replace `onStartTraining`.
+   */
   onCtaAction?: (cta: IrpCtaHint) => void;
   isPro?: boolean;
 }
@@ -182,6 +188,20 @@ export function IrpProfileHome({
                 );
               }
 
+              // Prefer host callback when provided (in-panel navigation).
+              if (onCtaAction) {
+                return (
+                  <Button
+                    key={`${cta.cta_type}-${label}`}
+                    className="w-full"
+                    variant={cta.primary ? 'default' : 'outline'}
+                    onClick={() => onCtaAction(cta)}
+                  >
+                    {label}
+                  </Button>
+                );
+              }
+
               if (href) {
                 return (
                   <Button
@@ -200,7 +220,7 @@ export function IrpProfileHome({
                   key={`${cta.cta_type}-${label}`}
                   className="w-full"
                   variant={cta.primary ? 'default' : 'outline'}
-                  onClick={() => onCtaAction?.(cta)}
+                  onClick={onStartTraining}
                 >
                   {label}
                 </Button>
