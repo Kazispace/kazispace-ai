@@ -22,7 +22,9 @@ interface JobDetailRailProps {
   className?: string;
 }
 
-const DETAIL_VIEW: RailView = { kind: 'detail' };
+function createDetailView(): RailView {
+  return { kind: 'detail' };
+}
 
 /** Right-rail job detail with in-panel back/forward history. */
 export function JobDetailRail({
@@ -33,16 +35,16 @@ export function JobDetailRail({
 }: JobDetailRailProps) {
   const router = useRouter();
   const t = useTranslations('jobs');
-  const [stack, setStack] = useState<RailView[]>([DETAIL_VIEW]);
+  const [stack, setStack] = useState<RailView[]>(() => [createDetailView()]);
   const [index, setIndex] = useState(0);
 
   // New job → reset history.
   useEffect(() => {
-    setStack([DETAIL_VIEW]);
+    setStack([createDetailView()]);
     setIndex(0);
   }, [jobId]);
 
-  const current = stack[index] ?? DETAIL_VIEW;
+  const current = stack[index] ?? createDetailView();
   const canGoBack = index > 0;
   const canGoForward = index < stack.length - 1;
 
@@ -58,6 +60,21 @@ export function JobDetailRail({
   const goForward = useCallback(() => {
     setIndex((i) => Math.min(stack.length - 1, i + 1));
   }, [stack.length]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey) return;
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        goBack();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        goForward();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [goBack, goForward]);
 
   const handleNavigate = useCallback(
     (href: string) => {
@@ -124,7 +141,10 @@ export function JobDetailRail({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        key={`${current.kind}-${index}`}
+        className="min-h-0 flex-1 overflow-y-auto animate-in fade-in duration-150"
+      >
         {current.kind === 'detail' ? (
           <JobDetailBody
             jobId={jobId}

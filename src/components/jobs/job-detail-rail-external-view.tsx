@@ -24,27 +24,32 @@ export function JobDetailRailExternalView({
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col', className)}>
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-100 px-3 py-2">
-        <p className="min-w-0 truncate text-xs text-gray-500" title={url}>
-          {url}
+      <div className="flex shrink-0 flex-col gap-1.5 border-b border-gray-100 px-3 py-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate text-xs text-gray-500" title={url}>
+            {url}
+          </p>
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="h-7 shrink-0 gap-1 px-2 text-xs"
+          >
+            <a href={url} target="_blank" rel="noopener noreferrer">
+              {t('applyOpenExternal')}
+              <ExternalLink className="h-3 w-3" aria-hidden />
+            </a>
+          </Button>
+        </div>
+        <p className="text-[11px] leading-snug text-gray-400">
+          {t('applyEmbedBlocked')}
         </p>
-        <Button
-          asChild
-          size="sm"
-          variant="outline"
-          className="h-7 shrink-0 gap-1 px-2 text-xs"
-        >
-          <a href={url} target="_blank" rel="noopener noreferrer">
-            {t('applyOpenExternal')}
-            <ExternalLink className="h-3 w-3" aria-hidden />
-          </a>
-        </Button>
       </div>
       <iframe
         title={t('apply')}
         src={url}
         className="min-h-0 w-full flex-1 border-0 bg-white"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
         referrerPolicy="no-referrer"
       />
     </div>

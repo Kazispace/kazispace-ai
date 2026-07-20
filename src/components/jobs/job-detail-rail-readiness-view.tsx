@@ -71,7 +71,11 @@ export function JobDetailRailReadinessView({
 
       {readinessError && !isReadinessLoading && !isReadinessLimitError && (
         <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 text-center">
-          <p className="text-sm text-red-600">{readinessError}</p>
+          <p className="text-sm text-red-600">
+            {typeof readinessError === 'string'
+              ? readinessError
+              : t('readiness.retry')}
+          </p>
           <Button
             size="sm"
             onClick={() => void refetchReadiness()}
