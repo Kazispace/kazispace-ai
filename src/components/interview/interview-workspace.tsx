@@ -90,7 +90,15 @@ export function InterviewWorkspace({
             <JobDetailRailReadinessView
               jobId={jobIdFromUrl}
               locale={locale}
-              onPracticeForJob={onPracticeInChat}
+              onPracticeForJob={
+                onPracticeInChat
+                  ? () =>
+                      onPracticeInChat({
+                        jobId: jobIdFromUrl,
+                        jobTitle: null,
+                      })
+                  : undefined
+              }
             />
           ) : (
             <div className="space-y-3 p-4">
