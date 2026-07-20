@@ -700,5 +700,16 @@
 		"sessionStaleMessage": "此会话已在其他标签页更新。",
 		"sessionStaleRefresh": "刷新",
 		"sessionStaleDismiss": "忽略"
+	},
+	"interview": {
+		"irp": {
+			"practice": {
+				"chatPromptWithGaps": "帮我练习面试，目标工作是{title}，主要针对我的 Readiness 的以下几个弱点：{weaknesses}。",
+				"chatPrompt": "帮我练习面试，目标工作是{title}。",
+				"chatPromptNoTitleWithGaps": "帮我练习面试，主要针对我的 Readiness 的以下几个弱点：{weaknesses}。",
+				"chatPromptNoTitle": "帮我练习面试，目标是我刚才在看的那个工作。",
+				"weaknessSeparator": "；"
+			}
+		}
 	}
 }

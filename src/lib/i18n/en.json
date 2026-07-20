@@ -1055,9 +1055,11 @@
 				}
 			},
 			"practice": {
-				"title": "Mock interview",
-				"hint": "Full mock interviews (role intake, questions, and feedback) run in the Interview workspace — not as a free-form chat reply. Your job context will be carried over.",
-				"cta": "Start mock interview"
+				"chatPromptWithGaps": "Help me practice for an interview. The target role is {title}. Focus on these readiness weaknesses: {weaknesses}.",
+				"chatPrompt": "Help me practice for an interview. The target role is {title}.",
+				"chatPromptNoTitleWithGaps": "Help me practice for an interview. Focus on these readiness weaknesses: {weaknesses}.",
+				"chatPromptNoTitle": "Help me practice for an interview for the role I was just reviewing.",
+				"weaknessSeparator": "; "
 			},
 			"growth": {
 				"pageTitle": "Growth history",

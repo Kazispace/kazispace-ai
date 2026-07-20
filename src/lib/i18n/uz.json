@@ -716,9 +716,11 @@
 				}
 			},
 			"practice": {
-				"title": "Mock suhbat",
-				"hint": "To‘liq mock suhbat (intake, savollar va feedback) Interview workspace’da o‘tadi — oddiy chat javobi emas. Vakansiya konteksti o‘tkaziladi.",
-				"cta": "Mock suhbatni boshlash"
+				"chatPromptWithGaps": "Menga suhbat mashqi qilishga yordam ber. Maqsad rol — {title}. Readiness dagi mana shu zaif tomonlarga e'tibor ber: {weaknesses}.",
+				"chatPrompt": "Menga suhbat mashqi qilishga yordam ber. Maqsad rol — {title}.",
+				"chatPromptNoTitleWithGaps": "Menga suhbat mashqi qilishga yordam ber. Readiness dagi mana shu zaif tomonlarga e'tibor ber: {weaknesses}.",
+				"chatPromptNoTitle": "Menga hozirgina ko‘rgan rol bo‘yicha suhbat mashqi qilishga yordam ber.",
+				"weaknessSeparator": "; "
 			},
 			"growth": {
 				"pageTitle": "O'sish tarixi",

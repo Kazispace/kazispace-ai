@@ -13,6 +13,9 @@ import {
   useSpaceTurn,
   type SpaceSendResult,
 } from '@/hooks/use-space-turn';
+import type { JobPracticeContext } from '@/components/jobs/job-detail-rail';
+import { buildReadinessPracticePrompt } from '@/lib/jobs/practice-chat-prompt';
+import { useUIStore } from '@/lib/store';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard } from '@/types/chat-envelope';
@@ -46,7 +49,9 @@ export function SpaceChatPane({
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
   const tChat = useTranslations('chat');
+  const tPractice = useTranslations('interview.irp.practice');
   const router = useRouter();
+  const requestComposerInsert = useUIStore((s) => s.requestComposerInsert);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const {
     messages,
@@ -104,14 +109,17 @@ export function SpaceChatPane({
   );
 
   const handlePracticeForJob = useCallback(
-    (jobId: string) => {
-      // Clear rail before leave so browser-back does not restore practice confirm.
-      closeJobDetail();
-      router.push(
-        `/${locale}/interview?job_id=${encodeURIComponent(jobId)}`
-      );
+    (ctx: JobPracticeContext) => {
+      if (isSending) return;
+      // Keep readiness rail open; focus Space composer and send FE-built prompt.
+      const prompt = buildReadinessPracticePrompt(tPractice, {
+        jobTitle: ctx.jobTitle,
+        weaknessLabels: ctx.weaknessLabels,
+      });
+      requestComposerInsert(prompt, 'space', 'replace');
+      void sendAndPin(prompt);
     },
-    [closeJobDetail, locale, router]
+    [isSending, requestComposerInsert, sendAndPin, tPractice]
   );
 
   const composerNode =
