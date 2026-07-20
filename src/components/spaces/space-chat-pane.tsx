@@ -47,6 +47,7 @@ export function SpaceChatPane({
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
   const tChat = useTranslations('chat');
+  const tJobs = useTranslations('jobs');
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const {
@@ -107,9 +108,9 @@ export function SpaceChatPane({
   const handlePracticeForJob = useCallback(
     (ctx: { jobId: string; jobTitle?: string | null }) => {
       closeJobDetail();
-      void sendAndPin(buildJobPracticeChatPrompt(ctx));
+      void sendAndPin(buildJobPracticeChatPrompt(tJobs, ctx));
     },
-    [closeJobDetail, sendAndPin]
+    [closeJobDetail, sendAndPin, tJobs]
   );
 
   const composerNode =

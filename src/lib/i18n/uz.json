@@ -266,6 +266,8 @@
 		"navForward": "Oldinga",
 		"applyEmbedBlocked": "Sahifa bo‘sh ko‘rinsa, yangi varaqda oching.",
 		"applyOpenExternal": "Yangi varaqda ochish",
+		"practiceChatPromptWithTitle": "「{title}» roli uchun mock interview practice qil (job_id: {jobId}). Shu chatda qol — tayyorgarlik savollarini shu yerda ber va men tayyor bo‘lganda boshla.",
+		"practiceChatPrompt": "job_id {jobId} uchun mock interview practice qil. Shu chatda qol — tayyorgarlik savollarini shu yerda ber va men tayyor bo‘lganda boshla.",
 		"apply": "Ariza berish",
 		"proLocked": "Pro da mavjud",
 		"whyMatched": "Nima uchun mos",

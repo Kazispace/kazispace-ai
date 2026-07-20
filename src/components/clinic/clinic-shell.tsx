@@ -106,6 +106,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const router = useRouter();
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
+  const tJobs = useTranslations("jobs");
   const tReferral = useTranslations("referral");
   const tSessions = useTranslations("agentSessions");
   const tSessionNav = useTranslations("sessionNav");
@@ -779,20 +780,24 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         // Interim bridge (pre-KAZI-138): L2 still processes inline mock interview;
         // remove this path once BE returns referral-only next_actions. See KAZI-138.
         // Job-rail "Practice for this job" must stay in the chat column (max depth 3).
+        // Keep the suppress flag until a hub-route signal actually fires (soft intro
+        // replies must not clear it early), then consume it once.
         if (
           msg &&
-          !stayInChatForPracticeRef.current &&
           shouldClinicReplyRouteToInterviewHub({
             intent: msg.intent,
             nextActions: msg.nextActions,
             userText: text,
           })
         ) {
-          markStreamComplete(result.assistantId);
-          await activateMockInterviewHub();
-          return;
+          if (stayInChatForPracticeRef.current) {
+            stayInChatForPracticeRef.current = false;
+          } else {
+            markStreamComplete(result.assistantId);
+            await activateMockInterviewHub();
+            return;
+          }
         }
-        stayInChatForPracticeRef.current = false;
 
         if (
           shouldRouteToEnglishEpp({
@@ -1135,7 +1140,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   }) => {
     setSelectedJobId(null);
     stayInChatForPracticeRef.current = true;
-    void handleSend(buildJobPracticeChatPrompt(ctx));
+    void handleSend(buildJobPracticeChatPrompt(tJobs, ctx));
   };
 
   const clinicShellReady =

@@ -39,6 +39,15 @@ export function InterviewWorkspace({
   const jobIdFromUrl = searchParams.get('job_id');
   const [view, setView] = useState<WorkspaceView>('menu');
 
+  const viewTitle =
+    view === 'profile'
+      ? t('viewProfile')
+      : view === 'growth'
+        ? t('viewHistory')
+        : view === 'readiness'
+          ? t('viewReadiness')
+          : null;
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       {view !== 'menu' ? (
@@ -51,6 +60,11 @@ export function InterviewWorkspace({
             <ChevronLeft className="h-4 w-4" aria-hidden />
             {t('workspaceTitle')}
           </button>
+          {viewTitle ? (
+            <h2 className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-kazi-navy">
+              {viewTitle}
+            </h2>
+          ) : null}
         </div>
       ) : null}
 
