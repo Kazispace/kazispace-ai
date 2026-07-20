@@ -33,6 +33,10 @@ interface JobDetailBodyProps {
    * host can close the rail before navigating.
    */
   onNavigate?: (href: string) => void;
+  /** Rail: open interview readiness inside the panel history stack. */
+  onOpenReadiness?: () => void;
+  /** Rail: open external apply URL inside the panel (iframe). */
+  onOpenExternal?: (url: string) => void;
 }
 
 /** Shared job detail body for `/jobs/[id]` and in-chat detail rail. */
@@ -42,6 +46,8 @@ export function JobDetailBody({
   className,
   density = 'page',
   onNavigate,
+  onOpenReadiness,
+  onOpenExternal,
 }: JobDetailBodyProps) {
   const router = useRouter();
   const t = useTranslations('jobs');
@@ -65,6 +71,10 @@ export function JobDetailBody({
   const handlePrimaryCta = (cta: string, id: string) => {
     if (cta === 'unlock_pro') {
       openPaywall('PRO_FEATURE_LOCKED');
+      return;
+    }
+    if (cta === 'assess_readiness' && onOpenReadiness) {
+      onOpenReadiness();
       return;
     }
     const href = getJobCtaHref(locale, cta, id);
@@ -222,12 +232,22 @@ export function JobDetailBody({
               </Button>
             )}
             {applyUrl && !locked && (
-              <Button asChild className="w-full gap-2">
-                <a href={applyUrl} target="_blank" rel="noopener noreferrer">
+              onOpenExternal ? (
+                <Button
+                  type="button"
+                  className="w-full gap-2"
+                  onClick={() => onOpenExternal(applyUrl)}
+                >
                   {t('apply')}
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
+                </Button>
+              ) : (
+                <Button asChild className="w-full gap-2">
+                  <a href={applyUrl} target="_blank" rel="noopener noreferrer">
+                    {t('apply')}
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
+              )
             )}
           </div>
         </>
