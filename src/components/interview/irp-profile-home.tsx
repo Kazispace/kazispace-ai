@@ -182,6 +182,20 @@ export function IrpProfileHome({
                 );
               }
 
+              // Prefer host callback when provided (in-panel navigation).
+              if (onCtaAction) {
+                return (
+                  <Button
+                    key={`${cta.cta_type}-${label}`}
+                    className="w-full"
+                    variant={cta.primary ? 'default' : 'outline'}
+                    onClick={() => onCtaAction(cta)}
+                  >
+                    {label}
+                  </Button>
+                );
+              }
+
               if (href) {
                 return (
                   <Button

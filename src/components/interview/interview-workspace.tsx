@@ -146,9 +146,13 @@ function WorkspaceMenu({
 function WorkspaceProfilePane({
   locale,
   onBackToChat,
+  onOpenGrowth,
+  onOpenReadiness,
 }: {
   locale: string;
   onBackToChat: () => void;
+  onOpenGrowth: () => void;
+  onOpenReadiness: () => void;
 }) {
   const t = useTranslations('interview.irp');
   const { profile, isProfileLoading, profileError, refetchProfile } =
@@ -199,6 +203,11 @@ function WorkspaceProfilePane({
         locale={locale}
         isPro={isProUser}
         onStartTraining={onBackToChat}
+        onCtaAction={(cta) => {
+          if (cta.cta_type === 'growth_history') onOpenGrowth();
+          else if (cta.cta_type === 'readiness_check') onOpenReadiness();
+          else onBackToChat();
+        }}
       />
     </div>
   );
