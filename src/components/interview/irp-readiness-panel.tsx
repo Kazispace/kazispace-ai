@@ -17,10 +17,13 @@ interface IrpReadinessPanelProps {
   onRetry?: () => void;
   isLoading?: boolean;
   /**
-   * When set, "Practice for this job" stays in the current chat/rail host
-   * instead of navigating to the full `/interview` page (avoids a 4th layer).
+   * When set, "Practice for this job" stays in the host chat (no /interview hop).
+   * Passes readiness gaps so the host can FE-build the practice prompt.
    */
-  onPracticeForJob?: (jobId: string) => void;
+  onPracticeForJob?: (ctx: {
+    jobId: string;
+    weaknessLabels: string[];
+  }) => void;
 }
 
 function tierTone(tier?: ReadinessTier | null) {
@@ -156,18 +159,22 @@ export function IrpReadinessPanel({
         )}
 
         <div className="flex flex-wrap gap-2 pt-1">
-          {jobId &&
-            (onPracticeForJob ? (
-              <Button size="sm" type="button" onClick={() => onPracticeForJob(jobId)}>
-                {t('readiness.practiceForJob')}
-              </Button>
-            ) : (
-              <Button size="sm" asChild>
-                <Link href={`/${locale}/interview?job_id=${encodeURIComponent(jobId)}`}>
-                  {t('readiness.practiceForJob')}
-                </Link>
-              </Button>
-            ))}
+          {jobId && onPracticeForJob ? (
+            <Button
+              size="sm"
+              type="button"
+              onClick={() =>
+                onPracticeForJob({
+                  jobId,
+                  weaknessLabels: visibleGaps
+                    .map((gap) => gap.label?.trim() || '')
+                    .filter(Boolean),
+                })
+              }
+            >
+              {t('readiness.practiceForJob')}
+            </Button>
+          ) : null}
           {onRetry && !showFreeLimit && (
             <Button size="sm" variant="outline" onClick={onRetry} disabled={isLoading}>
               {t('readiness.refresh')}

@@ -6,8 +6,10 @@ import { useTranslations } from 'next-intl';
 import { IrpReadinessPanel } from '@/components/interview/irp-readiness-panel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import type { JobPracticeContext } from '@/components/jobs/job-detail-rail';
 import { useBilling } from '@/hooks/use-billing';
 import { useInterviewReadiness } from '@/hooks/use-interview-profile';
+import { useJobDetail } from '@/hooks/use-jobs';
 import { isProPlan } from '@/lib/api-mappers';
 import { IRP_PROFILE_ENABLED } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -16,8 +18,8 @@ interface JobDetailRailReadinessViewProps {
   jobId: string;
   locale: string;
   className?: string;
-  /** Open in-rail practice confirm (host then navigates to Interview workspace). */
-  onPracticeForJob?: () => void;
+  /** Keep rail open; host sends FE-built practice prompt in the chat column. */
+  onPracticeForJob?: (ctx: JobPracticeContext) => void;
 }
 
 /** Compact interview-readiness body for the job detail rail (no page chrome). */
@@ -28,6 +30,7 @@ export function JobDetailRailReadinessView({
   onPracticeForJob,
 }: JobDetailRailReadinessViewProps) {
   const t = useTranslations('interview.irp');
+  const { job } = useJobDetail(jobId);
   const {
     readinessResult,
     isReadinessLoading,
@@ -97,7 +100,15 @@ export function JobDetailRailReadinessView({
           onRetry={() => void refetchReadiness()}
           isLoading={isReadinessLoading}
           isPro={isProUser}
-          onPracticeForJob={onPracticeForJob}
+          onPracticeForJob={
+            onPracticeForJob
+              ? (ctx) =>
+                  onPracticeForJob({
+                    ...ctx,
+                    jobTitle: job?.title ?? null,
+                  })
+              : undefined
+          }
         />
       )}
     </div>

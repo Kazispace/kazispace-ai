@@ -24,7 +24,9 @@ import { ClinicParkedCapabilityBanner } from "./clinic-parked-capability-banner"
 import { ConfirmAbandonSessionDialog } from "@/components/session-nav/confirm-abandon-session-dialog";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
 import { JobDetailRailHost } from "@/components/jobs/job-detail-rail-host";
+import type { JobPracticeContext } from "@/components/jobs/job-detail-rail";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
+import { buildReadinessPracticePrompt } from "@/lib/jobs/practice-chat-prompt";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
 import { clinicChatScrollStorageKey } from "@/lib/spaces/chat-scroll";
 import { cn } from "@/lib/utils";
@@ -105,6 +107,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const router = useRouter();
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
+  const tPractice = useTranslations("interview.irp.practice");
   const tReferral = useTranslations("referral");
   const tSessions = useTranslations("agentSessions");
   const tSessionNav = useTranslations("sessionNav");
@@ -117,6 +120,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const setPendingAgentSwitch = useAgentStore((s) => s.setPendingAgentSwitch);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
+  const requestComposerInsert = useUIStore((s) => s.requestComposerInsert);
   const openPaywall = useUIStore((s) => s.openPaywall);
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
   const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
@@ -1118,11 +1122,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     [locale, router]
   );
 
-  const handlePracticeForJob = (jobId: string) => {
-    // Dedicated Interview workspace — free-form Clinic turns only get a dead
-    // "use the dedicated page" reply without a usable CTA.
-    setSelectedJobId(null);
-    routeInterviewPage(jobId);
+  const handlePracticeForJob = (ctx: JobPracticeContext) => {
+    // Keep readiness rail open; focus Clinic composer and send FE-built prompt.
+    // Do not route to the dedicated Mock Interview hub.
+    const prompt = buildReadinessPracticePrompt(tPractice, {
+      jobTitle: ctx.jobTitle,
+      weaknessLabels: ctx.weaknessLabels,
+    });
+    requestComposerInsert(prompt, "clinic", "replace");
+    void handleSend(prompt);
   };
 
   const clinicShellReady =
