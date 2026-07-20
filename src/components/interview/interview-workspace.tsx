@@ -63,9 +63,11 @@ export function InterviewWorkspace({
           />
         ) : null}
         {view === 'profile' ? (
-          <WorkspaceProfilePanel
+          <WorkspaceProfilePane
             locale={locale}
             onBackToChat={() => setView('menu')}
+            onOpenGrowth={() => setView('growth')}
+            onOpenReadiness={() => setView('readiness')}
           />
         ) : null}
         {view === 'growth' ? <WorkspaceGrowthPane /> : null}

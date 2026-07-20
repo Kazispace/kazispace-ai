@@ -214,7 +214,7 @@ export function IrpProfileHome({
                   key={`${cta.cta_type}-${label}`}
                   className="w-full"
                   variant={cta.primary ? 'default' : 'outline'}
-                  onClick={() => onCtaAction?.(cta)}
+                  onClick={onStartTraining}
                 >
                   {label}
                 </Button>
