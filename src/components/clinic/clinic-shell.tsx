@@ -1118,13 +1118,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     [locale, router]
   );
 
-  const handlePracticeForJob = (ctx: {
-    jobId: string;
-    jobTitle?: string | null;
-  }) => {
+  const handlePracticeForJob = (jobId: string) => {
     // Dedicated Interview workspace — free-form Clinic turns only get a dead
     // "use the dedicated page" reply without a usable CTA.
-    routeInterviewPage(ctx.jobId);
+    setSelectedJobId(null);
+    routeInterviewPage(jobId);
   };
 
   const clinicShellReady =

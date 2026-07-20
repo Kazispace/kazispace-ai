@@ -733,10 +733,6 @@
 				"trainingPlan": "Ұсынылған жаттығу",
 				"trainingItem": "{type} · {rounds} раунд",
 				"practiceForJob": "Бұл жұмысқа жаттығу",
-				"practiceRailTitle": "Mock сұхбат",
-				"practiceRailHint": "Толық mock сұхбат (intake, сұрақтар және кері байланыс) Interview кеңістігінде өтеді — қарапайым чат жауабы емес. Жұмыс контексті сақталады.",
-				"practiceRailCta": "Mock сұхбатты бастау",
-				"practiceRailStarting": "Ашылуда…",
 				"refresh": "Жаңарту",
 				"retry": "Қайталау",
 				"back": "← Сұхбатқа оралу",
@@ -749,6 +745,11 @@
 					"strong": "Күшті сәйкестік",
 					"dominant": "Жеткілікті дайын"
 				}
+			},
+			"practice": {
+				"title": "Mock сұхбат",
+				"hint": "Толық mock сұхбат (intake, сұрақтар және кері байланыс) Interview кеңістігінде өтеді — қарапайым чат жауабы емес. Жұмыс контексті сақталады.",
+				"cta": "Mock сұхбатты бастау"
 			},
 			"growth": {
 				"pageTitle": "Өсу тарихы",

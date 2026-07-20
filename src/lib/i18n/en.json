@@ -1041,10 +1041,6 @@
 				"trainingPlan": "Recommended training",
 				"trainingItem": "{type} · {rounds} rounds",
 				"practiceForJob": "Practice for this job",
-				"practiceRailTitle": "Mock interview",
-				"practiceRailHint": "Full mock interviews (role intake, questions, and feedback) run in the Interview workspace — not as a free-form chat reply. Your job context will be carried over.",
-				"practiceRailCta": "Start mock interview",
-				"practiceRailStarting": "Opening…",
 				"refresh": "Refresh",
 				"retry": "Try again",
 				"back": "← Back to interview",
@@ -1057,6 +1053,11 @@
 					"strong": "Strong match",
 					"dominant": "Dominant — well prepared"
 				}
+			},
+			"practice": {
+				"title": "Mock interview",
+				"hint": "Full mock interviews (role intake, questions, and feedback) run in the Interview workspace — not as a free-form chat reply. Your job context will be carried over.",
+				"cta": "Start mock interview"
 			},
 			"growth": {
 				"pageTitle": "Growth history",

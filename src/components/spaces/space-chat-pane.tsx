@@ -104,14 +104,14 @@ export function SpaceChatPane({
   );
 
   const handlePracticeForJob = useCallback(
-    (ctx: { jobId: string; jobTitle?: string | null }) => {
-      // Mock interview needs the dedicated workspace — chat turns only get a
-      // dead "use the dedicated page" reply with no CTA.
+    (jobId: string) => {
+      // Clear rail before leave so browser-back does not restore practice confirm.
+      closeJobDetail();
       router.push(
-        `/${locale}/interview?job_id=${encodeURIComponent(ctx.jobId)}`
+        `/${locale}/interview?job_id=${encodeURIComponent(jobId)}`
       );
     },
-    [locale, router]
+    [closeJobDetail, locale, router]
   );
 
   const composerNode =

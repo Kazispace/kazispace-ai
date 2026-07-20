@@ -22,8 +22,8 @@ interface JobDetailRailProps {
   locale: string;
   onClose: () => void;
   className?: string;
-  /** Open the Interview workspace for this job (host navigates; rail stays until leave). */
-  onPracticeForJob?: (ctx: { jobId: string; jobTitle?: string | null }) => void;
+  /** Open Interview workspace for this job (`/interview?job_id=`). */
+  onPracticeForJob?: (jobId: string) => void;
 }
 
 function createDetailView(): RailView {
