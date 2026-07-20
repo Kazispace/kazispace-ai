@@ -13,7 +13,6 @@ import {
   useSpaceTurn,
   type SpaceSendResult,
 } from '@/hooks/use-space-turn';
-import { buildJobPracticeChatPrompt } from '@/lib/jobs/practice-chat-prompt';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard } from '@/types/chat-envelope';
@@ -47,7 +46,6 @@ export function SpaceChatPane({
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
   const tChat = useTranslations('chat');
-  const tJobs = useTranslations('jobs');
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const {
@@ -107,10 +105,13 @@ export function SpaceChatPane({
 
   const handlePracticeForJob = useCallback(
     (ctx: { jobId: string; jobTitle?: string | null }) => {
-      closeJobDetail();
-      void sendAndPin(buildJobPracticeChatPrompt(tJobs, ctx));
+      // Mock interview needs the dedicated workspace — chat turns only get a
+      // dead "use the dedicated page" reply with no CTA.
+      router.push(
+        `/${locale}/interview?job_id=${encodeURIComponent(ctx.jobId)}`
+      );
     },
-    [closeJobDetail, sendAndPin, tJobs]
+    [locale, router]
   );
 
   const composerNode =
