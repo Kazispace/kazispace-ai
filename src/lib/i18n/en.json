@@ -544,8 +544,6 @@
 		"navForward": "Forward",
 		"applyEmbedBlocked": "If this page looks blank, open it in a new tab.",
 		"applyOpenExternal": "Open in new tab",
-		"practiceChatPromptWithTitle": "Please run a mock interview practice for the role 「{title}」(job_id: {jobId}). Stay in this chat — ask prep questions here and start when I'm ready.",
-		"practiceChatPrompt": "Please run a mock interview practice for job_id {jobId}. Stay in this chat — ask prep questions here and start when I'm ready.",
 		"apply": "Apply",
 		"proLocked": "Pro features locked",
 		"whyMatched": "Why this fits you",
@@ -1055,6 +1053,11 @@
 					"strong": "Strong match",
 					"dominant": "Dominant — well prepared"
 				}
+			},
+			"practice": {
+				"title": "Mock interview",
+				"hint": "Full mock interviews (role intake, questions, and feedback) run in the Interview workspace — not as a free-form chat reply. Your job context will be carried over.",
+				"cta": "Start mock interview"
 			},
 			"growth": {
 				"pageTitle": "Growth history",

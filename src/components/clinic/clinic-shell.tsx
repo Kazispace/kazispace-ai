@@ -25,7 +25,6 @@ import { ConfirmAbandonSessionDialog } from "@/components/session-nav/confirm-ab
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
 import { JobDetailRailHost } from "@/components/jobs/job-detail-rail-host";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
-import { buildJobPracticeChatPrompt } from "@/lib/jobs/practice-chat-prompt";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
 import { clinicChatScrollStorageKey } from "@/lib/spaces/chat-scroll";
 import { cn } from "@/lib/utils";
@@ -106,7 +105,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const router = useRouter();
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
-  const tJobs = useTranslations("jobs");
   const tReferral = useTranslations("referral");
   const tSessions = useTranslations("agentSessions");
   const tSessionNav = useTranslations("sessionNav");
@@ -332,8 +330,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const sessionHistoryTriggerRef = useRef<HTMLElement | null>(null);
   const manualSessionSelectRef = useRef(false);
   const sessionSwitchGenRef = useRef(0);
-  /** When practice starts from job rail, keep reply in Clinic chat (no /interview hub). */
-  const stayInChatForPracticeRef = useRef(false);
 
   const {
     sessions: agentSessions,
@@ -779,9 +775,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
         // Interim bridge (pre-KAZI-138): L2 still processes inline mock interview;
         // remove this path once BE returns referral-only next_actions. See KAZI-138.
-        // Job-rail "Practice for this job" must stay in the chat column (max depth 3).
-        // Keep the suppress flag until a hub-route signal actually fires (soft intro
-        // replies must not clear it early), then consume it once.
         if (
           msg &&
           shouldClinicReplyRouteToInterviewHub({
@@ -790,13 +783,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             userText: text,
           })
         ) {
-          if (stayInChatForPracticeRef.current) {
-            stayInChatForPracticeRef.current = false;
-          } else {
-            markStreamComplete(result.assistantId);
-            await activateMockInterviewHub();
-            return;
-          }
+          markStreamComplete(result.assistantId);
+          await activateMockInterviewHub();
+          return;
         }
 
         if (
@@ -908,7 +897,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     const result = await sendClinicMessage(text);
 
     if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
-      stayInChatForPracticeRef.current = false;
       void refreshCurrentSessions(true);
       setClinicNlConfirm({
         text,
@@ -916,10 +904,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         agentId: resolveConflictAgentId(),
       });
       return;
-    }
-
-    if (!result.ok) {
-      stayInChatForPracticeRef.current = false;
     }
 
     await handleClinicSendOutcome(text, result);
@@ -1134,13 +1118,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     [locale, router]
   );
 
-  const handlePracticeForJob = (ctx: {
-    jobId: string;
-    jobTitle?: string | null;
-  }) => {
+  const handlePracticeForJob = (jobId: string) => {
+    // Dedicated Interview workspace — free-form Clinic turns only get a dead
+    // "use the dedicated page" reply without a usable CTA.
     setSelectedJobId(null);
-    stayInChatForPracticeRef.current = true;
-    void handleSend(buildJobPracticeChatPrompt(tJobs, ctx));
+    routeInterviewPage(jobId);
   };
 
   const clinicShellReady =

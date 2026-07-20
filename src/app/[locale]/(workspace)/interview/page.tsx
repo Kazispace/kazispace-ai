@@ -359,11 +359,9 @@ function InterviewPageContent({ locale }: { locale: string }) {
                 <InterviewWorkspace
                   locale={locale}
                   showProfileLink={irpEnabled}
-                  onPracticeInChat={(ctx) => {
-                    // Already on interview page — kick prep for this job in the chat column.
-                    if (ctx.jobTitle?.trim()) {
-                      void submitIntake(ctx.jobTitle.trim());
-                    } else if (jobId) {
+                  onPracticeForJob={(practiceJobId) => {
+                    // Already on interview page — start/retry job session in chat.
+                    if (practiceJobId === jobId || jobId) {
                       void startJobSession();
                     }
                   }}

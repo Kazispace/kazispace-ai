@@ -26,7 +26,7 @@ interface JobDetailRailHostProps {
   onClose: () => void;
   children: ReactNode;
   className?: string;
-  onPracticeForJob?: (ctx: { jobId: string; jobTitle?: string | null }) => void;
+  onPracticeForJob?: (jobId: string) => void;
 }
 
 function clampRailWidth(width: number, containerWidth: number): number {

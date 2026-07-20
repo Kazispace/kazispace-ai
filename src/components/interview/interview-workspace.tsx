@@ -23,15 +23,15 @@ type WorkspaceView = 'menu' | 'profile' | 'growth' | 'readiness';
 interface InterviewWorkspaceProps {
   locale: string;
   showProfileLink?: boolean;
-  /** When set, "Practice" from readiness stays in the interview chat column. */
-  onPracticeInChat?: (ctx: { jobId: string; jobTitle?: string | null }) => void;
+  /** Start mock interview for a job (host owns navigation / session start). */
+  onPracticeForJob?: (jobId: string) => void;
 }
 
 /** §19.3.1 / §19.4 — IRP history entry as in-panel views (no deep page hops). */
 export function InterviewWorkspace({
   locale,
   showProfileLink = false,
-  onPracticeInChat,
+  onPracticeForJob,
 }: InterviewWorkspaceProps) {
   const t = useTranslations('interview');
   const tIrp = useTranslations('interview.irp');
@@ -90,7 +90,11 @@ export function InterviewWorkspace({
             <JobDetailRailReadinessView
               jobId={jobIdFromUrl}
               locale={locale}
-              onPracticeForJob={onPracticeInChat}
+              onPracticeForJob={
+                onPracticeForJob
+                  ? () => onPracticeForJob(jobIdFromUrl)
+                  : undefined
+              }
             />
           ) : (
             <div className="space-y-3 p-4">

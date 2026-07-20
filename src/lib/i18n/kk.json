@@ -266,8 +266,6 @@
 		"navForward": "Алға",
 		"applyEmbedBlocked": "Бет бос болса, жаңа қойындыда ашыңыз.",
 		"applyOpenExternal": "Жаңа қойындыда ашу",
-		"practiceChatPromptWithTitle": "「{title}» рөлі үшін mock interview practice жасашы (job_id: {jobId}). Осы чатта қал — дайындық сұрақтарын осында қой және мен дайын болғанда баста.",
-		"practiceChatPrompt": "job_id {jobId} үшін mock interview practice жасашы. Осы чатта қал — дайындық сұрақтарын осында қой және мен дайын болғанда баста.",
 		"apply": "Өтініш беру",
 		"proLocked": "Pro-да қолжетімді",
 		"whyMatched": "Неге сәйкес",
@@ -747,6 +745,11 @@
 					"strong": "Күшті сәйкестік",
 					"dominant": "Жеткілікті дайын"
 				}
+			},
+			"practice": {
+				"title": "Mock сұхбат",
+				"hint": "Толық mock сұхбат (intake, сұрақтар және кері байланыс) Interview кеңістігінде өтеді — қарапайым чат жауабы емес. Жұмыс контексті сақталады.",
+				"cta": "Mock сұхбатты бастау"
 			},
 			"growth": {
 				"pageTitle": "Өсу тарихы",
