@@ -12,6 +12,7 @@ import {
 import { useTranslations } from 'next-intl';
 
 import { JobDetailRail } from '@/components/jobs/job-detail-rail';
+import type { JobPracticeContext } from '@/types/jobs';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_RAIL_WIDTH = 480;
@@ -26,7 +27,7 @@ interface JobDetailRailHostProps {
   onClose: () => void;
   children: ReactNode;
   className?: string;
-  onPracticeForJob?: (jobId: string) => void;
+  onPracticeForJob?: (ctx: JobPracticeContext) => void;
 }
 
 function clampRailWidth(width: number, containerWidth: number): number {

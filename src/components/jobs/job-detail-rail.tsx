@@ -7,14 +7,13 @@ import { useTranslations } from 'next-intl';
 
 import { JobDetailBody } from '@/components/jobs/job-detail-body';
 import { JobDetailRailExternalView } from '@/components/jobs/job-detail-rail-external-view';
-import { JobDetailRailPracticeView } from '@/components/jobs/job-detail-rail-practice-view';
 import { JobDetailRailReadinessView } from '@/components/jobs/job-detail-rail-readiness-view';
+import type { JobPracticeContext } from '@/types/jobs';
 import { cn } from '@/lib/utils';
 
 type RailView =
   | { kind: 'detail' }
   | { kind: 'readiness'; jobId: string }
-  | { kind: 'practice'; jobId: string }
   | { kind: 'external'; url: string; titleKey: 'apply' | 'detailTitle' };
 
 interface JobDetailRailProps {
@@ -22,8 +21,11 @@ interface JobDetailRailProps {
   locale: string;
   onClose: () => void;
   className?: string;
-  /** Open Interview workspace for this job (`/interview?job_id=`). */
-  onPracticeForJob?: (jobId: string) => void;
+  /**
+   * Practice in the host chat column (keep this rail open).
+   * Host sends the FE-built prompt — do not navigate to /interview.
+   */
+  onPracticeForJob?: (ctx: JobPracticeContext) => void;
 }
 
 function createDetailView(): RailView {
@@ -93,10 +95,6 @@ export function JobDetailRail({
     pushView({ kind: 'readiness', jobId });
   }, [jobId, pushView]);
 
-  const handleOpenPractice = useCallback(() => {
-    pushView({ kind: 'practice', jobId });
-  }, [jobId, pushView]);
-
   const handleOpenExternal = useCallback(
     (url: string) => {
       pushView({ kind: 'external', url, titleKey: 'apply' });
@@ -109,9 +107,7 @@ export function JobDetailRail({
       ? t('detailTitle')
       : current.kind === 'readiness'
         ? t('cta.assess_readiness')
-        : current.kind === 'practice'
-          ? t('cta.start_interview')
-          : t(current.titleKey);
+        : t(current.titleKey);
 
   return (
     <div
@@ -170,15 +166,7 @@ export function JobDetailRail({
           <JobDetailRailReadinessView
             jobId={current.jobId}
             locale={locale}
-            onPracticeForJob={
-              onPracticeForJob ? handleOpenPractice : undefined
-            }
-          />
-        ) : null}
-        {current.kind === 'practice' && onPracticeForJob ? (
-          <JobDetailRailPracticeView
-            jobId={current.jobId}
-            onStart={onPracticeForJob}
+            onPracticeForJob={onPracticeForJob}
           />
         ) : null}
         {current.kind === 'external' ? (

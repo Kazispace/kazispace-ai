@@ -9,6 +9,7 @@ import { IrpGrowthHistory } from '@/components/interview/irp-growth-history';
 import { IrpProfileHome } from '@/components/interview/irp-profile-home';
 import { JobDetailRailReadinessView } from '@/components/jobs/job-detail-rail-readiness-view';
 import { Button } from '@/components/ui/button';
+import type { JobPracticeContext } from '@/types/jobs';
 import { useBilling } from '@/hooks/use-billing';
 import {
   useInterviewProfile,
@@ -23,8 +24,8 @@ type WorkspaceView = 'menu' | 'profile' | 'growth' | 'readiness';
 interface InterviewWorkspaceProps {
   locale: string;
   showProfileLink?: boolean;
-  /** Start mock interview for a job (host owns navigation / session start). */
-  onPracticeForJob?: (jobId: string) => void;
+  /** Practice in the interview chat column (FE-built prompt from readiness). */
+  onPracticeForJob?: (ctx: JobPracticeContext) => void;
 }
 
 /** §19.3.1 / §19.4 — IRP history entry as in-panel views (no deep page hops). */
@@ -90,11 +91,7 @@ export function InterviewWorkspace({
             <JobDetailRailReadinessView
               jobId={jobIdFromUrl}
               locale={locale}
-              onPracticeForJob={
-                onPracticeForJob
-                  ? () => onPracticeForJob(jobIdFromUrl)
-                  : undefined
-              }
+              onPracticeForJob={onPracticeForJob}
             />
           ) : (
             <div className="space-y-3 p-4">

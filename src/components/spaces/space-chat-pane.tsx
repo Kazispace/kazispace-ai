@@ -13,6 +13,8 @@ import {
   useSpaceTurn,
   type SpaceSendResult,
 } from '@/hooks/use-space-turn';
+import type { JobPracticeContext } from '@/types/jobs';
+import { buildReadinessPracticePrompt } from '@/lib/jobs/readiness-practice-prompt';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard } from '@/types/chat-envelope';
@@ -46,6 +48,7 @@ export function SpaceChatPane({
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
   const tChat = useTranslations('chat');
+  const tPractice = useTranslations('interview.irp.practice');
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const {
@@ -104,14 +107,17 @@ export function SpaceChatPane({
   );
 
   const handlePracticeForJob = useCallback(
-    (jobId: string) => {
-      // Clear rail before leave so browser-back does not restore practice confirm.
-      closeJobDetail();
-      router.push(
-        `/${locale}/interview?job_id=${encodeURIComponent(jobId)}`
-      );
+    (ctx: JobPracticeContext) => {
+      if (isSending) return;
+      // Immediate send in the Space chat column (keep readiness rail open).
+      // Do not prefill composer — insert+send races leave duplicate draft text.
+      const prompt = buildReadinessPracticePrompt(tPractice, {
+        jobTitle: ctx.jobTitle,
+        weaknessLabels: ctx.weaknessLabels,
+      });
+      void sendAndPin(prompt);
     },
-    [closeJobDetail, locale, router]
+    [isSending, sendAndPin, tPractice]
   );
 
   const composerNode =
