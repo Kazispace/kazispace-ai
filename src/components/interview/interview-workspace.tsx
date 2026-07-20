@@ -7,11 +7,9 @@ import { ChevronLeft } from 'lucide-react';
 
 import { IrpGrowthHistory } from '@/components/interview/irp-growth-history';
 import { IrpProfileHome } from '@/components/interview/irp-profile-home';
-import {
-  JobDetailRailReadinessView,
-} from '@/components/jobs/job-detail-rail-readiness-view';
-import type { JobPracticeContext } from '@/components/jobs/job-detail-rail';
+import { JobDetailRailReadinessView } from '@/components/jobs/job-detail-rail-readiness-view';
 import { Button } from '@/components/ui/button';
+import type { JobPracticeContext } from '@/types/jobs';
 import { useBilling } from '@/hooks/use-billing';
 import {
   useInterviewProfile,

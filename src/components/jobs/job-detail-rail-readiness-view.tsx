@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { IrpReadinessPanel } from '@/components/interview/irp-readiness-panel';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import type { JobPracticeContext } from '@/components/jobs/job-detail-rail';
+import type { JobPracticeContext } from '@/types/jobs';
 import { useBilling } from '@/hooks/use-billing';
 import { useInterviewReadiness } from '@/hooks/use-interview-profile';
 import { useJobDetail } from '@/hooks/use-jobs';
@@ -97,18 +97,11 @@ export function JobDetailRailReadinessView({
           result={readinessResult}
           locale={locale}
           jobId={jobId}
+          jobTitle={job?.title ?? null}
           onRetry={() => void refetchReadiness()}
           isLoading={isReadinessLoading}
           isPro={isProUser}
-          onPracticeForJob={
-            onPracticeForJob
-              ? (ctx) =>
-                  onPracticeForJob({
-                    ...ctx,
-                    jobTitle: job?.title ?? null,
-                  })
-              : undefined
-          }
+          onPracticeForJob={onPracticeForJob}
         />
       )}
     </div>

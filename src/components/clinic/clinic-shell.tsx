@@ -24,9 +24,9 @@ import { ClinicParkedCapabilityBanner } from "./clinic-parked-capability-banner"
 import { ConfirmAbandonSessionDialog } from "@/components/session-nav/confirm-abandon-session-dialog";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
 import { JobDetailRailHost } from "@/components/jobs/job-detail-rail-host";
-import type { JobPracticeContext } from "@/components/jobs/job-detail-rail";
+import type { JobPracticeContext } from "@/types/jobs";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
-import { buildReadinessPracticePrompt } from "@/lib/jobs/practice-chat-prompt";
+import { buildReadinessPracticePrompt } from "@/lib/jobs/readiness-practice-prompt";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
 import { clinicChatScrollStorageKey } from "@/lib/spaces/chat-scroll";
 import { cn } from "@/lib/utils";
@@ -120,7 +120,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const setPendingAgentSwitch = useAgentStore((s) => s.setPendingAgentSwitch);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
-  const requestComposerInsert = useUIStore((s) => s.requestComposerInsert);
   const openPaywall = useUIStore((s) => s.openPaywall);
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
   const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
@@ -1123,13 +1122,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   );
 
   const handlePracticeForJob = (ctx: JobPracticeContext) => {
-    // Keep readiness rail open; focus Clinic composer and send FE-built prompt.
-    // Do not route to the dedicated Mock Interview hub.
+    // Immediate send in Clinic chat (keep readiness rail open). Do not open
+    // Mock Interview hub. If BE returns needsConfirm (interactive in progress),
+    // the existing ConfirmAbandon flow retries this same prompt after abandon.
     const prompt = buildReadinessPracticePrompt(tPractice, {
       jobTitle: ctx.jobTitle,
       weaknessLabels: ctx.weaknessLabels,
     });
-    requestComposerInsert(prompt, "clinic", "replace");
     void handleSend(prompt);
   };
 

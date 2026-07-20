@@ -8,22 +8,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { clampPct } from '@/lib/interview-irp-utils';
 import type { InterviewReadinessResult, ReadinessTier } from '@/types';
+import type { JobPracticeContext } from '@/types/jobs';
 
 interface IrpReadinessPanelProps {
   result: InterviewReadinessResult;
   locale: string;
   jobId?: string | null;
+  /** Optional role title for the FE practice prompt (host may also supply). */
+  jobTitle?: string | null;
   isPro?: boolean;
   onRetry?: () => void;
   isLoading?: boolean;
   /**
    * When set, "Practice for this job" stays in the host chat (no /interview hop).
-   * Passes readiness gaps so the host can FE-build the practice prompt.
+   * Prompt uses the full gap_analysis list (not the free-tier UI slice).
    */
-  onPracticeForJob?: (ctx: {
-    jobId: string;
-    weaknessLabels: string[];
-  }) => void;
+  onPracticeForJob?: (ctx: JobPracticeContext) => void;
 }
 
 function tierTone(tier?: ReadinessTier | null) {
@@ -46,6 +46,7 @@ export function IrpReadinessPanel({
   result,
   locale,
   jobId,
+  jobTitle = null,
   isPro = false,
   onRetry,
   isLoading,
@@ -166,7 +167,9 @@ export function IrpReadinessPanel({
               onClick={() =>
                 onPracticeForJob({
                   jobId,
-                  weaknessLabels: visibleGaps
+                  jobTitle,
+                  // Full gap list for the chat prompt — UI may show a free-tier slice only.
+                  weaknessLabels: gaps
                     .map((gap) => gap.label?.trim() || '')
                     .filter(Boolean),
                 })

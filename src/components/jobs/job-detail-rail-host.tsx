@@ -12,7 +12,7 @@ import {
 import { useTranslations } from 'next-intl';
 
 import { JobDetailRail } from '@/components/jobs/job-detail-rail';
-import type { JobPracticeContext } from '@/components/jobs/job-detail-rail';
+import type { JobPracticeContext } from '@/types/jobs';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_RAIL_WIDTH = 480;

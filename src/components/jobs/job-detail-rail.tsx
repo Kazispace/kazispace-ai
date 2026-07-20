@@ -8,13 +8,8 @@ import { useTranslations } from 'next-intl';
 import { JobDetailBody } from '@/components/jobs/job-detail-body';
 import { JobDetailRailExternalView } from '@/components/jobs/job-detail-rail-external-view';
 import { JobDetailRailReadinessView } from '@/components/jobs/job-detail-rail-readiness-view';
+import type { JobPracticeContext } from '@/types/jobs';
 import { cn } from '@/lib/utils';
-
-export type JobPracticeContext = {
-  jobId: string;
-  jobTitle?: string | null;
-  weaknessLabels: string[];
-};
 
 type RailView =
   | { kind: 'detail' }
@@ -28,7 +23,7 @@ interface JobDetailRailProps {
   className?: string;
   /**
    * Practice in the host chat column (keep this rail open).
-   * Host builds/sends the FE prompt — do not navigate to /interview.
+   * Host sends the FE-built prompt — do not navigate to /interview.
    */
   onPracticeForJob?: (ctx: JobPracticeContext) => void;
 }

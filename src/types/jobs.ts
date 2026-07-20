@@ -20,3 +20,10 @@ export type JobPrimaryCtaValue =
   | 'unlock_pro';
 
 export type JobMatchLevel = 'excellent' | 'good' | 'fair';
+
+/** Context for "Practice for this job" from readiness → host chat prompt. */
+export type JobPracticeContext = {
+  jobId: string;
+  jobTitle?: string | null;
+  weaknessLabels: string[];
+};
