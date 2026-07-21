@@ -31,6 +31,20 @@ describe('isInFlightClinicMessage', () => {
     expect(isInFlightClinicMessage(base({ status: 'sent' }))).toBe(false);
     expect(isInFlightClinicMessage(base({ status: 'failed' }))).toBe(false);
   });
+
+  it('does not treat assistants already bound to serverMessageId as in-flight', () => {
+    expect(
+      isInFlightClinicMessage(
+        base({
+          id: 'a_local',
+          role: 'assistant',
+          content: 'soft reply',
+          streamComplete: false,
+          serverMessageId: '42',
+        })
+      )
+    ).toBe(false);
+  });
 });
 
 describe('mergeClinicMessagesAfterHistoryLoad', () => {
@@ -75,9 +89,25 @@ describe('mergeClinicMessagesAfterHistoryLoad', () => {
     expect(mergeClinicMessagesAfterHistoryLoad(local, server)).toEqual(server);
   });
 
-  it('drops failed rows in favor of server history', () => {
-    const local = [base({ id: 'u_fail', content: 'retry me', status: 'failed' })];
-    const server = [base({ id: 'u_srv', content: 'older' })];
+  it('drops local streaming assistant once serverMessageId is bound (no double bubble)', () => {
+    const local = [
+      base({ id: 'u_local', content: '傻逼呀' }),
+      base({
+        id: 'a_local',
+        role: 'assistant',
+        content: '抱歉让你这么烦心。搜索结果…',
+        streamComplete: false,
+        serverMessageId: '99',
+      }),
+    ];
+    const server = [
+      base({ id: 'u_srv', content: '傻逼呀' }),
+      base({
+        id: '99',
+        role: 'assistant',
+        content: '抱歉让你这么烦心。搜索结果…\n<!--kazi:degraded-->',
+      }),
+    ];
     expect(mergeClinicMessagesAfterHistoryLoad(local, server)).toEqual(server);
   });
 });
