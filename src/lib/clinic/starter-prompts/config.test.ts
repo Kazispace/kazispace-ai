@@ -44,9 +44,11 @@ describe('clinic starter config (KAZI-258)', () => {
     ).toThrow(/web_search/);
   });
 
-  it('Phase B mutex: hide when QR non-empty', () => {
+  it('Phase B mutex: hide when next_actions non-empty', () => {
     expect(shouldHideClinicStarterForQuickReplies([])).toBe(false);
-    expect(shouldHideClinicStarterForQuickReplies(['a'])).toBe(true);
+    expect(shouldHideClinicStarterForQuickReplies([{ type: 'job_search' }])).toBe(
+      true
+    );
   });
 
   it('collapse key is session-scoped', () => {

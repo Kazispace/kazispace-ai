@@ -18,6 +18,8 @@ import type { SpaceStarterConfig } from '@/lib/spaces/starter-prompts/types';
 import { readCachedMasterSessionId } from '@/lib/master-session';
 import { useChatStore } from '@/lib/store';
 
+export { resolveLatestClinicNextActions } from '@/lib/clinic/starter-prompts/clinic-nba';
+
 export {
   shouldHideClinicStarterForQuickReplies,
 };
