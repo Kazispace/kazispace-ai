@@ -20,6 +20,7 @@ interface JobDetailRailReadinessViewProps {
   className?: string;
   /** Keep rail open; host sends FE-built practice prompt in the chat column. */
   onPracticeForJob?: (ctx: JobPracticeContext) => void;
+  practiceDisabled?: boolean;
 }
 
 /** Compact interview-readiness body for the job detail rail (no page chrome). */
@@ -28,6 +29,7 @@ export function JobDetailRailReadinessView({
   locale,
   className,
   onPracticeForJob,
+  practiceDisabled = false,
 }: JobDetailRailReadinessViewProps) {
   const t = useTranslations('interview.irp');
   const { job } = useJobDetail(jobId);
@@ -102,6 +104,7 @@ export function JobDetailRailReadinessView({
           isLoading={isReadinessLoading}
           isPro={isProUser}
           onPracticeForJob={onPracticeForJob}
+          practiceDisabled={practiceDisabled}
         />
       )}
     </div>

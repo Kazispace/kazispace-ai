@@ -27,6 +27,7 @@ import {
   mapSpaceHistoryMessages,
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnCards,
+  resolveSpaceTurnNextActions,
   resolveSpaceTurnReply,
   type SpaceChatMessage,
 } from '@/lib/spaces/turn';
@@ -106,6 +107,8 @@ export function useSpaceTurn(
 
   /** Generation counter — skip stale async store writes when the user navigates away. */
   const sendGenerationRef = useRef(0);
+  /** Sync mutex — `isSending` store flag alone loses to double-click before re-render (KAZI-296). */
+  const sendInFlightRef = useRef(false);
   /**
    * Mount-local settle flag for scroll restore.
    * Store `isHydrating` can still be false on the first paint after remount (leftover from
@@ -203,11 +206,20 @@ export function useSpaceTurn(
         return { ok: false as const, error: 'Space not ready' };
       }
 
+      if (
+        sendInFlightRef.current ||
+        useSpaceStore.getState().getSpaceSlice(spaceId)?.isSending
+      ) {
+        return { ok: false as const, error: 'Send in progress' };
+      }
+      sendInFlightRef.current = true;
+
       const generation = sendGenerationRef.current;
       const isStale = () => generation !== sendGenerationRef.current;
 
       const resolvedMasterId = resolveSpaceMasterSessionId(masterSessionId);
       if (!resolvedMasterId) {
+        sendInFlightRef.current = false;
         const err = 'Space not ready';
         setSpaceReplyNotice(spaceId, { kind: 'error', message: err });
         return { ok: false as const, error: err };
@@ -280,6 +292,7 @@ export function useSpaceTurn(
 
         let reply = resolveSpaceTurnReply(res.data);
         const turnCards = resolveSpaceTurnCards(res.data);
+        const turnNextActions = resolveSpaceTurnNextActions(res.data);
         let history: SpaceChatMessage[] = [];
         let recoveredFromHistory = false;
 
@@ -339,6 +352,9 @@ export function useSpaceTurn(
             role: 'assistant',
             content: reply,
             ...(turnCards.length > 0 ? { cards: turnCards } : {}),
+            ...(turnNextActions.length > 0
+              ? { nextActions: turnNextActions }
+              : {}),
             ...(isServerAssistantMessageId(assistantMessageId)
               ? { serverMessageId: assistantMessageId }
               : {}),
@@ -369,6 +385,7 @@ export function useSpaceTurn(
 
         return { ok: true as const };
       } finally {
+        sendInFlightRef.current = false;
         if (!isStale()) {
           setSpaceSending(spaceId, false);
         }

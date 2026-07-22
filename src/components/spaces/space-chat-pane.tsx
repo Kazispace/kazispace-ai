@@ -15,9 +15,10 @@ import {
 } from '@/hooks/use-space-turn';
 import type { JobPracticeContext } from '@/types/jobs';
 import { buildReadinessPracticePrompt } from '@/lib/jobs/readiness-practice-prompt';
+import { resolveSpaceNextActionHref } from '@/lib/spaces/next-action';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
-import type { ChatJobCard } from '@/types/chat-envelope';
+import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import { cn } from '@/lib/utils';
 
 type SpaceWelcomeKey = 'blankWelcome' | 'jobSprintWelcome' | 'ieltsWelcome';
@@ -120,6 +121,15 @@ export function SpaceChatPane({
     [isSending, sendAndPin, tPractice]
   );
 
+  const handleNextAction = useCallback(
+    (action: ChatNextAction) => {
+      const href = resolveSpaceNextActionHref(locale, action);
+      if (!href) return;
+      router.push(href);
+    },
+    [locale, router]
+  );
+
   const composerNode =
     typeof composer === 'function'
       ? composer({
@@ -158,6 +168,7 @@ export function SpaceChatPane({
       locale={locale}
       onClose={closeJobDetail}
       onPracticeForJob={handlePracticeForJob}
+      practiceDisabled={isSending}
       className="h-full w-full"
     >
       <SpaceShell
@@ -188,12 +199,15 @@ export function SpaceChatPane({
                 serverMessageId={message.serverMessageId}
                 status={message.status}
                 cards={message.cards}
+                nextActions={message.nextActions}
                 locale={locale}
                 variant="clinic"
                 surface="workspace"
                 composerTarget="space"
                 streamComplete
                 onJobCardClick={handleJobCardClick}
+                onNextAction={handleNextAction}
+                actionsDisabled={isSending}
                 onRetry={
                   message.role === 'user' && message.status === 'failed'
                     ? () => {
