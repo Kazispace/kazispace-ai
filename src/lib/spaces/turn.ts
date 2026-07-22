@@ -1,6 +1,6 @@
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
-import type { ChatJobCard } from '@/types/chat-envelope';
+import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 
 /** Unicode ellipsis (U+2026) and ASCII three-dot placeholder. */
 const PLACEHOLDER_REPLIES = new Set(['…', '...']);
@@ -86,6 +86,23 @@ export function resolveSpaceTurnCards(data: unknown): ChatJobCard[] {
   return [];
 }
 
+/**
+ * next_actions from Space turn / history (same unwrap as cards — KAZI-296).
+ * Clinic already stores these; Space previously dropped them → dead "click to continue" copy.
+ */
+export function resolveSpaceTurnNextActions(data: unknown): ChatNextAction[] {
+  if (!data || typeof data !== 'object') return [];
+  const raw = data as Record<string, unknown>;
+
+  for (const candidate of [data, raw.envelope]) {
+    if (!candidate) continue;
+    const nextActions = parseAssistantEnvelope(candidate).nextActions;
+    if (nextActions.length > 0) return nextActions;
+  }
+
+  return [];
+}
+
 export type SpaceChatMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -96,6 +113,8 @@ export type SpaceChatMessage = {
    * card types can land here without a Space-only union rewrite.
    */
   cards?: ChatJobCard[];
+  /** CTA row from assistant_response.next_actions (KAZI-296). */
+  nextActions?: ChatNextAction[];
   /** Present on optimistic local turns (KAZI-186 retry). */
   status?: 'sending' | 'sent' | 'failed';
   /** Persisted chat_messages.id for feedback (KAZI-254). */
@@ -145,12 +164,15 @@ export function normalizeSpaceHistoryMessage(
 
   const cards =
     role === 'assistant' ? resolveSpaceTurnCards(raw) : [];
+  const nextActions =
+    role === 'assistant' ? resolveSpaceTurnNextActions(raw) : [];
 
   return {
     id,
     role,
     content,
     ...(cards.length > 0 ? { cards } : {}),
+    ...(nextActions.length > 0 ? { nextActions } : {}),
     ...(role === 'assistant' && isServerAssistantMessageId(id)
       ? { serverMessageId: id }
       : {}),
@@ -213,22 +235,39 @@ export function mergeSpaceMessagesAfterSend(
   if (fromServer.length === 0) return local;
 
   // Position-based: Nth local assistant → Nth server assistant (not content key —
-  // duplicate copy like「找到 10 个岗位」must not cross-attach cards).
-  const localAssistantCards: (ChatJobCard[] | undefined)[] = [];
+  // duplicate copy like「找到 10 个岗位」must not cross-attach cards / CTAs).
+  const localAssistantExtras: {
+    cards?: ChatJobCard[];
+    nextActions?: ChatNextAction[];
+  }[] = [];
   for (const message of local) {
     if (message.role !== 'assistant') continue;
-    localAssistantCards.push(
-      message.cards && message.cards.length > 0 ? message.cards : undefined
-    );
+    localAssistantExtras.push({
+      ...(message.cards && message.cards.length > 0
+        ? { cards: message.cards }
+        : {}),
+      ...(message.nextActions && message.nextActions.length > 0
+        ? { nextActions: message.nextActions }
+        : {}),
+    });
   }
 
   let assistantOrdinal = 0;
   const enrichedServer = fromServer.map((message) => {
     if (message.role !== 'assistant') return message;
-    const localCards = localAssistantCards[assistantOrdinal];
+    const localExtras = localAssistantExtras[assistantOrdinal] ?? {};
     assistantOrdinal += 1;
-    if (message.cards && message.cards.length > 0) return message;
-    return localCards ? { ...message, cards: localCards } : message;
+    let next = message;
+    if (!(message.cards && message.cards.length > 0) && localExtras.cards) {
+      next = { ...next, cards: localExtras.cards };
+    }
+    if (
+      !(message.nextActions && message.nextActions.length > 0) &&
+      localExtras.nextActions
+    ) {
+      next = { ...next, nextActions: localExtras.nextActions };
+    }
+    return next;
   });
 
   const serverAssistantContents = new Set(

@@ -24,6 +24,8 @@ interface IrpReadinessPanelProps {
    * Prompt uses the full gap_analysis list (not the free-tier UI slice).
    */
   onPracticeForJob?: (ctx: JobPracticeContext) => void;
+  /** Disable practice while the host chat turn is in flight (KAZI-296). */
+  practiceDisabled?: boolean;
 }
 
 function tierTone(tier?: ReadinessTier | null) {
@@ -51,6 +53,7 @@ export function IrpReadinessPanel({
   onRetry,
   isLoading,
   onPracticeForJob,
+  practiceDisabled = false,
 }: IrpReadinessPanelProps) {
   const t = useTranslations('interview.irp');
 
@@ -164,6 +167,7 @@ export function IrpReadinessPanel({
             <Button
               size="sm"
               type="button"
+              disabled={practiceDisabled}
               onClick={() =>
                 onPracticeForJob({
                   jobId,

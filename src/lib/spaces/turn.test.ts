@@ -7,6 +7,7 @@ import {
   mapSpaceHistoryMessages,
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnCards,
+  resolveSpaceTurnNextActions,
   resolveSpaceTurnReply,
 } from '@/lib/spaces/turn';
 
@@ -128,6 +129,59 @@ describe('resolveSpaceTurnCards', () => {
   });
 });
 
+describe('resolveSpaceTurnNextActions', () => {
+  const continueActions = [
+    {
+      type: 'open_interview',
+      label: '继续模拟面试',
+      path: '/interview',
+    },
+  ];
+
+  it('reads next_actions on the turn root', () => {
+    expect(
+      resolveSpaceTurnNextActions({
+        reply_text: '你有一场进行中的模拟面试，点击继续：',
+        assistant_response: {
+          content: '你有一场进行中的模拟面试，点击继续：',
+          next_actions: continueActions,
+        },
+      })
+    ).toEqual(continueActions);
+  });
+
+  it('reads next_actions nested under envelope', () => {
+    expect(
+      resolveSpaceTurnNextActions({
+        envelope: {
+          components: [
+            { type: 'text', text: '你有一场进行中的模拟面试，点击继续：' },
+          ],
+          assistant_response: {
+            content: '你有一场进行中的模拟面试，点击继续：',
+            next_actions: continueActions,
+          },
+        },
+      })
+    ).toEqual(continueActions);
+  });
+
+  it('hydrates next_actions from history messages', () => {
+    const mapped = mapSpaceHistoryMessages([
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: '你有一场进行中的模拟面试，点击继续：',
+        assistant_response: {
+          content: '你有一场进行中的模拟面试，点击继续：',
+          next_actions: continueActions,
+        },
+      },
+    ]);
+    expect(mapped[0]?.nextActions).toEqual(continueActions);
+  });
+});
+
 describe('latestAssistantAfterLastUser', () => {
   it('returns assistant after the last user turn by position', () => {
     expect(
@@ -240,6 +294,35 @@ describe('mergeSpaceMessagesAfterSend', () => {
         role: 'assistant',
         content: '为「贸易经理」找到 10 个岗位。',
         cards,
+      },
+    ]);
+  });
+
+  it('preserves local next_actions when server history omits them', () => {
+    const nextActions = [
+      { type: 'open_interview', label: '继续', path: '/interview' },
+    ];
+    const copy = '你有一场进行中的模拟面试，点击继续：';
+    const local = [
+      { id: 'u1', role: 'user' as const, content: '练习面试' },
+      {
+        id: 'local_a1',
+        role: 'assistant' as const,
+        content: copy,
+        nextActions,
+      },
+    ];
+    const server = [
+      { id: 'u1', role: 'user' as const, content: '练习面试' },
+      { id: 'srv_a1', role: 'assistant' as const, content: copy },
+    ];
+    expect(mergeSpaceMessagesAfterSend(local, server)).toEqual([
+      { id: 'u1', role: 'user', content: '练习面试' },
+      {
+        id: 'srv_a1',
+        role: 'assistant',
+        content: copy,
+        nextActions,
       },
     ]);
   });

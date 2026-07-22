@@ -1122,6 +1122,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   );
 
   const handlePracticeForJob = (ctx: JobPracticeContext) => {
+    if (isSending || isSwitching) return;
     // Immediate send in Clinic chat (keep readiness rail open). Do not open
     // Mock Interview hub. If BE returns needsConfirm (interactive in progress),
     // the existing ConfirmAbandon flow retries this same prompt after abandon.
@@ -1288,6 +1289,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         locale={locale}
         onClose={() => setSelectedJobId(null)}
         onPracticeForJob={handlePracticeForJob}
+        practiceDisabled={isSending || isSwitching}
       >
       <div className="relative flex min-h-0 flex-1 flex-col">
       <div

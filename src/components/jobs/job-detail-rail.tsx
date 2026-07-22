@@ -26,6 +26,7 @@ interface JobDetailRailProps {
    * Host sends the FE-built prompt — do not navigate to /interview.
    */
   onPracticeForJob?: (ctx: JobPracticeContext) => void;
+  practiceDisabled?: boolean;
 }
 
 function createDetailView(): RailView {
@@ -39,6 +40,7 @@ export function JobDetailRail({
   onClose,
   className,
   onPracticeForJob,
+  practiceDisabled = false,
 }: JobDetailRailProps) {
   const router = useRouter();
   const t = useTranslations('jobs');
@@ -167,6 +169,7 @@ export function JobDetailRail({
             jobId={current.jobId}
             locale={locale}
             onPracticeForJob={onPracticeForJob}
+            practiceDisabled={practiceDisabled}
           />
         ) : null}
         {current.kind === 'external' ? (

@@ -28,6 +28,8 @@ interface JobDetailRailHostProps {
   children: ReactNode;
   className?: string;
   onPracticeForJob?: (ctx: JobPracticeContext) => void;
+  /** Disable "Practice for this job" while the host chat turn is in flight. */
+  practiceDisabled?: boolean;
 }
 
 function clampRailWidth(width: number, containerWidth: number): number {
@@ -72,6 +74,7 @@ export function JobDetailRailHost({
   children,
   className,
   onPracticeForJob,
+  practiceDisabled = false,
 }: JobDetailRailHostProps) {
   const t = useTranslations('jobs');
   const hostRef = useRef<HTMLDivElement>(null);
@@ -242,6 +245,7 @@ export function JobDetailRailHost({
               locale={locale}
               onClose={onClose}
               onPracticeForJob={onPracticeForJob}
+              practiceDisabled={practiceDisabled}
             />
           </aside>
           <div
@@ -255,6 +259,7 @@ export function JobDetailRailHost({
               locale={locale}
               onClose={onClose}
               onPracticeForJob={onPracticeForJob}
+              practiceDisabled={practiceDisabled}
             />
           </div>
         </>
