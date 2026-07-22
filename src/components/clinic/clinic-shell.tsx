@@ -18,7 +18,7 @@ import {
   ClinicStarterCapabilityToolbar,
   ClinicStarterExampleStrip,
   resolveLatestClinicNextActions,
-  shouldHideClinicStarterForQuickReplies,
+  shouldHideClinicStarterForNextActions,
   useClinicStarterPromptsController,
 } from "./clinic-starter";
 import { ClinicParkedCapabilityBanner } from "./clinic-parked-capability-banner";
@@ -505,7 +505,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   // Phase B: mutex Clinic Starter vs assistant next_actions (PRD §3.4.2 / SDD §2.4.2).
   // CTAs render inline on MessageBubble; composer only needs the mutex signal.
-  const clinicNbaActions = useMemo(
+  const latestClinicNextActions = useMemo(
     () => resolveLatestClinicNextActions(clinicMessages),
     [clinicMessages]
   );
@@ -515,7 +515,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     !isAgentMode &&
     Boolean(clinicStarter?.hydrated) &&
     clinicStarter != null &&
-    !shouldHideClinicStarterForQuickReplies(clinicNbaActions);
+    !shouldHideClinicStarterForNextActions(latestClinicNextActions);
   const clinicInputDisabled =
     isSending || isSwitching || isSwitchingSession || historyReadOnly;
 

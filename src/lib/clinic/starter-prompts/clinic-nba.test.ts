@@ -28,7 +28,7 @@ describe('resolveLatestClinicNextActions', () => {
     ).toEqual(continueMock);
   });
 
-  it('uses only the latest assistant row', () => {
+  it('returns NBA from latest assistant even after a user turn (when a newer assistant reply follows)', () => {
     expect(
       resolveLatestClinicNextActions([
         { role: 'assistant', nextActions: [{ type: 'job_search' }] },

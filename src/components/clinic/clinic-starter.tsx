@@ -11,7 +11,7 @@ import {
   readClinicStarterCollapsed,
   resolveClinicStarterConfig,
   resolveStarterCollapsed,
-  shouldHideClinicStarterForQuickReplies,
+  shouldHideClinicStarterForNextActions,
   writeClinicStarterCollapsed,
 } from '@/lib/clinic/starter-prompts/config';
 import type { SpaceStarterConfig } from '@/lib/spaces/starter-prompts/types';
@@ -21,7 +21,7 @@ import { useChatStore } from '@/lib/store';
 export { resolveLatestClinicNextActions } from '@/lib/clinic/starter-prompts/clinic-nba';
 
 export {
-  shouldHideClinicStarterForQuickReplies,
+  shouldHideClinicStarterForNextActions,
 };
 
 export function useClinicStarterPromptsController(
