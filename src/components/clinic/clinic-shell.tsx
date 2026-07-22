@@ -17,7 +17,8 @@ import { ReferralPrompt } from "./referral-prompt";
 import {
   ClinicStarterCapabilityToolbar,
   ClinicStarterExampleStrip,
-  shouldHideClinicStarterForQuickReplies,
+  resolveLatestClinicNextActions,
+  shouldHideClinicStarterForNextActions,
   useClinicStarterPromptsController,
 } from "./clinic-starter";
 import { ClinicParkedCapabilityBanner } from "./clinic-parked-capability-banner";
@@ -502,20 +503,19 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       ? AGENT_QUICK_REPLIES[activeAgentId]?.[locale as SupportedLocale] ?? []
       : [];
 
-  // Phase B: clinic-layer NBA options for Starter mutex (PRD §3.4.2).
-  // TODO(KAZI-258): populate from clinic next_actions / NBA when BE exposes them
-  // on the outpatient layer. Agent Hub QR stays AgentMode-only (below) — never
-  // co-rendered with Clinic Starter (`showClinicStarter` requires !isAgentMode).
-  const clinicNbaOptions: string[] = [];
+  // Phase B: mutex Clinic Starter vs assistant next_actions (PRD §3.4.2 / SDD §2.4.2).
+  // CTAs render inline on MessageBubble; composer only needs the mutex signal.
+  const latestClinicNextActions = useMemo(
+    () => resolveLatestClinicNextActions(clinicMessages),
+    [clinicMessages]
+  );
   const hasClinicUserMessage = clinicMessages.some((m) => m.role === "user");
   const clinicStarter = useClinicStarterPromptsController(hasClinicUserMessage);
   const showClinicStarter =
     !isAgentMode &&
     Boolean(clinicStarter?.hydrated) &&
     clinicStarter != null &&
-    !shouldHideClinicStarterForQuickReplies(clinicNbaOptions);
-  const showClinicQuickReplies =
-    !isAgentMode && clinicNbaOptions.length > 0;
+    !shouldHideClinicStarterForNextActions(latestClinicNextActions);
   const clinicInputDisabled =
     isSending || isSwitching || isSwitchingSession || historyReadOnly;
 
@@ -1443,14 +1443,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         <QuickReplies
           options={quickReplies}
           disabled={isSending || isSwitching}
-          onSelect={handleSend}
-        />
-      )}
-
-      {showClinicQuickReplies && (
-        <QuickReplies
-          options={clinicNbaOptions}
-          disabled={clinicInputDisabled}
           onSelect={handleSend}
         />
       )}

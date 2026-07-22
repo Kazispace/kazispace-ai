@@ -129,7 +129,7 @@ export function resolveClinicStarterConfig(options?: {
 }
 
 /** Phase B hard mutex; Phase B+ may type-filter or use length >= 3 (D12). */
-export function shouldHideClinicStarterForQuickReplies(
+export function shouldHideClinicStarterForNextActions(
   options: ReadonlyArray<unknown>
 ): boolean {
   return options.length > 0;

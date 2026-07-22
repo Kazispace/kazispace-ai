@@ -6,7 +6,7 @@ import {
   assertClinicStarterAllowlist,
   clinicStarterCollapseStorageKey,
   resolveClinicStarterConfig,
-  shouldHideClinicStarterForQuickReplies,
+  shouldHideClinicStarterForNextActions,
 } from '@/lib/clinic/starter-prompts/config';
 
 describe('clinic starter config (KAZI-258)', () => {
@@ -44,9 +44,11 @@ describe('clinic starter config (KAZI-258)', () => {
     ).toThrow(/web_search/);
   });
 
-  it('Phase B mutex: hide when QR non-empty', () => {
-    expect(shouldHideClinicStarterForQuickReplies([])).toBe(false);
-    expect(shouldHideClinicStarterForQuickReplies(['a'])).toBe(true);
+  it('Phase B mutex: hide when next_actions non-empty', () => {
+    expect(shouldHideClinicStarterForNextActions([])).toBe(false);
+    expect(shouldHideClinicStarterForNextActions([{ type: 'job_search' }])).toBe(
+      true
+    );
   });
 
   it('collapse key is session-scoped', () => {
