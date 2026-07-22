@@ -89,6 +89,12 @@ describe('mergeClinicMessagesAfterHistoryLoad', () => {
     expect(mergeClinicMessagesAfterHistoryLoad(local, server)).toEqual(server);
   });
 
+  it('drops failed rows in favor of server history', () => {
+    const local = [base({ id: 'u_fail', content: 'retry me', status: 'failed' })];
+    const server = [base({ id: 'u_srv', content: 'older' })];
+    expect(mergeClinicMessagesAfterHistoryLoad(local, server)).toEqual(server);
+  });
+
   it('drops local streaming assistant once serverMessageId is bound (no double bubble)', () => {
     const local = [
       base({ id: 'u_local', content: '傻逼呀' }),
