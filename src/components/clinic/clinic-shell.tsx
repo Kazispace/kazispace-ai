@@ -99,10 +99,9 @@ import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { API_BASE_URL } from "@/lib/constants";
 import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
 import {
-  MOCK_INTERVIEW_REFERRAL_OPENING,
-  resolveInteractiveNextActionChatPrompt,
-  resolveInteractiveNextActionHref,
-} from "@/lib/interactive-in-space/next-action";
+  resolveNextActionChatPrompt,
+  resolveNextActionHref,
+} from "@/lib/next-action/resolve";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
 
 interface ClinicShellProps {
@@ -777,11 +776,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         // remove this path once BE returns referral-only next_actions. See KAZI-138.
         if (
           msg &&
-          shouldClinicReplyRouteToInterviewHub({
-            intent: msg.intent,
-            nextActions: msg.nextActions,
-            userText: text,
-          })
+          shouldClinicReplyRouteToInterviewHub(msg.nextActions)
         ) {
           markStreamComplete(result.assistantId);
           routeInterviewPage();
@@ -851,7 +846,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     ]
   );
 
-  const handleSend = async (text: string) => {
+  const handleSend = async (
+    text: string,
+    options?: { fromNextAction?: boolean }
+  ) => {
     pinToLatestOnSend();
     if (!isLoggedIn) {
       showToast(tClinic("loginToChat"), "info");
@@ -894,7 +892,22 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       return;
     }
 
-    const result = await sendClinicMessage(text);
+    if (options?.fromNextAction) {
+      const conflictingId = resolveConflictAgentId();
+      if (conflictingId) {
+        const exitRes = await exitAgentSession(conflictingId, locale);
+        if (!exitRes.success) {
+          showToast(tClinic("activateFailed"), "error");
+          return;
+        }
+        void refreshCurrentSessions(true);
+        publishSessionNavInvalidate();
+      }
+    }
+
+    const result = await sendClinicMessage(text, {
+      ...(options?.fromNextAction ? { confirmAbandon: true } : {}),
+    });
 
     if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
       void refreshCurrentSessions(true);
@@ -1013,7 +1026,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     if (messageId) dismissMessageReferral(messageId);
     setPendingReferral(null);
     if (isMockInterviewAgent(agentId)) {
-      void handleSend(MOCK_INTERVIEW_REFERRAL_OPENING);
+      const prompt = resolveNextActionChatPrompt(
+        { type: "mock_interview" },
+        locale
+      );
+      if (prompt) {
+        void handleSend(prompt, { fromNextAction: true });
+      }
       return;
     }
     if (isEnglishTutorAgent(agentId)) {
@@ -1071,14 +1090,14 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const handleNextAction = useCallback(
     (action: ChatNextAction) => {
-      const href = resolveInteractiveNextActionHref(locale, action);
+      const href = resolveNextActionHref(locale, action);
       if (href) {
         router.push(href);
         return;
       }
-      const prompt = resolveInteractiveNextActionChatPrompt(action);
+      const prompt = resolveNextActionChatPrompt(action, locale);
       if (prompt) {
-        void handleSend(prompt);
+        void handleSend(prompt, { fromNextAction: true });
         return;
       }
       switch (action.type) {

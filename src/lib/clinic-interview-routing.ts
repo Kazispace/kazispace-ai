@@ -32,14 +32,10 @@ export function hasInterviewHubNextAction(
 
 /**
  * Whether a Clinic assistant turn should navigate to `/interview`.
- * KAZI-321: `mock_interview` intent/CTA alone stays in-thread; only `open_interview` or explicit interview path may deep-link.
+ * KAZI-321: only `open_interview` or an explicit interview `path` may deep-link.
  */
-export function shouldClinicReplyRouteToInterviewHub(input: {
-  intent?: string;
-  nextActions?: ChatNextAction[];
-  userText?: string;
-}): boolean {
-  void input.intent;
-  void input.userText;
-  return hasInterviewHubNextAction(input.nextActions);
+export function shouldClinicReplyRouteToInterviewHub(
+  nextActions?: ChatNextAction[]
+): boolean {
+  return hasInterviewHubNextAction(nextActions);
 }

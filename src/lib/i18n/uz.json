@@ -309,6 +309,13 @@
 			"job_search": "Ish qidirish mutaxassisi",
 			"edit_cv": "Rezyumeni yaxshilash",
 			"cv_builder": "Rezyume yaratuvchini ochish"
+		},
+		"inSpacePrompts": {
+			"mock_interview": "Suhbat mashqini boshlaylik",
+			"cv_builder": "Rezyumemni yaxshilashga yordam bering",
+			"edit_cv": "Rezyumemni yaxshilashga yordam bering",
+			"english_tutor": "Ingliz tilini mashq qilmoqchiman",
+			"job_search": "Ish topishga yordam bering"
 		}
 	},
 	"referral": {

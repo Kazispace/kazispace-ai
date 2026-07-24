@@ -1,16 +1,22 @@
 import type { ChatNextAction } from '@/types/chat-envelope';
 import { getCompleteProfileHref } from '@/lib/profile-routing';
 
-/** NL opener when user accepts a mock_interview referral in Clinic (KAZI-321). */
-export const MOCK_INTERVIEW_REFERRAL_OPENING = '我想练习面试';
+import {
+  resolveInSpaceChatPrompt,
+  type InSpaceChatPromptType,
+} from '@/lib/next-action/i18n-prompts';
 
-const IN_SPACE_CHAT_PROMPT_BY_TYPE: Record<string, string> = {
-  mock_interview: MOCK_INTERVIEW_REFERRAL_OPENING,
-  cv_builder: '帮我优化简历',
-  edit_cv: '帮我优化简历',
-  english_tutor: '我想练习英语',
-  job_search: '帮我找工作',
-};
+const IN_SPACE_CHAT_PROMPT_TYPES = new Set<string>([
+  'mock_interview',
+  'cv_builder',
+  'edit_cv',
+  'english_tutor',
+  'job_search',
+]);
+
+function isInSpaceChatPromptType(type: string): type is InSpaceChatPromptType {
+  return IN_SPACE_CHAT_PROMPT_TYPES.has(type);
+}
 
 function normalizeAppPath(locale: string, rawPath: string): string | null {
   const path = rawPath.trim();
@@ -21,10 +27,10 @@ function normalizeAppPath(locale: string, rawPath: string): string | null {
 }
 
 /**
- * Optional deep-link for next_actions (KAZI-321).
+ * Optional deep-link for Clinic/Space next_actions (KAZI-321).
  * `mock_interview` never maps to `/interview` by type alone; `open_interview` or explicit `path` may.
  */
-export function resolveInteractiveNextActionHref(
+export function resolveNextActionHref(
   locale: string,
   action: ChatNextAction
 ): string | null {
@@ -50,10 +56,12 @@ export function resolveInteractiveNextActionHref(
 }
 
 /** User message to send in the current Clinic/Space thread (no Hub hop). */
-export function resolveInteractiveNextActionChatPrompt(
-  action: ChatNextAction
+export function resolveNextActionChatPrompt(
+  action: ChatNextAction,
+  locale: string
 ): string | null {
   const payload = action.payload?.trim();
   if (payload) return payload;
-  return IN_SPACE_CHAT_PROMPT_BY_TYPE[action.type] ?? null;
+  if (!isInSpaceChatPromptType(action.type)) return null;
+  return resolveInSpaceChatPrompt(locale, action.type);
 }
