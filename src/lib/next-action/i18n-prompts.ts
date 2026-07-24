@@ -15,10 +15,15 @@ export type InSpaceChatPromptType =
 
 type InSpacePromptsMap = Partial<Record<InSpaceChatPromptType, string>>;
 
-const MESSAGES = { en, ru, kk, uz, zh } as Record<
-  SupportedLocale,
-  { chat: { inSpacePrompts?: InSpacePromptsMap } }
->;
+type InSpacePromptsLocale = { chat: { inSpacePrompts?: InSpacePromptsMap } };
+
+const MESSAGES: Record<SupportedLocale, InSpacePromptsLocale> = {
+  en,
+  ru,
+  kk,
+  uz,
+  zh,
+};
 
 function readPrompt(locale: SupportedLocale, type: InSpaceChatPromptType): string | undefined {
   const fromLocale = MESSAGES[locale].chat.inSpacePrompts?.[type];

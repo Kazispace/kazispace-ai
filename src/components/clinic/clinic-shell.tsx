@@ -922,13 +922,17 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     await handleClinicSendOutcome(text, result);
   };
 
+  const submitClinicChatRef = useRef(submitClinicChat);
+  submitClinicChatRef.current = submitClinicChat;
+
+  /** ChatSendHandler — clinic composer does not send attachments yet; ignore File. */
   const handleSend = (text: string, _attachment?: File) => {
-    void submitClinicChat(text);
+    void submitClinicChatRef.current(text);
   };
 
-  const handleSendFromNextAction = (text: string) => {
-    void submitClinicChat(text, { fromNextAction: true });
-  };
+  const handleSendFromNextAction = useCallback((text: string) => {
+    void submitClinicChatRef.current(text, { fromNextAction: true });
+  }, []);
 
   const handleConfirmClinicNlAbandon = async () => {
     if (!clinicNlConfirm) return;
