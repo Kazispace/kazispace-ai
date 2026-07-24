@@ -846,9 +846,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     ]
   );
 
-  const handleSend = async (
+  const submitClinicChat = async (
     text: string,
-    options?: { fromNextAction?: boolean }
+    opts?: { fromNextAction?: boolean }
   ) => {
     pinToLatestOnSend();
     if (!isLoggedIn) {
@@ -892,7 +892,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       return;
     }
 
-    if (options?.fromNextAction) {
+    if (opts?.fromNextAction) {
       const conflictingId = resolveConflictAgentId();
       if (conflictingId) {
         const exitRes = await exitAgentSession(conflictingId, locale);
@@ -906,7 +906,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     }
 
     const result = await sendClinicMessage(text, {
-      ...(options?.fromNextAction ? { confirmAbandon: true } : {}),
+      ...(opts?.fromNextAction ? { confirmAbandon: true } : {}),
     });
 
     if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
@@ -920,6 +920,14 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     }
 
     await handleClinicSendOutcome(text, result);
+  };
+
+  const handleSend = (text: string, _attachment?: File) => {
+    void submitClinicChat(text);
+  };
+
+  const handleSendFromNextAction = (text: string) => {
+    void submitClinicChat(text, { fromNextAction: true });
   };
 
   const handleConfirmClinicNlAbandon = async () => {
@@ -1031,7 +1039,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         locale
       );
       if (prompt) {
-        void handleSend(prompt, { fromNextAction: true });
+        void handleSendFromNextAction(prompt);
       }
       return;
     }
@@ -1097,7 +1105,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       }
       const prompt = resolveNextActionChatPrompt(action, locale);
       if (prompt) {
-        void handleSend(prompt, { fromNextAction: true });
+        void handleSendFromNextAction(prompt);
         return;
       }
       switch (action.type) {
@@ -1112,7 +1120,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, openPaywall, handleBackToClinic, handleSend]
+    [locale, router, openPaywall, handleBackToClinic, handleSendFromNextAction]
   );
 
   const handleJobCardClick = useCallback(
