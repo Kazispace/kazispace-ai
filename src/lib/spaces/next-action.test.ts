@@ -21,10 +21,10 @@ describe('resolveSpaceNextActionHref', () => {
     ).toBe('/ru/interview');
   });
 
-  it('maps interview CTAs without path', () => {
+  it('deep-links open_interview only (not mock_interview type alone)', () => {
     expect(
       resolveSpaceNextActionHref('en', { type: 'mock_interview' })
-    ).toBe('/en/interview');
+    ).toBeNull();
     expect(
       resolveSpaceNextActionHref('en', { type: 'open_interview' })
     ).toBe('/en/interview');

@@ -15,6 +15,9 @@ import {
 } from '@/hooks/use-space-turn';
 import type { JobPracticeContext } from '@/types/jobs';
 import { buildReadinessPracticePrompt } from '@/lib/jobs/readiness-practice-prompt';
+import {
+  resolveInteractiveNextActionChatPrompt,
+} from '@/lib/interactive-in-space/next-action';
 import { resolveSpaceNextActionHref } from '@/lib/spaces/next-action';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
@@ -124,10 +127,16 @@ export function SpaceChatPane({
   const handleNextAction = useCallback(
     (action: ChatNextAction) => {
       const href = resolveSpaceNextActionHref(locale, action);
-      if (!href) return;
-      router.push(href);
+      if (href) {
+        router.push(href);
+        return;
+      }
+      const prompt = resolveInteractiveNextActionChatPrompt(action);
+      if (prompt) {
+        void sendAndPin(prompt);
+      }
     },
-    [locale, router]
+    [locale, router, sendAndPin]
   );
 
   const composerNode =

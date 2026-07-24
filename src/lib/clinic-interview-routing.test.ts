@@ -2,31 +2,24 @@ import { describe, expect, it } from 'vitest';
 
 import {
   hasInterviewHubNextAction,
-  isMockInterviewStartUtterance,
   shouldClinicReplyRouteToInterviewHub,
 } from '@/lib/clinic-interview-routing';
 
 describe('clinic-interview-routing', () => {
-  it('detects mock interview start utterances', () => {
-    expect(isMockInterviewStartUtterance('我想练习面试')).toBe(true);
-    expect(isMockInterviewStartUtterance('帮我练习面试')).toBe(true);
-    expect(isMockInterviewStartUtterance('模拟面试')).toBe(true);
-    expect(isMockInterviewStartUtterance('How do I prepare for interview?')).toBe(
-      false
-    );
-  });
-
-  it('rejects non-practice interview utterances (false positives)', () => {
-    expect(isMockInterviewStartUtterance('我想面试这家公司')).toBe(false);
-    expect(isMockInterviewStartUtterance('帮我看看面试结果')).toBe(false);
-  });
-
-  it('routes on mock_interview next_action (KAZI-138 referral)', () => {
+  it('does not route on mock_interview next_action alone (KAZI-321)', () => {
+    expect(
+      shouldClinicReplyRouteToInterviewHub({
+        nextActions: [{ type: 'mock_interview' }],
+      })
+    ).toBe(false);
     expect(
       shouldClinicReplyRouteToInterviewHub({
         nextActions: [{ type: 'mock_interview', path: '/interview' }],
       })
     ).toBe(true);
+  });
+
+  it('routes on open_interview next_action', () => {
     expect(
       shouldClinicReplyRouteToInterviewHub({
         nextActions: [{ type: 'open_interview', label: 'View feedback' }],
@@ -34,17 +27,11 @@ describe('clinic-interview-routing', () => {
     ).toBe(true);
   });
 
-  it('routes on interim inline intent + start utterance only', () => {
+  it('does not route on interim mock_interview intent + start utterance', () => {
     expect(
       shouldClinicReplyRouteToInterviewHub({
         intent: 'mock_interview',
         userText: '我想练习面试',
-      })
-    ).toBe(true);
-    expect(
-      shouldClinicReplyRouteToInterviewHub({
-        intent: 'mock_interview',
-        userText: '贸易经理',
       })
     ).toBe(false);
   });
