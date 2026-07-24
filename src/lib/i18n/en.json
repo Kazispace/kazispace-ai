@@ -632,6 +632,13 @@
 			"job_search": "Talk to job search expert",
 			"edit_cv": "Improve CV",
 			"cv_builder": "Open CV Builder"
+		},
+		"inSpacePrompts": {
+			"mock_interview": "I want to practice a mock interview",
+			"cv_builder": "Help me improve my CV",
+			"edit_cv": "Help me improve my CV",
+			"english_tutor": "I want to practice English",
+			"job_search": "Help me find a job"
 		}
 	},
 	"referral": {

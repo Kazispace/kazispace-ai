@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveSpaceNextActionHref } from '@/lib/spaces/next-action';
+import { resolveNextActionHref } from '@/lib/next-action/resolve';
 
-describe('resolveSpaceNextActionHref', () => {
+describe('resolveNextActionHref', () => {
   it('prefers locale-prefixed path from BE', () => {
     expect(
-      resolveSpaceNextActionHref('zh', {
+      resolveNextActionHref('zh', {
         type: 'open_interview',
         path: '/zh/interview',
       })
@@ -14,25 +14,25 @@ describe('resolveSpaceNextActionHref', () => {
 
   it('prefixes locale onto absolute app paths', () => {
     expect(
-      resolveSpaceNextActionHref('ru', {
+      resolveNextActionHref('ru', {
         type: 'mock_interview',
         path: '/interview',
       })
     ).toBe('/ru/interview');
   });
 
-  it('maps interview CTAs without path', () => {
+  it('deep-links open_interview only (not mock_interview type alone)', () => {
     expect(
-      resolveSpaceNextActionHref('en', { type: 'mock_interview' })
-    ).toBe('/en/interview');
+      resolveNextActionHref('en', { type: 'mock_interview' })
+    ).toBeNull();
     expect(
-      resolveSpaceNextActionHref('en', { type: 'open_interview' })
+      resolveNextActionHref('en', { type: 'open_interview' })
     ).toBe('/en/interview');
   });
 
   it('rejects external http(s) paths', () => {
     expect(
-      resolveSpaceNextActionHref('en', {
+      resolveNextActionHref('en', {
         type: 'open_list',
         path: 'https://example.com/jobs',
       })
@@ -41,7 +41,7 @@ describe('resolveSpaceNextActionHref', () => {
 
   it('returns null for unknown types without path', () => {
     expect(
-      resolveSpaceNextActionHref('en', { type: 'totally_unknown' })
+      resolveNextActionHref('en', { type: 'totally_unknown' })
     ).toBeNull();
   });
 });

@@ -484,6 +484,13 @@
 			"copyFailed": "复制失败",
 			"savedDocument": "已下载为 Markdown 文档",
 			"saveFailed": "保存文档失败"
+		},
+		"inSpacePrompts": {
+			"mock_interview": "我想练习面试",
+			"cv_builder": "帮我优化简历",
+			"edit_cv": "帮我优化简历",
+			"english_tutor": "我想练习英语",
+			"job_search": "帮我找工作"
 		}
 	},
 	"errors": {
