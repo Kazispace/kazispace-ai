@@ -13,7 +13,11 @@ export type InSpaceChatPromptType =
   | 'english_tutor'
   | 'job_search';
 
-const MESSAGES: Record<SupportedLocale, typeof en> = {
+type InSpacePromptsMap = Partial<Record<InSpaceChatPromptType, string>>;
+
+type InSpacePromptsLocale = { chat: { inSpacePrompts?: InSpacePromptsMap } };
+
+const MESSAGES: Record<SupportedLocale, InSpacePromptsLocale> = {
   en,
   ru,
   kk,
@@ -21,14 +25,10 @@ const MESSAGES: Record<SupportedLocale, typeof en> = {
   zh,
 };
 
-type ChatMessages = (typeof en)['chat'] & {
-  inSpacePrompts?: Partial<Record<InSpaceChatPromptType, string>>;
-};
-
 function readPrompt(locale: SupportedLocale, type: InSpaceChatPromptType): string | undefined {
-  const fromLocale = (MESSAGES[locale].chat as ChatMessages).inSpacePrompts?.[type];
+  const fromLocale = MESSAGES[locale].chat.inSpacePrompts?.[type];
   if (fromLocale?.trim()) return fromLocale.trim();
-  return (MESSAGES.en.chat as ChatMessages).inSpacePrompts?.[type]?.trim();
+  return MESSAGES.en.chat.inSpacePrompts?.[type]?.trim();
 }
 
 export function resolveInSpaceChatPrompt(

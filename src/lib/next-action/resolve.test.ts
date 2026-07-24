@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveInSpaceChatPrompt } from '@/lib/next-action/i18n-prompts';
+import {
+  type InSpaceChatPromptType,
+  resolveInSpaceChatPrompt,
+} from '@/lib/next-action/i18n-prompts';
+import en from '@/lib/i18n/en.json';
+import kk from '@/lib/i18n/kk.json';
+import ru from '@/lib/i18n/ru.json';
+import uz from '@/lib/i18n/uz.json';
+import zh from '@/lib/i18n/zh.json';
+import { SUPPORTED_LOCALES } from '@/lib/constants';
 import {
   resolveNextActionChatPrompt,
   resolveNextActionHref,
@@ -50,5 +59,26 @@ describe('next-action resolve (KAZI-321)', () => {
     const enPrompt = resolveInSpaceChatPrompt('en', 'job_search');
     expect(enPrompt).toBeTruthy();
     expect(resolveInSpaceChatPrompt('xx' as 'en', 'job_search')).toBe(enPrompt);
+  });
+
+  it('uses only known inSpacePrompts keys in every locale bundle', () => {
+    const bundles = { en, ru, kk, uz, zh };
+    const allowed = new Set<InSpaceChatPromptType>([
+      'mock_interview',
+      'cv_builder',
+      'edit_cv',
+      'english_tutor',
+      'job_search',
+    ]);
+    for (const locale of SUPPORTED_LOCALES) {
+      const prompts = bundles[locale].chat.inSpacePrompts;
+      if (!prompts) continue;
+      for (const key of Object.keys(prompts)) {
+        expect(
+          allowed.has(key as InSpaceChatPromptType),
+          `${locale}: unknown inSpacePrompts key "${key}"`
+        ).toBe(true);
+      }
+    }
   });
 });
