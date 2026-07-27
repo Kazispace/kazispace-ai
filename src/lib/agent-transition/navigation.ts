@@ -40,5 +40,7 @@ export function isNavigationPending(plan: NavigationPlan): boolean {
   if (!plan.shouldNavigate || !plan.href) return false;
   if (typeof window === 'undefined') return false;
   const targetPath = plan.href.split('?')[0];
-  return window.location.pathname !== targetPath;
+  if (window.location.pathname !== targetPath) return true;
+  const current = `${window.location.pathname}${window.location.search}`;
+  return current !== plan.href;
 }

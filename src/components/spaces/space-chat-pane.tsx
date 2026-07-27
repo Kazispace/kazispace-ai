@@ -1,12 +1,12 @@
 'use client';
 
-import { type ReactNode, useCallback, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { ChevronDown, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
-import { JobDetailRailHost } from '@/components/jobs/job-detail-rail-host';
+import { ChatSideRailsHost } from '@/components/chat/chat-side-rails-host';
 import { SpaceShell } from '@/components/spaces/space-shell';
 import { useChatScroll } from '@/hooks/use-chat-scroll';
 import {
@@ -19,6 +19,15 @@ import {
   resolveNextActionChatPrompt,
   resolveNextActionHref,
 } from '@/lib/next-action/resolve';
+import {
+  buildSpaceCvPanelHref,
+  buildSpaceCvRailHref,
+  CV_RAIL_QUERY_PARAM,
+  isLegacyCvHubHref,
+  migrateLegacyCvHubHref,
+  parseJobIdFromHref,
+} from '@/lib/cv-entry';
+import { resolveSpacePanels } from '@/lib/spaces/panels';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
@@ -43,6 +52,35 @@ interface SpaceChatPaneProps {
     | ((ctx: SpaceComposerRenderProps) => ReactNode);
 }
 
+function resolveSpaceCvEntryHref(
+  locale: string,
+  space: SpaceDetail,
+  jobId?: string | null
+): string {
+  const panels = resolveSpacePanels(space);
+  if (panels.some((p) => p.panel_id === 'cv')) {
+    return buildSpaceCvPanelHref(locale, space.id, jobId);
+  }
+  return buildSpaceCvRailHref(locale, space.id, jobId);
+}
+
+function remapCvNavigationForSpace(
+  locale: string,
+  space: SpaceDetail,
+  href: string
+): string {
+  if (isLegacyCvHubHref(href)) {
+    return migrateLegacyCvHubHref(locale, href).includes('/chat')
+      ? resolveSpaceCvEntryHref(locale, space, parseJobIdFromHref(href))
+      : migrateLegacyCvHubHref(locale, href);
+  }
+  const clinicCv = `/${locale}/chat`;
+  if (href.startsWith(clinicCv) && href.includes(`${CV_RAIL_QUERY_PARAM}=1`)) {
+    return resolveSpaceCvEntryHref(locale, space, parseJobIdFromHref(href));
+  }
+  return href;
+}
+
 /** Shared space orchestrator chat column (POST /spaces/{id}/turn). */
 export function SpaceChatPane({
   locale,
@@ -54,6 +92,9 @@ export function SpaceChatPane({
   const tChat = useTranslations('chat');
   const tPractice = useTranslations('interview.irp.practice');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const panels = useMemo(() => resolveSpacePanels(space), [space]);
+  const hasCvPanel = panels.some((p) => p.panel_id === 'cv');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const {
     messages,
@@ -80,6 +121,20 @@ export function SpaceChatPane({
   const closeJobDetail = useCallback(() => {
     setSelectedJobId(null);
   }, []);
+
+  const cvRailOpen =
+    !hasCvPanel && searchParams.get(CV_RAIL_QUERY_PARAM) === '1';
+  const cvRailJobId = searchParams.get('job_id');
+
+  const closeCvRail = useCallback(() => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete(CV_RAIL_QUERY_PARAM);
+    const q = next.toString();
+    router.replace(
+      `/${locale}/spaces/${encodeURIComponent(space.id)}${q ? `?${q}` : ''}`,
+      { scroll: false }
+    );
+  }, [locale, router, searchParams, space.id]);
 
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
@@ -126,9 +181,9 @@ export function SpaceChatPane({
 
   const handleNextAction = useCallback(
     (action: ChatNextAction) => {
-      const href = resolveNextActionHref(locale, action);
-      if (href) {
-        router.push(href);
+      const rawHref = resolveNextActionHref(locale, action);
+      if (rawHref) {
+        router.push(remapCvNavigationForSpace(locale, space, rawHref));
         return;
       }
       const prompt = resolveNextActionChatPrompt(action, locale);
@@ -136,7 +191,7 @@ export function SpaceChatPane({
         void sendAndPin(prompt);
       }
     },
-    [locale, router, sendAndPin]
+    [locale, router, sendAndPin, space]
   );
 
   const composerNode =
@@ -172,10 +227,12 @@ export function SpaceChatPane({
   ) : null;
 
   return (
-    <JobDetailRailHost
+    <ChatSideRailsHost
       jobId={selectedJobId}
       locale={locale}
-      onClose={closeJobDetail}
+      onCloseJob={closeJobDetail}
+      cvRail={{ open: cvRailOpen, jobId: cvRailJobId }}
+      onCloseCv={closeCvRail}
       onPracticeForJob={handlePracticeForJob}
       practiceDisabled={isSending}
       className="h-full w-full"
@@ -262,6 +319,6 @@ export function SpaceChatPane({
           ) : null}
         </div>
       </SpaceShell>
-    </JobDetailRailHost>
+    </ChatSideRailsHost>
   );
 }

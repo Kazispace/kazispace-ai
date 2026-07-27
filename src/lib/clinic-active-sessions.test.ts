@@ -46,7 +46,7 @@ describe('clinic-active-sessions', () => {
     expect(entries).toHaveLength(2);
     expect(entries[0]?.agentId).toBe('cv_builder');
     expect(entries[0]?.badge).toBe('pipeline');
-    expect(entries[0]?.href).toBe('/en/cv');
+    expect(entries[0]?.href).toBe('/en/chat?cv=1');
     expect(entries[1]?.agentId).toBe('mock_interview');
     expect(entries[1]?.href).toBe('/en/interview');
   });

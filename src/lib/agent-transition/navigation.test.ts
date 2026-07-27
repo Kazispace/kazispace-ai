@@ -50,7 +50,7 @@ describe('planNavigation', () => {
       href: string;
       surface: AgentSurfaceId;
     }> = [
-      { from: 'clinic', agentId: CV_BUILDER_AGENT_ID, href: '/en/cv', surface: 'cv' },
+      { from: 'clinic', agentId: CV_BUILDER_AGENT_ID, href: '/en/chat?cv=1', surface: 'cv' },
       {
         from: 'clinic',
         agentId: MOCK_INTERVIEW_AGENT_ID,
@@ -72,13 +72,13 @@ describe('planNavigation', () => {
       {
         from: 'interview',
         agentId: CV_BUILDER_AGENT_ID,
-        href: '/en/cv',
+        href: '/en/chat?cv=1',
         surface: 'cv',
       },
       {
         from: 'english',
         agentId: CV_BUILDER_AGENT_ID,
-        href: '/en/cv',
+        href: '/en/chat?cv=1',
         surface: 'cv',
       },
     ];
@@ -126,8 +126,21 @@ describe('isNavigationPending', () => {
     ).toBe(false);
   });
 
-  it('compares pathname without query string', () => {
-    vi.stubGlobal('window', { location: { pathname: '/en/cv' } });
+  it('compares pathname and query for navigation targets', () => {
+    vi.stubGlobal('window', {
+      location: { pathname: '/en/chat', search: '' },
+    });
+    expect(
+      isNavigationPending({
+        shouldNavigate: true,
+        href: '/en/chat?cv=1',
+        targetSurface: 'cv',
+      })
+    ).toBe(true);
+
+    vi.stubGlobal('window', {
+      location: { pathname: '/en/interview', search: '' },
+    });
     expect(
       isNavigationPending({
         shouldNavigate: true,
@@ -136,7 +149,9 @@ describe('isNavigationPending', () => {
       })
     ).toBe(true);
 
-    vi.stubGlobal('window', { location: { pathname: '/en/interview' } });
+    vi.stubGlobal('window', {
+      location: { pathname: '/en/interview', search: '?job_id=1' },
+    });
     expect(
       isNavigationPending({
         shouldNavigate: true,

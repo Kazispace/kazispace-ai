@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChatHeader } from "./chat-header";
 import { WelcomeView } from "./welcome-view";
@@ -24,7 +24,7 @@ import {
 import { ClinicParkedCapabilityBanner } from "./clinic-parked-capability-banner";
 import { ConfirmAbandonSessionDialog } from "@/components/session-nav/confirm-abandon-session-dialog";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
-import { JobDetailRailHost } from "@/components/jobs/job-detail-rail-host";
+import { ChatSideRailsHost } from "@/components/chat/chat-side-rails-host";
 import type { JobPracticeContext } from "@/types/jobs";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { buildReadinessPracticePrompt } from "@/lib/jobs/readiness-practice-prompt";
@@ -78,6 +78,10 @@ import {
   MOCK_INTERVIEW_AGENT_ID,
 } from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
+import {
+  buildClinicCvRailHref,
+  CV_RAIL_QUERY_PARAM,
+} from "@/lib/cv-entry";
 import { AgentSessionPanel } from "@/components/agent/agent-session-panel";
 import { useAgentSessionList } from "@/hooks/use-agent-session-list";
 import { activateAgent, fetchAgentMessages } from "@/lib/agent-api";
@@ -110,6 +114,7 @@ interface ClinicShellProps {
 
 export function ClinicShell({ locale }: ClinicShellProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
   const tPractice = useTranslations("interview.irp.practice");
@@ -130,16 +135,27 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
   const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
 
-  /** TMA / deep-link / routedToAgent — may include ?job_id=; not used by planNavigation SSOT. */
-  const routeCvBuilderPage = useCallback(
+  /** TMA / deep-link / routedToAgent — opens CV on the right rail; chat stays in Clinic. */
+  const openCvRail = useCallback(
     (targetJobId?: string | null) => {
-      const query = targetJobId
-        ? `?job_id=${encodeURIComponent(targetJobId)}`
-        : "";
-      router.push(`/${locale}/cv${query}`);
+      const jobId =
+        targetJobId?.trim() ||
+        searchParams.get("job_id")?.trim() ||
+        null;
+      router.replace(buildClinicCvRailHref(locale, jobId));
     },
-    [locale, router]
+    [locale, router, searchParams]
   );
+
+  const closeCvRail = useCallback(() => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete(CV_RAIL_QUERY_PARAM);
+    const q = next.toString();
+    router.replace(`/${locale}/chat${q ? `?${q}` : ""}`, { scroll: false });
+  }, [locale, router, searchParams]);
+
+  const cvRailOpen = searchParams.get(CV_RAIL_QUERY_PARAM) === "1";
+  const cvRailJobId = searchParams.get("job_id");
 
   const routeInterviewPage = useCallback(
     (targetJobId?: string | null) => {
@@ -561,7 +577,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const pending = consumePendingTmaAction();
       if (pending?.type === 'activate_agent') {
         if (pending.agentId === CV_BUILDER_AGENT_ID) {
-          routeCvBuilderPage();
+          openCvRail();
           return;
         }
         if (pending.agentId === MOCK_INTERVIEW_AGENT_ID) {
@@ -610,7 +626,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
       if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
-        routeCvBuilderPage();
+        openCvRail();
         return;
       }
       if (deepLinkAgent && shouldOpenInterviewPage(deepLinkAgent)) {
@@ -662,7 +678,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     tmaInitComplete,
     locale,
     router,
-    routeCvBuilderPage,
+    openCvRail,
     routeInterviewPage,
     routeEnglishPage,
     shouldOpenCvBuilderPage,
@@ -707,7 +723,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         AGENT_REGISTRY.some((a) => a.agentId === agentFromUrl)
       ) {
         if (shouldOpenCvBuilderPage(agentFromUrl)) {
-          routeCvBuilderPage();
+          openCvRail();
           return;
         }
         if (shouldOpenInterviewPage(agentFromUrl)) {
@@ -727,7 +743,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     exitToClinic,
     isLoggedIn,
     loadHistory,
-    routeCvBuilderPage,
+    openCvRail,
     routeInterviewPage,
     routeEnglishPage,
     shouldOpenCvBuilderPage,
@@ -802,7 +818,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
               greeting: msg?.content?.trim() || undefined,
             });
             markStreamComplete(result.assistantId);
-            routeCvBuilderPage();
+            openCvRail();
             return;
           }
           if (msg?.role === "assistant") {
@@ -836,7 +852,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       markStreamComplete,
       refreshCurrentSessions,
       reloadClinicIfNeeded,
-      routeCvBuilderPage,
+      openCvRail,
       routeEnglishPage,
       routeInterviewPage,
       setCvAgentHandoff,
@@ -1301,10 +1317,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         </p>
       ) : null}
 
-      <JobDetailRailHost
+      <ChatSideRailsHost
         jobId={selectedJobId}
         locale={locale}
-        onClose={() => setSelectedJobId(null)}
+        onCloseJob={() => setSelectedJobId(null)}
+        cvRail={{ open: cvRailOpen, jobId: cvRailJobId }}
+        onCloseCv={closeCvRail}
         onPracticeForJob={handlePracticeForJob}
         practiceDisabled={isSending || isSwitching}
       >
@@ -1547,7 +1565,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           </div>
         </div>
       )}
-      </JobDetailRailHost>
+      </ChatSideRailsHost>
 
       <AgentSwitcher
         locale={locale}

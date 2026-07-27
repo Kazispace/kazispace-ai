@@ -769,6 +769,7 @@
 	"cv": {
 		"title": "CV Builder",
 		"subtitle": "Chat with AI to build your resume",
+		"closeRail": "Close CV workspace",
 		"subtitleWithJob": "Tailoring your CV for {jobId}",
 		"backToMine": "← Back to profile",
 		"loginBanner": "Sign in to build and save your CV.",

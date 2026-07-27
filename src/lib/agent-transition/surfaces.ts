@@ -1,17 +1,18 @@
 /**
  * Template-internal rendering surfaces (ADR-006).
  *
- * `/cv`, `/interview`, `/english` and agent IDs here are **not** user-facing
- * navigation — they map capabilities inside Space templates (e.g. 求职冲刺).
- * Do not add new entries for primary nav; Session Nav → Spaces list (ADR-006).
+ * `cv_builder` is **not** a dedicated Hub route — CV workspace opens in the
+ * Clinic/Space chat column + right rail (`lib/cv-entry.ts`).
+ *
+ * `/interview`, `/english` remain dedicated Hub chat-first routes for now.
  */
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { buildClinicCvRailHref } from '@/lib/cv-entry';
 import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
 import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 
 const HUB_AGENT_TO_SURFACE: Record<string, AgentSurfaceId> = {
-  [CV_BUILDER_AGENT_ID]: 'cv',
   [MOCK_INTERVIEW_AGENT_ID]: 'interview',
   [ENGLISH_TUTOR_AGENT_ID]: 'english',
 };
@@ -29,7 +30,7 @@ const SURFACE_TO_HUB_AGENT: Partial<Record<AgentSurfaceId, string>> = {
 
 const SURFACE_PATH: Record<AgentSurfaceId, (locale: string) => string> = {
   clinic: (locale) => `/${locale}/chat`,
-  cv: (locale) => `/${locale}/cv`,
+  cv: (locale) => buildClinicCvRailHref(locale),
   interview: (locale) => `/${locale}/interview`,
   english: (locale) => `/${locale}/english`,
 };
@@ -46,6 +47,7 @@ export function isDedicatedHubAgent(agentId: string): boolean {
 }
 
 export function resolveSurfaceForAgent(agentId: string): AgentSurfaceId {
+  if (agentId === CV_BUILDER_AGENT_ID) return 'cv';
   return HUB_AGENT_TO_SURFACE[agentId] ?? 'clinic';
 }
 
@@ -54,6 +56,9 @@ export function getSurfacePath(locale: string, surfaceId: AgentSurfaceId): strin
 }
 
 export function getAgentHubPath(locale: string, agentId: string): string | null {
+  if (agentId === CV_BUILDER_AGENT_ID) {
+    return buildClinicCvRailHref(locale);
+  }
   const surface = HUB_AGENT_TO_SURFACE[agentId];
   return surface ? getSurfacePath(locale, surface) : null;
 }
