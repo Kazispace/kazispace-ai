@@ -5,6 +5,7 @@ import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
 import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
 import {
   isNavigationPending,
+  normalizeNavigationHref,
   planNavigation,
 } from '@/lib/agent-transition/navigation';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
@@ -159,5 +160,22 @@ describe('isNavigationPending', () => {
         targetSurface: 'interview',
       })
     ).toBe(false);
+  });
+
+  it('ignores UTM-style query noise on the current URL', () => {
+    vi.stubGlobal('window', {
+      location: {
+        pathname: '/en/chat',
+        search: '?utm_source=newsletter',
+      },
+    });
+    expect(
+      isNavigationPending({
+        shouldNavigate: true,
+        href: '/en/chat',
+        targetSurface: 'clinic',
+      })
+    ).toBe(false);
+    expect(normalizeNavigationHref('/en/chat?utm_campaign=x')).toBe('/en/chat');
   });
 });

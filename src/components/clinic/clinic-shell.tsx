@@ -142,7 +142,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         targetJobId?.trim() ||
         searchParams.get("job_id")?.trim() ||
         null;
-      router.replace(buildClinicCvRailHref(locale, jobId));
+      router.push(buildClinicCvRailHref(locale, jobId));
     },
     [locale, router, searchParams]
   );

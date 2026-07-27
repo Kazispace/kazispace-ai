@@ -24,7 +24,6 @@ import {
   buildSpaceCvRailHref,
   CV_RAIL_QUERY_PARAM,
   isLegacyCvHubHref,
-  migrateLegacyCvHubHref,
   parseJobIdFromHref,
 } from '@/lib/cv-entry';
 import { resolveSpacePanels } from '@/lib/spaces/panels';
@@ -70,9 +69,7 @@ function remapCvNavigationForSpace(
   href: string
 ): string {
   if (isLegacyCvHubHref(href)) {
-    return migrateLegacyCvHubHref(locale, href).includes('/chat')
-      ? resolveSpaceCvEntryHref(locale, space, parseJobIdFromHref(href))
-      : migrateLegacyCvHubHref(locale, href);
+    return resolveSpaceCvEntryHref(locale, space, parseJobIdFromHref(href));
   }
   const clinicCv = `/${locale}/chat`;
   if (href.startsWith(clinicCv) && href.includes(`${CV_RAIL_QUERY_PARAM}=1`)) {
