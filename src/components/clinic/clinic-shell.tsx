@@ -1306,7 +1306,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         mode={isAgentMode ? "agent" : "clinic"}
         agentName={activeEntry ? getAgentLabel(activeEntry, locale, "name") : undefined}
         agentId={activeEntry?.agentId}
-        agentEmoji={activeEntry?.emoji}
         isOnline={isOnline}
         onBackToClinic={isAgentMode ? handleBackToClinic : undefined}
         onOpenSessionHistory={

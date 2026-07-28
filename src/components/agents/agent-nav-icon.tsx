@@ -32,6 +32,13 @@ const TEMPLATE_ICONS: Record<string, LucideIcon> = {
   ielts_prep: BookOpen,
 };
 
+/** Slightly thinner strokes on very small nav icons (layer-indicator, etc.). */
+function strokeWidthForSize(sizeClassName: string): number {
+  if (/h-3\.5|w-3\.5|h-3 |w-3 /.test(sizeClassName)) return 1.75;
+  if (/h-5|w-5|h-6|w-6/.test(sizeClassName)) return 2.25;
+  return 2;
+}
+
 export interface AgentNavIconProps {
   agentId: string | null | undefined;
   className?: string;
@@ -57,7 +64,10 @@ export function AgentNavIcon({
       )}
       aria-hidden
     >
-      <Icon className={sizeClassName} strokeWidth={2} />
+      <Icon
+        className={sizeClassName}
+        strokeWidth={strokeWidthForSize(sizeClassName)}
+      />
     </span>
   );
 }
@@ -88,7 +98,10 @@ export function SpaceTemplateNavIcon({
       )}
       aria-hidden
     >
-      <Icon className={sizeClassName} strokeWidth={2} />
+      <Icon
+        className={sizeClassName}
+        strokeWidth={strokeWidthForSize(sizeClassName)}
+      />
     </span>
   );
 }

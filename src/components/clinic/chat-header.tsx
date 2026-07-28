@@ -18,9 +18,7 @@ interface ChatHeaderProps {
   mode?: "clinic" | "agent" | "space";
   agentName?: string;
   agentId?: string | null;
-  agentEmoji?: string;
   spaceName?: string;
-  spaceEmoji?: string;
   spaceTemplateId?: string | null;
   isOnline?: boolean;
   onBackToClinic?: () => void;
@@ -58,17 +56,17 @@ export function ChatHeader({
     mode === "agent" && agentId ? (
       <AgentNavIcon
         agentId={agentId}
-        className="text-white"
+        className="text-kazi-navy"
         sizeClassName="h-5 w-5"
       />
     ) : mode === "space" ? (
       <SpaceTemplateNavIcon
         templateId={spaceTemplateId}
-        className="text-white"
+        className="text-kazi-navy"
         sizeClassName="h-5 w-5"
       />
     ) : (
-      <Bot className="h-5 w-5 text-white" aria-hidden />
+      <Bot className="h-5 w-5 text-kazi-navy" strokeWidth={2.25} aria-hidden />
     );
 
   return (
@@ -92,7 +90,7 @@ export function ChatHeader({
       <div className="w-px h-6 bg-white/20 shrink-0" />
 
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-kazi-orange to-amber-600/90 flex items-center justify-center shrink-0">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-200 via-amber-100 to-orange-50 ring-1 ring-white/25">
           {avatarIcon}
         </div>
         <div className="min-w-0">

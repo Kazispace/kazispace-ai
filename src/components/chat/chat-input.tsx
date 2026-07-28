@@ -440,7 +440,7 @@ export function ChatInput({
           className={cn(
             "rounded-2xl border border-[#D0E3FF]/90 bg-white",
             "shadow-[0_0_0_1px_rgba(208,227,255,0.35),0_8px_24px_-12px_rgba(15,23,42,0.18)]",
-            "transition-shadow focus-within:border-kazi-orange/50 focus-within:shadow-[0_0_0_1px_rgba(217,110,40,0.22),0_8px_24px_-12px_rgba(217,110,40,0.18)]",
+            "transition-shadow focus-within:border-kazi-orange/50 focus-within:ring-1 focus-within:ring-kazi-orange/25 focus-within:shadow-[0_8px_24px_-12px] focus-within:shadow-kazi-orange/20",
             inputDisabled && "opacity-50"
           )}
         >

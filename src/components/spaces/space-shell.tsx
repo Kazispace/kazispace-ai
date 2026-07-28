@@ -36,7 +36,6 @@ export function SpaceShell({
   const tClinic = useTranslations('clinic');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
-  const spaceEmoji = space.template_icon ?? '💬';
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
@@ -45,7 +44,6 @@ export function SpaceShell({
           locale={locale}
           mode="space"
           spaceName={space.name}
-          spaceEmoji={spaceEmoji}
           spaceTemplateId={space.template_id}
         />
       ) : null}

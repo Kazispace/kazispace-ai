@@ -145,6 +145,11 @@ export function MessageBubble({
     Boolean(composerTarget);
   const isWorkspace = surface === "workspace";
   const isWebSearchShortAnswer = capabilityId === "web_search";
+  const isLongFormAssistant =
+    !isUser &&
+    (capabilityId === "research" ||
+      pendingCapability === "research" ||
+      (citations?.length ?? 0) > 0);
   const showCapabilityChip =
     !isUser && showEnrichment && isSearchCapability(capabilityId);
   // Search intents use the capability chip when resolved; keep the raw intent
@@ -227,17 +232,15 @@ export function MessageBubble({
                 : "bg-gray-100 text-muted-foreground"
               : isWorkspace
                 ? "bg-workspace-active text-kazi-orange"
-                : "bg-gradient-to-br from-kazi-orange to-amber-500"
+                : "bg-orange-100 text-kazi-orange"
           )}
         >
           {isUser ? (
-            <User className="h-4 w-4" aria-hidden />
+            <User className="h-4 w-4" strokeWidth={2.25} aria-hidden />
           ) : (
             <Bot
-              className={cn(
-                "h-4 w-4",
-                isWorkspace ? "text-kazi-orange" : "text-white"
-              )}
+              className="h-4 w-4 text-kazi-orange"
+              strokeWidth={2.25}
               aria-hidden
             />
           )}
@@ -260,6 +263,10 @@ export function MessageBubble({
               // web_search short-answer: denser body only. CitationList keeps its own
               // text-sm; research keeps default Markdown long-form spacing (KAZI-225).
               isWebSearchShortAnswer && "text-[14px] leading-snug",
+              !isUser &&
+                isLongFormAssistant &&
+                !isWorkspace &&
+                "text-gray-900",
               isUser
               ? isFailed
                 ? "bg-red-950/40 text-red-200 border border-red-800/60 rounded-br-[4px]"
