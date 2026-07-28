@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 import { AgentNavIcon, SpaceTemplateNavIcon } from '@/components/agents/agent-nav-icon';
+import { SpaceListScopeMenu } from '@/components/session-nav/space-list-scope-menu';
 import { AgentSessionList } from '@/components/agent/agent-session-list';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import type { CurrentSessionsByAgent } from '@/lib/current-agent-sessions';
@@ -380,12 +381,28 @@ export function SessionNavPanel({
 
   const panelBody = (
     <div className="flex h-full flex-col bg-white">
-      <div className="border-b border-[#E5E6EB] px-3 py-2">
-        <div className="flex items-center justify-between gap-2">
+      <div className="border-b border-[#E5E6EB] px-2 py-1.5">
+        <div className="flex items-center justify-between gap-1">
           {spacesMode ? (
-            <p className="min-w-0 flex-1 px-1 text-sm font-medium text-[#1D2129]">
-              {t('tabSpaces')}
-            </p>
+            <>
+              <SpaceListScopeMenu
+                spaceFilter={spaceFilter}
+                hasArchivedSpaces={hasArchivedSpaces}
+                onFilterChange={handleFilterChange}
+              />
+              {onNewSpace ? (
+                <button
+                  type="button"
+                  disabled={actionsDisabled}
+                  onClick={onNewSpace}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#4E5969] hover:bg-[#F2F3F5] disabled:opacity-50"
+                  aria-label={t('newSpace')}
+                  title={t('newSpace')}
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              ) : null}
+            </>
           ) : (
             <div className="flex min-w-0 flex-1 rounded-lg bg-[#F2F3F5] p-0.5">
               <button
@@ -417,7 +434,7 @@ export function SessionNavPanel({
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-[#86909C] hover:bg-[#F2F3F5]"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"
             aria-label={t('collapsePanel')}
           >
             {mobileDrawer ? <X className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
@@ -431,48 +448,7 @@ export function SessionNavPanel({
         </p>
       )}
 
-      {spacesMode && onNewSpace ? (
-        <div className="shrink-0 border-b border-[#E5E6EB] p-2">
-          <button
-            type="button"
-            disabled={actionsDisabled}
-            onClick={onNewSpace}
-            className="flex w-full items-center justify-center gap-1 rounded-lg border border-[#E5E6EB] px-2 py-2 text-xs font-medium text-[#1D2129] hover:bg-[#F2F3F5] disabled:opacity-50"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            {t('newSpace')}
-          </button>
-          {hasArchivedSpaces && onSpaceFilterChange ? (
-            <div className="mt-1.5 flex rounded-lg bg-[#F2F3F5] p-0.5">
-              <button
-                type="button"
-                onClick={() => handleFilterChange('active')}
-                className={cn(
-                  'flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                  spaceFilter === 'active'
-                    ? 'bg-white text-[#1D2129] shadow-sm'
-                    : 'text-[#86909C]'
-                )}
-              >
-                {tSpaces('filterActive')}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFilterChange('archived')}
-                className={cn(
-                  'flex-1 rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                  spaceFilter === 'archived'
-                    ? 'bg-white text-[#1D2129] shadow-sm'
-                    : 'text-[#86909C]'
-                )}
-              >
-                {tSpaces('filterArchived')}
-              </button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
+      {!spacesMode ? (
       <div className="border-b border-[#E5E6EB] px-3 py-2">
         <label className="relative block">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86909C]" />
@@ -485,8 +461,9 @@ export function SessionNavPanel({
           />
         </label>
       </div>
+      ) : null}
 
-      <ul ref={listScrollRef} className="flex-1 space-y-1 overflow-y-auto p-2">
+      <ul ref={listScrollRef} className="flex-1 space-y-0.5 overflow-y-auto p-1.5">
         {isLoading &&
         (spacesMode
           ? listRows.length === 0
@@ -542,7 +519,7 @@ export function SessionNavPanel({
                         setContextMenuId(isMenuOpen ? null : row.id);
                       }}
                       className={cn(
-                        'min-w-0 flex-1 rounded-lg px-3 py-3 text-left',
+                        'min-w-0 flex-1 rounded-lg px-2.5 py-2 text-left',
                         row.disabled && 'cursor-not-allowed opacity-60'
                       )}
                     >
@@ -553,7 +530,7 @@ export function SessionNavPanel({
                         </span>
                       </div>
                       {badge ? (
-                        <p className="mt-0.5 pl-7 text-xs text-[#86909C]">{badge}</p>
+                        <p className="mt-0.5 pl-6 text-[11px] leading-tight text-[#86909C]">{badge}</p>
                       ) : null}
                     </button>
                     {showMenu ? (
