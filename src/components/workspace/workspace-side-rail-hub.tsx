@@ -279,7 +279,7 @@ function ZoneBlock({
 }) {
   return (
     <section
-      className={cn('border-b border-gray-100 px-3 py-2.5', className)}
+      className={cn('border-b border-gray-100 px-3 py-3', className)}
     >
       <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
         {title}

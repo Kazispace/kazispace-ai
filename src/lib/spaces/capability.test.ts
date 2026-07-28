@@ -98,7 +98,7 @@ describe('formatRegisteredCapabilityLabel', () => {
       formatRegisteredCapabilityLabel('cv_builder', (id) =>
         id === 'cv_builder' ? { emoji: '📄', name: 'CV' } : null
       )
-    ).toBe('📄 CV');
+    ).toBe('CV');
     expect(
       formatRegisteredCapabilityLabel('future_agent', () => null)
     ).toBeNull();

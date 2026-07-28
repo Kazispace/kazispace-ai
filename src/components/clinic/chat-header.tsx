@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { History, LayoutGrid } from "lucide-react";
+import { Bot, History, LayoutGrid } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import {
+  AgentNavIcon,
+  SpaceTemplateNavIcon,
+} from "@/components/agents/agent-nav-icon";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
 import { useUIStore } from "@/lib/store";
@@ -13,9 +17,11 @@ interface ChatHeaderProps {
   locale: string;
   mode?: "clinic" | "agent" | "space";
   agentName?: string;
+  agentId?: string | null;
   agentEmoji?: string;
   spaceName?: string;
   spaceEmoji?: string;
+  spaceTemplateId?: string | null;
   isOnline?: boolean;
   onBackToClinic?: () => void;
   onOpenSessionHistory?: () => void;
@@ -26,9 +32,9 @@ export function ChatHeader({
   locale,
   mode = "clinic",
   agentName,
-  agentEmoji,
+  agentId,
   spaceName,
-  spaceEmoji,
+  spaceTemplateId,
   isOnline = true,
   onBackToClinic,
   onOpenSessionHistory,
@@ -41,14 +47,29 @@ export function ChatHeader({
   const tCv = useTranslations("cv.railHub");
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
 
-  const headerEmoji =
-    mode === "space" ? spaceEmoji : mode === "agent" ? agentEmoji : null;
   const headerName =
     mode === "space"
       ? spaceName
       : mode === "agent"
         ? agentName
         : t("title", { name: AGENT_NAME });
+
+  const avatarIcon =
+    mode === "agent" && agentId ? (
+      <AgentNavIcon
+        agentId={agentId}
+        className="text-white"
+        sizeClassName="h-5 w-5"
+      />
+    ) : mode === "space" ? (
+      <SpaceTemplateNavIcon
+        templateId={spaceTemplateId}
+        className="text-white"
+        sizeClassName="h-5 w-5"
+      />
+    ) : (
+      <Bot className="h-5 w-5 text-white" aria-hidden />
+    );
 
   return (
     <header className="bg-kazi-navy px-4 py-3 flex items-center gap-3 shrink-0 border-b border-white/5">
@@ -71,8 +92,8 @@ export function ChatHeader({
       <div className="w-px h-6 bg-white/20 shrink-0" />
 
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-kazi-orange to-amber-500 flex items-center justify-center text-lg shrink-0">
-          {headerEmoji ?? "🤖"}
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-kazi-orange to-amber-600/90 flex items-center justify-center shrink-0">
+          {avatarIcon}
         </div>
         <div className="min-w-0">
           <div className="text-sm font-semibold text-white truncate">

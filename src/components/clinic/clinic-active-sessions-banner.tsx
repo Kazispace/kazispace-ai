@@ -4,6 +4,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { ChevronRight } from 'lucide-react';
 
+import { AgentNavIcon } from '@/components/agents/agent-nav-icon';
+
 import type { ClinicActiveSessionEntry } from '@/lib/clinic-active-sessions';
 import { openAgentSessionTarget } from '@/lib/session-nav';
 import {
@@ -61,8 +63,8 @@ export function ClinicActiveSessionsBanner({
           className
         )}
       >
-        <span className="text-2xl shrink-0" aria-hidden>
-          {entry.agent.emoji}
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-kazi-orange/20">
+          <AgentNavIcon agentId={entry.agentId} sizeClassName="h-5 w-5" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-kazi-navy truncate">
@@ -98,8 +100,8 @@ export function ClinicActiveSessionsBanner({
                 onClick={() => openEntry(entry)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 transition-colors"
               >
-                <span className="text-xl shrink-0" aria-hidden>
-                  {entry.agent.emoji}
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-kazi-orange/15">
+                  <AgentNavIcon agentId={entry.agentId} sizeClassName="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-kazi-navy truncate">

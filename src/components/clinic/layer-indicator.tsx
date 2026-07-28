@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
+import { AgentNavIcon } from '@/components/agents/agent-nav-icon';
 import { cn } from '@/lib/utils';
 
 interface LayerIndicatorProps {
@@ -66,11 +67,9 @@ export function LayerIndicator({
             <span className="text-gray-300 shrink-0" aria-hidden>
               ›
             </span>
-            <span className="inline-flex items-center gap-1 min-w-0 font-semibold text-kazi-navy truncate">
-              {agentEntry?.emoji ? (
-                <span className="shrink-0" aria-hidden>
-                  {agentEntry.emoji}
-                </span>
+            <span className="inline-flex items-center gap-1.5 min-w-0 font-semibold text-kazi-navy truncate">
+              {agentEntry?.agentId ? (
+                <AgentNavIcon agentId={agentEntry.agentId} sizeClassName="h-3.5 w-3.5" />
               ) : null}
               <span className="truncate">{agentLabel}</span>
             </span>

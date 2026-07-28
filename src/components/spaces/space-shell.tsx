@@ -46,6 +46,7 @@ export function SpaceShell({
           mode="space"
           spaceName={space.name}
           spaceEmoji={spaceEmoji}
+          spaceTemplateId={space.template_id}
         />
       ) : null}
 

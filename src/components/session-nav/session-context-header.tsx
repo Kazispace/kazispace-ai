@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
+import { AgentNavIcon } from '@/components/agents/agent-nav-icon';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SessionHeaderDrawer } from '@/components/session-nav/session-header-drawer';
 import type { CurrentSessionsByAgent } from '@/lib/current-agent-sessions';
@@ -92,7 +93,7 @@ export function SessionContextHeader({
     drawer === 'search'
   );
 
-  const { title, statusLabel, statusKind } = useMemo(() => {
+  const { title, titleAgentId, statusLabel, statusKind } = useMemo(() => {
     const agent = agentId
       ? AGENT_REGISTRY.find((entry) => entry.agentId === agentId)
       : undefined;
@@ -101,12 +102,13 @@ export function SessionContextHeader({
       const name = getAgentLabel(agent, locale, 'name');
       const sessionTitle = currentSession?.title?.trim();
       const titleText = sessionTitle
-        ? `${agent.emoji} ${name} · ${sessionTitle}`
-        : `${agent.emoji} ${name}`;
+        ? `${name} · ${sessionTitle}`
+        : name;
 
       const badge = resolveSessionNavBadge(currentSession);
       return {
         title: titleText,
+        titleAgentId: agent.agentId,
         statusLabel: badge
           ? formatSessionNavBadgeLabel(
               badge.kind,
@@ -135,6 +137,7 @@ export function SessionContextHeader({
         : null;
       return {
         title: `${space.name}`,
+        titleAgentId: null as string | null,
         statusLabel: capabilityLabel
           ? capabilityLabel
           : space.status === 'active'
@@ -147,6 +150,7 @@ export function SessionContextHeader({
     if (isClinicChatPathname(pathname) || (spaceId && !space)) {
       return {
         title: t('clinic'),
+        titleAgentId: null as string | null,
         statusLabel: null as string | null,
         statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
       };
@@ -154,6 +158,7 @@ export function SessionContextHeader({
 
     return {
       title: t('workspace'),
+      titleAgentId: null as string | null,
       statusLabel: null as string | null,
       statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
     };
@@ -223,7 +228,12 @@ export function SessionContextHeader({
     <div className="relative shrink-0">
       <header className="flex h-12 items-center justify-between gap-3 border-b border-[#E5E6EB] bg-white px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <h1 className="truncate text-sm font-semibold text-[#1D2129]">{title}</h1>
+          <h1 className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold text-[#1D2129]">
+            {titleAgentId ? (
+              <AgentNavIcon agentId={titleAgentId} className="text-kazi-orange" />
+            ) : null}
+            <span className="truncate">{title}</span>
+          </h1>
           {statusLabel && statusKind && (
             <span
               className={cn(
