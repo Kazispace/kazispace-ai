@@ -51,7 +51,7 @@ describe('planNavigation', () => {
       href: string;
       surface: AgentSurfaceId;
     }> = [
-      { from: 'clinic', agentId: CV_BUILDER_AGENT_ID, href: '/en/chat?cv=1', surface: 'cv' },
+      { from: 'clinic', agentId: CV_BUILDER_AGENT_ID, href: '/en/chat?open_cv=1', surface: 'cv' },
       {
         from: 'clinic',
         agentId: MOCK_INTERVIEW_AGENT_ID,
@@ -73,13 +73,13 @@ describe('planNavigation', () => {
       {
         from: 'interview',
         agentId: CV_BUILDER_AGENT_ID,
-        href: '/en/chat?cv=1',
+        href: '/en/chat?open_cv=1',
         surface: 'cv',
       },
       {
         from: 'english',
         agentId: CV_BUILDER_AGENT_ID,
-        href: '/en/chat?cv=1',
+        href: '/en/chat?open_cv=1',
         surface: 'cv',
       },
     ];
@@ -134,10 +134,21 @@ describe('isNavigationPending', () => {
     expect(
       isNavigationPending({
         shouldNavigate: true,
-        href: '/en/chat?cv=1',
+        href: '/en/chat?open_cv=1',
         targetSurface: 'cv',
       })
     ).toBe(true);
+
+    vi.stubGlobal('window', {
+      location: { pathname: '/en/chat', search: '?open_cv=1' },
+    });
+    expect(
+      isNavigationPending({
+        shouldNavigate: true,
+        href: '/en/chat?open_cv=1',
+        targetSurface: 'cv',
+      })
+    ).toBe(false);
 
     vi.stubGlobal('window', {
       location: { pathname: '/en/interview', search: '' },

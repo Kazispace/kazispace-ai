@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChatHeader } from "./chat-header";
 import { WelcomeView } from "./welcome-view";
@@ -43,7 +43,7 @@ import { getAgentHubPath } from "@/lib/agent-transition/surfaces";
 import { publishSessionNavInvalidate } from "@/lib/session-nav-invalidate";
 import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
 import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
-import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
+import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, stripAgentParamsFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useNbaAction } from "@/hooks/use-nba-action";
 import { useAuthStore, useAgentStore, useChatStore, useUIStore } from "@/lib/store";
@@ -79,7 +79,7 @@ import {
 } from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
 import {
-  buildClinicCvRailHref,
+  CV_OPEN_RAIL_QUERY_PARAM,
   CV_RAIL_QUERY_PARAM,
 } from "@/lib/cv-entry";
 import { AgentSessionPanel } from "@/components/agent/agent-session-panel";
@@ -114,7 +114,6 @@ interface ClinicShellProps {
 
 export function ClinicShell({ locale }: ClinicShellProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
   const tPractice = useTranslations("interview.irp.practice");
@@ -135,27 +134,40 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
   const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
 
-  /** TMA / deep-link / routedToAgent — opens CV on the right rail; chat stays in Clinic. */
-  const openCvRail = useCallback(
-    (targetJobId?: string | null) => {
-      const jobId =
-        targetJobId?.trim() ||
-        searchParams.get("job_id")?.trim() ||
-        null;
-      router.push(buildClinicCvRailHref(locale, jobId));
-    },
-    [locale, router, searchParams]
-  );
+  const [cvRailOpen, setCvRailOpen] = useState(false);
+  const [cvRailJobId, setCvRailJobId] = useState<string | null>(null);
+
+  const openCvRail = useCallback((targetJobId?: string | null) => {
+    const jobId = targetJobId?.trim() || null;
+    setCvRailJobId(jobId);
+    setCvRailOpen(true);
+  }, []);
 
   const closeCvRail = useCallback(() => {
-    const next = new URLSearchParams(searchParams.toString());
-    next.delete(CV_RAIL_QUERY_PARAM);
-    const q = next.toString();
-    router.replace(`/${locale}/chat${q ? `?${q}` : ""}`, { scroll: false });
-  }, [locale, router, searchParams]);
+    setCvRailOpen(false);
+    setCvRailJobId(null);
+  }, []);
 
-  const cvRailOpen = searchParams.get(CV_RAIL_QUERY_PARAM) === "1";
-  const cvRailJobId = searchParams.get("job_id");
+  const openCvRailRef = useRef(openCvRail);
+  openCvRailRef.current = openCvRail;
+
+  /** External links (`?open_cv=1` / legacy `?cv=1`) — open rail once, then clean URL (no bootstrap router loop). */
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const wantsRail =
+      params.get(CV_OPEN_RAIL_QUERY_PARAM) === "1" ||
+      params.get(CV_RAIL_QUERY_PARAM) === "1";
+    if (!wantsRail) return;
+
+    const jobId = params.get("job_id")?.trim() || null;
+    openCvRailRef.current(jobId);
+
+    params.delete(CV_OPEN_RAIL_QUERY_PARAM);
+    params.delete(CV_RAIL_QUERY_PARAM);
+    params.delete("job_id");
+    const q = params.toString();
+    router.replace(`/${locale}/chat${q ? `?${q}` : ""}`, { scroll: false });
+  }, [locale, router]);
 
   const routeInterviewPage = useCallback(
     (targetJobId?: string | null) => {
@@ -577,8 +589,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const pending = consumePendingTmaAction();
       if (pending?.type === 'activate_agent') {
         if (pending.agentId === CV_BUILDER_AGENT_ID) {
-          openCvRail();
-          // Stays on ClinicShell (unlike interview/english hub navigations) — unblock layer spinner.
+          openCvRailRef.current();
           if (!cancelled) setLayerReady(true);
           return;
         }
@@ -628,8 +639,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
       if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
-        openCvRail();
-        // CV rail keeps user on /chat; interview/english routes leave ClinicShell (no setLayerReady).
+        openCvRailRef.current();
+        stripAgentParamsFromUrl();
         if (!cancelled) setLayerReady(true);
         return;
       }
@@ -654,6 +665,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       if (hasStickyActiveAgent(active)) {
         if (isDedicatedHubAgent(active.active_agent)) {
           await stayInClinicForDedicatedHub(active.active_agent);
+        } else if (isCvBuilderAgent(active.active_agent)) {
+          clinicHubColdOpenRef.current = null;
+          useAgentStore.getState().setActiveAgent(null, null);
+          await loadHistoryRef.current();
         } else {
           clinicHubColdOpenRef.current = null;
           await resumeActiveAgentSilentlyRef.current(
@@ -682,7 +697,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     tmaInitComplete,
     locale,
     router,
-    openCvRail,
     routeInterviewPage,
     routeEnglishPage,
     shouldOpenCvBuilderPage,
@@ -727,7 +741,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         AGENT_REGISTRY.some((a) => a.agentId === agentFromUrl)
       ) {
         if (shouldOpenCvBuilderPage(agentFromUrl)) {
-          openCvRail();
+          openCvRailRef.current();
+          stripAgentParamsFromUrl();
           return;
         }
         if (shouldOpenInterviewPage(agentFromUrl)) {
@@ -747,7 +762,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     exitToClinic,
     isLoggedIn,
     loadHistory,
-    openCvRail,
     routeInterviewPage,
     routeEnglishPage,
     shouldOpenCvBuilderPage,
@@ -1030,6 +1044,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         }
         setParkReplaceTargetId(null);
         router.push(hubPath);
+        if (isCvBuilderAgent(targetId)) {
+          openCvRail();
+        }
         return;
       }
 

@@ -23,7 +23,7 @@ import {
   syncProfileLanguageCookie,
 } from "@/lib/locale";
 import { isSupportedLocale, type SupportedLocale } from "@/lib/constants";
-import { buildClinicCvRailHref } from "@/lib/cv-entry";
+import { buildClinicCvRailOpenHref } from "@/lib/cv-entry";
 import { useAuthStore, useUIStore } from "@/lib/store";
 import type { ProfileCompletion, User } from "@/types";
 
@@ -229,7 +229,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
     const nextRoute = preference;
 
     if (returnToCv && canEnterCvBuilder(res.data)) {
-      router.push(buildClinicCvRailHref(nextRoute));
+      router.push(buildClinicCvRailOpenHref(nextRoute));
       return;
     }
     router.push(

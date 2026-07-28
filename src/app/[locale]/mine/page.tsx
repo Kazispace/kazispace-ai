@@ -20,7 +20,7 @@ import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, User } fro
 import { NbaActionCard } from "@/components/nba/nba-action-card";
 import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
 import { LocaleSwitcher } from "@/components/locale/locale-switcher";
-import { buildClinicCvRailHref } from "@/lib/cv-entry";
+import { buildClinicChatHref } from "@/lib/cv-entry";
 
 interface MinePageProps {
   params: { locale: string };
@@ -144,7 +144,7 @@ export default function MinePage({ params }: MinePageProps) {
             {t("jobPrepGroupTitle")}
           </h3>
           <div className="space-y-2">
-            <Link href={buildClinicCvRailHref(locale)}>
+            <Link href={buildClinicChatHref(locale)}>
               <Card className="hover:border-orange cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">

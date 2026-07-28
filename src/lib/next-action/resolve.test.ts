@@ -37,7 +37,7 @@ describe('next-action resolve (KAZI-321)', () => {
         type: 'cv_builder',
         path: '/en/cv?job_id=job-1',
       })
-    ).toBe('/en/chat?cv=1&job_id=job-1');
+    ).toBe('/en/chat?open_cv=1&job_id=job-1');
   });
 
   it('resolves locale-specific in-chat prompts', () => {

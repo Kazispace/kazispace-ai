@@ -3,6 +3,8 @@
  */
 
 export const CV_RAIL_QUERY_PARAM = 'cv';
+/** One-shot deep link: consumed on Clinic load, opens rail then stripped from URL. */
+export const CV_OPEN_RAIL_QUERY_PARAM = 'open_cv';
 
 const CV_PATH_SEGMENT = /\/cv(?:\/|$|\?)/;
 
@@ -27,13 +29,13 @@ export function parseJobIdFromHref(href: string): string | null {
   }
 }
 
-/** Clinic chat + right CV workspace rail (`?cv=1`). */
-export function buildClinicCvRailHref(
+/** Clinic chat + open CV right rail once (`?open_cv=1`). */
+export function buildClinicCvRailOpenHref(
   locale: string,
   jobId?: string | null
 ): string {
   const params = new URLSearchParams();
-  params.set(CV_RAIL_QUERY_PARAM, '1');
+  params.set(CV_OPEN_RAIL_QUERY_PARAM, '1');
   if (jobId?.trim()) {
     params.set('job_id', jobId.trim());
   }
@@ -41,14 +43,27 @@ export function buildClinicCvRailHref(
   return `/${locale}/chat${q ? `?${q}` : ''}`;
 }
 
-/** Blank / chat-only Space — CV workspace on the right rail (`?cv=1`). */
+/** @deprecated Prefer `buildClinicCvRailOpenHref` for rail; plain `/chat` for nav rows. */
+export function buildClinicCvRailHref(
+  locale: string,
+  jobId?: string | null
+): string {
+  return buildClinicCvRailOpenHref(locale, jobId);
+}
+
+/** Clinic chat entry without opening the CV rail (session nav, Mine, etc.). */
+export function buildClinicChatHref(locale: string): string {
+  return `/${locale}/chat`;
+}
+
+/** Blank / chat-only Space — open CV rail once (`?open_cv=1`). */
 export function buildSpaceCvRailHref(
   locale: string,
   spaceId: string,
   jobId?: string | null
 ): string {
   const params = new URLSearchParams();
-  params.set(CV_RAIL_QUERY_PARAM, '1');
+  params.set(CV_OPEN_RAIL_QUERY_PARAM, '1');
   if (jobId?.trim()) {
     params.set('job_id', jobId.trim());
   }

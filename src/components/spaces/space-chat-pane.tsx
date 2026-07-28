@@ -1,8 +1,8 @@
 'use client';
 
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { useEffect, useRef, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { ChevronDown, Loader2 } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
@@ -22,6 +22,7 @@ import {
 import {
   buildSpaceCvPanelHref,
   buildSpaceCvRailHref,
+  CV_OPEN_RAIL_QUERY_PARAM,
   CV_RAIL_QUERY_PARAM,
   isLegacyCvHubHref,
   parseJobIdFromHref,
@@ -76,7 +77,11 @@ function remapCvNavigationForSpace(
     return resolveSpaceCvEntryHref(locale, space, parseJobIdFromHref(href));
   }
   const clinicCv = `/${locale}/chat`;
-  if (href.startsWith(clinicCv) && href.includes(`${CV_RAIL_QUERY_PARAM}=1`)) {
+  if (
+    href.startsWith(clinicCv) &&
+    (href.includes(`${CV_OPEN_RAIL_QUERY_PARAM}=1`) ||
+      href.includes(`${CV_RAIL_QUERY_PARAM}=1`))
+  ) {
     return resolveSpaceCvEntryHref(locale, space, parseJobIdFromHref(href));
   }
   return href;
@@ -93,10 +98,15 @@ export function SpaceChatPane({
   const tChat = useTranslations('chat');
   const tPractice = useTranslations('interview.irp.practice');
   const router = useRouter();
-  const searchParams = useSearchParams();
   const panels = useMemo(() => resolveSpacePanels(space), [space]);
   const hasCvPanel = panels.some((p) => p.panel_id === 'cv');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [cvRailOpen, setCvRailOpen] = useState(false);
+  const [cvRailJobId, setCvRailJobId] = useState<string | null>(null);
+  const openCvRailRef = useRef((jobId: string | null) => {
+    setCvRailJobId(jobId);
+    setCvRailOpen(true);
+  });
   const {
     messages,
     isHydrating,
@@ -123,10 +133,6 @@ export function SpaceChatPane({
     setSelectedJobId(null);
   }, []);
 
-  const cvRailOpen =
-    !hasCvPanel && searchParams.get(CV_RAIL_QUERY_PARAM) === '1';
-  const cvRailJobId = searchParams.get('job_id');
-
   const cvRailTransition = useMemo(() => {
     if (hasCvPanel) return undefined;
     const { fromSurface } = resolveSpacePanelAgentConfig('cv_workspace');
@@ -136,15 +142,31 @@ export function SpaceChatPane({
     };
   }, [hasCvPanel, locale, space.id]);
 
-  const closeCvRail = useCallback(() => {
-    const next = new URLSearchParams(searchParams.toString());
-    next.delete(CV_RAIL_QUERY_PARAM);
-    const q = next.toString();
+  useEffect(() => {
+    if (hasCvPanel) return;
+    const params = new URLSearchParams(window.location.search);
+    const wantsRail =
+      params.get(CV_OPEN_RAIL_QUERY_PARAM) === '1' ||
+      params.get(CV_RAIL_QUERY_PARAM) === '1';
+    if (!wantsRail) return;
+
+    const jobId = params.get('job_id')?.trim() || null;
+    openCvRailRef.current(jobId);
+
+    params.delete(CV_OPEN_RAIL_QUERY_PARAM);
+    params.delete(CV_RAIL_QUERY_PARAM);
+    params.delete('job_id');
+    const q = params.toString();
     router.replace(
       `/${locale}/spaces/${encodeURIComponent(space.id)}${q ? `?${q}` : ''}`,
       { scroll: false }
     );
-  }, [locale, router, searchParams, space.id]);
+  }, [hasCvPanel, locale, router, space.id]);
+
+  const closeCvRail = useCallback(() => {
+    setCvRailOpen(false);
+    setCvRailJobId(null);
+  }, []);
 
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
@@ -241,7 +263,7 @@ export function SpaceChatPane({
       jobId={selectedJobId}
       locale={locale}
       onCloseJob={closeJobDetail}
-      cvRail={{ open: cvRailOpen, jobId: cvRailJobId }}
+      cvRail={{ open: !hasCvPanel && cvRailOpen, jobId: cvRailJobId }}
       onCloseCv={closeCvRail}
       cvRailTransition={cvRailTransition}
       onPracticeForJob={handlePracticeForJob}

@@ -1,4 +1,4 @@
-import { buildClinicCvRailHref } from '@/lib/cv-entry';
+import { buildClinicChatHref, buildClinicCvRailOpenHref } from '@/lib/cv-entry';
 import { STORAGE_KEYS } from './constants';
 import { resolveStartParam } from './telegram';
 
@@ -42,9 +42,9 @@ export function routeForTmaAction(locale: string, action: TmaPendingAction): str
     case 'job':
       return `/${locale}/jobs/${encodeURIComponent(action.jobId)}`;
     case 'cv':
-      return buildClinicCvRailHref(locale);
+      return buildClinicCvRailOpenHref(locale);
     case 'cv_job':
-      return buildClinicCvRailHref(locale, action.jobId);
+      return buildClinicCvRailOpenHref(locale, action.jobId);
     case 'interview':
       return `/${locale}/interview`;
     case 'interview_job':
