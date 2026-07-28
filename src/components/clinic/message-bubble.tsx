@@ -270,9 +270,7 @@ export function MessageBubble({
               isUser
               ? isFailed
                 ? "bg-red-950/40 text-red-200 border border-red-800/60 rounded-br-[4px]"
-                : isWorkspace
-                  ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-br-[4px]"
-                  : "bg-user-bubble text-[#1D2129] border border-orange-200/55 rounded-br-[4px]"
+                : "bg-workspace-active text-workspace-text border border-workspace-border rounded-br-[4px]"
               : variant === "agent"
                 ? isWorkspace
                   ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-bl-[4px]"
