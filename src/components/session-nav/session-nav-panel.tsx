@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { AgentNavIcon, SpaceTemplateNavIcon } from '@/components/agents/agent-nav-icon';
 import { AgentSessionList } from '@/components/agent/agent-session-list';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import type { CurrentSessionsByAgent } from '@/lib/current-agent-sessions';
@@ -38,10 +39,32 @@ import {
   type SessionNavViewTab,
   type SessionViewRow,
 } from '@/lib/session-nav';
+import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import { filterSpaceNavRows, type SpaceNavFilter } from '@/lib/space-nav';
 import { canRunSpaceLifecycle, type SpaceLifecycleAction } from '@/lib/spaces/lifecycle';
 import { cn } from '@/lib/utils';
 import type { SpaceSummary } from '@/types/spaces';
+
+function rowLeadingIcon(
+  row: SessionNavRow | SessionViewRow,
+  space?: SpaceSummary | null
+) {
+  if (space) {
+    return (
+      <SpaceTemplateNavIcon
+        templateId={space.template_id}
+        spaceId={space.id}
+      />
+    );
+  }
+  if (row.agentId) {
+    return <AgentNavIcon agentId={row.agentId} />;
+  }
+  if (row.id === 'clinic' || row.id === CLINIC_SPACE_ID) {
+    return <AgentNavIcon agentId="clinic" />;
+  }
+  return <AgentNavIcon agentId={null} />;
+}
 
 interface SessionNavPanelProps {
   locale: string;
@@ -275,17 +298,15 @@ export function SessionNavPanel({
                 if (mobileDrawer) onClose();
               }}
               className={cn(
-                'min-w-0 flex-1 rounded-lg px-2 py-2.5 text-left transition-colors',
+                'min-w-0 flex-1 rounded-lg px-2 py-3 text-left transition-colors',
                 row.disabled
                   ? 'cursor-not-allowed opacity-60'
                   : 'hover:bg-[#F2F3F5]',
                 !isActive && !row.disabled && 'text-[#1D2129]'
               )}
             >
-              <div className="flex items-center gap-2">
-                <span className="text-base" aria-hidden>
-                  {row.emoji}
-                </span>
+              <div className="flex items-center gap-2.5">
+                {rowLeadingIcon(row)}
                 <span className="flex-1 truncate text-sm font-medium">
                   {row.displayName}
                 </span>
@@ -340,15 +361,13 @@ export function SessionNavPanel({
             if (mobileDrawer) onClose();
           }}
           className={cn(
-            'w-full rounded-lg px-3 py-2.5 text-left transition-colors',
+            'w-full rounded-lg px-3 py-3 text-left transition-colors',
             isActive && 'bg-[#FFF4EC]',
             'hover:bg-[#F2F3F5] text-[#1D2129]'
           )}
         >
-          <div className="flex items-center gap-2">
-            <span className="text-base" aria-hidden>
-              {row.emoji}
-            </span>
+          <div className="flex items-center gap-2.5">
+            {rowLeadingIcon(row)}
             <span className="flex-1 truncate text-sm font-medium">{label}</span>
           </div>
           {badge && (
@@ -523,14 +542,12 @@ export function SessionNavPanel({
                         setContextMenuId(isMenuOpen ? null : row.id);
                       }}
                       className={cn(
-                        'min-w-0 flex-1 rounded-lg px-3 py-2.5 text-left',
+                        'min-w-0 flex-1 rounded-lg px-3 py-3 text-left',
                         row.disabled && 'cursor-not-allowed opacity-60'
                       )}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-base" aria-hidden>
-                          {row.emoji}
-                        </span>
+                      <div className="flex items-center gap-2.5">
+                        {rowLeadingIcon(row, space)}
                         <span className="flex-1 truncate text-sm font-medium text-[#1D2129]">
                           {row.displayName}
                         </span>

@@ -18,16 +18,17 @@ const config: Config = {
           foreground: 'hsl(var(--muted-foreground))',
         },
         kazi: {
-          orange: '#F47920',
-          'orange-dark': '#d96a10',
+          // UI v1.0: slightly desaturated ochre-orange (less promo/e-commerce feel)
+          orange: '#D96E28',
+          'orange-dark': '#B85A1F',
           navy: '#0D1B2A',
           navy2: '#132237',
         },
         'clinic-bubble': '#F0F2F5',
         'agent-bubble': '#F0FDF4',
         orange: {
-          DEFAULT: '#F47920',
-          d: '#d96a10',
+          DEFAULT: '#D96E28',
+          d: '#B85A1F',
         },
         navy: {
           DEFAULT: '#0D1B2A',
@@ -46,7 +47,7 @@ const config: Config = {
           hover: '#F2F3F5',
           active: '#FFF4EC',
           input: '#FFFFFF',
-          accent: '#F47920',
+          accent: '#D96E28',
         },
       },
       fontFamily: {

@@ -11,6 +11,7 @@ import {
 } from "@/lib/session-nav-badges";
 import type { SessionNavBadgeKind } from "@/lib/session-nav";
 import { Lock } from "lucide-react";
+import { AgentNavIcon } from "@/components/agents/agent-nav-icon";
 
 interface AgentCardProps {
   agent: AgentRegistryEntry;
@@ -58,7 +59,9 @@ export function AgentCard({
       )}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="text-3xl">{agent.emoji}</div>
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white ring-1 ring-gray-200/80">
+          <AgentNavIcon agentId={agent.agentId} sizeClassName="h-5 w-5" />
+        </div>
         {badgeLabel ? (
           <span
             className={cn(

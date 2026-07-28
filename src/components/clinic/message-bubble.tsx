@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Bot, FileText, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
 import { CitationList } from "./citation-list";
@@ -144,6 +145,11 @@ export function MessageBubble({
     Boolean(composerTarget);
   const isWorkspace = surface === "workspace";
   const isWebSearchShortAnswer = capabilityId === "web_search";
+  const isLongFormAssistant =
+    !isUser &&
+    (capabilityId === "research" ||
+      pendingCapability === "research" ||
+      (citations?.length ?? 0) > 0);
   const showCapabilityChip =
     !isUser && showEnrichment && isSearchCapability(capabilityId);
   // Search intents use the capability chip when resolved; keep the raw intent
@@ -213,7 +219,7 @@ export function MessageBubble({
     >
       <div
         className={cn(
-          "flex gap-3",
+          "flex gap-4",
           widenForJobCards && (isUser ? "self-end max-w-[85%]" : "self-start max-w-[85%]")
         )}
       >
@@ -226,10 +232,18 @@ export function MessageBubble({
                 : "bg-gray-100 text-muted-foreground"
               : isWorkspace
                 ? "bg-workspace-active text-kazi-orange"
-                : "bg-gradient-to-br from-kazi-orange to-amber-500"
+                : "bg-orange-100 text-kazi-orange"
           )}
         >
-          {isUser ? "👤" : "🤖"}
+          {isUser ? (
+            <User className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+          ) : (
+            <Bot
+              className="h-4 w-4 text-kazi-orange"
+              strokeWidth={2.25}
+              aria-hidden
+            />
+          )}
         </div>
         <div className="flex flex-col gap-1 min-w-0">
           {!isUser && displayName && (
@@ -245,9 +259,14 @@ export function MessageBubble({
           <div
             className={cn(
               "px-4 py-3 rounded-[18px] text-[15px] leading-relaxed break-words",
+              isUser ? "font-medium" : "font-normal",
               // web_search short-answer: denser body only. CitationList keeps its own
               // text-sm; research keeps default Markdown long-form spacing (KAZI-225).
               isWebSearchShortAnswer && "text-[14px] leading-snug",
+              !isUser &&
+                isLongFormAssistant &&
+                !isWorkspace &&
+                "text-gray-900",
               isUser
               ? isFailed
                 ? "bg-red-950/40 text-red-200 border border-red-800/60 rounded-br-[4px]"
@@ -260,7 +279,7 @@ export function MessageBubble({
                   : "bg-agent-bubble text-gray-900 border border-green-200/80 rounded-bl-[4px]"
                 : isWorkspace
                   ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-bl-[4px]"
-                  : "bg-clinic-bubble text-gray-900 border border-gray-200/80 rounded-bl-[4px]"
+                  : "bg-clinic-bubble text-gray-800 border border-gray-200/80 rounded-bl-[4px]"
             )}
           >
             {renderAssistantContent()}
@@ -333,8 +352,15 @@ export function MessageBubble({
             />
           ) : null}
           {showIntentBadge && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-orange-100 text-kazi-orange">
-              {intent === "RESUME_OPTIMIZE" ? "📄 Resume Mode" : intent}
+            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-orange-100 text-kazi-orange">
+              {intent === "RESUME_OPTIMIZE" ? (
+                <>
+                  <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  Resume Mode
+                </>
+              ) : (
+                intent
+              )}
             </span>
           )}
         </div>

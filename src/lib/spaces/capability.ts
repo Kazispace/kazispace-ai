@@ -77,5 +77,5 @@ export function formatRegisteredCapabilityLabel(
 ): string | null {
   const agent = resolveAgent(capabilityId);
   if (!agent) return null;
-  return `${agent.emoji} ${agent.name}`;
+  return `${agent.name}`;
 }

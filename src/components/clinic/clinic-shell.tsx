@@ -1305,7 +1305,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         locale={locale}
         mode={isAgentMode ? "agent" : "clinic"}
         agentName={activeEntry ? getAgentLabel(activeEntry, locale, "name") : undefined}
-        agentEmoji={activeEntry?.emoji}
+        agentId={activeEntry?.agentId}
         isOnline={isOnline}
         onBackToClinic={isAgentMode ? handleBackToClinic : undefined}
         onOpenSessionHistory={
@@ -1388,15 +1388,15 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         ref={scrollRef}
         onScroll={handleScroll}
         className={`flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0 ${
-          isAgentMode ? "" : "p-4"
+          isAgentMode ? "" : "px-5 py-5"
         }`}
       >
         {isAgentMode ? (
           <HubWorkflowStrip workflow={agentActiveWorkflow} locale={locale} />
         ) : null}
         <div
-          className={`mx-auto flex w-full max-w-3xl flex-col gap-3 min-h-0 ${
-            isAgentMode ? "p-4" : ""
+          className={`mx-auto flex w-full max-w-3xl flex-col gap-4 min-h-0 ${
+            isAgentMode ? "px-5 py-5" : ""
           }`}
         >
         {/* Active-sessions banner removed (KAZI-198): progress tracked per-space, not in Clinic. */}
