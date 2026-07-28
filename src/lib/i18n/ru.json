@@ -581,6 +581,20 @@
 			"generate": "Генерация",
 			"review": "Проверка",
 			"done": "Готово"
+		},
+		"railHub": {
+			"title": "Рабочая зона",
+			"subtitle": "Карьерные материалы — нажмите на иконку",
+			"zonesLabel": "Зоны",
+			"zoneCareer": "Карьера",
+			"zoneWork": "Работа",
+			"zoneFinance": "Финансы",
+			"zoneBusiness": "Ещё",
+			"tileCv": "Резюме",
+			"tileCvHint": "Просмотр, экспорт, адаптация",
+			"workZoneEmpty": "Инструменты по вакансиям пока в чате и разделе Jobs.",
+			"zoneComingSoon": "Скоро",
+			"backToHub": "Назад в рабочую зону"
 		}
 	},
 	"nba": {

@@ -681,6 +681,20 @@
 			"generate": "生成",
 			"review": "审阅",
 			"done": "完成"
+		},
+		"railHub": {
+			"title": "工作区",
+			"subtitle": "职业资产一览，点图标进入",
+			"zonesLabel": "分区",
+			"zoneCareer": "职业区",
+			"zoneWork": "工作区",
+			"zoneFinance": "理财区",
+			"zoneBusiness": "业务区",
+			"tileCv": "简历",
+			"tileCvHint": "预览、导出、定制",
+			"workZoneEmpty": "岗位相关工具仍在对话与 Jobs 空间中。",
+			"zoneComingSoon": "即将上线",
+			"backToHub": "返回工作区"
 		}
 	},
 	"english": {

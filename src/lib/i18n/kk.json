@@ -563,6 +563,20 @@
 			"generate": "Жасау",
 			"review": "Тексеру",
 			"done": "Дайын"
+		},
+		"railHub": {
+			"title": "Жұмыс аймағы",
+			"subtitle": "Мансап активтері — белгішені басыңыз",
+			"zonesLabel": "Аймақтар",
+			"zoneCareer": "Мансап",
+			"zoneWork": "Жұмыс",
+			"zoneFinance": "Қаржы",
+			"zoneBusiness": "Тағы",
+			"tileCv": "Түйіндеме",
+			"tileCvHint": "Қарау, экспорт, бейімдеу",
+			"workZoneEmpty": "Вакансия құралдары әзірге чатта және Jobs бөлімінде.",
+			"zoneComingSoon": "Жақында",
+			"backToHub": "Жұмыс аймағына оралу"
 		}
 	},
 	"nba": {

@@ -666,7 +666,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           clinicHubColdOpenRef.current = null;
           useAgentStore.getState().setActiveAgent(null, null);
           await loadHistoryRef.current();
-          openCvRailRef.current();
         } else {
           clinicHubColdOpenRef.current = null;
           await resumeActiveAgentSilentlyRef.current(
