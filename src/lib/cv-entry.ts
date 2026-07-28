@@ -29,6 +29,35 @@ export function parseJobIdFromHref(href: string): string | null {
   }
 }
 
+export function searchParamsRequestCvRailOpen(params: URLSearchParams): boolean {
+  return (
+    params.get(CV_OPEN_RAIL_QUERY_PARAM) === '1' ||
+    params.get(CV_RAIL_QUERY_PARAM) === '1'
+  );
+}
+
+export function stripCvRailOpenParams(params: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(params.toString());
+  next.delete(CV_OPEN_RAIL_QUERY_PARAM);
+  next.delete(CV_RAIL_QUERY_PARAM);
+  next.delete('job_id');
+  return next;
+}
+
+/** True when href targets Clinic chat with a one-shot CV rail open query. */
+export function isClinicCvRailOpenHref(locale: string, href: string): boolean {
+  try {
+    const url = href.startsWith('http')
+      ? new URL(href)
+      : new URL(href, 'https://kazispace.local');
+    if (!searchParamsRequestCvRailOpen(url.searchParams)) return false;
+    const path = url.pathname;
+    return path === `/${locale}/chat` || path === '/chat';
+  } catch {
+    return false;
+  }
+}
+
 /** Clinic chat + open CV right rail once (`?open_cv=1`). */
 export function buildClinicCvRailOpenHref(
   locale: string,
@@ -43,7 +72,7 @@ export function buildClinicCvRailOpenHref(
   return `/${locale}/chat${q ? `?${q}` : ''}`;
 }
 
-/** @deprecated Prefer `buildClinicCvRailOpenHref` for rail; plain `/chat` for nav rows. */
+/** @deprecated Alias of `buildClinicCvRailOpenHref` — rename callers, then remove. */
 export function buildClinicCvRailHref(
   locale: string,
   jobId?: string | null

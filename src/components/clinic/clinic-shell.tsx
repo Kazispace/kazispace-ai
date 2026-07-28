@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ChatHeader } from "./chat-header";
 import { WelcomeView } from "./welcome-view";
@@ -79,8 +79,10 @@ import {
 } from "@/lib/mock-interview-config";
 import { setCvAgentHandoff } from "@/lib/cv-agent-handoff";
 import {
-  CV_OPEN_RAIL_QUERY_PARAM,
-  CV_RAIL_QUERY_PARAM,
+  isClinicCvRailOpenHref,
+  parseJobIdFromHref,
+  searchParamsRequestCvRailOpen,
+  stripCvRailOpenParams,
 } from "@/lib/cv-entry";
 import { AgentSessionPanel } from "@/components/agent/agent-session-panel";
 import { useAgentSessionList } from "@/hooks/use-agent-session-list";
@@ -114,6 +116,7 @@ interface ClinicShellProps {
 
 export function ClinicShell({ locale }: ClinicShellProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const t = useTranslations("chat");
   const tClinic = useTranslations("clinic");
   const tPractice = useTranslations("interview.irp.practice");
@@ -151,23 +154,16 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const openCvRailRef = useRef(openCvRail);
   openCvRailRef.current = openCvRail;
 
-  /** External links (`?open_cv=1` / legacy `?cv=1`) — open rail once, then clean URL (no bootstrap router loop). */
+  /** In-app / external `?open_cv=1` (or legacy `?cv=1`) — not tied to bootstrap layerReady. */
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const wantsRail =
-      params.get(CV_OPEN_RAIL_QUERY_PARAM) === "1" ||
-      params.get(CV_RAIL_QUERY_PARAM) === "1";
-    if (!wantsRail) return;
+    if (!searchParamsRequestCvRailOpen(searchParams)) return;
 
-    const jobId = params.get("job_id")?.trim() || null;
+    const jobId = searchParams.get("job_id")?.trim() || null;
     openCvRailRef.current(jobId);
 
-    params.delete(CV_OPEN_RAIL_QUERY_PARAM);
-    params.delete(CV_RAIL_QUERY_PARAM);
-    params.delete("job_id");
-    const q = params.toString();
+    const q = stripCvRailOpenParams(searchParams).toString();
     router.replace(`/${locale}/chat${q ? `?${q}` : ""}`, { scroll: false });
-  }, [locale, router]);
+  }, [searchParams, locale, router]);
 
   const routeInterviewPage = useCallback(
     (targetJobId?: string | null) => {
@@ -640,6 +636,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
       if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
         openCvRailRef.current();
+        // URL-only cleanup; layerReady is local state (not searchParams-driven).
         stripAgentParamsFromUrl();
         if (!cancelled) setLayerReady(true);
         return;
@@ -669,6 +666,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           clinicHubColdOpenRef.current = null;
           useAgentStore.getState().setActiveAgent(null, null);
           await loadHistoryRef.current();
+          openCvRailRef.current();
         } else {
           clinicHubColdOpenRef.current = null;
           await resumeActiveAgentSilentlyRef.current(
@@ -1141,6 +1139,12 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     (action: ChatNextAction) => {
       const href = resolveNextActionHref(locale, action);
       if (href) {
+        if (isClinicCvRailOpenHref(locale, href)) {
+          openCvRail(parseJobIdFromHref(href));
+          const q = stripCvRailOpenParams(searchParams).toString();
+          router.replace(`/${locale}/chat${q ? `?${q}` : ""}`, { scroll: false });
+          return;
+        }
         router.push(href);
         return;
       }
@@ -1161,7 +1165,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, openPaywall, handleBackToClinic, handleSendFromNextAction]
+    [locale, router, searchParams, openCvRail, openPaywall, handleBackToClinic, handleSendFromNextAction]
   );
 
   const handleJobCardClick = useCallback(

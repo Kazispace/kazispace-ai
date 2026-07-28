@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { ChevronDown, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
@@ -26,6 +26,8 @@ import {
   CV_RAIL_QUERY_PARAM,
   isLegacyCvHubHref,
   parseJobIdFromHref,
+  searchParamsRequestCvRailOpen,
+  stripCvRailOpenParams,
 } from '@/lib/cv-entry';
 import { resolveSpacePanels } from '@/lib/spaces/panels';
 import {
@@ -98,15 +100,20 @@ export function SpaceChatPane({
   const tChat = useTranslations('chat');
   const tPractice = useTranslations('interview.irp.practice');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const panels = useMemo(() => resolveSpacePanels(space), [space]);
   const hasCvPanel = panels.some((p) => p.panel_id === 'cv');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [cvRailOpen, setCvRailOpen] = useState(false);
   const [cvRailJobId, setCvRailJobId] = useState<string | null>(null);
-  const openCvRailRef = useRef((jobId: string | null) => {
-    setCvRailJobId(jobId);
+
+  const openCvRail = useCallback((targetJobId?: string | null) => {
+    setCvRailJobId(targetJobId?.trim() || null);
     setCvRailOpen(true);
-  });
+  }, []);
+
+  const openCvRailRef = useRef(openCvRail);
+  openCvRailRef.current = openCvRail;
   const {
     messages,
     isHydrating,
@@ -144,24 +151,17 @@ export function SpaceChatPane({
 
   useEffect(() => {
     if (hasCvPanel) return;
-    const params = new URLSearchParams(window.location.search);
-    const wantsRail =
-      params.get(CV_OPEN_RAIL_QUERY_PARAM) === '1' ||
-      params.get(CV_RAIL_QUERY_PARAM) === '1';
-    if (!wantsRail) return;
+    if (!searchParamsRequestCvRailOpen(searchParams)) return;
 
-    const jobId = params.get('job_id')?.trim() || null;
+    const jobId = searchParams.get('job_id')?.trim() || null;
     openCvRailRef.current(jobId);
 
-    params.delete(CV_OPEN_RAIL_QUERY_PARAM);
-    params.delete(CV_RAIL_QUERY_PARAM);
-    params.delete('job_id');
-    const q = params.toString();
+    const q = stripCvRailOpenParams(searchParams).toString();
     router.replace(
       `/${locale}/spaces/${encodeURIComponent(space.id)}${q ? `?${q}` : ''}`,
       { scroll: false }
     );
-  }, [hasCvPanel, locale, router, space.id]);
+  }, [hasCvPanel, searchParams, locale, router, space.id]);
 
   const closeCvRail = useCallback(() => {
     setCvRailOpen(false);
@@ -215,7 +215,24 @@ export function SpaceChatPane({
     (action: ChatNextAction) => {
       const rawHref = resolveNextActionHref(locale, action);
       if (rawHref) {
-        router.push(remapCvNavigationForSpace(locale, space, rawHref));
+        const href = remapCvNavigationForSpace(locale, space, rawHref);
+        try {
+          const url = new URL(href, 'https://kazispace.local');
+          const spacePath = `/${locale}/spaces/${encodeURIComponent(space.id)}`;
+          if (
+            !hasCvPanel &&
+            url.pathname === spacePath &&
+            searchParamsRequestCvRailOpen(url.searchParams)
+          ) {
+            openCvRail(parseJobIdFromHref(href));
+            const q = stripCvRailOpenParams(url.searchParams).toString();
+            router.replace(`${spacePath}${q ? `?${q}` : ''}`, { scroll: false });
+            return;
+          }
+        } catch {
+          // fall through to router.push
+        }
+        router.push(href);
         return;
       }
       const prompt = resolveNextActionChatPrompt(action, locale);
@@ -223,7 +240,7 @@ export function SpaceChatPane({
         void sendAndPin(prompt);
       }
     },
-    [locale, router, sendAndPin, space]
+    [hasCvPanel, locale, openCvRail, router, sendAndPin, space]
   );
 
   const composerNode =
