@@ -705,6 +705,9 @@
 			"resumeIndex": "简历 {index}",
 			"sessionInterview": "面试",
 			"sessionEnglish": "英语",
+			"olderResumes": "更早的简历 ({count})",
+			"olderInterviews": "更早的面试 ({count})",
+			"olderEnglishSessions": "更早的英语 ({count})",
 			"openWorkspaceRail": "打开资产面板",
 			"zoneComingSoon": "即将上线",
 			"backToHub": "返回资产"

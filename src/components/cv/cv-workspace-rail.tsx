@@ -92,17 +92,13 @@ export function CvWorkspaceRail({
     [locale, onClose, pathname, router]
   );
 
+  // CV detail / Space rail: header always shown (hubEnabled=false still uses CV panel header).
   const showFullHeader = view !== 'hub' || !hubEnabled;
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col bg-white', className)}>
-      <header
-        className={cn(
-          'flex shrink-0 items-center justify-between gap-2 border-b border-gray-200/80',
-          showFullHeader ? 'px-4 py-3' : 'px-2 py-1.5'
-        )}
-      >
-        {showFullHeader ? (
+      {showFullHeader ? (
+        <header className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200/80 px-4 py-3">
           <div className="flex min-w-0 items-start gap-2">
             {view === 'cv' && hubEnabled && !jobId?.trim() ? (
               <button
@@ -125,24 +121,22 @@ export function CvWorkspaceRail({
               </p>
             </div>
           </div>
-        ) : (
-          <p className="truncate px-1 text-xs font-medium text-[#86909C]">
-            {tHub('title')}
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4E5969] hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
-          aria-label={t('closeRail')}
-        >
-          <X className="h-5 w-5" aria-hidden />
-        </button>
-      </header>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4E5969] hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+            aria-label={t('closeRail')}
+          >
+            <X className="h-5 w-5" aria-hidden />
+          </button>
+        </header>
+      ) : null}
       <div className="min-h-0 flex-1">
         {view === 'hub' ? (
           <WorkspaceSideRailHub
             locale={locale}
+            showCloseButton
+            onClose={onClose}
             onOpenCv={openCvDrillDown}
             onOpenCvSession={openCvSession}
             onOpenAgentSession={openAgentSession}

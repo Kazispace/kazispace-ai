@@ -587,6 +587,9 @@
 			"resumeIndex": "Түйіндеме {index}",
 			"sessionInterview": "Сұхбат",
 			"sessionEnglish": "Ағылшын",
+			"olderResumes": "Ескі түйіндемелер ({count})",
+			"olderInterviews": "Ескі сұхбаттар ({count})",
+			"olderEnglishSessions": "Ескі ағылшын сессиялары ({count})",
 			"openWorkspaceRail": "Актив панелін ашу",
 			"zoneComingSoon": "Жақында",
 			"backToHub": "Активтерге"

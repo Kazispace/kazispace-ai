@@ -881,6 +881,9 @@
 			"resumeIndex": "Resume {index}",
 			"sessionInterview": "Interview",
 			"sessionEnglish": "English",
+			"olderResumes": "Older resumes ({count})",
+			"olderInterviews": "Older interviews ({count})",
+			"olderEnglishSessions": "Older English sessions ({count})",
 			"openWorkspaceRail": "Open workspace panel",
 			"zoneComingSoon": "Coming soon",
 			"backToHub": "Back to assets"

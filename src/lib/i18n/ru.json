@@ -605,6 +605,9 @@
 			"resumeIndex": "Резюме {index}",
 			"sessionInterview": "Интервью",
 			"sessionEnglish": "Английский",
+			"olderResumes": "Ранние резюме ({count})",
+			"olderInterviews": "Ранние интервью ({count})",
+			"olderEnglishSessions": "Ранние сессии английского ({count})",
 			"openWorkspaceRail": "Открыть панель активов",
 			"zoneComingSoon": "Скоро",
 			"backToHub": "К активам"
