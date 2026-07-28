@@ -2,17 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { AgentTransitionProvider } from '@/components/agent-transition/agent-transition-provider';
 import { JobSprintCvPanel } from '@/components/spaces/panels/job-sprint-cv-panel';
 import {
   WorkspaceSideRailHub,
-  type WorkspaceSideRailHubAction,
 } from '@/components/workspace/workspace-side-rail-hub';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
+import { primeSessionNavHandoff } from '@/lib/session-nav-handoff';
+import { openAgentSessionTarget } from '@/lib/session-nav';
 import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -55,6 +56,7 @@ export function CvWorkspaceRail({
   const tHub = useTranslations('cv.railHub');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const router = useRouter();
+  const pathname = usePathname();
 
   const [view, setView] = useState<CvRailView>(() =>
     resolveInitialView(jobId, drillDown, hubEnabled)
@@ -69,60 +71,65 @@ export function CvWorkspaceRail({
   const openCvDrillDown = useCallback(() => setView('cv'), []);
   const backToHub = useCallback(() => setView('hub'), []);
 
-  const handleHubAction = useCallback(
-    (action: WorkspaceSideRailHubAction) => {
-      switch (action) {
-        case 'cv':
-          openCvDrillDown();
-          return;
-        case 'interview':
-          onClose();
-          router.push(`/${locale}/interview`);
-          return;
-        case 'english':
-          onClose();
-          router.push(`/${locale}/english`);
-          return;
-        case 'jobs':
-          onClose();
-          router.push(`/${locale}/jobs`);
-          return;
-        default:
-          return;
-      }
+  const openCvSession = useCallback((sessionId: string) => {
+    primeSessionNavHandoff(CV_BUILDER_AGENT_ID, sessionId);
+    setView('cv');
+  }, []);
+
+  const handleHubNavigate = useCallback(
+    (path: string) => {
+      onClose();
+      router.push(path);
     },
-    [locale, onClose, openCvDrillDown, router]
+    [onClose, router]
   );
 
-  const headerTitle = view === 'hub' ? tHub('title') : t('title');
-  const headerSubtitle =
-    view === 'hub'
-      ? tHub('subtitle')
-      : jobId?.trim()
-        ? t('subtitleWithJob', { jobId })
-        : t('subtitle');
+  const openAgentSession = useCallback(
+    (agentId: string, sessionId: string) => {
+      onClose();
+      openAgentSessionTarget(router, pathname, locale, agentId, sessionId);
+    },
+    [locale, onClose, pathname, router]
+  );
+
+  const showFullHeader = view !== 'hub' || !hubEnabled;
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col bg-white', className)}>
-      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200/80 px-4 py-3">
-        <div className="flex min-w-0 items-start gap-2">
-          {view === 'cv' && hubEnabled && !jobId?.trim() ? (
-            <button
-              type="button"
-              onClick={backToHub}
-              className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4E5969] hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
-              aria-label={tHub('backToHub')}
-            >
-              <ArrowLeft className="h-5 w-5" aria-hidden />
-            </button>
-          ) : null}
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[#1D2129]">
-              {headerTitle}
-            </p>
-            <p className="truncate text-xs text-[#86909C]">{headerSubtitle}</p>
+      <header
+        className={cn(
+          'flex shrink-0 items-center justify-between gap-2 border-b border-gray-200/80',
+          showFullHeader ? 'px-4 py-3' : 'px-2 py-1.5'
+        )}
+      >
+        {showFullHeader ? (
+          <div className="flex min-w-0 items-start gap-2">
+            {view === 'cv' && hubEnabled && !jobId?.trim() ? (
+              <button
+                type="button"
+                onClick={backToHub}
+                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4E5969] hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+                aria-label={tHub('backToHub')}
+              >
+                <ArrowLeft className="h-5 w-5" aria-hidden />
+              </button>
+            ) : null}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-[#1D2129]">
+                {t('title')}
+              </p>
+              <p className="truncate text-xs text-[#86909C]">
+                {jobId?.trim()
+                  ? t('subtitleWithJob', { jobId })
+                  : t('subtitle')}
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <p className="truncate px-1 text-xs font-medium text-[#86909C]">
+            {tHub('title')}
+          </p>
+        )}
         <button
           type="button"
           onClick={onClose}
@@ -134,7 +141,13 @@ export function CvWorkspaceRail({
       </header>
       <div className="min-h-0 flex-1">
         {view === 'hub' ? (
-          <WorkspaceSideRailHub onAction={handleHubAction} />
+          <WorkspaceSideRailHub
+            locale={locale}
+            onOpenCv={openCvDrillDown}
+            onOpenCvSession={openCvSession}
+            onOpenAgentSession={openAgentSession}
+            onNavigate={handleHubNavigate}
+          />
         ) : (
           <AgentTransitionProvider
             locale={locale}

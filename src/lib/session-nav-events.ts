@@ -21,6 +21,18 @@ export function publishSessionNavOpenWorkspaceRail(): void {
   );
 }
 
+export const SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT =
+  'kazi-session-nav-chat-side-rail-open';
+
+export function publishSessionNavChatSideRailOpen(open: boolean): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent(SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT, {
+      detail: { open },
+    })
+  );
+}
+
 export type SessionNavOpenFileDetail = {
   agentId: string;
   sessionId: string;

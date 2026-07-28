@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl';
 import { CvWorkspaceRail } from '@/components/cv/cv-workspace-rail';
 import { JobDetailRail } from '@/components/jobs/job-detail-rail';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
+import { publishSessionNavChatSideRailOpen } from '@/lib/session-nav-events';
 import type { JobPracticeContext } from '@/types/jobs';
 import { cn } from '@/lib/utils';
 
@@ -104,7 +105,19 @@ export function ChatSideRailsHost({
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const railKind = cvRail.open ? 'cv' : jobId ? 'job' : null;
+  const railOpen = Boolean(railKind);
   const onCloseRail = cvRail.open ? onCloseCv : onCloseJob;
+
+  const prevRailOpenRef = useRef(railOpen);
+  useEffect(() => {
+    if (prevRailOpenRef.current === railOpen) return;
+    prevRailOpenRef.current = railOpen;
+    publishSessionNavChatSideRailOpen(railOpen);
+  }, [railOpen]);
+
+  useEffect(() => {
+    return () => publishSessionNavChatSideRailOpen(false);
+  }, []);
 
   const setRailWidth = useCallback((next: number, persist = false) => {
     const hostWidth = hostRef.current?.clientWidth ?? window.innerWidth;

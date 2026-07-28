@@ -565,13 +565,14 @@
 			"done": "Дайын"
 		},
 		"railHub": {
-			"title": "Жұмыс аймағы",
+			"title": "Активтер",
 			"subtitle": "Мансап активтері — белгішені басыңыз",
 			"zonesLabel": "Аймақтар",
 			"zoneCareer": "Мансап",
 			"zoneWork": "Жұмыс",
 			"zoneFinance": "Қаржы",
-			"zoneBusiness": "Тағы",
+			"zoneBusiness": "Бизнес",
+			"zoneBusinessHint": "Кеңістіктер және болашақ құралдар.",
 			"tileCv": "Түйіндеме",
 			"tileCvHint": "Қарау, экспорт, бейімдеу",
 			"tileInterview": "Сұхбат",
@@ -580,9 +581,15 @@
 			"tileEnglishHint": "Жаттықтырушы",
 			"tileJobs": "Вакансиялар",
 			"tileJobsHint": "Іздеу және сақталған",
-			"openWorkspaceRail": "Жұмыс панелін ашу",
+			"tileSpaces": "Кеңістіктер",
+			"assetNewResume": "Жаңа түйіндеме",
+			"assetReadiness": "Дайындық",
+			"resumeIndex": "Түйіндеме {index}",
+			"sessionInterview": "Сұхбат",
+			"sessionEnglish": "Ағылшын",
+			"openWorkspaceRail": "Актив панелін ашу",
 			"zoneComingSoon": "Жақында",
-			"backToHub": "Жұмыс аймағына оралу"
+			"backToHub": "Активтерге"
 		}
 	},
 	"nba": {
