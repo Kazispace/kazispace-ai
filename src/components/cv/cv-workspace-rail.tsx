@@ -92,6 +92,7 @@ export function CvWorkspaceRail({
     [locale, onClose, pathname, router]
   );
 
+  // CV detail / Space rail: header always shown (hubEnabled=false still uses CV panel header).
   const showFullHeader = view !== 'hub' || !hubEnabled;
 
   return (
@@ -134,6 +135,7 @@ export function CvWorkspaceRail({
         {view === 'hub' ? (
           <WorkspaceSideRailHub
             locale={locale}
+            showCloseButton
             onClose={onClose}
             onOpenCv={openCvDrillDown}
             onOpenCvSession={openCvSession}

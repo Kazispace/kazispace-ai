@@ -557,8 +557,8 @@
 			"sessionInterview": "Suhbat",
 			"sessionEnglish": "Ingliz",
 			"olderResumes": "Eski rezyumeler ({count})",
-			"olderInterview": "Eski suhbatlar ({count})",
-			"olderEnglish": "Eski ingliz ({count})",
+			"olderInterviews": "Eski suhbatlar ({count})",
+			"olderEnglishSessions": "Eski ingliz sessiyalari ({count})",
 			"openWorkspaceRail": "Aktiv paneli",
 			"zoneComingSoon": "Tez orada",
 			"backToHub": "Aktivlarga"

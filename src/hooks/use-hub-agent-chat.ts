@@ -16,7 +16,12 @@ import { fetchAgentMessages, sendAgentChat } from '@/lib/agent-api';
 import { mapAgentHistoryToChatMessages, type RawAgentHistoryMessage } from '@/lib/agent-sessions';
 import { handleAgentEnvelope } from '@/lib/handle-agent-envelope';
 import { openHubAgentSession } from '@/lib/hub-agent-open';
-import { useAuthStore } from '@/lib/store';
+import { takeHubSessionHandoff } from '@/lib/hub-session-handoff';
+import {
+  SESSION_NAV_SELECT_HISTORY_EVENT,
+  type SessionNavSelectHistoryDetail,
+} from '@/lib/session-nav-events';
+import { useAuthStore, useAgentStore } from '@/lib/store';
 
 export type HubChatMessage = {
   id: string;
@@ -108,6 +113,15 @@ export function useHubAgentChat(options: {
       setIsOpening(true);
       setOpenError(null);
 
+      const handoffSessionId = takeHubSessionHandoff(agentId);
+      if (handoffSessionId) {
+        if (gen !== openGenRef.current) return null;
+        setIsOpening(false);
+        syncSessionId(handoffSessionId);
+        await hydrateHistory(handoffSessionId);
+        return handoffSessionId;
+      }
+
       const open = await openHubAgentSession(agentId, locale);
       if (gen !== openGenRef.current) return null;
 
@@ -153,6 +167,36 @@ export function useHubAgentChat(options: {
       setOpenError(null);
     }
   }, [isLoggedIn, syncSessionId]);
+
+  const selectSession = useCallback(
+    async (sessionId: string) => {
+      if (!isLoggedIn || !enabled || !sessionId.trim()) return;
+      if (sessionIdRef.current === sessionId) return;
+      openGenRef.current += 1;
+      syncSessionId(sessionId);
+      useAgentStore.getState().setAgentSession(agentId, sessionId);
+      setMessages([]);
+      await hydrateHistory(sessionId);
+    },
+    [agentId, enabled, hydrateHistory, isLoggedIn, syncSessionId]
+  );
+
+  const selectSessionRef = useRef(selectSession);
+  useEffect(() => {
+    selectSessionRef.current = selectSession;
+  }, [selectSession]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const onSelectHistory = (event: Event) => {
+      const detail = (event as CustomEvent<SessionNavSelectHistoryDetail>).detail;
+      if (detail.agentId !== agentId) return;
+      void selectSessionRef.current(detail.sessionId);
+    };
+    window.addEventListener(SESSION_NAV_SELECT_HISTORY_EVENT, onSelectHistory);
+    return () =>
+      window.removeEventListener(SESSION_NAV_SELECT_HISTORY_EVENT, onSelectHistory);
+  }, [agentId, enabled]);
 
   const resyncSession = useCallback(async () => {
     openGenRef.current += 1;

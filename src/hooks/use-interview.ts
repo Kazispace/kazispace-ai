@@ -27,6 +27,11 @@ import {
 } from '@/lib/handle-agent-envelope';
 import { formatPrepMessage } from '@/lib/interview-message-format';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
+import { takeHubSessionHandoff } from '@/lib/hub-session-handoff';
+import {
+  SESSION_NAV_SELECT_HISTORY_EVENT,
+  type SessionNavSelectHistoryDetail,
+} from '@/lib/session-nav-events';
 import { resolveInterviewFeedbackCtas } from '@/lib/interview-cta';
 import { buildMockInterviewWorkflow } from '@/lib/workflow-catalog';
 import { MOCK_INTERVIEW_AGENT_ID, DEFAULT_INTERVIEW_LEVEL } from '@/lib/mock-interview-config';
@@ -144,6 +149,9 @@ export function useInterview(jobId?: string | null) {
   const jobStartInFlightRef = useRef(false);
   const hubOpenGenRef = useRef(0);
   const hubOpenInFlightRef = useRef<Promise<string | null> | null>(null);
+  const hydrateFromAgentHistoryRef = useRef<
+    (sid: string, greeting?: string, runId?: number) => Promise<void>
+  >(async () => {});
   const setAgentSending = useAgentStore((s) => s.setAgentSending);
 
   const finishIfStale = useCallback((runId: number) => {
@@ -388,6 +396,15 @@ export function useInterview(jobId?: string | null) {
 
     const openPromise = (async (): Promise<string | null> => {
       const gen = ++hubOpenGenRef.current;
+
+      const handoffSessionId = takeHubSessionHandoff(MOCK_INTERVIEW_AGENT_ID);
+      if (handoffSessionId) {
+        setAgentSessionId(handoffSessionId);
+        await hydrateFromAgentHistoryRef.current(handoffSessionId, undefined, gen);
+        if (gen !== hubOpenGenRef.current) return null;
+        return handoffSessionId;
+      }
+
       const open = await openHubAgentSession(MOCK_INTERVIEW_AGENT_ID, locale, {
         job_id: jobId ?? undefined,
       });
@@ -571,6 +588,10 @@ export function useInterview(jobId?: string | null) {
     [appendMessage, seedIntakeWelcome, startPolling]
   );
 
+  useEffect(() => {
+    hydrateFromAgentHistoryRef.current = hydrateFromAgentHistory;
+  }, [hydrateFromAgentHistory]);
+
   const resyncSession = useCallback(async () => {
     if (!isLoggedIn) return;
     const gen = ++hubOpenGenRef.current;
@@ -608,6 +629,28 @@ export function useInterview(jobId?: string | null) {
     if (!isLoggedIn || jobId) return;
     void ensureHubOpen();
   }, [ensureHubOpen, isLoggedIn, jobId]);
+
+  const selectHubSession = useCallback(
+    async (sid: string) => {
+      if (!sid.trim()) return;
+      hubOpenGenRef.current += 1;
+      setAgentSessionId(sid);
+      useAgentStore.getState().setAgentSession(MOCK_INTERVIEW_AGENT_ID, sid);
+      await hydrateFromAgentHistory(sid);
+    },
+    [hydrateFromAgentHistory]
+  );
+
+  useEffect(() => {
+    const onSelectHistory = (event: Event) => {
+      const detail = (event as CustomEvent<SessionNavSelectHistoryDetail>).detail;
+      if (detail.agentId !== MOCK_INTERVIEW_AGENT_ID) return;
+      void selectHubSession(detail.sessionId);
+    };
+    window.addEventListener(SESSION_NAV_SELECT_HISTORY_EVENT, onSelectHistory);
+    return () =>
+      window.removeEventListener(SESSION_NAV_SELECT_HISTORY_EVENT, onSelectHistory);
+  }, [selectHubSession]);
 
   useEffect(() => () => stopPolling(), [stopPolling]);
 

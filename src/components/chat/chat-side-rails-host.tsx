@@ -109,6 +109,7 @@ export function ChatSideRailsHost({
   const onCloseRail = cvRail.open ? onCloseCv : onCloseJob;
 
   const prevRailOpenRef = useRef(railOpen);
+  // Publish only on open↔closed transitions (not cv↔job) to avoid Context Header flash.
   useEffect(() => {
     if (prevRailOpenRef.current === railOpen) return;
     prevRailOpenRef.current = railOpen;

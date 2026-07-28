@@ -882,8 +882,8 @@
 			"sessionInterview": "Interview",
 			"sessionEnglish": "English",
 			"olderResumes": "Older resumes ({count})",
-			"olderInterview": "Older interviews ({count})",
-			"olderEnglish": "Older English ({count})",
+			"olderInterviews": "Older interviews ({count})",
+			"olderEnglishSessions": "Older English sessions ({count})",
 			"openWorkspaceRail": "Open workspace panel",
 			"zoneComingSoon": "Coming soon",
 			"backToHub": "Back to assets"

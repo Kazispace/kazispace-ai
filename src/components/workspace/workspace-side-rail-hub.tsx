@@ -28,9 +28,12 @@ import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { AgentSessionSummary } from '@/types';
 
+export const HUB_ASSET_GRID_CLASS = 'grid grid-cols-4 gap-1 sm:grid-cols-5';
+
 interface WorkspaceSideRailHubProps {
   locale: string;
   className?: string;
+  showCloseButton?: boolean;
   onClose?: () => void;
   onOpenCv?: () => void;
   onOpenCvSession?: (sessionId: string) => void;
@@ -61,6 +64,7 @@ const TONE_ICON_CLASS: Record<AssetTone, string> = {
 export function WorkspaceSideRailHub({
   locale,
   className,
+  showCloseButton = true,
   onClose,
   onOpenCv,
   onOpenCvSession,
@@ -106,7 +110,7 @@ export function WorkspaceSideRailHub({
         className
       )}
     >
-      {onClose ? (
+      {showCloseButton && onClose ? (
         <button
           type="button"
           onClick={onClose}
@@ -187,7 +191,7 @@ export function WorkspaceSideRailHub({
           />
         ))}
         <CollapsibleOlder
-          label={t('olderInterview', { count: interviewParts.older.length })}
+          label={t('olderInterviews', { count: interviewParts.older.length })}
           itemCount={interviewParts.older.length}
         >
           {interviewParts.older.map((session, index) => (
@@ -219,7 +223,9 @@ export function WorkspaceSideRailHub({
           />
         ))}
         <CollapsibleOlder
-          label={t('olderEnglish', { count: englishParts.older.length })}
+          label={t('olderEnglishSessions', {
+            count: englishParts.older.length,
+          })}
           itemCount={englishParts.older.length}
         >
           {englishParts.older.map((session, index) => (
@@ -278,7 +284,7 @@ function ZoneBlock({
       <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
         {title}
       </h2>
-      <div className="grid grid-cols-4 gap-1 sm:grid-cols-5">{children}</div>
+      <div className={HUB_ASSET_GRID_CLASS}>{children}</div>
     </section>
   );
 }
@@ -312,9 +318,7 @@ function CollapsibleOlder({
         {label}
       </button>
       {open ? (
-        <div className="mt-1 grid grid-cols-4 gap-1 sm:grid-cols-5">
-          {children}
-        </div>
+        <div className={cn('mt-1', HUB_ASSET_GRID_CLASS)}>{children}</div>
       ) : null}
     </div>
   );
@@ -332,11 +336,12 @@ function CvSessionIcon({
   onOpen: () => void;
 }) {
   const exited = session.status === 'exited';
+  const emptyTitle = !session.title?.trim();
   const icon = exited ? ScrollText : FileText;
   return (
     <AssetIcon
       icon={icon}
-      tone={exited ? 'muted' : 'resume'}
+      tone={exited || emptyTitle ? 'muted' : 'resume'}
       label={formatResumeLabel(session.title, index, t)}
       onClick={onOpen}
     />
@@ -361,7 +366,7 @@ function AgentSessionIcon({
   return (
     <AssetIcon
       icon={icon}
-      tone={tone}
+      tone={tone === 'muted' || !session.title?.trim() ? 'muted' : tone}
       label={formatSessionShort(session.title, index, prefix)}
       onClick={onOpen}
     />
