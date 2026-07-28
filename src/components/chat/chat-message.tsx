@@ -27,7 +27,7 @@ export function ChatMessage({ role, content, intent, timestamp }: ChatMessagePro
           className={cn(
             "px-4 py-3 rounded-2xl text-sm leading-relaxed",
             isUser
-              ? "bg-kazi-orange text-white rounded-br-sm"
+              ? "bg-user-bubble text-[#1D2129] border border-orange-200/55 rounded-br-sm"
               : "bg-white border border-gray-200 text-gray-900 rounded-bl-sm"
           )}
         >

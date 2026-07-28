@@ -26,6 +26,8 @@ const config: Config = {
         },
         'clinic-bubble': '#F0F2F5',
         'agent-bubble': '#F0FDF4',
+        /** User-sent message fill (Clinic) — tint only, not saturated brand orange */
+        'user-bubble': '#FFF7F0',
         orange: {
           DEFAULT: '#D96E28',
           d: '#B85A1F',
