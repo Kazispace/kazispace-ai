@@ -5,7 +5,9 @@ import {
   Briefcase,
   FileText,
   Landmark,
+  Languages,
   LayoutGrid,
+  Mic,
   Sparkles,
   type LucideIcon,
 } from 'lucide-react';
@@ -15,9 +17,15 @@ import { cn } from '@/lib/utils';
 
 export type WorkspaceSideRailHubZoneId = 'career' | 'work' | 'finance' | 'business';
 
+export type WorkspaceSideRailHubAction =
+  | 'cv'
+  | 'interview'
+  | 'english'
+  | 'jobs';
+
 interface WorkspaceSideRailHubProps {
   className?: string;
-  onOpenCv?: () => void;
+  onAction?: (action: WorkspaceSideRailHubAction) => void;
 }
 
 interface ZoneConfig {
@@ -37,7 +45,7 @@ const ZONES: ZoneConfig[] = [
 /** Shallow icon hub for the right rail — drill down from tiles, not full CV by default. */
 export function WorkspaceSideRailHub({
   className,
-  onOpenCv,
+  onAction,
 }: WorkspaceSideRailHubProps) {
   const t = useTranslations('cv.railHub');
   const [activeZone, setActiveZone] =
@@ -82,11 +90,30 @@ export function WorkspaceSideRailHub({
               icon={FileText}
               title={t('tileCv')}
               hint={t('tileCvHint')}
-              onClick={onOpenCv}
+              onClick={() => onAction?.('cv')}
+            />
+            <HubTile
+              icon={Mic}
+              title={t('tileInterview')}
+              hint={t('tileInterviewHint')}
+              onClick={() => onAction?.('interview')}
+            />
+            <HubTile
+              icon={Languages}
+              title={t('tileEnglish')}
+              hint={t('tileEnglishHint')}
+              onClick={() => onAction?.('english')}
             />
           </div>
         ) : activeZone === 'work' ? (
-          <p className="text-sm text-[#86909C]">{t('workZoneEmpty')}</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <HubTile
+              icon={Briefcase}
+              title={t('tileJobs')}
+              hint={t('tileJobsHint')}
+              onClick={() => onAction?.('jobs')}
+            />
+          </div>
         ) : (
           <p className="text-sm text-[#86909C]">{t('zoneComingSoon')}</p>
         )}

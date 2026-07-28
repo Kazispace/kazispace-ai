@@ -574,6 +574,13 @@
 			"zoneBusiness": "Тағы",
 			"tileCv": "Түйіндеме",
 			"tileCvHint": "Қарау, экспорт, бейімдеу",
+			"tileInterview": "Сұхбат",
+			"tileInterviewHint": "Жаттығу",
+			"tileEnglish": "Ағылшын",
+			"tileEnglishHint": "Жаттықтырушы",
+			"tileJobs": "Вакансиялар",
+			"tileJobsHint": "Іздеу және сақталған",
+			"openWorkspaceRail": "Жұмыс панелін ашу",
 			"workZoneEmpty": "Вакансия құралдары әзірге чатта және Jobs бөлімінде.",
 			"zoneComingSoon": "Жақында",
 			"backToHub": "Жұмыс аймағына оралу"

@@ -2,11 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { AgentTransitionProvider } from '@/components/agent-transition/agent-transition-provider';
 import { JobSprintCvPanel } from '@/components/spaces/panels/job-sprint-cv-panel';
-import { WorkspaceSideRailHub } from '@/components/workspace/workspace-side-rail-hub';
+import {
+  WorkspaceSideRailHub,
+  type WorkspaceSideRailHubAction,
+} from '@/components/workspace/workspace-side-rail-hub';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { useAuthStore } from '@/lib/store';
@@ -17,6 +21,7 @@ type CvRailView = 'hub' | 'cv';
 interface CvWorkspaceRailProps {
   locale: string;
   jobId?: string | null;
+  drillDown?: boolean;
   onClose: () => void;
   className?: string;
   /** Agent transition context — Clinic rail defaults to `clinic`; Space rail uses `cv` + space return href. */
@@ -24,10 +29,19 @@ interface CvWorkspaceRailProps {
   transitionReturnHref?: string;
 }
 
+function resolveInitialView(
+  jobId?: string | null,
+  drillDown?: boolean
+): CvRailView {
+  if (jobId?.trim() || drillDown) return 'cv';
+  return 'hub';
+}
+
 /** Right-rail workspace hub + optional CV drill-down — chat stays in Clinic or Space column. */
 export function CvWorkspaceRail({
   locale,
   jobId,
+  drillDown = false,
   onClose,
   className,
   transitionFromSurface = 'clinic',
@@ -36,22 +50,47 @@ export function CvWorkspaceRail({
   const t = useTranslations('cv');
   const tHub = useTranslations('cv.railHub');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const router = useRouter();
 
   const [view, setView] = useState<CvRailView>(() =>
-    jobId?.trim() ? 'cv' : 'hub'
+    resolveInitialView(jobId, drillDown)
   );
 
   useEffect(() => {
-    if (jobId?.trim()) {
+    if (jobId?.trim() || drillDown) {
       setView('cv');
     }
-  }, [jobId]);
+  }, [jobId, drillDown]);
 
   const openCvDrillDown = useCallback(() => setView('cv'), []);
   const backToHub = useCallback(() => setView('hub'), []);
 
-  const headerTitle =
-    view === 'hub' ? tHub('title') : t('title');
+  const handleHubAction = useCallback(
+    (action: WorkspaceSideRailHubAction) => {
+      switch (action) {
+        case 'cv':
+          openCvDrillDown();
+          return;
+        case 'interview':
+          onClose();
+          router.push(`/${locale}/interview`);
+          return;
+        case 'english':
+          onClose();
+          router.push(`/${locale}/english`);
+          return;
+        case 'jobs':
+          onClose();
+          router.push(`/${locale}/jobs`);
+          return;
+        default:
+          return;
+      }
+    },
+    [locale, onClose, openCvDrillDown, router]
+  );
+
+  const headerTitle = view === 'hub' ? tHub('title') : t('title');
   const headerSubtitle =
     view === 'hub'
       ? tHub('subtitle')
@@ -91,7 +130,7 @@ export function CvWorkspaceRail({
       </header>
       <div className="min-h-0 flex-1">
         {view === 'hub' ? (
-          <WorkspaceSideRailHub onOpenCv={openCvDrillDown} />
+          <WorkspaceSideRailHub onAction={handleHubAction} />
         ) : (
           <AgentTransitionProvider
             locale={locale}

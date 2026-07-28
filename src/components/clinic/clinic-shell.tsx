@@ -41,6 +41,9 @@ import { exitAgentSession, newAgentSession } from "@/lib/agent-api";
 import { openHubAgentSession } from "@/lib/hub-agent-open";
 import { getAgentHubPath } from "@/lib/agent-transition/surfaces";
 import { publishSessionNavInvalidate } from "@/lib/session-nav-invalidate";
+import {
+  SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+} from "@/lib/session-nav-events";
 import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
 import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, stripAgentParamsFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
@@ -139,16 +142,25 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const [cvRailOpen, setCvRailOpen] = useState(false);
   const [cvRailJobId, setCvRailJobId] = useState<string | null>(null);
+  const [cvRailDrillDown, setCvRailDrillDown] = useState(false);
 
-  const openCvRail = useCallback((targetJobId?: string | null) => {
-    const jobId = targetJobId?.trim() || null;
-    setCvRailJobId(jobId);
-    setCvRailOpen(true);
-  }, []);
+  const openCvRail = useCallback(
+    (
+      targetJobId?: string | null,
+      options?: { drillDown?: boolean }
+    ) => {
+      const jobId = targetJobId?.trim() || null;
+      setCvRailJobId(jobId);
+      setCvRailDrillDown(Boolean(options?.drillDown) || Boolean(jobId));
+      setCvRailOpen(true);
+    },
+    []
+  );
 
   const closeCvRail = useCallback(() => {
     setCvRailOpen(false);
     setCvRailJobId(null);
+    setCvRailDrillDown(false);
   }, []);
 
   const openCvRailRef = useRef(openCvRail);
@@ -164,6 +176,21 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     const q = stripCvRailOpenParams(searchParams).toString();
     router.replace(`/${locale}/chat${q ? `?${q}` : ""}`, { scroll: false });
   }, [searchParams, locale, router]);
+
+  useEffect(() => {
+    const onOpenWorkspaceRail = () => {
+      openCvRailRef.current(undefined, { drillDown: false });
+    };
+    window.addEventListener(
+      SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+      onOpenWorkspaceRail
+    );
+    return () =>
+      window.removeEventListener(
+        SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+        onOpenWorkspaceRail
+      );
+  }, []);
 
   const routeInterviewPage = useCallback(
     (targetJobId?: string | null) => {
@@ -833,7 +860,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
               greeting: msg?.content?.trim() || undefined,
             });
             markStreamComplete(result.assistantId);
-            openCvRail();
+            openCvRail(undefined, { drillDown: true });
             return;
           }
           if (msg?.role === "assistant") {
@@ -1289,6 +1316,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
               }
             : undefined
         }
+        onOpenWorkspaceHub={
+          !isAgentMode && isLoggedIn
+            ? () => openCvRail(undefined, { drillDown: false })
+            : undefined
+        }
       />
       )}
 
@@ -1345,7 +1377,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         jobId={selectedJobId}
         locale={locale}
         onCloseJob={() => setSelectedJobId(null)}
-        cvRail={{ open: cvRailOpen, jobId: cvRailJobId }}
+        cvRail={{ open: cvRailOpen, jobId: cvRailJobId, drillDown: cvRailDrillDown }}
         onCloseCv={closeCvRail}
         onPracticeForJob={handlePracticeForJob}
         practiceDisabled={isSending || isSwitching}

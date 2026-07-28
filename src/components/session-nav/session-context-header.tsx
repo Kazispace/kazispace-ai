@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { FileText, FolderOpen, MoreHorizontal, Search } from 'lucide-react';
+import { FileText, FolderOpen, LayoutGrid, MoreHorizontal, Search } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -27,7 +27,7 @@ import {
   shouldUseGlobalAgentForContextHeader,
 } from '@/lib/spaces/capability';
 import { isClinicChatPathname } from '@/lib/space-nav';
-import { publishSessionNavOpenFile } from '@/lib/session-nav-events';
+import { publishSessionNavOpenFile, publishSessionNavOpenWorkspaceRail } from '@/lib/session-nav-events';
 import {
   resolveContextHeaderSession,
   resolveSessionNavBadge,
@@ -56,6 +56,7 @@ export function SessionContextHeader({
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
   const tSpaces = useTranslations('spaces');
+  const tRailHub = useTranslations('cv.railHub');
   const showToast = useUIStore((s) => s.showToast);
   const clinicActiveAgentId = useAgentStore((s) => s.activeAgentId);
   const hubAgentId = getDedicatedHubAgentFromPathname(pathname);
@@ -180,6 +181,7 @@ export function SessionContextHeader({
   );
   const showHeaderActions =
     showSessionActions || showBackToClinic || showSpaceLifecycle;
+  const showClinicWorkspaceRail = isClinicChatPathname(pathname);
 
   const closeDrawer = () => {
     setDrawer(null);
@@ -235,6 +237,17 @@ export function SessionContextHeader({
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
+          {showClinicWorkspaceRail ? (
+            <button
+              type="button"
+              onClick={() => publishSessionNavOpenWorkspaceRail()}
+              className="rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]"
+              aria-label={tRailHub('openWorkspaceRail')}
+              title={tRailHub('openWorkspaceRail')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          ) : null}
           {showSessionActions ? (
             <>
               <button

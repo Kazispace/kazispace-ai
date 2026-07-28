@@ -592,6 +592,13 @@
 			"zoneBusiness": "Ещё",
 			"tileCv": "Резюме",
 			"tileCvHint": "Просмотр, экспорт, адаптация",
+			"tileInterview": "Интервью",
+			"tileInterviewHint": "Пробное собеседование",
+			"tileEnglish": "Английский",
+			"tileEnglishHint": "Тренер и инструменты",
+			"tileJobs": "Вакансии",
+			"tileJobsHint": "Поиск и сохранённые",
+			"openWorkspaceRail": "Открыть рабочую панель",
 			"workZoneEmpty": "Инструменты по вакансиям пока в чате и разделе Jobs.",
 			"zoneComingSoon": "Скоро",
 			"backToHub": "Назад в рабочую зону"

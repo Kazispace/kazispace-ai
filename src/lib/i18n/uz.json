@@ -543,6 +543,13 @@
 			"zoneBusiness": "Yana",
 			"tileCv": "Rezyume",
 			"tileCvHint": "Ko'rish, eksport, moslashtirish",
+			"tileInterview": "Suhbat",
+			"tileInterviewHint": "Mashq",
+			"tileEnglish": "Ingliz tili",
+			"tileEnglishHint": "Murabbiy",
+			"tileJobs": "Ishlar",
+			"tileJobsHint": "Qidiruv va saqlangan",
+			"openWorkspaceRail": "Ish panelini ochish",
 			"workZoneEmpty": "Ish vositalari hozircha chat va Jobs bo'limida.",
 			"zoneComingSoon": "Tez orada",
 			"backToHub": "Ish maydoniga qaytish"
