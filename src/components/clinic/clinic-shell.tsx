@@ -1395,7 +1395,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           <HubWorkflowStrip workflow={agentActiveWorkflow} locale={locale} />
         ) : null}
         <div
-          className={`flex flex-col gap-3 min-h-0 ${
+          className={`mx-auto flex w-full max-w-3xl flex-col gap-3 min-h-0 ${
             isAgentMode ? "p-4" : ""
           }`}
         >

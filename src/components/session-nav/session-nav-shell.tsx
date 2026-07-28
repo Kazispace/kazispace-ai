@@ -37,7 +37,10 @@ import {
 import { CLINIC_SPACE_ID, isSpacesEnabled } from '@/lib/spaces/constants';
 import { createSpace } from '@/lib/spaces-api';
 import { useSpaceLifecycle } from '@/hooks/use-space-lifecycle';
-import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
+import {
+  publishSessionNavSessionExited,
+  SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT,
+} from '@/lib/session-nav-events';
 import { isTelegramWebApp } from '@/lib/telegram';
 import { WorkspaceShellProvider } from '@/lib/workspace-shell-context';
 import { useUIStore } from '@/lib/store';
@@ -98,6 +101,7 @@ function SessionNavShellLayout({
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [isCreatingSpace, setIsCreatingSpace] = useState(false);
   const [spaceFilter, setSpaceFilter] = useState<SpaceNavFilter>('active');
+  const [chatSideRailOpen, setChatSideRailOpen] = useState(false);
   const {
     run: runSidebarLifecycle,
     pendingSpaceId: sidebarPendingSpaceId,
@@ -122,7 +126,24 @@ function SessionNavShellLayout({
   const panelVisible = panelOpen || mobileDrawerOpen;
   const contextHeaderSpaceId =
     spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
-  const showContextHeader = isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId);
+  const showContextHeader =
+    (isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId)) &&
+    !(isClinic && chatSideRailOpen);
+
+  useEffect(() => {
+    const onSideRail = (event: Event) => {
+      const open = Boolean(
+        (event as CustomEvent<{ open: boolean }>).detail?.open
+      );
+      setChatSideRailOpen(open);
+    };
+    window.addEventListener(SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT, onSideRail);
+    return () =>
+      window.removeEventListener(
+        SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT,
+        onSideRail
+      );
+  }, []);
 
   useEffect(() => {
     if (!pinNavPanel) return;

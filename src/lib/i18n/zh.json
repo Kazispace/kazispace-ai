@@ -683,13 +683,14 @@
 			"done": "完成"
 		},
 		"railHub": {
-			"title": "工作区",
+			"title": "资产",
 			"subtitle": "职业资产一览，点图标进入",
 			"zonesLabel": "分区",
 			"zoneCareer": "职业区",
 			"zoneWork": "工作区",
 			"zoneFinance": "理财区",
-			"zoneBusiness": "业务区",
+			"zoneBusiness": "商务区",
+			"zoneBusinessHint": "空间与后续业务工具。",
 			"tileCv": "简历",
 			"tileCvHint": "预览、导出、定制",
 			"tileInterview": "面试",
@@ -698,9 +699,15 @@
 			"tileEnglishHint": "教练与工具",
 			"tileJobs": "岗位",
 			"tileJobsHint": "搜索与收藏",
-			"openWorkspaceRail": "打开工作区面板",
+			"tileSpaces": "空间",
+			"assetNewResume": "新建简历",
+			"assetReadiness": "准备度",
+			"resumeIndex": "简历 {index}",
+			"sessionInterview": "面试",
+			"sessionEnglish": "英语",
+			"openWorkspaceRail": "打开资产面板",
 			"zoneComingSoon": "即将上线",
-			"backToHub": "返回工作区"
+			"backToHub": "返回资产"
 		}
 	},
 	"english": {

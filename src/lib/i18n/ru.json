@@ -583,13 +583,14 @@
 			"done": "Готово"
 		},
 		"railHub": {
-			"title": "Рабочая зона",
+			"title": "Активы",
 			"subtitle": "Карьерные материалы — нажмите на иконку",
 			"zonesLabel": "Зоны",
 			"zoneCareer": "Карьера",
 			"zoneWork": "Работа",
 			"zoneFinance": "Финансы",
-			"zoneBusiness": "Ещё",
+			"zoneBusiness": "Бизнес",
+			"zoneBusinessHint": "Пространства и будущие инструменты.",
 			"tileCv": "Резюме",
 			"tileCvHint": "Просмотр, экспорт, адаптация",
 			"tileInterview": "Интервью",
@@ -598,9 +599,15 @@
 			"tileEnglishHint": "Тренер и инструменты",
 			"tileJobs": "Вакансии",
 			"tileJobsHint": "Поиск и сохранённые",
-			"openWorkspaceRail": "Открыть рабочую панель",
+			"tileSpaces": "Пространства",
+			"assetNewResume": "Новое резюме",
+			"assetReadiness": "Готовность",
+			"resumeIndex": "Резюме {index}",
+			"sessionInterview": "Интервью",
+			"sessionEnglish": "Английский",
+			"openWorkspaceRail": "Открыть панель активов",
 			"zoneComingSoon": "Скоро",
-			"backToHub": "Назад в рабочую зону"
+			"backToHub": "К активам"
 		}
 	},
 	"nba": {
