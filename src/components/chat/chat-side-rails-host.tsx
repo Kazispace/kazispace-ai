@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 
 import { CvWorkspaceRail } from '@/components/cv/cv-workspace-rail';
 import { JobDetailRail } from '@/components/jobs/job-detail-rail';
+import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import type { JobPracticeContext } from '@/types/jobs';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +28,12 @@ export interface CvRailState {
   jobId?: string | null;
 }
 
+/** Passed into CV rail when host is Space (blank template); Clinic omits → defaults. */
+export interface CvRailTransitionContext {
+  fromSurface: AgentSurfaceId;
+  returnHref?: string;
+}
+
 interface ChatSideRailsHostProps {
   locale: string;
   children: ReactNode;
@@ -35,6 +42,7 @@ interface ChatSideRailsHostProps {
   onCloseJob: () => void;
   cvRail: CvRailState;
   onCloseCv: () => void;
+  cvRailTransition?: CvRailTransitionContext;
   onPracticeForJob?: (ctx: JobPracticeContext) => void;
   practiceDisabled?: boolean;
 }
@@ -80,6 +88,7 @@ export function ChatSideRailsHost({
   onCloseJob,
   cvRail,
   onCloseCv,
+  cvRailTransition,
   onPracticeForJob,
   practiceDisabled = false,
 }: ChatSideRailsHostProps) {
@@ -218,6 +227,8 @@ export function ChatSideRailsHost({
         locale={locale}
         jobId={cvRail.jobId}
         onClose={onCloseCv}
+        transitionFromSurface={cvRailTransition?.fromSurface}
+        transitionReturnHref={cvRailTransition?.returnHref}
       />
     ) : railKind === 'job' && jobId ? (
       <JobDetailRail
