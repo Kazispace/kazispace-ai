@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { useEffect, useRef, type ReactNode, useCallback, useMemo, useState } from 'react';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -22,9 +22,12 @@ import {
 import {
   buildSpaceCvPanelHref,
   buildSpaceCvRailHref,
+  CV_OPEN_RAIL_QUERY_PARAM,
   CV_RAIL_QUERY_PARAM,
   isLegacyCvHubHref,
   parseJobIdFromHref,
+  searchParamsRequestCvRailOpen,
+  stripCvRailOpenParams,
 } from '@/lib/cv-entry';
 import { resolveSpacePanels } from '@/lib/spaces/panels';
 import {
@@ -76,7 +79,11 @@ function remapCvNavigationForSpace(
     return resolveSpaceCvEntryHref(locale, space, parseJobIdFromHref(href));
   }
   const clinicCv = `/${locale}/chat`;
-  if (href.startsWith(clinicCv) && href.includes(`${CV_RAIL_QUERY_PARAM}=1`)) {
+  if (
+    href.startsWith(clinicCv) &&
+    (href.includes(`${CV_OPEN_RAIL_QUERY_PARAM}=1`) ||
+      href.includes(`${CV_RAIL_QUERY_PARAM}=1`))
+  ) {
     return resolveSpaceCvEntryHref(locale, space, parseJobIdFromHref(href));
   }
   return href;
@@ -97,6 +104,16 @@ export function SpaceChatPane({
   const panels = useMemo(() => resolveSpacePanels(space), [space]);
   const hasCvPanel = panels.some((p) => p.panel_id === 'cv');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [cvRailOpen, setCvRailOpen] = useState(false);
+  const [cvRailJobId, setCvRailJobId] = useState<string | null>(null);
+
+  const openCvRail = useCallback((targetJobId?: string | null) => {
+    setCvRailJobId(targetJobId?.trim() || null);
+    setCvRailOpen(true);
+  }, []);
+
+  const openCvRailRef = useRef(openCvRail);
+  openCvRailRef.current = openCvRail;
   const {
     messages,
     isHydrating,
@@ -123,10 +140,6 @@ export function SpaceChatPane({
     setSelectedJobId(null);
   }, []);
 
-  const cvRailOpen =
-    !hasCvPanel && searchParams.get(CV_RAIL_QUERY_PARAM) === '1';
-  const cvRailJobId = searchParams.get('job_id');
-
   const cvRailTransition = useMemo(() => {
     if (hasCvPanel) return undefined;
     const { fromSurface } = resolveSpacePanelAgentConfig('cv_workspace');
@@ -136,15 +149,24 @@ export function SpaceChatPane({
     };
   }, [hasCvPanel, locale, space.id]);
 
-  const closeCvRail = useCallback(() => {
-    const next = new URLSearchParams(searchParams.toString());
-    next.delete(CV_RAIL_QUERY_PARAM);
-    const q = next.toString();
+  useEffect(() => {
+    if (hasCvPanel) return;
+    if (!searchParamsRequestCvRailOpen(searchParams)) return;
+
+    const jobId = searchParams.get('job_id')?.trim() || null;
+    openCvRailRef.current(jobId);
+
+    const q = stripCvRailOpenParams(searchParams).toString();
     router.replace(
       `/${locale}/spaces/${encodeURIComponent(space.id)}${q ? `?${q}` : ''}`,
       { scroll: false }
     );
-  }, [locale, router, searchParams, space.id]);
+  }, [hasCvPanel, searchParams, locale, router, space.id]);
+
+  const closeCvRail = useCallback(() => {
+    setCvRailOpen(false);
+    setCvRailJobId(null);
+  }, []);
 
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
@@ -193,7 +215,24 @@ export function SpaceChatPane({
     (action: ChatNextAction) => {
       const rawHref = resolveNextActionHref(locale, action);
       if (rawHref) {
-        router.push(remapCvNavigationForSpace(locale, space, rawHref));
+        const href = remapCvNavigationForSpace(locale, space, rawHref);
+        try {
+          const url = new URL(href, 'https://kazispace.local');
+          const spacePath = `/${locale}/spaces/${encodeURIComponent(space.id)}`;
+          if (
+            !hasCvPanel &&
+            url.pathname === spacePath &&
+            searchParamsRequestCvRailOpen(url.searchParams)
+          ) {
+            openCvRail(parseJobIdFromHref(href));
+            const q = stripCvRailOpenParams(url.searchParams).toString();
+            router.replace(`${spacePath}${q ? `?${q}` : ''}`, { scroll: false });
+            return;
+          }
+        } catch {
+          // fall through to router.push
+        }
+        router.push(href);
         return;
       }
       const prompt = resolveNextActionChatPrompt(action, locale);
@@ -201,7 +240,7 @@ export function SpaceChatPane({
         void sendAndPin(prompt);
       }
     },
-    [locale, router, sendAndPin, space]
+    [hasCvPanel, locale, openCvRail, router, sendAndPin, space]
   );
 
   const composerNode =
@@ -241,7 +280,7 @@ export function SpaceChatPane({
       jobId={selectedJobId}
       locale={locale}
       onCloseJob={closeJobDetail}
-      cvRail={{ open: cvRailOpen, jobId: cvRailJobId }}
+      cvRail={{ open: !hasCvPanel && cvRailOpen, jobId: cvRailJobId }}
       onCloseCv={closeCvRail}
       cvRailTransition={cvRailTransition}
       onPracticeForJob={handlePracticeForJob}

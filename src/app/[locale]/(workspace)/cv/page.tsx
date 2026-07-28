@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { buildClinicCvRailHref } from '@/lib/cv-entry';
+import { buildClinicCvRailOpenHref } from '@/lib/cv-entry';
 
 interface CvLegacyRedirectPageProps {
   params: { locale: string };
@@ -19,5 +19,5 @@ export default function CvLegacyRedirectPage({
       : Array.isArray(rawJobId)
         ? rawJobId[0]
         : null;
-  redirect(buildClinicCvRailHref(params.locale, jobId));
+  redirect(buildClinicCvRailOpenHref(params.locale, jobId));
 }

@@ -1,4 +1,4 @@
-import { buildClinicCvRailHref } from '@/lib/cv-entry';
+import { buildClinicCvRailOpenHref } from '@/lib/cv-entry';
 import { resolveActionLabel } from '@/lib/chat-envelope';
 import type { ChatNextAction } from '@/types/chat-envelope';
 import type { InterviewCta, InterviewCtaType } from '@/types';
@@ -25,7 +25,7 @@ export function getInterviewCtaHref(
 
   switch (cta.cta_type) {
     case 'edit_cv':
-      return buildClinicCvRailHref(locale, jobId);
+      return buildClinicCvRailOpenHref(locale, jobId);
     case 'view_jobs':
       return `/${locale}/jobs`;
     case 'back_to_clinic':

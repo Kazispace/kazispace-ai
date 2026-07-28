@@ -1,4 +1,4 @@
-import { buildClinicCvRailHref } from '@/lib/cv-entry';
+import { buildClinicCvRailOpenHref } from '@/lib/cv-entry';
 import { getCompleteProfileHref } from '@/lib/profile-routing';
 import type { ReadinessCheckSource } from '@/types';
 
@@ -30,7 +30,7 @@ export function getJobCtaHref(
     case 'complete_profile':
       return getCompleteProfileHref(locale);
     case 'edit_cv':
-      return buildClinicCvRailHref(locale, jobId);
+      return buildClinicCvRailOpenHref(locale, jobId);
     case 'start_interview':
       return jobId
         ? `/${locale}/interview?job_id=${encodeURIComponent(jobId)}`

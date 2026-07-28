@@ -7,7 +7,7 @@
  * `/interview`, `/english` remain dedicated Hub chat-first routes for now.
  */
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
-import { buildClinicCvRailHref } from '@/lib/cv-entry';
+import { buildClinicChatHref, buildClinicCvRailOpenHref } from '@/lib/cv-entry';
 import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
 import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
@@ -29,8 +29,8 @@ const SURFACE_TO_HUB_AGENT: Partial<Record<AgentSurfaceId, string>> = {
 };
 
 const SURFACE_PATH: Record<AgentSurfaceId, (locale: string) => string> = {
-  clinic: (locale) => `/${locale}/chat`,
-  cv: (locale) => buildClinicCvRailHref(locale),
+  clinic: (locale) => buildClinicChatHref(locale),
+  cv: (locale) => buildClinicCvRailOpenHref(locale),
   interview: (locale) => `/${locale}/interview`,
   english: (locale) => `/${locale}/english`,
 };
@@ -57,7 +57,7 @@ export function getSurfacePath(locale: string, surfaceId: AgentSurfaceId): strin
 
 export function getAgentHubPath(locale: string, agentId: string): string | null {
   if (agentId === CV_BUILDER_AGENT_ID) {
-    return buildClinicCvRailHref(locale);
+    return buildClinicChatHref(locale);
   }
   const surface = HUB_AGENT_TO_SURFACE[agentId];
   return surface ? getSurfacePath(locale, surface) : null;
