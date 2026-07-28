@@ -27,11 +27,7 @@ export function ChatMessage({ role, content, intent, timestamp }: ChatMessagePro
           className={cn(
             "px-4 py-3 rounded-2xl text-sm leading-relaxed",
             isUser
-<<<<<<< HEAD
-              ? "bg-kazi-orange text-white rounded-br-sm"
-=======
               ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-br-sm"
->>>>>>> 9142b3e (fix(ui): user bubbles use workspace-active (#FFF4EC) per option B)
               : "bg-white border border-gray-200 text-gray-900 rounded-bl-sm"
           )}
         >
