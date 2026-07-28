@@ -578,6 +578,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       if (pending?.type === 'activate_agent') {
         if (pending.agentId === CV_BUILDER_AGENT_ID) {
           openCvRail();
+          if (!cancelled) setLayerReady(true);
           return;
         }
         if (pending.agentId === MOCK_INTERVIEW_AGENT_ID) {
@@ -627,6 +628,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
       if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
         openCvRail();
+        if (!cancelled) setLayerReady(true);
         return;
       }
       if (deepLinkAgent && shouldOpenInterviewPage(deepLinkAgent)) {

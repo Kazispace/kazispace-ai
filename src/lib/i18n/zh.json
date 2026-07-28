@@ -593,6 +593,7 @@
 	"cv": {
 		"title": "简历助手",
 		"subtitle": "与 AI 对话，制作你的简历",
+		"closeRail": "关闭简历面板",
 		"subtitleWithJob": "为岗位 {jobId} 定制简历",
 		"backToMine": "← 返回我的",
 		"loginBanner": "登录后即可创建并保存简历。",

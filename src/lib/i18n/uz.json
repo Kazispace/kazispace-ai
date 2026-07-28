@@ -447,6 +447,7 @@
 	"cv": {
 		"title": "Rezyume yaratuvchi",
 		"subtitle": "AI bilan suhbatda rezyume tuzing",
+		"closeRail": "Rezyume panelini yopish",
 		"subtitleWithJob": "Vakansiya uchun rezyume: {jobId}",
 		"backToMine": "← Profilga",
 		"loginBanner": "Rezyume yaratish uchun tizimga kiring.",
