@@ -31,6 +31,7 @@ interface WorkspaceSideRailHubProps {
   className?: string;
   onOpenCv?: () => void;
   onOpenCvSession?: (sessionId: string) => void;
+  onOpenAgentSession?: (agentId: string, sessionId: string) => void;
   onNavigate?: (path: string) => void;
 }
 
@@ -40,6 +41,7 @@ export function WorkspaceSideRailHub({
   className,
   onOpenCv,
   onOpenCvSession,
+  onOpenAgentSession,
   onNavigate,
 }: WorkspaceSideRailHubProps) {
   const t = useTranslations('cv.railHub');
@@ -100,20 +102,24 @@ export function WorkspaceSideRailHub({
           label={t('tileEnglish')}
           onClick={() => push(`/${locale}/english`)}
         />
-        {interviewSessions.slice(0, 4).map((session, index) => (
+        {interviewSessions.slice(0, 8).map((session, index) => (
           <AssetIcon
             key={session.session_id}
             icon={Mic}
             label={formatSessionShort(session.title, index, t('sessionInterview'))}
-            onClick={() => push(`/${locale}/interview`)}
+            onClick={() =>
+              onOpenAgentSession?.(MOCK_INTERVIEW_AGENT_ID, session.session_id)
+            }
           />
         ))}
-        {englishSessions.slice(0, 4).map((session, index) => (
+        {englishSessions.slice(0, 8).map((session, index) => (
           <AssetIcon
             key={session.session_id}
             icon={Languages}
             label={formatSessionShort(session.title, index, t('sessionEnglish'))}
-            onClick={() => push(`/${locale}/english`)}
+            onClick={() =>
+              onOpenAgentSession?.(ENGLISH_TUTOR_AGENT_ID, session.session_id)
+            }
           />
         ))}
       </ZoneBlock>

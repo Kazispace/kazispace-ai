@@ -105,12 +105,19 @@ export function ChatSideRailsHost({
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   const railKind = cvRail.open ? 'cv' : jobId ? 'job' : null;
+  const railOpen = Boolean(railKind);
   const onCloseRail = cvRail.open ? onCloseCv : onCloseJob;
 
+  const prevRailOpenRef = useRef(railOpen);
   useEffect(() => {
-    publishSessionNavChatSideRailOpen(Boolean(railKind));
+    if (prevRailOpenRef.current === railOpen) return;
+    prevRailOpenRef.current = railOpen;
+    publishSessionNavChatSideRailOpen(railOpen);
+  }, [railOpen]);
+
+  useEffect(() => {
     return () => publishSessionNavChatSideRailOpen(false);
-  }, [railKind]);
+  }, []);
 
   const setRailWidth = useCallback((next: number, persist = false) => {
     const hostWidth = hostRef.current?.clientWidth ?? window.innerWidth;

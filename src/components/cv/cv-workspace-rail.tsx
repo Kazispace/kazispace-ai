@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { AgentTransitionProvider } from '@/components/agent-transition/agent-transition-provider';
@@ -13,6 +13,7 @@ import {
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { primeSessionNavHandoff } from '@/lib/session-nav-handoff';
+import { openAgentSessionTarget } from '@/lib/session-nav';
 import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
@@ -55,6 +56,7 @@ export function CvWorkspaceRail({
   const tHub = useTranslations('cv.railHub');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const router = useRouter();
+  const pathname = usePathname();
 
   const [view, setView] = useState<CvRailView>(() =>
     resolveInitialView(jobId, drillDown, hubEnabled)
@@ -80,6 +82,14 @@ export function CvWorkspaceRail({
       router.push(path);
     },
     [onClose, router]
+  );
+
+  const openAgentSession = useCallback(
+    (agentId: string, sessionId: string) => {
+      onClose();
+      openAgentSessionTarget(router, pathname, locale, agentId, sessionId);
+    },
+    [locale, onClose, pathname, router]
   );
 
   const showFullHeader = view !== 'hub' || !hubEnabled;
@@ -135,6 +145,7 @@ export function CvWorkspaceRail({
             locale={locale}
             onOpenCv={openCvDrillDown}
             onOpenCvSession={openCvSession}
+            onOpenAgentSession={openAgentSession}
             onNavigate={handleHubNavigate}
           />
         ) : (
