@@ -22,7 +22,7 @@ describe('session-nav', () => {
     const jobSearch = rows.find((r) => r.agentId === 'job_search');
     expect(jobSearch?.disabled).toBe(true);
     expect(jobSearch?.badge).toBe('clinicInline');
-    expect(rows.find((r) => r.agentId === 'cv_builder')?.href).toBe('/en/cv');
+    expect(rows.find((r) => r.agentId === 'cv_builder')?.href).toBe('/en/chat?cv=1');
   });
 
   it('resolves active row from pathname', () => {

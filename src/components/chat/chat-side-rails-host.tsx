@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { useTranslations } from 'next-intl';
 
+import { CvWorkspaceRail } from '@/components/cv/cv-workspace-rail';
 import { JobDetailRail } from '@/components/jobs/job-detail-rail';
 import type { JobPracticeContext } from '@/types/jobs';
 import { cn } from '@/lib/utils';
@@ -19,22 +20,26 @@ const DEFAULT_RAIL_WIDTH = 480;
 const MIN_RAIL_WIDTH = 320;
 const MAX_RAIL_WIDTH = 720;
 const KEYBOARD_STEP_PX = 16;
-const WIDTH_STORAGE_KEY = 'ks.jobDetailRail.width.v1';
+const WIDTH_STORAGE_KEY = 'ks.chatSideRail.width.v1';
 
-interface JobDetailRailHostProps {
-  jobId: string | null;
+export interface CvRailState {
+  open: boolean;
+  jobId?: string | null;
+}
+
+interface ChatSideRailsHostProps {
   locale: string;
-  onClose: () => void;
   children: ReactNode;
   className?: string;
+  jobId: string | null;
+  onCloseJob: () => void;
+  cvRail: CvRailState;
+  onCloseCv: () => void;
   onPracticeForJob?: (ctx: JobPracticeContext) => void;
-  /** Disable "Practice for this job" while the host chat turn is in flight. */
   practiceDisabled?: boolean;
 }
 
 function clampRailWidth(width: number, containerWidth: number): number {
-  // Cap at 55% of host so chat stays usable. Floor with MIN so a tiny host
-  // (should not happen at lg+) still keeps a usable rail floor.
   const maxForChat = Math.max(
     MIN_RAIL_WIDTH,
     Math.floor(containerWidth * 0.55)
@@ -59,29 +64,34 @@ function writeStoredWidth(width: number): void {
   try {
     sessionStorage.setItem(WIDTH_STORAGE_KEY, String(width));
   } catch {
-    // private mode / quota
+    // ignore
   }
 }
 
 /**
- * Chat column + optional job detail rail.
- * Desktop: resizable right aside. Mobile: full-screen overlay.
+ * Clinic / Space chat column + optional right rail (job detail or CV workspace).
+ * CV rail takes precedence over job rail when both are requested.
  */
-export function JobDetailRailHost({
-  jobId,
+export function ChatSideRailsHost({
   locale,
-  onClose,
   children,
   className,
+  jobId,
+  onCloseJob,
+  cvRail,
+  onCloseCv,
   onPracticeForJob,
   practiceDisabled = false,
-}: JobDetailRailHostProps) {
-  const t = useTranslations('jobs');
+}: ChatSideRailsHostProps) {
+  const tJobs = useTranslations('jobs');
   const hostRef = useRef<HTMLDivElement>(null);
   const railWidthRef = useRef(DEFAULT_RAIL_WIDTH);
   const [railWidth, setRailWidthState] = useState(DEFAULT_RAIL_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  const railKind = cvRail.open ? 'cv' : jobId ? 'job' : null;
+  const onCloseRail = cvRail.open ? onCloseCv : onCloseJob;
 
   const setRailWidth = useCallback((next: number, persist = false) => {
     const hostWidth = hostRef.current?.clientWidth ?? window.innerWidth;
@@ -97,7 +107,6 @@ export function JobDetailRailHost({
     setRailWidth(stored);
   }, [setRailWidth]);
 
-  // Re-clamp when the host shrinks (e.g. window resize after a wide drag).
   useEffect(() => {
     const host = hostRef.current;
     if (!host || typeof ResizeObserver === 'undefined') return;
@@ -109,13 +118,13 @@ export function JobDetailRailHost({
   }, [setRailWidth]);
 
   useEffect(() => {
-    if (!jobId) return;
+    if (!railKind) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onCloseRail();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [jobId, onClose]);
+  }, [railKind, onCloseRail]);
 
   useEffect(() => {
     if (!isResizing) return;
@@ -203,6 +212,23 @@ export function JobDetailRailHost({
     setRailWidth(next, true);
   };
 
+  const railInner =
+    railKind === 'cv' ? (
+      <CvWorkspaceRail
+        locale={locale}
+        jobId={cvRail.jobId}
+        onClose={onCloseCv}
+      />
+    ) : railKind === 'job' && jobId ? (
+      <JobDetailRail
+        jobId={jobId}
+        locale={locale}
+        onClose={onCloseJob}
+        onPracticeForJob={onPracticeForJob}
+        practiceDisabled={practiceDisabled}
+      />
+    ) : null;
+
   return (
     <div
       ref={hostRef}
@@ -212,7 +238,7 @@ export function JobDetailRailHost({
         {children}
       </div>
 
-      {jobId ? (
+      {railInner ? (
         <>
           <aside
             style={{ width: railWidth }}
@@ -230,7 +256,7 @@ export function JobDetailRailHost({
               aria-valuenow={railWidth}
               aria-valuemin={MIN_RAIL_WIDTH}
               aria-valuemax={MAX_RAIL_WIDTH}
-              aria-label={t('resizeDetail')}
+              aria-label={tJobs('resizeDetail')}
               onPointerDown={onResizePointerDown}
               onKeyDown={onResizeKeyDown}
               className={cn(
@@ -240,13 +266,7 @@ export function JobDetailRailHost({
                 isResizing && 'bg-kazi-orange/40'
               )}
             />
-            <JobDetailRail
-              jobId={jobId}
-              locale={locale}
-              onClose={onClose}
-              onPracticeForJob={onPracticeForJob}
-              practiceDisabled={practiceDisabled}
-            />
+            {railInner}
           </aside>
           <div
             className={cn(
@@ -254,13 +274,7 @@ export function JobDetailRailHost({
               'animate-in fade-in slide-in-from-right duration-200'
             )}
           >
-            <JobDetailRail
-              jobId={jobId}
-              locale={locale}
-              onClose={onClose}
-              onPracticeForJob={onPracticeForJob}
-              practiceDisabled={practiceDisabled}
-            />
+            {railInner}
           </div>
         </>
       ) : null}

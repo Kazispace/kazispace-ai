@@ -1,4 +1,5 @@
 import type { InterviewProfileStatus, IrpCtaHint, IrpCtaType } from '@/types';
+import { buildClinicCvRailHref } from '@/lib/cv-entry';
 
 const IRP_CTA_TYPES: IrpCtaType[] = [
   'start_training',
@@ -145,9 +146,7 @@ export function getIrpCtaHref(
     case 'growth_history':
       return `/${locale}/interview/growth`;
     case 'edit_cv':
-      return jobId
-        ? `/${locale}/cv?job_id=${encodeURIComponent(jobId)}`
-        : `/${locale}/cv`;
+      return buildClinicCvRailHref(locale, jobId);
     case 'view_jobs':
       return `/${locale}/jobs`;
     case 'start_training':

@@ -1,5 +1,9 @@
 import type { ChatNextAction } from '@/types/chat-envelope';
 import { getCompleteProfileHref } from '@/lib/profile-routing';
+import {
+  isLegacyCvHubHref,
+  migrateLegacyCvHubHref,
+} from '@/lib/cv-entry';
 
 import {
   resolveInSpaceChatPrompt,
@@ -36,6 +40,9 @@ export function resolveNextActionHref(
 ): string | null {
   const explicit = action.path?.trim();
   if (explicit) {
+    if (isLegacyCvHubHref(explicit)) {
+      return migrateLegacyCvHubHref(locale, explicit);
+    }
     return normalizeAppPath(locale, explicit);
   }
 
