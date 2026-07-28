@@ -27,6 +27,10 @@ import {
   parseJobIdFromHref,
 } from '@/lib/cv-entry';
 import { resolveSpacePanels } from '@/lib/spaces/panels';
+import {
+  getSpacePanelReturnHref,
+  resolveSpacePanelAgentConfig,
+} from '@/lib/spaces/panel-agent-config';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
@@ -122,6 +126,15 @@ export function SpaceChatPane({
   const cvRailOpen =
     !hasCvPanel && searchParams.get(CV_RAIL_QUERY_PARAM) === '1';
   const cvRailJobId = searchParams.get('job_id');
+
+  const cvRailTransition = useMemo(() => {
+    if (hasCvPanel) return undefined;
+    const { fromSurface } = resolveSpacePanelAgentConfig('cv_workspace');
+    return {
+      fromSurface,
+      returnHref: getSpacePanelReturnHref(locale, space.id),
+    };
+  }, [hasCvPanel, locale, space.id]);
 
   const closeCvRail = useCallback(() => {
     const next = new URLSearchParams(searchParams.toString());
@@ -230,6 +243,7 @@ export function SpaceChatPane({
       onCloseJob={closeJobDetail}
       cvRail={{ open: cvRailOpen, jobId: cvRailJobId }}
       onCloseCv={closeCvRail}
+      cvRailTransition={cvRailTransition}
       onPracticeForJob={handlePracticeForJob}
       practiceDisabled={isSending}
       className="h-full w-full"

@@ -578,6 +578,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       if (pending?.type === 'activate_agent') {
         if (pending.agentId === CV_BUILDER_AGENT_ID) {
           openCvRail();
+          // Stays on ClinicShell (unlike interview/english hub navigations) — unblock layer spinner.
           if (!cancelled) setLayerReady(true);
           return;
         }
@@ -628,6 +629,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
       if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
         openCvRail();
+        // CV rail keeps user on /chat; interview/english routes leave ClinicShell (no setLayerReady).
         if (!cancelled) setLayerReady(true);
         return;
       }
