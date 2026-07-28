@@ -556,6 +556,9 @@
 			"resumeIndex": "Rezyume {index}",
 			"sessionInterview": "Suhbat",
 			"sessionEnglish": "Ingliz",
+			"olderResumes": "Eski rezyumeler ({count})",
+			"olderInterview": "Eski suhbatlar ({count})",
+			"olderEnglish": "Eski ingliz ({count})",
 			"openWorkspaceRail": "Aktiv paneli",
 			"zoneComingSoon": "Tez orada",
 			"backToHub": "Aktivlarga"
