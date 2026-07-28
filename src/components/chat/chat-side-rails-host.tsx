@@ -28,6 +28,8 @@ export interface CvRailState {
   jobId?: string | null;
   /** Skip icon hub and open CV panel (e.g. in-chat handoff to CV builder). */
   drillDown?: boolean;
+  /** Clinic: zone/tile hub. Space blank template: CV panel only (no hub). */
+  hubEnabled?: boolean;
 }
 
 /** Passed into CV rail when host is Space (blank template); Clinic omits → defaults. */
@@ -229,6 +231,7 @@ export function ChatSideRailsHost({
         locale={locale}
         jobId={cvRail.jobId}
         drillDown={cvRail.drillDown}
+        hubEnabled={cvRail.hubEnabled ?? true}
         onClose={onCloseCv}
         transitionFromSurface={cvRailTransition?.fromSurface}
         transitionReturnHref={cvRailTransition?.returnHref}

@@ -178,6 +178,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   }, [searchParams, locale, router]);
 
   useEffect(() => {
+    // Ref keeps handler stable — avoids re-binding when openCvRail identity changes.
     const onOpenWorkspaceRail = () => {
       openCvRailRef.current(undefined, { drillDown: false });
     };

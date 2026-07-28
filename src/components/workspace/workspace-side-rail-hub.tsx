@@ -106,7 +106,7 @@ export function WorkspaceSideRailHub({
             />
           </div>
         ) : activeZone === 'work' ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 justify-items-start gap-3 sm:grid-cols-3 [&:has(>:only-child)]:justify-items-center">
             <HubTile
               icon={Briefcase}
               title={t('tileJobs')}

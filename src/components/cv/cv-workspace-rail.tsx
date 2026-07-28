@@ -22,6 +22,8 @@ interface CvWorkspaceRailProps {
   locale: string;
   jobId?: string | null;
   drillDown?: boolean;
+  /** When false, always show CV panel (Space rail). Default true for Clinic. */
+  hubEnabled?: boolean;
   onClose: () => void;
   className?: string;
   /** Agent transition context — Clinic rail defaults to `clinic`; Space rail uses `cv` + space return href. */
@@ -31,9 +33,10 @@ interface CvWorkspaceRailProps {
 
 function resolveInitialView(
   jobId?: string | null,
-  drillDown?: boolean
+  drillDown?: boolean,
+  hubEnabled = true
 ): CvRailView {
-  if (jobId?.trim() || drillDown) return 'cv';
+  if (!hubEnabled || jobId?.trim() || drillDown) return 'cv';
   return 'hub';
 }
 
@@ -42,6 +45,7 @@ export function CvWorkspaceRail({
   locale,
   jobId,
   drillDown = false,
+  hubEnabled = true,
   onClose,
   className,
   transitionFromSurface = 'clinic',
@@ -53,14 +57,14 @@ export function CvWorkspaceRail({
   const router = useRouter();
 
   const [view, setView] = useState<CvRailView>(() =>
-    resolveInitialView(jobId, drillDown)
+    resolveInitialView(jobId, drillDown, hubEnabled)
   );
 
   useEffect(() => {
-    if (jobId?.trim() || drillDown) {
+    if (!hubEnabled || jobId?.trim() || drillDown) {
       setView('cv');
     }
-  }, [jobId, drillDown]);
+  }, [jobId, drillDown, hubEnabled]);
 
   const openCvDrillDown = useCallback(() => setView('cv'), []);
   const backToHub = useCallback(() => setView('hub'), []);
@@ -102,7 +106,7 @@ export function CvWorkspaceRail({
     <div className={cn('flex h-full min-h-0 flex-col bg-white', className)}>
       <header className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200/80 px-4 py-3">
         <div className="flex min-w-0 items-start gap-2">
-          {view === 'cv' && !jobId?.trim() ? (
+          {view === 'cv' && hubEnabled && !jobId?.trim() ? (
             <button
               type="button"
               onClick={backToHub}

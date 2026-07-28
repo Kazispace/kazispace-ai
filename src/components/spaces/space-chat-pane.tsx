@@ -280,7 +280,11 @@ export function SpaceChatPane({
       jobId={selectedJobId}
       locale={locale}
       onCloseJob={closeJobDetail}
-      cvRail={{ open: !hasCvPanel && cvRailOpen, jobId: cvRailJobId }}
+      cvRail={{
+        open: !hasCvPanel && cvRailOpen,
+        jobId: cvRailJobId,
+        hubEnabled: false,
+      }}
       onCloseCv={closeCvRail}
       cvRailTransition={cvRailTransition}
       onPracticeForJob={handlePracticeForJob}
