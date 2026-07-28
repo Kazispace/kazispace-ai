@@ -270,13 +270,7 @@ export function MessageBubble({
               isUser
               ? isFailed
                 ? "bg-red-950/40 text-red-200 border border-red-800/60 rounded-br-[4px]"
-<<<<<<< HEAD
-                : isWorkspace
-                  ? "bg-workspace-accent text-white rounded-br-[4px]"
-                  : "bg-kazi-orange text-white rounded-br-[4px]"
-=======
                 : "bg-workspace-active text-workspace-text border border-workspace-border rounded-br-[4px]"
->>>>>>> 9142b3e (fix(ui): user bubbles use workspace-active (#FFF4EC) per option B)
               : variant === "agent"
                 ? isWorkspace
                   ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-bl-[4px]"
