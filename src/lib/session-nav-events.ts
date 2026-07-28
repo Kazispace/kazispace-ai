@@ -10,6 +10,17 @@ export const SESSION_NAV_SESSION_EXITED_EVENT = 'kazi-session-nav-session-exited
 
 export const SESSION_NAV_OPEN_FILE_EVENT = 'kazi-session-nav-open-file';
 
+/** Open Clinic / Space right-rail workspace hub (icon tiles). */
+export const SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT =
+  'kazi-session-nav-open-workspace-rail';
+
+export function publishSessionNavOpenWorkspaceRail(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent(SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT)
+  );
+}
+
 export type SessionNavOpenFileDetail = {
   agentId: string;
   sessionId: string;

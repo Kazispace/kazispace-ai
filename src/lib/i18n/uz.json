@@ -532,6 +532,26 @@
 			"generate": "Yaratish",
 			"review": "Ko'rib chiqish",
 			"done": "Tayyor"
+		},
+		"railHub": {
+			"title": "Ish maydoni",
+			"subtitle": "Martaba aktivlari — belgini bosing",
+			"zonesLabel": "Zonalar",
+			"zoneCareer": "Martaba",
+			"zoneWork": "Ish",
+			"zoneFinance": "Moliya",
+			"zoneBusiness": "Yana",
+			"tileCv": "Rezyume",
+			"tileCvHint": "Ko'rish, eksport, moslashtirish",
+			"tileInterview": "Suhbat",
+			"tileInterviewHint": "Mashq",
+			"tileEnglish": "Ingliz tili",
+			"tileEnglishHint": "Murabbiy",
+			"tileJobs": "Ishlar",
+			"tileJobsHint": "Qidiruv va saqlangan",
+			"openWorkspaceRail": "Ish panelini ochish",
+			"zoneComingSoon": "Tez orada",
+			"backToHub": "Ish maydoniga qaytish"
 		}
 	},
 	"nba": {

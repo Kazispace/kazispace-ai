@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { History } from "lucide-react";
+import { History, LayoutGrid } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ interface ChatHeaderProps {
   isOnline?: boolean;
   onBackToClinic?: () => void;
   onOpenSessionHistory?: () => void;
+  onOpenWorkspaceHub?: () => void;
 }
 
 export function ChatHeader({
@@ -31,11 +32,13 @@ export function ChatHeader({
   isOnline = true,
   onBackToClinic,
   onOpenSessionHistory,
+  onOpenWorkspaceHub,
 }: ChatHeaderProps) {
   const t = useTranslations("chat");
   const tSessions = useTranslations("agentSessions");
   const tNav = useTranslations("nav");
   const tTma = useTranslations("tma");
+  const tCv = useTranslations("cv.railHub");
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
 
   const headerEmoji =
@@ -99,6 +102,19 @@ export function ChatHeader({
           aria-label={tSessions("sessionHistory")}
         >
           <History className="h-4 w-4" />
+        </Button>
+      ) : null}
+
+      {mode === "clinic" && onOpenWorkspaceHub ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-white/70 hover:text-white shrink-0"
+          onClick={onOpenWorkspaceHub}
+          aria-label={tCv("openWorkspaceRail")}
+        >
+          <LayoutGrid className="h-4 w-4" />
         </Button>
       ) : null}
 

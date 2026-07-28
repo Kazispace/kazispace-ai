@@ -857,6 +857,26 @@
 			"generate": "Generate",
 			"review": "Review",
 			"done": "Done"
+		},
+		"railHub": {
+			"title": "Workspace",
+			"subtitle": "Career assets at a glance — tap an icon to open",
+			"zonesLabel": "Zones",
+			"zoneCareer": "Career",
+			"zoneWork": "Jobs",
+			"zoneFinance": "Finance",
+			"zoneBusiness": "More",
+			"tileCv": "Resumes",
+			"tileCvHint": "Preview, export, tailor",
+			"tileInterview": "Interview",
+			"tileInterviewHint": "Mock practice",
+			"tileEnglish": "English",
+			"tileEnglishHint": "Coach & tools",
+			"tileJobs": "Jobs",
+			"tileJobsHint": "Search & saved roles",
+			"openWorkspaceRail": "Open workspace panel",
+			"zoneComingSoon": "Coming soon",
+			"backToHub": "Back to workspace hub"
 		}
 	},
 	"nba": {
