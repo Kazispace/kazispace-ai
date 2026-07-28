@@ -3,7 +3,10 @@
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { AgentTransitionProvider } from '@/components/agent-transition/agent-transition-provider';
 import { JobSprintCvPanel } from '@/components/spaces/panels/job-sprint-cv-panel';
+import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 interface CvWorkspaceRailProps {
@@ -21,6 +24,7 @@ export function CvWorkspaceRail({
   className,
 }: CvWorkspaceRailProps) {
   const t = useTranslations('cv');
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
   return (
     <div className={cn('flex h-full min-h-0 flex-col bg-white', className)}>
@@ -39,7 +43,14 @@ export function CvWorkspaceRail({
         </button>
       </header>
       <div className="min-h-0 flex-1">
-        <JobSprintCvPanel locale={locale} jobId={jobId} className="h-full" />
+        <AgentTransitionProvider
+          locale={locale}
+          fromSurface="clinic"
+          hubAgentId={CV_BUILDER_AGENT_ID}
+          isLoggedIn={isLoggedIn}
+        >
+          <JobSprintCvPanel locale={locale} jobId={jobId} className="h-full" />
+        </AgentTransitionProvider>
       </div>
     </div>
   );
