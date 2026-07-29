@@ -483,7 +483,7 @@ function WorkspaceCenterColumn({
             'transition-[width,min-width] duration-200 ease-out',
             chatSideRailOpen
               ? 'border-l border-[#E5E6EB] bg-white'
-              : 'pointer-events-none max-w-0'
+              : 'pointer-events-none w-0 max-w-0 border-l-0'
           )}
           aria-hidden={!chatSideRailOpen}
         />
