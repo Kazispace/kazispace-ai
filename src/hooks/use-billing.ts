@@ -7,6 +7,7 @@ import { getCachedBilling, setCachedBilling } from '@/lib/billing-cache';
 import { useAuthStore } from '@/lib/store';
 import type { CreditBalance, CurrentPlan } from '@/types';
 
+/** Billing summary + plan; uses `billing-cache` (5 min TTL) unless `refresh(true)`. */
 export function useBilling() {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const [balance, setBalance] = useState<CreditBalance | null>(null);
@@ -33,9 +34,8 @@ export function useBilling() {
           return;
         }
       }
-
-      setIsLoading(true);
       setError(null);
+      setIsLoading(true);
 
       const [summaryRes, planRes] = await Promise.all([
         getBillingSummary(),

@@ -15,11 +15,14 @@ import { useTranslations } from 'next-intl';
 import type { SessionNavPanelMode } from '@/lib/session-nav';
 import { cn } from '@/lib/utils';
 import { getSurfacePath } from '@/lib/agent-transition/surfaces';
+import { SessionIconRailCredits } from '@/components/session-nav/session-icon-rail-credits';
 
 interface SessionIconRailProps {
   locale: string;
   panelOpen: boolean;
   panelMode: SessionNavPanelMode;
+  /** When true (Spaces MVP), hide list search entry on the rail. */
+  spacesMode?: boolean;
   onToggleAgentsPanel: () => void;
   onOpenFilesPanel: () => void;
   onOpenSearchPanel: () => void;
@@ -30,6 +33,7 @@ export function SessionIconRail({
   locale,
   panelOpen,
   panelMode,
+  spacesMode = false,
   onToggleAgentsPanel,
   onOpenFilesPanel,
   onOpenSearchPanel,
@@ -101,9 +105,12 @@ export function SessionIconRail({
 
       {iconBtn(agentsActive, handleAgentsClick, t('agents'), <Bot className="h-5 w-5" />)}
       {iconBtn(filesActive, onOpenFilesPanel, t('files'), <FolderOpen className="h-5 w-5" />)}
-      {iconBtn(searchActive, onOpenSearchPanel, t('search'), <Search className="h-5 w-5" />)}
+      {!spacesMode
+        ? iconBtn(searchActive, onOpenSearchPanel, t('search'), <Search className="h-5 w-5" />)
+        : null}
 
-      <div className="mt-auto flex flex-col gap-1">
+      <div className="mt-auto flex flex-col items-center gap-1">
+        <SessionIconRailCredits locale={locale} />
         <Link
           href={`/${locale}/mine`}
           className="flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"

@@ -340,6 +340,7 @@ function SessionNavShellLayout({
           locale={locale}
           panelOpen={panelVisible}
           panelMode={panelMode}
+          spacesMode={spacesEnabled}
           onToggleAgentsPanel={handleToggleAgentsPanel}
           onOpenFilesPanel={() => openPanelMode('files')}
           onOpenSearchPanel={() => openPanelMode('search')}
