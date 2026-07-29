@@ -379,6 +379,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [historyReadOnly, setHistoryReadOnly] = useState(false);
   const [isSwitchingSession, setIsSwitchingSession] = useState(false);
+  const [clinicHistoryLoadFailed, setClinicHistoryLoadFailed] = useState(false);
   const sessionHistoryTriggerRef = useRef<HTMLElement | null>(null);
   const manualSessionSelectRef = useRef(false);
   const sessionSwitchGenRef = useRef(0);
@@ -614,6 +615,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       if (pending?.type === 'activate_agent') {
         if (pending.agentId === CV_BUILDER_AGENT_ID) {
           openCvRailRef.current();
+          await loadHistoryRef.current();
           if (!cancelled) setLayerReady(true);
           return;
         }
@@ -664,8 +666,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
       if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
         openCvRailRef.current();
-        // URL-only cleanup; layerReady is local state (not searchParams-driven).
         stripAgentParamsFromUrl();
+        await loadHistoryRef.current();
         if (!cancelled) setLayerReady(true);
         return;
       }
@@ -799,6 +801,52 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     pendingClinicHistoryReloadRef.current = false;
     void loadHistory();
   }, [isClinicSending, loadHistory]);
+
+  /** One catch-up load when layer is ready but bootstrap left an empty thread. */
+  const emptyHistoryRecoveryAttemptedRef = useRef(false);
+  useEffect(() => {
+    if (
+      !isLoggedIn ||
+      !layerReady ||
+      isAgentMode ||
+      isHistoryLoading ||
+      isClinicSending
+    ) {
+      return;
+    }
+    if (clinicMessages.length > 0) {
+      emptyHistoryRecoveryAttemptedRef.current = false;
+      setClinicHistoryLoadFailed(false);
+      return;
+    }
+    if (emptyHistoryRecoveryAttemptedRef.current) return;
+    emptyHistoryRecoveryAttemptedRef.current = true;
+    void loadHistory().then((ok) => {
+      if (!ok) {
+        console.error('[ClinicShell] clinic history load failed (recovery)');
+        setClinicHistoryLoadFailed(true);
+      }
+    });
+  }, [
+    clinicMessages.length,
+    isAgentMode,
+    isClinicSending,
+    isHistoryLoading,
+    isLoggedIn,
+    layerReady,
+    loadHistory,
+  ]);
+
+  const retryClinicHistoryLoad = useCallback(() => {
+    emptyHistoryRecoveryAttemptedRef.current = false;
+    setClinicHistoryLoadFailed(false);
+    void loadHistory().then((ok) => {
+      if (!ok) {
+        console.error('[ClinicShell] clinic history load failed (manual retry)');
+        setClinicHistoryLoadFailed(true);
+      }
+    });
+  }, [loadHistory]);
 
   const beforeVoiceTranscribe = useCallback(() => {
     if (!isLoggedIn) {
@@ -1404,6 +1452,27 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
             <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
             <p className="text-sm">{tClinic("layerResolving")}</p>
+          </div>
+        ) : !isAgentMode &&
+          clinicHistoryLoadFailed &&
+          clinicMessages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-gray-500">
+            <p className="text-sm text-red-600">{tClinic("historyLoadFailed")}</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={retryClinicHistoryLoad}
+            >
+              {tClinic("historyRetry")}
+            </Button>
+          </div>
+        ) : !isAgentMode &&
+          isHistoryLoading &&
+          clinicMessages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
+            <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+            <p className="text-sm">{tClinic("historyLoading")}</p>
           </div>
         ) : showWelcome ? (
           <WelcomeView

@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useChatStore, useUIStore } from '@/lib/store';
+import { useAuthStore, useChatStore, useUIStore } from '@/lib/store';
 import {
   sendChatMessage,
   fetchChatHistory,
@@ -10,7 +10,8 @@ import {
 } from '@/lib/api-client';
 import { isPaywallError, isProfileIncomplete, isLlmBusy, isInteractiveInProgress } from '@/lib/api-errors';
 import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
-import { ensureMasterSession } from '@/lib/master-session';
+import { getAuthToken } from '@/lib/auth';
+import { ensureMasterSession, syncMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
 import { looksLikeResearchRequest } from '@/lib/clinic/upgrade-cta';
 import { isPlaceholderReply, resolveSpaceTurnReply } from '@/lib/spaces/turn';
@@ -114,7 +115,9 @@ async function recoverPlaceholderReplyFromHistory(
 }
 
 export function useClinicChat(locale?: string) {
-  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const masterSessionSyncedRef = useRef(false);
   const {
     messages,
     isStreaming,
@@ -129,6 +132,12 @@ export function useClinicChat(locale?: string) {
   const showToast = useUIStore((s) => s.showToast);
   const openPaywall = useUIStore((s) => s.openPaywall);
   const tErrors = useTranslations('errors');
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      masterSessionSyncedRef.current = false;
+    }
+  }, [isLoggedIn]);
 
   const handleApiFailure = useCallback(
     (res: {
@@ -161,11 +170,18 @@ export function useClinicChat(locale?: string) {
 
     setIsHistoryLoading(true);
     try {
+      if (getAuthToken() && !masterSessionSyncedRef.current) {
+        await syncMasterSession();
+        masterSessionSyncedRef.current = true;
+      }
       const sessionId = await ensureMasterSession();
       const fromServer = await fetchNormalizedHistory(sessionId);
       const local = useChatStore.getState().messages;
       setMessages(mergeClinicMessagesAfterHistoryLoad(local, fromServer));
       return true;
+    } catch (error) {
+      console.error('[useClinicChat] loadHistory failed', error);
+      return false;
     } finally {
       setIsHistoryLoading(false);
     }
