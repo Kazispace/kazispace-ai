@@ -448,6 +448,7 @@ export function SessionNavPanel({
         </p>
       )}
 
+      {/* Spaces MVP: in-list search removed (low space count); restore when space list grows. */}
       {!spacesMode ? (
       <div className="border-b border-[#E5E6EB] px-3 py-2">
         <label className="relative block">
@@ -519,7 +520,7 @@ export function SessionNavPanel({
                         setContextMenuId(isMenuOpen ? null : row.id);
                       }}
                       className={cn(
-                        'min-w-0 flex-1 rounded-lg px-2.5 py-2 text-left',
+                        'min-w-0 flex-1 rounded-lg px-3 py-2.5 text-left min-h-11 md:min-h-0 md:px-2.5 md:py-2',
                         row.disabled && 'cursor-not-allowed opacity-60'
                       )}
                     >

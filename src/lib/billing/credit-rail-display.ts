@@ -1,7 +1,10 @@
 import type { CreditBalance } from '@/types';
 
-/** Below this total (CV + interview), rail shows red “top up” styling. */
-export const CREDIT_RAIL_LOW_THRESHOLD = 3;
+/**
+ * Balances strictly below this total use “low credits” styling on the icon rail.
+ * (e.g. 3 → low, 4 → OK — use `<` not `<=` for clearer naming.)
+ */
+export const CREDIT_RAIL_LOW_THRESHOLD = 4;
 
 export function creditRailTotal(balance: CreditBalance | null | undefined): number {
   if (!balance) return 0;
@@ -9,7 +12,7 @@ export function creditRailTotal(balance: CreditBalance | null | undefined): numb
 }
 
 export function isCreditRailLow(balance: CreditBalance | null | undefined): boolean {
-  return creditRailTotal(balance) <= CREDIT_RAIL_LOW_THRESHOLD;
+  return creditRailTotal(balance) < CREDIT_RAIL_LOW_THRESHOLD;
 }
 
 /** Compact label for narrow icon rail (e.g. 139.1k). */

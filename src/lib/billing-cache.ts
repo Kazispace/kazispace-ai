@@ -1,6 +1,7 @@
 import type { CreditBalance, CurrentPlan } from '@/types';
 
-const CACHE_TTL_MS = 30_000;
+/** Shared in-memory billing cache TTL (see `getCachedBilling`). */
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 interface BillingCacheEntry {
   balance: CreditBalance;
