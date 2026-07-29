@@ -302,7 +302,7 @@ export function SpaceChatPane({
         <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-col gap-3">
           {!spaceSessionReady ? (
             <p className="py-8 text-center text-sm text-red-600">{t('spaceNotReady')}</p>
-          ) : isHydrating && messages.length === 0 ? (
+          ) : (!historyReady || isHydrating) && messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
               <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
               <p className="text-sm">{t('loading')}</p>
@@ -322,7 +322,6 @@ export function SpaceChatPane({
                 nextActions={message.nextActions}
                 locale={locale}
                 variant="clinic"
-                surface="workspace"
                 composerTarget="space"
                 streamComplete
                 onJobCardClick={handleJobCardClick}

@@ -10,7 +10,8 @@ import {
 } from '@/lib/api-client';
 import { isPaywallError, isProfileIncomplete, isLlmBusy, isInteractiveInProgress } from '@/lib/api-errors';
 import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
-import { ensureMasterSession } from '@/lib/master-session';
+import { getAuthToken } from '@/lib/auth';
+import { ensureMasterSession, syncMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
 import { looksLikeResearchRequest } from '@/lib/clinic/upgrade-cta';
 import { isPlaceholderReply, resolveSpaceTurnReply } from '@/lib/spaces/turn';
@@ -114,7 +115,7 @@ async function recoverPlaceholderReplyFromHistory(
 }
 
 export function useClinicChat(locale?: string) {
-  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const {
     messages,
     isStreaming,
@@ -161,6 +162,9 @@ export function useClinicChat(locale?: string) {
 
     setIsHistoryLoading(true);
     try {
+      if (getAuthToken()) {
+        await syncMasterSession();
+      }
       const sessionId = await ensureMasterSession();
       const fromServer = await fetchNormalizedHistory(sessionId);
       const local = useChatStore.getState().messages;

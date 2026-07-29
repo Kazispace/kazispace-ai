@@ -614,6 +614,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       if (pending?.type === 'activate_agent') {
         if (pending.agentId === CV_BUILDER_AGENT_ID) {
           openCvRailRef.current();
+          await loadHistoryRef.current();
           if (!cancelled) setLayerReady(true);
           return;
         }
@@ -664,8 +665,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       const deepLinkAgent = getDeepLinkAgentId(window.location.search);
       if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
         openCvRailRef.current();
-        // URL-only cleanup; layerReady is local state (not searchParams-driven).
         stripAgentParamsFromUrl();
+        await loadHistoryRef.current();
         if (!cancelled) setLayerReady(true);
         return;
       }
@@ -799,6 +800,35 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     pendingClinicHistoryReloadRef.current = false;
     void loadHistory();
   }, [isClinicSending, loadHistory]);
+
+  /** Recover when layer is ready but history never landed (stale isHistoryLoading / skipped bootstrap). */
+  const clinicHistoryEmptyRetryRef = useRef(false);
+  useEffect(() => {
+    if (
+      !isLoggedIn ||
+      !layerReady ||
+      isAgentMode ||
+      isHistoryLoading ||
+      isClinicSending
+    ) {
+      return;
+    }
+    if (clinicMessages.length > 0) {
+      clinicHistoryEmptyRetryRef.current = false;
+      return;
+    }
+    if (clinicHistoryEmptyRetryRef.current) return;
+    clinicHistoryEmptyRetryRef.current = true;
+    void loadHistory();
+  }, [
+    clinicMessages.length,
+    isAgentMode,
+    isClinicSending,
+    isHistoryLoading,
+    isLoggedIn,
+    layerReady,
+    loadHistory,
+  ]);
 
   const beforeVoiceTranscribe = useCallback(() => {
     if (!isLoggedIn) {
@@ -1404,6 +1434,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
             <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
             <p className="text-sm">{tClinic("layerResolving")}</p>
+          </div>
+        ) : !isAgentMode &&
+          isHistoryLoading &&
+          clinicMessages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
+            <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+            <p className="text-sm">{tSpaces("loading")}</p>
           </div>
         ) : showWelcome ? (
           <WelcomeView
