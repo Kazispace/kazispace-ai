@@ -166,6 +166,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const openCvRailRef = useRef(openCvRail);
   openCvRailRef.current = openCvRail;
+  const cvRailOpenRef = useRef(cvRailOpen);
+  cvRailOpenRef.current = cvRailOpen;
+  const closeCvRailRef = useRef(closeCvRail);
+  closeCvRailRef.current = closeCvRail;
 
   /** In-app / external `?open_cv=1` (or legacy `?cv=1`) — not tied to bootstrap layerReady. */
   useEffect(() => {
@@ -183,8 +187,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       openCvRailRef.current(undefined, { drillDown: false });
     };
     const onToggleWorkspaceRail = () => {
-      if (cvRailOpen) {
-        closeCvRail();
+      if (cvRailOpenRef.current) {
+        closeCvRailRef.current();
         return;
       }
       openCvRailRef.current(undefined, { drillDown: false });
@@ -207,7 +211,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         onToggleWorkspaceRail
       );
     };
-  }, [cvRailOpen, closeCvRail]);
+  }, []);
 
   const routeInterviewPage = useCallback(
     (targetJobId?: string | null) => {

@@ -471,7 +471,7 @@ function WorkspaceCenterColumn({
               locale={locale}
               sessionsByAgent={sessionsByAgent}
               spaceId={contextHeaderSpaceId}
-              workspaceRailOpen={chatSideRailOpen}
+              workspaceRailOpen={chatSideRailOpen} // same signal as shell chatSideRailOpen (CV/job side rail)
             />
           ) : null}
           <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
@@ -479,8 +479,11 @@ function WorkspaceCenterColumn({
         <div
           ref={(el) => portal?.setPortalHost(el)}
           className={cn(
-            'hidden min-h-0 min-w-0 shrink-0 self-stretch lg:flex lg:flex-col',
-            chatSideRailOpen ? 'border-l border-[#E5E6EB] bg-white' : 'pointer-events-none w-0'
+            'hidden min-h-0 min-w-0 shrink-0 self-stretch overflow-hidden lg:flex lg:flex-col',
+            'transition-[width,min-width] duration-200 ease-out',
+            chatSideRailOpen
+              ? 'border-l border-[#E5E6EB] bg-white'
+              : 'pointer-events-none w-0'
           )}
           aria-hidden={!chatSideRailOpen}
         />

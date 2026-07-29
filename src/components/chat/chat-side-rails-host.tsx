@@ -272,7 +272,11 @@ export function ChatSideRailsHost({
         className={cn(
           'relative flex min-h-0 shrink-0 flex-col',
           embeddedInWorkspace
-            ? 'h-full w-full'
+            ? cn(
+                'h-full w-full',
+                !isResizing &&
+                  'animate-in fade-in slide-in-from-right-4 duration-200'
+              )
             : 'hidden border-l border-gray-200/80 bg-white lg:flex',
           !embeddedInWorkspace &&
             !isResizing &&

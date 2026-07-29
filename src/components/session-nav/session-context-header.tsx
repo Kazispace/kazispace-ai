@@ -45,6 +45,7 @@ interface SessionContextHeaderProps {
   locale: string;
   sessionsByAgent: CurrentSessionsByAgent;
   spaceId?: string | null;
+  /** Whether the workspace chat side rail is open (CV hub / job detail). */
   workspaceRailOpen?: boolean;
 }
 
