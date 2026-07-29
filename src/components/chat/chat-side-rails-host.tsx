@@ -317,7 +317,7 @@ export function ChatSideRailsHost({
         {children}
       </div>
 
-      {!embeddedInWorkspace && railDesktop}
+      {railDesktop}
 
       {railInner ? (
         <div
