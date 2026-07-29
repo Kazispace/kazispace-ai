@@ -4,29 +4,46 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
 
+import { registerSessionNavChatSideRailOpenSync } from '@/lib/session-nav-events';
+
 type WorkspaceRailPortalContextValue = {
   portalHost: HTMLElement | null;
   setPortalHost: (element: HTMLElement | null) => void;
+  chatSideRailOpen: boolean;
+  setChatSideRailOpen: (open: boolean) => void;
 };
 
 const WorkspaceRailPortalContext =
   createContext<WorkspaceRailPortalContextValue | null>(null);
 
-/** Portal target for workspace chat right rail (full-height column beside context header). */
+/** Portal target + chat side-rail open state (workspace shell right column). */
 export function WorkspaceRailPortalProvider({ children }: { children: ReactNode }) {
   const [portalHost, setPortalHostState] = useState<HTMLElement | null>(null);
+  const [chatSideRailOpen, setChatSideRailOpen] = useState(false);
+
   const setPortalHost = useCallback((element: HTMLElement | null) => {
     setPortalHostState(element);
   }, []);
 
+  useEffect(
+    () => registerSessionNavChatSideRailOpenSync(setChatSideRailOpen),
+    []
+  );
+
   const value = useMemo(
-    () => ({ portalHost, setPortalHost }),
-    [portalHost, setPortalHost]
+    () => ({
+      portalHost,
+      setPortalHost,
+      chatSideRailOpen,
+      setChatSideRailOpen,
+    }),
+    [portalHost, setPortalHost, chatSideRailOpen]
   );
 
   return (
