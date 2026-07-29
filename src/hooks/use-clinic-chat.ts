@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useChatStore, useUIStore } from '@/lib/store';
+import { useAuthStore, useChatStore, useUIStore } from '@/lib/store';
 import {
   sendChatMessage,
   fetchChatHistory,
@@ -116,6 +116,8 @@ async function recoverPlaceholderReplyFromHistory(
 
 export function useClinicChat(locale?: string) {
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const masterSessionSyncedRef = useRef(false);
   const {
     messages,
     isStreaming,
@@ -130,6 +132,12 @@ export function useClinicChat(locale?: string) {
   const showToast = useUIStore((s) => s.showToast);
   const openPaywall = useUIStore((s) => s.openPaywall);
   const tErrors = useTranslations('errors');
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      masterSessionSyncedRef.current = false;
+    }
+  }, [isLoggedIn]);
 
   const handleApiFailure = useCallback(
     (res: {
@@ -162,14 +170,18 @@ export function useClinicChat(locale?: string) {
 
     setIsHistoryLoading(true);
     try {
-      if (getAuthToken()) {
+      if (getAuthToken() && !masterSessionSyncedRef.current) {
         await syncMasterSession();
+        masterSessionSyncedRef.current = true;
       }
       const sessionId = await ensureMasterSession();
       const fromServer = await fetchNormalizedHistory(sessionId);
       const local = useChatStore.getState().messages;
       setMessages(mergeClinicMessagesAfterHistoryLoad(local, fromServer));
       return true;
+    } catch (error) {
+      console.error('[useClinicChat] loadHistory failed', error);
+      return false;
     } finally {
       setIsHistoryLoading(false);
     }

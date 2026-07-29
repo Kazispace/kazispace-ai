@@ -311,6 +311,9 @@ export function SpaceChatPane({
             <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
           ) : (
             messages.map((message) => (
+              // Omit surface="workspace": that prop only changes MessageBubble
+              // assistant chrome (peach vs clinic gray). Cards / next_actions / CV
+              // routing use composerTarget="space", not surface.
               <MessageBubble
                 key={message.id}
                 role={message.role}
