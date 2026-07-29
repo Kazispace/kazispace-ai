@@ -18,6 +18,10 @@ import {
 } from 'lucide-react';
 
 import { AgentNavIcon, SpaceTemplateNavIcon } from '@/components/agents/agent-nav-icon';
+import {
+  PRIMARY_ICON_STROKE,
+  SessionNavPrimaryIconButton,
+} from '@/components/session-nav/session-nav-primary-chrome';
 import { SpaceListScopeMenu } from '@/components/session-nav/space-list-scope-menu';
 import { AgentSessionList } from '@/components/agent/agent-session-list';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -391,16 +395,14 @@ export function SessionNavPanel({
                 onFilterChange={handleFilterChange}
               />
               {onNewSpace ? (
-                <button
-                  type="button"
+                <SessionNavPrimaryIconButton
                   disabled={actionsDisabled}
                   onClick={onNewSpace}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#4E5969] hover:bg-[#F2F3F5] disabled:opacity-50"
                   aria-label={t('newSpace')}
                   title={t('newSpace')}
                 >
-                  <Plus className="h-4 w-4" />
-                </button>
+                  <Plus className="h-4 w-4" strokeWidth={PRIMARY_ICON_STROKE} />
+                </SessionNavPrimaryIconButton>
               ) : null}
             </>
           ) : (
