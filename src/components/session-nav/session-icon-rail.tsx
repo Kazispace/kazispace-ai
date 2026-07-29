@@ -15,7 +15,7 @@ import { useTranslations } from 'next-intl';
 import type { SessionNavPanelMode } from '@/lib/session-nav';
 import { cn } from '@/lib/utils';
 import { getSurfacePath } from '@/lib/agent-transition/surfaces';
-import { SessionIconRailCredits } from '@/components/session-nav/session-icon-rail-credits';
+import { SessionIconRailCredits } from '@/components/session-nav/session-nav-primary-chrome';
 
 interface SessionIconRailProps {
   locale: string;
