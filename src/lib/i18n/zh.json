@@ -715,6 +715,7 @@
 			"olderInterviews": "更早的面试 ({count})",
 			"olderEnglishSessions": "更早的英语 ({count})",
 			"openWorkspaceRail": "打开资产面板",
+			"workspaceRailUseCvPanel": "本空间已在右侧提供简历面板，请使用面板内的入口。",
 			"zoneComingSoon": "即将上线",
 			"backToHub": "返回资产"
 		}

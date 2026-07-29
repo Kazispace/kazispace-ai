@@ -42,6 +42,7 @@ import { openHubAgentSession } from "@/lib/hub-agent-open";
 import { getAgentHubPath } from "@/lib/agent-transition/surfaces";
 import { publishSessionNavInvalidate } from "@/lib/session-nav-invalidate";
 import {
+  publishSessionNavChatSideRailOpen,
   SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
   SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
 } from "@/lib/session-nav-events";
@@ -154,6 +155,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       setCvRailJobId(jobId);
       setCvRailDrillDown(Boolean(options?.drillDown) || Boolean(jobId));
       setCvRailOpen(true);
+      publishSessionNavChatSideRailOpen(true);
     },
     []
   );
@@ -162,6 +164,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     setCvRailOpen(false);
     setCvRailJobId(null);
     setCvRailDrillDown(false);
+    publishSessionNavChatSideRailOpen(false);
   }, []);
 
   const openCvRailRef = useRef(openCvRail);

@@ -891,6 +891,7 @@
 			"olderInterviews": "Older interviews ({count})",
 			"olderEnglishSessions": "Older English sessions ({count})",
 			"openWorkspaceRail": "Open workspace panel",
+			"workspaceRailUseCvPanel": "This space already has a CV panel on the right — use it from there.",
 			"zoneComingSoon": "Coming soon",
 			"backToHub": "Back to assets"
 		}

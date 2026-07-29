@@ -38,6 +38,12 @@ import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import { cn } from '@/lib/utils';
+import { useUIStore } from '@/lib/store';
+import {
+  publishSessionNavChatSideRailOpen,
+  SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+  SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+} from '@/lib/session-nav-events';
 
 type SpaceWelcomeKey = 'blankWelcome' | 'jobSprintWelcome' | 'ieltsWelcome';
 
@@ -97,23 +103,98 @@ export function SpaceChatPane({
   composer,
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
+  const tRailHub = useTranslations('cv.railHub');
   const tChat = useTranslations('chat');
   const tPractice = useTranslations('interview.irp.practice');
   const router = useRouter();
   const searchParams = useSearchParams();
+  const showToast = useUIStore((s) => s.showToast);
   const panels = useMemo(() => resolveSpacePanels(space), [space]);
   const hasCvPanel = panels.some((p) => p.panel_id === 'cv');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [cvRailOpen, setCvRailOpen] = useState(false);
   const [cvRailJobId, setCvRailJobId] = useState<string | null>(null);
+  const [cvRailDrillDown, setCvRailDrillDown] = useState(false);
+  const [cvRailHubEnabled, setCvRailHubEnabled] = useState(false);
 
-  const openCvRail = useCallback((targetJobId?: string | null) => {
-    setCvRailJobId(targetJobId?.trim() || null);
-    setCvRailOpen(true);
+  const closeCvRail = useCallback(() => {
+    setCvRailOpen(false);
+    setCvRailJobId(null);
+    setCvRailDrillDown(false);
+    setCvRailHubEnabled(false);
+    publishSessionNavChatSideRailOpen(false);
   }, []);
+
+  const openWorkspaceRail = useCallback(() => {
+    setCvRailJobId(null);
+    setCvRailDrillDown(false);
+    setCvRailHubEnabled(true);
+    setCvRailOpen(true);
+    publishSessionNavChatSideRailOpen(true);
+  }, []);
+
+  const openCvRail = useCallback(
+    (
+      targetJobId?: string | null,
+      options?: { drillDown?: boolean }
+    ) => {
+      const jobId = targetJobId?.trim() || null;
+      setCvRailJobId(jobId);
+      setCvRailDrillDown(Boolean(options?.drillDown) || Boolean(jobId));
+      setCvRailHubEnabled(false);
+      setCvRailOpen(true);
+      publishSessionNavChatSideRailOpen(true);
+    },
+    []
+  );
 
   const openCvRailRef = useRef(openCvRail);
   openCvRailRef.current = openCvRail;
+  const openWorkspaceRailRef = useRef(openWorkspaceRail);
+  openWorkspaceRailRef.current = openWorkspaceRail;
+  const closeCvRailRef = useRef(closeCvRail);
+  closeCvRailRef.current = closeCvRail;
+  const cvRailOpenRef = useRef(cvRailOpen);
+  cvRailOpenRef.current = cvRailOpen;
+
+  useEffect(() => {
+    const onPanelBlocked = () => {
+      showToast(tRailHub('workspaceRailUseCvPanel'), 'info');
+    };
+    const onOpenWorkspaceRail = () => {
+      if (hasCvPanel) {
+        onPanelBlocked();
+        return;
+      }
+      openWorkspaceRailRef.current();
+    };
+    const onToggleWorkspaceRail = () => {
+      if (hasCvPanel) {
+        onPanelBlocked();
+        return;
+      }
+      if (cvRailOpenRef.current) {
+        closeCvRailRef.current();
+        return;
+      }
+      openWorkspaceRailRef.current();
+    };
+    window.addEventListener(SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT, onOpenWorkspaceRail);
+    window.addEventListener(
+      SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+      onToggleWorkspaceRail
+    );
+    return () => {
+      window.removeEventListener(
+        SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+        onOpenWorkspaceRail
+      );
+      window.removeEventListener(
+        SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+        onToggleWorkspaceRail
+      );
+    };
+  }, [hasCvPanel, showToast, tRailHub]);
   const {
     messages,
     isHydrating,
@@ -162,11 +243,6 @@ export function SpaceChatPane({
       { scroll: false }
     );
   }, [hasCvPanel, searchParams, locale, router, space.id]);
-
-  const closeCvRail = useCallback(() => {
-    setCvRailOpen(false);
-    setCvRailJobId(null);
-  }, []);
 
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
@@ -283,7 +359,8 @@ export function SpaceChatPane({
       cvRail={{
         open: !hasCvPanel && cvRailOpen,
         jobId: cvRailJobId,
-        hubEnabled: false,
+        drillDown: cvRailDrillDown,
+        hubEnabled: cvRailHubEnabled,
       }}
       onCloseCv={closeCvRail}
       cvRailTransition={cvRailTransition}

@@ -27,7 +27,7 @@ import {
   resolveActiveCapability,
   shouldUseGlobalAgentForContextHeader,
 } from '@/lib/spaces/capability';
-import { isClinicChatPathname } from '@/lib/space-nav';
+import { isClinicChatPathname, resolveSpaceIdFromPathname } from '@/lib/space-nav';
 import { publishSessionNavOpenFile, publishSessionNavToggleWorkspaceRail } from '@/lib/session-nav-events';
 import {
   resolveContextHeaderSession,
@@ -189,7 +189,8 @@ export function SessionContextHeader({
   );
   const showHeaderActions =
     showSessionActions || showBackToClinic || showSpaceLifecycle;
-  const showClinicWorkspaceRail = isClinicChatPathname(pathname);
+  const showClinicWorkspaceRail =
+    isClinicChatPathname(pathname) || Boolean(resolveSpaceIdFromPathname(pathname));
 
   const closeDrawer = () => {
     setDrawer(null);
