@@ -401,7 +401,7 @@ export function SessionNavPanel({
                   aria-label={t('newSpace')}
                   title={t('newSpace')}
                 >
-                  <Plus className="h-5 w-5" strokeWidth={PRIMARY_ICON_STROKE} />
+                  <Plus className="h-4 w-4" strokeWidth={PRIMARY_ICON_STROKE} />
                 </SessionNavPrimaryIconButton>
               ) : null}
             </>
