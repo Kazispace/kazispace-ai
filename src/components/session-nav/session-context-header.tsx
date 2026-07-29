@@ -28,7 +28,7 @@ import {
   shouldUseGlobalAgentForContextHeader,
 } from '@/lib/spaces/capability';
 import { isClinicChatPathname } from '@/lib/space-nav';
-import { publishSessionNavOpenFile, publishSessionNavOpenWorkspaceRail } from '@/lib/session-nav-events';
+import { publishSessionNavOpenFile, publishSessionNavToggleWorkspaceRail } from '@/lib/session-nav-events';
 import {
   resolveContextHeaderSession,
   resolveSessionNavBadge,
@@ -45,6 +45,8 @@ interface SessionContextHeaderProps {
   locale: string;
   sessionsByAgent: CurrentSessionsByAgent;
   spaceId?: string | null;
+  /** Whether the workspace chat side rail is open (CV hub / job detail). */
+  workspaceRailOpen?: boolean;
 }
 
 type HeaderDrawer = 'files' | 'search' | 'more' | null;
@@ -53,6 +55,7 @@ export function SessionContextHeader({
   locale,
   sessionsByAgent,
   spaceId = null,
+  workspaceRailOpen = false,
 }: SessionContextHeaderProps) {
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
@@ -250,9 +253,13 @@ export function SessionContextHeader({
           {showClinicWorkspaceRail ? (
             <button
               type="button"
-              onClick={() => publishSessionNavOpenWorkspaceRail()}
-              className="rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]"
+              onClick={() => publishSessionNavToggleWorkspaceRail()}
+              className={cn(
+                'rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]',
+                workspaceRailOpen && 'bg-[#FFF4EC] text-kazi-orange'
+              )}
               aria-label={tRailHub('openWorkspaceRail')}
+              aria-pressed={workspaceRailOpen}
               title={tRailHub('openWorkspaceRail')}
             >
               <LayoutGrid className="h-4 w-4" />

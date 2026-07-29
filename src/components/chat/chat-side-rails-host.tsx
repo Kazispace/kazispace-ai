@@ -9,12 +9,15 @@ import {
   useRef,
   useState,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 
 import { CvWorkspaceRail } from '@/components/cv/cv-workspace-rail';
 import { JobDetailRail } from '@/components/jobs/job-detail-rail';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { publishSessionNavChatSideRailOpen } from '@/lib/session-nav-events';
+import { useEmbeddedInWorkspaceShell } from '@/lib/workspace-shell-context';
+import { useWorkspaceRailPortal } from '@/lib/workspace-rail-portal';
 import type { JobPracticeContext } from '@/types/jobs';
 import { cn } from '@/lib/utils';
 
@@ -98,6 +101,8 @@ export function ChatSideRailsHost({
   practiceDisabled = false,
 }: ChatSideRailsHostProps) {
   const tJobs = useTranslations('jobs');
+  const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
+  const railPortal = useWorkspaceRailPortal();
   const hostRef = useRef<HTMLDivElement>(null);
   const railWidthRef = useRef(DEFAULT_RAIL_WIDTH);
   const [railWidth, setRailWidthState] = useState(DEFAULT_RAIL_WIDTH);
@@ -260,6 +265,54 @@ export function ChatSideRailsHost({
       />
     ) : null;
 
+  const railDesktopAside =
+    railInner ? (
+      <aside
+        style={{ width: railWidth }}
+        className={cn(
+          'relative flex min-h-0 shrink-0 flex-col',
+          embeddedInWorkspace
+            ? cn(
+                'h-full w-full',
+                !isResizing &&
+                  'animate-in fade-in slide-in-from-right-4 duration-200'
+              )
+            : 'hidden border-l border-gray-200/80 bg-white lg:flex',
+          !embeddedInWorkspace &&
+            !isResizing &&
+            'animate-in fade-in slide-in-from-right-4 duration-200'
+        )}
+      >
+        <div
+          role="separator"
+          tabIndex={0}
+          aria-orientation="vertical"
+          aria-valuenow={railWidth}
+          aria-valuemin={MIN_RAIL_WIDTH}
+          aria-valuemax={MAX_RAIL_WIDTH}
+          aria-label={tJobs('resizeDetail')}
+          onPointerDown={onResizePointerDown}
+          onKeyDown={onResizeKeyDown}
+          className={cn(
+            'absolute inset-y-0 left-0 z-10 w-1.5 -translate-x-1/2 cursor-col-resize touch-none',
+            'bg-gray-200/70 hover:bg-kazi-orange/35',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+            isResizing && 'bg-kazi-orange/40'
+          )}
+        />
+        {railInner}
+      </aside>
+    ) : null;
+
+  const railDesktop =
+    !railDesktopAside
+      ? null
+      : embeddedInWorkspace && railPortal?.portalHost
+        ? createPortal(railDesktopAside, railPortal.portalHost)
+        : !embeddedInWorkspace
+          ? railDesktopAside
+          : null;
+
   return (
     <div
       ref={hostRef}
@@ -269,45 +322,17 @@ export function ChatSideRailsHost({
         {children}
       </div>
 
+      {!embeddedInWorkspace && railDesktop}
+
       {railInner ? (
-        <>
-          <aside
-            style={{ width: railWidth }}
-            className={cn(
-              'relative hidden min-h-0 shrink-0 flex-col',
-              'border-l border-gray-200/80 bg-white lg:flex',
-              !isResizing &&
-                'animate-in fade-in slide-in-from-right-4 duration-200'
-            )}
-          >
-            <div
-              role="separator"
-              tabIndex={0}
-              aria-orientation="vertical"
-              aria-valuenow={railWidth}
-              aria-valuemin={MIN_RAIL_WIDTH}
-              aria-valuemax={MAX_RAIL_WIDTH}
-              aria-label={tJobs('resizeDetail')}
-              onPointerDown={onResizePointerDown}
-              onKeyDown={onResizeKeyDown}
-              className={cn(
-                'absolute inset-y-0 left-0 z-10 w-1.5 -translate-x-1/2 cursor-col-resize touch-none',
-                'bg-gray-200/70 hover:bg-kazi-orange/35',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
-                isResizing && 'bg-kazi-orange/40'
-              )}
-            />
-            {railInner}
-          </aside>
-          <div
-            className={cn(
-              'absolute inset-0 z-30 flex flex-col bg-white lg:hidden',
-              'animate-in fade-in slide-in-from-right duration-200'
-            )}
-          >
-            {railInner}
-          </div>
-        </>
+        <div
+          className={cn(
+            'absolute inset-0 z-30 flex flex-col bg-white lg:hidden',
+            'animate-in fade-in slide-in-from-right duration-200'
+          )}
+        >
+          {railInner}
+        </div>
       ) : null}
     </div>
   );

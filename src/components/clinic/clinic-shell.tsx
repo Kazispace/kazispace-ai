@@ -43,6 +43,7 @@ import { getAgentHubPath } from "@/lib/agent-transition/surfaces";
 import { publishSessionNavInvalidate } from "@/lib/session-nav-invalidate";
 import {
   SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+  SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
 } from "@/lib/session-nav-events";
 import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
 import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
@@ -165,6 +166,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const openCvRailRef = useRef(openCvRail);
   openCvRailRef.current = openCvRail;
+  const cvRailOpenRef = useRef(cvRailOpen);
+  cvRailOpenRef.current = cvRailOpen;
+  const closeCvRailRef = useRef(closeCvRail);
+  closeCvRailRef.current = closeCvRail;
 
   /** In-app / external `?open_cv=1` (or legacy `?cv=1`) — not tied to bootstrap layerReady. */
   useEffect(() => {
@@ -178,19 +183,34 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   }, [searchParams, locale, router]);
 
   useEffect(() => {
-    // Ref keeps handler stable — avoids re-binding when openCvRail identity changes.
     const onOpenWorkspaceRail = () => {
+      openCvRailRef.current(undefined, { drillDown: false });
+    };
+    const onToggleWorkspaceRail = () => {
+      if (cvRailOpenRef.current) {
+        closeCvRailRef.current();
+        return;
+      }
       openCvRailRef.current(undefined, { drillDown: false });
     };
     window.addEventListener(
       SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
       onOpenWorkspaceRail
     );
-    return () =>
+    window.addEventListener(
+      SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+      onToggleWorkspaceRail
+    );
+    return () => {
       window.removeEventListener(
         SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
         onOpenWorkspaceRail
       );
+      window.removeEventListener(
+        SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+        onToggleWorkspaceRail
+      );
+    };
   }, []);
 
   const routeInterviewPage = useCallback(
