@@ -121,6 +121,8 @@ export function SessionNavPrimaryIconButton({
         className
       )}
       {...props}
-    />
+    >
+      {children}
+    </button>
   );
 }
