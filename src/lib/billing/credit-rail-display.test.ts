@@ -17,8 +17,9 @@ describe('credit-rail-display', () => {
     expect(formatCreditRailAmount(12)).toBe('12');
   });
 
-  it('flags low balance', () => {
-    expect(isCreditRailLow({ cvCredits: 3, interviewCredits: 0 })).toBe(true);
-    expect(isCreditRailLow({ cvCredits: 4, interviewCredits: 0 })).toBe(false);
+  it('flags low balance below 100 on rail', () => {
+    expect(isCreditRailLow({ cvCredits: 99, interviewCredits: 0 })).toBe(true);
+    expect(isCreditRailLow({ cvCredits: 100, interviewCredits: 0 })).toBe(false);
+    expect(isCreditRailLow({ cvCredits: 991, interviewCredits: 0 })).toBe(false);
   });
 });

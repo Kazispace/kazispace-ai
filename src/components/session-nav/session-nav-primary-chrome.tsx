@@ -23,7 +23,7 @@ export function creditsChipShellClass(low: boolean): string {
     'flex min-h-[3rem] w-10 flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 py-1 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-colors',
     low
       ? 'border-orange-200 bg-gradient-to-b from-orange-50 to-white hover:border-orange-300'
-      : 'border-[#E0E3E8] bg-white hover:border-kazi-orange/35 hover:bg-[#FFF9F5]'
+      : 'border-[#E0E3E8] bg-white hover:border-emerald-200/80 hover:bg-emerald-50/40'
   );
 }
 
@@ -79,7 +79,7 @@ export function SessionIconRailCredits({ locale }: SessionIconRailCreditsProps) 
         <Coins
           className={cn(
             'h-4 w-4 shrink-0',
-            low ? 'text-red-500' : 'text-kazi-orange'
+            low ? 'text-red-500' : 'text-emerald-600'
           )}
           strokeWidth={PRIMARY_ICON_STROKE}
           aria-hidden
@@ -94,7 +94,7 @@ export function SessionIconRailCredits({ locale }: SessionIconRailCreditsProps) 
       <span
         className={cn(
           'max-w-[2.75rem] truncate text-xs font-bold tabular-nums leading-none tracking-tight',
-          low ? 'text-red-600' : 'text-kazi-orange'
+          low ? 'text-red-600' : 'text-emerald-700'
         )}
       >
         {label}

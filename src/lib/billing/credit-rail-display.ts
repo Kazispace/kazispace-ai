@@ -1,10 +1,10 @@
 import type { CreditBalance } from '@/types';
 
 /**
- * Balances strictly below this total use “low credits” styling on the icon rail.
- * (e.g. 3 → low, 4 → OK — use `<` not `<=` for clearer naming.)
+ * Icon rail uses red styling when total credits are below this value.
+ * Totals at or above use healthy (green) styling.
  */
-export const CREDIT_RAIL_LOW_THRESHOLD = 4;
+export const CREDIT_RAIL_LOW_THRESHOLD = 100;
 
 export function creditRailTotal(balance: CreditBalance | null | undefined): number {
   if (!balance) return 0;
