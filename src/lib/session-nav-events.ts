@@ -35,7 +35,17 @@ export function publishSessionNavToggleWorkspaceRail(): void {
 export const SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT =
   'kazi-session-nav-chat-side-rail-open';
 
+let chatSideRailOpenSync: ((open: boolean) => void) | undefined;
+
+/** Shell layout reads open state synchronously (portal column width). */
+export function registerSessionNavChatSideRailOpenSync(
+  fn: ((open: boolean) => void) | undefined
+): void {
+  chatSideRailOpenSync = fn;
+}
+
 export function publishSessionNavChatSideRailOpen(open: boolean): void {
+  chatSideRailOpenSync?.(open);
   if (typeof window === 'undefined') return;
   window.dispatchEvent(
     new CustomEvent(SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT, {

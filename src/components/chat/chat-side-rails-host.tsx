@@ -122,10 +122,6 @@ export function ChatSideRailsHost({
     publishSessionNavChatSideRailOpen(railOpen);
   }, [railOpen]);
 
-  useEffect(() => {
-    return () => publishSessionNavChatSideRailOpen(false);
-  }, []);
-
   const setRailWidth = useCallback((next: number, persist = false) => {
     const hostWidth = hostRef.current?.clientWidth ?? window.innerWidth;
     const clamped = clampRailWidth(next, hostWidth);
@@ -310,9 +306,7 @@ export function ChatSideRailsHost({
       ? null
       : embeddedInWorkspace && portalHost
         ? createPortal(railDesktopAside, portalHost)
-        : !embeddedInWorkspace
-          ? railDesktopAside
-          : null;
+        : railDesktopAside;
 
   return (
     <div

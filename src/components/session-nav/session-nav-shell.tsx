@@ -37,10 +37,7 @@ import {
 import { CLINIC_SPACE_ID, isSpacesEnabled } from '@/lib/spaces/constants';
 import { createSpace } from '@/lib/spaces-api';
 import { useSpaceLifecycle } from '@/hooks/use-space-lifecycle';
-import {
-  publishSessionNavSessionExited,
-  SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT,
-} from '@/lib/session-nav-events';
+import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
 import { isTelegramWebApp } from '@/lib/telegram';
 import { WorkspaceShellProvider } from '@/lib/workspace-shell-context';
 import {
@@ -106,7 +103,6 @@ function SessionNavShellLayout({
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [isCreatingSpace, setIsCreatingSpace] = useState(false);
   const [spaceFilter, setSpaceFilter] = useState<SpaceNavFilter>('active');
-  const [chatSideRailOpen, setChatSideRailOpen] = useState(false);
   const {
     run: runSidebarLifecycle,
     pendingSpaceId: sidebarPendingSpaceId,
@@ -133,21 +129,6 @@ function SessionNavShellLayout({
     spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
   const showContextHeader =
     isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId);
-
-  useEffect(() => {
-    const onSideRail = (event: Event) => {
-      const open = Boolean(
-        (event as CustomEvent<{ open: boolean }>).detail?.open
-      );
-      setChatSideRailOpen(open);
-    };
-    window.addEventListener(SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT, onSideRail);
-    return () =>
-      window.removeEventListener(
-        SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT,
-        onSideRail
-      );
-  }, []);
 
   useEffect(() => {
     if (!pinNavPanel) return;
@@ -401,7 +382,6 @@ function SessionNavShellLayout({
         <WorkspaceCenterColumn
           locale={locale}
           showContextHeader={showContextHeader}
-          chatSideRailOpen={chatSideRailOpen}
           sessionsByAgent={sessionsByAgent}
           contextHeaderSpaceId={contextHeaderSpaceId}
           onOpenMobilePanel={() => openPanelMode('agents')}
@@ -434,7 +414,6 @@ function SessionNavShellLayout({
 function WorkspaceCenterColumn({
   locale,
   showContextHeader,
-  chatSideRailOpen,
   sessionsByAgent,
   contextHeaderSpaceId,
   onOpenMobilePanel,
@@ -443,7 +422,6 @@ function WorkspaceCenterColumn({
 }: {
   locale: string;
   showContextHeader: boolean;
-  chatSideRailOpen: boolean;
   sessionsByAgent: ReturnType<typeof useActiveAgentSessions>['sessionsByAgent'];
   contextHeaderSpaceId: string | null;
   onOpenMobilePanel: () => void;
@@ -451,6 +429,7 @@ function WorkspaceCenterColumn({
   children: React.ReactNode;
 }) {
   const portal = useWorkspaceRailPortal();
+  const chatSideRailOpen = portal?.chatSideRailOpen ?? false;
 
   return (
     <div className="relative flex min-w-0 flex-1 min-h-0 flex-col">
