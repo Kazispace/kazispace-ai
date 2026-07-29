@@ -43,6 +43,7 @@ import { getAgentHubPath } from "@/lib/agent-transition/surfaces";
 import { publishSessionNavInvalidate } from "@/lib/session-nav-invalidate";
 import {
   SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+  SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
 } from "@/lib/session-nav-events";
 import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
 import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
@@ -178,20 +179,35 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   }, [searchParams, locale, router]);
 
   useEffect(() => {
-    // Ref keeps handler stable — avoids re-binding when openCvRail identity changes.
     const onOpenWorkspaceRail = () => {
+      openCvRailRef.current(undefined, { drillDown: false });
+    };
+    const onToggleWorkspaceRail = () => {
+      if (cvRailOpen) {
+        closeCvRail();
+        return;
+      }
       openCvRailRef.current(undefined, { drillDown: false });
     };
     window.addEventListener(
       SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
       onOpenWorkspaceRail
     );
-    return () =>
+    window.addEventListener(
+      SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+      onToggleWorkspaceRail
+    );
+    return () => {
       window.removeEventListener(
         SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
         onOpenWorkspaceRail
       );
-  }, []);
+      window.removeEventListener(
+        SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+        onToggleWorkspaceRail
+      );
+    };
+  }, [cvRailOpen, closeCvRail]);
 
   const routeInterviewPage = useCallback(
     (targetJobId?: string | null) => {

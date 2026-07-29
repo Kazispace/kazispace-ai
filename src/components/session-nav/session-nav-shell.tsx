@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Menu } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -43,7 +43,12 @@ import {
 } from '@/lib/session-nav-events';
 import { isTelegramWebApp } from '@/lib/telegram';
 import { WorkspaceShellProvider } from '@/lib/workspace-shell-context';
+import {
+  WorkspaceRailPortalProvider,
+  useWorkspaceRailPortal,
+} from '@/lib/workspace-rail-portal';
 import { useUIStore } from '@/lib/store';
+import { cn } from '@/lib/utils';
 
 interface SessionNavShellProps {
   locale: string;
@@ -127,8 +132,7 @@ function SessionNavShellLayout({
   const contextHeaderSpaceId =
     spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
   const showContextHeader =
-    (isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId)) &&
-    !(isClinic && chatSideRailOpen);
+    isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId);
 
   useEffect(() => {
     const onSideRail = (event: Event) => {
@@ -335,6 +339,7 @@ function SessionNavShellLayout({
     <SessionNavControllerProvider value={controllerValue}>
       {/* Provider wraps floating sheets too — Clinic/Space shells must see embedded=true. */}
       <WorkspaceShellProvider>
+      <WorkspaceRailPortalProvider>
       <div className="flex h-[100dvh] w-full overflow-hidden bg-[#F4F5F7]">
         <SessionIconRail
           locale={locale}
@@ -393,26 +398,17 @@ function SessionNavShellLayout({
           />
         ) : null}
 
-        <div className="relative flex min-w-0 flex-1 flex-col">
-          <div className="flex items-center border-b border-[#E5E6EB] bg-white md:hidden">
-            <button
-              type="button"
-              onClick={() => openPanelMode('agents')}
-              className="m-2 rounded-lg p-2 text-[#1D2129] hover:bg-[#F2F3F5]"
-              aria-label={t('openPanel')}
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-          </div>
-          {showContextHeader && (
-            <SessionContextHeader
-              locale={locale}
-              sessionsByAgent={sessionsByAgent}
-              spaceId={contextHeaderSpaceId}
-            />
-          )}
-          <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
-        </div>
+        <WorkspaceCenterColumn
+          locale={locale}
+          showContextHeader={showContextHeader}
+          chatSideRailOpen={chatSideRailOpen}
+          sessionsByAgent={sessionsByAgent}
+          contextHeaderSpaceId={contextHeaderSpaceId}
+          onOpenMobilePanel={() => openPanelMode('agents')}
+          mobilePanelLabel={t('openPanel')}
+        >
+          {children}
+        </WorkspaceCenterColumn>
       </div>
 
       <SpaceTemplatePicker
@@ -429,7 +425,66 @@ function SessionNavShellLayout({
         onConfirm={() => void handleConfirmAbandon()}
         onCancel={cancelConfirmAbandon}
       />
+      </WorkspaceRailPortalProvider>
       </WorkspaceShellProvider>
     </SessionNavControllerProvider>
+  );
+}
+
+function WorkspaceCenterColumn({
+  locale,
+  showContextHeader,
+  chatSideRailOpen,
+  sessionsByAgent,
+  contextHeaderSpaceId,
+  onOpenMobilePanel,
+  mobilePanelLabel,
+  children,
+}: {
+  locale: string;
+  showContextHeader: boolean;
+  chatSideRailOpen: boolean;
+  sessionsByAgent: ReturnType<typeof useActiveAgentSessions>['sessionsByAgent'];
+  contextHeaderSpaceId: string | null;
+  onOpenMobilePanel: () => void;
+  mobilePanelLabel: string;
+  children: React.ReactNode;
+}) {
+  const portal = useWorkspaceRailPortal();
+
+  return (
+    <div className="relative flex min-w-0 flex-1 min-h-0 flex-col">
+      <div className="flex items-center border-b border-[#E5E6EB] bg-white md:hidden">
+        <button
+          type="button"
+          onClick={onOpenMobilePanel}
+          className="m-2 rounded-lg p-2 text-[#1D2129] hover:bg-[#F2F3F5]"
+          aria-label={mobilePanelLabel}
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-1">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {showContextHeader ? (
+            <SessionContextHeader
+              locale={locale}
+              sessionsByAgent={sessionsByAgent}
+              spaceId={contextHeaderSpaceId}
+              workspaceRailOpen={chatSideRailOpen}
+            />
+          ) : null}
+          <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+        </div>
+        <div
+          ref={(el) => portal?.setPortalHost(el)}
+          className={cn(
+            'hidden min-h-0 min-w-0 shrink-0 self-stretch lg:flex lg:flex-col',
+            chatSideRailOpen ? 'border-l border-[#E5E6EB] bg-white' : 'pointer-events-none w-0'
+          )}
+          aria-hidden={!chatSideRailOpen}
+        />
+      </div>
+    </div>
   );
 }

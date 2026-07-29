@@ -21,6 +21,17 @@ export function publishSessionNavOpenWorkspaceRail(): void {
   );
 }
 
+/** Toggle Clinic / Space workspace asset rail (open ↔ close). */
+export const SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT =
+  'kazi-session-nav-toggle-workspace-rail';
+
+export function publishSessionNavToggleWorkspaceRail(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent(SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT)
+  );
+}
+
 export const SESSION_NAV_CHAT_SIDE_RAIL_OPEN_EVENT =
   'kazi-session-nav-chat-side-rail-open';
 
