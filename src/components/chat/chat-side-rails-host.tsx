@@ -103,6 +103,7 @@ export function ChatSideRailsHost({
   const tJobs = useTranslations('jobs');
   const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
   const railPortal = useWorkspaceRailPortal();
+  const portalHost = railPortal?.portalHost ?? null;
   const hostRef = useRef<HTMLDivElement>(null);
   const railWidthRef = useRef(DEFAULT_RAIL_WIDTH);
   const [railWidth, setRailWidthState] = useState(DEFAULT_RAIL_WIDTH);
@@ -307,8 +308,8 @@ export function ChatSideRailsHost({
   const railDesktop =
     !railDesktopAside
       ? null
-      : embeddedInWorkspace && railPortal?.portalHost
-        ? createPortal(railDesktopAside, railPortal.portalHost)
+      : embeddedInWorkspace && portalHost
+        ? createPortal(railDesktopAside, portalHost)
         : !embeddedInWorkspace
           ? railDesktopAside
           : null;

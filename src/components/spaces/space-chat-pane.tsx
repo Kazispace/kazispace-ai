@@ -38,6 +38,11 @@ import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import { cn } from '@/lib/utils';
+import {
+  publishSessionNavChatSideRailOpen,
+  SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+  SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+} from '@/lib/session-nav-events';
 
 type SpaceWelcomeKey = 'blankWelcome' | 'jobSprintWelcome' | 'ieltsWelcome';
 
@@ -110,10 +115,45 @@ export function SpaceChatPane({
   const openCvRail = useCallback((targetJobId?: string | null) => {
     setCvRailJobId(targetJobId?.trim() || null);
     setCvRailOpen(true);
+    publishSessionNavChatSideRailOpen(true);
   }, []);
 
   const openCvRailRef = useRef(openCvRail);
   openCvRailRef.current = openCvRail;
+  const cvRailOpenRef = useRef(cvRailOpen);
+  cvRailOpenRef.current = cvRailOpen;
+
+  useEffect(() => {
+    const onOpenWorkspaceRail = () => {
+      if (hasCvPanel) return;
+      openCvRailRef.current();
+    };
+    const onToggleWorkspaceRail = () => {
+      if (hasCvPanel) return;
+      if (cvRailOpenRef.current) {
+        setCvRailOpen(false);
+        setCvRailJobId(null);
+        publishSessionNavChatSideRailOpen(false);
+        return;
+      }
+      openCvRailRef.current();
+    };
+    window.addEventListener(SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT, onOpenWorkspaceRail);
+    window.addEventListener(
+      SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+      onToggleWorkspaceRail
+    );
+    return () => {
+      window.removeEventListener(
+        SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+        onOpenWorkspaceRail
+      );
+      window.removeEventListener(
+        SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+        onToggleWorkspaceRail
+      );
+    };
+  }, [hasCvPanel]);
   const {
     messages,
     isHydrating,
@@ -166,6 +206,7 @@ export function SpaceChatPane({
   const closeCvRail = useCallback(() => {
     setCvRailOpen(false);
     setCvRailJobId(null);
+    publishSessionNavChatSideRailOpen(false);
   }, []);
 
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
