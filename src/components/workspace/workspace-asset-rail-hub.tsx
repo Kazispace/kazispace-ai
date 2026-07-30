@@ -38,16 +38,23 @@ interface WorkspaceAssetRailHubProps {
   onNavigate?: (path: string) => void;
 }
 
-type AssetTone = 'resume' | 'work' | 'spaces' | 'muted';
+type AssetTone = 'resume' | 'interview' | 'work' | 'spaces' | 'muted';
 
 const TONE_ICON_CLASS: Record<AssetTone, string> = {
   resume: 'bg-sky-50 text-sky-900 ring-sky-200/90',
+  interview: 'bg-violet-50 text-violet-900 ring-violet-200/90',
   work: 'bg-[#FFF4EC] text-kazi-navy ring-kazi-orange/25',
   spaces: 'bg-[#F2F3F5] text-kazi-navy ring-gray-200/90',
   muted: 'bg-gray-50 text-[#86909C] ring-gray-200/80',
 };
 
-/** v2 hub — file-centric career assets (KAZI-404 P0: resume category). */
+const CATEGORY_TONE: Record<WorkspaceAssetCategory, AssetTone> = {
+  resume: 'resume',
+  english: 'resume',
+  interview: 'interview',
+};
+
+/** v2 hub — file-centric career assets (KAZI-404 resume, KAZI-409 interview). */
 export function WorkspaceAssetRailHub({
   locale,
   scope = 'user',
@@ -63,19 +70,20 @@ export function WorkspaceAssetRailHub({
   const tCv = useTranslations('cv');
 
   const listParams = useMemo(
-    () => ({ scope, spaceId, category: 'resume' as const, includeHistory: false }),
+    () => ({ scope, spaceId, includeHistory: false }),
     [scope, spaceId]
   );
 
   const { items, categories, historyCounts, isLoading, error, refresh, authenticated, authReady } =
     useWorkspaceAssets(listParams, true);
 
-  const currentResume = useMemo(
-    () => items.filter((item) => item.category === 'resume' && item.is_current),
+  const currentByCategory = useMemo(
+    () => ({
+      resume: items.filter((item) => item.category === 'resume' && item.is_current),
+      interview: items.filter((item) => item.category === 'interview' && item.is_current),
+    }),
     [items]
   );
-
-  const resumeCount = categories.resume;
 
   const push = (path: string) => onNavigate?.(path);
 
@@ -98,45 +106,42 @@ export function WorkspaceAssetRailHub({
       ) : null}
 
       <ZoneBlock title={t('zoneCareer')} className="pt-2 pr-10">
-        <SubcategoryHeader
+        <CareerAssetSubcategory
+          category="resume"
           label={tV2('categoryResume')}
-          count={resumeCount}
+          count={categories.resume}
           historyCount={historyCounts.resume}
+          items={currentByCategory.resume}
+          scope={scope}
+          spaceId={spaceId}
+          authReady={authReady}
+          authenticated={authenticated}
+          isLoading={isLoading}
+          error={error}
+          loginRequiredLabel={tV2('loginRequired')}
+          olderAssetsLabel={tV2('olderAssets', { count: historyCounts.resume })}
+          onOpenAsset={onOpenAsset}
+          onRetry={refresh}
+          t={tV2}
         />
-        {!authReady ? (
-          <AssetSkeletonRow />
-        ) : !authenticated ? (
-          <p className="col-span-full px-1 text-[10px] text-[#86909C]">
-            {tV2('loginRequired')}
-          </p>
-        ) : isLoading ? (
-          <AssetSkeletonRow />
-        ) : error ? (
-          <p className="col-span-full px-1 text-[10px] text-red-600">{error}</p>
-        ) : (
-          <>
-            {currentResume.map((asset) => (
-              <WorkspaceAssetIcon
-                key={asset.asset_id}
-                asset={asset}
-                onOpen={() => onOpenAsset?.(asset)}
-                onRetry={refresh}
-                t={tV2}
-              />
-            ))}
-            <CategoryHistoryFold
-              category="resume"
-              label={tV2('olderAssets', { count: historyCounts.resume })}
-              historyCount={historyCounts.resume}
-              scope={scope}
-              spaceId={spaceId}
-              authenticated={authenticated}
-              onOpenAsset={onOpenAsset}
-              onRetry={refresh}
-              t={tV2}
-            />
-          </>
-        )}
+        <CareerAssetSubcategory
+          category="interview"
+          label={tV2('categoryInterview')}
+          count={categories.interview}
+          historyCount={historyCounts.interview}
+          items={currentByCategory.interview}
+          scope={scope}
+          spaceId={spaceId}
+          authReady={authReady}
+          authenticated={authenticated}
+          isLoading={isLoading}
+          error={error}
+          loginRequiredLabel={tV2('loginRequired')}
+          olderAssetsLabel={tV2('olderAssets', { count: historyCounts.interview })}
+          onOpenAsset={onOpenAsset}
+          onRetry={refresh}
+          t={tV2}
+        />
       </ZoneBlock>
 
       <ZoneBlock title={t('zoneWork')}>
@@ -203,6 +208,85 @@ function SubcategoryHeader({
   );
 }
 
+/** One career subcategory grid (resume / interview) with history fold. */
+function CareerAssetSubcategory({
+  category,
+  label,
+  count,
+  historyCount,
+  items,
+  scope,
+  spaceId,
+  authReady,
+  authenticated,
+  isLoading,
+  error,
+  loginRequiredLabel,
+  olderAssetsLabel,
+  onOpenAsset,
+  onRetry,
+  t,
+}: {
+  category: WorkspaceAssetCategory;
+  label: string;
+  count: number;
+  historyCount: number;
+  items: WorkspaceAsset[];
+  scope: WorkspaceAssetScope;
+  spaceId?: string;
+  authReady: boolean;
+  authenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  loginRequiredLabel: string;
+  olderAssetsLabel: string;
+  onOpenAsset?: (asset: WorkspaceAsset) => void;
+  onRetry: () => void;
+  t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
+}) {
+  const tone = CATEGORY_TONE[category];
+
+  return (
+    <>
+      <SubcategoryHeader label={label} count={count} historyCount={historyCount} />
+      {!authReady ? (
+        <AssetSkeletonRow />
+      ) : !authenticated ? (
+        <p className="col-span-full px-1 text-[10px] text-[#86909C]">{loginRequiredLabel}</p>
+      ) : isLoading ? (
+        <AssetSkeletonRow />
+      ) : error ? (
+        <p className="col-span-full px-1 text-[10px] text-red-600">{error}</p>
+      ) : (
+        <>
+          {items.map((asset) => (
+            <WorkspaceAssetIcon
+              key={asset.asset_id}
+              asset={asset}
+              tone={tone}
+              onOpen={() => onOpenAsset?.(asset)}
+              onRetry={onRetry}
+              t={t}
+            />
+          ))}
+          <CategoryHistoryFold
+            category={category}
+            label={olderAssetsLabel}
+            historyCount={historyCount}
+            scope={scope}
+            spaceId={spaceId}
+            authenticated={authenticated}
+            tone={tone}
+            onOpenAsset={onOpenAsset}
+            onRetry={onRetry}
+            t={t}
+          />
+        </>
+      )}
+    </>
+  );
+}
+
 /** Per-category expand + lazy history fetch (SSOT §4.2.2, review P2-2). */
 function CategoryHistoryFold({
   category,
@@ -211,6 +295,7 @@ function CategoryHistoryFold({
   scope,
   spaceId,
   authenticated,
+  tone,
   onOpenAsset,
   onRetry,
   t,
@@ -221,6 +306,7 @@ function CategoryHistoryFold({
   scope: WorkspaceAssetScope;
   spaceId?: string;
   authenticated: boolean;
+  tone: AssetTone;
   onOpenAsset?: (asset: WorkspaceAsset) => void;
   onRetry: () => void;
   t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
@@ -271,6 +357,7 @@ function CategoryHistoryFold({
               <WorkspaceAssetIcon
                 key={asset.asset_id}
                 asset={asset}
+                tone={tone}
                 historical
                 onOpen={() => onOpenAsset?.(asset)}
                 onRetry={onRetry}
@@ -286,12 +373,14 @@ function CategoryHistoryFold({
 
 function WorkspaceAssetIcon({
   asset,
+  tone,
   historical,
   onOpen,
   onRetry,
   t,
 }: {
   asset: WorkspaceAsset;
+  tone: AssetTone;
   historical?: boolean;
   onOpen: () => void;
   onRetry: () => void;
@@ -331,7 +420,7 @@ function WorkspaceAssetIcon({
       <span
         className={cn(
           'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1',
-          isFailed ? TONE_ICON_CLASS.muted : TONE_ICON_CLASS.resume
+          isFailed ? TONE_ICON_CLASS.muted : TONE_ICON_CLASS[tone]
         )}
       >
         {isPending || retrying ? (

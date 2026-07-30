@@ -617,6 +617,7 @@
 			"backToHub": "К активам",
 			"assetV2": {
 				"categoryResume": "Резюме",
+				"categoryInterview": "Интервью",
 				"olderAssets": "Ранее ({count})",
 				"historyBadge": "Архив",
 				"indexFailed": "Ошибка — нажмите для повтора",

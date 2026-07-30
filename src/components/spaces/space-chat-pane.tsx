@@ -350,6 +350,8 @@ export function SpaceChatPane({
         jobId: cvRailJobId,
         drillDown: cvRailDrillDown,
         hubEnabled: cvRailHubEnabled,
+        assetScope: cvRailHubEnabled ? 'space' : undefined,
+        assetSpaceId: cvRailHubEnabled ? space.id : undefined,
       }}
       onCloseCv={closeCvRail}
       cvRailTransition={cvRailTransition}

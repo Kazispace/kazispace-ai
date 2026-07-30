@@ -20,7 +20,7 @@ import { primeSessionNavHandoff } from '@/lib/session-nav-handoff';
 import { openAgentSessionTarget } from '@/lib/session-nav';
 import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
-import type { WorkspaceAsset } from '@/types/workspace-asset';
+import type { WorkspaceAsset, WorkspaceAssetScope } from '@/types/workspace-asset';
 
 type CvRailView = 'hub' | 'cv' | 'asset-preview';
 
@@ -35,6 +35,9 @@ interface CvWorkspaceRailProps {
   /** Agent transition context — Clinic rail defaults to `clinic`; Space rail uses `cv` + space return href. */
   transitionFromSurface?: AgentSurfaceId;
   transitionReturnHref?: string;
+  /** Workspace asset list scope — Clinic defaults to `user`; job_sprint Space rail uses `space`. */
+  assetScope?: WorkspaceAssetScope;
+  assetSpaceId?: string;
 }
 
 function resolveInitialView(
@@ -56,6 +59,8 @@ export function CvWorkspaceRail({
   className,
   transitionFromSurface = 'clinic',
   transitionReturnHref,
+  assetScope = 'user',
+  assetSpaceId,
 }: CvWorkspaceRailProps) {
   const t = useTranslations('cv');
   const tHub = useTranslations('cv.railHub');
@@ -162,6 +167,8 @@ export function CvWorkspaceRail({
           assetRailV2 ? (
             <WorkspaceAssetRailHub
               locale={locale}
+              scope={assetScope}
+              spaceId={assetSpaceId}
               showCloseButton
               onClose={onClose}
               onOpenAsset={openWorkspaceAsset}

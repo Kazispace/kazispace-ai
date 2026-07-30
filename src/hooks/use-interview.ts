@@ -27,6 +27,7 @@ import {
 } from '@/lib/handle-agent-envelope';
 import { formatPrepMessage } from '@/lib/interview-message-format';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
+import { publishWorkspaceAssetsInvalidate } from '@/lib/workspace-assets-invalidate';
 import { takeHubSessionHandoff } from '@/lib/hub-session-handoff';
 import {
   SESSION_NAV_SELECT_HISTORY_EVENT,
@@ -358,6 +359,7 @@ export function useInterview(jobId?: string | null) {
             cards: assistant.cards,
           });
           setPhase('feedback_ready');
+          publishWorkspaceAssetsInvalidate();
           return;
         }
 
