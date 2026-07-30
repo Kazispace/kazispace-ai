@@ -67,7 +67,7 @@ export function WorkspaceAssetRailHub({
     [scope, spaceId]
   );
 
-  const { items, categories, historyCounts, isLoading, error, refresh, authenticated } =
+  const { items, categories, historyCounts, isLoading, error, refresh, authenticated, authReady } =
     useWorkspaceAssets(listParams, true);
 
   const currentResume = useMemo(
@@ -75,7 +75,7 @@ export function WorkspaceAssetRailHub({
     [items]
   );
 
-  const resumeCount = Math.max(categories.resume, currentResume.length);
+  const resumeCount = categories.resume;
 
   const push = (path: string) => onNavigate?.(path);
 
@@ -103,7 +103,9 @@ export function WorkspaceAssetRailHub({
           count={resumeCount}
           historyCount={historyCounts.resume}
         />
-        {!authenticated ? (
+        {!authReady ? (
+          <AssetSkeletonRow />
+        ) : !authenticated ? (
           <p className="col-span-full px-1 text-[10px] text-[#86909C]">
             {tV2('loginRequired')}
           </p>

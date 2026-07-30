@@ -83,6 +83,17 @@ function countByCategory(items: WorkspaceAsset[]): WorkspaceAssetCategoryCounts 
   };
 }
 
+function pickCategoryCounts(
+  derived: WorkspaceAssetCategoryCounts,
+  api?: Partial<WorkspaceAssetCategoryCounts>
+): WorkspaceAssetCategoryCounts {
+  return {
+    resume: derived.resume > 0 ? derived.resume : (api?.resume ?? 0),
+    english: derived.english > 0 ? derived.english : (api?.english ?? 0),
+    interview: derived.interview > 0 ? derived.interview : (api?.interview ?? 0),
+  };
+}
+
 function countHistoryByCategory(
   items: WorkspaceAsset[]
 ): WorkspaceAssetCategoryCounts {
@@ -120,16 +131,11 @@ function normalizeResponse(
 
   return {
     items,
-    categories: {
-      ...EMPTY_COUNTS,
-      ...derivedCategories,
-      ...categoriesRaw,
-    },
-    history_counts: {
-      ...EMPTY_COUNTS,
-      ...derivedHistory,
-      ...historyRaw,
-    },
+    // items-derived wins when non-zero; API counts are fallback only (PR #180 P2)
+    categories: pickCategoryCounts(derivedCategories, categoriesRaw),
+    history_counts: includeHistory
+      ? pickCategoryCounts(derivedHistory, historyRaw)
+      : { ...EMPTY_COUNTS, ...historyRaw },
   };
 }
 
