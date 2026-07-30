@@ -19,7 +19,6 @@ import { publishSessionNavChatSideRailOpen } from '@/lib/session-nav-events';
 import { useEmbeddedInWorkspaceShell } from '@/lib/workspace-shell-context';
 import { useWorkspaceRailPortal } from '@/lib/workspace-rail-portal';
 import type { JobPracticeContext } from '@/types/jobs';
-import type { WorkspaceAssetScope } from '@/types/workspace-asset';
 import { cn } from '@/lib/utils';
 
 const DEFAULT_RAIL_WIDTH = 480;
@@ -35,9 +34,6 @@ export interface CvRailState {
   drillDown?: boolean;
   /** Clinic: zone/tile hub. Space blank template: CV panel only (no hub). */
   hubEnabled?: boolean;
-  /** Workspace asset list scope for v2 hub (Space job_sprint → `space` + spaceId). */
-  assetScope?: WorkspaceAssetScope;
-  assetSpaceId?: string;
 }
 
 /** Passed into CV rail when host is Space (blank template); Clinic omits → defaults. */
@@ -252,8 +248,6 @@ export function ChatSideRailsHost({
         jobId={cvRail.jobId}
         drillDown={cvRail.drillDown}
         hubEnabled={cvRail.hubEnabled ?? true}
-        assetScope={cvRail.assetScope}
-        assetSpaceId={cvRail.assetSpaceId}
         onClose={onCloseCv}
         transitionFromSurface={cvRailTransition?.fromSurface}
         transitionReturnHref={cvRailTransition?.returnHref}

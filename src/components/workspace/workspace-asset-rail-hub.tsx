@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   Briefcase,
   ChevronDown,
@@ -19,18 +19,15 @@ import {
   useWorkspaceAssetCategoryHistory,
   useWorkspaceAssets,
 } from '@/hooks/use-workspace-assets';
-import { isWorkspaceAssetReindexEnabled } from '@/lib/workspace-assets-constants';
+import {
+  isWorkspaceAssetReindexEnabled,
+  WORKSPACE_ASSET_HUB_SCOPE,
+} from '@/lib/workspace-assets-constants';
 import { cn } from '@/lib/utils';
-import type {
-  WorkspaceAsset,
-  WorkspaceAssetCategory,
-  WorkspaceAssetScope,
-} from '@/types/workspace-asset';
+import type { WorkspaceAsset, WorkspaceAssetCategory } from '@/types/workspace-asset';
 
 interface WorkspaceAssetRailHubProps {
   locale: string;
-  scope?: WorkspaceAssetScope;
-  spaceId?: string;
   className?: string;
   showCloseButton?: boolean;
   onClose?: () => void;
@@ -57,8 +54,6 @@ const CATEGORY_TONE: Record<WorkspaceAssetCategory, AssetTone> = {
 /** v2 hub — file-centric career assets (KAZI-404 resume, KAZI-409 interview). */
 export function WorkspaceAssetRailHub({
   locale,
-  scope = 'user',
-  spaceId,
   className,
   showCloseButton = true,
   onClose,
@@ -69,21 +64,16 @@ export function WorkspaceAssetRailHub({
   const tV2 = useTranslations('cv.railHub.assetV2');
   const tCv = useTranslations('cv');
 
-  const listParams = useMemo(
-    () => ({ scope, spaceId, includeHistory: false }),
-    [scope, spaceId]
+  const resumeQuery = useWorkspaceAssets(
+    { scope: WORKSPACE_ASSET_HUB_SCOPE, category: 'resume', includeHistory: false },
+    true
+  );
+  const interviewQuery = useWorkspaceAssets(
+    { scope: WORKSPACE_ASSET_HUB_SCOPE, category: 'interview', includeHistory: false },
+    true
   );
 
-  const { items, categories, historyCounts, isLoading, error, refresh, authenticated, authReady } =
-    useWorkspaceAssets(listParams, true);
-
-  const currentByCategory = useMemo(
-    () => ({
-      resume: items.filter((item) => item.category === 'resume' && item.is_current),
-      interview: items.filter((item) => item.category === 'interview' && item.is_current),
-    }),
-    [items]
-  );
+  const { authReady, authenticated } = resumeQuery;
 
   const push = (path: string) => onNavigate?.(path);
 
@@ -109,37 +99,35 @@ export function WorkspaceAssetRailHub({
         <CareerAssetSubcategory
           category="resume"
           label={tV2('categoryResume')}
-          count={categories.resume}
-          historyCount={historyCounts.resume}
-          items={currentByCategory.resume}
-          scope={scope}
-          spaceId={spaceId}
+          count={resumeQuery.categories.resume}
+          historyCount={resumeQuery.historyCounts.resume}
+          items={resumeQuery.items.filter((item) => item.is_current)}
           authReady={authReady}
           authenticated={authenticated}
-          isLoading={isLoading}
-          error={error}
+          isLoading={resumeQuery.isLoading}
+          error={resumeQuery.error}
           loginRequiredLabel={tV2('loginRequired')}
-          olderAssetsLabel={tV2('olderAssets', { count: historyCounts.resume })}
+          olderAssetsLabel={tV2('olderAssets', { count: resumeQuery.historyCounts.resume })}
           onOpenAsset={onOpenAsset}
-          onRetry={refresh}
+          onRetry={resumeQuery.refresh}
           t={tV2}
         />
         <CareerAssetSubcategory
           category="interview"
           label={tV2('categoryInterview')}
-          count={categories.interview}
-          historyCount={historyCounts.interview}
-          items={currentByCategory.interview}
-          scope={scope}
-          spaceId={spaceId}
+          count={interviewQuery.categories.interview}
+          historyCount={interviewQuery.historyCounts.interview}
+          items={interviewQuery.items.filter((item) => item.is_current)}
           authReady={authReady}
           authenticated={authenticated}
-          isLoading={isLoading}
-          error={error}
+          isLoading={interviewQuery.isLoading}
+          error={interviewQuery.error}
           loginRequiredLabel={tV2('loginRequired')}
-          olderAssetsLabel={tV2('olderAssets', { count: historyCounts.interview })}
+          olderAssetsLabel={tV2('olderAssets', {
+            count: interviewQuery.historyCounts.interview,
+          })}
           onOpenAsset={onOpenAsset}
-          onRetry={refresh}
+          onRetry={interviewQuery.refresh}
           t={tV2}
         />
       </ZoneBlock>
@@ -215,8 +203,6 @@ function CareerAssetSubcategory({
   count,
   historyCount,
   items,
-  scope,
-  spaceId,
   authReady,
   authenticated,
   isLoading,
@@ -232,8 +218,6 @@ function CareerAssetSubcategory({
   count: number;
   historyCount: number;
   items: WorkspaceAsset[];
-  scope: WorkspaceAssetScope;
-  spaceId?: string;
   authReady: boolean;
   authenticated: boolean;
   isLoading: boolean;
@@ -273,8 +257,6 @@ function CareerAssetSubcategory({
             category={category}
             label={olderAssetsLabel}
             historyCount={historyCount}
-            scope={scope}
-            spaceId={spaceId}
             authenticated={authenticated}
             tone={tone}
             onOpenAsset={onOpenAsset}
@@ -292,8 +274,6 @@ function CategoryHistoryFold({
   category,
   label,
   historyCount,
-  scope,
-  spaceId,
   authenticated,
   tone,
   onOpenAsset,
@@ -303,8 +283,6 @@ function CategoryHistoryFold({
   category: WorkspaceAssetCategory;
   label: string;
   historyCount: number;
-  scope: WorkspaceAssetScope;
-  spaceId?: string;
   authenticated: boolean;
   tone: AssetTone;
   onOpenAsset?: (asset: WorkspaceAsset) => void;
@@ -314,20 +292,16 @@ function CategoryHistoryFold({
   const [open, setOpen] = useState(false);
 
   const { items, isLoading } = useWorkspaceAssetCategoryHistory(
-    { scope, spaceId, category },
+    { scope: WORKSPACE_ASSET_HUB_SCOPE, category },
     open,
     authenticated
   );
 
-  const historyItems = useMemo(
-    () =>
-      items.filter(
-        (item) =>
-          item.category === category &&
-          !item.is_current &&
-          item.indexing_status === 'ready'
-      ),
-    [category, items]
+  const historyItems = items.filter(
+    (item) =>
+      item.category === category &&
+      !item.is_current &&
+      item.indexing_status === 'ready'
   );
 
   if (historyCount <= 0) return null;
