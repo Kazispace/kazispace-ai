@@ -485,7 +485,6 @@ export function useInterview(jobId?: string | null) {
         }
         startPolling(runId);
         publishSessionNavInvalidate();
-        publishWorkspaceAssetsInvalidate();
         return true;
       }
 
@@ -1036,7 +1035,6 @@ export function useInterview(jobId?: string | null) {
           startPolling(runId);
           setIsSending(false);
           publishSessionNavInvalidate();
-          publishWorkspaceAssetsInvalidate();
           return;
         }
 
