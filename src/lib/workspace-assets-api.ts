@@ -2,6 +2,7 @@ import { apiRequest } from '@/lib/api-client';
 import type { ApiResponse } from '@/types';
 import type {
   FetchWorkspaceAssetsParams,
+  WorkspaceAsset,
   WorkspaceAssetDetail,
   WorkspaceAssetsResponse,
 } from '@/types/workspace-asset';
@@ -39,4 +40,29 @@ export async function reindexWorkspaceAsset(
     `/api/v1/workspace-assets/${encodeURIComponent(assetId)}/reindex`,
     { method: 'POST' }
   );
+}
+
+/**
+ * Load markdown body for rail preview.
+ * BE #301 detail omits `content` — fall back to signed preview/download URL.
+ */
+export async function fetchWorkspaceAssetMarkdownContent(
+  asset: WorkspaceAsset
+): Promise<string> {
+  const detailRes = await fetchWorkspaceAssetDetail(asset.asset_id);
+  const inline = detailRes.success ? detailRes.data?.content : undefined;
+  if (typeof inline === 'string' && inline.length > 0) {
+    return inline;
+  }
+
+  const url = asset.preview_url ?? asset.download_url;
+  if (!url) {
+    throw new Error('No preview URL for markdown asset');
+  }
+
+  const blobRes = await fetch(url);
+  if (!blobRes.ok) {
+    throw new Error(`Preview fetch failed (${blobRes.status})`);
+  }
+  return blobRes.text();
 }

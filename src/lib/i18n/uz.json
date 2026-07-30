@@ -571,6 +571,7 @@
 				"olderAssets": "Avvalgilar ({count})",
 				"historyBadge": "Tarix",
 				"indexFailed": "Xato — qayta urinish",
+				"indexFailedNoRetry": "Yaratish muvaffaqiyatsiz",
 				"previewLoading": "Yuklanmoqda…",
 				"previewUnavailable": "Ko‘rib bo‘lmaydi."
 			}

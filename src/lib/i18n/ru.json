@@ -620,6 +620,7 @@
 				"olderAssets": "Ранее ({count})",
 				"historyBadge": "Архив",
 				"indexFailed": "Ошибка — нажмите для повтора",
+				"indexFailedNoRetry": "Ошибка генерации",
 				"previewLoading": "Загрузка…",
 				"previewUnavailable": "Предпросмотр недоступен."
 			}

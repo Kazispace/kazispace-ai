@@ -723,6 +723,7 @@
 				"olderAssets": "更早的… · {count}",
 				"historyBadge": "历史",
 				"indexFailed": "生成失败 · 点按重试",
+				"indexFailedNoRetry": "生成失败",
 				"previewLoading": "加载预览…",
 				"previewUnavailable": "暂无法预览此文件。"
 			}

@@ -12,7 +12,7 @@ import { WorkspaceAssetRailHub } from '@/components/workspace/workspace-asset-ra
 import {
   WorkspaceSideRailHub,
 } from '@/components/workspace/workspace-side-rail-hub';
-import { useWorkspaceAssetDetail } from '@/hooks/use-workspace-assets';
+import { useWorkspaceAssetPreview } from '@/hooks/use-workspace-assets';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { isWorkspaceAssetRailV2Enabled } from '@/lib/workspace-assets-constants';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
@@ -70,10 +70,9 @@ export function CvWorkspaceRail({
   );
   const [previewAsset, setPreviewAsset] = useState<WorkspaceAsset | null>(null);
 
-  const assetDetailQuery = useWorkspaceAssetDetail(
-    previewAsset?.asset_id ?? null,
-    view === 'asset-preview' &&
-      previewAsset?.mime_type === 'text/markdown'
+  const previewQuery = useWorkspaceAssetPreview(
+    previewAsset,
+    view === 'asset-preview'
   );
 
   useEffect(() => {
@@ -182,14 +181,14 @@ export function CvWorkspaceRail({
         ) : view === 'asset-preview' && previewAsset ? (
           <WorkspaceAssetPreviewPanel
             asset={previewAsset}
-            content={assetDetailQuery.data?.content}
+            content={previewQuery.data ?? undefined}
             isLoading={
               previewAsset.mime_type === 'text/markdown' &&
-              assetDetailQuery.isLoading
+              previewQuery.isLoading
             }
             error={
-              assetDetailQuery.error instanceof Error
-                ? assetDetailQuery.error.message
+              previewQuery.error instanceof Error
+                ? previewQuery.error.message
                 : null
             }
             className="h-full"

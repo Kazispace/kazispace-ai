@@ -602,6 +602,7 @@
 				"olderAssets": "Ертерек ({count})",
 				"historyBadge": "Тарих",
 				"indexFailed": "Қате — қайталау",
+				"indexFailedNoRetry": "Генерация сәтсіз",
 				"previewLoading": "Жүктелуде…",
 				"previewUnavailable": "Алдын ала қарау жоқ."
 			}

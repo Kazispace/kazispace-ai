@@ -13,13 +13,13 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import {
-  HUB_ASSET_GRID_CLASS,
-} from '@/components/workspace/workspace-side-rail-hub';
+import { HUB_ASSET_GRID_CLASS } from '@/components/workspace/workspace-side-rail-hub';
 import {
   retryWorkspaceAssetIndexing,
+  useWorkspaceAssetCategoryHistory,
   useWorkspaceAssets,
 } from '@/hooks/use-workspace-assets';
+import { isWorkspaceAssetReindexEnabled } from '@/lib/workspace-assets-constants';
 import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type {
@@ -64,18 +64,13 @@ export function WorkspaceAssetRailHub({
   const tCv = useTranslations('cv');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const listParams = useMemo(
+    () => ({ scope, spaceId, category: 'resume' as const, includeHistory: false }),
+    [scope, spaceId]
+  );
 
   const { items, categories, historyCounts, isLoading, error, refresh } =
-    useWorkspaceAssets(
-      {
-        scope,
-        spaceId,
-        category: 'resume',
-        includeHistory: historyOpen,
-      },
-      isLoggedIn
-    );
+    useWorkspaceAssets(listParams, isLoggedIn);
 
   const currentResume = useMemo(
     () => items.filter((item) => item.is_current),
@@ -123,13 +118,13 @@ export function WorkspaceAssetRailHub({
                 t={tV2}
               />
             ))}
-            <HistoryFold
+            <CategoryHistoryFold
               category="resume"
               label={tV2('olderAssets', { count: historyCounts.resume })}
               historyCount={historyCounts.resume}
-              open={historyOpen}
-              onToggle={() => setHistoryOpen((v) => !v)}
-              items={items}
+              scope={scope}
+              spaceId={spaceId}
+              isLoggedIn={isLoggedIn}
               onOpenAsset={onOpenAsset}
               onRetry={refresh}
               t={tV2}
@@ -196,21 +191,20 @@ function SubcategoryHeader({
         {label} · {count}
       </p>
       {historyCount > 0 ? (
-        <span className="text-[10px] text-[#86909C]">
-          +{historyCount}
-        </span>
+        <span className="text-[10px] text-[#86909C]">+{historyCount}</span>
       ) : null}
     </div>
   );
 }
 
-function HistoryFold({
+/** Per-category expand + lazy history fetch (SSOT §4.2.2, review P2-2). */
+function CategoryHistoryFold({
   category,
   label,
   historyCount,
-  open,
-  onToggle,
-  items,
+  scope,
+  spaceId,
+  isLoggedIn,
   onOpenAsset,
   onRetry,
   t,
@@ -218,13 +212,21 @@ function HistoryFold({
   category: WorkspaceAssetCategory;
   label: string;
   historyCount: number;
-  open: boolean;
-  onToggle: () => void;
-  items: WorkspaceAsset[];
+  scope: WorkspaceAssetScope;
+  spaceId?: string;
+  isLoggedIn: boolean;
   onOpenAsset?: (asset: WorkspaceAsset) => void;
   onRetry: () => void;
   t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
 }) {
+  const [open, setOpen] = useState(false);
+
+  const { items, isLoading } = useWorkspaceAssetCategoryHistory(
+    { scope, spaceId, category },
+    open,
+    isLoggedIn
+  );
+
   const historyItems = useMemo(
     () =>
       items.filter(
@@ -242,7 +244,7 @@ function HistoryFold({
     <div className="col-span-full">
       <button
         type="button"
-        onClick={onToggle}
+        onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-1 rounded-md px-0.5 py-1 text-left text-[10px] font-medium text-[#86909C] hover:bg-gray-50"
       >
         <ChevronDown
@@ -256,16 +258,20 @@ function HistoryFold({
       </button>
       {open ? (
         <div className={cn('mt-1', HUB_ASSET_GRID_CLASS)}>
-          {historyItems.map((asset) => (
-            <WorkspaceAssetIcon
-              key={asset.asset_id}
-              asset={asset}
-              historical
-              onOpen={() => onOpenAsset?.(asset)}
-              onRetry={onRetry}
-              t={t}
-            />
-          ))}
+          {isLoading ? (
+            <AssetSkeletonRow />
+          ) : (
+            historyItems.map((asset) => (
+              <WorkspaceAssetIcon
+                key={asset.asset_id}
+                asset={asset}
+                historical
+                onOpen={() => onOpenAsset?.(asset)}
+                onRetry={onRetry}
+                t={t}
+              />
+            ))
+          )}
         </div>
       ) : null}
     </div>
@@ -286,12 +292,14 @@ function WorkspaceAssetIcon({
   t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
 }) {
   const [retrying, setRetrying] = useState(false);
+  const reindexEnabled = isWorkspaceAssetReindexEnabled();
   const isPending = asset.indexing_status === 'pending';
   const isFailed = asset.indexing_status === 'failed';
   const mimeLabel = asset.mime_type === 'application/pdf' ? 'PDF' : 'MD';
 
   const handleClick = async () => {
     if (isFailed) {
+      if (!reindexEnabled) return;
       setRetrying(true);
       await retryWorkspaceAssetIndexing(asset);
       setRetrying(false);
@@ -306,7 +314,7 @@ function WorkspaceAssetIcon({
     <button
       type="button"
       onClick={() => void handleClick()}
-      disabled={isPending || retrying}
+      disabled={isPending || retrying || (isFailed && !reindexEnabled)}
       title={asset.display_name}
       className={cn(
         'relative flex min-w-0 flex-col items-center gap-0.5 rounded-lg p-1',
@@ -337,7 +345,11 @@ function WorkspaceAssetIcon({
         ) : null}
       </span>
       <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-[#4E5969]">
-        {isFailed ? t('indexFailed') : asset.display_name}
+        {isFailed
+          ? reindexEnabled
+            ? t('indexFailed')
+            : t('indexFailedNoRetry')
+          : asset.display_name}
       </span>
       {asset.subtitle ? (
         <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-[#86909C]">

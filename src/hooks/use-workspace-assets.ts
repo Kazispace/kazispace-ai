@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
-  fetchWorkspaceAssetDetail,
+  fetchWorkspaceAssetMarkdownContent,
   fetchWorkspaceAssets,
   reindexWorkspaceAsset,
 } from '@/lib/workspace-assets-api';
@@ -41,6 +41,21 @@ function normalizeResponse(data: unknown): WorkspaceAssetsResponse {
   };
 }
 
+function useWorkspaceAssetsInvalidate(enabled: boolean) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!enabled) return;
+    const onInvalidate = () => {
+      void queryClient.invalidateQueries({ queryKey: ['workspace-assets'] });
+      void queryClient.invalidateQueries({ queryKey: ['workspace-asset-preview'] });
+    };
+    window.addEventListener(WORKSPACE_ASSETS_INVALIDATE_EVENT, onInvalidate);
+    return () =>
+      window.removeEventListener(WORKSPACE_ASSETS_INVALIDATE_EVENT, onInvalidate);
+  }, [enabled, queryClient]);
+}
+
 export function useWorkspaceAssets(
   params?: FetchWorkspaceAssetsParams,
   enabled = true
@@ -61,32 +76,17 @@ export function useWorkspaceAssets(
     staleTime: 30_000,
   });
 
+  useWorkspaceAssetsInvalidate(enabled);
+
   const refresh = useCallback(
     () => queryClient.invalidateQueries({ queryKey }),
     [queryClient, queryKey]
   );
 
-  useEffect(() => {
-    if (!enabled) return;
-    const onInvalidate = () => {
-      void queryClient.invalidateQueries({ queryKey: ['workspace-assets'] });
-    };
-    window.addEventListener(WORKSPACE_ASSETS_INVALIDATE_EVENT, onInvalidate);
-    return () =>
-      window.removeEventListener(WORKSPACE_ASSETS_INVALIDATE_EVENT, onInvalidate);
-  }, [enabled, queryClient]);
-
-  const resumeItems = (query.data?.items ?? []).filter(
-    (item) => item.category === 'resume' && item.is_current
-  );
-  const resumeHistoryCount = query.data?.history_counts.resume ?? 0;
-
   return {
     items: query.data?.items ?? [],
     categories: query.data?.categories ?? EMPTY_COUNTS,
     historyCounts: query.data?.history_counts ?? EMPTY_COUNTS,
-    resumeItems,
-    resumeHistoryCount,
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     error: query.error instanceof Error ? query.error.message : null,
@@ -94,18 +94,41 @@ export function useWorkspaceAssets(
   };
 }
 
-export function useWorkspaceAssetDetail(assetId: string | null, enabled = true) {
+/** Per-category history fold — fetches only when expanded (P2-2). */
+export function useWorkspaceAssetCategoryHistory(
+  params: FetchWorkspaceAssetsParams & { category: WorkspaceAsset['category'] },
+  expanded: boolean,
+  enabled = true
+) {
+  return useWorkspaceAssets(
+    { ...params, includeHistory: true },
+    enabled && expanded
+  );
+}
+
+/** MD preview: detail `content` when present, else signed URL fetch (P1-1). */
+export function useWorkspaceAssetPreview(
+  asset: WorkspaceAsset | null,
+  enabled = true
+) {
   return useQuery({
-    queryKey: ['workspace-asset', assetId],
+    queryKey: [
+      'workspace-asset-preview',
+      asset?.asset_id,
+      asset?.preview_url ?? asset?.download_url,
+    ],
     queryFn: async () => {
-      if (!assetId) throw new Error('Missing asset id');
-      const res = await fetchWorkspaceAssetDetail(assetId);
-      if (!res.success || !res.data) {
-        throw new Error(res.error ?? 'Failed to load asset');
+      if (!asset) throw new Error('Missing asset');
+      if (asset.mime_type !== 'text/markdown') {
+        return null;
       }
-      return res.data;
+      return fetchWorkspaceAssetMarkdownContent(asset);
     },
-    enabled: enabled && Boolean(assetId),
+    enabled:
+      enabled &&
+      Boolean(asset) &&
+      asset?.mime_type === 'text/markdown' &&
+      asset.indexing_status === 'ready',
     staleTime: 60_000,
   });
 }
