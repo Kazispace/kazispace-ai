@@ -565,7 +565,16 @@
 			"openWorkspaceRail": "Aktiv paneli",
 			"workspaceRailUseCvPanel": "Bu makonda CV paneli o‘ngda — u yerdan oching.",
 			"zoneComingSoon": "Tez orada",
-			"backToHub": "Aktivlarga"
+			"backToHub": "Aktivlarga",
+			"assetV2": {
+				"categoryResume": "Rezyume",
+				"olderAssets": "Avvalgilar ({count})",
+				"historyBadge": "Tarix",
+				"indexFailed": "Xato — qayta urinish",
+				"indexFailedNoRetry": "Yaratish muvaffaqiyatsiz",
+				"previewLoading": "Yuklanmoqda…",
+				"previewUnavailable": "Ko‘rib bo‘lmaydi."
+			}
 		}
 	},
 	"nba": {

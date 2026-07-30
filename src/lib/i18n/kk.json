@@ -596,7 +596,16 @@
 			"openWorkspaceRail": "Актив панелін ашу",
 			"workspaceRailUseCvPanel": "Бұл кеңістікте CV панелі оң жақта — оны онда ашыңыз.",
 			"zoneComingSoon": "Жақында",
-			"backToHub": "Активтерге"
+			"backToHub": "Активтерге",
+			"assetV2": {
+				"categoryResume": "Түйіндеме",
+				"olderAssets": "Ертерек ({count})",
+				"historyBadge": "Тарих",
+				"indexFailed": "Қате — қайталау",
+				"indexFailedNoRetry": "Генерация сәтсіз",
+				"previewLoading": "Жүктелуде…",
+				"previewUnavailable": "Алдын ала қарау жоқ."
+			}
 		}
 	},
 	"nba": {

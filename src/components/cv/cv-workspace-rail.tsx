@@ -7,17 +7,22 @@ import { useTranslations } from 'next-intl';
 
 import { AgentTransitionProvider } from '@/components/agent-transition/agent-transition-provider';
 import { JobSprintCvPanel } from '@/components/spaces/panels/job-sprint-cv-panel';
+import { WorkspaceAssetPreviewPanel } from '@/components/workspace/workspace-asset-preview-panel';
+import { WorkspaceAssetRailHub } from '@/components/workspace/workspace-asset-rail-hub';
 import {
   WorkspaceSideRailHub,
 } from '@/components/workspace/workspace-side-rail-hub';
+import { useWorkspaceAssetPreview } from '@/hooks/use-workspace-assets';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
+import { isWorkspaceAssetRailV2Enabled } from '@/lib/workspace-assets-constants';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { primeSessionNavHandoff } from '@/lib/session-nav-handoff';
 import { openAgentSessionTarget } from '@/lib/session-nav';
 import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import type { WorkspaceAsset } from '@/types/workspace-asset';
 
-type CvRailView = 'hub' | 'cv';
+type CvRailView = 'hub' | 'cv' | 'asset-preview';
 
 interface CvWorkspaceRailProps {
   locale: string;
@@ -58,8 +63,16 @@ export function CvWorkspaceRail({
   const router = useRouter();
   const pathname = usePathname();
 
+  const assetRailV2 = isWorkspaceAssetRailV2Enabled();
+
   const [view, setView] = useState<CvRailView>(() =>
     resolveInitialView(jobId, drillDown, hubEnabled)
+  );
+  const [previewAsset, setPreviewAsset] = useState<WorkspaceAsset | null>(null);
+
+  const previewQuery = useWorkspaceAssetPreview(
+    previewAsset,
+    view === 'asset-preview'
   );
 
   useEffect(() => {
@@ -69,7 +82,15 @@ export function CvWorkspaceRail({
   }, [jobId, drillDown, hubEnabled]);
 
   const openCvDrillDown = useCallback(() => setView('cv'), []);
-  const backToHub = useCallback(() => setView('hub'), []);
+  const backToHub = useCallback(() => {
+    setPreviewAsset(null);
+    setView('hub');
+  }, []);
+
+  const openWorkspaceAsset = useCallback((asset: WorkspaceAsset) => {
+    setPreviewAsset(asset);
+    setView('asset-preview');
+  }, []);
 
   const openCvSession = useCallback((sessionId: string) => {
     primeSessionNavHandoff(CV_BUILDER_AGENT_ID, sessionId);
@@ -100,7 +121,8 @@ export function CvWorkspaceRail({
       {showFullHeader ? (
         <header className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200/80 px-4 py-3">
           <div className="flex min-w-0 items-start gap-2">
-            {view === 'cv' && hubEnabled && !jobId?.trim() ? (
+            {(view === 'cv' && hubEnabled && !jobId?.trim()) ||
+            view === 'asset-preview' ? (
               <button
                 type="button"
                 onClick={backToHub}
@@ -112,12 +134,16 @@ export function CvWorkspaceRail({
             ) : null}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-[#1D2129]">
-                {t('title')}
+                {view === 'asset-preview' && previewAsset
+                  ? previewAsset.display_name
+                  : t('title')}
               </p>
               <p className="truncate text-xs text-[#86909C]">
-                {jobId?.trim()
-                  ? t('subtitleWithJob', { jobId })
-                  : t('subtitle')}
+                {view === 'asset-preview' && previewAsset?.subtitle
+                  ? previewAsset.subtitle
+                  : jobId?.trim()
+                    ? t('subtitleWithJob', { jobId })
+                    : t('subtitle')}
               </p>
             </div>
           </div>
@@ -133,14 +159,39 @@ export function CvWorkspaceRail({
       ) : null}
       <div className="min-h-0 flex-1">
         {view === 'hub' ? (
-          <WorkspaceSideRailHub
-            locale={locale}
-            showCloseButton
-            onClose={onClose}
-            onOpenCv={openCvDrillDown}
-            onOpenCvSession={openCvSession}
-            onOpenAgentSession={openAgentSession}
-            onNavigate={handleHubNavigate}
+          assetRailV2 ? (
+            <WorkspaceAssetRailHub
+              locale={locale}
+              showCloseButton
+              onClose={onClose}
+              onOpenAsset={openWorkspaceAsset}
+              onNavigate={handleHubNavigate}
+            />
+          ) : (
+            <WorkspaceSideRailHub
+              locale={locale}
+              showCloseButton
+              onClose={onClose}
+              onOpenCv={openCvDrillDown}
+              onOpenCvSession={openCvSession}
+              onOpenAgentSession={openAgentSession}
+              onNavigate={handleHubNavigate}
+            />
+          )
+        ) : view === 'asset-preview' && previewAsset ? (
+          <WorkspaceAssetPreviewPanel
+            asset={previewAsset}
+            content={previewQuery.data ?? undefined}
+            isLoading={
+              previewAsset.mime_type === 'text/markdown' &&
+              previewQuery.isLoading
+            }
+            error={
+              previewQuery.error instanceof Error
+                ? previewQuery.error.message
+                : null
+            }
+            className="h-full"
           />
         ) : (
           <AgentTransitionProvider

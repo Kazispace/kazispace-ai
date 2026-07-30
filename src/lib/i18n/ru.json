@@ -614,7 +614,16 @@
 			"openWorkspaceRail": "Открыть панель активов",
 			"workspaceRailUseCvPanel": "В этом пространстве резюме уже в панели справа — откройте её там.",
 			"zoneComingSoon": "Скоро",
-			"backToHub": "К активам"
+			"backToHub": "К активам",
+			"assetV2": {
+				"categoryResume": "Резюме",
+				"olderAssets": "Ранее ({count})",
+				"historyBadge": "Архив",
+				"indexFailed": "Ошибка — нажмите для повтора",
+				"indexFailedNoRetry": "Ошибка генерации",
+				"previewLoading": "Загрузка…",
+				"previewUnavailable": "Предпросмотр недоступен."
+			}
 		}
 	},
 	"nba": {

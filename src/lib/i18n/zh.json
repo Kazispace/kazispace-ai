@@ -717,7 +717,16 @@
 			"openWorkspaceRail": "打开资产面板",
 			"workspaceRailUseCvPanel": "本空间已在右侧提供简历面板，请使用面板内的入口。",
 			"zoneComingSoon": "即将上线",
-			"backToHub": "返回资产"
+			"backToHub": "返回资产",
+			"assetV2": {
+				"categoryResume": "简历类",
+				"olderAssets": "更早的… · {count}",
+				"historyBadge": "历史",
+				"indexFailed": "生成失败 · 点按重试",
+				"indexFailedNoRetry": "生成失败",
+				"previewLoading": "加载预览…",
+				"previewUnavailable": "暂无法预览此文件。"
+			}
 		}
 	},
 	"english": {

@@ -893,7 +893,16 @@
 			"openWorkspaceRail": "Open workspace panel",
 			"workspaceRailUseCvPanel": "This space already has a CV panel on the right — use it from there.",
 			"zoneComingSoon": "Coming soon",
-			"backToHub": "Back to assets"
+			"backToHub": "Back to assets",
+			"assetV2": {
+				"categoryResume": "Resumes",
+				"olderAssets": "Older ({count})",
+				"historyBadge": "Past",
+				"indexFailed": "Failed — tap to retry",
+				"indexFailedNoRetry": "Generation failed",
+				"previewLoading": "Loading preview…",
+				"previewUnavailable": "Preview is not available for this file."
+			}
 		}
 	},
 	"nba": {
