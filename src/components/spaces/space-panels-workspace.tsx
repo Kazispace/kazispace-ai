@@ -19,10 +19,11 @@ import {
 } from '@/lib/spaces/panels';
 import { resolveSpaceJobId } from '@/lib/spaces/space-context';
 import {
-  publishSessionNavChatSideRailOpen,
   SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
   SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
 } from '@/lib/session-nav-events';
+import { useIsDesktop } from '@/hooks/use-is-desktop';
+import { useWorkspaceRailPortal } from '@/lib/workspace-rail-portal';
 import { useSpaceStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { SpaceDetail } from '@/types/spaces';
@@ -43,6 +44,8 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   const locale = (params.locale as string) ?? 'en';
   const jobId = resolveSpaceJobId(space, searchParams);
   const muted = isSpaceComposerMuted(space.status);
+  const isDesktop = useIsDesktop();
+  const workspacePortal = useWorkspaceRailPortal();
 
   const panels = useMemo(() => resolveSpacePanels(space), [space]);
   const defaultPanelId = resolveDefaultPanelId(panels);
@@ -68,6 +71,10 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   );
   const desktopPanelOpenRef = useRef(desktopPanelOpen);
   desktopPanelOpenRef.current = desktopPanelOpen;
+  const isDesktopRef = useRef(isDesktop);
+  isDesktopRef.current = isDesktop;
+  const mobileViewRef = useRef(mobileView);
+  mobileViewRef.current = mobileView;
 
   useEffect(() => {
     if (panelFromUrl && isValidPanelId(panels, panelFromUrl)) {
@@ -88,30 +95,39 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
     [locale, router, searchParams, space.id]
   );
 
-  const openDesktopPanel = useCallback(() => {
+  const openWorkspacePanel = useCallback(() => {
     const panelId = defaultPanelId ?? panels[0]?.panel_id;
     if (!panelId) return;
     setDesktopPanelId(panelId);
-    setDesktopPanelOpen(true);
-    setMobileView('chat');
     syncPanelQuery(panelId);
+    if (isDesktopRef.current) {
+      setDesktopPanelOpen(true);
+    } else {
+      setMobileView(panelId);
+    }
   }, [defaultPanelId, panels, syncPanelQuery]);
 
-  const closeDesktopPanel = useCallback(() => {
-    setDesktopPanelOpen(false);
-    setMobileView('chat');
+  const closeWorkspacePanel = useCallback(() => {
+    if (isDesktopRef.current) {
+      setDesktopPanelOpen(false);
+    } else {
+      setMobileView('chat');
+    }
   }, []);
 
   useEffect(() => {
     const onOpenWorkspaceRail = () => {
-      openDesktopPanel();
+      openWorkspacePanel();
     };
     const onToggleWorkspaceRail = () => {
-      if (desktopPanelOpenRef.current) {
-        closeDesktopPanel();
+      const open = isDesktopRef.current
+        ? desktopPanelOpenRef.current
+        : mobileViewRef.current !== 'chat';
+      if (open) {
+        closeWorkspacePanel();
         return;
       }
-      openDesktopPanel();
+      openWorkspacePanel();
     };
     window.addEventListener(SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT, onOpenWorkspaceRail);
     window.addEventListener(
@@ -128,15 +144,20 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
         onToggleWorkspaceRail
       );
     };
-  }, [closeDesktopPanel, openDesktopPanel]);
+  }, [closeWorkspacePanel, openWorkspacePanel]);
+
+  const workspaceChromeOpen = isDesktop
+    ? desktopPanelOpen
+    : mobileView !== 'chat';
 
   useEffect(() => {
-    publishSessionNavChatSideRailOpen(desktopPanelOpen);
-  }, [desktopPanelOpen]);
+    workspacePortal?.setChatSideRailOpen(workspaceChromeOpen);
+  }, [workspaceChromeOpen, workspacePortal]);
 
   useEffect(() => {
-    return () => publishSessionNavChatSideRailOpen(false);
-  }, []);
+    const clear = workspacePortal?.setChatSideRailOpen;
+    return () => clear?.(false);
+  }, [workspacePortal]);
 
 
   const handleMobileViewChange = useCallback(
