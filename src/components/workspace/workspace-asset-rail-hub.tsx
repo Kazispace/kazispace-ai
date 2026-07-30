@@ -20,7 +20,6 @@ import {
   useWorkspaceAssets,
 } from '@/hooks/use-workspace-assets';
 import { isWorkspaceAssetReindexEnabled } from '@/lib/workspace-assets-constants';
-import { useAuthStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type {
   WorkspaceAsset,
@@ -62,20 +61,21 @@ export function WorkspaceAssetRailHub({
   const t = useTranslations('cv.railHub');
   const tV2 = useTranslations('cv.railHub.assetV2');
   const tCv = useTranslations('cv');
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
   const listParams = useMemo(
     () => ({ scope, spaceId, category: 'resume' as const, includeHistory: false }),
     [scope, spaceId]
   );
 
-  const { items, categories, historyCounts, isLoading, error, refresh } =
-    useWorkspaceAssets(listParams, isLoggedIn);
+  const { items, categories, historyCounts, isLoading, error, refresh, authenticated, authReady } =
+    useWorkspaceAssets(listParams, true);
 
   const currentResume = useMemo(
-    () => items.filter((item) => item.is_current),
+    () => items.filter((item) => item.category === 'resume' && item.is_current),
     [items]
   );
+
+  const resumeCount = categories.resume;
 
   const push = (path: string) => onNavigate?.(path);
 
@@ -100,10 +100,16 @@ export function WorkspaceAssetRailHub({
       <ZoneBlock title={t('zoneCareer')} className="pt-2 pr-10">
         <SubcategoryHeader
           label={tV2('categoryResume')}
-          count={categories.resume}
+          count={resumeCount}
           historyCount={historyCounts.resume}
         />
-        {isLoading ? (
+        {!authReady ? (
+          <AssetSkeletonRow />
+        ) : !authenticated ? (
+          <p className="col-span-full px-1 text-[10px] text-[#86909C]">
+            {tV2('loginRequired')}
+          </p>
+        ) : isLoading ? (
           <AssetSkeletonRow />
         ) : error ? (
           <p className="col-span-full px-1 text-[10px] text-red-600">{error}</p>
@@ -124,7 +130,7 @@ export function WorkspaceAssetRailHub({
               historyCount={historyCounts.resume}
               scope={scope}
               spaceId={spaceId}
-              isLoggedIn={isLoggedIn}
+              authenticated={authenticated}
               onOpenAsset={onOpenAsset}
               onRetry={refresh}
               t={tV2}
@@ -204,7 +210,7 @@ function CategoryHistoryFold({
   historyCount,
   scope,
   spaceId,
-  isLoggedIn,
+  authenticated,
   onOpenAsset,
   onRetry,
   t,
@@ -214,7 +220,7 @@ function CategoryHistoryFold({
   historyCount: number;
   scope: WorkspaceAssetScope;
   spaceId?: string;
-  isLoggedIn: boolean;
+  authenticated: boolean;
   onOpenAsset?: (asset: WorkspaceAsset) => void;
   onRetry: () => void;
   t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
@@ -224,7 +230,7 @@ function CategoryHistoryFold({
   const { items, isLoading } = useWorkspaceAssetCategoryHistory(
     { scope, spaceId, category },
     open,
-    isLoggedIn
+    authenticated
   );
 
   const historyItems = useMemo(

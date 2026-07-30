@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { User, ChatMessage, CreditBalance } from '@/types';
 import { setAuthToken, clearAuthToken, setUserInfo } from './auth';
+import { publishAuthSessionCleared } from './auth-session-events';
+import { publishWorkspaceAssetsInvalidate } from './workspace-assets-invalidate';
 import { clearBillingCache } from './billing-cache';
 import { clearMockAgentSessions } from './agent-api';
 import { clearLocaleCookies } from './locale';
@@ -39,6 +41,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     setAuthToken(token);
     setUserInfo(user);
     set({ token, user, isLoggedIn: true });
+    publishWorkspaceAssetsInvalidate();
   },
   logout: () => {
     clearAuthToken();
@@ -47,6 +50,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     clearBillingCache();
     useAgentStore.getState().reset();
     useSpaceStore.getState().reset();
+    publishAuthSessionCleared();
     set({ token: null, user: null, isLoggedIn: false });
   },
   updateUser: (partialUser) =>
