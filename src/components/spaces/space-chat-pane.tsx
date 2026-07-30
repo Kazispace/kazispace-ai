@@ -35,6 +35,7 @@ import {
   resolveSpacePanelAgentConfig,
 } from '@/lib/spaces/panel-agent-config';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
+import { resolveWorkspaceAssetListScope } from '@/lib/workspace-assets-scope';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import { cn } from '@/lib/utils';
@@ -340,6 +341,11 @@ export function SpaceChatPane({
     </button>
   ) : null;
 
+  const cvRailAssetScope = useMemo(
+    () => (cvRailHubEnabled ? resolveWorkspaceAssetListScope(space) : null),
+    [cvRailHubEnabled, space]
+  );
+
   return (
     <ChatSideRailsHost
       jobId={selectedJobId}
@@ -350,8 +356,8 @@ export function SpaceChatPane({
         jobId: cvRailJobId,
         drillDown: cvRailDrillDown,
         hubEnabled: cvRailHubEnabled,
-        assetScope: cvRailHubEnabled ? 'space' : undefined,
-        assetSpaceId: cvRailHubEnabled ? space.id : undefined,
+        assetScope: cvRailAssetScope?.scope,
+        assetSpaceId: cvRailAssetScope?.spaceId,
       }}
       onCloseCv={closeCvRail}
       cvRailTransition={cvRailTransition}

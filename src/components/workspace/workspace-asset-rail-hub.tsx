@@ -69,21 +69,16 @@ export function WorkspaceAssetRailHub({
   const tV2 = useTranslations('cv.railHub.assetV2');
   const tCv = useTranslations('cv');
 
-  const listParams = useMemo(
-    () => ({ scope, spaceId, includeHistory: false }),
-    [scope, spaceId]
+  const resumeQuery = useWorkspaceAssets(
+    { scope, spaceId, category: 'resume', includeHistory: false },
+    true
+  );
+  const interviewQuery = useWorkspaceAssets(
+    { scope, spaceId, category: 'interview', includeHistory: false },
+    true
   );
 
-  const { items, categories, historyCounts, isLoading, error, refresh, authenticated, authReady } =
-    useWorkspaceAssets(listParams, true);
-
-  const currentByCategory = useMemo(
-    () => ({
-      resume: items.filter((item) => item.category === 'resume' && item.is_current),
-      interview: items.filter((item) => item.category === 'interview' && item.is_current),
-    }),
-    [items]
-  );
+  const { authReady, authenticated } = resumeQuery;
 
   const push = (path: string) => onNavigate?.(path);
 
@@ -109,37 +104,39 @@ export function WorkspaceAssetRailHub({
         <CareerAssetSubcategory
           category="resume"
           label={tV2('categoryResume')}
-          count={categories.resume}
-          historyCount={historyCounts.resume}
-          items={currentByCategory.resume}
+          count={resumeQuery.categories.resume}
+          historyCount={resumeQuery.historyCounts.resume}
+          items={resumeQuery.items.filter((item) => item.is_current)}
           scope={scope}
           spaceId={spaceId}
           authReady={authReady}
           authenticated={authenticated}
-          isLoading={isLoading}
-          error={error}
+          isLoading={resumeQuery.isLoading}
+          error={resumeQuery.error}
           loginRequiredLabel={tV2('loginRequired')}
-          olderAssetsLabel={tV2('olderAssets', { count: historyCounts.resume })}
+          olderAssetsLabel={tV2('olderAssets', { count: resumeQuery.historyCounts.resume })}
           onOpenAsset={onOpenAsset}
-          onRetry={refresh}
+          onRetry={resumeQuery.refresh}
           t={tV2}
         />
         <CareerAssetSubcategory
           category="interview"
           label={tV2('categoryInterview')}
-          count={categories.interview}
-          historyCount={historyCounts.interview}
-          items={currentByCategory.interview}
+          count={interviewQuery.categories.interview}
+          historyCount={interviewQuery.historyCounts.interview}
+          items={interviewQuery.items.filter((item) => item.is_current)}
           scope={scope}
           spaceId={spaceId}
           authReady={authReady}
           authenticated={authenticated}
-          isLoading={isLoading}
-          error={error}
+          isLoading={interviewQuery.isLoading}
+          error={interviewQuery.error}
           loginRequiredLabel={tV2('loginRequired')}
-          olderAssetsLabel={tV2('olderAssets', { count: historyCounts.interview })}
+          olderAssetsLabel={tV2('olderAssets', {
+            count: interviewQuery.historyCounts.interview,
+          })}
           onOpenAsset={onOpenAsset}
-          onRetry={refresh}
+          onRetry={interviewQuery.refresh}
           t={tV2}
         />
       </ZoneBlock>
