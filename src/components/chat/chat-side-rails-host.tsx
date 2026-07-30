@@ -270,11 +270,11 @@ export function ChatSideRailsHost({
           'relative flex min-h-0 shrink-0 flex-col',
           embeddedInWorkspace
             ? cn(
-                'h-full w-full',
+                'h-full shrink-0',
                 !isResizing &&
                   'animate-in fade-in slide-in-from-right-4 duration-200'
               )
-            : 'hidden border-l border-gray-200/80 bg-white lg:flex',
+            : 'hidden border-l border-gray-200/80 bg-white md:flex',
           !embeddedInWorkspace &&
             !isResizing &&
             'animate-in fade-in slide-in-from-right-4 duration-200'
@@ -322,7 +322,7 @@ export function ChatSideRailsHost({
       {railInner ? (
         <div
           className={cn(
-            'absolute inset-0 z-30 flex flex-col bg-white lg:hidden',
+            'absolute inset-0 z-30 flex flex-col bg-white md:hidden',
             'animate-in fade-in slide-in-from-right duration-200'
           )}
         >

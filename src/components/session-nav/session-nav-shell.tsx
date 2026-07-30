@@ -458,10 +458,10 @@ function WorkspaceCenterColumn({
         <div
           ref={(el) => portal?.setPortalHost(el)}
           className={cn(
-            'hidden min-h-0 min-w-0 shrink-0 self-stretch overflow-hidden lg:flex lg:flex-col',
+            'hidden min-h-0 min-w-0 shrink-0 self-stretch overflow-hidden md:flex md:flex-col',
             'transition-[width,min-width] duration-200 ease-out',
             chatSideRailOpen
-              ? 'border-l border-[#E5E6EB] bg-white'
+              ? 'min-w-[320px] border-l border-[#E5E6EB] bg-white'
               : 'pointer-events-none w-0 max-w-0 border-l-0'
           )}
           aria-hidden={!chatSideRailOpen}
