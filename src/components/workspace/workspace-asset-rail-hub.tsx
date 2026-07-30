@@ -14,6 +14,7 @@ import {
 import { useTranslations } from 'next-intl';
 
 import { HUB_ASSET_GRID_CLASS } from '@/components/workspace/workspace-side-rail-hub';
+import { useAuthReady } from '@/hooks/use-auth-ready';
 import {
   retryWorkspaceAssetIndexing,
   useWorkspaceAssetCategoryHistory,
@@ -73,7 +74,8 @@ export function WorkspaceAssetRailHub({
     true
   );
 
-  const { authReady, authenticated } = resumeQuery;
+  // Auth gate is independent of asset queries (PR #183 review P1).
+  const { ready: authReady, authenticated } = useAuthReady();
 
   const push = (path: string) => onNavigate?.(path);
 
