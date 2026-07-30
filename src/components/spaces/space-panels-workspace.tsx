@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -18,6 +18,11 @@ import {
   resolveSpacePanels,
 } from '@/lib/spaces/panels';
 import { resolveSpaceJobId } from '@/lib/spaces/space-context';
+import {
+  publishSessionNavChatSideRailOpen,
+  SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+  SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+} from '@/lib/session-nav-events';
 import { useSpaceStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { SpaceDetail } from '@/types/spaces';
@@ -61,6 +66,8 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   const [desktopPanelId, setDesktopPanelId] = useState(
     urlRequestsPanel ? panelFromUrl! : fallbackPanelId
   );
+  const desktopPanelOpenRef = useRef(desktopPanelOpen);
+  desktopPanelOpenRef.current = desktopPanelOpen;
 
   useEffect(() => {
     if (panelFromUrl && isValidPanelId(panels, panelFromUrl)) {
@@ -80,6 +87,57 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
     },
     [locale, router, searchParams, space.id]
   );
+
+  const openDesktopPanel = useCallback(() => {
+    const panelId = defaultPanelId ?? panels[0]?.panel_id;
+    if (!panelId) return;
+    setDesktopPanelId(panelId);
+    setDesktopPanelOpen(true);
+    setMobileView('chat');
+    syncPanelQuery(panelId);
+  }, [defaultPanelId, panels, syncPanelQuery]);
+
+  const closeDesktopPanel = useCallback(() => {
+    setDesktopPanelOpen(false);
+    setMobileView('chat');
+  }, []);
+
+  useEffect(() => {
+    const onOpenWorkspaceRail = () => {
+      openDesktopPanel();
+    };
+    const onToggleWorkspaceRail = () => {
+      if (desktopPanelOpenRef.current) {
+        closeDesktopPanel();
+        return;
+      }
+      openDesktopPanel();
+    };
+    window.addEventListener(SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT, onOpenWorkspaceRail);
+    window.addEventListener(
+      SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+      onToggleWorkspaceRail
+    );
+    return () => {
+      window.removeEventListener(
+        SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
+        onOpenWorkspaceRail
+      );
+      window.removeEventListener(
+        SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
+        onToggleWorkspaceRail
+      );
+    };
+  }, [closeDesktopPanel, openDesktopPanel]);
+
+  useEffect(() => {
+    publishSessionNavChatSideRailOpen(desktopPanelOpen);
+  }, [desktopPanelOpen]);
+
+  useEffect(() => {
+    return () => publishSessionNavChatSideRailOpen(false);
+  }, []);
+
 
   const handleMobileViewChange = useCallback(
     (view: SpaceWorkspaceView) => {

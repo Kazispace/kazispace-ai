@@ -103,7 +103,6 @@ export function SpaceChatPane({
   composer,
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
-  const tRailHub = useTranslations('cv.railHub');
   const tChat = useTranslations('chat');
   const tPractice = useTranslations('interview.irp.practice');
   const router = useRouter();
@@ -158,21 +157,11 @@ export function SpaceChatPane({
   cvRailOpenRef.current = cvRailOpen;
 
   useEffect(() => {
-    const onPanelBlocked = () => {
-      showToast(tRailHub('workspaceRailUseCvPanel'), 'info');
-    };
+    if (hasCvPanel) return;
     const onOpenWorkspaceRail = () => {
-      if (hasCvPanel) {
-        onPanelBlocked();
-        return;
-      }
       openWorkspaceRailRef.current();
     };
     const onToggleWorkspaceRail = () => {
-      if (hasCvPanel) {
-        onPanelBlocked();
-        return;
-      }
       if (cvRailOpenRef.current) {
         closeCvRailRef.current();
         return;
@@ -194,7 +183,7 @@ export function SpaceChatPane({
         onToggleWorkspaceRail
       );
     };
-  }, [hasCvPanel, showToast, tRailHub]);
+  }, [hasCvPanel]);
   const {
     messages,
     isHydrating,

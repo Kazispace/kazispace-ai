@@ -430,6 +430,22 @@ function WorkspaceCenterColumn({
 }) {
   const portal = useWorkspaceRailPortal();
   const chatSideRailOpen = portal?.chatSideRailOpen ?? false;
+  const [portalHasChild, setPortalHasChild] = useState(false);
+
+  useEffect(() => {
+    const host = portal?.portalHost;
+    if (!host) {
+      setPortalHasChild(false);
+      return;
+    }
+    const sync = () => setPortalHasChild(host.childElementCount > 0);
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(host, { childList: true });
+    return () => observer.disconnect();
+  }, [portal?.portalHost]);
+
+  const showPortalColumn = chatSideRailOpen && portalHasChild;
 
   return (
     <div className="relative flex min-w-0 flex-1 min-h-0 flex-col">
@@ -450,7 +466,7 @@ function WorkspaceCenterColumn({
               locale={locale}
               sessionsByAgent={sessionsByAgent}
               spaceId={contextHeaderSpaceId}
-              workspaceRailOpen={chatSideRailOpen} // same signal as shell chatSideRailOpen (CV/job side rail)
+              workspaceRailOpen={chatSideRailOpen}
             />
           ) : null}
           <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
@@ -460,11 +476,11 @@ function WorkspaceCenterColumn({
           className={cn(
             'hidden min-h-0 min-w-0 shrink-0 self-stretch overflow-hidden md:flex md:flex-col',
             'transition-[width,min-width] duration-200 ease-out',
-            chatSideRailOpen
+            showPortalColumn
               ? 'min-w-[320px] border-l border-[#E5E6EB] bg-white'
               : 'pointer-events-none w-0 max-w-0 border-l-0'
           )}
-          aria-hidden={!chatSideRailOpen}
+          aria-hidden={!showPortalColumn}
         />
       </div>
     </div>
