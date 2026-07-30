@@ -3,19 +3,26 @@
 import { useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useAuthReady } from '@/hooks/use-auth-ready';
 import {
   fetchWorkspaceAssetMarkdownContent,
   fetchWorkspaceAssets,
   reindexWorkspaceAsset,
 } from '@/lib/workspace-assets-api';
+import { AUTH_SESSION_CLEARED_EVENT } from '@/lib/auth-session-events';
 import { WORKSPACE_ASSETS_INVALIDATE_EVENT } from '@/lib/workspace-assets-invalidate';
 import type {
   FetchWorkspaceAssetsParams,
   WorkspaceAsset,
+  WorkspaceAssetCategoryCounts,
   WorkspaceAssetsResponse,
 } from '@/types/workspace-asset';
 
-const EMPTY_COUNTS = { resume: 0, english: 0, interview: 0 };
+const EMPTY_COUNTS: WorkspaceAssetCategoryCounts = {
+  resume: 0,
+  english: 0,
+  interview: 0,
+};
 
 export function workspaceAssetsQueryKey(params?: FetchWorkspaceAssetsParams) {
   return [
@@ -29,19 +36,104 @@ export function workspaceAssetsQueryKey(params?: FetchWorkspaceAssetsParams) {
   ] as const;
 }
 
-function normalizeResponse(data: unknown): WorkspaceAssetsResponse {
-  if (!data || typeof data !== 'object') {
-    return { items: [], categories: EMPTY_COUNTS, history_counts: EMPTY_COUNTS };
-  }
-  const raw = data as Partial<WorkspaceAssetsResponse>;
+function normalizeItem(
+  raw: unknown,
+  includeHistory: boolean
+): WorkspaceAsset | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const isCurrentRaw = r.is_current ?? r.isCurrent;
+  const isCurrent =
+    isCurrentRaw === undefined || isCurrentRaw === null
+      ? !includeHistory
+      : isCurrentRaw !== false && isCurrentRaw !== 'false';
+
+  const assetId = r.asset_id ?? r.assetId;
+  if (!assetId) return null;
+
   return {
-    items: Array.isArray(raw.items) ? raw.items : [],
-    categories: { ...EMPTY_COUNTS, ...raw.categories },
-    history_counts: { ...EMPTY_COUNTS, ...raw.history_counts },
+    asset_id: String(assetId),
+    category: (r.category as WorkspaceAsset['category']) ?? 'resume',
+    display_name: String(r.display_name ?? r.displayName ?? 'File'),
+    subtitle: (r.subtitle as string | null | undefined) ?? null,
+    mime_type:
+      (r.mime_type as WorkspaceAsset['mime_type']) ??
+      (r.mimeType as WorkspaceAsset['mime_type']) ??
+      'text/markdown',
+    variant: (r.variant as WorkspaceAsset['variant']) ?? 'source_md',
+    indexing_status:
+      (r.indexing_status as WorkspaceAsset['indexing_status']) ??
+      (r.indexingStatus as WorkspaceAsset['indexing_status']) ??
+      'ready',
+    preview_url: (r.preview_url ?? r.previewUrl ?? null) as string | null,
+    download_url: String(r.download_url ?? r.downloadUrl ?? ''),
+    updated_at: String(r.updated_at ?? r.updatedAt ?? ''),
+    is_current: isCurrent,
+    logical_key: String(r.logical_key ?? r.logicalKey ?? ''),
+    provenance: (r.provenance as WorkspaceAsset['provenance']) ?? undefined,
   };
 }
 
-function useWorkspaceAssetsInvalidate(enabled: boolean) {
+function countByCategory(items: WorkspaceAsset[]): WorkspaceAssetCategoryCounts {
+  const current = items.filter((item) => item.is_current);
+  return {
+    resume: current.filter((i) => i.category === 'resume').length,
+    english: current.filter((i) => i.category === 'english').length,
+    interview: current.filter((i) => i.category === 'interview').length,
+  };
+}
+
+function countHistoryByCategory(
+  items: WorkspaceAsset[]
+): WorkspaceAssetCategoryCounts {
+  const history = items.filter(
+    (item) => !item.is_current && item.indexing_status === 'ready'
+  );
+  return {
+    resume: history.filter((i) => i.category === 'resume').length,
+    english: history.filter((i) => i.category === 'english').length,
+    interview: history.filter((i) => i.category === 'interview').length,
+  };
+}
+
+function normalizeResponse(
+  data: unknown,
+  includeHistory: boolean
+): WorkspaceAssetsResponse {
+  if (!data || typeof data !== 'object') {
+    return { items: [], categories: EMPTY_COUNTS, history_counts: EMPTY_COUNTS };
+  }
+  const raw = data as Record<string, unknown>;
+  const items = (Array.isArray(raw.items) ? raw.items : [])
+    .map((item) => normalizeItem(item, includeHistory))
+    .filter((item): item is WorkspaceAsset => item != null);
+
+  const categoriesRaw =
+    (raw.categories as WorkspaceAssetCategoryCounts | undefined) ??
+    (raw.category_counts as WorkspaceAssetCategoryCounts | undefined);
+  const historyRaw =
+    (raw.history_counts as WorkspaceAssetCategoryCounts | undefined) ??
+    (raw.historyCounts as WorkspaceAssetCategoryCounts | undefined);
+
+  const derivedCategories = countByCategory(items);
+  const derivedHistory = countHistoryByCategory(items);
+
+  return {
+    items,
+    categories: {
+      ...EMPTY_COUNTS,
+      ...derivedCategories,
+      ...categoriesRaw,
+    },
+    history_counts: {
+      ...EMPTY_COUNTS,
+      ...derivedHistory,
+      ...historyRaw,
+    },
+  };
+}
+
+function useWorkspaceAssetsQueryLifecycle(enabled: boolean) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -50,9 +142,17 @@ function useWorkspaceAssetsInvalidate(enabled: boolean) {
       void queryClient.invalidateQueries({ queryKey: ['workspace-assets'] });
       void queryClient.invalidateQueries({ queryKey: ['workspace-asset-preview'] });
     };
+    const onSessionCleared = () => {
+      queryClient.removeQueries({ queryKey: ['workspace-assets'] });
+      queryClient.removeQueries({ queryKey: ['workspace-asset-preview'] });
+    };
+
     window.addEventListener(WORKSPACE_ASSETS_INVALIDATE_EVENT, onInvalidate);
-    return () =>
+    window.addEventListener(AUTH_SESSION_CLEARED_EVENT, onSessionCleared);
+    return () => {
       window.removeEventListener(WORKSPACE_ASSETS_INVALIDATE_EVENT, onInvalidate);
+      window.removeEventListener(AUTH_SESSION_CLEARED_EVENT, onSessionCleared);
+    };
   }, [enabled, queryClient]);
 }
 
@@ -61,7 +161,10 @@ export function useWorkspaceAssets(
   enabled = true
 ) {
   const queryClient = useQueryClient();
+  const { ready: authReady, authenticated } = useAuthReady();
+  const includeHistory = params?.includeHistory ?? false;
   const queryKey = workspaceAssetsQueryKey(params);
+  const canFetch = enabled && authReady && authenticated;
 
   const query = useQuery({
     queryKey,
@@ -70,27 +173,33 @@ export function useWorkspaceAssets(
       if (!res.success || !res.data) {
         throw new Error(res.error ?? 'Failed to load workspace assets');
       }
-      return normalizeResponse(res.data);
+      return normalizeResponse(res.data, includeHistory);
     },
-    enabled,
+    enabled: canFetch,
     staleTime: 30_000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
-  useWorkspaceAssetsInvalidate(enabled);
+  useWorkspaceAssetsQueryLifecycle(canFetch);
 
   const refresh = useCallback(
     () => queryClient.invalidateQueries({ queryKey }),
     [queryClient, queryKey]
   );
 
+  const bootstrapping = !authReady || (authenticated && !query.data && !query.error);
+
   return {
     items: query.data?.items ?? [],
     categories: query.data?.categories ?? EMPTY_COUNTS,
     historyCounts: query.data?.history_counts ?? EMPTY_COUNTS,
-    isLoading: query.isLoading,
+    isLoading: bootstrapping || query.isLoading,
     isFetching: query.isFetching,
     error: query.error instanceof Error ? query.error.message : null,
     refresh,
+    authReady,
+    authenticated,
   };
 }
 

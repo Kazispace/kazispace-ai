@@ -901,7 +901,8 @@
 				"indexFailed": "Failed — tap to retry",
 				"indexFailedNoRetry": "Generation failed",
 				"previewLoading": "Loading preview…",
-				"previewUnavailable": "Preview is not available for this file."
+				"previewUnavailable": "Preview is not available for this file.",
+				"loginRequired": "Sign in to view your resume files."
 			}
 		}
 	},

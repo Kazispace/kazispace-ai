@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getAuthToken, getUserInfo } from "@/lib/auth";
+import { AUTH_SESSION_CLEARED_EVENT } from "@/lib/auth-session-events";
 import { useAuthStore } from "@/lib/store";
 import { useTmaInit, reauthTelegramIfPossible } from "@/hooks/use-tma-init";
 import { isTelegramWebApp } from "@/lib/telegram";
@@ -42,6 +43,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const onSessionExpired = async () => {
+      queryClient.removeQueries({ queryKey: ['workspace-assets'] });
+      queryClient.removeQueries({ queryKey: ['workspace-asset-preview'] });
       if (isTelegramWebApp()) {
         const ok = await reauthTelegramIfPossible();
         if (ok) return;
@@ -51,9 +54,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
       router.push(`/${locale}/login?expired=1`);
     };
 
+    const onAuthSessionCleared = () => {
+      queryClient.removeQueries({ queryKey: ['workspace-assets'] });
+      queryClient.removeQueries({ queryKey: ['workspace-asset-preview'] });
+    };
+
     window.addEventListener("kazi:session-expired", onSessionExpired);
-    return () => window.removeEventListener("kazi:session-expired", onSessionExpired);
-  }, [pathname, router]);
+    window.addEventListener(AUTH_SESSION_CLEARED_EVENT, onAuthSessionCleared);
+    return () => {
+      window.removeEventListener("kazi:session-expired", onSessionExpired);
+      window.removeEventListener(AUTH_SESSION_CLEARED_EVENT, onAuthSessionCleared);
+    };
+  }, [pathname, queryClient, router]);
 
   return (
     <QueryClientProvider client={queryClient}>
