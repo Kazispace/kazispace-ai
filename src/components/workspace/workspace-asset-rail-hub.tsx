@@ -1,0 +1,398 @@
+'use client';
+
+import { useMemo, useState, type ReactNode } from 'react';
+import {
+  Briefcase,
+  ChevronDown,
+  FileText,
+  LayoutGrid,
+  Loader2,
+  RefreshCw,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
+import { useTranslations } from 'next-intl';
+
+import {
+  HUB_ASSET_GRID_CLASS,
+} from '@/components/workspace/workspace-side-rail-hub';
+import {
+  retryWorkspaceAssetIndexing,
+  useWorkspaceAssets,
+} from '@/hooks/use-workspace-assets';
+import { useAuthStore } from '@/lib/store';
+import { cn } from '@/lib/utils';
+import type {
+  WorkspaceAsset,
+  WorkspaceAssetCategory,
+  WorkspaceAssetScope,
+} from '@/types/workspace-asset';
+
+interface WorkspaceAssetRailHubProps {
+  locale: string;
+  scope?: WorkspaceAssetScope;
+  spaceId?: string;
+  className?: string;
+  showCloseButton?: boolean;
+  onClose?: () => void;
+  onOpenAsset?: (asset: WorkspaceAsset) => void;
+  onNavigate?: (path: string) => void;
+}
+
+type AssetTone = 'resume' | 'work' | 'spaces' | 'muted';
+
+const TONE_ICON_CLASS: Record<AssetTone, string> = {
+  resume: 'bg-sky-50 text-sky-900 ring-sky-200/90',
+  work: 'bg-[#FFF4EC] text-kazi-navy ring-kazi-orange/25',
+  spaces: 'bg-[#F2F3F5] text-kazi-navy ring-gray-200/90',
+  muted: 'bg-gray-50 text-[#86909C] ring-gray-200/80',
+};
+
+/** v2 hub — file-centric career assets (KAZI-404 P0: resume category). */
+export function WorkspaceAssetRailHub({
+  locale,
+  scope = 'user',
+  spaceId,
+  className,
+  showCloseButton = true,
+  onClose,
+  onOpenAsset,
+  onNavigate,
+}: WorkspaceAssetRailHubProps) {
+  const t = useTranslations('cv.railHub');
+  const tV2 = useTranslations('cv.railHub.assetV2');
+  const tCv = useTranslations('cv');
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const { items, categories, historyCounts, isLoading, error, refresh } =
+    useWorkspaceAssets(
+      {
+        scope,
+        spaceId,
+        category: 'resume',
+        includeHistory: historyOpen,
+      },
+      isLoggedIn
+    );
+
+  const currentResume = useMemo(
+    () => items.filter((item) => item.is_current),
+    [items]
+  );
+
+  const push = (path: string) => onNavigate?.(path);
+
+  return (
+    <div
+      className={cn(
+        'relative flex min-h-0 flex-1 flex-col overflow-y-auto text-[#1D2129]',
+        className
+      )}
+    >
+      {showCloseButton && onClose ? (
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-1.5 top-1.5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#4E5969] shadow-sm ring-1 ring-gray-200/80 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+          aria-label={tCv('closeRail')}
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      ) : null}
+
+      <ZoneBlock title={t('zoneCareer')} className="pt-2 pr-10">
+        <SubcategoryHeader
+          label={tV2('categoryResume')}
+          count={categories.resume}
+          historyCount={historyCounts.resume}
+        />
+        {isLoading ? (
+          <AssetSkeletonRow />
+        ) : error ? (
+          <p className="col-span-full px-1 text-[10px] text-red-600">{error}</p>
+        ) : (
+          <>
+            {currentResume.map((asset) => (
+              <WorkspaceAssetIcon
+                key={asset.asset_id}
+                asset={asset}
+                onOpen={() => onOpenAsset?.(asset)}
+                onRetry={refresh}
+                t={tV2}
+              />
+            ))}
+            <HistoryFold
+              category="resume"
+              label={tV2('olderAssets', { count: historyCounts.resume })}
+              historyCount={historyCounts.resume}
+              open={historyOpen}
+              onToggle={() => setHistoryOpen((v) => !v)}
+              items={items}
+              onOpenAsset={onOpenAsset}
+              onRetry={refresh}
+              t={tV2}
+            />
+          </>
+        )}
+      </ZoneBlock>
+
+      <ZoneBlock title={t('zoneWork')}>
+        <RouteAssetIcon
+          icon={Briefcase}
+          tone="work"
+          label={t('tileJobs')}
+          onClick={() => push(`/${locale}/jobs`)}
+        />
+      </ZoneBlock>
+
+      <ZoneBlock title={t('zoneBusiness')}>
+        <RouteAssetIcon
+          icon={LayoutGrid}
+          tone="spaces"
+          label={t('tileSpaces')}
+          onClick={() => push(`/${locale}/spaces`)}
+        />
+        <p className="col-span-full px-1 text-[10px] leading-snug text-[#86909C]">
+          {t('zoneBusinessHint')}
+        </p>
+      </ZoneBlock>
+    </div>
+  );
+}
+
+function ZoneBlock({
+  title,
+  children,
+  className,
+}: {
+  title: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={cn('border-b border-gray-100 px-3 py-3', className)}>
+      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
+        {title}
+      </h2>
+      <div className={HUB_ASSET_GRID_CLASS}>{children}</div>
+    </section>
+  );
+}
+
+function SubcategoryHeader({
+  label,
+  count,
+  historyCount,
+}: {
+  label: string;
+  count: number;
+  historyCount: number;
+}) {
+  return (
+    <div className="col-span-full mb-1 flex items-center justify-between gap-2 px-0.5">
+      <p className="text-[10px] font-medium text-[#4E5969]">
+        {label} · {count}
+      </p>
+      {historyCount > 0 ? (
+        <span className="text-[10px] text-[#86909C]">
+          +{historyCount}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function HistoryFold({
+  category,
+  label,
+  historyCount,
+  open,
+  onToggle,
+  items,
+  onOpenAsset,
+  onRetry,
+  t,
+}: {
+  category: WorkspaceAssetCategory;
+  label: string;
+  historyCount: number;
+  open: boolean;
+  onToggle: () => void;
+  items: WorkspaceAsset[];
+  onOpenAsset?: (asset: WorkspaceAsset) => void;
+  onRetry: () => void;
+  t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
+}) {
+  const historyItems = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          item.category === category &&
+          !item.is_current &&
+          item.indexing_status === 'ready'
+      ),
+    [category, items]
+  );
+
+  if (historyCount <= 0) return null;
+
+  return (
+    <div className="col-span-full">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-1 rounded-md px-0.5 py-1 text-left text-[10px] font-medium text-[#86909C] hover:bg-gray-50"
+      >
+        <ChevronDown
+          className={cn(
+            'h-3.5 w-3.5 shrink-0 transition-transform',
+            open && 'rotate-180'
+          )}
+          aria-hidden
+        />
+        {label}
+      </button>
+      {open ? (
+        <div className={cn('mt-1', HUB_ASSET_GRID_CLASS)}>
+          {historyItems.map((asset) => (
+            <WorkspaceAssetIcon
+              key={asset.asset_id}
+              asset={asset}
+              historical
+              onOpen={() => onOpenAsset?.(asset)}
+              onRetry={onRetry}
+              t={t}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function WorkspaceAssetIcon({
+  asset,
+  historical,
+  onOpen,
+  onRetry,
+  t,
+}: {
+  asset: WorkspaceAsset;
+  historical?: boolean;
+  onOpen: () => void;
+  onRetry: () => void;
+  t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
+}) {
+  const [retrying, setRetrying] = useState(false);
+  const isPending = asset.indexing_status === 'pending';
+  const isFailed = asset.indexing_status === 'failed';
+  const mimeLabel = asset.mime_type === 'application/pdf' ? 'PDF' : 'MD';
+
+  const handleClick = async () => {
+    if (isFailed) {
+      setRetrying(true);
+      await retryWorkspaceAssetIndexing(asset);
+      setRetrying(false);
+      onRetry();
+      return;
+    }
+    if (isPending) return;
+    onOpen();
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleClick()}
+      disabled={isPending || retrying}
+      title={asset.display_name}
+      className={cn(
+        'relative flex min-w-0 flex-col items-center gap-0.5 rounded-lg p-1',
+        'hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+        (isPending || isFailed) && 'opacity-80'
+      )}
+    >
+      <span
+        className={cn(
+          'relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1',
+          isFailed ? TONE_ICON_CLASS.muted : TONE_ICON_CLASS.resume
+        )}
+      >
+        {isPending || retrying ? (
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        ) : isFailed ? (
+          <RefreshCw className="h-4 w-4" aria-hidden />
+        ) : (
+          <FileText className="h-4 w-4" aria-hidden />
+        )}
+        <span className="absolute -bottom-0.5 -right-0.5 rounded bg-white px-0.5 text-[8px] font-semibold leading-none text-[#4E5969] ring-1 ring-gray-200">
+          {mimeLabel}
+        </span>
+        {historical ? (
+          <span className="absolute -left-0.5 -top-0.5 rounded bg-[#86909C] px-0.5 text-[7px] font-medium leading-none text-white">
+            {t('historyBadge')}
+          </span>
+        ) : null}
+      </span>
+      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-[#4E5969]">
+        {isFailed ? t('indexFailed') : asset.display_name}
+      </span>
+      {asset.subtitle ? (
+        <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-[#86909C]">
+          {asset.subtitle}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+function RouteAssetIcon({
+  icon: Icon,
+  tone,
+  label,
+  onClick,
+}: {
+  icon: LucideIcon;
+  tone: AssetTone;
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      className={cn(
+        'flex min-w-0 flex-col items-center gap-0.5 rounded-lg p-1',
+        'hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40'
+      )}
+    >
+      <span
+        className={cn(
+          'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1',
+          TONE_ICON_CLASS[tone]
+        )}
+      >
+        <Icon className="h-4 w-4" aria-hidden />
+      </span>
+      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-[#4E5969]">
+        {label}
+      </span>
+    </button>
+  );
+}
+
+function AssetSkeletonRow() {
+  return (
+    <>
+      {Array.from({ length: 2 }).map((_, i) => (
+        <div key={i} className="flex flex-col items-center gap-1 p-1">
+          <div className="h-9 w-9 animate-pulse rounded-lg bg-gray-100" />
+          <div className="h-2 w-10 animate-pulse rounded bg-gray-100" />
+        </div>
+      ))}
+    </>
+  );
+}

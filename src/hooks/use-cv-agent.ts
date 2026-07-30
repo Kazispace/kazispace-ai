@@ -47,6 +47,7 @@ import {
 } from '@/lib/cv-api';
 import { uploadCvResumeFile, resolveCvUploadErrorMessage } from '@/lib/cv-input-api';
 import { exportCvDocumentPdf, resolveCvExportErrorMessage } from '@/lib/cv-export-api';
+import { publishWorkspaceAssetsInvalidate } from '@/lib/workspace-assets-invalidate';
 import { useAuthStore, useAgentStore, useUIStore } from '@/lib/store';
 import { normalizeAgentSessions, isAgentSessionReadOnly } from '@/lib/agent-sessions';
 import { consumeSessionNavHandoff } from '@/lib/session-nav-handoff';
@@ -767,10 +768,15 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
     [sendAgentMessage]
   );
 
-  const acceptCv = useCallback(
-    () => sendAgentMessage('__action:accept_cv', { showUserBubble: false }),
-    [sendAgentMessage]
-  );
+  const acceptCv = useCallback(async () => {
+    const result = await sendAgentMessage('__action:accept_cv', {
+      showUserBubble: false,
+    });
+    if (result.ok) {
+      publishWorkspaceAssetsInvalidate();
+    }
+    return result;
+  }, [sendAgentMessage]);
 
   const confirmCv = acceptCv;
 
@@ -795,6 +801,7 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
         showToast(resolveCvExportErrorMessage(res.error, res.errorCode, t), 'error');
         return { ok: false as const, error: res.error };
       }
+      publishWorkspaceAssetsInvalidate();
       return { ok: true as const };
     } finally {
       setIsExporting(false);
