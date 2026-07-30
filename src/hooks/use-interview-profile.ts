@@ -10,6 +10,7 @@ import {
   getInterviewProfileHistory,
   postInterviewReadinessCheck,
 } from '@/lib/interview-profile-api';
+import { publishWorkspaceAssetsInvalidate } from '@/lib/workspace-assets-invalidate';
 import type {
   InterviewProfile,
   InterviewReadinessResult,
@@ -37,6 +38,7 @@ async function runReadinessCheck(
     }
     throw new Error(res.error ?? 'Failed to check readiness');
   }
+  publishWorkspaceAssetsInvalidate();
   return res.data;
 }
 

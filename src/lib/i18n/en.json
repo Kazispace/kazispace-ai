@@ -896,13 +896,14 @@
 			"backToHub": "Back to assets",
 			"assetV2": {
 				"categoryResume": "Resumes",
+				"categoryInterview": "Interview",
 				"olderAssets": "Older ({count})",
 				"historyBadge": "Past",
 				"indexFailed": "Failed — tap to retry",
 				"indexFailedNoRetry": "Generation failed",
 				"previewLoading": "Loading preview…",
 				"previewUnavailable": "Preview is not available for this file.",
-				"loginRequired": "Sign in to view your resume files."
+				"loginRequired": "Sign in to view your career files."
 			}
 		}
 	},

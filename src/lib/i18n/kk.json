@@ -599,6 +599,7 @@
 			"backToHub": "Активтерге",
 			"assetV2": {
 				"categoryResume": "Түйіндеме",
+				"categoryInterview": "Сұхбат",
 				"olderAssets": "Ертерек ({count})",
 				"historyBadge": "Тарих",
 				"indexFailed": "Қате — қайталау",
