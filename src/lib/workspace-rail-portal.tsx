@@ -16,6 +16,7 @@ type WorkspaceRailPortalContextValue = {
   portalHost: HTMLElement | null;
   setPortalHost: (element: HTMLElement | null) => void;
   chatSideRailOpen: boolean;
+  /** Header grid `aria-pressed` + portal column width (when portaled). */
   setChatSideRailOpen: (open: boolean) => void;
 };
 
