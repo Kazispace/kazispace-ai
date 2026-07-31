@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
 import { CitationList } from "./citation-list";
 import { ChatJobTeasers } from "./chat-job-teasers";
-import { ChatNextActions } from "./chat-next-actions";
 import { MessageEnrichmentActions } from "./message-enrichment-actions";
 import { MarkdownContent } from "./markdown-content";
 import { MessageActions } from "./message-actions";
