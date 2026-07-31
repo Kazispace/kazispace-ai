@@ -28,6 +28,12 @@ export function partitionNextActions(actions?: ChatNextAction[]): {
   };
 }
 
+export function hasStrategySelectActions(
+  actions?: ChatNextAction[]
+): boolean {
+  return Boolean(actions?.some(isStrategySelectAction));
+}
+
 export function isStrategyPayloadContent(content: string): boolean {
   return strategyIdFromPayload(content.trim()) !== null;
 }
@@ -59,7 +65,7 @@ export function isStrategyStartCta(actions: ChatNextAction[]): boolean {
   );
 }
 
-/** Hide pending CTAs once the user has replied below this assistant turn. */
+/** Pending CTAs are interactive only until the user replies below this turn. */
 export function resolveActiveNextActions(
   messages: ReadonlyArray<{ role: string; nextActions?: ChatNextAction[] }>,
   messageIndex: number
@@ -73,12 +79,101 @@ export function resolveActiveNextActions(
   return actions;
 }
 
-/** @deprecated Use {@link resolveActiveNextActions}. */
-export function resolveActiveStrategySelectActions(
-  messages: ReadonlyArray<{ role: string; nextActions?: ChatNextAction[] }>,
+/** Normalize user/label text for loose strategy_select reply matching. */
+export function normalizeStrategyMatchText(text: string): string {
+  return text
+    .trim()
+    .replace(/[\s\u3000]+/g, ' ')
+    .replace(/[.。!！?？,，;；:：'"''""]+$/, '');
+}
+
+function findFirstUserReplyAfter<T extends { role: string }>(
+  messages: ReadonlyArray<T>,
   messageIndex: number
-): ChatNextAction[] | undefined {
-  return resolveActiveNextActions(messages, messageIndex);
+): T | null {
+  for (let i = messageIndex + 1; i < messages.length; i++) {
+    const message = messages[i];
+    if (message?.role === 'assistant') return null;
+    if (message?.role === 'user') return message;
+  }
+  return null;
+}
+
+function matchStrategySelectActionByUserContent(
+  actions: ChatNextAction[],
+  content: string,
+  locale: string
+): ChatNextAction | undefined {
+  const trimmed = content.trim();
+  if (!trimmed) return undefined;
+
+  const byPayload = actions.find(
+    (action) => action.payload?.trim() === trimmed
+  );
+  if (byPayload) return byPayload;
+
+  if (isStrategyPayloadContent(trimmed)) {
+    const strategyId = strategyIdFromPayload(trimmed);
+    if (strategyId) {
+      const byId = actions.find(
+        (action) => strategyIdFromPayload(action.payload?.trim() ?? '') === strategyId
+      );
+      if (byId) return byId;
+    }
+  }
+
+  const normalized = normalizeStrategyMatchText(trimmed);
+  return actions.find((action) => {
+    const label = normalizeStrategyMatchText(resolveActionLabel(action, locale));
+    return label.length > 0 && label === normalized;
+  });
+}
+
+/**
+ * Payload the user chose for a historical `strategy_select` turn (if any).
+ * Inspects only the first user reply below the assistant turn.
+ */
+export function resolveStrategySelectReply(
+  messages: ReadonlyArray<{
+    role: string;
+    content: string;
+    nextActions?: ChatNextAction[];
+  }>,
+  messageIndex: number,
+  locale: string
+): string | null {
+  const actions = messages[messageIndex]?.nextActions;
+  if (!actions?.length || !actions.every(isStrategySelectAction)) return null;
+
+  const reply = findFirstUserReplyAfter(messages, messageIndex);
+  if (!reply || !('content' in reply)) return null;
+
+  const match = matchStrategySelectActionByUserContent(
+    actions,
+    reply.content,
+    locale
+  );
+  return match?.payload?.trim() ?? null;
+}
+
+/** Active vs historical strategy_select state for a rendered assistant turn. */
+export function resolveStrategySelectTurnContext(
+  messages: ReadonlyArray<{
+    role: string;
+    content: string;
+    nextActions?: ChatNextAction[];
+  }>,
+  messageIndex: number,
+  locale: string
+): {
+  activeNextActions?: ChatNextAction[];
+  selectedStrategyPayload?: string;
+} {
+  const activeNextActions = resolveActiveNextActions(messages, messageIndex);
+  const selectedStrategyPayload = activeNextActions
+    ? undefined
+    : resolveStrategySelectReply(messages, messageIndex, locale) ?? undefined;
+  return { activeNextActions, selectedStrategyPayload };
 }
 
 /**

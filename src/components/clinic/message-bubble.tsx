@@ -24,6 +24,7 @@ import {
   type SearchCapabilityId,
 } from "@/lib/clinic/search-capability";
 import type { ComposerInsertTarget } from "@/lib/store";
+import { hasStrategySelectActions } from "@/lib/strategy-select";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
@@ -46,6 +47,8 @@ interface MessageBubbleProps {
   referral?: ReferralPayload;
   spaceNudge?: SpaceNudgePayload;
   nextActions?: ChatNextAction[];
+  /** Historical strategy_select — payload the user chose below this turn. */
+  selectedStrategyPayload?: string | null;
   assistantMeta?: Record<string, unknown>;
   cards?: ChatJobCard[];
   citations?: CitationItem[];
@@ -88,6 +91,7 @@ export function MessageBubble({
   referral,
   spaceNudge,
   nextActions,
+  selectedStrategyPayload,
   assistantMeta,
   cards,
   citations,
@@ -133,7 +137,9 @@ export function MessageBubble({
   const jobCards = cards?.filter((card) => card.type === "job") ?? [];
   const showJobCards = showEnrichment && jobCards.length > 0;
   const showNextActionRow =
-    showEnrichment && (nextActions?.length ?? 0) > 0 && onNextAction;
+    showEnrichment &&
+    (((nextActions?.length ?? 0) > 0 && onNextAction) ||
+      hasStrategySelectActions(nextActions));
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
   const showUpgradeCta =
     showEnrichment &&
@@ -297,6 +303,7 @@ export function MessageBubble({
                 locale={locale}
                 onAction={onNextAction}
                 disabled={actionsDisabled}
+                selectedStrategyPayload={selectedStrategyPayload}
                 placement="inline"
               />
             ) : null}

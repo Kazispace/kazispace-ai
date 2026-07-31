@@ -11,6 +11,8 @@ interface MessageEnrichmentActionsProps {
   locale: string;
   onAction?: (action: ChatNextAction) => void;
   disabled?: boolean;
+  /** Historical strategy_select — read-only with prior selection highlighted. */
+  selectedStrategyPayload?: string | null;
   /** `inline` = inside assistant bubble; `below` = stacked under bubble (Hub). */
   placement?: "inline" | "below";
   className?: string;
@@ -22,12 +24,14 @@ export function MessageEnrichmentActions({
   locale,
   onAction,
   disabled,
+  selectedStrategyPayload,
   placement = "inline",
   className,
 }: MessageEnrichmentActionsProps) {
   const { strategyActions, genericActions } = partitionNextActions(actions);
-  const showStrategy = strategyActions.length > 0 && onAction;
-  const showGeneric = genericActions.length > 0 && onAction;
+  const strategyReadOnly = strategyActions.length > 0 && !onAction;
+  const showStrategy = strategyActions.length > 0;
+  const showGeneric = genericActions.length > 0 && Boolean(onAction);
 
   if (!showStrategy && !showGeneric) return null;
 
@@ -37,11 +41,13 @@ export function MessageEnrichmentActions({
       locale={locale}
       onAction={onAction}
       disabled={disabled}
+      readOnly={strategyReadOnly}
+      selectedPayload={selectedStrategyPayload}
       placement={placement}
     />
   ) : null;
 
-  const genericBlock = showGeneric ? (
+  const genericBlock = showGeneric && onAction ? (
     <ChatNextActions
       actions={genericActions}
       locale={locale}

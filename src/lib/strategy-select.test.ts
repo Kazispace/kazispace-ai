@@ -2,13 +2,17 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getStrategySelectRationale,
+  hasStrategySelectActions,
   hydrateStrategyPayloadUserLabels,
   isStrategySelectActions,
   isStrategySelectRecommended,
   isStrategyStartCta,
+  normalizeStrategyMatchText,
   partitionNextActions,
   resolveActiveNextActions,
+  resolveStrategySelectReply,
   resolveStrategySelectSubmit,
+  resolveStrategySelectTurnContext,
   strategyIdFromPayload,
 } from '@/lib/strategy-select';
 import type { ChatNextAction } from '@/types/chat-envelope';
@@ -80,13 +84,86 @@ describe('strategy-select', () => {
     expect(hydrated[1]?.content).toBe('在现有版本上精修');
   });
 
-  it('hides pending CTAs after a user reply', () => {
+  it('deactivates pending CTAs after a user reply', () => {
     const messages = [
       { role: 'assistant', nextActions: sampleAActions },
       { role: 'user', content: 'picked' },
     ];
     expect(resolveActiveNextActions(messages, 0)).toBeUndefined();
     expect(resolveActiveNextActions([messages[0]], 0)).toEqual(sampleAActions);
+  });
+
+  it('resolves historical strategy_select reply by payload or label', () => {
+    const messages = [
+      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'user', content: '__strategy:continue_current' },
+    ];
+    expect(resolveStrategySelectReply(messages, 0, 'zh')).toBe(
+      '__strategy:continue_current'
+    );
+
+    const hydrated = [
+      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'user', content: '在现有版本上精修' },
+    ];
+    expect(resolveStrategySelectReply(hydrated, 0, 'zh')).toBe(
+      '__strategy:continue_current'
+    );
+
+    const trailingPunctuation = [
+      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'user', content: '在现有版本上精修。' },
+    ];
+    expect(resolveStrategySelectReply(trailingPunctuation, 0, 'zh')).toBe(
+      '__strategy:continue_current'
+    );
+
+    expect(resolveStrategySelectReply([messages[0]!], 0, 'zh')).toBeNull();
+  });
+
+  it('only inspects the first user reply below the assistant turn', () => {
+    const messages = [
+      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'user', content: '随便说一句' },
+      { role: 'user', content: '__strategy:continue_current' },
+    ];
+    expect(resolveStrategySelectReply(messages, 0, 'zh')).toBeNull();
+  });
+
+  it('normalizes trailing punctuation for label matching', () => {
+    expect(normalizeStrategyMatchText('在现有版本上精修。')).toBe(
+      '在现有版本上精修'
+    );
+  });
+
+  it('resolves active vs historical turn context', () => {
+    const pending = [{ role: 'assistant', nextActions: sampleAActions }];
+    expect(resolveStrategySelectTurnContext(pending, 0, 'zh')).toEqual({
+      activeNextActions: sampleAActions,
+      selectedStrategyPayload: undefined,
+    });
+
+    const answered = [
+      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'user', content: '在现有版本上精修' },
+    ];
+    expect(resolveStrategySelectTurnContext(answered, 0, 'zh')).toEqual({
+      activeNextActions: undefined,
+      selectedStrategyPayload: '__strategy:continue_current',
+    });
+  });
+
+  it('detects mixed rows that include strategy_select', () => {
+    expect(hasStrategySelectActions(sampleAActions)).toBe(true);
+    expect(
+      hasStrategySelectActions([
+        ...sampleAActions,
+        { type: 'return_to_clinic', label: { zh: '取消' } },
+      ])
+    ).toBe(true);
+    expect(hasStrategySelectActions([{ type: 'return_to_clinic' }])).toBe(
+      false
+    );
   });
 
   it('builds payload + display label for submit', () => {

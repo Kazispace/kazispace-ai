@@ -20,8 +20,8 @@ import {
   resolveNextActionHref,
 } from '@/lib/next-action/resolve';
 import {
-  resolveActiveNextActions,
   resolveStrategySelectSubmit,
+  resolveStrategySelectTurnContext,
 } from '@/lib/strategy-select';
 import {
   buildSpaceCvPanelHref,
@@ -392,10 +392,8 @@ export function SpaceChatPane({
             <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
           ) : (
             messages.map((message, messageIndex) => {
-              const activeNextActions = resolveActiveNextActions(
-                messages,
-                messageIndex
-              );
+              const { activeNextActions, selectedStrategyPayload } =
+                resolveStrategySelectTurnContext(messages, messageIndex, locale);
               return (
               // Omit surface="workspace": that prop only changes MessageBubble
               // assistant chrome (peach vs clinic gray). Cards / next_actions / CV
@@ -408,14 +406,17 @@ export function SpaceChatPane({
                 serverMessageId={message.serverMessageId}
                 status={message.status}
                 cards={message.cards}
-                nextActions={activeNextActions}
+                nextActions={message.nextActions}
+                selectedStrategyPayload={selectedStrategyPayload}
                 assistantMeta={message.assistantMeta}
                 locale={locale}
                 variant="clinic"
                 composerTarget="space"
                 streamComplete
                 onJobCardClick={handleJobCardClick}
-                onNextAction={handleNextAction}
+                onNextAction={
+                  activeNextActions ? handleNextAction : undefined
+                }
                 actionsDisabled={isSending}
                 onRetry={
                   message.role === 'user' && message.status === 'failed'
