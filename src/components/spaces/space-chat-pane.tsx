@@ -21,6 +21,7 @@ import {
 } from '@/lib/next-action/resolve';
 import {
   resolveActiveNextActions,
+  resolveStrategySelectReply,
   resolveStrategySelectSubmit,
 } from '@/lib/strategy-select';
 import {
@@ -396,6 +397,10 @@ export function SpaceChatPane({
                 messages,
                 messageIndex
               );
+              const selectedStrategyPayload = activeNextActions
+                ? undefined
+                : resolveStrategySelectReply(messages, messageIndex, locale) ??
+                  undefined;
               return (
               // Omit surface="workspace": that prop only changes MessageBubble
               // assistant chrome (peach vs clinic gray). Cards / next_actions / CV
@@ -408,14 +413,17 @@ export function SpaceChatPane({
                 serverMessageId={message.serverMessageId}
                 status={message.status}
                 cards={message.cards}
-                nextActions={activeNextActions}
+                nextActions={message.nextActions}
+                selectedStrategyPayload={selectedStrategyPayload}
                 assistantMeta={message.assistantMeta}
                 locale={locale}
                 variant="clinic"
                 composerTarget="space"
                 streamComplete
                 onJobCardClick={handleJobCardClick}
-                onNextAction={handleNextAction}
+                onNextAction={
+                  activeNextActions ? handleNextAction : undefined
+                }
                 actionsDisabled={isSending}
                 onRetry={
                   message.role === 'user' && message.status === 'failed'

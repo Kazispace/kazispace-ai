@@ -59,7 +59,7 @@ export function isStrategyStartCta(actions: ChatNextAction[]): boolean {
   );
 }
 
-/** Hide pending CTAs once the user has replied below this assistant turn. */
+/** Pending CTAs are interactive only until the user replies below this turn. */
 export function resolveActiveNextActions(
   messages: ReadonlyArray<{ role: string; nextActions?: ChatNextAction[] }>,
   messageIndex: number
@@ -71,6 +71,43 @@ export function resolveActiveNextActions(
     if (messages[i].role === 'user') return undefined;
   }
   return actions;
+}
+
+/**
+ * Payload the user chose for a historical `strategy_select` turn (if any).
+ * Matches `__strategy:*` content or hydrated label against action payloads.
+ */
+export function resolveStrategySelectReply(
+  messages: ReadonlyArray<{
+    role: string;
+    content: string;
+    nextActions?: ChatNextAction[];
+  }>,
+  messageIndex: number,
+  locale: string
+): string | null {
+  const actions = messages[messageIndex]?.nextActions;
+  if (!actions?.length || !actions.every(isStrategySelectAction)) return null;
+
+  for (let i = messageIndex + 1; i < messages.length; i++) {
+    const message = messages[i];
+    if (message.role === 'assistant') break;
+    if (message.role !== 'user') continue;
+
+    const content = message.content.trim();
+    const byPayload = actions.find(
+      (action) => action.payload?.trim() === content
+    );
+    if (byPayload?.payload) return byPayload.payload.trim();
+
+    const byLabel = actions.find(
+      (action) => resolveActionLabel(action, locale) === content
+    );
+    if (byLabel?.payload) return byLabel.payload.trim();
+
+    return null;
+  }
+  return null;
 }
 
 /** @deprecated Use {@link resolveActiveNextActions}. */

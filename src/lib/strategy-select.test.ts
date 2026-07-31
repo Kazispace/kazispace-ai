@@ -8,6 +8,7 @@ import {
   isStrategyStartCta,
   partitionNextActions,
   resolveActiveNextActions,
+  resolveStrategySelectReply,
   resolveStrategySelectSubmit,
   strategyIdFromPayload,
 } from '@/lib/strategy-select';
@@ -80,13 +81,33 @@ describe('strategy-select', () => {
     expect(hydrated[1]?.content).toBe('在现有版本上精修');
   });
 
-  it('hides pending CTAs after a user reply', () => {
+  it('deactivates pending CTAs after a user reply', () => {
     const messages = [
       { role: 'assistant', nextActions: sampleAActions },
       { role: 'user', content: 'picked' },
     ];
     expect(resolveActiveNextActions(messages, 0)).toBeUndefined();
     expect(resolveActiveNextActions([messages[0]], 0)).toEqual(sampleAActions);
+  });
+
+  it('resolves historical strategy_select reply by payload or label', () => {
+    const messages = [
+      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'user', content: '__strategy:continue_current' },
+    ];
+    expect(resolveStrategySelectReply(messages, 0, 'zh')).toBe(
+      '__strategy:continue_current'
+    );
+
+    const hydrated = [
+      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'user', content: '在现有版本上精修' },
+    ];
+    expect(resolveStrategySelectReply(hydrated, 0, 'zh')).toBe(
+      '__strategy:continue_current'
+    );
+    expect(resolveStrategySelectReply(messages, 0, 'zh')).not.toBeNull();
+    expect(resolveStrategySelectReply([messages[0]!], 0, 'zh')).toBeNull();
   });
 
   it('builds payload + display label for submit', () => {

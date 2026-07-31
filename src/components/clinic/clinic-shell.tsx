@@ -115,6 +115,7 @@ import {
 } from "@/lib/next-action/resolve";
 import {
   resolveActiveNextActions,
+  resolveStrategySelectReply,
   resolveStrategySelectSubmit,
 } from "@/lib/strategy-select";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
@@ -1538,6 +1539,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
               messages,
               messageIndex
             );
+            const selectedStrategyPayload = activeNextActions
+              ? undefined
+              : resolveStrategySelectReply(messages, messageIndex, locale) ??
+                undefined;
             return (
               <MessageBubble
                 key={msg.id}
@@ -1550,7 +1555,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 status={msg.status}
                 referral={msg.referral}
                 spaceNudge={!isAgentMode ? msg.spaceNudge : undefined}
-                nextActions={activeNextActions}
+                nextActions={msg.nextActions}
+                selectedStrategyPayload={selectedStrategyPayload}
                 assistantMeta={msg.assistantMeta}
                 cards={msg.cards}
                 citations={msg.citations}
@@ -1618,7 +1624,9 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                     : undefined
                 }
                 referralDisabled={isSending || isSwitching || spaceNudgeBusy}
-                onNextAction={handleNextAction}
+                onNextAction={
+                  activeNextActions ? handleNextAction : undefined
+                }
                 onJobCardClick={handleJobCardClick}
                 actionsDisabled={isSending || isSwitching || spaceNudgeBusy}
               />

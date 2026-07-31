@@ -15,8 +15,11 @@ import type { ChatNextAction } from "@/types/chat-envelope";
 interface StrategySelectActionsProps {
   actions: ChatNextAction[];
   locale: string;
-  onAction: (action: ChatNextAction) => void;
+  onAction?: (action: ChatNextAction) => void;
   disabled?: boolean;
+  /** Read-only history row — show options with the user's prior selection. */
+  readOnly?: boolean;
+  selectedPayload?: string | null;
   placement?: "inline" | "below";
 }
 
@@ -34,9 +37,12 @@ export function StrategySelectActions({
   locale,
   onAction,
   disabled,
+  readOnly = false,
+  selectedPayload,
   placement = "inline",
 }: StrategySelectActionsProps) {
   const t = useTranslations("chat");
+  const isInteractive = !readOnly && Boolean(onAction);
 
   if (actions.length === 0) return null;
 
@@ -49,16 +55,27 @@ export function StrategySelectActions({
     const action = actions[0]!;
     const label = resolveActionLabel(action, locale);
     const rationale = getStrategySelectRationale(action);
+    const isSelected =
+      readOnly &&
+      Boolean(
+        selectedPayload &&
+          action.payload?.trim() === selectedPayload.trim()
+      );
 
     return (
       <div className={wrapperClass}>
         <Button
           type="button"
-          variant="default"
-          disabled={disabled}
-          onClick={() => onAction(action)}
-          className="h-auto min-h-11 w-full flex-col items-start justify-start gap-1 whitespace-normal py-2.5 text-left"
+          variant={isSelected ? "outline" : "default"}
+          disabled={readOnly || disabled}
+          onClick={isInteractive ? () => onAction!(action) : undefined}
+          className={cn(
+            "h-auto min-h-11 w-full flex-col items-start justify-start gap-1 whitespace-normal py-2.5 text-left",
+            isSelected &&
+              "border-kazi-orange bg-orange-50 text-gray-900 hover:bg-orange-50"
+          )}
           aria-label={label}
+          aria-pressed={isSelected || undefined}
         >
           <span className="font-medium leading-snug">{label}</span>
           {rationale ? (
@@ -86,26 +103,45 @@ export function StrategySelectActions({
           const optionLabel = isRecommended
             ? t("strategySelect.recommendedOption", { label })
             : label;
+          const actionPayload = action.payload?.trim() ?? "";
+          const isSelected =
+            readOnly &&
+            Boolean(selectedPayload && actionPayload === selectedPayload.trim());
 
           return (
             <button
               key={`${action.type}-${action.payload ?? index}`}
               type="button"
-              disabled={disabled}
-              onClick={() => onAction(action)}
+              disabled={readOnly || disabled}
+              onClick={
+                isInteractive ? () => onAction!(action) : undefined
+              }
               aria-label={optionLabel}
+              aria-pressed={readOnly ? isSelected : undefined}
               className={cn(
-                "flex w-full items-start gap-3 bg-transparent px-3 py-3 text-left",
-                "transition-colors hover:bg-gray-50",
+                "flex w-full items-start gap-3 px-3 py-3 text-left",
+                readOnly
+                  ? "cursor-default bg-transparent"
+                  : "bg-transparent transition-colors hover:bg-gray-50",
+                isSelected && "bg-orange-50/70",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kazi-orange/40",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 !isLast && "border-b border-gray-200"
               )}
             >
               <span
-                className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-gray-900"
+                className={cn(
+                  "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2",
+                  isSelected
+                    ? "border-kazi-orange bg-kazi-orange"
+                    : "border-gray-900"
+                )}
                 aria-hidden
-              />
+              >
+                {isSelected ? (
+                  <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                ) : null}
+              </span>
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="text-[15px] font-medium leading-snug text-gray-900">
