@@ -2,7 +2,7 @@
 
 import { ChatNextActions } from "@/components/clinic/chat-next-actions";
 import { StrategySelectActions } from "@/components/clinic/strategy-select-actions";
-import { partitionNextActions, STRATEGY_SELECT_ACTION_TYPE } from "@/lib/strategy-select";
+import { partitionNextActions } from "@/lib/strategy-select";
 import { cn } from "@/lib/utils";
 import type { ChatNextAction } from "@/types/chat-envelope";
 
@@ -47,7 +47,7 @@ export function MessageEnrichmentActions({
     />
   ) : null;
 
-  const genericBlock = showGeneric ? (
+  const genericBlock = showGeneric && onAction ? (
     <ChatNextActions
       actions={genericActions}
       locale={locale}
