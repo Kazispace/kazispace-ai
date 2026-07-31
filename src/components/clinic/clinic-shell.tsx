@@ -114,9 +114,8 @@ import {
   resolveNextActionHref,
 } from "@/lib/next-action/resolve";
 import {
-  resolveActiveNextActions,
-  resolveStrategySelectReply,
   resolveStrategySelectSubmit,
+  resolveStrategySelectTurnContext,
 } from "@/lib/strategy-select";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
 
@@ -1535,14 +1534,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             const referralEntry =
               msg.referral &&
               AGENT_REGISTRY.find((a) => a.agentId === msg.referral?.agentId);
-            const activeNextActions = resolveActiveNextActions(
-              messages,
-              messageIndex
-            );
-            const selectedStrategyPayload = activeNextActions
-              ? undefined
-              : resolveStrategySelectReply(messages, messageIndex, locale) ??
-                undefined;
+            const { activeNextActions, selectedStrategyPayload } =
+              resolveStrategySelectTurnContext(messages, messageIndex, locale);
             return (
               <MessageBubble
                 key={msg.id}

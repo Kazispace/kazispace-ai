@@ -20,9 +20,8 @@ import {
   resolveNextActionHref,
 } from '@/lib/next-action/resolve';
 import {
-  resolveActiveNextActions,
-  resolveStrategySelectReply,
   resolveStrategySelectSubmit,
+  resolveStrategySelectTurnContext,
 } from '@/lib/strategy-select';
 import {
   buildSpaceCvPanelHref,
@@ -393,14 +392,8 @@ export function SpaceChatPane({
             <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
           ) : (
             messages.map((message, messageIndex) => {
-              const activeNextActions = resolveActiveNextActions(
-                messages,
-                messageIndex
-              );
-              const selectedStrategyPayload = activeNextActions
-                ? undefined
-                : resolveStrategySelectReply(messages, messageIndex, locale) ??
-                  undefined;
+              const { activeNextActions, selectedStrategyPayload } =
+                resolveStrategySelectTurnContext(messages, messageIndex, locale);
               return (
               // Omit surface="workspace": that prop only changes MessageBubble
               // assistant chrome (peach vs clinic gray). Cards / next_actions / CV

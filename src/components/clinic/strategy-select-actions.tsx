@@ -43,6 +43,9 @@ export function StrategySelectActions({
 }: StrategySelectActionsProps) {
   const t = useTranslations("chat");
   const isInteractive = !readOnly && Boolean(onAction);
+  const handleSelect = (action: ChatNextAction) => {
+    if (isInteractive && onAction) onAction(action);
+  };
 
   if (actions.length === 0) return null;
 
@@ -68,7 +71,7 @@ export function StrategySelectActions({
           type="button"
           variant={isSelected ? "outline" : "default"}
           disabled={readOnly || disabled}
-          onClick={isInteractive ? () => onAction!(action) : undefined}
+          onClick={isInteractive ? () => handleSelect(action) : undefined}
           className={cn(
             "h-auto min-h-11 w-full flex-col items-start justify-start gap-1 whitespace-normal py-2.5 text-left",
             isSelected &&
@@ -113,9 +116,7 @@ export function StrategySelectActions({
               key={`${action.type}-${action.payload ?? index}`}
               type="button"
               disabled={readOnly || disabled}
-              onClick={
-                isInteractive ? () => onAction!(action) : undefined
-              }
+              onClick={isInteractive ? () => handleSelect(action) : undefined}
               aria-label={optionLabel}
               aria-pressed={readOnly ? isSelected : undefined}
               className={cn(

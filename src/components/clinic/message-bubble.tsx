@@ -24,7 +24,7 @@ import {
   type SearchCapabilityId,
 } from "@/lib/clinic/search-capability";
 import type { ComposerInsertTarget } from "@/lib/store";
-import { partitionNextActions } from "@/lib/strategy-select";
+import { hasStrategySelectActions } from "@/lib/strategy-select";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
@@ -136,11 +136,10 @@ export function MessageBubble({
     !isUser && streamComplete && !isStreaming;
   const jobCards = cards?.filter((card) => card.type === "job") ?? [];
   const showJobCards = showEnrichment && jobCards.length > 0;
-  const { strategyActions } = partitionNextActions(nextActions);
   const showNextActionRow =
     showEnrichment &&
     (((nextActions?.length ?? 0) > 0 && onNextAction) ||
-      strategyActions.length > 0);
+      hasStrategySelectActions(nextActions));
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
   const showUpgradeCta =
     showEnrichment &&
