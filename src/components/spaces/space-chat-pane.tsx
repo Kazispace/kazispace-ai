@@ -20,6 +20,10 @@ import {
   resolveNextActionHref,
 } from '@/lib/next-action/resolve';
 import {
+  resolveActiveNextActions,
+  resolveStrategySelectSubmit,
+} from '@/lib/strategy-select';
+import {
   buildSpaceCvPanelHref,
   buildSpaceCvRailHref,
   CV_OPEN_RAIL_QUERY_PARAM,
@@ -255,9 +259,12 @@ export function SpaceChatPane({
   });
 
   const sendAndPin = useCallback(
-    async (text: string) => {
+    async (
+      text: string,
+      opts?: { displayContent?: string }
+    ) => {
       pinToLatestOnSend();
-      return sendMessage(text);
+      return sendMessage(text, opts);
     },
     [pinToLatestOnSend, sendMessage],
   );
@@ -278,6 +285,14 @@ export function SpaceChatPane({
 
   const handleNextAction = useCallback(
     (action: ChatNextAction) => {
+      const strategySubmit = resolveStrategySelectSubmit(action, locale);
+      if (strategySubmit) {
+        void sendAndPin(strategySubmit.payload, {
+          displayContent: strategySubmit.display,
+        });
+        return;
+      }
+
       const rawHref = resolveNextActionHref(locale, action);
       if (rawHref) {
         const href = remapCvNavigationForSpace(locale, space, rawHref);
@@ -376,7 +391,12 @@ export function SpaceChatPane({
           ) : messages.length === 0 ? (
             <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
           ) : (
-            messages.map((message) => (
+            messages.map((message, messageIndex) => {
+              const activeNextActions = resolveActiveNextActions(
+                messages,
+                messageIndex
+              );
+              return (
               // Omit surface="workspace": that prop only changes MessageBubble
               // assistant chrome (peach vs clinic gray). Cards / next_actions / CV
               // routing use composerTarget="space", not surface.
@@ -388,7 +408,8 @@ export function SpaceChatPane({
                 serverMessageId={message.serverMessageId}
                 status={message.status}
                 cards={message.cards}
-                nextActions={message.nextActions}
+                nextActions={activeNextActions}
+                assistantMeta={message.assistantMeta}
                 locale={locale}
                 variant="clinic"
                 composerTarget="space"
@@ -405,7 +426,8 @@ export function SpaceChatPane({
                     : undefined
                 }
               />
-            ))
+              );
+            })
           )}
           {isSending ? (
             <MessageBubble

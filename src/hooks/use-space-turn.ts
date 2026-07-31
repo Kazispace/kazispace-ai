@@ -21,12 +21,14 @@ import {
   rehydrateSpaceMessagesWithCards,
   rememberSpaceJobCards,
 } from '@/lib/spaces/space-job-cards-cache';
+import { hydrateStrategyPayloadUserLabels } from '@/lib/strategy-select';
 import {
   isPlaceholderReply,
   latestAssistantAfterLastUser,
   mapSpaceHistoryMessages,
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnCards,
+  resolveSpaceTurnAssistantMeta,
   resolveSpaceTurnNextActions,
   resolveSpaceTurnReply,
   type SpaceChatMessage,
@@ -51,12 +53,13 @@ function resolveSpaceMasterSessionId(
 }
 
 async function loadSpaceHistory(
-  masterSessionId: string
+  masterSessionId: string,
+  locale?: string
 ): Promise<SpaceChatMessage[]> {
   const res = await fetchChatHistory(masterSessionId);
   if (!res.success || !res.data) return [];
   const list = Array.isArray(res.data) ? res.data : (res.data.messages ?? []);
-  return mapSpaceHistoryMessages(list);
+  return mapSpaceHistoryMessages(list, locale);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -64,12 +67,13 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function recoverReplyFromMasterHistory(
-  masterSessionId: string
+  masterSessionId: string,
+  locale?: string
 ): Promise<{ reply: string; history: SpaceChatMessage[] }> {
   let history: SpaceChatMessage[] = [];
   for (let attempt = 0; attempt < HISTORY_RECOVERY_ATTEMPTS; attempt++) {
     if (attempt > 0) await sleep(HISTORY_RECOVERY_DELAY_MS);
-    history = await loadSpaceHistory(masterSessionId);
+    history = await loadSpaceHistory(masterSessionId, locale);
     const reply = latestAssistantAfterLastUser(history);
     if (!isPlaceholderReply(reply)) {
       return { reply, history };
@@ -171,7 +175,7 @@ export function useSpaceTurn(
       // Capture before await — SPA switch-away must not lose in-memory cards.
       const previous =
         useSpaceStore.getState().getSpaceSlice(spaceId)?.messages ?? [];
-      const next = await loadSpaceHistory(resolvedMasterId);
+      const next = await loadSpaceHistory(resolvedMasterId, locale);
       if (cancelled) return;
       setSpaceMessages(
         spaceId,
@@ -200,7 +204,7 @@ export function useSpaceTurn(
   const sendMessage = useCallback(
     async (
       text: string,
-      options?: { retryMessageId?: string }
+      options?: { retryMessageId?: string; displayContent?: string }
     ): Promise<SpaceSendResult> => {
       if (!enabled || !spaceId || !text.trim()) {
         return { ok: false as const, error: 'Space not ready' };
@@ -226,6 +230,7 @@ export function useSpaceTurn(
       }
 
       const trimmed = text.trim();
+      const displayContent = options?.displayContent?.trim() || trimmed;
       const userId = options?.retryMessageId ?? `user_${Date.now()}`;
       let nextMessages: SpaceChatMessage[] = [];
 
@@ -233,7 +238,7 @@ export function useSpaceTurn(
         patchSpaceMessages(spaceId, (prev) => {
           nextMessages = prev.map((message) =>
             message.id === userId
-              ? { ...message, content: trimmed, status: 'sending' as const }
+              ? { ...message, content: displayContent, status: 'sending' as const }
               : message
           );
           return nextMessages;
@@ -242,7 +247,7 @@ export function useSpaceTurn(
         patchSpaceMessages(spaceId, (prev) => {
           nextMessages = [
             ...prev,
-            { id: userId, role: 'user', content: trimmed, status: 'sending' },
+            { id: userId, role: 'user', content: displayContent, status: 'sending' },
           ];
           return nextMessages;
         });
@@ -293,6 +298,7 @@ export function useSpaceTurn(
         let reply = resolveSpaceTurnReply(res.data);
         const turnCards = resolveSpaceTurnCards(res.data);
         const turnNextActions = resolveSpaceTurnNextActions(res.data);
+        const turnAssistantMeta = resolveSpaceTurnAssistantMeta(res.data);
         let history: SpaceChatMessage[] = [];
         let recoveredFromHistory = false;
 
@@ -308,7 +314,10 @@ export function useSpaceTurn(
 
         if (isPlaceholderReply(reply)) {
           try {
-            const recovered = await recoverReplyFromMasterHistory(resolvedMasterId);
+            const recovered = await recoverReplyFromMasterHistory(
+              resolvedMasterId,
+              locale
+            );
             if (isStale()) {
               return { ok: false as const, error: 'Navigated away' };
             }
@@ -355,6 +364,7 @@ export function useSpaceTurn(
             ...(turnNextActions.length > 0
               ? { nextActions: turnNextActions }
               : {}),
+            ...(turnAssistantMeta ? { assistantMeta: turnAssistantMeta } : {}),
             ...(isServerAssistantMessageId(assistantMessageId)
               ? { serverMessageId: assistantMessageId }
               : {}),
@@ -365,7 +375,7 @@ export function useSpaceTurn(
 
         try {
           if (!recoveredFromHistory) {
-            history = await loadSpaceHistory(resolvedMasterId);
+            history = await loadSpaceHistory(resolvedMasterId, locale);
           }
           if (isStale()) {
             return { ok: false as const, error: 'Navigated away' };
@@ -374,7 +384,10 @@ export function useSpaceTurn(
             const merged = applyCachedSpaceJobCards(
               spaceId,
               resolvedMasterId,
-              mergeSpaceMessagesAfterSend(nextMessages, history)
+              hydrateStrategyPayloadUserLabels(
+                mergeSpaceMessagesAfterSend(nextMessages, history),
+                locale
+              )
             );
             rememberSpaceJobCards(spaceId, resolvedMasterId, merged);
             setSpaceMessages(spaceId, merged);

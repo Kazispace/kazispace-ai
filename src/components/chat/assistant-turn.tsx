@@ -2,7 +2,7 @@
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
 import { ChatJobTeasers } from '@/components/clinic/chat-job-teasers';
-import { ChatNextActions } from '@/components/clinic/chat-next-actions';
+import { MessageEnrichmentActions } from '@/components/clinic/message-enrichment-actions';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 
 interface AssistantTurnProps {
@@ -32,7 +32,7 @@ export function AssistantTurn({
   actionsDisabled,
 }: AssistantTurnProps) {
   const jobCards = cards?.filter((c) => c.type === 'job') ?? [];
-  const showActions =
+  const showNextActionRow =
     streamComplete &&
     !isStreaming &&
     (nextActions?.length ?? 0) > 0 &&
@@ -51,12 +51,13 @@ export function AssistantTurn({
           isStreaming={isStreaming}
         />
 
-        {showActions ? (
-          <ChatNextActions
-            actions={nextActions!}
+        {showNextActionRow ? (
+          <MessageEnrichmentActions
+            actions={nextActions}
             locale={locale}
-            onAction={onNextAction!}
+            onAction={onNextAction}
             disabled={actionsDisabled}
+            placement="below"
           />
         ) : null}
       </div>

@@ -7,6 +7,7 @@ import { AGENT_NAME } from "@/lib/constants";
 import { CitationList } from "./citation-list";
 import { ChatJobTeasers } from "./chat-job-teasers";
 import { ChatNextActions } from "./chat-next-actions";
+import { MessageEnrichmentActions } from "./message-enrichment-actions";
 import { MarkdownContent } from "./markdown-content";
 import { MessageActions } from "./message-actions";
 import { ReferralPrompt } from "./referral-prompt";
@@ -46,6 +47,7 @@ interface MessageBubbleProps {
   referral?: ReferralPayload;
   spaceNudge?: SpaceNudgePayload;
   nextActions?: ChatNextAction[];
+  assistantMeta?: Record<string, unknown>;
   cards?: ChatJobCard[];
   citations?: CitationItem[];
   upgradeCta?: UpgradeCtaPayload;
@@ -87,6 +89,7 @@ export function MessageBubble({
   referral,
   spaceNudge,
   nextActions,
+  assistantMeta,
   cards,
   citations,
   upgradeCta,
@@ -130,7 +133,7 @@ export function MessageBubble({
     !isUser && streamComplete && !isStreaming;
   const jobCards = cards?.filter((card) => card.type === "job") ?? [];
   const showJobCards = showEnrichment && jobCards.length > 0;
-  const showNextActions =
+  const showNextActionRow =
     showEnrichment && (nextActions?.length ?? 0) > 0 && onNextAction;
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
   const showUpgradeCta =
@@ -289,14 +292,15 @@ export function MessageBubble({
                 }
               />
             ) : null}
-            {showNextActions && (
-              <ChatNextActions
-                actions={nextActions!}
+            {showNextActionRow ? (
+              <MessageEnrichmentActions
+                actions={nextActions}
                 locale={locale}
-                onAction={onNextAction!}
+                onAction={onNextAction}
                 disabled={actionsDisabled}
+                placement="inline"
               />
-            )}
+            ) : null}
             {showUpgradeCta && (
               <UpgradeResearchCta
                 cta={upgradeCta!}

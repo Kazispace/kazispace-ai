@@ -47,6 +47,22 @@ function normalizeNextActions(raw: unknown): ChatNextAction[] {
     if (typeof action.session_id === 'string') {
       entry.session_id = action.session_id;
     }
+    const metaRaw = asRecord(action.meta);
+    if (metaRaw) {
+      const meta: NonNullable<ChatNextAction['meta']> = {};
+      if (typeof metaRaw.rationale === 'string' && metaRaw.rationale.trim()) {
+        meta.rationale = metaRaw.rationale.trim();
+      }
+      if (metaRaw.recommended === true) {
+        meta.recommended = true;
+      }
+      if (metaRaw.confirm_skipped === true) {
+        meta.confirm_skipped = true;
+      }
+      if (Object.keys(meta).length > 0) {
+        entry.meta = meta;
+      }
+    }
     actions.push(entry);
   }
   return actions;

@@ -21,6 +21,8 @@ export type AssistantMessageEnvelopeFields = {
   cards?: ChatJobCard[];
   workflow?: AssistantWorkflow;
   intent?: string;
+  /** assistant_response.meta — e.g. recommended_strategy_id (KAZI-400). */
+  assistantMeta?: Record<string, unknown>;
 };
 
 /** Path A escalation from parsed envelope fields. */
@@ -63,6 +65,9 @@ export function buildAssistantMessageFields(
   }
   if (envelope.workflow) {
     fields.workflow = envelope.workflow;
+  }
+  if (envelope.meta && Object.keys(envelope.meta).length > 0) {
+    fields.assistantMeta = envelope.meta;
   }
   return fields;
 }

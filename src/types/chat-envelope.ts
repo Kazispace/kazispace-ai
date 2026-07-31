@@ -20,6 +20,13 @@ export interface AssistantWorkflow {
   progress_pct?: number;
 }
 
+/** Per-action meta on `strategy_select` (KAZI-400 / BE #309 `merged_turn`). */
+export interface StrategySelectActionMeta {
+  rationale?: string;
+  recommended?: boolean;
+  confirm_skipped?: boolean;
+}
+
 export interface ChatNextAction {
   type: string;
   label?: LocalizedLabel;
@@ -28,6 +35,8 @@ export interface ChatNextAction {
   path?: string;
   job_id?: string;
   session_id?: string;
+  /** Action-level meta; `strategy_select` carries rationale / recommended (#309). */
+  meta?: StrategySelectActionMeta;
 }
 
 export interface ChatJobCard {

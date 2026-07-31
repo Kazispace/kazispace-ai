@@ -113,6 +113,10 @@ import {
   resolveNextActionChatPrompt,
   resolveNextActionHref,
 } from "@/lib/next-action/resolve";
+import {
+  resolveActiveNextActions,
+  resolveStrategySelectSubmit,
+} from "@/lib/strategy-select";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
 
 interface ClinicShellProps {
@@ -311,7 +315,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     isAgentStreaming,
     loadAgentHistory,
     sendMessage: sendAgentMessage,
-  } = useAgentChat(activeAgentId, agentSessionId);
+  } = useAgentChat(activeAgentId, agentSessionId, locale);
 
   const { nba: nbaResponse, isLoading: nbaLoading } = useNbaAction();
 
@@ -439,7 +443,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       setAgentMessages(
         activeAgentId,
-        mapAgentHistoryToChatMessages(hist.data.messages, sessionId)
+        mapAgentHistoryToChatMessages(hist.data.messages, sessionId, locale)
       );
       setIsSwitchingSession(false);
     },
@@ -1235,6 +1239,18 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const handleNextAction = useCallback(
     (action: ChatNextAction) => {
+      const strategySubmit = resolveStrategySelectSubmit(action, locale);
+      if (strategySubmit) {
+        if (isAgentMode) {
+          void sendAgentMessage(strategySubmit.payload, {
+            displayContent: strategySubmit.display,
+          });
+        } else {
+          void handleSendFromNextAction(strategySubmit.payload);
+        }
+        return;
+      }
+
       const href = resolveNextActionHref(locale, action);
       if (href) {
         if (isClinicCvRailOpenHref(locale, href)) {
@@ -1263,7 +1279,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, searchParams, openCvRail, openPaywall, handleBackToClinic, handleSendFromNextAction]
+    [locale, router, searchParams, openCvRail, openPaywall, handleBackToClinic, handleSendFromNextAction, isAgentMode, sendAgentMessage]
   );
 
   const handleJobCardClick = useCallback(
@@ -1514,10 +1530,14 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             <p className="text-sm">{tSessions("sessionSwitching")}</p>
           </div>
         ) : (
-          messages.map((msg) => {
+          messages.map((msg, messageIndex) => {
             const referralEntry =
               msg.referral &&
               AGENT_REGISTRY.find((a) => a.agentId === msg.referral?.agentId);
+            const activeNextActions = resolveActiveNextActions(
+              messages,
+              messageIndex
+            );
             return (
               <MessageBubble
                 key={msg.id}
@@ -1530,7 +1550,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 status={msg.status}
                 referral={msg.referral}
                 spaceNudge={!isAgentMode ? msg.spaceNudge : undefined}
-                nextActions={msg.nextActions}
+                nextActions={activeNextActions}
+                assistantMeta={msg.assistantMeta}
                 cards={msg.cards}
                 citations={msg.citations}
                 // Clinic-only: Agent Hub owns its own depth / tooling; do not surface

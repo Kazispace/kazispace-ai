@@ -5,12 +5,14 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { resolveActionLabel } from "@/lib/chat-envelope";
 import type { ChatNextAction } from "@/types/chat-envelope";
+import { cn } from "@/lib/utils";
 
 interface ChatNextActionsProps {
   actions: ChatNextAction[];
   locale: string;
   onAction: (action: ChatNextAction) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 const KNOWN_ACTION_TYPES = [
@@ -35,6 +37,7 @@ export function ChatNextActions({
   locale,
   onAction,
   disabled,
+  className,
 }: ChatNextActionsProps) {
   const t = useTranslations("chat");
 
@@ -49,7 +52,12 @@ export function ChatNextActions({
     });
 
   return (
-    <div className="mt-3 pt-3 border-t border-gray-200/80 flex flex-col gap-2">
+    <div
+      className={cn(
+        "mt-3 flex flex-col gap-2 border-t border-gray-200/80 pt-3",
+        className
+      )}
+    >
       {actions.map((action, index) => (
         <Button
           key={`${action.type}-${index}`}
