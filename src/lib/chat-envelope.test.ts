@@ -72,6 +72,25 @@ describe('parseAssistantEnvelope next_actions and exit', () => {
     expect(parsed.nextActions[0]?.job_id).toBe('job_1');
   });
 
+  it('parses next_actions with per-action meta (KAZI-400 #309)', () => {
+    const parsed = parseAssistantEnvelope({
+      assistant_response: {
+        content: 'Done',
+        next_actions: [
+          {
+            type: 'strategy_select',
+            label: { zh: '精修' },
+            payload: '__strategy:continue_current',
+            meta: { rationale: '改动最小', recommended: true },
+          },
+        ],
+      },
+    });
+
+    expect(parsed.nextActions[0]?.meta?.rationale).toBe('改动最小');
+    expect(parsed.nextActions[0]?.meta?.recommended).toBe(true);
+  });
+
   it('parses Path A exit fields', () => {
     const parsed = parseAssistantEnvelope({
       exited: true,
@@ -209,22 +228,24 @@ describe('buildAssistantMessageFields', () => {
     expect(fields.cards).toBeUndefined();
   });
 
-  it('passes assistant meta for strategy_select turns (KAZI-400)', () => {
+  it('passes assistant turn meta (workflow_phase etc.)', () => {
     const fields = buildAssistantMessageFields({
       reply: 'Pick a strategy',
       nextActions: [
         {
           type: 'strategy_select',
-          payload: '__strategy:jd_tailor',
+          payload: '__strategy:continue_current',
+          meta: { recommended: true, rationale: '改动最小' },
         },
       ],
       cards: [],
       meta: {
-        merged_intent_confirm: true,
-        recommended_strategy_id: 'jd_tailor',
+        workflow_phase: 'intent_confirm',
+        routing_mode: 'switch_in',
       },
     });
-    expect(fields.nextActions).toHaveLength(1);
-    expect(fields.assistantMeta?.recommended_strategy_id).toBe('jd_tailor');
+    expect(fields.nextActions?.[0]?.meta?.recommended).toBe(true);
+    expect(fields.assistantMeta?.workflow_phase).toBe('intent_confirm');
+    expect(fields.assistantMeta?.recommended_strategy_id).toBeUndefined();
   });
 });

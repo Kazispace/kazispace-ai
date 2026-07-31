@@ -28,7 +28,6 @@ import type { ComposerInsertTarget } from "@/lib/store";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import {
-  getRecommendedStrategyId,
   isStrategySelectActions,
 } from "@/lib/strategy-select";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
@@ -149,7 +148,6 @@ export function MessageBubble({
     (strategySelectActions?.length ?? 0) > 0 && onNextAction;
   const showNextActions =
     (genericNextActions?.length ?? 0) > 0 && onNextAction;
-  const recommendedStrategyId = getRecommendedStrategyId(assistantMeta);
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
   const showUpgradeCta =
     showEnrichment &&
@@ -311,7 +309,6 @@ export function MessageBubble({
               <StrategySelectActions
                 actions={strategySelectActions!}
                 locale={locale}
-                recommendedStrategyId={recommendedStrategyId}
                 onAction={onNextAction!}
                 disabled={actionsDisabled}
               />

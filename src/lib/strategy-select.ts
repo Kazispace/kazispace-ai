@@ -22,11 +22,15 @@ export function strategyIdFromPayload(payload: string): string | null {
   return id || null;
 }
 
-export function getRecommendedStrategyId(
-  meta?: Record<string, unknown> | null
-): string | undefined {
-  const id = meta?.recommended_strategy_id;
-  return typeof id === 'string' && id.trim() ? id.trim() : undefined;
+/** BE #309: recommended flag lives on each action, not turn meta. */
+export function isStrategySelectRecommended(action: ChatNextAction): boolean {
+  return action.meta?.recommended === true;
+}
+
+/** BE #309: optional subtitle under the strategy label. */
+export function getStrategySelectRationale(action: ChatNextAction): string | undefined {
+  const rationale = action.meta?.rationale?.trim();
+  return rationale || undefined;
 }
 
 /** Hide strategy_select once the user has replied below this assistant turn. */

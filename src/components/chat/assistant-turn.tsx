@@ -4,7 +4,7 @@ import { MessageBubble } from '@/components/clinic/message-bubble';
 import { ChatJobTeasers } from '@/components/clinic/chat-job-teasers';
 import { ChatNextActions } from '@/components/clinic/chat-next-actions';
 import { StrategySelectActions } from '@/components/clinic/strategy-select-actions';
-import { getRecommendedStrategyId, isStrategySelectActions } from '@/lib/strategy-select';
+import { isStrategySelectActions } from '@/lib/strategy-select';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 
 interface AssistantTurnProps {
@@ -27,7 +27,6 @@ export function AssistantTurn({
   locale,
   variant = 'agent',
   nextActions,
-  assistantMeta,
   cards,
   streamComplete = true,
   isStreaming,
@@ -51,7 +50,6 @@ export function AssistantTurn({
     !isStreaming &&
     (genericNextActions?.length ?? 0) > 0 &&
     onNextAction;
-  const recommendedStrategyId = getRecommendedStrategyId(assistantMeta);
   const showCards = streamComplete && !isStreaming && jobCards.length > 0;
 
   return (
@@ -70,7 +68,6 @@ export function AssistantTurn({
           <StrategySelectActions
             actions={strategySelectActions!}
             locale={locale}
-            recommendedStrategyId={recommendedStrategyId}
             onAction={onNextAction!}
             disabled={actionsDisabled}
           />
