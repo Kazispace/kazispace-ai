@@ -4,6 +4,7 @@ import type {
   ChatJobCard,
   ChatNextAction,
 } from '@/types/chat-envelope';
+import { hydrateStrategyPayloadUserLabels } from '@/lib/strategy-select';
 
 export type RawAgentHistoryMessage = {
   id?: string;
@@ -22,9 +23,10 @@ export type RawAgentHistoryMessage = {
 /** Map API history rows to chat messages; unknown roles become assistant. */
 export function mapAgentHistoryToChatMessages(
   messages: RawAgentHistoryMessage[],
-  sessionId: string
+  sessionId: string,
+  locale?: string
 ): ChatMessage[] {
-  return messages.map((raw, i) => {
+  const mapped = messages.map((raw, i) => {
     const roleRaw = raw.role ?? 'assistant';
     const role: ChatMessage['role'] =
       roleRaw === 'user'
@@ -48,6 +50,7 @@ export function mapAgentHistoryToChatMessages(
       ...(raw.workflow ? { workflow: raw.workflow } : {}),
     };
   });
+  return locale ? hydrateStrategyPayloadUserLabels(mapped, locale) : mapped;
 }
 
 /** Stable ordering: active first, then most recently updated. */

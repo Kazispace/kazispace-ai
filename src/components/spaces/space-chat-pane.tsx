@@ -20,8 +20,7 @@ import {
   resolveNextActionHref,
 } from '@/lib/next-action/resolve';
 import {
-  isStrategySelectActions,
-  resolveActiveStrategySelectActions,
+  resolveActiveNextActions,
   resolveStrategySelectSubmit,
 } from '@/lib/strategy-select';
 import {
@@ -393,11 +392,10 @@ export function SpaceChatPane({
             <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
           ) : (
             messages.map((message, messageIndex) => {
-              const activeNextActions = isStrategySelectActions(
-                message.nextActions
-              )
-                ? resolveActiveStrategySelectActions(messages, messageIndex)
-                : message.nextActions;
+              const activeNextActions = resolveActiveNextActions(
+                messages,
+                messageIndex
+              );
               return (
               // Omit surface="workspace": that prop only changes MessageBubble
               // assistant chrome (peach vs clinic gray). Cards / next_actions / CV

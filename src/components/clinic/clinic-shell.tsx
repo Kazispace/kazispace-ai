@@ -114,8 +114,7 @@ import {
   resolveNextActionHref,
 } from "@/lib/next-action/resolve";
 import {
-  isStrategySelectActions,
-  resolveActiveStrategySelectActions,
+  resolveActiveNextActions,
   resolveStrategySelectSubmit,
 } from "@/lib/strategy-select";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
@@ -316,7 +315,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     isAgentStreaming,
     loadAgentHistory,
     sendMessage: sendAgentMessage,
-  } = useAgentChat(activeAgentId, agentSessionId);
+  } = useAgentChat(activeAgentId, agentSessionId, locale);
 
   const { nba: nbaResponse, isLoading: nbaLoading } = useNbaAction();
 
@@ -444,7 +443,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
       setAgentMessages(
         activeAgentId,
-        mapAgentHistoryToChatMessages(hist.data.messages, sessionId)
+        mapAgentHistoryToChatMessages(hist.data.messages, sessionId, locale)
       );
       setIsSwitchingSession(false);
     },
@@ -1535,9 +1534,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             const referralEntry =
               msg.referral &&
               AGENT_REGISTRY.find((a) => a.agentId === msg.referral?.agentId);
-            const activeNextActions = isStrategySelectActions(msg.nextActions)
-              ? resolveActiveStrategySelectActions(messages, messageIndex)
-              : msg.nextActions;
+            const activeNextActions = resolveActiveNextActions(
+              messages,
+              messageIndex
+            );
             return (
               <MessageBubble
                 key={msg.id}

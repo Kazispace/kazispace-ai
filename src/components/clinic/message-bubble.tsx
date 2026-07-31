@@ -7,7 +7,7 @@ import { AGENT_NAME } from "@/lib/constants";
 import { CitationList } from "./citation-list";
 import { ChatJobTeasers } from "./chat-job-teasers";
 import { ChatNextActions } from "./chat-next-actions";
-import { StrategySelectActions } from "./strategy-select-actions";
+import { MessageEnrichmentActions } from "./message-enrichment-actions";
 import { MarkdownContent } from "./markdown-content";
 import { MessageActions } from "./message-actions";
 import { ReferralPrompt } from "./referral-prompt";
@@ -27,9 +27,6 @@ import {
 import type { ComposerInsertTarget } from "@/lib/store";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
-import {
-  isStrategySelectActions,
-} from "@/lib/strategy-select";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 
 interface MessageBubbleProps {
@@ -136,18 +133,8 @@ export function MessageBubble({
     !isUser && streamComplete && !isStreaming;
   const jobCards = cards?.filter((card) => card.type === "job") ?? [];
   const showJobCards = showEnrichment && jobCards.length > 0;
-  const strategySelectActions =
-    showEnrichment && isStrategySelectActions(nextActions)
-      ? nextActions
-      : undefined;
-  const genericNextActions =
-    showEnrichment && nextActions && !strategySelectActions
-      ? nextActions
-      : undefined;
-  const showStrategySelect =
-    (strategySelectActions?.length ?? 0) > 0 && onNextAction;
-  const showNextActions =
-    (genericNextActions?.length ?? 0) > 0 && onNextAction;
+  const showNextActionRow =
+    showEnrichment && (nextActions?.length ?? 0) > 0 && onNextAction;
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
   const showUpgradeCta =
     showEnrichment &&
@@ -305,22 +292,15 @@ export function MessageBubble({
                 }
               />
             ) : null}
-            {showStrategySelect && (
-              <StrategySelectActions
-                actions={strategySelectActions!}
+            {showNextActionRow ? (
+              <MessageEnrichmentActions
+                actions={nextActions}
                 locale={locale}
-                onAction={onNextAction!}
+                onAction={onNextAction}
                 disabled={actionsDisabled}
+                placement="inline"
               />
-            )}
-            {showNextActions && (
-              <ChatNextActions
-                actions={genericNextActions!}
-                locale={locale}
-                onAction={onNextAction!}
-                disabled={actionsDisabled}
-              />
-            )}
+            ) : null}
             {showUpgradeCta && (
               <UpgradeResearchCta
                 cta={upgradeCta!}

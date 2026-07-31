@@ -21,6 +21,7 @@ import {
   rehydrateSpaceMessagesWithCards,
   rememberSpaceJobCards,
 } from '@/lib/spaces/space-job-cards-cache';
+import { hydrateStrategyPayloadUserLabels } from '@/lib/strategy-select';
 import {
   isPlaceholderReply,
   latestAssistantAfterLastUser,
@@ -52,12 +53,13 @@ function resolveSpaceMasterSessionId(
 }
 
 async function loadSpaceHistory(
-  masterSessionId: string
+  masterSessionId: string,
+  locale?: string
 ): Promise<SpaceChatMessage[]> {
   const res = await fetchChatHistory(masterSessionId);
   if (!res.success || !res.data) return [];
   const list = Array.isArray(res.data) ? res.data : (res.data.messages ?? []);
-  return mapSpaceHistoryMessages(list);
+  return mapSpaceHistoryMessages(list, locale);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -65,12 +67,13 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function recoverReplyFromMasterHistory(
-  masterSessionId: string
+  masterSessionId: string,
+  locale?: string
 ): Promise<{ reply: string; history: SpaceChatMessage[] }> {
   let history: SpaceChatMessage[] = [];
   for (let attempt = 0; attempt < HISTORY_RECOVERY_ATTEMPTS; attempt++) {
     if (attempt > 0) await sleep(HISTORY_RECOVERY_DELAY_MS);
-    history = await loadSpaceHistory(masterSessionId);
+    history = await loadSpaceHistory(masterSessionId, locale);
     const reply = latestAssistantAfterLastUser(history);
     if (!isPlaceholderReply(reply)) {
       return { reply, history };
@@ -172,7 +175,7 @@ export function useSpaceTurn(
       // Capture before await — SPA switch-away must not lose in-memory cards.
       const previous =
         useSpaceStore.getState().getSpaceSlice(spaceId)?.messages ?? [];
-      const next = await loadSpaceHistory(resolvedMasterId);
+      const next = await loadSpaceHistory(resolvedMasterId, locale);
       if (cancelled) return;
       setSpaceMessages(
         spaceId,
@@ -311,7 +314,10 @@ export function useSpaceTurn(
 
         if (isPlaceholderReply(reply)) {
           try {
-            const recovered = await recoverReplyFromMasterHistory(resolvedMasterId);
+            const recovered = await recoverReplyFromMasterHistory(
+              resolvedMasterId,
+              locale
+            );
             if (isStale()) {
               return { ok: false as const, error: 'Navigated away' };
             }
@@ -369,7 +375,7 @@ export function useSpaceTurn(
 
         try {
           if (!recoveredFromHistory) {
-            history = await loadSpaceHistory(resolvedMasterId);
+            history = await loadSpaceHistory(resolvedMasterId, locale);
           }
           if (isStale()) {
             return { ok: false as const, error: 'Navigated away' };
@@ -378,7 +384,10 @@ export function useSpaceTurn(
             const merged = applyCachedSpaceJobCards(
               spaceId,
               resolvedMasterId,
-              mergeSpaceMessagesAfterSend(nextMessages, history)
+              hydrateStrategyPayloadUserLabels(
+                mergeSpaceMessagesAfterSend(nextMessages, history),
+                locale
+              )
             );
             rememberSpaceJobCards(spaceId, resolvedMasterId, merged);
             setSpaceMessages(spaceId, merged);

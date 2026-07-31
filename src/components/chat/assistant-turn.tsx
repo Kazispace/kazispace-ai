@@ -2,9 +2,7 @@
 
 import { MessageBubble } from '@/components/clinic/message-bubble';
 import { ChatJobTeasers } from '@/components/clinic/chat-job-teasers';
-import { ChatNextActions } from '@/components/clinic/chat-next-actions';
-import { StrategySelectActions } from '@/components/clinic/strategy-select-actions';
-import { isStrategySelectActions } from '@/lib/strategy-select';
+import { MessageEnrichmentActions } from '@/components/clinic/message-enrichment-actions';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 
 interface AssistantTurnProps {
@@ -12,7 +10,6 @@ interface AssistantTurnProps {
   locale: string;
   variant?: 'clinic' | 'agent';
   nextActions?: ChatNextAction[];
-  assistantMeta?: Record<string, unknown>;
   cards?: ChatJobCard[];
   streamComplete?: boolean;
   isStreaming?: boolean;
@@ -35,20 +32,10 @@ export function AssistantTurn({
   actionsDisabled,
 }: AssistantTurnProps) {
   const jobCards = cards?.filter((c) => c.type === 'job') ?? [];
-  const strategySelectActions = isStrategySelectActions(nextActions)
-    ? nextActions
-    : undefined;
-  const genericNextActions =
-    nextActions && !strategySelectActions ? nextActions : undefined;
-  const showStrategySelect =
+  const showNextActionRow =
     streamComplete &&
     !isStreaming &&
-    (strategySelectActions?.length ?? 0) > 0 &&
-    onNextAction;
-  const showActions =
-    streamComplete &&
-    !isStreaming &&
-    (genericNextActions?.length ?? 0) > 0 &&
+    (nextActions?.length ?? 0) > 0 &&
     onNextAction;
   const showCards = streamComplete && !isStreaming && jobCards.length > 0;
 
@@ -64,21 +51,13 @@ export function AssistantTurn({
           isStreaming={isStreaming}
         />
 
-        {showStrategySelect ? (
-          <StrategySelectActions
-            actions={strategySelectActions!}
+        {showNextActionRow ? (
+          <MessageEnrichmentActions
+            actions={nextActions}
             locale={locale}
-            onAction={onNextAction!}
+            onAction={onNextAction}
             disabled={actionsDisabled}
-          />
-        ) : null}
-
-        {showActions ? (
-          <ChatNextActions
-            actions={genericNextActions!}
-            locale={locale}
-            onAction={onNextAction!}
-            disabled={actionsDisabled}
+            placement="below"
           />
         ) : null}
       </div>

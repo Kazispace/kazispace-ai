@@ -1,4 +1,5 @@
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import { hydrateStrategyPayloadUserLabels } from '@/lib/strategy-select';
 import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 
@@ -199,14 +200,18 @@ export function normalizeSpaceHistoryMessage(
   };
 }
 
-export function mapSpaceHistoryMessages(messages: unknown[]): SpaceChatMessage[] {
-  return messages
+export function mapSpaceHistoryMessages(
+  messages: unknown[],
+  locale?: string
+): SpaceChatMessage[] {
+  const mapped = messages
     .map((item, index) =>
       item && typeof item === 'object'
         ? normalizeSpaceHistoryMessage(item as Record<string, unknown>, index)
         : null
     )
     .filter((message): message is SpaceChatMessage => message != null);
+  return locale ? hydrateStrategyPayloadUserLabels(mapped, locale) : mapped;
 }
 
 function assistantContentKey(content: string): string {

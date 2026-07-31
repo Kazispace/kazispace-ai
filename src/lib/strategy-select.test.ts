@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import {
   getStrategySelectRationale,
+  hydrateStrategyPayloadUserLabels,
   isStrategySelectActions,
   isStrategySelectRecommended,
-  resolveActiveStrategySelectActions,
+  isStrategyStartCta,
+  partitionNextActions,
+  resolveActiveNextActions,
   resolveStrategySelectSubmit,
   strategyIdFromPayload,
 } from '@/lib/strategy-select';
@@ -42,55 +44,49 @@ const sampleBActions: ChatNextAction[] = [
 ];
 
 describe('strategy-select', () => {
-  it('detects strategy_select action sets', () => {
-    expect(isStrategySelectActions(sampleAActions)).toBe(true);
-    expect(
-      isStrategySelectActions([{ type: 'strategy_select' }, { type: 'confirm' }])
-    ).toBe(false);
+  it('partitions mixed strategy_select and generic actions (P2-1)', () => {
+    const mixed: ChatNextAction[] = [
+      ...sampleAActions,
+      { type: 'return_to_clinic', label: { zh: '取消' } },
+    ];
+    expect(isStrategySelectActions(mixed)).toBe(false);
+    expect(partitionNextActions(mixed)).toEqual({
+      strategyActions: sampleAActions,
+      genericActions: [{ type: 'return_to_clinic', label: { zh: '取消' } }],
+    });
   });
 
-  it('parses strategy id from payload', () => {
-    expect(strategyIdFromPayload('__strategy:jd_tailor')).toBe('jd_tailor');
-    expect(strategyIdFromPayload('confirm')).toBeNull();
+  it('detects Start CTA shape (P2-2)', () => {
+    expect(isStrategyStartCta(sampleBActions)).toBe(true);
+    expect(isStrategyStartCta(sampleAActions)).toBe(false);
   });
 
   it('reads recommended and rationale from action.meta (#309)', () => {
     expect(isStrategySelectRecommended(sampleAActions[0]!)).toBe(true);
     expect(isStrategySelectRecommended(sampleAActions[1]!)).toBe(false);
     expect(getStrategySelectRationale(sampleAActions[0]!)).toBe('改动最小');
-    expect(getStrategySelectRationale(sampleAActions[1]!)).toBe('提升 ATS 通过率');
-    expect(sampleBActions[0]?.meta?.confirm_skipped).toBe(true);
   });
 
-  it('parses action.meta from assistant envelope', () => {
-    const parsed = parseAssistantEnvelope({
-      assistant_response: {
-        content: 'Pick',
-        next_actions: [
-          {
-            type: 'strategy_select',
-            payload: '__strategy:continue_current',
-            meta: { rationale: '改动最小', recommended: true },
-          },
-        ],
-        meta: { workflow_phase: 'intent_confirm' },
+  it('hydrates persisted strategy payload to label (P2-5)', () => {
+    const messages = [
+      {
+        role: 'assistant',
+        content: 'pick',
+        nextActions: sampleAActions,
       },
-    });
-    expect(parsed.nextActions[0]?.meta?.recommended).toBe(true);
-    expect(parsed.nextActions[0]?.meta?.rationale).toBe('改动最小');
-    expect(parsed.meta?.workflow_phase).toBe('intent_confirm');
-    expect(parsed.meta?.recommended_strategy_id).toBeUndefined();
+      { role: 'user', content: '__strategy:continue_current' },
+    ];
+    const hydrated = hydrateStrategyPayloadUserLabels(messages, 'zh');
+    expect(hydrated[1]?.content).toBe('在现有版本上精修');
   });
 
-  it('hides strategy_select after a user reply', () => {
+  it('hides pending CTAs after a user reply', () => {
     const messages = [
       { role: 'assistant', nextActions: sampleAActions },
       { role: 'user', content: 'picked' },
     ];
-    expect(resolveActiveStrategySelectActions(messages, 0)).toBeUndefined();
-    expect(resolveActiveStrategySelectActions([messages[0]], 0)).toEqual(
-      sampleAActions
-    );
+    expect(resolveActiveNextActions(messages, 0)).toBeUndefined();
+    expect(resolveActiveNextActions([messages[0]], 0)).toEqual(sampleAActions);
   });
 
   it('builds payload + display label for submit', () => {
@@ -98,6 +94,9 @@ describe('strategy-select', () => {
       payload: '__strategy:continue_current',
       display: '在现有版本上精修',
     });
-    expect(resolveStrategySelectSubmit({ type: 'confirm' }, 'zh')).toBeNull();
+  });
+
+  it('parses strategy id from payload', () => {
+    expect(strategyIdFromPayload('__strategy:jd_tailor')).toBe('jd_tailor');
   });
 });

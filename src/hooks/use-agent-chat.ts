@@ -9,7 +9,11 @@ import { mapAgentHistoryToChatMessages } from '@/lib/agent-sessions';
 import type { RawAgentHistoryMessage } from '@/lib/agent-sessions';
 import type { ChatMessage } from '@/types';
 
-export function useAgentChat(agentId: string | null, sessionId: string | null) {
+export function useAgentChat(
+  agentId: string | null,
+  sessionId: string | null,
+  locale?: string
+) {
   const {
     setAgentMessages,
     addAgentMessage,
@@ -41,11 +45,12 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
         agentId,
         mapAgentHistoryToChatMessages(
           list as RawAgentHistoryMessage[],
-          sessionId
+          sessionId,
+          locale
         )
       );
     }
-  }, [agentId, sessionId, setAgentMessages]);
+  }, [agentId, sessionId, locale, setAgentMessages]);
 
   const sendMessage = useCallback(
     async (text: string, opts?: { displayContent?: string }) => {

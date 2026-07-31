@@ -496,7 +496,9 @@
 			"job_search": "帮我找工作"
 		},
 		"strategySelect": {
-			"groupLabel": "选择简历策略"
+			"groupLabel": "选择简历策略",
+			"recommendedBadge": "推荐",
+			"recommendedOption": "推荐：{label}"
 		}
 	},
 	"errors": {
