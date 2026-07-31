@@ -208,4 +208,23 @@ describe('buildAssistantMessageFields', () => {
     expect(fields.nextActions).toBeUndefined();
     expect(fields.cards).toBeUndefined();
   });
+
+  it('passes assistant meta for strategy_select turns (KAZI-400)', () => {
+    const fields = buildAssistantMessageFields({
+      reply: 'Pick a strategy',
+      nextActions: [
+        {
+          type: 'strategy_select',
+          payload: '__strategy:jd_tailor',
+        },
+      ],
+      cards: [],
+      meta: {
+        merged_intent_confirm: true,
+        recommended_strategy_id: 'jd_tailor',
+      },
+    });
+    expect(fields.nextActions).toHaveLength(1);
+    expect(fields.assistantMeta?.recommended_strategy_id).toBe('jd_tailor');
+  });
 });

@@ -103,6 +103,21 @@ export function resolveSpaceTurnNextActions(data: unknown): ChatNextAction[] {
   return [];
 }
 
+export function resolveSpaceTurnAssistantMeta(
+  data: unknown
+): Record<string, unknown> | undefined {
+  if (!data || typeof data !== 'object') return undefined;
+  const raw = data as Record<string, unknown>;
+
+  for (const candidate of [data, raw.envelope]) {
+    if (!candidate) continue;
+    const meta = parseAssistantEnvelope(candidate).meta;
+    if (meta && Object.keys(meta).length > 0) return meta;
+  }
+
+  return undefined;
+}
+
 export type SpaceChatMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -115,6 +130,8 @@ export type SpaceChatMessage = {
   cards?: ChatJobCard[];
   /** CTA row from assistant_response.next_actions (KAZI-296). */
   nextActions?: ChatNextAction[];
+  /** assistant_response.meta (e.g. recommended_strategy_id for KAZI-400). */
+  assistantMeta?: Record<string, unknown>;
   /** Present on optimistic local turns (KAZI-186 retry). */
   status?: 'sending' | 'sent' | 'failed';
   /** Persisted chat_messages.id for feedback (KAZI-254). */
@@ -166,6 +183,8 @@ export function normalizeSpaceHistoryMessage(
     role === 'assistant' ? resolveSpaceTurnCards(raw) : [];
   const nextActions =
     role === 'assistant' ? resolveSpaceTurnNextActions(raw) : [];
+  const assistantMeta =
+    role === 'assistant' ? resolveSpaceTurnAssistantMeta(raw) : undefined;
 
   return {
     id,
@@ -173,6 +192,7 @@ export function normalizeSpaceHistoryMessage(
     content,
     ...(cards.length > 0 ? { cards } : {}),
     ...(nextActions.length > 0 ? { nextActions } : {}),
+    ...(assistantMeta ? { assistantMeta } : {}),
     ...(role === 'assistant' && isServerAssistantMessageId(id)
       ? { serverMessageId: id }
       : {}),
@@ -239,6 +259,7 @@ export function mergeSpaceMessagesAfterSend(
   const localAssistantExtras: {
     cards?: ChatJobCard[];
     nextActions?: ChatNextAction[];
+    assistantMeta?: Record<string, unknown>;
   }[] = [];
   for (const message of local) {
     if (message.role !== 'assistant') continue;
@@ -249,6 +270,7 @@ export function mergeSpaceMessagesAfterSend(
       ...(message.nextActions && message.nextActions.length > 0
         ? { nextActions: message.nextActions }
         : {}),
+      ...(message.assistantMeta ? { assistantMeta: message.assistantMeta } : {}),
     });
   }
 
@@ -266,6 +288,9 @@ export function mergeSpaceMessagesAfterSend(
       localExtras.nextActions
     ) {
       next = { ...next, nextActions: localExtras.nextActions };
+    }
+    if (!message.assistantMeta && localExtras.assistantMeta) {
+      next = { ...next, assistantMeta: localExtras.assistantMeta };
     }
     return next;
   });

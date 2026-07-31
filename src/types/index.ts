@@ -74,6 +74,8 @@ export interface ChatMessage {
    */
   pendingCapability?: 'web_search' | 'research';
   workflow?: import('./chat-envelope').AssistantWorkflow;
+  /** assistant_response.meta (e.g. recommended_strategy_id for KAZI-400). */
+  assistantMeta?: Record<string, unknown>;
   streamComplete?: boolean;
   /**
    * Persisted `chat_messages.id` from BE (KAZI-254).

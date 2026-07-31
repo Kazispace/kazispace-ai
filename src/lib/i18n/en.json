@@ -636,6 +636,9 @@
 			"edit_cv": "Improve CV",
 			"cv_builder": "Open CV Builder"
 		},
+		"strategySelect": {
+			"groupLabel": "Choose a CV strategy"
+		},
 		"inSpacePrompts": {
 			"mock_interview": "I want to practice a mock interview",
 			"cv_builder": "Help me improve my CV",

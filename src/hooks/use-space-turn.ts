@@ -27,6 +27,7 @@ import {
   mapSpaceHistoryMessages,
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnCards,
+  resolveSpaceTurnAssistantMeta,
   resolveSpaceTurnNextActions,
   resolveSpaceTurnReply,
   type SpaceChatMessage,
@@ -200,7 +201,7 @@ export function useSpaceTurn(
   const sendMessage = useCallback(
     async (
       text: string,
-      options?: { retryMessageId?: string }
+      options?: { retryMessageId?: string; displayContent?: string }
     ): Promise<SpaceSendResult> => {
       if (!enabled || !spaceId || !text.trim()) {
         return { ok: false as const, error: 'Space not ready' };
@@ -226,6 +227,7 @@ export function useSpaceTurn(
       }
 
       const trimmed = text.trim();
+      const displayContent = options?.displayContent?.trim() || trimmed;
       const userId = options?.retryMessageId ?? `user_${Date.now()}`;
       let nextMessages: SpaceChatMessage[] = [];
 
@@ -233,7 +235,7 @@ export function useSpaceTurn(
         patchSpaceMessages(spaceId, (prev) => {
           nextMessages = prev.map((message) =>
             message.id === userId
-              ? { ...message, content: trimmed, status: 'sending' as const }
+              ? { ...message, content: displayContent, status: 'sending' as const }
               : message
           );
           return nextMessages;
@@ -242,7 +244,7 @@ export function useSpaceTurn(
         patchSpaceMessages(spaceId, (prev) => {
           nextMessages = [
             ...prev,
-            { id: userId, role: 'user', content: trimmed, status: 'sending' },
+            { id: userId, role: 'user', content: displayContent, status: 'sending' },
           ];
           return nextMessages;
         });
@@ -293,6 +295,7 @@ export function useSpaceTurn(
         let reply = resolveSpaceTurnReply(res.data);
         const turnCards = resolveSpaceTurnCards(res.data);
         const turnNextActions = resolveSpaceTurnNextActions(res.data);
+        const turnAssistantMeta = resolveSpaceTurnAssistantMeta(res.data);
         let history: SpaceChatMessage[] = [];
         let recoveredFromHistory = false;
 
@@ -355,6 +358,7 @@ export function useSpaceTurn(
             ...(turnNextActions.length > 0
               ? { nextActions: turnNextActions }
               : {}),
+            ...(turnAssistantMeta ? { assistantMeta: turnAssistantMeta } : {}),
             ...(isServerAssistantMessageId(assistantMessageId)
               ? { serverMessageId: assistantMessageId }
               : {}),

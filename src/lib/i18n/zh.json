@@ -494,6 +494,9 @@
 			"edit_cv": "帮我优化简历",
 			"english_tutor": "我想练习英语",
 			"job_search": "帮我找工作"
+		},
+		"strategySelect": {
+			"groupLabel": "选择简历策略"
 		}
 	},
 	"errors": {

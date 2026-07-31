@@ -7,6 +7,7 @@ import { AGENT_NAME } from "@/lib/constants";
 import { CitationList } from "./citation-list";
 import { ChatJobTeasers } from "./chat-job-teasers";
 import { ChatNextActions } from "./chat-next-actions";
+import { StrategySelectActions } from "./strategy-select-actions";
 import { MarkdownContent } from "./markdown-content";
 import { MessageActions } from "./message-actions";
 import { ReferralPrompt } from "./referral-prompt";
@@ -26,6 +27,10 @@ import {
 import type { ComposerInsertTarget } from "@/lib/store";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
+import {
+  getRecommendedStrategyId,
+  isStrategySelectActions,
+} from "@/lib/strategy-select";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 
 interface MessageBubbleProps {
@@ -46,6 +51,7 @@ interface MessageBubbleProps {
   referral?: ReferralPayload;
   spaceNudge?: SpaceNudgePayload;
   nextActions?: ChatNextAction[];
+  assistantMeta?: Record<string, unknown>;
   cards?: ChatJobCard[];
   citations?: CitationItem[];
   upgradeCta?: UpgradeCtaPayload;
@@ -87,6 +93,7 @@ export function MessageBubble({
   referral,
   spaceNudge,
   nextActions,
+  assistantMeta,
   cards,
   citations,
   upgradeCta,
@@ -130,8 +137,19 @@ export function MessageBubble({
     !isUser && streamComplete && !isStreaming;
   const jobCards = cards?.filter((card) => card.type === "job") ?? [];
   const showJobCards = showEnrichment && jobCards.length > 0;
+  const strategySelectActions =
+    showEnrichment && isStrategySelectActions(nextActions)
+      ? nextActions
+      : undefined;
+  const genericNextActions =
+    showEnrichment && nextActions && !strategySelectActions
+      ? nextActions
+      : undefined;
+  const showStrategySelect =
+    (strategySelectActions?.length ?? 0) > 0 && onNextAction;
   const showNextActions =
-    showEnrichment && (nextActions?.length ?? 0) > 0 && onNextAction;
+    (genericNextActions?.length ?? 0) > 0 && onNextAction;
+  const recommendedStrategyId = getRecommendedStrategyId(assistantMeta);
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
   const showUpgradeCta =
     showEnrichment &&
@@ -289,9 +307,18 @@ export function MessageBubble({
                 }
               />
             ) : null}
+            {showStrategySelect && (
+              <StrategySelectActions
+                actions={strategySelectActions!}
+                locale={locale}
+                recommendedStrategyId={recommendedStrategyId}
+                onAction={onNextAction!}
+                disabled={actionsDisabled}
+              />
+            )}
             {showNextActions && (
               <ChatNextActions
-                actions={nextActions!}
+                actions={genericNextActions!}
                 locale={locale}
                 onAction={onNextAction!}
                 disabled={actionsDisabled}

@@ -48,15 +48,16 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
   }, [agentId, sessionId, setAgentMessages]);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, opts?: { displayContent?: string }) => {
       if (!agentId || !sessionId) {
         return { ok: false as const, error: 'No active expert' };
       }
 
+      const displayContent = opts?.displayContent?.trim() || text.trim();
       const userMsg: ChatMessage = {
         id: `user_${Date.now()}`,
         role: 'user',
-        content: text,
+        content: displayContent,
         timestamp: new Date().toISOString(),
         sessionId,
       };
@@ -73,7 +74,7 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
       });
       setAgentStreaming(agentId, true);
 
-      const res = await sendAgentChat(agentId, text, sessionId);
+      const res = await sendAgentChat(agentId, text.trim(), sessionId);
       setAgentSending(agentId, false);
       setAgentStreaming(agentId, false);
 
@@ -103,6 +104,9 @@ export function useAgentChat(agentId: string | null, sessionId: string | null) {
         ...(assistant.nextActions ? { nextActions: assistant.nextActions } : {}),
         ...(assistant.cards ? { cards: assistant.cards } : {}),
         ...(assistant.workflow ? { workflow: assistant.workflow } : {}),
+        ...(assistant.assistantMeta
+          ? { assistantMeta: assistant.assistantMeta }
+          : {}),
       });
       return {
         ok: true as const,

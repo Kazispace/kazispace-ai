@@ -3,6 +3,8 @@
 import { MessageBubble } from '@/components/clinic/message-bubble';
 import { ChatJobTeasers } from '@/components/clinic/chat-job-teasers';
 import { ChatNextActions } from '@/components/clinic/chat-next-actions';
+import { StrategySelectActions } from '@/components/clinic/strategy-select-actions';
+import { getRecommendedStrategyId, isStrategySelectActions } from '@/lib/strategy-select';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 
 interface AssistantTurnProps {
@@ -10,6 +12,7 @@ interface AssistantTurnProps {
   locale: string;
   variant?: 'clinic' | 'agent';
   nextActions?: ChatNextAction[];
+  assistantMeta?: Record<string, unknown>;
   cards?: ChatJobCard[];
   streamComplete?: boolean;
   isStreaming?: boolean;
@@ -24,6 +27,7 @@ export function AssistantTurn({
   locale,
   variant = 'agent',
   nextActions,
+  assistantMeta,
   cards,
   streamComplete = true,
   isStreaming,
@@ -32,11 +36,22 @@ export function AssistantTurn({
   actionsDisabled,
 }: AssistantTurnProps) {
   const jobCards = cards?.filter((c) => c.type === 'job') ?? [];
+  const strategySelectActions = isStrategySelectActions(nextActions)
+    ? nextActions
+    : undefined;
+  const genericNextActions =
+    nextActions && !strategySelectActions ? nextActions : undefined;
+  const showStrategySelect =
+    streamComplete &&
+    !isStreaming &&
+    (strategySelectActions?.length ?? 0) > 0 &&
+    onNextAction;
   const showActions =
     streamComplete &&
     !isStreaming &&
-    (nextActions?.length ?? 0) > 0 &&
+    (genericNextActions?.length ?? 0) > 0 &&
     onNextAction;
+  const recommendedStrategyId = getRecommendedStrategyId(assistantMeta);
   const showCards = streamComplete && !isStreaming && jobCards.length > 0;
 
   return (
@@ -51,9 +66,19 @@ export function AssistantTurn({
           isStreaming={isStreaming}
         />
 
+        {showStrategySelect ? (
+          <StrategySelectActions
+            actions={strategySelectActions!}
+            locale={locale}
+            recommendedStrategyId={recommendedStrategyId}
+            onAction={onNextAction!}
+            disabled={actionsDisabled}
+          />
+        ) : null}
+
         {showActions ? (
           <ChatNextActions
-            actions={nextActions!}
+            actions={genericNextActions!}
             locale={locale}
             onAction={onNextAction!}
             disabled={actionsDisabled}
