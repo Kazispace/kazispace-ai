@@ -200,6 +200,9 @@ export function useClinicChat(locale?: string) {
         pendingCapability?: 'web_search' | 'research';
         /** INV-P2 — retry after ConfirmAbandon (KAZI-272). */
         confirmAbandon?: boolean;
+        /** Bubble copy when transport uses action meta (KAZI-469). */
+        displayContent?: string;
+        actionMeta?: import('@/types/chat-envelope').UserMessageActionMeta;
       }
     ) => {
       // Clinic Phase 1 path is a single long HTTP POST (not mid-stream SSE).
@@ -209,14 +212,15 @@ export function useClinicChat(locale?: string) {
       const pendingCapability =
         options?.pendingCapability ??
         (looksLikeResearchRequest(text) ? 'research' : undefined);
+      const displayContent = options?.displayContent?.trim() || text.trim();
 
       if (options?.retryMessageId) {
-        updateMessage(userMsgId, { status: 'sending', content: text });
+        updateMessage(userMsgId, { status: 'sending', content: displayContent });
       } else {
         addMessage({
           id: userMsgId,
           role: 'user',
-          content: text,
+          content: displayContent,
           timestamp: new Date().toISOString(),
           sessionId,
           status: 'sending',
@@ -238,10 +242,11 @@ export function useClinicChat(locale?: string) {
       setStreaming(true);
 
       try {
-        const res = await sendChatMessage(sessionId, text, locale, {
+        const res = await sendChatMessage(sessionId, displayContent, locale, {
           routingMode: 'clinic',
           routingVersion: 2,
           ...(options?.confirmAbandon ? { confirmAbandon: true } : {}),
+          ...(options?.actionMeta ? { actionMeta: options.actionMeta } : {}),
         });
 
         if (!res.success || !res.data) {

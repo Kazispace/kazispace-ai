@@ -265,7 +265,10 @@ function mockAgentEscalationResponse(
 export async function sendAgentChat(
   agentId: string,
   message: string,
-  sessionId?: string
+  sessionId?: string,
+  options?: {
+    actionMeta?: import('@/types/chat-envelope').UserMessageActionMeta;
+  }
 ): Promise<ApiResponse<AgentChatResponse>> {
   const res = await apiRequest<AgentChatResponse>('/api/v1/agents/chat', {
     method: 'POST',
@@ -273,6 +276,7 @@ export async function sendAgentChat(
       agent_id: agentId,
       message,
       ...(sessionId ? { session_id: sessionId } : {}),
+      ...(options?.actionMeta ? { meta: options.actionMeta } : {}),
     }),
   });
   if (res.success) return withSessionNavRefresh(res);

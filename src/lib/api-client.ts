@@ -240,6 +240,8 @@ export async function sendChatMessage(
     routingVersion?: number;
     /** INV-P2 — abandon Current interactive before Clinic NL activates another. */
     confirmAbandon?: boolean;
+    /** Payload-based next_action transport (KAZI-469). */
+    actionMeta?: import('@/types/chat-envelope').UserMessageActionMeta;
   }
 ): Promise<ApiResponse<ClinicChatResponse>> {
   // API v2.10.6: routing.mode applies to POST /chat/messages (Clinic) only.
@@ -266,6 +268,7 @@ export async function sendChatMessage(
         ? { routing: { mode: options.routingMode } }
         : {}),
       ...(options?.confirmAbandon ? { confirm_abandon: true } : {}),
+      ...(options?.actionMeta ? { meta: options.actionMeta } : {}),
     }),
   });
 }

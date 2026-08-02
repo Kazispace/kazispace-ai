@@ -114,9 +114,9 @@ import {
   resolveNextActionHref,
 } from "@/lib/next-action/resolve";
 import {
-  resolveStrategySelectSubmit,
   resolveStrategySelectTurnContext,
 } from "@/lib/strategy-select";
+import { resolveActionSelectSubmit } from "@/lib/next-action-submit";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
 
 interface ClinicShellProps {
@@ -982,7 +982,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const submitClinicChat = async (
     text: string,
-    opts?: { fromNextAction?: boolean }
+    opts?: {
+      fromNextAction?: boolean;
+      displayContent?: string;
+      actionMeta?: import("@/types/chat-envelope").UserMessageActionMeta;
+    }
   ) => {
     pinToLatestOnSend();
     if (!isLoggedIn) {
@@ -1041,6 +1045,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     const result = await sendClinicMessage(text, {
       ...(opts?.fromNextAction ? { confirmAbandon: true } : {}),
+      ...(opts?.displayContent ? { displayContent: opts.displayContent } : {}),
+      ...(opts?.actionMeta ? { actionMeta: opts.actionMeta } : {}),
     });
 
     if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
@@ -1239,14 +1245,19 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const handleNextAction = useCallback(
     (action: ChatNextAction) => {
-      const strategySubmit = resolveStrategySelectSubmit(action, locale);
-      if (strategySubmit) {
+      const actionSubmit = resolveActionSelectSubmit(action, locale);
+      if (actionSubmit) {
         if (isAgentMode) {
-          void sendAgentMessage(strategySubmit.payload, {
-            displayContent: strategySubmit.display,
+          void sendAgentMessage(actionSubmit.display, {
+            displayContent: actionSubmit.display,
+            actionMeta: actionSubmit.meta,
           });
         } else {
-          void handleSendFromNextAction(strategySubmit.payload);
+          void submitClinicChatRef.current(actionSubmit.display, {
+            fromNextAction: true,
+            displayContent: actionSubmit.display,
+            actionMeta: actionSubmit.meta,
+          });
         }
         return;
       }

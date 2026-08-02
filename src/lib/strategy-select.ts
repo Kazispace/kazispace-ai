@@ -1,8 +1,19 @@
 import { resolveActionLabel } from '@/lib/chat-envelope';
+import {
+  isTransportPayloadContent,
+  isStrategyPayloadContent,
+  strategyIdFromPayload,
+} from '@/lib/action-payload';
+import { resolveActionSelectSubmit } from '@/lib/next-action-submit';
 import type { ChatNextAction } from '@/types/chat-envelope';
 
 export const STRATEGY_SELECT_ACTION_TYPE = 'strategy_select';
-export const STRATEGY_PAYLOAD_PREFIX = '__strategy:';
+export {
+  STRATEGY_PAYLOAD_PREFIX,
+  strategyIdFromPayload,
+  isStrategyPayloadContent,
+  isTransportPayloadContent,
+} from '@/lib/action-payload';
 
 export function isStrategySelectAction(action: ChatNextAction): boolean {
   return action.type === STRATEGY_SELECT_ACTION_TYPE;
@@ -34,15 +45,17 @@ export function hasStrategySelectActions(
   return Boolean(actions?.some(isStrategySelectAction));
 }
 
-export function isStrategyPayloadContent(content: string): boolean {
-  return strategyIdFromPayload(content.trim()) !== null;
-}
-
-export function strategyIdFromPayload(payload: string): string | null {
-  const trimmed = payload.trim();
-  if (!trimmed.startsWith(STRATEGY_PAYLOAD_PREFIX)) return null;
-  const id = trimmed.slice(STRATEGY_PAYLOAD_PREFIX.length).trim();
-  return id || null;
+export function actionSelectFallbackLabel(locale: string): string {
+  switch (locale) {
+    case 'zh':
+      return '已选择策略';
+    case 'ru':
+      return 'Стратегия выбрана';
+    case 'kk':
+      return 'Стратегия таңдалды';
+    default:
+      return 'Option selected';
+  }
 }
 
 /** BE #309: recommended flag lives on each action, not turn meta. */
@@ -183,8 +196,9 @@ export function resolveStrategySelectTurnContext(
 export function hydrateStrategyPayloadUserLabels<
   T extends { role: string; content: string; nextActions?: ChatNextAction[] },
 >(messages: T[], locale: string): T[] {
+  const fallback = actionSelectFallbackLabel(locale);
   return messages.map((message, index) => {
-    if (message.role !== 'user' || !isStrategyPayloadContent(message.content)) {
+    if (message.role !== 'user' || !isTransportPayloadContent(message.content)) {
       return message;
     }
 
@@ -200,7 +214,7 @@ export function hydrateStrategyPayloadUserLabels<
       }
       break;
     }
-    return message;
+    return { ...message, content: fallback };
   });
 }
 
@@ -208,11 +222,10 @@ export function resolveStrategySelectSubmit(
   action: ChatNextAction,
   locale: string
 ): { payload: string; display: string } | null {
-  if (!isStrategySelectAction(action)) return null;
-  const payload = action.payload?.trim();
-  if (!payload) return null;
+  const submit = resolveActionSelectSubmit(action, locale);
+  if (!submit) return null;
   return {
-    payload,
-    display: resolveActionLabel(action, locale),
+    payload: submit.meta.action_payload,
+    display: submit.display,
   };
 }
