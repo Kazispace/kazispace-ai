@@ -90,7 +90,7 @@ describe('strategy-select', () => {
       { role: 'user', content: '__strategy:missing' },
     ];
     const hydrated = hydrateStrategyPayloadUserLabels(messages, 'zh');
-    expect(hydrated[1]?.content).toBe('已选择策略');
+    expect(hydrated[1]?.content).toBe('已选择');
   });
 
   it('deactivates pending CTAs after a user reply', () => {

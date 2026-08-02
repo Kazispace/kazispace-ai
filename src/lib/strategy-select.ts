@@ -1,6 +1,6 @@
 import { resolveActionLabel } from '@/lib/chat-envelope';
 import {
-  isTransportPayloadContent,
+  isTransportPayload,
   isStrategyPayloadContent,
   strategyIdFromPayload,
 } from '@/lib/action-payload';
@@ -12,7 +12,7 @@ export {
   STRATEGY_PAYLOAD_PREFIX,
   strategyIdFromPayload,
   isStrategyPayloadContent,
-  isTransportPayloadContent,
+  isTransportPayload,
 } from '@/lib/action-payload';
 
 export function isStrategySelectAction(action: ChatNextAction): boolean {
@@ -48,13 +48,13 @@ export function hasStrategySelectActions(
 export function actionSelectFallbackLabel(locale: string): string {
   switch (locale) {
     case 'zh':
-      return '已选择策略';
+      return '已选择';
     case 'ru':
-      return 'Стратегия выбрана';
+      return 'Выбрано';
     case 'kk':
-      return 'Стратегия таңдалды';
+      return 'Таңдалды';
     default:
-      return 'Option selected';
+      return 'Selected';
   }
 }
 
@@ -198,7 +198,7 @@ export function hydrateStrategyPayloadUserLabels<
 >(messages: T[], locale: string): T[] {
   const fallback = actionSelectFallbackLabel(locale);
   return messages.map((message, index) => {
-    if (message.role !== 'user' || !isTransportPayloadContent(message.content)) {
+    if (message.role !== 'user' || !isTransportPayload(message.content)) {
       return message;
     }
 

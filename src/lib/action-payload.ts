@@ -25,10 +25,6 @@ export function isTransportPayload(payload: string): boolean {
   );
 }
 
-export function isTransportPayloadContent(content: string): boolean {
-  return isTransportPayload(content);
-}
-
 export function isStrategyPayloadContent(content: string): boolean {
   return strategyIdFromPayload(content) !== null;
 }
