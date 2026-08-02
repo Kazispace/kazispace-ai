@@ -27,6 +27,14 @@ export interface StrategySelectActionMeta {
   confirm_skipped?: boolean;
 }
 
+/** User message meta when submitting a payload-based next_action (KAZI-469). */
+export interface UserMessageActionMeta {
+  action_type: string;
+  action_payload: string;
+  strategy_id?: string;
+  task_id?: string;
+}
+
 export interface ChatNextAction {
   type: string;
   label?: LocalizedLabel;

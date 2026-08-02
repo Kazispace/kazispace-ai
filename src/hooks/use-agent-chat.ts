@@ -53,7 +53,13 @@ export function useAgentChat(
   }, [agentId, sessionId, locale, setAgentMessages]);
 
   const sendMessage = useCallback(
-    async (text: string, opts?: { displayContent?: string }) => {
+    async (
+      text: string,
+      opts?: {
+        displayContent?: string;
+        actionMeta?: import('@/types/chat-envelope').UserMessageActionMeta;
+      }
+    ) => {
       if (!agentId || !sessionId) {
         return { ok: false as const, error: 'No active expert' };
       }
@@ -79,7 +85,12 @@ export function useAgentChat(
       });
       setAgentStreaming(agentId, true);
 
-      const res = await sendAgentChat(agentId, text.trim(), sessionId);
+      const res = await sendAgentChat(
+        agentId,
+        displayContent,
+        sessionId,
+        opts?.actionMeta ? { actionMeta: opts.actionMeta } : undefined
+      );
       setAgentSending(agentId, false);
       setAgentStreaming(agentId, false);
 

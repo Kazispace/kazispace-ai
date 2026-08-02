@@ -20,9 +20,9 @@ import {
   resolveNextActionHref,
 } from '@/lib/next-action/resolve';
 import {
-  resolveStrategySelectSubmit,
   resolveStrategySelectTurnContext,
 } from '@/lib/strategy-select';
+import { resolveActionSelectSubmit } from '@/lib/next-action-submit';
 import {
   buildSpaceCvPanelHref,
   buildSpaceCvRailHref,
@@ -261,7 +261,10 @@ export function SpaceChatPane({
   const sendAndPin = useCallback(
     async (
       text: string,
-      opts?: { displayContent?: string }
+      opts?: {
+        displayContent?: string;
+        actionMeta?: import('@/types/chat-envelope').UserMessageActionMeta;
+      }
     ) => {
       pinToLatestOnSend();
       return sendMessage(text, opts);
@@ -285,10 +288,11 @@ export function SpaceChatPane({
 
   const handleNextAction = useCallback(
     (action: ChatNextAction) => {
-      const strategySubmit = resolveStrategySelectSubmit(action, locale);
-      if (strategySubmit) {
-        void sendAndPin(strategySubmit.payload, {
-          displayContent: strategySubmit.display,
+      const actionSubmit = resolveActionSelectSubmit(action, locale);
+      if (actionSubmit) {
+        void sendAndPin(actionSubmit.display, {
+          displayContent: actionSubmit.display,
+          actionMeta: actionSubmit.meta,
         });
         return;
       }

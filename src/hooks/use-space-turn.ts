@@ -204,7 +204,11 @@ export function useSpaceTurn(
   const sendMessage = useCallback(
     async (
       text: string,
-      options?: { retryMessageId?: string; displayContent?: string }
+      options?: {
+        retryMessageId?: string;
+        displayContent?: string;
+        actionMeta?: import('@/types/chat-envelope').UserMessageActionMeta;
+      }
     ): Promise<SpaceSendResult> => {
       if (!enabled || !spaceId || !text.trim()) {
         return { ok: false as const, error: 'Space not ready' };
@@ -257,9 +261,10 @@ export function useSpaceTurn(
 
       try {
         const res = await sendSpaceTurn(spaceId, {
-          message: trimmed,
+          message: displayContent,
           locale,
           language_preference: locale,
+          ...(options?.actionMeta ? { meta: options.actionMeta } : {}),
         });
 
         if (isStale()) {

@@ -54,6 +54,8 @@ export interface SpaceTurnRequest {
   locale?: string;
   /** Preferred UI language for this turn (same codes as Accept-Language / app locale). */
   language_preference?: string;
+  /** Payload-based next_action transport (KAZI-469). */
+  meta?: import('@/types/chat-envelope').UserMessageActionMeta;
 }
 
 export interface SpaceTurnResponse {

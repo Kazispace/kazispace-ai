@@ -84,6 +84,15 @@ describe('strategy-select', () => {
     expect(hydrated[1]?.content).toBe('在现有版本上精修');
   });
 
+  it('hydrates unknown transport payload to fallback label (KAZI-469)', () => {
+    const messages = [
+      { role: 'assistant', content: 'pick', nextActions: [] },
+      { role: 'user', content: '__strategy:missing' },
+    ];
+    const hydrated = hydrateStrategyPayloadUserLabels(messages, 'zh');
+    expect(hydrated[1]?.content).toBe('已选择');
+  });
+
   it('deactivates pending CTAs after a user reply', () => {
     const messages = [
       { role: 'assistant', nextActions: sampleAActions },
