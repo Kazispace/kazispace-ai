@@ -19,7 +19,8 @@ function getServerSnapshot(): boolean {
   return false;
 }
 
-/** Tailwind `md` breakpoint via useSyncExternalStore — no hydration mismatch warning. */
+/** Tailwind `md` breakpoint via useSyncExternalStore — no hydration mismatch warning.
+ *  Keep in sync with Tailwind `screens.md` (768px default). */
 export function useIsDesktop(): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

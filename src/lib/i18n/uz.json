@@ -574,7 +574,8 @@
 				"indexFailed": "Xato — qayta urinish",
 				"indexFailedNoRetry": "Yaratish muvaffaqiyatsiz",
 				"previewLoading": "Yuklanmoqda…",
-				"previewUnavailable": "Ko‘rib bo‘lmaydi."
+				"previewUnavailable": "Ko‘rib bo‘lmaydi.",
+				"deepLinkFailed": "Faylni ochib bo‘lmadi. Ro‘yxatdan qayta urinib ko‘ring."
 			}
 		}
 	},

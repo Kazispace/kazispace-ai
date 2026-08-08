@@ -32,6 +32,7 @@ function detailToAsset(detail: WorkspaceAssetDetail): WorkspaceAsset {
 
 function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
   const t = useTranslations('cv.railHub');
+  const tV2 = useTranslations('cv.railHub.assetV2');
   const router = useRouter();
   const searchParams = useSearchParams();
   const deepLinkAssetId = parseClinicHubAssetId(searchParams);
@@ -84,9 +85,8 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
     setPreviewAsset(null);
     setView('grid');
     const q = stripClinicHubAssetParam(searchParams).toString();
-    router.replace(
-      `/${locale}/clinic/hub${q ? `?${q}` : ''}`
-    );
+    const href = buildClinicHubHref(locale);
+    router.replace(q ? `${href}?${q}` : href);
   }, [locale, router, searchParams]);
 
   const handleNavigate = useCallback(
@@ -154,6 +154,21 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
         ) : deepLinkAssetId && deepLinkQuery.isLoading ? (
           <div className="flex flex-1 items-center justify-center py-16 text-gray-500">
             <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+          </div>
+        ) : deepLinkAssetId && deepLinkQuery.isError ? (
+          <div className="flex flex-col items-center justify-center gap-3 px-4 py-16 text-center">
+            <p className="text-sm text-red-600">
+              {deepLinkQuery.error instanceof Error
+                ? deepLinkQuery.error.message
+                : tV2('deepLinkFailed')}
+            </p>
+            <button
+              type="button"
+              onClick={() => router.replace(buildClinicHubHref(locale))}
+              className="text-sm font-medium text-kazi-orange hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+            >
+              {t('backToHub')}
+            </button>
           </div>
         ) : (
           <WorkspaceAssetRailHub
