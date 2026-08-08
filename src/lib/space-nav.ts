@@ -1,4 +1,5 @@
 import { CLINIC_SPACE_ID, TEMPLATE_EMOJI } from '@/lib/spaces/constants';
+import { isClinicHubPathname } from '@/lib/hub-entry';
 import type { SessionNavBadgeKind, SessionNavRow } from '@/lib/session-nav';
 import type { SpaceSummary } from '@/types/spaces';
 
@@ -34,6 +35,7 @@ const DEDICATED_HUB_SEGMENTS = new Set(['cv', 'interview', 'english']);
  */
 export function shouldPinWorkspaceNavPanel(pathname: string): boolean {
   if (isClinicChatPathname(pathname)) return true;
+  if (isClinicHubPathname(pathname)) return true;
   if (resolveSpaceIdFromPathname(pathname)) return true;
   const segments = pathname.split('/').filter(Boolean);
   return segments.length >= 2 && DEDICATED_HUB_SEGMENTS.has(segments[1]!);
@@ -42,11 +44,11 @@ export function shouldPinWorkspaceNavPanel(pathname: string): boolean {
 /** @deprecated Use shouldPinWorkspaceNavPanel */
 export const shouldPinSpacesNavPanel = shouldPinWorkspaceNavPanel;
 
-/** Active sidebar row for `/spaces/*` and `/chat` only; null for legacy hub routes. */
+/** Active sidebar row for `/spaces/*`, `/chat`, and `/clinic/hub`. */
 export function resolveActiveSpaceNavRowId(pathname: string): string | null {
   const spaceId = resolveSpaceIdFromPathname(pathname);
   if (spaceId) return spaceId;
-  if (isClinicChatPathname(pathname)) {
+  if (isClinicChatPathname(pathname) || isClinicHubPathname(pathname)) {
     return CLINIC_SPACE_ID;
   }
   return null;

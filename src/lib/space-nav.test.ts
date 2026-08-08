@@ -63,6 +63,7 @@ describe('space-nav', () => {
   it('resolves active space from pathname', () => {
     expect(resolveSpaceIdFromPathname('/zh/spaces/sp_abc123')).toBe('sp_abc123');
     expect(resolveActiveSpaceNavRowId('/zh/chat')).toBe(CLINIC_SPACE_ID);
+    expect(resolveActiveSpaceNavRowId('/zh/clinic/hub')).toBe(CLINIC_SPACE_ID);
     expect(resolveActiveSpaceNavRowId('/zh/spaces/sp_abc123')).toBe('sp_abc123');
     expect(resolveActiveSpaceNavRowId('/zh/cv')).toBeNull();
   });
@@ -76,8 +77,9 @@ describe('space-nav', () => {
     expect(isClinicChatPathname('/zh/english')).toBe(false);
   });
 
-  it('shouldPinWorkspaceNavPanel pins chat, spaces, and dedicated hub routes', () => {
+  it('shouldPinWorkspaceNavPanel pins chat, spaces, clinic hub, and dedicated hub routes', () => {
     expect(shouldPinWorkspaceNavPanel('/zh/chat')).toBe(true);
+    expect(shouldPinWorkspaceNavPanel('/zh/clinic/hub')).toBe(true);
     expect(shouldPinWorkspaceNavPanel('/zh/spaces/sp_abc123')).toBe(true);
     expect(shouldPinWorkspaceNavPanel('/zh/interview')).toBe(true);
     expect(shouldPinWorkspaceNavPanel('/zh/cv')).toBe(true);
