@@ -908,6 +908,7 @@
 				"indexFailedNoRetry": "Generation failed",
 				"previewLoading": "Loading preview…",
 				"previewUnavailable": "Preview is not available for this file.",
+				"deepLinkFailed": "Could not open this file. Try again from the asset list.",
 				"loginRequired": "Sign in to view your career files."
 			}
 		}

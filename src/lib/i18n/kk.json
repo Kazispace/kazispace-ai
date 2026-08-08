@@ -605,7 +605,8 @@
 				"indexFailed": "Қате — қайталау",
 				"indexFailedNoRetry": "Генерация сәтсіз",
 				"previewLoading": "Жүктелуде…",
-				"previewUnavailable": "Алдын ала қарау жоқ."
+				"previewUnavailable": "Алдын ала қарау жоқ.",
+				"deepLinkFailed": "Файлды ашу мүмкін болмады. Тізімнен қайта көріңіз."
 			}
 		}
 	},

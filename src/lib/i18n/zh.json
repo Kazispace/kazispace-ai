@@ -732,6 +732,7 @@
 				"indexFailedNoRetry": "生成失败",
 				"previewLoading": "加载预览…",
 				"previewUnavailable": "暂无法预览此文件。",
+				"deepLinkFailed": "无法打开该文件，请从资产列表重试。",
 				"loginRequired": "登录后查看职业区文件"
 			}
 		}

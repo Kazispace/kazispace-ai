@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl';
 
 import { CvWorkspaceRail } from '@/components/cv/cv-workspace-rail';
 import { JobDetailRail } from '@/components/jobs/job-detail-rail';
+import { useIsDesktop } from '@/hooks/use-is-desktop';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { publishSessionNavChatSideRailOpen } from '@/lib/session-nav-events';
 import { useEmbeddedInWorkspaceShell } from '@/lib/workspace-shell-context';
@@ -101,6 +102,7 @@ export function ChatSideRailsHost({
   practiceDisabled = false,
 }: ChatSideRailsHostProps) {
   const tJobs = useTranslations('jobs');
+  const isDesktop = useIsDesktop();
   const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
   const railPortal = useWorkspaceRailPortal();
   const portalHost = railPortal?.portalHost ?? null;
@@ -317,12 +319,12 @@ export function ChatSideRailsHost({
         {children}
       </div>
 
-      {railDesktop}
+      {isDesktop ? railDesktop : null}
 
-      {railInner ? (
+      {!isDesktop && railInner ? (
         <div
           className={cn(
-            'absolute inset-0 z-30 flex flex-col bg-white md:hidden',
+            'absolute inset-0 z-30 flex flex-col bg-white',
             'animate-in fade-in slide-in-from-right duration-200'
           )}
         >

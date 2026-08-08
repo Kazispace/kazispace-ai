@@ -623,7 +623,8 @@
 				"indexFailed": "Ошибка — нажмите для повтора",
 				"indexFailedNoRetry": "Ошибка генерации",
 				"previewLoading": "Загрузка…",
-				"previewUnavailable": "Предпросмотр недоступен."
+				"previewUnavailable": "Предпросмотр недоступен.",
+				"deepLinkFailed": "Не удалось открыть файл. Повторите из списка активов."
 			}
 		}
 	},
