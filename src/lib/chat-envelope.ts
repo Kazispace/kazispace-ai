@@ -11,6 +11,12 @@ import type {
   WorkflowStep,
 } from '@/types/chat-envelope';
 
+/** S4 / KAZI-418 — BE no longer emits these on NL Path A; strip zombie CTAs. */
+export const NL_DEPRECATED_NEXT_ACTION_TYPES = new Set([
+  'confirm_abandon_activate',
+  'cross_cap_soft',
+]);
+
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -30,6 +36,7 @@ function normalizeNextActions(raw: unknown): ChatNextAction[] {
           ? action.action
           : null;
     if (!type) continue;
+    if (NL_DEPRECATED_NEXT_ACTION_TYPES.has(type)) continue;
     const label = action.label;
     const entry: ChatNextAction = { type };
     if (typeof label === 'string' || (label && typeof label === 'object')) {

@@ -34,10 +34,9 @@ import { cn } from "@/lib/utils";
 import { useActiveAgentSessions } from "@/hooks/use-active-agent-sessions";
 import {
   needsParkReplaceConfirm,
-  selectCurrentInteractiveFromMap,
   selectParkedInteractiveFromMap,
 } from "@/lib/clinic/parked-capability";
-import { exitAgentSession, newAgentSession } from "@/lib/agent-api";
+import { newAgentSession } from "@/lib/agent-api";
 import { openHubAgentSession } from "@/lib/hub-agent-open";
 import { getAgentHubPath } from "@/lib/agent-transition/surfaces";
 import { publishSessionNavInvalidate } from "@/lib/session-nav-invalidate";
@@ -280,24 +279,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     [sessionsByAgent]
   );
 
-  const currentInteractive = useMemo(
-    () => selectCurrentInteractiveFromMap(sessionsByAgent),
-    [sessionsByAgent]
-  );
-
-  /** INV-P2: open a different interactive while one is parked → ConfirmAbandon. */
+  /** INV-P2: Hub card opens new Cap while another is parked → ConfirmAbandon (G6). */
   const [parkReplaceTargetId, setParkReplaceTargetId] = useState<string | null>(
     null
   );
   const [parkReplaceBusy, setParkReplaceBusy] = useState(false);
-
-  /** KAZI-272: Clinic NL → interactive hit INTERACTIVE_IN_PROGRESS. */
-  const [clinicNlConfirm, setClinicNlConfirm] = useState<{
-    text: string;
-    retryMessageId: string;
-    agentId: string | null;
-  } | null>(null);
-  const [clinicNlConfirmBusy, setClinicNlConfirmBusy] = useState(false);
 
   // Active-session multi-badge banner removed (KAZI-198); Park chip is KAZI-269.
   const requestAgentSwitchRef = useRef(requestAgentSwitch);
@@ -884,15 +870,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     return true;
   }, [isLoggedIn, locale, router, showToast, tClinic]);
 
-  const resolveConflictAgentId = useCallback((): string | null => {
-    return (
-      currentInteractive?.agent_id ??
-      parkedInteractive?.agent_id ??
-      selectCurrentInteractiveFromMap(sessionsByAgent)?.agent_id ??
-      null
-    );
-  }, [currentInteractive?.agent_id, parkedInteractive?.agent_id, sessionsByAgent]);
-
   const handleClinicSendOutcome = useCallback(
     async (
       text: string,
@@ -961,7 +938,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         await reloadClinicIfNeeded(exitResult);
         return;
       }
-      // Hook already handled LLM_BUSY / profile / paywall / INV-P2 ConfirmAbandon.
+      // Hook already handled LLM_BUSY / profile / paywall.
       if ("toastShown" in result && result.toastShown) return;
       showToast(result.error ?? tClinic("sendFailed"), "error");
     },
@@ -983,7 +960,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const submitClinicChat = async (
     text: string,
     opts?: {
-      fromNextAction?: boolean;
       displayContent?: string;
       actionMeta?: import("@/types/chat-envelope").UserMessageActionMeta;
     }
@@ -1030,34 +1006,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       return;
     }
 
-    if (opts?.fromNextAction) {
-      const conflictingId = resolveConflictAgentId();
-      if (conflictingId) {
-        const exitRes = await exitAgentSession(conflictingId, locale);
-        if (!exitRes.success) {
-          showToast(tClinic("activateFailed"), "error");
-          return;
-        }
-        void refreshCurrentSessions(true);
-        publishSessionNavInvalidate();
-      }
-    }
-
     const result = await sendClinicMessage(text, {
-      ...(opts?.fromNextAction ? { confirmAbandon: true } : {}),
       ...(opts?.displayContent ? { displayContent: opts.displayContent } : {}),
       ...(opts?.actionMeta ? { actionMeta: opts.actionMeta } : {}),
     });
-
-    if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
-      void refreshCurrentSessions(true);
-      setClinicNlConfirm({
-        text,
-        retryMessageId: result.retryMessageId,
-        agentId: resolveConflictAgentId(),
-      });
-      return;
-    }
 
     await handleClinicSendOutcome(text, result);
   };
@@ -1071,42 +1023,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   };
 
   const handleSendFromNextAction = useCallback((text: string) => {
-    void submitClinicChatRef.current(text, { fromNextAction: true });
+    void submitClinicChatRef.current(text);
   }, []);
-
-  const handleConfirmClinicNlAbandon = async () => {
-    if (!clinicNlConfirm) return;
-    const { text, retryMessageId, agentId } = clinicNlConfirm;
-    setClinicNlConfirmBusy(true);
-    try {
-      // Prefer agentId captured at dialog open; resolve again only if still null.
-      const conflictingId = agentId ?? resolveConflictAgentId();
-      if (conflictingId) {
-        const exitRes = await exitAgentSession(conflictingId, locale);
-        if (!exitRes.success) {
-          showToast(tClinic("activateFailed"), "error");
-          return;
-        }
-        void refreshCurrentSessions(true);
-        publishSessionNavInvalidate();
-      }
-
-      const result = await sendClinicMessage(text, {
-        retryMessageId,
-        confirmAbandon: true,
-      });
-
-      if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
-        showToast(tClinic("activateFailed"), "error");
-        return;
-      }
-
-      setClinicNlConfirm(null);
-      await handleClinicSendOutcome(text, result);
-    } finally {
-      setClinicNlConfirmBusy(false);
-    }
-  };
 
   const handleAgentSelect = async (agentId: string) => {
     if (!isLoggedIn) {
@@ -1254,7 +1172,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           });
         } else {
           void submitClinicChatRef.current(actionSubmit.display, {
-            fromNextAction: true,
             displayContent: actionSubmit.display,
             actionMeta: actionSubmit.meta,
           });
@@ -1306,9 +1223,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   const handlePracticeForJob = (ctx: JobPracticeContext) => {
     if (isSending || isSwitching) return;
-    // Immediate send in Clinic chat (keep readiness rail open). Do not open
-    // Mock Interview hub. If BE returns needsConfirm (interactive in progress),
-    // the existing ConfirmAbandon flow retries this same prompt after abandon.
     const prompt = buildReadinessPracticePrompt(tPractice, {
       jobTitle: ctx.jobTitle,
       weaknessLabels: ctx.weaknessLabels,
@@ -1365,17 +1279,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         dismissMessageUpgradeCta(messageId);
         return;
       }
-      if (!result.ok && "needsConfirm" in result && result.needsConfirm) {
-        // Same INV-P2 gate as Clinic NL: 409 only when BE tries to activate another
-        // interactive during this turn (research itself is delivery; ConfirmAbandon is still correct).
-        void refreshCurrentSessions(true);
-        setClinicNlConfirm({
-          text: handoffText,
-          retryMessageId: result.retryMessageId,
-          agentId: resolveConflictAgentId(),
-        });
-        return;
-      }
       if (!("toastShown" in result && result.toastShown)) {
         showToast(result.error ?? tClinic("sendFailed"), "error");
       }
@@ -1384,8 +1287,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       dismissMessageUpgradeCta,
       locale,
       pinToLatestOnSend,
-      refreshCurrentSessions,
-      resolveConflictAgentId,
       sendClinicMessage,
       showToast,
       tClinic,
@@ -1760,21 +1661,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       />
 
       <ConfirmAbandonSessionDialog
-        open={Boolean(parkReplaceTargetId) || Boolean(clinicNlConfirm)}
-        agentId={
-          parkReplaceTargetId
-            ? (parkedInteractive?.agent_id ?? null)
-            : (clinicNlConfirm?.agentId ?? null)
-        }
+        open={Boolean(parkReplaceTargetId)}
+        agentId={parkedInteractive?.agent_id ?? null}
         locale={locale}
-        onConfirm={() => {
-          if (clinicNlConfirm) void handleConfirmClinicNlAbandon();
-          else void handleConfirmParkReplace();
-        }}
+        onConfirm={() => void handleConfirmParkReplace()}
         onCancel={() => {
-          if (parkReplaceBusy || clinicNlConfirmBusy) return;
-          if (clinicNlConfirm) setClinicNlConfirm(null);
-          else setParkReplaceTargetId(null);
+          if (parkReplaceBusy) return;
+          setParkReplaceTargetId(null);
         }}
       />
 
