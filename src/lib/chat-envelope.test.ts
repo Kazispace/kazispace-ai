@@ -72,6 +72,22 @@ describe('parseAssistantEnvelope next_actions and exit', () => {
     expect(parsed.nextActions[0]?.job_id).toBe('job_1');
   });
 
+  it('strips deprecated NL confirm CTAs (KAZI-418)', () => {
+    const parsed = parseAssistantEnvelope({
+      assistant_response: {
+        content: 'Switch?',
+        next_actions: [
+          { type: 'confirm_abandon_activate', label: { zh: '确认切换' } },
+          { type: 'cross_cap_soft', label: { zh: '确认' } },
+          { type: 'cv_builder', label: { en: 'Open CV' } },
+        ],
+      },
+    });
+
+    expect(parsed.nextActions).toHaveLength(1);
+    expect(parsed.nextActions[0]?.type).toBe('cv_builder');
+  });
+
   it('parses next_actions with per-action meta (KAZI-400 #309)', () => {
     const parsed = parseAssistantEnvelope({
       assistant_response: {

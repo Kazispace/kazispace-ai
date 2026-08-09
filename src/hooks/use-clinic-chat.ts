@@ -8,7 +8,7 @@ import {
   fetchChatHistory,
   parseClinicReply,
 } from '@/lib/api-client';
-import { isPaywallError, isProfileIncomplete, isLlmBusy, isInteractiveInProgress } from '@/lib/api-errors';
+import { isPaywallError, isProfileIncomplete, isLlmBusy } from '@/lib/api-errors';
 import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
 import { getAuthToken } from '@/lib/auth';
 import { ensureMasterSession, syncMasterSession } from '@/lib/master-session';
@@ -198,8 +198,6 @@ export function useClinicChat(locale?: string) {
         retryMessageId?: string;
         /** Prefer research waiting copy (CTA handoff / explicit research). */
         pendingCapability?: 'web_search' | 'research';
-        /** INV-P2 — retry after ConfirmAbandon (KAZI-272). */
-        confirmAbandon?: boolean;
         /** Bubble copy when transport uses action meta (KAZI-469). */
         displayContent?: string;
         actionMeta?: import('@/types/chat-envelope').UserMessageActionMeta;
@@ -245,25 +243,12 @@ export function useClinicChat(locale?: string) {
         const res = await sendChatMessage(sessionId, displayContent, locale, {
           routingMode: 'clinic',
           routingVersion: 2,
-          ...(options?.confirmAbandon ? { confirmAbandon: true } : {}),
           ...(options?.actionMeta ? { actionMeta: options.actionMeta } : {}),
         });
 
         if (!res.success || !res.data) {
           removeMessage(assistantId);
           updateMessage(userMsgId, { status: 'failed' });
-          const interactiveConflict = isInteractiveInProgress(res);
-          if (interactiveConflict) {
-            // Caller shows ConfirmAbandon. `toastShown` here means "do not toast"
-            // (UI already owned) — same suppress contract as LLM_BUSY / paywall.
-            return {
-              ok: false as const,
-              needsConfirm: true as const,
-              retryMessageId: userMsgId,
-              errorCode: res.errorCode ?? 'INTERACTIVE_IN_PROGRESS',
-              toastShown: true as const,
-            };
-          }
           handleApiFailure(res);
           const busy = isLlmBusy(res);
           return {
