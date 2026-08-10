@@ -973,6 +973,16 @@
 			"speakingRadarTitle": "Профиль говорения",
 			"modelAnswerTitle": "Образец ответа",
 			"progressSummaryTitle": "Прогресс",
+			"progressTrend": "Тренд",
+			"progressCurrentEstimate": "Текущая оценка",
+			"progressWindow": "Последние {count} сессии",
+			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowDelta": "Δ {delta}",
+			"progressTrendValues": {
+				"improving": "Рост",
+				"stable": "Стабильно",
+				"declining": "Снижение"
+			},
 			"dimensions": {
 				"task_response": "Выполнение задания",
 				"coherence": "Связность",

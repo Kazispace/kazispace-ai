@@ -68,6 +68,39 @@ describe('parseEnglishTutorCustomComponents', () => {
     expect(parsed[0].ai_synthetic).toBe(true);
   });
 
+  it('parses progress_summary object from BE (PR #420)', () => {
+    const parsed = parseEnglishTutorCustomComponents([
+      {
+        type: 'progress_summary',
+        trend: 'improving',
+        window: { n: 5, from: 5.5, to: 6.5, delta: 1.0 },
+        current_estimate: 6.5,
+        resolved_tags: ['grammar.accuracy'],
+      },
+    ]);
+
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]?.type).toBe('progress_summary');
+    if (parsed[0]?.type !== 'progress_summary') return;
+    expect(parsed[0].trend).toBe('improving');
+    expect(parsed[0].current_estimate).toBe(6.5);
+    expect(parsed[0].window?.delta).toBe(1);
+    expect(parsed[0].resolved_tags).toEqual(['grammar.accuracy']);
+  });
+
+  it('parses legacy progress_summary items array', () => {
+    const parsed = parseEnglishTutorCustomComponents([
+      {
+        type: 'progress_summary',
+        items: [{ label: 'Sessions', value: '5' }],
+      },
+    ]);
+
+    expect(parsed[0]?.type).toBe('progress_summary');
+    if (parsed[0]?.type !== 'progress_summary') return;
+    expect(parsed[0].items).toEqual([{ label: 'Sessions', value: '5' }]);
+  });
+
   it('skips citation_list and unknown types', () => {
     const parsed = parseEnglishTutorCustomComponents([
       { type: 'citation_list', items: [] },

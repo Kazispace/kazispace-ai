@@ -30,7 +30,7 @@ import { hasStrategySelectActions } from "@/lib/strategy-select";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
-import type { EnglishTutorEnvelopeComponent } from "@/types/english-tutor-envelope";
+import type { EnglishTutorEnvelopeComponent, ExamPickerOption } from "@/types/english-tutor-envelope";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -75,7 +75,7 @@ interface MessageBubbleProps {
   onUpgradeResearch?: () => void;
   onNextAction?: (action: ChatNextAction) => void;
   onFocusComposer?: () => void;
-  onExamSelect?: (examId: string) => void;
+  onExamSelect?: (option: ExamPickerOption) => void;
   onJobCardClick?: (card: ChatJobCard) => void;
   referralDisabled?: boolean;
   actionsDisabled?: boolean;

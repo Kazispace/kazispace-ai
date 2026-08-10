@@ -4,6 +4,8 @@ import type {
   EssaySpanIssue,
   ExamPickerOption,
   ProgressSummaryItem,
+  ProgressSummaryWindow,
+  ProgressSummaryComponent,
   ScoreDimension,
 } from '@/types/english-tutor-envelope';
 
@@ -93,6 +95,56 @@ function parseDimensions(raw: unknown): ScoreDimension[] {
     });
   }
   return dimensions;
+}
+
+function parseProgressWindow(raw: unknown): ProgressSummaryWindow | null {
+  const row = asRecord(raw);
+  if (!row) return null;
+  const n = readNumber(row.n);
+  const from = readNumber(row.from);
+  const to = readNumber(row.to);
+  const delta = readNumber(row.delta);
+  if (n == null && from == null && to == null && delta == null) return null;
+  return { n: n ?? null, from: from ?? null, to: to ?? null, delta: delta ?? null };
+}
+
+function parseResolvedTags(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+    .filter((tag) => tag.length > 0);
+}
+
+function parseProgressSummaryComponent(
+  row: Record<string, unknown>
+): ProgressSummaryComponent | null {
+  const nested = asRecord(row.progress_summary ?? row.data);
+  const source = nested ?? row;
+
+  const trend = readString(source.trend);
+  const window = parseProgressWindow(source.window);
+  const currentEstimate = readNumber(source.current_estimate ?? source.estimate);
+  const resolvedTags = parseResolvedTags(source.resolved_tags ?? source.tags);
+  const items = parseProgressItems(source.items);
+
+  if (
+    !trend &&
+    !window &&
+    currentEstimate == null &&
+    resolvedTags.length === 0 &&
+    items.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    type: 'progress_summary',
+    trend: trend ?? null,
+    window,
+    current_estimate: currentEstimate ?? null,
+    ...(resolvedTags.length > 0 ? { resolved_tags: resolvedTags } : {}),
+    ...(items.length > 0 ? { items } : {}),
+  };
 }
 
 function parseProgressItems(raw: unknown): ProgressSummaryItem[] {
@@ -185,9 +237,7 @@ function parseEnglishTutorComponent(raw: unknown): EnglishTutorEnvelopeComponent
       };
     }
     case 'progress_summary': {
-      const items = parseProgressItems(row.items ?? row.summary);
-      if (items.length === 0) return null;
-      return { type, items };
+      return parseProgressSummaryComponent(row);
     }
     default:
       return null;

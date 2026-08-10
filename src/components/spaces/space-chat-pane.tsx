@@ -279,9 +279,9 @@ export function SpaceChatPane({
   }, [requestComposerInsert]);
 
   const handleExamSelect = useCallback(
-    (examId: string) => {
+    (option: import('@/types/english-tutor-envelope').ExamPickerOption) => {
       if (isSending) return;
-      void sendAndPin(examId);
+      void sendAndPin(option.label);
     },
     [isSending, sendAndPin]
   );

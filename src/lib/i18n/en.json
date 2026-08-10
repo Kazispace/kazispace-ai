@@ -1305,6 +1305,16 @@
 			"speakingRadarTitle": "Speaking profile",
 			"modelAnswerTitle": "Model answer",
 			"progressSummaryTitle": "Progress",
+			"progressTrend": "Trend",
+			"progressCurrentEstimate": "Current estimate",
+			"progressWindow": "Last {count} sessions",
+			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowDelta": "Δ {delta}",
+			"progressTrendValues": {
+				"improving": "Improving",
+				"stable": "Stable",
+				"declining": "Declining"
+			},
 			"dimensions": {
 				"task_response": "Task response",
 				"coherence": "Coherence",

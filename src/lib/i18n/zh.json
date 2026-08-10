@@ -766,6 +766,16 @@
 			"speakingRadarTitle": "口语维度",
 			"modelAnswerTitle": "参考答案",
 			"progressSummaryTitle": "学习进度",
+			"progressTrend": "趋势",
+			"progressCurrentEstimate": "当前估分",
+			"progressWindow": "近 {count} 次",
+			"progressWindowRange": "{from} → {to}（+{delta}）",
+			"progressWindowDelta": "变化 {delta}",
+			"progressTrendValues": {
+				"improving": "上升",
+				"stable": "稳定",
+				"declining": "下降"
+			},
 			"dimensions": {
 				"task_response": "任务回应",
 				"coherence": "连贯性",

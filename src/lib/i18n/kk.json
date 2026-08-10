@@ -955,6 +955,16 @@
 			"speakingRadarTitle": "Сөйлеу профилі",
 			"modelAnswerTitle": "Үлгі жауап",
 			"progressSummaryTitle": "Прогресс",
+			"progressTrend": "Үрдіс",
+			"progressCurrentEstimate": "Ағымдағы баға",
+			"progressWindow": "Соңғы {count} сессия",
+			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowDelta": "Δ {delta}",
+			"progressTrendValues": {
+				"improving": "Жақсару",
+				"stable": "Тұрақты",
+				"declining": "Төмендеу"
+			},
 			"dimensions": {
 				"task_response": "Тапсырма",
 				"coherence": "Байланыс",

@@ -9,6 +9,7 @@ import type {
   EnglishTutorEnvelopeComponent,
   EssayDiffComponent,
   EssaySpanIssue,
+  ExamPickerOption,
   ScoreDimension,
 } from '@/types/english-tutor-envelope';
 
@@ -17,7 +18,7 @@ interface EnglishTutorEnvelopeBlocksProps {
   locale: string;
   lowConfidence?: boolean;
   onFocusComposer?: () => void;
-  onExamSelect?: (examId: string) => void;
+  onExamSelect?: (option: ExamPickerOption) => void;
   className?: string;
 }
 
@@ -54,7 +55,7 @@ function ExamPickerBlock({
   onExamSelect,
 }: {
   component: Extract<EnglishTutorEnvelopeComponent, { type: 'exam_picker' }>;
-  onExamSelect?: (examId: string) => void;
+  onExamSelect?: (option: ExamPickerOption) => void;
 }) {
   const t = useTranslations('english.envelope');
   return (
@@ -70,7 +71,7 @@ function ExamPickerBlock({
               key={option.id}
               type="button"
               disabled={!onExamSelect}
-              onClick={() => onExamSelect?.(option.id)}
+              onClick={() => onExamSelect?.(option)}
               className={cn(
                 'rounded-lg border px-3 py-2 text-left transition-colors',
                 selected
@@ -254,6 +255,7 @@ function DimensionBars({
   );
 }
 
+/** MVP speaking profile: SVG polygon + dimension bars (not a full charting lib). */
 function SpeakingRadarBlock({
   component,
 }: {
@@ -375,19 +377,83 @@ function ProgressSummaryBlock({
   component: Extract<EnglishTutorEnvelopeComponent, { type: 'progress_summary' }>;
 }) {
   const t = useTranslations('english.envelope');
+  const window = component.window;
+  const hasStructured =
+    Boolean(component.trend) ||
+    component.current_estimate != null ||
+    Boolean(window) ||
+    (component.resolved_tags?.length ?? 0) > 0;
+  const legacyItems = component.items ?? [];
+
   return (
     <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50/80 p-3">
       <p className="text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
         {t('progressSummaryTitle')}
       </p>
-      <dl className="space-y-1.5">
-        {component.items.map((item, index) => (
-          <div key={`${item.label}-${index}`} className="flex items-start justify-between gap-3 text-sm">
-            <dt className="text-[#86909C]">{item.label}</dt>
-            <dd className="font-medium text-[#1D2129]">{item.value}</dd>
-          </div>
-        ))}
-      </dl>
+      {hasStructured ? (
+        <dl className="space-y-1.5">
+          {component.trend ? (
+            <div className="flex items-start justify-between gap-3 text-sm">
+              <dt className="text-[#86909C]">{t('progressTrend')}</dt>
+              <dd className="font-medium text-[#1D2129]">
+                {t(`progressTrendValues.${component.trend}`, {
+                  defaultValue: component.trend,
+                })}
+              </dd>
+            </div>
+          ) : null}
+          {component.current_estimate != null ? (
+            <div className="flex items-start justify-between gap-3 text-sm">
+              <dt className="text-[#86909C]">{t('progressCurrentEstimate')}</dt>
+              <dd className="font-medium text-[#1D2129]">{component.current_estimate}</dd>
+            </div>
+          ) : null}
+          {window &&
+          (window.from != null || window.to != null || window.delta != null) ? (
+            <div className="flex items-start justify-between gap-3 text-sm">
+              <dt className="text-[#86909C]">
+                {t('progressWindow', { count: window.n ?? 0 })}
+              </dt>
+              <dd className="font-medium text-[#1D2129]">
+                {window.from != null && window.to != null
+                  ? t('progressWindowRange', {
+                      from: window.from,
+                      to: window.to,
+                      delta: window.delta ?? 0,
+                    })
+                  : window.delta != null
+                    ? t('progressWindowDelta', { delta: window.delta })
+                    : '—'}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : null}
+      {(component.resolved_tags?.length ?? 0) > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {component.resolved_tags!.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-[#4E5969] ring-1 ring-gray-200"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {legacyItems.length > 0 ? (
+        <dl className="space-y-1.5">
+          {legacyItems.map((item, index) => (
+            <div
+              key={`${item.label}-${index}`}
+              className="flex items-start justify-between gap-3 text-sm"
+            >
+              <dt className="text-[#86909C]">{item.label}</dt>
+              <dd className="font-medium text-[#1D2129]">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
     </div>
   );
 }

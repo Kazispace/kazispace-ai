@@ -1033,13 +1033,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   }, [requestComposerInsert]);
 
   const handleExamSelect = useCallback(
-    (examId: string) => {
+    (option: import('@/types/english-tutor-envelope').ExamPickerOption) => {
       if (isSending || isSwitching) return;
       if (isAgentMode) {
-        void sendAgentMessage(examId);
+        void sendAgentMessage(option.label);
         return;
       }
-      void submitClinicChatRef.current(examId);
+      void submitClinicChatRef.current(option.label);
     },
     [isAgentMode, isSending, isSwitching, sendAgentMessage]
   );

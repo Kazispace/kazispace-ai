@@ -27,7 +27,9 @@ export interface EssayPromptComponent {
 }
 
 export interface EssaySpanIssue {
+  /** UTF-16 code unit offsets into `original` (same semantics as `String.slice`). */
   start: number;
+  /** UTF-16 code unit offset (exclusive) into `original`. */
   end: number;
   category: string;
   message: string;
@@ -74,9 +76,22 @@ export interface ProgressSummaryItem {
   value: string;
 }
 
+export interface ProgressSummaryWindow {
+  n?: number | null;
+  from?: number | null;
+  to?: number | null;
+  delta?: number | null;
+}
+
+/** BE progress_summary object (PR #420) — not a label/value array. */
 export interface ProgressSummaryComponent {
   type: 'progress_summary';
-  items: ProgressSummaryItem[];
+  trend?: string | null;
+  window?: ProgressSummaryWindow | null;
+  current_estimate?: number | null;
+  resolved_tags?: string[];
+  /** Legacy fallback when BE sends pre-rendered rows. */
+  items?: ProgressSummaryItem[];
 }
 
 export type EnglishTutorEnvelopeComponent =

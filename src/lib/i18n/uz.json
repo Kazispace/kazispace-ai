@@ -924,6 +924,16 @@
 			"speakingRadarTitle": "Gapirish profili",
 			"modelAnswerTitle": "Namuna javob",
 			"progressSummaryTitle": "Jarayon",
+			"progressTrend": "Trend",
+			"progressCurrentEstimate": "Joriy baho",
+			"progressWindow": "So'nggi {count} sessiya",
+			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowDelta": "Δ {delta}",
+			"progressTrendValues": {
+				"improving": "O'sish",
+				"stable": "Barqaror",
+				"declining": "Pasayish"
+			},
 			"dimensions": {
 				"task_response": "Vazifa",
 				"coherence": "Izchillik",
