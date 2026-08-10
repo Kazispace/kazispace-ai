@@ -76,6 +76,8 @@ export interface ChatMessage {
   workflow?: import('./chat-envelope').AssistantWorkflow;
   /** assistant_response.meta (e.g. recommended_strategy_id for KAZI-400). */
   assistantMeta?: Record<string, unknown>;
+  /** english_tutor Cap custom_components (KAZI-502). */
+  customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
   streamComplete?: boolean;
   /**
    * Persisted `chat_messages.id` from BE (KAZI-254).

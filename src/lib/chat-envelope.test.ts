@@ -48,6 +48,38 @@ describe('parseAssistantEnvelope workflow', () => {
       { url: 'https://park.example', title: '官网' },
     ]);
   });
+
+  it('parses english_tutor custom_components alongside citations (KAZI-502)', () => {
+    const parsed = parseAssistantEnvelope({
+      assistant_response: {
+        content: 'Writing feedback',
+        meta: { confidence: 'low' },
+        custom_components: [
+          {
+            type: 'citation_list',
+            items: [{ url: 'https://example.com', title: 'Ref' }],
+          },
+          {
+            type: 'writing_scorecard',
+            overall: 6,
+            dimensions: [{ key: 'grammar', score: 6, max: 9 }],
+          },
+          {
+            type: 'essay_diff',
+            original: 'I go school.',
+            issues: [{ start: 2, end: 4, category: 'grammar', message: 'tense' }],
+          },
+        ],
+      },
+    });
+
+    expect(parsed.citations).toHaveLength(1);
+    expect(parsed.meta?.confidence).toBe('low');
+    expect(parsed.customComponents?.map((item) => item.type)).toEqual([
+      'writing_scorecard',
+      'essay_diff',
+    ]);
+  });
 });
 
 describe('parseAssistantEnvelope next_actions and exit', () => {

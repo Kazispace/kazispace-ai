@@ -80,4 +80,6 @@ export interface ParsedAssistantEnvelope {
   suggestedNextSteps?: string[];
   /** Domain extension from assistant_response.meta (e.g. interview_session_status). */
   meta?: Record<string, unknown>;
+  /** english_tutor Cap custom_components (KAZI-502). */
+  customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
 }

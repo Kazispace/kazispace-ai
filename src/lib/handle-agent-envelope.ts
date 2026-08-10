@@ -23,6 +23,8 @@ export type AssistantMessageEnvelopeFields = {
   intent?: string;
   /** assistant_response.meta — e.g. recommended_strategy_id (KAZI-400). */
   assistantMeta?: Record<string, unknown>;
+  /** english_tutor Cap custom_components (KAZI-502). */
+  customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
 };
 
 /** Path A escalation from parsed envelope fields. */
@@ -68,6 +70,9 @@ export function buildAssistantMessageFields(
   }
   if (envelope.meta && Object.keys(envelope.meta).length > 0) {
     fields.assistantMeta = envelope.meta;
+  }
+  if (envelope.customComponents && envelope.customComponents.length > 0) {
+    fields.customComponents = envelope.customComponents;
   }
   return fields;
 }

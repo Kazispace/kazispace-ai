@@ -1291,6 +1291,28 @@
 			"levelScore": "L{level} · {score} composite",
 			"eventLabel": "Event {n} · {type}",
 			"maxLevelHint": "Scale up to L{max}"
+		},
+		"envelope": {
+			"lowConfidenceBanner": "Scores are indicative only for this review.",
+			"aiSyntheticDisclaimer": "This prompt was AI-generated for practice.",
+			"submitRevision": "Submit revised draft",
+			"examPickerTitle": "Choose exam",
+			"wordLimit": "Up to {count} words",
+			"essayOriginal": "Your draft",
+			"essayRewrite": "Suggested rewrite",
+			"rewriteExample": "Try: {text}",
+			"writingScorecardTitle": "Writing score",
+			"speakingRadarTitle": "Speaking profile",
+			"modelAnswerTitle": "Model answer",
+			"progressSummaryTitle": "Progress",
+			"dimensions": {
+				"task_response": "Task response",
+				"coherence": "Coherence",
+				"lexical": "Vocabulary",
+				"grammar": "Grammar",
+				"fluency": "Fluency",
+				"pronunciation": "Pronunciation"
+			}
 		}
 	},
 	"tma": {

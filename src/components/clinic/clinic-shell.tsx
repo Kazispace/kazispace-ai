@@ -117,6 +117,7 @@ import {
 } from "@/lib/strategy-select";
 import { resolveActionSelectSubmit } from "@/lib/next-action-submit";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
+import { isEnglishTutorReviseAction } from "@/lib/english-tutor/custom-components";
 
 interface ClinicShellProps {
   locale: string;
@@ -141,6 +142,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const openPaywall = useUIStore((s) => s.openPaywall);
+  const requestComposerInsert = useUIStore((s) => s.requestComposerInsert);
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
   const tmaInitComplete = useUIStore((s) => s.tmaInitComplete);
   const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
@@ -1026,6 +1028,22 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     void submitClinicChatRef.current(text);
   }, []);
 
+  const handleFocusComposer = useCallback(() => {
+    requestComposerInsert("", "clinic", "append");
+  }, [requestComposerInsert]);
+
+  const handleExamSelect = useCallback(
+    (examId: string) => {
+      if (isSending || isSwitching) return;
+      if (isAgentMode) {
+        void sendAgentMessage(examId);
+        return;
+      }
+      void submitClinicChatRef.current(examId);
+    },
+    [isAgentMode, isSending, isSwitching, sendAgentMessage]
+  );
+
   const handleAgentSelect = async (agentId: string) => {
     if (!isLoggedIn) {
       showToast(tClinic("loginToContinue"), "info");
@@ -1179,6 +1197,11 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         return;
       }
 
+      if (isEnglishTutorReviseAction(action.type)) {
+        requestComposerInsert("", "clinic", "append");
+        return;
+      }
+
       const href = resolveNextActionHref(locale, action);
       if (href) {
         if (isClinicCvRailOpenHref(locale, href)) {
@@ -1207,7 +1230,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           return;
       }
     },
-    [locale, router, searchParams, openCvRail, openPaywall, handleBackToClinic, handleSendFromNextAction, isAgentMode, sendAgentMessage]
+    [locale, router, searchParams, openCvRail, openPaywall, handleBackToClinic, handleSendFromNextAction, isAgentMode, sendAgentMessage, requestComposerInsert]
   );
 
   const handleJobCardClick = useCallback(
@@ -1465,6 +1488,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 assistantMeta={msg.assistantMeta}
                 cards={msg.cards}
                 citations={msg.citations}
+                customComponents={msg.customComponents}
                 // Clinic-only: Agent Hub owns its own depth / tooling; do not surface
                 // L1 web_search→research Handoff CTAs while an Agent session is active.
                 upgradeCta={!isAgentMode ? msg.upgradeCta : undefined}
@@ -1532,6 +1556,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                 onNextAction={
                   activeNextActions ? handleNextAction : undefined
                 }
+                onFocusComposer={handleFocusComposer}
+                onExamSelect={handleExamSelect}
                 onJobCardClick={handleJobCardClick}
                 actionsDisabled={isSending || isSwitching || spaceNudgeBusy}
               />

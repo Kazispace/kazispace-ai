@@ -331,6 +331,8 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   upgradeCta?: import('@/lib/clinic/upgrade-cta').UpgradeCtaPayload;
   capabilityId?: import('@/lib/clinic/search-capability').SearchCapabilityId;
   playbookId?: string | null;
+  assistantMeta?: Record<string, unknown>;
+  customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
   routedToAgent?: { agentId: string; sessionId?: string };
   assistantMessageId?: string;
 } {
@@ -389,6 +391,12 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
     ...(envelope.capabilityId ? { capabilityId: envelope.capabilityId } : {}),
     ...(envelope.playbookId !== undefined
       ? { playbookId: envelope.playbookId }
+      : {}),
+    ...(envelope.meta && Object.keys(envelope.meta).length > 0
+      ? { assistantMeta: envelope.meta }
+      : {}),
+    ...(envelope.customComponents && envelope.customComponents.length > 0
+      ? { customComponents: envelope.customComponents }
       : {}),
     routedToAgent,
     ...(assistantMessageId ? { assistantMessageId } : {}),

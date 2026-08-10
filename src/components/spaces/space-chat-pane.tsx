@@ -23,6 +23,7 @@ import {
   resolveStrategySelectTurnContext,
 } from '@/lib/strategy-select';
 import { resolveActionSelectSubmit } from '@/lib/next-action-submit';
+import { isEnglishTutorReviseAction } from '@/lib/english-tutor/custom-components';
 import {
   buildSpaceCvPanelHref,
   buildSpaceCvRailHref,
@@ -112,6 +113,7 @@ export function SpaceChatPane({
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useUIStore((s) => s.showToast);
+  const requestComposerInsert = useUIStore((s) => s.requestComposerInsert);
   const panels = useMemo(() => resolveSpacePanels(space), [space]);
   const hasCvPanel = panels.some((p) => p.panel_id === 'cv');
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -272,6 +274,18 @@ export function SpaceChatPane({
     [pinToLatestOnSend, sendMessage],
   );
 
+  const handleFocusComposer = useCallback(() => {
+    requestComposerInsert('', 'space', 'append');
+  }, [requestComposerInsert]);
+
+  const handleExamSelect = useCallback(
+    (examId: string) => {
+      if (isSending) return;
+      void sendAndPin(examId);
+    },
+    [isSending, sendAndPin]
+  );
+
   const handlePracticeForJob = useCallback(
     (ctx: JobPracticeContext) => {
       if (isSending) return;
@@ -294,6 +308,11 @@ export function SpaceChatPane({
           displayContent: actionSubmit.display,
           actionMeta: actionSubmit.meta,
         });
+        return;
+      }
+
+      if (isEnglishTutorReviseAction(action.type)) {
+        requestComposerInsert('', 'space', 'append');
         return;
       }
 
@@ -324,7 +343,7 @@ export function SpaceChatPane({
         void sendAndPin(prompt);
       }
     },
-    [hasCvPanel, locale, openCvRail, router, sendAndPin, space]
+    [hasCvPanel, locale, openCvRail, requestComposerInsert, router, sendAndPin, space]
   );
 
   const composerNode =
@@ -413,6 +432,7 @@ export function SpaceChatPane({
                 nextActions={message.nextActions}
                 selectedStrategyPayload={selectedStrategyPayload}
                 assistantMeta={message.assistantMeta}
+                customComponents={message.customComponents}
                 locale={locale}
                 variant="clinic"
                 composerTarget="space"
@@ -421,6 +441,8 @@ export function SpaceChatPane({
                 onNextAction={
                   activeNextActions ? handleNextAction : undefined
                 }
+                onFocusComposer={handleFocusComposer}
+                onExamSelect={handleExamSelect}
                 actionsDisabled={isSending}
                 onRetry={
                   message.role === 'user' && message.status === 'failed'

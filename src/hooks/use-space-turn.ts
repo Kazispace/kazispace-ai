@@ -29,6 +29,7 @@ import {
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnCards,
   resolveSpaceTurnAssistantMeta,
+  resolveSpaceTurnCustomComponents,
   resolveSpaceTurnNextActions,
   resolveSpaceTurnReply,
   type SpaceChatMessage,
@@ -304,6 +305,7 @@ export function useSpaceTurn(
         const turnCards = resolveSpaceTurnCards(res.data);
         const turnNextActions = resolveSpaceTurnNextActions(res.data);
         const turnAssistantMeta = resolveSpaceTurnAssistantMeta(res.data);
+        const turnCustomComponents = resolveSpaceTurnCustomComponents(res.data);
         let history: SpaceChatMessage[] = [];
         let recoveredFromHistory = false;
 
@@ -370,6 +372,9 @@ export function useSpaceTurn(
               ? { nextActions: turnNextActions }
               : {}),
             ...(turnAssistantMeta ? { assistantMeta: turnAssistantMeta } : {}),
+            ...(turnCustomComponents.length > 0
+              ? { customComponents: turnCustomComponents }
+              : {}),
             ...(isServerAssistantMessageId(assistantMessageId)
               ? { serverMessageId: assistantMessageId }
               : {}),

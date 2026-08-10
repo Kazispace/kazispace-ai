@@ -16,6 +16,7 @@ import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
 import { looksLikeResearchRequest } from '@/lib/clinic/upgrade-cta';
 import { isPlaceholderReply, resolveSpaceTurnReply } from '@/lib/spaces/turn';
 import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
+import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import type { ChatMessage } from '@/types';
 
 function extractHistoryMessageContent(
@@ -57,6 +58,9 @@ function normalizeHistoryMessage(
     (typeof raw.message_id === 'number' ? String(raw.message_id) : '') ||
     crypto.randomUUID();
 
+  const envelope =
+    role === 'assistant' ? parseAssistantEnvelope(raw) : null;
+
   return {
     id,
     role,
@@ -65,6 +69,23 @@ function normalizeHistoryMessage(
     sessionId,
     status: 'sent',
     streamComplete: true,
+    ...(envelope?.intent ? { intent: envelope.intent } : {}),
+    ...(envelope && envelope.nextActions.length > 0
+      ? { nextActions: envelope.nextActions }
+      : {}),
+    ...(envelope && envelope.cards.length > 0 ? { cards: envelope.cards } : {}),
+    ...(envelope?.citations && envelope.citations.length > 0
+      ? { citations: envelope.citations }
+      : {}),
+    ...(envelope?.upgradeCta ? { upgradeCta: envelope.upgradeCta } : {}),
+    ...(envelope?.capabilityId ? { capabilityId: envelope.capabilityId } : {}),
+    ...(envelope?.playbookId !== undefined ? { playbookId: envelope.playbookId } : {}),
+    ...(envelope?.meta && Object.keys(envelope.meta).length > 0
+      ? { assistantMeta: envelope.meta }
+      : {}),
+    ...(envelope?.customComponents && envelope.customComponents.length > 0
+      ? { customComponents: envelope.customComponents }
+      : {}),
     ...(role === 'assistant' && isServerAssistantMessageId(id)
       ? { serverMessageId: id }
       : {}),
@@ -276,6 +297,8 @@ export function useClinicChat(locale?: string) {
           upgradeCta,
           capabilityId,
           playbookId,
+          assistantMeta,
+          customComponents,
           routedToAgent,
           assistantMessageId,
         } = parseClinicReply(res.data);
@@ -310,6 +333,10 @@ export function useClinicChat(locale?: string) {
           ...(upgradeCta ? { upgradeCta } : {}),
           ...(capabilityId ? { capabilityId } : {}),
           ...(playbookId !== undefined ? { playbookId } : {}),
+          ...(assistantMeta ? { assistantMeta } : {}),
+          ...(customComponents && customComponents.length > 0
+            ? { customComponents }
+            : {}),
           ...(isServerAssistantMessageId(assistantMessageId)
             ? { serverMessageId: assistantMessageId }
             : {}),

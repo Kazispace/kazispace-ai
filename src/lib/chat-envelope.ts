@@ -1,5 +1,6 @@
 import type { SupportedLocale } from '@/lib/constants';
 import { parseCitationList } from '@/lib/clinic/citation-list';
+import { parseEnglishTutorCustomComponents } from '@/lib/english-tutor/custom-components';
 import { resolveSearchCapability } from '@/lib/clinic/search-capability';
 import { parseUpgradeCta } from '@/lib/clinic/upgrade-cta';
 import type {
@@ -234,11 +235,13 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
   const metaRaw = assistant?.meta ?? response?.meta ?? raw.meta;
   const meta = asRecord(metaRaw);
 
-  const citationList = parseCitationList(
+  const customComponentsRaw =
     assistant?.custom_components ??
-      response?.custom_components ??
-      raw.custom_components,
-  );
+    response?.custom_components ??
+    raw.custom_components;
+
+  const citationList = parseCitationList(customComponentsRaw);
+  const customComponents = parseEnglishTutorCustomComponents(customComponentsRaw);
 
   const upgradeCta = parseUpgradeCta(meta);
 
@@ -261,6 +264,7 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
     nextActions,
     cards: cards.filter((card) => card.type === 'job'),
     ...(citationList ? { citations: citationList.items } : {}),
+    ...(customComponents.length > 0 ? { customComponents } : {}),
     ...(upgradeCta ? { upgradeCta } : {}),
     ...(capabilityId ? { capabilityId } : {}),
     ...(playbookId !== undefined ? { playbookId } : {}),
