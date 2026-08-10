@@ -941,6 +941,38 @@
 			"levelScore": "L{level} · {score}",
 			"eventLabel": "Оқиға {n} · {type}",
 			"maxLevelHint": "L{max} дейін"
+		},
+		"envelope": {
+			"lowConfidenceBanner": "Бұл баға тек анықтамалық.",
+			"aiSyntheticDisclaimer": "Бұл тапсырма AI арқылы жасалған.",
+			"submitRevision": "Түзетілген нұсқаны жіберу",
+			"examPickerTitle": "Емтихан таңдау",
+			"wordLimit": "{count} сөзге дейін",
+			"essayOriginal": "Сіздің мәтін",
+			"essayRewrite": "Ұсынылған түзету",
+			"rewriteExample": "Мысалы: {text}",
+			"writingScorecardTitle": "Жазу бағасы",
+			"speakingRadarTitle": "Сөйлеу профилі",
+			"modelAnswerTitle": "Үлгі жауап",
+			"progressSummaryTitle": "Прогресс",
+			"progressTrend": "Үрдіс",
+			"progressCurrentEstimate": "Ағымдағы баға",
+			"progressWindow": "Соңғы {count} сессия",
+			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowDelta": "Δ {delta}",
+			"progressTrendValues": {
+				"improving": "Жақсару",
+				"stable": "Тұрақты",
+				"declining": "Төмендеу"
+			},
+			"dimensions": {
+				"task_response": "Тапсырма",
+				"coherence": "Байланыс",
+				"lexical": "Лексика",
+				"grammar": "Грамматика",
+				"fluency": "Ағындылық",
+				"pronunciation": "Дыбыстау"
+			}
 		}
 	},
 	"tma": {

@@ -119,6 +119,21 @@ export function resolveSpaceTurnAssistantMeta(
   return undefined;
 }
 
+export function resolveSpaceTurnCustomComponents(
+  data: unknown
+): import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[] {
+  if (!data || typeof data !== 'object') return [];
+  const raw = data as Record<string, unknown>;
+
+  for (const candidate of [data, raw.envelope]) {
+    if (!candidate) continue;
+    const customComponents = parseAssistantEnvelope(candidate).customComponents;
+    if (customComponents && customComponents.length > 0) return customComponents;
+  }
+
+  return [];
+}
+
 export type SpaceChatMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -133,6 +148,8 @@ export type SpaceChatMessage = {
   nextActions?: ChatNextAction[];
   /** assistant_response.meta (e.g. recommended_strategy_id for KAZI-400). */
   assistantMeta?: Record<string, unknown>;
+  /** english_tutor Cap custom_components (KAZI-502). */
+  customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
   /** Present on optimistic local turns (KAZI-186 retry). */
   status?: 'sending' | 'sent' | 'failed';
   /** Persisted chat_messages.id for feedback (KAZI-254). */
@@ -186,6 +203,8 @@ export function normalizeSpaceHistoryMessage(
     role === 'assistant' ? resolveSpaceTurnNextActions(raw) : [];
   const assistantMeta =
     role === 'assistant' ? resolveSpaceTurnAssistantMeta(raw) : undefined;
+  const customComponents =
+    role === 'assistant' ? resolveSpaceTurnCustomComponents(raw) : [];
 
   return {
     id,
@@ -194,6 +213,7 @@ export function normalizeSpaceHistoryMessage(
     ...(cards.length > 0 ? { cards } : {}),
     ...(nextActions.length > 0 ? { nextActions } : {}),
     ...(assistantMeta ? { assistantMeta } : {}),
+    ...(customComponents.length > 0 ? { customComponents } : {}),
     ...(role === 'assistant' && isServerAssistantMessageId(id)
       ? { serverMessageId: id }
       : {}),
@@ -265,6 +285,7 @@ export function mergeSpaceMessagesAfterSend(
     cards?: ChatJobCard[];
     nextActions?: ChatNextAction[];
     assistantMeta?: Record<string, unknown>;
+    customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
   }[] = [];
   for (const message of local) {
     if (message.role !== 'assistant') continue;
@@ -276,6 +297,9 @@ export function mergeSpaceMessagesAfterSend(
         ? { nextActions: message.nextActions }
         : {}),
       ...(message.assistantMeta ? { assistantMeta: message.assistantMeta } : {}),
+      ...(message.customComponents && message.customComponents.length > 0
+        ? { customComponents: message.customComponents }
+        : {}),
     });
   }
 
@@ -296,6 +320,12 @@ export function mergeSpaceMessagesAfterSend(
     }
     if (!message.assistantMeta && localExtras.assistantMeta) {
       next = { ...next, assistantMeta: localExtras.assistantMeta };
+    }
+    if (
+      !(message.customComponents && message.customComponents.length > 0) &&
+      localExtras.customComponents
+    ) {
+      next = { ...next, customComponents: localExtras.customComponents };
     }
     return next;
   });

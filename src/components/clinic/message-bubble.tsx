@@ -14,10 +14,12 @@ import { SpaceNudgePrompt } from "./space-nudge-prompt";
 import { UpgradeResearchCta } from "./upgrade-research-cta";
 import { SearchCapabilityChip } from "./search-capability-chip";
 import { StreamingText } from "@/components/chat/streaming-text";
+import { EnglishTutorEnvelopeBlocks } from "@/components/english/envelope/english-tutor-envelope-blocks";
 import {
   stripMarkdownSourcesSection,
   type CitationItem,
 } from "@/lib/clinic/citation-list";
+import { isLowConfidenceMeta } from "@/lib/english-tutor/custom-components";
 import type { UpgradeCtaPayload } from "@/lib/clinic/upgrade-cta";
 import {
   isSearchCapability,
@@ -28,6 +30,7 @@ import { hasStrategySelectActions } from "@/lib/strategy-select";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
+import type { EnglishTutorEnvelopeComponent, ExamPickerOption } from "@/types/english-tutor-envelope";
 
 interface MessageBubbleProps {
   role: "user" | "assistant";
@@ -52,6 +55,7 @@ interface MessageBubbleProps {
   assistantMeta?: Record<string, unknown>;
   cards?: ChatJobCard[];
   citations?: CitationItem[];
+  customComponents?: EnglishTutorEnvelopeComponent[];
   upgradeCta?: UpgradeCtaPayload;
   capabilityId?: SearchCapabilityId;
   playbookId?: string | null;
@@ -70,6 +74,8 @@ interface MessageBubbleProps {
   onSpaceNudgeDismiss?: () => void;
   onUpgradeResearch?: () => void;
   onNextAction?: (action: ChatNextAction) => void;
+  onFocusComposer?: () => void;
+  onExamSelect?: (option: ExamPickerOption) => void;
   onJobCardClick?: (card: ChatJobCard) => void;
   referralDisabled?: boolean;
   actionsDisabled?: boolean;
@@ -95,6 +101,7 @@ export function MessageBubble({
   assistantMeta,
   cards,
   citations,
+  customComponents,
   upgradeCta,
   capabilityId,
   playbookId,
@@ -111,6 +118,8 @@ export function MessageBubble({
   onSpaceNudgeDismiss,
   onUpgradeResearch,
   onNextAction,
+  onFocusComposer,
+  onExamSelect,
   onJobCardClick,
   referralDisabled,
   actionsDisabled,
@@ -141,6 +150,10 @@ export function MessageBubble({
     (((nextActions?.length ?? 0) > 0 && onNextAction) ||
       hasStrategySelectActions(nextActions));
   const showCitations = showEnrichment && (citations?.length ?? 0) > 0;
+  const lowConfidence = showEnrichment && isLowConfidenceMeta(assistantMeta);
+  const showEnglishTutorBlocks =
+    showEnrichment &&
+    ((customComponents?.length ?? 0) > 0 || lowConfidence);
   const showUpgradeCta =
     showEnrichment &&
     upgradeCta &&
@@ -295,6 +308,15 @@ export function MessageBubble({
                 className={
                   isWebSearchShortAnswer ? "max-h-40 [&_ul]:max-h-32" : undefined
                 }
+              />
+            ) : null}
+            {showEnglishTutorBlocks ? (
+              <EnglishTutorEnvelopeBlocks
+                components={customComponents ?? []}
+                locale={locale}
+                lowConfidence={lowConfidence}
+                onFocusComposer={onFocusComposer}
+                onExamSelect={onExamSelect}
               />
             ) : null}
             {showNextActionRow ? (

@@ -959,6 +959,38 @@
 			"levelScore": "L{level} · {score} composite",
 			"eventLabel": "Событие {n} · {type}",
 			"maxLevelHint": "Шкала до L{max}"
+		},
+		"envelope": {
+			"lowConfidenceBanner": "Оценки носят ориентировочный характер.",
+			"aiSyntheticDisclaimer": "Задание сгенерировано ИИ для практики.",
+			"submitRevision": "Отправить исправленный текст",
+			"examPickerTitle": "Выберите экзамен",
+			"wordLimit": "До {count} слов",
+			"essayOriginal": "Ваш текст",
+			"essayRewrite": "Предлагаемая правка",
+			"rewriteExample": "Попробуйте: {text}",
+			"writingScorecardTitle": "Оценка письма",
+			"speakingRadarTitle": "Профиль говорения",
+			"modelAnswerTitle": "Образец ответа",
+			"progressSummaryTitle": "Прогресс",
+			"progressTrend": "Тренд",
+			"progressCurrentEstimate": "Текущая оценка",
+			"progressWindow": "Последние {count} сессии",
+			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowDelta": "Δ {delta}",
+			"progressTrendValues": {
+				"improving": "Рост",
+				"stable": "Стабильно",
+				"declining": "Снижение"
+			},
+			"dimensions": {
+				"task_response": "Выполнение задания",
+				"coherence": "Связность",
+				"lexical": "Лексика",
+				"grammar": "Грамматика",
+				"fluency": "Беглость",
+				"pronunciation": "Произношение"
+			}
 		}
 	},
 	"spaces": {

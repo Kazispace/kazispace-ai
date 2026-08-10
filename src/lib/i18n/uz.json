@@ -910,6 +910,38 @@
 			"levelScore": "L{level} · {score}",
 			"eventLabel": "Hodisa {n} · {type}",
 			"maxLevelHint": "L{max} gacha"
+		},
+		"envelope": {
+			"lowConfidenceBanner": "Bu baho faqat ko'rsatkich.",
+			"aiSyntheticDisclaimer": "Bu mashq AI tomonidan yaratilgan.",
+			"submitRevision": "Tuzatilgan matnni yuborish",
+			"examPickerTitle": "Imtihonni tanlang",
+			"wordLimit": "{count} so'zgacha",
+			"essayOriginal": "Sizning matn",
+			"essayRewrite": "Tavsiya etilgan tuzatish",
+			"rewriteExample": "Masalan: {text}",
+			"writingScorecardTitle": "Yozish bahosi",
+			"speakingRadarTitle": "Gapirish profili",
+			"modelAnswerTitle": "Namuna javob",
+			"progressSummaryTitle": "Jarayon",
+			"progressTrend": "Trend",
+			"progressCurrentEstimate": "Joriy baho",
+			"progressWindow": "So'nggi {count} sessiya",
+			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowDelta": "Δ {delta}",
+			"progressTrendValues": {
+				"improving": "O'sish",
+				"stable": "Barqaror",
+				"declining": "Pasayish"
+			},
+			"dimensions": {
+				"task_response": "Vazifa",
+				"coherence": "Izchillik",
+				"lexical": "Lug'at",
+				"grammar": "Grammatika",
+				"fluency": "Oqimlilik",
+				"pronunciation": "Talaffuz"
+			}
 		}
 	},
 	"tma": {
