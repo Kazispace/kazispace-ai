@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL =
-  process.env.API_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  'https://bot.kazispace.ai';
+import { bootstrapBase, isKnownApiBase } from '@/lib/region';
 
 const UPSTREAM_TIMEOUT_MS = 110_000;
 
@@ -21,6 +18,14 @@ const UPSTREAM_FORWARD_HEADERS = [
 /** CV parser can take 30–90s; allow long-running upstream on Netlify/Node. */
 export const maxDuration = 120;
 export const dynamic = 'force-dynamic';
+
+function resolveUpstreamBase(request: NextRequest): string {
+  const claimed = request.headers.get('x-kazi-home-api-base')?.trim();
+  if (claimed && isKnownApiBase(claimed)) {
+    return claimed.replace(/\/+$/, '');
+  }
+  return bootstrapBase();
+}
 
 function buildUpstreamHeaders(request: NextRequest): Record<string, string> {
   const headers: Record<string, string> = {};
@@ -48,6 +53,7 @@ function buildUpstreamHeaders(request: NextRequest): Record<string, string> {
 export async function POST(request: NextRequest) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  const backendUrl = resolveUpstreamBase(request);
 
   try {
     const incoming = await request.formData();
@@ -78,7 +84,7 @@ export async function POST(request: NextRequest) {
       outbound.append('device_id', deviceHeader.trim());
     }
 
-    const upstream = await fetch(`${BACKEND_URL}/api/v1/inputs`, {
+    const upstream = await fetch(`${backendUrl}/api/v1/inputs`, {
       method: 'POST',
       headers: buildUpstreamHeaders(request),
       body: outbound,

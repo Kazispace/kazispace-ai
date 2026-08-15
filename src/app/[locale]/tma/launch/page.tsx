@@ -15,7 +15,6 @@ import {
   applyTelegramTheme,
 } from '@/lib/telegram';
 import { authTelegramWebapp, getMe } from '@/lib/api-client';
-import { setAuthToken } from '@/lib/auth';
 import { useAuthStore, useUIStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 
@@ -58,7 +57,7 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
       }
 
       const token = authRes.data.access_token;
-      setAuthToken(token);
+      // Region session persisted inside authTelegramWebapp (KAZI-533).
 
       const me = await getMe();
       if (cancelled) return;

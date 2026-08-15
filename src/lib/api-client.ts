@@ -1,5 +1,4 @@
-import { API_BASE_URL } from './constants';
-import { getAuthToken, getDeviceId, clearAuthToken } from './auth';
+import { getAuthToken, getDeviceId, clearAuthToken, setRegionAuthSession } from './auth';
 import { getActiveLanguagePreference } from './locale';
 import { mapUserFromApi } from './api-mappers';
 import { parseAssistantEnvelope } from './chat-envelope';
@@ -14,6 +13,18 @@ import { isPlaceholderReply, resolveSpaceTurnReply } from './spaces/turn';
 import { extractAssistantMessageId } from './clinic/message-feedback';
 import { getTmaClientHeaders } from './telegram';
 import { parseRetryAfterSeconds } from './retry-after';
+import {
+  BUNDLED_DIRECTORY,
+  allowNotReadyLiveHost,
+  bootstrapBase,
+  buildSessionFromVerify,
+  ensureDirectoryLoaded,
+  findRowByApiBase,
+  getAdvertisedApiBases,
+  isKnownApiBase,
+  regionAwareApiClient,
+  RegionAccountFetchError,
+} from './region';
 import type {
   ApiResponse,
   OtpRequestResponse,
@@ -32,15 +43,25 @@ import type {
 export type ApiRequestOptions = RequestInit & {
   /** Explicit Language Preference for headers; avoids SSR defaulting to `ru`. */
   locale?: string;
+  /** Pre-login OTP routing by phone (KAZI-533). */
+  phone?: string;
+  /** Force bootstrap host (health / public). */
+  bootstrap?: boolean;
+  /** Require region session (account-scoped). */
+  requireSession?: boolean;
 };
 
 export async function apiRequest<T>(
   endpoint: string,
   options: ApiRequestOptions = {}
 ): Promise<ApiResponse<T>> {
-  const { locale: localeOverride, ...fetchOptions } = options;
-  const url = `${API_BASE_URL}${endpoint}`;
-  const token = getAuthToken();
+  const {
+    locale: localeOverride,
+    phone,
+    bootstrap,
+    requireSession,
+    ...fetchOptions
+  } = options;
   const deviceId = getDeviceId();
 
   const isFormData =
@@ -52,10 +73,6 @@ export async function apiRequest<T>(
 
   if (fetchOptions.headers) {
     Object.assign(headers, fetchOptions.headers as Record<string, string>);
-  }
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
   }
 
   Object.assign(headers, getTmaClientHeaders());
@@ -71,14 +88,22 @@ export async function apiRequest<T>(
   headers['X-Locale'] = languagePreference;
 
   try {
-    const response = await fetch(url, { ...fetchOptions, headers });
+    const response = await regionAwareApiClient.fetch(endpoint, {
+      ...fetchOptions,
+      headers,
+      phone,
+      bootstrap,
+      requireSession:
+        requireSession ??
+        (!phone && !bootstrap && Boolean(getAuthToken())),
+    });
 
     if (response.status === 401) {
       clearAuthToken();
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('kazi:session-expired'));
       }
-      return { success: false, error: 'Session expired' };
+      return { success: false, error: 'Session expired', status: 401 };
     }
 
     if (!response.ok) {
@@ -88,7 +113,9 @@ export async function apiRequest<T>(
         typeof detail === 'object' && detail !== null
           ? (detail as { message?: string; error_code?: string }).message ??
             (detail as { error_code?: string }).error_code
-          : undefined;
+          : typeof detail === 'string'
+            ? detail
+            : undefined;
       const errorCode =
         (typeof detail === 'object' && detail !== null
           ? (detail as { error_code?: string }).error_code
@@ -98,15 +125,27 @@ export async function apiRequest<T>(
       const retryAfter = parseRetryAfterSeconds(
         response.headers.get('Retry-After')
       );
+
+      // T12 — region-local 404: do not probe the other cluster.
+      const regionMissingAccount =
+        response.status === 404 &&
+        (errorCode === 'USER_NOT_FOUND' ||
+          errorCode === 'ACCOUNT_NOT_FOUND' ||
+          errorCode === 'NOT_FOUND' ||
+          /no account|没有账号|not found/i.test(String(detailMessage ?? '')));
+
       return {
         success: false,
-        error:
-          detailMessage ||
-          errorData.message ||
-          errorData.error ||
-          errorData.error_code ||
-          `HTTP ${response.status}`,
-        errorCode,
+        error: regionMissingAccount
+          ? '此区域没有账号'
+          : detailMessage ||
+            errorData.message ||
+            errorData.error ||
+            errorData.error_code ||
+            `HTTP ${response.status}`,
+        errorCode: regionMissingAccount
+          ? 'REGION_ACCOUNT_NOT_FOUND'
+          : errorCode,
         status: response.status,
         ...(retryAfter != null ? { retryAfter } : {}),
       };
@@ -118,6 +157,17 @@ export async function apiRequest<T>(
     const data = await response.json();
     return { success: true, data: data as T };
   } catch (err) {
+    if (err instanceof RegionAccountFetchError) {
+      clearAuthToken();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('kazi:session-expired'));
+      }
+      return {
+        success: false,
+        error: err.message,
+        errorCode: err.code,
+      };
+    }
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Network error',
@@ -129,9 +179,11 @@ export async function apiRequest<T>(
 export async function requestOtp(
   phone: string
 ): Promise<ApiResponse<OtpRequestResponse>> {
+  void ensureDirectoryLoaded();
   return apiRequest<OtpRequestResponse>('/api/v1/auth/otp/request', {
     method: 'POST',
     body: JSON.stringify({ phone }),
+    phone,
   });
 }
 
@@ -139,13 +191,20 @@ export async function verifyOtp(
   phone: string,
   code: string
 ): Promise<ApiResponse<OtpVerifyResponse>> {
+  void ensureDirectoryLoaded();
   const res = await apiRequest<Record<string, unknown>>('/api/v1/auth/otp/verify', {
     method: 'POST',
     body: JSON.stringify({ phone, code }),
+    phone,
   });
 
   if (!res.success || !res.data) {
-    return { success: false, error: res.error };
+    return {
+      success: false,
+      error: res.error,
+      errorCode: res.errorCode,
+      status: res.status,
+    };
   }
 
   const raw = res.data;
@@ -154,6 +213,60 @@ export async function verifyOtp(
     return { success: false, error: 'Invalid login response' };
   }
 
+  // Pin session to the live host we authenticated against unless BE home is
+  // already advertised (or staging allow-not-ready). Never fall back to
+  // resolveHome().api_base while CN is not_ready — that would break +86 login.
+  const liveBase = regionAwareApiClient.selectLiveApiBase(phone);
+  const beHome =
+    typeof raw.home_api_base === 'string' && raw.home_api_base.trim()
+      ? raw.home_api_base.trim().replace(/\/+$/, '')
+      : null;
+  const advertised = getAdvertisedApiBases();
+  const chosenBase =
+    beHome &&
+    isKnownApiBase(beHome) &&
+    (beHome === liveBase ||
+      advertised.has(beHome) ||
+      allowNotReadyLiveHost())
+      ? beHome
+      : liveBase;
+
+  const row = findRowByApiBase(chosenBase);
+  const beRegion =
+    raw.data_region === 'cn-mainland' || raw.data_region === 'global'
+      ? raw.data_region
+      : null;
+  const dataRegion =
+    beRegion && row && beRegion === row.data_region
+      ? beRegion
+      : row?.data_region ?? 'global';
+
+  const session = buildSessionFromVerify({
+    token,
+    home_api_base: chosenBase,
+    data_region: dataRegion,
+    directory_version:
+      typeof raw.directory_version === 'number'
+        ? raw.directory_version
+        : BUNDLED_DIRECTORY.directory_version,
+    fallbackHome: {
+      api_base: liveBase,
+      data_region: findRowByApiBase(liveBase)?.data_region ?? 'global',
+    },
+  });
+
+  if (!session) {
+    clearAuthToken();
+    return {
+      success: false,
+      error: 'Invalid region session from login response',
+      errorCode: 'INVALID_REGION_SESSION',
+    };
+  }
+
+  // Persist before any follow-up account call (getMe).
+  setRegionAuthSession(session);
+
   const userRaw = (raw.user ?? {}) as Record<string, unknown>;
   return {
     success: true,
@@ -161,6 +274,9 @@ export async function verifyOtp(
       success: true,
       token,
       user: mapUserFromApi(userRaw),
+      home_api_base: session.home_api_base,
+      data_region: session.data_region,
+      directory_version: session.directory_version,
     },
   };
 }
@@ -199,10 +315,45 @@ export async function patchMe(body: PatchMeBody): Promise<ApiResponse<User>> {
 export async function authTelegramWebapp(
   initData: string
 ): Promise<ApiResponse<TelegramWebappResponse>> {
-  return apiRequest<TelegramWebappResponse>('/api/v1/auth/telegram-miniapp', {
-    method: 'POST',
-    body: JSON.stringify({ init_data: initData }),
+  // TMA stays on intl this ticket (webhook on intl) — bootstrap host.
+  const res = await apiRequest<TelegramWebappResponse>(
+    '/api/v1/auth/telegram-miniapp',
+    {
+      method: 'POST',
+      body: JSON.stringify({ init_data: initData }),
+      bootstrap: true,
+    }
+  );
+
+  if (!res.success || !res.data?.access_token) {
+    return res;
+  }
+
+  const liveBase = bootstrapBase();
+  const row = findRowByApiBase(liveBase);
+  const session = buildSessionFromVerify({
+    token: res.data.access_token,
+    home_api_base: res.data.home_api_base ?? liveBase,
+    data_region: res.data.data_region ?? row?.data_region ?? 'global',
+    directory_version:
+      res.data.directory_version ?? BUNDLED_DIRECTORY.directory_version,
+    fallbackHome: {
+      api_base: liveBase,
+      data_region: row?.data_region ?? 'global',
+    },
   });
+
+  if (!session) {
+    clearAuthToken();
+    return {
+      success: false,
+      error: 'Invalid region session from Telegram auth',
+      errorCode: 'INVALID_REGION_SESSION',
+    };
+  }
+
+  setRegionAuthSession(session);
+  return res;
 }
 
 export interface ClinicChatResponse {

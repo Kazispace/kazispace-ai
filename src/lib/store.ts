@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User, ChatMessage, CreditBalance } from '@/types';
-import { setAuthToken, clearAuthToken, setUserInfo } from './auth';
+import { clearAuthToken, setUserInfo } from './auth';
+import { getSession as getRegionSession } from './region';
 import { publishAuthSessionCleared } from './auth-session-events';
 import { publishWorkspaceAssetsInvalidate } from './workspace-assets-invalidate';
 import { clearBillingCache } from './billing-cache';
@@ -38,7 +39,15 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   user: null,
   isLoggedIn: false,
   login: (token, user) => {
-    setAuthToken(token);
+    // KAZI-533: token must already live in the region session blob.
+    // Do not write a bare token — that would invalidate getAuthToken().
+    const session = getRegionSession();
+    if (!session || session.token !== token) {
+      // Keep UI login soft-fail safe: still set in-memory; API calls need session.
+      console.warn(
+        '[auth] login() without matching region session; call setRegionAuthSession first'
+      );
+    }
     setUserInfo(user);
     set({ token, user, isLoggedIn: true });
     publishWorkspaceAssetsInvalidate();

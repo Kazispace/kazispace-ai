@@ -15,7 +15,8 @@
 		"sessionExpiredTitle": "Seans muddati tugadi",
 		"sessionExpiredContent": "Sizning seansingiz muddati tugadi. Davom etish uchun qayta kiring.",
 		"reLogin": "Kirish",
-		"cancel": "Bekor qilish"
+		"cancel": "Bekor qilish",
+		"regionNotice": "Xitoy materigi (+86) raqamlari Xitoyda saqlanadi; boshqalari xalqaro klasterda. Ro‘yxatdan o‘tgach o‘zgartirib bo‘lmaydi."
 	},
 	"mine": {
 		"title": "Profil",
@@ -30,18 +31,15 @@
 		"langChangeFailedToast": "Interfeys tili o'zgartirildi, lekin serverga sinxronlash muvaffaqiyatsiz",
 		"confirmOk": "OK",
 		"confirmCancel": "Bekor qilish",
-		
 		"freeTrialBadge": "Sinov muddati",
 		"proBadge": "Pro-tarif",
 		"sprintBadge": "Sprint faol",
 		"buyCreditsLabel": "Kreditlar sotib olish",
-		
 		"cvCreditsLabel": "Rezyume (kreditlar)",
 		"mockInterviewsLabel": "Suhbat (tayyorgarlik)",
 		"streakLabel": "Kun ketma-ket",
 		"streakUnit": "kun",
 		"upgradeButton": "Tarifni yaxshilash / Kreditlar sotib olish",
-		
 		"jobPrepGroupTitle": "Tayyorgarlik va o'qitish",
 		"cvRepoLabel": "Mening rezyumelar omborim",
 		"cvRepoValue": "2 ta loyiha",
@@ -49,7 +47,6 @@
 		"interviewRecordsValue": "3 ta yakunlandi",
 		"dailyTasksLabel": "Kundalik vazifalar",
 		"dailyTasksValue": "1 ta bajarish kerak",
-		
 		"profilePreferencesGroupTitle": "Profil va sozlamalar",
 		"targetRoleLabel": "Maqsadli rol va daraja",
 		"sprintPlanLabel": "Karyera sprint rejasi",
@@ -57,16 +54,13 @@
 		"bindTelegramLabel": "Telegram akkauntini ulash",
 		"tgUnlinked": "Ulanmagan",
 		"tgLinked": "Ulangan",
-		
 		"billingServicesGroupTitle": "Billing va xizmatlar",
 		"subscriptionPlansLabel": "Tarif rejalari",
 		"creditsLedgerLabel": "Kreditlarni hisobga olish tarixi",
-		
 		"systemSettingsGroupTitle": "Tizim sozlamalari",
 		"interfaceLanguageLabel": "Interfeys tili",
 		"hapticFeedbackLabel": "Vibratsiyali teskari aloqa",
 		"logoutLabel": "Chiqish",
-		
 		"cvLoading": "Rezyumelar omboriga o'tish...",
 		"interviewLoading": "Suhbat yozuvlarini yuklash...",
 		"sprintLoading": "Kundalik sprintlarni yuklash...",
@@ -133,7 +127,6 @@
 		},
 		"confirmText": "Tasdiqlash",
 		"cancelText": "Bekor qilish",
-		
 		"countries": {
 			"kz": "Qozogʻiston (KZ)",
 			"uz": "Oʻzbekiston (UZ)",

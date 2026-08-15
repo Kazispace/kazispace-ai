@@ -1,7 +1,7 @@
-import { API_BASE_URL } from '@/lib/constants';
 import { getAuthToken, getDeviceId } from '@/lib/auth';
 import { getActiveLanguagePreference } from '@/lib/locale';
 import { getTmaClientHeaders } from '@/lib/telegram';
+import { getSession, regionAwareApiClient } from '@/lib/region';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import type { AgentChatResponse, ApiResponse } from '@/types';
 
@@ -144,35 +144,49 @@ function buildUploadHeaders(locale?: string): Record<string, string> {
     'X-Locale': languagePreference,
     ...getTmaClientHeaders(),
   };
-  const token = getAuthToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const session = getSession();
+  if (session?.home_api_base) {
+    // Same-origin proxy uses this allowlisted host (KAZI-533).
+    headers['X-Kazi-Home-Api-Base'] = session.home_api_base;
+  }
   return headers;
 }
 
-function resolveUploadTargets(file: File): string[] {
-  if (typeof window === 'undefined') {
-    return [`${API_BASE_URL}/api/v1/inputs`];
-  }
+type UploadTarget = 'proxy' | 'direct';
 
-  const direct = `${API_BASE_URL}/api/v1/inputs`;
-  const proxy = '/api/cv/upload';
+function resolveUploadTargets(file: File): UploadTarget[] {
+  if (typeof window === 'undefined') {
+    return ['direct'];
+  }
 
   // Large files: skip Netlify proxy body limit.
   if (file.size > CV_UPLOAD_PROXY_MAX_BYTES) {
-    return [direct];
+    return ['direct'];
   }
 
   // Same-origin proxy avoids Safari CORS / Netlify preview origin issues.
-  return [proxy, direct];
+  return ['proxy', 'direct'];
 }
 
 async function postCvUpload(
-  url: string,
+  target: UploadTarget,
   form: FormData,
   headers: Record<string, string>
 ): Promise<ApiResponse<CvFileUploadResponse>> {
   try {
-    const response = await fetch(url, { method: 'POST', headers, body: form });
+    const response =
+      target === 'direct'
+        ? await regionAwareApiClient.fetch('/api/v1/inputs', {
+            method: 'POST',
+            headers,
+            body: form,
+            requireSession: Boolean(getAuthToken()),
+          })
+        : await fetch('/api/cv/upload', {
+            method: 'POST',
+            headers,
+            body: form,
+          });
     if (!response.ok) {
       const errorData = (await response.json().catch(() => ({}))) as Record<
         string,
@@ -268,8 +282,8 @@ export async function uploadCvResumeFile(
     errorCode: 'NETWORK_ERROR',
   };
 
-  for (const url of targets) {
-    const res = await postCvUpload(url, buildUploadForm(file), headers);
+  for (const target of targets) {
+    const res = await postCvUpload(target, buildUploadForm(file), headers);
     if (res.success) return res;
     last = res;
     if (!shouldFallbackToDirectUpload(res.errorCode)) {

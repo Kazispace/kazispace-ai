@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
 import { isValidOtpPhone } from "@/lib/api-mappers";
-import { setAuthToken } from "@/lib/auth";
 import {
   resolvePostLoginLocale,
   switchLocalePath,
@@ -78,7 +77,7 @@ export default function LoginPage({ params }: LoginPageProps) {
       const result = await verifyOtp(normalizedPhone, otp);
       if (result.success && result.data) {
         const { token, user: otpUser } = result.data;
-        setAuthToken(token);
+        // Region session already persisted inside verifyOtp (KAZI-533).
         const me = await getMe();
         const user = me.success && me.data ? me.data : otpUser;
         useAuthStore.getState().login(token, user);
@@ -139,6 +138,7 @@ export default function LoginPage({ params }: LoginPageProps) {
                   className="w-full"
                 />
                 <p className="text-xs text-muted-foreground mt-1.5">{t("phoneHint")}</p>
+                <p className="text-xs text-muted-foreground mt-1.5">{t("regionNotice")}</p>
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>

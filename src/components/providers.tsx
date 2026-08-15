@@ -9,6 +9,7 @@ import { useAuthStore } from "@/lib/store";
 import { useTmaInit, reauthTelegramIfPossible } from "@/hooks/use-tma-init";
 import { isTelegramWebApp } from "@/lib/telegram";
 import { DEFAULT_LOCALE } from "@/lib/constants";
+import { ensureDirectoryLoaded } from "@/lib/region";
 import type { User } from "@/types";
 
 function localeFromPathname(pathname: string): string {
@@ -32,6 +33,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   useTmaInit();
+
+  useEffect(() => {
+    void ensureDirectoryLoaded();
+  }, []);
 
   useEffect(() => {
     const token = getAuthToken();

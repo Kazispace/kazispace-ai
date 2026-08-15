@@ -15,7 +15,8 @@
 		"sessionExpiredTitle": "Сессия мерзімі аяқталды",
 		"sessionExpiredContent": "Сессияңыздың мерзімі аяқталды. Жалғастыру үшін қайта кіріңіз.",
 		"reLogin": "Кіру",
-		"cancel": "Бас тарту"
+		"cancel": "Бас тарту",
+		"regionNotice": "Қытай материгі (+86) нөмірлері Қытайда сақталады; басқалары халықаралық кластерде. Тіркелгеннен кейін өзгертуге болмайды."
 	},
 	"mine": {
 		"title": "Жеке кабинет",
@@ -30,18 +31,15 @@
 		"langChangeFailedToast": "Интерфейс тілі өзгертілді, бірақ серверге синхрондау сәтсіз аяқталды",
 		"confirmOk": "Жарайды",
 		"confirmCancel": "Бас тарту",
-		
 		"freeTrialBadge": "Сынақ мерзімі",
 		"proBadge": "Pro-тариф",
 		"sprintBadge": "Спринт белсенді",
 		"buyCreditsLabel": "Кредиттер сатып алу",
-		
 		"cvCreditsLabel": "Түйіндеме (кредиттер)",
 		"mockInterviewsLabel": "Сұхбат (дайындалу)",
 		"streakLabel": "Күн қатарынан",
 		"streakUnit": "күн",
 		"upgradeButton": "Тарифті жақсарту / Кредиттер сатып алу",
-		
 		"jobPrepGroupTitle": "Дайындық және оқыту",
 		"cvRepoLabel": "Менің түйіндемелер қорым",
 		"cvRepoValue": "2 жоба",
@@ -49,7 +47,6 @@
 		"interviewRecordsValue": "3 аяқталды",
 		"dailyTasksLabel": "Күнделікті тапсырмалар",
 		"dailyTasksValue": "1 орындау қажет",
-		
 		"profilePreferencesGroupTitle": "Жеке деректер және баптаулар",
 		"targetRoleLabel": "Мақсатты рөл мен деңгей",
 		"sprintPlanLabel": "Мансап спринт жоспары",
@@ -57,16 +54,13 @@
 		"bindTelegramLabel": "Telegram аккаунтын байланыстыру",
 		"tgUnlinked": "Байланыспаған",
 		"tgLinked": "Байланысқан",
-		
 		"billingServicesGroupTitle": "Биллинг және қызметтер",
 		"subscriptionPlansLabel": "Тарифтік жоспарлар",
 		"creditsLedgerLabel": "Кредиттерді есепке алу тарихы",
-		
 		"systemSettingsGroupTitle": "Жүйелік параметрлер",
 		"interfaceLanguageLabel": "Интерфейс тілі",
 		"hapticFeedbackLabel": "Дірілмен кері байланыс",
 		"logoutLabel": "Шығу",
-		
 		"cvLoading": "Түйіндемелер қорына өту...",
 		"interviewLoading": "Сұхбат жазбаларын жүктеу...",
 		"sprintLoading": "Күнделікті спринттерді жүктеу...",
@@ -133,7 +127,6 @@
 		},
 		"confirmText": "Дайын",
 		"cancelText": "Бас тарту",
-		
 		"countries": {
 			"kz": "Қазақстан (KZ)",
 			"uz": "Өзбекстан (UZ)",
