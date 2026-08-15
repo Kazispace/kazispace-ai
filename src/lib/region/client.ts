@@ -21,6 +21,11 @@ export type RegionFetchOptions = RequestInit & {
    * Mutually exclusive with authenticated session routing.
    */
   phone?: string;
+  /**
+   * Pin to an allowlisted pre-auth host (OtpAttempt.api_base).
+   * Never sends JWT. Rejects unknown hosts.
+   */
+  apiBase?: string;
   /** Force bootstrap host (public directory, health). Never sends JWT. */
   bootstrap?: boolean;
   /**
@@ -31,7 +36,12 @@ export type RegionFetchOptions = RequestInit & {
 };
 
 export class RegionAccountFetchError extends Error {
-  readonly code: 'NO_SESSION' | 'UNKNOWN_HOME' | 'HOST_MISMATCH';
+  readonly code:
+    | 'NO_SESSION'
+    | 'UNKNOWN_HOME'
+    | 'HOST_MISMATCH'
+    | 'ABSOLUTE_PATH'
+    | 'UNKNOWN_API_BASE';
 
   constructor(code: RegionAccountFetchError['code'], message: string) {
     super(message);
@@ -45,15 +55,20 @@ function normalizeApiBase(raw: string): string {
 }
 
 function joinUrl(base: string, path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    throw new RegionAccountFetchError(
+      'ABSOLUTE_PATH',
+      'Absolute API URLs are not allowed — pass a path only'
+    );
+  }
   const b = normalizeApiBase(base);
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
   const p = path.startsWith('/') ? path : `/${path}`;
   return `${b}${p}`;
 }
 
-function hostnameOf(url: string): string {
+function originOf(url: string): string {
   try {
-    return new URL(url).hostname;
+    return new URL(url).origin;
   } catch {
     return '';
   }
@@ -62,7 +77,7 @@ function hostnameOf(url: string): string {
 /**
  * Sole browser API entry for region-aware host selection (KAZI-533).
  *
- * - OTP: pass `{ phone }` → `selectLiveApiBase`
+ * - OTP: `{ phone }` or pinned `{ apiBase }` from OtpAttempt
  * - Account calls: session.home_api_base + JWT (no cross-host)
  * - Public/health: `{ bootstrap: true }`
  */
@@ -93,17 +108,33 @@ export class RegionAwareApiClient {
 
   /**
    * Low-level fetch. Account-scoped calls without a session throw (T9).
-   * JWT is only attached when the request host matches session.home_api_base.
+   * JWT is only attached when the request origin matches session.home_api_base.
+   * Session token always overwrites any caller Authorization.
    */
   async fetch(path: string, init: RegionFetchOptions = {}): Promise<Response> {
-    const { phone, bootstrap, requireSession, headers: initHeaders, ...rest } =
-      init;
+    const {
+      phone,
+      apiBase,
+      bootstrap,
+      requireSession,
+      headers: initHeaders,
+      ...rest
+    } = init;
 
     let base: string;
     let attachToken = false;
 
     if (bootstrap) {
       base = bootstrapBase();
+    } else if (apiBase) {
+      const normalized = normalizeApiBase(apiBase);
+      if (!isKnownApiBase(normalized)) {
+        throw new RegionAccountFetchError(
+          'UNKNOWN_API_BASE',
+          'Pinned apiBase not in bundled directory'
+        );
+      }
+      base = normalized;
     } else if (phone) {
       base = selectLiveApiBase(phone);
     } else {
@@ -131,6 +162,8 @@ export class RegionAwareApiClient {
 
     const url = joinUrl(base, path);
     const headers = new Headers(initHeaders);
+    // Caller must never supply Authorization — session is authoritative.
+    headers.delete('Authorization');
 
     if (attachToken) {
       const session = getSession();
@@ -140,20 +173,15 @@ export class RegionAwareApiClient {
           'Account API requires a region session'
         );
       }
-      // Never send JWT to a different hostname.
-      if (hostnameOf(url) !== hostnameOf(session.home_api_base)) {
+      // Compare full origin (scheme + host + port), not hostname alone.
+      if (originOf(url) !== originOf(session.home_api_base)) {
         clearSession();
         throw new RegionAccountFetchError(
           'HOST_MISMATCH',
-          'Refusing to send JWT to a non-home API host'
+          'Refusing to send JWT to a non-home API origin'
         );
       }
-      if (!headers.has('Authorization')) {
-        headers.set('Authorization', `Bearer ${session.token}`);
-      }
-    } else {
-      // Pre-login / bootstrap / guest: strip any accidental Authorization.
-      headers.delete('Authorization');
+      headers.set('Authorization', `Bearer ${session.token}`);
     }
 
     return fetch(url, { ...rest, headers });

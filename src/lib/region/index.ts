@@ -40,3 +40,8 @@ export {
   regionAwareApiClient,
 } from './client';
 export type { RegionFetchOptions } from './client';
+export {
+  assertOtpAttempt,
+  createOtpAttempt,
+  type OtpAttempt,
+} from './otp-attempt';

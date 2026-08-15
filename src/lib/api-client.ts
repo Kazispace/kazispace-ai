@@ -15,15 +15,15 @@ import { getTmaClientHeaders } from './telegram';
 import { parseRetryAfterSeconds } from './retry-after';
 import {
   BUNDLED_DIRECTORY,
-  allowNotReadyLiveHost,
+  assertOtpAttempt,
   bootstrapBase,
   buildSessionFromVerify,
+  createOtpAttempt,
   ensureDirectoryLoaded,
   findRowByApiBase,
-  getAdvertisedApiBases,
-  isKnownApiBase,
   regionAwareApiClient,
   RegionAccountFetchError,
+  type OtpAttempt,
 } from './region';
 import type {
   ApiResponse,
@@ -45,10 +45,16 @@ export type ApiRequestOptions = RequestInit & {
   locale?: string;
   /** Pre-login OTP routing by phone (KAZI-533). */
   phone?: string;
+  /** Pin to allowlisted pre-auth host (OtpAttempt). */
+  apiBase?: string;
   /** Force bootstrap host (health / public). */
   bootstrap?: boolean;
   /** Require region session (account-scoped). */
   requireSession?: boolean;
+};
+
+export type OtpRequestResult = ApiResponse<OtpRequestResponse> & {
+  attempt?: OtpAttempt;
 };
 
 export async function apiRequest<T>(
@@ -58,6 +64,7 @@ export async function apiRequest<T>(
   const {
     locale: localeOverride,
     phone,
+    apiBase,
     bootstrap,
     requireSession,
     ...fetchOptions
@@ -92,10 +99,11 @@ export async function apiRequest<T>(
       ...fetchOptions,
       headers,
       phone,
+      apiBase,
       bootstrap,
       requireSession:
         requireSession ??
-        (!phone && !bootstrap && Boolean(getAuthToken())),
+        (!phone && !apiBase && !bootstrap && Boolean(getAuthToken())),
     });
 
     if (response.status === 401) {
@@ -176,27 +184,60 @@ export async function apiRequest<T>(
   }
 }
 
-export async function requestOtp(
-  phone: string
-): Promise<ApiResponse<OtpRequestResponse>> {
-  void ensureDirectoryLoaded();
-  return apiRequest<OtpRequestResponse>('/api/v1/auth/otp/request', {
+export async function requestOtp(phone: string): Promise<OtpRequestResult> {
+  // Bounded wait for public directory refresh so first-click OTP is deterministic.
+  await Promise.race([
+    ensureDirectoryLoaded(),
+    new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+  ]);
+
+  const apiBase = regionAwareApiClient.selectLiveApiBase(phone);
+  const attempt = createOtpAttempt({
+    phone,
+    api_base: apiBase,
+    directory_version: BUNDLED_DIRECTORY.directory_version,
+  });
+  if (!attempt) {
+    return {
+      success: false,
+      error: 'Unable to resolve OTP region host',
+      errorCode: 'UNKNOWN_API_BASE',
+    };
+  }
+
+  const res = await apiRequest<OtpRequestResponse>('/api/v1/auth/otp/request', {
     method: 'POST',
     body: JSON.stringify({ phone }),
-    phone,
+    apiBase: attempt.api_base,
   });
+
+  return { ...res, attempt: res.success ? attempt : undefined };
 }
 
 export async function verifyOtp(
   phone: string,
-  code: string
+  code: string,
+  attempt?: OtpAttempt | null
 ): Promise<ApiResponse<OtpVerifyResponse>> {
-  void ensureDirectoryLoaded();
-  const res = await apiRequest<Record<string, unknown>>('/api/v1/auth/otp/verify', {
-    method: 'POST',
-    body: JSON.stringify({ phone, code }),
-    phone,
-  });
+  let pinned: OtpAttempt;
+  try {
+    pinned = assertOtpAttempt(attempt, phone);
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Invalid OTP attempt',
+      errorCode: 'INVALID_OTP_ATTEMPT',
+    };
+  }
+
+  const res = await apiRequest<Record<string, unknown>>(
+    '/api/v1/auth/otp/verify',
+    {
+      method: 'POST',
+      body: JSON.stringify({ phone, code }),
+      apiBase: pinned.api_base,
+    }
+  );
 
   if (!res.success || !res.data) {
     return {
@@ -213,25 +254,11 @@ export async function verifyOtp(
     return { success: false, error: 'Invalid login response' };
   }
 
-  // Pin session to the live host we authenticated against unless BE home is
-  // already advertised (or staging allow-not-ready). Never fall back to
-  // resolveHome().api_base while CN is not_ready — that would break +86 login.
-  const liveBase = regionAwareApiClient.selectLiveApiBase(phone);
-  const beHome =
-    typeof raw.home_api_base === 'string' && raw.home_api_base.trim()
-      ? raw.home_api_base.trim().replace(/\/+$/, '')
-      : null;
-  const advertised = getAdvertisedApiBases();
-  const chosenBase =
-    beHome &&
-    isKnownApiBase(beHome) &&
-    (beHome === liveBase ||
-      advertised.has(beHome) ||
-      allowNotReadyLiveHost())
-      ? beHome
-      : liveBase;
-
-  const row = findRowByApiBase(chosenBase);
+  // Token was issued by the pinned OTP host — session home MUST stay there.
+  // Do not jump to BE home_api_base / resolveHome when it differs (issuer mismatch).
+  // Advertise-driven cutover happens on the *next* OTP attempt via selectLiveApiBase.
+  const pinnedBase = pinned.api_base;
+  const row = findRowByApiBase(pinnedBase);
   const beRegion =
     raw.data_region === 'cn-mainland' || raw.data_region === 'global'
       ? raw.data_region
@@ -243,15 +270,15 @@ export async function verifyOtp(
 
   const session = buildSessionFromVerify({
     token,
-    home_api_base: chosenBase,
+    home_api_base: pinnedBase,
     data_region: dataRegion,
     directory_version:
       typeof raw.directory_version === 'number'
         ? raw.directory_version
-        : BUNDLED_DIRECTORY.directory_version,
+        : pinned.directory_version,
     fallbackHome: {
-      api_base: liveBase,
-      data_region: findRowByApiBase(liveBase)?.data_region ?? 'global',
+      api_base: pinnedBase,
+      data_region: row?.data_region ?? 'global',
     },
   });
 
@@ -316,6 +343,7 @@ export async function authTelegramWebapp(
   initData: string
 ): Promise<ApiResponse<TelegramWebappResponse>> {
   // TMA stays on intl this ticket (webhook on intl) — bootstrap host.
+  // Ignore BE home_api_base if it differs; TMA→CN needs a separate Story.
   const res = await apiRequest<TelegramWebappResponse>(
     '/api/v1/auth/telegram-miniapp',
     {
@@ -333,10 +361,9 @@ export async function authTelegramWebapp(
   const row = findRowByApiBase(liveBase);
   const session = buildSessionFromVerify({
     token: res.data.access_token,
-    home_api_base: res.data.home_api_base ?? liveBase,
-    data_region: res.data.data_region ?? row?.data_region ?? 'global',
-    directory_version:
-      res.data.directory_version ?? BUNDLED_DIRECTORY.directory_version,
+    home_api_base: liveBase,
+    data_region: row?.data_region ?? 'global',
+    directory_version: BUNDLED_DIRECTORY.directory_version,
     fallbackHome: {
       api_base: liveBase,
       data_region: row?.data_region ?? 'global',

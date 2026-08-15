@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { bootstrapBase, isKnownApiBase } from '@/lib/region';
+import { bootstrapBase } from '@/lib/region';
 
 const UPSTREAM_TIMEOUT_MS = 110_000;
 
-/** Forward only known client headers; never pass through arbitrary values. */
+/**
+ * Guest-only same-origin BFF for CV upload (CORS / preview).
+ * Logged-in uploads must use RegionAwareApiClient direct to session home —
+ * this proxy never accepts client-claimed home hosts or Authorization
+ * (KAZI-533 P1-1/P1-2).
+ */
 const UPSTREAM_FORWARD_HEADERS = [
-  'authorization',
   'x-device-id',
   'accept-language',
   'x-language-preference',
@@ -18,14 +22,6 @@ const UPSTREAM_FORWARD_HEADERS = [
 /** CV parser can take 30–90s; allow long-running upstream on Netlify/Node. */
 export const maxDuration = 120;
 export const dynamic = 'force-dynamic';
-
-function resolveUpstreamBase(request: NextRequest): string {
-  const claimed = request.headers.get('x-kazi-home-api-base')?.trim();
-  if (claimed && isKnownApiBase(claimed)) {
-    return claimed.replace(/\/+$/, '');
-  }
-  return bootstrapBase();
-}
 
 function buildUpstreamHeaders(request: NextRequest): Record<string, string> {
   const headers: Record<string, string> = {};
@@ -49,11 +45,12 @@ function buildUpstreamHeaders(request: NextRequest): Record<string, string> {
   return headers;
 }
 
-/** Same-origin proxy for CV resume upload → POST /api/v1/inputs (multipart). */
+/** Same-origin proxy for guest CV resume upload → POST /api/v1/inputs (multipart). */
 export async function POST(request: NextRequest) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
-  const backendUrl = resolveUpstreamBase(request);
+  // Always bootstrap — never trust client-claimed home hosts or Authorization.
+  const backendUrl = bootstrapBase();
 
   try {
     const incoming = await request.formData();

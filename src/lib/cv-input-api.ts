@@ -137,34 +137,32 @@ function buildUploadHeaders(locale?: string): Record<string, string> {
       typeof window !== 'undefined' ? window.location.pathname : undefined
     );
 
-  const headers: Record<string, string> = {
+  return {
     'X-Device-ID': getDeviceId(),
     'Accept-Language': languagePreference,
     'X-Language-Preference': languagePreference,
     'X-Locale': languagePreference,
     ...getTmaClientHeaders(),
   };
-  const session = getSession();
-  if (session?.home_api_base) {
-    // Same-origin proxy uses this allowlisted host (KAZI-533).
-    headers['X-Kazi-Home-Api-Base'] = session.home_api_base;
-  }
-  return headers;
 }
 
 type UploadTarget = 'proxy' | 'direct';
 
-function resolveUploadTargets(file: File): UploadTarget[] {
+/**
+ * Logged-in uploads always go direct via RegionAwareApiClient (JWT + home host).
+ * Guest uploads may use same-origin BFF (bootstrap only, no Authorization).
+ * @internal exported for unit tests
+ */
+export function resolveUploadTargets(file: File): UploadTarget[] {
+  if (getAuthToken() || getSession()) {
+    return ['direct'];
+  }
   if (typeof window === 'undefined') {
     return ['direct'];
   }
-
-  // Large files: skip Netlify proxy body limit.
   if (file.size > CV_UPLOAD_PROXY_MAX_BYTES) {
     return ['direct'];
   }
-
-  // Same-origin proxy avoids Safari CORS / Netlify preview origin issues.
   return ['proxy', 'direct'];
 }
 
@@ -180,7 +178,7 @@ async function postCvUpload(
             method: 'POST',
             headers,
             body: form,
-            requireSession: Boolean(getAuthToken()),
+            requireSession: Boolean(getAuthToken() || getSession()),
           })
         : await fetch('/api/cv/upload', {
             method: 'POST',
@@ -193,8 +191,17 @@ async function postCvUpload(
         unknown
       >;
       const { error, errorCode } = parseFormError(errorData, response.status);
+      // 401/403 are auth failures — never treat as proxy/network fallback.
+      if (response.status === 401 || response.status === 403) {
+        return {
+          success: false,
+          error,
+          errorCode: errorCode ?? 'UNAUTHORIZED',
+          status: response.status,
+        };
+      }
       const mappedCode =
-        response.status === 404
+        target === 'proxy' && response.status === 404
           ? 'PROXY_UNAVAILABLE'
           : response.status === 413
             ? 'PROXY_PAYLOAD_TOO_LARGE'
@@ -205,6 +212,7 @@ async function postCvUpload(
         success: false,
         error,
         errorCode: mappedCode,
+        status: response.status,
       };
     }
     const data = (await response.json()) as CvFileUploadResponse;

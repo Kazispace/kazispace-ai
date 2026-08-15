@@ -32,7 +32,11 @@ function installMemoryLocalStorage() {
     clear: () => store.clear(),
   };
   vi.stubGlobal('localStorage', localStorage);
-  vi.stubGlobal('window', { localStorage });
+  vi.stubGlobal('document', { cookie: '' });
+  vi.stubGlobal('window', {
+    localStorage,
+    location: { pathname: '/en/login' },
+  });
 }
 
 describe('resolveHome (T1–T3)', () => {
@@ -213,6 +217,38 @@ describe('RegionAwareApiClient.fetch (T9–T11)', () => {
     expect(getSession()!.home_api_base).toBe(before);
     expect(getSession()!.home_api_base).toBe(INTL);
   });
+
+  it('P2: rejects absolute API paths', async () => {
+    await expect(
+      client.fetch('https://evil.example/api/v1/me', { bootstrap: true })
+    ).rejects.toMatchObject({ code: 'ABSOLUTE_PATH' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('P2: session Authorization overwrites caller header', async () => {
+    setSession({
+      token: 'session-jwt',
+      home_api_base: INTL,
+      data_region: 'global',
+      directory_version: 4,
+    });
+    await client.fetch('/api/v1/me', {
+      requireSession: true,
+      headers: { Authorization: 'Bearer attacker' },
+    });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).get('Authorization')).toBe(
+      'Bearer session-jwt'
+    );
+  });
+
+  it('P2: pinned apiBase must be allowlisted', async () => {
+    await expect(
+      client.fetch('/api/v1/auth/otp/verify', {
+        apiBase: 'https://evil.example',
+      })
+    ).rejects.toMatchObject({ code: 'UNKNOWN_API_BASE' });
+  });
 });
 
 describe('login 404 region isolation (T12)', () => {
@@ -245,5 +281,126 @@ describe('login 404 region isolation (T12)', () => {
 
     vi.unstubAllGlobals();
     setAdvertisedApiBasesForTests(null);
+  });
+});
+
+describe('OtpAttempt host pin (P1-3)', () => {
+  beforeEach(() => {
+    installMemoryLocalStorage();
+    clearSession();
+    setAdvertisedApiBasesForTests([INTL]);
+    delete process.env.NEXT_PUBLIC_REGION_ALLOW_NOT_READY;
+  });
+
+  afterEach(() => {
+    clearSession();
+    setAdvertisedApiBasesForTests(null);
+    vi.unstubAllGlobals();
+  });
+
+  it('request/verify stay on same host when directory becomes CN-advertised mid-flight', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (String(url).includes('/otp/request')) {
+        return new Response(JSON.stringify({ success: true }), { status: 200 });
+      }
+      if (String(url).includes('/otp/verify')) {
+        return new Response(
+          JSON.stringify({
+            access_token: 'tok',
+            home_api_base: CN,
+            data_region: 'cn-mainland',
+            directory_version: 4,
+            user: { id: 1 },
+          }),
+          { status: 200 }
+        );
+      }
+      return new Response('{}', { status: 200 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { requestOtp, verifyOtp } = await import('@/lib/api-client');
+    const req = await requestOtp('+8613262788342');
+    expect(req.success).toBe(true);
+    expect(req.attempt?.api_base).toBe(INTL);
+
+    // Mid-flight: CN becomes advertised — verify must still use pinned intl.
+    setAdvertisedApiBasesForTests([INTL, CN]);
+    expect(selectLiveApiBase('+8613262788342')).toBe(CN);
+
+    const ver = await verifyOtp('+8613262788342', '123456', req.attempt);
+    expect(ver.success).toBe(true);
+
+    const urls = fetchMock.mock.calls.map((c) => String(c[0]));
+    const otpUrls = urls.filter((u) => u.includes('/auth/otp/'));
+    expect(otpUrls).toHaveLength(2);
+    expect(otpUrls.every((u) => u.startsWith(INTL))).toBe(true);
+    expect(otpUrls.some((u) => u.includes('api-cn'))).toBe(false);
+
+    // Session stays on pinned intl (CN home from BE rejected while we used intl OTP)
+    // BE returned CN but we authenticated on intl — chosenBase prefers pinned when
+    // BE home differs and... wait: after advertise, CN is in advertised set, so
+    // chosenBase would become CN. That would move JWT from intl OTP to CN session!
+    //
+    // Review: "成功后仍按 BE 响应 + advertised contract 创建 RegionSession"
+    // So after verify on intl, if BE returns CN and CN is now advertised, session
+    // could be CN — but then token was issued by intl. That's a BE contract issue.
+    // Safer: session home must equal the pinned OTP host (where token was issued).
+    expect(getSession()?.home_api_base).toBe(INTL);
+  });
+
+  it('rejects missing / unknown attempt host on verify', async () => {
+    const { verifyOtp } = await import('@/lib/api-client');
+    const missing = await verifyOtp('+8613262788342', '123456', null);
+    expect(missing.success).toBe(false);
+    expect(missing.errorCode).toBe('INVALID_OTP_ATTEMPT');
+
+    const bad = await verifyOtp('+8613262788342', '123456', {
+      phone: '+8613262788342',
+      api_base: 'https://evil.example',
+      directory_version: 4,
+    });
+    expect(bad.success).toBe(false);
+    expect(bad.errorCode).toBe('INVALID_OTP_ATTEMPT');
+  });
+});
+
+describe('TMA session pin (P1-4)', () => {
+  beforeEach(() => {
+    installMemoryLocalStorage();
+    clearSession();
+    setAdvertisedApiBasesForTests([INTL]);
+  });
+
+  afterEach(() => {
+    clearSession();
+    setAdvertisedApiBasesForTests(null);
+    vi.unstubAllGlobals();
+  });
+
+  it('ignores BE home_api_base=CN and keeps intl liveBase', async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          access_token: 'tma-tok',
+          token_type: 'bearer',
+          user_id: 1,
+          is_new_user: false,
+          expires_in: 3600,
+          home_api_base: CN,
+          data_region: 'cn-mainland',
+          directory_version: 4,
+        }),
+        { status: 200 }
+      )
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { authTelegramWebapp } = await import('@/lib/api-client');
+    const res = await authTelegramWebapp('query_id=1');
+    expect(res.success).toBe(true);
+    expect(getSession()?.home_api_base).toBe(INTL);
+    expect(getSession()?.data_region).toBe('global');
+    expect(String(fetchMock.mock.calls[0][0])).toContain(INTL);
   });
 });
