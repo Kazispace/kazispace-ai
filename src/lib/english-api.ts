@@ -1,6 +1,6 @@
-import { API_BASE_URL } from '@/lib/constants';
 import { getAuthToken, getDeviceId } from '@/lib/auth';
 import { getTmaClientHeaders } from '@/lib/telegram';
+import { regionAwareApiClient } from '@/lib/region';
 import { normalizeEnglishCtaHints } from '@/lib/english-epp-cta';
 import type {
   ApiResponse,
@@ -40,8 +40,6 @@ async function englishJsonRequest<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const token = getAuthToken();
   const deviceId = getDeviceId();
 
   const headers: Record<string, string> = {
@@ -53,12 +51,14 @@ async function englishJsonRequest<T>(
   if (options.headers) {
     Object.assign(headers, options.headers as Record<string, string>);
   }
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  // Authorization attached by RegionAwareApiClient when session exists.
 
   try {
-    const response = await fetch(url, { ...options, headers });
+    const response = await regionAwareApiClient.fetch(endpoint, {
+      ...options,
+      headers,
+      requireSession: Boolean(getAuthToken()),
+    });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return {
@@ -170,8 +170,7 @@ export async function submitEnglishAssessmentAudioItem(
     transcript?: string;
   }
 ): Promise<ApiResponse<{ ok: boolean }>> {
-  const url = `${API_BASE_URL}/api/v1/english/assessment/sessions/${encodeURIComponent(sessionId)}/items`;
-  const token = getAuthToken();
+  const path = `/api/v1/english/assessment/sessions/${encodeURIComponent(sessionId)}/items`;
   const form = new FormData();
   form.append('item_index', String(params.item_index));
   form.append('answer_mode', 'audio');
@@ -184,10 +183,14 @@ export async function submitEnglishAssessmentAudioItem(
     'X-Device-ID': getDeviceId(),
     ...getTmaClientHeaders(),
   };
-  if (token) headers.Authorization = `Bearer ${token}`;
 
   try {
-    const response = await fetch(url, { method: 'POST', headers, body: form });
+    const response = await regionAwareApiClient.fetch(path, {
+      method: 'POST',
+      headers,
+      body: form,
+      requireSession: Boolean(getAuthToken()),
+    });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const { error, errorCode } = parseEnglishFormError(errorData, response.status);
@@ -260,8 +263,7 @@ export async function submitEnglishTrainingAudioItem(
     transcript?: string;
   }
 ): Promise<ApiResponse<{ ok: boolean }>> {
-  const url = `${API_BASE_URL}/api/v1/english/training/sessions/${encodeURIComponent(sessionId)}/items`;
-  const token = getAuthToken();
+  const path = `/api/v1/english/training/sessions/${encodeURIComponent(sessionId)}/items`;
   const form = new FormData();
   form.append('item_index', String(params.item_index));
   form.append('answer_mode', 'audio');
@@ -274,10 +276,14 @@ export async function submitEnglishTrainingAudioItem(
     'X-Device-ID': getDeviceId(),
     ...getTmaClientHeaders(),
   };
-  if (token) headers.Authorization = `Bearer ${token}`;
 
   try {
-    const response = await fetch(url, { method: 'POST', headers, body: form });
+    const response = await regionAwareApiClient.fetch(path, {
+      method: 'POST',
+      headers,
+      body: form,
+      requireSession: Boolean(getAuthToken()),
+    });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const { error, errorCode } = parseEnglishFormError(errorData, response.status);

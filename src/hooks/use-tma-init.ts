@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { authTelegramWebapp, getMe } from '@/lib/api-client';
-import { setAuthToken, getAuthToken } from '@/lib/auth';
+import { getAuthToken } from '@/lib/auth';
 import { syncMasterSession } from '@/lib/master-session';
 import { captureStartParamFromContext } from '@/lib/tma-routing';
 import {
@@ -24,7 +24,7 @@ async function authenticateWithInitData(): Promise<boolean> {
   }
 
   const token = res.data.access_token;
-  setAuthToken(token);
+  // Region session persisted inside authTelegramWebapp (KAZI-533).
 
   const me = await getMe();
   if (me.success && me.data) {

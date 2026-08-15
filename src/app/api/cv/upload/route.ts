@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL =
-  process.env.API_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  'https://bot.kazispace.ai';
+import { bootstrapBase } from '@/lib/region';
 
 const UPSTREAM_TIMEOUT_MS = 110_000;
 
-/** Forward only known client headers; never pass through arbitrary values. */
+/**
+ * Guest-only same-origin BFF for CV upload (CORS / preview).
+ * Logged-in uploads must use RegionAwareApiClient direct to session home —
+ * this proxy never accepts client-claimed home hosts or Authorization
+ * (KAZI-533 P1-1/P1-2).
+ */
 const UPSTREAM_FORWARD_HEADERS = [
-  'authorization',
   'x-device-id',
   'accept-language',
   'x-language-preference',
@@ -44,10 +45,12 @@ function buildUpstreamHeaders(request: NextRequest): Record<string, string> {
   return headers;
 }
 
-/** Same-origin proxy for CV resume upload → POST /api/v1/inputs (multipart). */
+/** Same-origin proxy for guest CV resume upload → POST /api/v1/inputs (multipart). */
 export async function POST(request: NextRequest) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
+  // Always bootstrap — never trust client-claimed home hosts or Authorization.
+  const backendUrl = bootstrapBase();
 
   try {
     const incoming = await request.formData();
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
       outbound.append('device_id', deviceHeader.trim());
     }
 
-    const upstream = await fetch(`${BACKEND_URL}/api/v1/inputs`, {
+    const upstream = await fetch(`${backendUrl}/api/v1/inputs`, {
       method: 'POST',
       headers: buildUpstreamHeaders(request),
       body: outbound,

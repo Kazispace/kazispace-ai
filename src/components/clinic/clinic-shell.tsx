@@ -106,7 +106,7 @@ import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
-import { API_BASE_URL } from "@/lib/constants";
+import { bootstrapBase } from "@/lib/region";
 import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
 import {
   resolveNextActionChatPrompt,
@@ -587,7 +587,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     setEnglishLevelState(getEnglishLevel());
     clearExpiredReferralDismissals();
     clearExpiredSpaceNudgeDismissals();
-    fetch(`${API_BASE_URL}/health`, { signal: AbortSignal.timeout(5000) })
+    fetch(`${bootstrapBase()}/health`, { signal: AbortSignal.timeout(5000) })
       .then((r) => setIsOnline(r.ok))
       .catch(() => setIsOnline(false));
   }, []);

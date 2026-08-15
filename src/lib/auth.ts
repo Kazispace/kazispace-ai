@@ -1,4 +1,10 @@
 import { STORAGE_KEYS } from './constants';
+import {
+  clearSession as clearRegionSession,
+  getSession as getRegionSession,
+  setSession as setRegionSession,
+  type RegionSession,
+} from './region';
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
@@ -48,27 +54,52 @@ export function getWebUserId(): string {
 }
 
 /**
- * Get the stored auth token (client)
+ * Get the stored auth token (client).
+ * KAZI-533: token lives in the atomic region session blob (not a bare key).
  */
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+  const session = getRegionSession();
+  if (session?.token) return session.token;
+
+  // Legacy bare token → invalid under IR-FE-1; force re-login.
+  const legacy = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+  if (legacy) {
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    clearCookie(STORAGE_KEYS.AUTH_COOKIE);
+  }
+  return null;
 }
 
 /**
- * Set auth token — dual-write localStorage + cookie (SDD v1.1 §7.2)
+ * Persist a full region session (token + home_api_base + data_region + directory_version).
+ * Dual-writes auth cookie for middleware (SDD v1.1 §7.2).
+ */
+export function setRegionAuthSession(session: RegionSession): void {
+  if (typeof window === 'undefined') return;
+  setRegionSession(session);
+  // Keep legacy key cleared — session blob is SSOT.
+  localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+  setCookie(STORAGE_KEYS.AUTH_COOKIE, session.token);
+}
+
+/**
+ * @deprecated Prefer setRegionAuthSession with full RegionSession (KAZI-533).
+ * Token-only writes are rejected by getAuthToken after clear.
  */
 export function setAuthToken(token: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+  // Do not persist bare token as a valid session — callers must use setRegionAuthSession.
+  localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
   setCookie(STORAGE_KEYS.AUTH_COOKIE, token);
 }
 
 /**
- * Clear auth on logout — dual-clear
+ * Clear auth on logout — dual-clear region session + cookie
  */
 export function clearAuthToken(): void {
   if (typeof window === 'undefined') return;
+  clearRegionSession();
   localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.USER_INFO);
   clearCookie(STORAGE_KEYS.AUTH_COOKIE);

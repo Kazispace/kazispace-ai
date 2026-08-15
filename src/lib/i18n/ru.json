@@ -15,7 +15,8 @@
 		"sessionExpiredTitle": "Сессия истекла",
 		"sessionExpiredContent": "Ваша сессия истекла. Пожалуйста, войдите снова, чтобы продолжить.",
 		"reLogin": "Войти",
-		"cancel": "Отмена"
+		"cancel": "Отмена",
+		"regionNotice": "Номера материкового Китая (+86) хранятся в Китае; остальные — в международном кластере. После регистрации изменить нельзя."
 	},
 	"mine": {
 		"title": "Профиль",
@@ -30,18 +31,15 @@
 		"langChangeFailedToast": "Язык интерфейса изменён, но синхронизация с сервером не удалась",
 		"confirmOk": "ОК",
 		"confirmCancel": "Отмена",
-		
 		"freeTrialBadge": "Пробный период",
 		"proBadge": "Pro-тариф",
 		"sprintBadge": "Спринт активен",
 		"buyCreditsLabel": "Купить кредиты",
-		
 		"cvCreditsLabel": "Резюме (кредиты)",
 		"mockInterviewsLabel": "Интервью (подготовка)",
 		"streakLabel": "Дней подряд",
 		"streakUnit": "дн.",
 		"upgradeButton": "Улучшить тариф / Купить кредиты",
-		
 		"jobPrepGroupTitle": "Подготовка и обучение",
 		"cvRepoLabel": "Мой репозиторий резюме",
 		"cvRepoValue": "2 черновика",
@@ -49,7 +47,6 @@
 		"interviewRecordsValue": "3 завершено",
 		"dailyTasksLabel": "Ежедневные карьерные задачи",
 		"dailyTasksValue": "1 к исполнению",
-		
 		"profilePreferencesGroupTitle": "Профиль и предпочтения",
 		"targetRoleLabel": "Целевая роль и уровень",
 		"sprintPlanLabel": "План карьерного спринта",
@@ -57,16 +54,13 @@
 		"bindTelegramLabel": "Привязать аккаунт Telegram",
 		"tgUnlinked": "Не привязан",
 		"tgLinked": "Привязан",
-		
 		"billingServicesGroupTitle": "Биллинг и сервисы",
 		"subscriptionPlansLabel": "Тарифные планы",
 		"creditsLedgerLabel": "История начисления кредитов",
-		
 		"systemSettingsGroupTitle": "Системные настройки",
 		"interfaceLanguageLabel": "Язык интерфейса",
 		"hapticFeedbackLabel": "Тактильная отдача",
 		"logoutLabel": "Выйти",
-		
 		"cvLoading": "Переход к репозиторию резюме...",
 		"interviewLoading": "Загрузка записей интервью...",
 		"sprintLoading": "Загрузка ежедневных спринт-задач...",
@@ -133,7 +127,6 @@
 		},
 		"confirmText": "Готово",
 		"cancelText": "Отмена",
-		
 		"countries": {
 			"kz": "Казахстан (KZ)",
 			"uz": "Узбекистан (UZ)",

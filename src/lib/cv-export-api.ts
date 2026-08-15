@@ -1,7 +1,7 @@
-import { API_BASE_URL } from '@/lib/constants';
 import { getAuthToken, getDeviceId } from '@/lib/auth';
 import { getActiveLanguagePreference } from '@/lib/locale';
 import { getTmaClientHeaders } from '@/lib/telegram';
+import { regionAwareApiClient } from '@/lib/region';
 import type { ApiResponse } from '@/types';
 
 function buildExportHeaders(locale?: string): Record<string, string> {
@@ -18,8 +18,6 @@ function buildExportHeaders(locale?: string): Record<string, string> {
     'X-Locale': languagePreference,
     ...getTmaClientHeaders(),
   };
-  const token = getAuthToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
 }
 
@@ -100,11 +98,15 @@ export async function exportCvDocumentPdf(
   const timeout = setTimeout(() => controller.abort(), 60_000);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/cv/documents/${docId}/export`, {
-      method: 'POST',
-      headers: buildExportHeaders(locale),
-      signal: controller.signal,
-    });
+    const response = await regionAwareApiClient.fetch(
+      `/api/v1/cv/documents/${docId}/export`,
+      {
+        method: 'POST',
+        headers: buildExportHeaders(locale),
+        signal: controller.signal,
+        requireSession: Boolean(getAuthToken()),
+      }
+    );
 
     if (!response.ok) {
       const errorData = (await response.json().catch(() => ({}))) as Record<string, unknown>;

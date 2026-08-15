@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
 import { isValidOtpPhone } from "@/lib/api-mappers";
-import { setAuthToken } from "@/lib/auth";
+import type { OtpAttempt } from "@/lib/region";
 import {
   resolvePostLoginLocale,
   switchLocalePath,
@@ -30,6 +30,7 @@ export default function LoginPage({ params }: LoginPageProps) {
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
+  const [otpAttempt, setOtpAttempt] = useState<OtpAttempt | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -56,8 +57,11 @@ export default function LoginPage({ params }: LoginPageProps) {
     setError("");
     try {
       const result = await requestOtp(normalizedPhone);
-      if (result.success) {
+      if (result.success && result.attempt) {
+        setOtpAttempt(result.attempt);
         setStep("otp");
+      } else if (result.success) {
+        setError("Failed to pin OTP region host");
       } else {
         setError(result.error || "Failed to send code");
       }
@@ -75,10 +79,10 @@ export default function LoginPage({ params }: LoginPageProps) {
     setIsLoading(true);
     setError("");
     try {
-      const result = await verifyOtp(normalizedPhone, otp);
+      const result = await verifyOtp(normalizedPhone, otp, otpAttempt);
       if (result.success && result.data) {
         const { token, user: otpUser } = result.data;
-        setAuthToken(token);
+        // Region session already persisted inside verifyOtp (KAZI-533).
         const me = await getMe();
         const user = me.success && me.data ? me.data : otpUser;
         useAuthStore.getState().login(token, user);
@@ -139,6 +143,7 @@ export default function LoginPage({ params }: LoginPageProps) {
                   className="w-full"
                 />
                 <p className="text-xs text-muted-foreground mt-1.5">{t("phoneHint")}</p>
+                <p className="text-xs text-muted-foreground mt-1.5">{t("regionNotice")}</p>
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
@@ -165,7 +170,11 @@ export default function LoginPage({ params }: LoginPageProps) {
               </Button>
               <button
                 type="button"
-                onClick={() => setStep("phone")}
+                onClick={() => {
+                  setOtpAttempt(null);
+                  setOtp("");
+                  setStep("phone");
+                }}
                 className="w-full text-sm text-muted hover:text-orange"
               >
                 {t("back")}

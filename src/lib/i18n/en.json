@@ -15,7 +15,8 @@
 		"sessionExpiredTitle": "Session Expired",
 		"sessionExpiredContent": "Your session has expired. Please log in again to continue.",
 		"reLogin": "Log In",
-		"cancel": "Cancel"
+		"cancel": "Cancel",
+		"regionNotice": "Mainland China numbers (+86) are stored in China; other numbers are stored on the international cluster. This cannot be changed after registration."
 	},
 	"mine": {
 		"title": "Profile",
@@ -30,18 +31,15 @@
 		"langChangeFailedToast": "UI language updated locally, but server sync failed. Try again later.",
 		"confirmOk": "OK",
 		"confirmCancel": "Cancel",
-		
 		"freeTrialBadge": "Free Trial",
 		"proBadge": "Pro Plan",
 		"sprintBadge": "Sprint Active",
 		"buyCreditsLabel": "Buy Credits",
-		
 		"cvCreditsLabel": "CV Credits",
 		"mockInterviewsLabel": "Mock Prep",
 		"streakLabel": "Streak Days",
 		"streakUnit": "days",
 		"upgradeButton": "Upgrade Plan / Buy Credits",
-		
 		"jobPrepGroupTitle": "Prep & Learn",
 		"cvRepoLabel": "My Resume Repo",
 		"cvRepoValue": "2 Drafts",
@@ -49,7 +47,6 @@
 		"interviewRecordsValue": "3 Completed",
 		"dailyTasksLabel": "Daily Career Tasks",
 		"dailyTasksValue": "1 Todo",
-		
 		"profilePreferencesGroupTitle": "Profile & Preferences",
 		"targetRoleLabel": "Target Role & Level",
 		"sprintPlanLabel": "Career Sprint Plan",
@@ -57,16 +54,13 @@
 		"bindTelegramLabel": "Link Telegram Account",
 		"tgUnlinked": "Unlinked",
 		"tgLinked": "Linked",
-		
 		"billingServicesGroupTitle": "Billing & Services",
 		"subscriptionPlansLabel": "Subscription Plans",
 		"creditsLedgerLabel": "Credits Ledger",
-		
 		"systemSettingsGroupTitle": "System Settings",
 		"interfaceLanguageLabel": "Interface Language",
 		"hapticFeedbackLabel": "Haptic Feedback",
 		"logoutLabel": "Logout",
-		
 		"cvLoading": "Navigating to resume repository...",
 		"interviewLoading": "Opening interview records...",
 		"sprintLoading": "Opening daily sprint tasks...",
@@ -133,7 +127,6 @@
 		},
 		"confirmText": "Confirm",
 		"cancelText": "Cancel",
-		
 		"countries": {
 			"kz": "Kazakhstan (KZ)",
 			"uz": "Uzbekistan (UZ)",

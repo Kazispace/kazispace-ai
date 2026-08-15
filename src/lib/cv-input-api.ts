@@ -1,7 +1,7 @@
-import { API_BASE_URL } from '@/lib/constants';
 import { getAuthToken, getDeviceId } from '@/lib/auth';
 import { getActiveLanguagePreference } from '@/lib/locale';
 import { getTmaClientHeaders } from '@/lib/telegram';
+import { getSession, regionAwareApiClient } from '@/lib/region';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import type { AgentChatResponse, ApiResponse } from '@/types';
 
@@ -137,50 +137,71 @@ function buildUploadHeaders(locale?: string): Record<string, string> {
       typeof window !== 'undefined' ? window.location.pathname : undefined
     );
 
-  const headers: Record<string, string> = {
+  return {
     'X-Device-ID': getDeviceId(),
     'Accept-Language': languagePreference,
     'X-Language-Preference': languagePreference,
     'X-Locale': languagePreference,
     ...getTmaClientHeaders(),
   };
-  const token = getAuthToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return headers;
 }
 
-function resolveUploadTargets(file: File): string[] {
+type UploadTarget = 'proxy' | 'direct';
+
+/**
+ * Logged-in uploads always go direct via RegionAwareApiClient (JWT + home host).
+ * Guest uploads may use same-origin BFF (bootstrap only, no Authorization).
+ * @internal exported for unit tests
+ */
+export function resolveUploadTargets(file: File): UploadTarget[] {
+  if (getAuthToken() || getSession()) {
+    return ['direct'];
+  }
   if (typeof window === 'undefined') {
-    return [`${API_BASE_URL}/api/v1/inputs`];
+    return ['direct'];
   }
-
-  const direct = `${API_BASE_URL}/api/v1/inputs`;
-  const proxy = '/api/cv/upload';
-
-  // Large files: skip Netlify proxy body limit.
   if (file.size > CV_UPLOAD_PROXY_MAX_BYTES) {
-    return [direct];
+    return ['direct'];
   }
-
-  // Same-origin proxy avoids Safari CORS / Netlify preview origin issues.
-  return [proxy, direct];
+  return ['proxy', 'direct'];
 }
 
 async function postCvUpload(
-  url: string,
+  target: UploadTarget,
   form: FormData,
   headers: Record<string, string>
 ): Promise<ApiResponse<CvFileUploadResponse>> {
   try {
-    const response = await fetch(url, { method: 'POST', headers, body: form });
+    const response =
+      target === 'direct'
+        ? await regionAwareApiClient.fetch('/api/v1/inputs', {
+            method: 'POST',
+            headers,
+            body: form,
+            requireSession: Boolean(getAuthToken() || getSession()),
+          })
+        : await fetch('/api/cv/upload', {
+            method: 'POST',
+            headers,
+            body: form,
+          });
     if (!response.ok) {
       const errorData = (await response.json().catch(() => ({}))) as Record<
         string,
         unknown
       >;
       const { error, errorCode } = parseFormError(errorData, response.status);
+      // 401/403 are auth failures — never treat as proxy/network fallback.
+      if (response.status === 401 || response.status === 403) {
+        return {
+          success: false,
+          error,
+          errorCode: errorCode ?? 'UNAUTHORIZED',
+          status: response.status,
+        };
+      }
       const mappedCode =
-        response.status === 404
+        target === 'proxy' && response.status === 404
           ? 'PROXY_UNAVAILABLE'
           : response.status === 413
             ? 'PROXY_PAYLOAD_TOO_LARGE'
@@ -191,6 +212,7 @@ async function postCvUpload(
         success: false,
         error,
         errorCode: mappedCode,
+        status: response.status,
       };
     }
     const data = (await response.json()) as CvFileUploadResponse;
@@ -268,8 +290,8 @@ export async function uploadCvResumeFile(
     errorCode: 'NETWORK_ERROR',
   };
 
-  for (const url of targets) {
-    const res = await postCvUpload(url, buildUploadForm(file), headers);
+  for (const target of targets) {
+    const res = await postCvUpload(target, buildUploadForm(file), headers);
     if (res.success) return res;
     last = res;
     if (!shouldFallbackToDirectUpload(res.errorCode)) {

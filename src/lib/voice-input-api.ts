@@ -1,7 +1,7 @@
-import { API_BASE_URL } from '@/lib/constants';
 import { getAuthToken, getDeviceId } from '@/lib/auth';
 import { getActiveLanguagePreference } from '@/lib/locale';
 import { getTmaClientHeaders } from '@/lib/telegram';
+import { regionAwareApiClient } from '@/lib/region';
 import type { ApiResponse } from '@/types';
 import type { components } from '@/types/api.generated';
 
@@ -76,8 +76,6 @@ function buildHeaders(): Record<string, string> {
     'X-Language-Preference': lang,
     ...getTmaClientHeaders(),
   };
-  const token = getAuthToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
   return headers;
 }
 
@@ -101,16 +99,16 @@ export async function transcribeVoice(
   audioBlob: Blob,
   options?: TranscribeVoiceOptions,
 ): Promise<ApiResponse<VoiceInputResponse>> {
-  const url = `${API_BASE_URL}/api/v1/inputs`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), VOICE_ASR_TIMEOUT_MS);
 
   try {
-    const res = await fetch(url, {
+    const res = await regionAwareApiClient.fetch('/api/v1/inputs', {
       method: 'POST',
       headers: buildHeaders(),
       body: buildVoiceForm(audioBlob, options),
       signal: controller.signal,
+      requireSession: Boolean(getAuthToken()),
     });
     if (!res.ok) {
       const err = (await res.json().catch(() => ({}))) as Record<string, unknown>;

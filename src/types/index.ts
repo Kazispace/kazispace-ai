@@ -160,6 +160,9 @@ export interface OtpVerifyResponse {
   success: boolean;
   token: string;
   user: User;
+  home_api_base?: string;
+  data_region?: 'cn-mainland' | 'global';
+  directory_version?: number;
 }
 
 export interface TelegramWebappResponse {
@@ -168,6 +171,9 @@ export interface TelegramWebappResponse {
   user_id: number;
   is_new_user: boolean;
   expires_in: number;
+  home_api_base?: string;
+  data_region?: 'cn-mainland' | 'global';
+  directory_version?: number;
 }
 
 // Agent Hub types (API Spec §13)
