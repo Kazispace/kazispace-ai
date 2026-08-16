@@ -34,8 +34,38 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useTmaInit();
 
+  // KAZI-565: bundled directory is enough for first paint. Public refresh is
+  // background-only with idle/timeout so it does not compete with Clinic RSC.
   useEffect(() => {
-    void ensureDirectoryLoaded();
+    let cancelled = false;
+    const run = () => {
+      if (!cancelled) void ensureDirectoryLoaded();
+    };
+    let idleId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const ric = (
+      window as Window & {
+        requestIdleCallback?: (
+          cb: () => void,
+          opts?: { timeout: number }
+        ) => number;
+        cancelIdleCallback?: (id: number) => void;
+      }
+    ).requestIdleCallback;
+    if (typeof ric === "function") {
+      idleId = ric(run, { timeout: 2500 });
+    } else {
+      timeoutId = setTimeout(run, 2000);
+    }
+    return () => {
+      cancelled = true;
+      if (idleId != null) {
+        (
+          window as Window & { cancelIdleCallback?: (id: number) => void }
+        ).cancelIdleCallback?.(idleId);
+      }
+      if (timeoutId != null) clearTimeout(timeoutId);
+    };
   }, []);
 
   useEffect(() => {

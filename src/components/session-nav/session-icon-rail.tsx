@@ -113,6 +113,7 @@ export function SessionIconRail({
         <SessionIconRailCredits locale={locale} />
         <Link
           href={`/${locale}/mine`}
+          prefetch={false}
           className="flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"
           aria-label={t('settings')}
           title={t('settings')}

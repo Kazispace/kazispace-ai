@@ -3,8 +3,7 @@ import type { ChatMessage } from '@/types';
 
 /** Rows still owned by the client turn loop — not yet fully persisted in session history. */
 export function isInFlightClinicMessage(message: ChatMessage): boolean {
-  // Already bound to a server row — history reload must not append a second bubble
-  // (typewriter may still have streamComplete=false when send ends + loadHistory races).
+  // Already bound to a server row — history reload must not append a second bubble.
   if (message.serverMessageId) return false;
   if (message.status === 'sending') return true;
   if (message.streamComplete === false) return true;

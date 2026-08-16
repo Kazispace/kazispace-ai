@@ -13,7 +13,6 @@ import { ReferralPrompt } from "./referral-prompt";
 import { SpaceNudgePrompt } from "./space-nudge-prompt";
 import { UpgradeResearchCta } from "./upgrade-research-cta";
 import { SearchCapabilityChip } from "./search-capability-chip";
-import { StreamingText } from "@/components/chat/streaming-text";
 import { EnglishTutorEnvelopeBlocks } from "@/components/english/envelope/english-tutor-envelope-blocks";
 import {
   stripMarkdownSourcesSection,
@@ -79,7 +78,6 @@ interface MessageBubbleProps {
   onJobCardClick?: (card: ChatJobCard) => void;
   referralDisabled?: boolean;
   actionsDisabled?: boolean;
-  onStreamComplete?: () => void;
 }
 
 export function MessageBubble({
@@ -123,7 +121,6 @@ export function MessageBubble({
   onJobCardClick,
   referralDisabled,
   actionsDisabled,
-  onStreamComplete,
 }: MessageBubbleProps) {
   const t = useTranslations("chat");
   const isUser = role === "user";
@@ -197,7 +194,13 @@ export function MessageBubble({
 
   const renderAssistantContent = () => {
     // Empty or BE placeholder ("…") while waiting — show Processing… (KAZI-186).
-    if (isStreaming && isPlaceholderReply(content ?? "")) {
+    // Waiting for full HTTP reply — Processing only (KAZI-561).
+    // Do not typewriter a complete string; BE is not token-streaming.
+    if (
+      !isUser &&
+      (isStreaming || !streamComplete) &&
+      isPlaceholderReply(content ?? "")
+    ) {
       return (
         <span className="inline-flex items-center gap-2 text-muted-foreground">
           <span className="inline-flex gap-1 align-middle" aria-hidden>
@@ -207,12 +210,6 @@ export function MessageBubble({
           </span>
           <span>{processingLabel}</span>
         </span>
-      );
-    }
-
-    if (!isUser && content && !streamComplete) {
-      return (
-        <StreamingText text={content} onComplete={onStreamComplete} />
       );
     }
 

@@ -1373,7 +1373,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
           <span className="text-xs text-gray-600">
             <strong className="text-gray-900">{tClinic("guestBanner")}</strong>
           </span>
-          <Link href={`/${locale}/login`}>
+          <Link href={`/${locale}/login`} prefetch={false}>
             <Button size="sm" variant="secondary" className="h-8 text-xs">
               {tClinic("signIn")}
             </Button>
@@ -1514,11 +1514,6 @@ export function ClinicShell({ locale }: ClinicShellProps) {
                         pinToLatestOnSend();
                         void retryMessage(msg.id);
                       }
-                    : undefined
-                }
-                onStreamComplete={
-                  !isAgentMode && msg.streamComplete === false
-                    ? () => markStreamComplete(msg.id)
                     : undefined
                 }
                 onReferralAccept={

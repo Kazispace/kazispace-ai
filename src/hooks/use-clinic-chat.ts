@@ -341,7 +341,9 @@ export function useClinicChat(locale?: string) {
             ? { serverMessageId: assistantMessageId }
             : {}),
           pendingCapability: undefined,
-          streamComplete: false,
+          // Full HTTP reply — render Markdown immediately (KAZI-561).
+          // Never leave streamComplete=false for a complete string (fake typewriter).
+          streamComplete: true,
         });
 
         publishSessionNavInvalidate();

@@ -81,6 +81,7 @@ export function Header({ locale }: HeaderProps) {
           <LocaleSwitcher locale={locale} variant="header" />
           <Link
             href={`/${locale}/mine`}
+            prefetch={false}
             className="text-sm font-medium text-white/75 hover:text-kazi-orange transition-colors"
           >
             {t("profile")}
