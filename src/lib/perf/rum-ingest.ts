@@ -10,29 +10,47 @@ export type RumIngestPolicy = {
     period_seconds: number;
     burst: number;
   };
-  same_site: boolean;
   require_same_origin: boolean;
+  trusted_client_ip_header: string;
+  max_buckets: number;
+  bucket_ttl_seconds: number;
 };
 
 export const RUM_INGEST_POLICY: RumIngestPolicy = ingestPolicyJson;
 
-const buckets = new Map<string, { tokens: number; updatedAt: number }>();
+const UNKNOWN_KEY = 'unknown';
+
+type Bucket = { tokens: number; updatedAt: number; lastSeen: number };
+
+const buckets = new Map<string, Bucket>();
 
 export function resetRumIngestLimiterForTests(): void {
   buckets.clear();
 }
 
-export function rumClientKey(request: Request): string {
-  const nf = request.headers.get('x-nf-client-connection-ip')?.trim();
-  if (nf) return nf;
-  const real = request.headers.get('x-real-ip')?.trim();
-  if (real) return real;
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const first = forwarded.split(',')[0]?.trim();
-    if (first) return first;
+export function rumIngestBucketCountForTests(): number {
+  return buckets.size;
+}
+
+function isIpLiteral(value: string): boolean {
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(value)) {
+    return value.split('.').every((octet) => Number(octet) <= 255);
   }
-  return 'unknown';
+  if (value.includes(':') && /^[0-9a-fA-F:]+$/.test(value) && value.length <= 45) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Only the proxy-injected trusted header. Client XFF / X-Real-IP are ignored.
+ * Missing or non-IP values share the fixed `unknown` bucket.
+ */
+export function rumClientKey(request: Request): string {
+  const header = RUM_INGEST_POLICY.trusted_client_ip_header;
+  const raw = request.headers.get(header)?.trim() ?? '';
+  if (raw && isIpLiteral(raw)) return raw;
+  return UNKNOWN_KEY;
 }
 
 export function declaredContentLength(request: Request): number | null {
@@ -51,37 +69,43 @@ export function rejectOversizedContentLength(
   return length != null && length > maxBytes;
 }
 
+function requestHost(request: Request): string {
+  try {
+    return new URL(request.url).host;
+  } catch {
+    return request.headers.get('host') ?? '';
+  }
+}
+
+function hostOf(raw: string | null): string | null {
+  if (!raw) return null;
+  try {
+    return new URL(raw).host;
+  } catch {
+    return null;
+  }
+}
+
+/** Exact same-origin only. `same-site` sibling hosts are rejected. */
 export function isSameOriginRumRequest(request: Request): boolean {
   const site = request.headers.get('sec-fetch-site');
-  if (site === 'same-origin' || site === 'same-site') return true;
+  if (site === 'same-origin') return true;
+  if (site && site !== 'none') return false;
 
-  let expectedHost = '';
-  try {
-    expectedHost = new URL(request.url).host;
-  } catch {
-    expectedHost = request.headers.get('host') ?? '';
-  }
-  if (!expectedHost) return false;
-
-  const origin = request.headers.get('origin');
-  if (origin) {
-    try {
-      return new URL(origin).host === expectedHost;
-    } catch {
-      return false;
-    }
-  }
-
-  const referer = request.headers.get('referer');
-  if (referer) {
-    try {
-      return new URL(referer).host === expectedHost;
-    } catch {
-      return false;
-    }
-  }
-
+  const expected = requestHost(request);
+  if (!expected) return false;
+  const originHost = hostOf(request.headers.get('origin'));
+  if (originHost) return originHost === expected;
+  const refererHost = hostOf(request.headers.get('referer'));
+  if (refererHost) return refererHost === expected;
   return false;
+}
+
+function sweepExpired(now: number, policy: RumIngestPolicy): void {
+  const ttlMs = policy.bucket_ttl_seconds * 1000;
+  for (const [key, bucket] of buckets) {
+    if (now - bucket.lastSeen > ttlMs) buckets.delete(key);
+  }
 }
 
 export function allowRumIngest(
@@ -89,16 +113,19 @@ export function allowRumIngest(
   now: number = Date.now(),
   policy: RumIngestPolicy = RUM_INGEST_POLICY
 ): boolean {
+  sweepExpired(now, policy);
   const { points, period_seconds, burst } = policy.rate;
   const refillPerMs = points / (period_seconds * 1000);
   let bucket = buckets.get(key);
   if (!bucket) {
-    bucket = { tokens: burst, updatedAt: now };
+    if (buckets.size >= policy.max_buckets) return false;
+    bucket = { tokens: burst, updatedAt: now, lastSeen: now };
     buckets.set(key, bucket);
   }
   const elapsed = Math.max(0, now - bucket.updatedAt);
   bucket.tokens = Math.min(burst, bucket.tokens + elapsed * refillPerMs);
   bucket.updatedAt = now;
+  bucket.lastSeen = now;
   if (bucket.tokens < 1) return false;
   bucket.tokens -= 1;
   return true;

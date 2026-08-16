@@ -12,9 +12,17 @@ import { fileURLToPath } from 'url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NEXT_DIR = path.join(ROOT, '.next');
 const OPTIONAL = process.argv.includes('--optional');
+const BUDGET_PATH = path.join(ROOT, 'src/lib/perf/clinic-js-budget.json');
 
-/** Must stay in sync with src/lib/perf/budgets.ts */
-const PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES = 1_200_000;
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+const clinicJsBudget = readJson(BUDGET_PATH);
+const PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES =
+  clinicJsBudget.public_clinic_first_js_decoded_bytes;
+const TRANSFER_HINT_BYTES =
+  clinicJsBudget.public_clinic_first_js_transfer_hint_bytes;
 
 function walkJs(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;
@@ -24,10 +32,6 @@ function walkJs(dir, acc = []) {
     else if (entry.name.endsWith('.js')) acc.push(full);
   }
   return acc;
-}
-
-function readJson(file) {
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
 /** Public Clinic first paint: locale home (redirect) + /chat. */
@@ -108,8 +112,9 @@ function main() {
 
   const kb = (total / 1024).toFixed(1);
   const budgetKb = (PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES / 1024).toFixed(0);
+  const hintKb = (TRANSFER_HINT_BYTES / 1024).toFixed(0);
   console.log(
-    `KAZI-567 Clinic first-load JS: ${kb} KB decoded (${measured.length} files); budget ${budgetKb} KB`
+    `KAZI-567 Clinic first-load JS: ${kb} KB decoded (${measured.length} files); budget ${budgetKb} KB decoded; transfer hint ${hintKb} KB (not a gate)`
   );
 
   if (total > PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES) {

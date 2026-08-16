@@ -1,7 +1,7 @@
 # KAZI-567 rum_ingest (src/lib/perf/rum-ingest-policy.json):
-# POST /api/rum — 30 req / 60s / IP, max body 2048 bytes, same-origin.
-# App route fail-closes (Content-Length + capped read + token bucket).
-# CN public-edge: include deploy/rum-ingest.nginx.conf
+# POST /api/rum — 30 req / 60s / IP, max body 2048 bytes, exact same-origin.
+# Intl edge: netlify/edge-functions/rum-ingest.js (rateLimit + x-rum-client-ip).
+# CN/self-hosted: deploy/public-edge/nginx.conf includes rum-ingest.conf.
 
 [build]
   command = "npm run build"
@@ -15,3 +15,6 @@
   NEXT_PUBLIC_SPACES_ENABLED = "true"
   NEXT_PUBLIC_WORKSPACE_ASSET_RAIL_V2 = "true"
 
+[[edge_functions]]
+  path = "/api/rum"
+  function = "rum-ingest"

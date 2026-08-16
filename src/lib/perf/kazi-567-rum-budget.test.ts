@@ -3,7 +3,13 @@ import { readFileSync } from 'fs';
 import path from 'path';
 
 import { POST } from '@/app/api/rum/route';
-import { PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES, RUM_METRIC_NAMES } from '@/lib/perf/budgets';
+import {
+  CLINIC_JS_BUDGET_UNIT,
+  PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES,
+  PUBLIC_CLINIC_FIRST_JS_TRANSFER_HINT_BYTES,
+  RUM_METRIC_NAMES,
+} from '@/lib/perf/budgets';
+import clinicJsBudget from '@/lib/perf/clinic-js-budget.json';
 import { resetRumIngestLimiterForTests } from '@/lib/perf/rum-ingest';
 import { sanitizeRumEvent } from '@/lib/perf/rum';
 
@@ -35,7 +41,14 @@ describe('KAZI-567 RUM + budget gates', () => {
     expect(RUM_METRIC_NAMES).toEqual(
       expect.arrayContaining(['LCP', 'INP', 'CLS', 'route-transition'])
     );
-    expect(PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES).toBe(1_200_000);
+    expect(PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES).toBe(
+      clinicJsBudget.public_clinic_first_js_decoded_bytes
+    );
+    expect(PUBLIC_CLINIC_FIRST_JS_TRANSFER_HINT_BYTES).toBe(
+      clinicJsBudget.public_clinic_first_js_transfer_hint_bytes
+    );
+    expect(CLINIC_JS_BUDGET_UNIT).toBe('decoded_bytes');
+    expect(clinicJsBudget.transfer_hint_is_gate).toBe(false);
   });
 
   it('locale layout mounts WebVitalsReporter', () => {
@@ -101,7 +114,8 @@ describe('KAZI-567 RUM + budget gates', () => {
     );
     expect(src).toMatch(/isClinicFirstLoadPage/);
     expect(src).toMatch(/\(workspace\)\/chat/);
-    expect(src).toMatch(/PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES = 1_200_000/);
+    expect(src).toMatch(/clinic-js-budget\.json/);
+    expect(src).not.toMatch(/1_200_000/);
   });
 
   it('registers web-vitals observers once', () => {

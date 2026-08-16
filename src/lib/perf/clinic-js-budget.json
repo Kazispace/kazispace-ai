@@ -1,0 +1,7 @@
+{
+  "unit": "decoded_bytes",
+  "public_clinic_first_js_decoded_bytes": 1200000,
+  "public_clinic_first_js_transfer_hint_bytes": 450000,
+  "transfer_hint_unit": "transfer_bytes",
+  "transfer_hint_is_gate": false
+}

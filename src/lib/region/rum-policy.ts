@@ -1,4 +1,4 @@
-import { BUNDLED_DIRECTORY, findRowByApiBase } from './directory';
+import { findRowByApiBase } from './directory';
 import { getSession } from './session';
 import type { RegionSession } from './types';
 import rumRegionPolicyJson from './rum-region-policy.json';
@@ -54,19 +54,13 @@ export function isAllowedRumEndpoint(endpoint: string): boolean {
 export function resolveRegionIdForRum(
   session: RegionSession | null
 ): string | null {
-  if (session) {
-    return findRowByApiBase(session.home_api_base)?.region_id ?? null;
-  }
-  return (
-    BUNDLED_DIRECTORY.regions.find(
-      (row) => row.data_region === BUNDLED_DIRECTORY.default_data_region
-    )?.region_id ?? null
-  );
+  if (!session) return null;
+  return findRowByApiBase(session.home_api_base)?.region_id ?? null;
 }
 
 /**
- * Region Profile RUM contract. Missing row / undeclared endpoint → off.
- * Does not branch on data_region names in Clinic.
+ * Region Profile RUM contract. Missing session / unknown region / undeclared
+ * endpoint → off (fail-closed). Does not infer guest = bundled default region.
  */
 export function resolveRumClientPolicy(
   sessionOverride?: RegionSession | null

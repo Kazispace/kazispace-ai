@@ -1,13 +1,19 @@
 /**
  * KAZI-567 — named FE performance budgets (RUM + CI).
- * Cite these from tests and the clinic JS budget script.
+ * JS byte caps come from clinic-js-budget.json (shared with the build script).
  */
 
-/** Public Clinic first-load JS (decoded bytes of first-party chunks). */
-export const PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES = 1_200_000;
+import clinicJsBudget from './clinic-js-budget.json';
 
-/** Soft transfer target from the 2026-08-16 audit (~398KB). */
-export const PUBLIC_CLINIC_FIRST_JS_TRANSFER_HINT_BYTES = 450_000;
+/** Public Clinic first-load JS (decoded bytes of first-party chunks). */
+export const PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES =
+  clinicJsBudget.public_clinic_first_js_decoded_bytes;
+
+/** Soft transfer hint — not a CI gate (`transfer_hint_is_gate: false`). */
+export const PUBLIC_CLINIC_FIRST_JS_TRANSFER_HINT_BYTES =
+  clinicJsBudget.public_clinic_first_js_transfer_hint_bytes;
+
+export const CLINIC_JS_BUDGET_UNIT = clinicJsBudget.unit;
 
 /** Route transition mark — log if client navigation exceeds this. */
 export const ROUTE_TRANSITION_BUDGET_MS = 1_500;

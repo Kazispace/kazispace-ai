@@ -10,6 +10,8 @@ import {
   readBodyCapped,
   rejectOversizedContentLength,
   resetRumIngestLimiterForTests,
+  rumClientKey,
+  rumIngestBucketCountForTests,
 } from '@/lib/perf/rum-ingest';
 import {
   RUM_REGION_POLICY,
@@ -117,7 +119,7 @@ describe('KAZI-567 P1 rum ingest + region contract', () => {
     expect(allowRumIngest(key, now)).toBe(false);
   });
 
-  it('same-origin ingest accepts Sec-Fetch-Site and matching Origin', () => {
+  it('same-origin ingest requires exact origin, not same-site', () => {
     expect(
       isSameOriginRumRequest(
         new Request('http://localhost/api/rum', {
@@ -127,16 +129,23 @@ describe('KAZI-567 P1 rum ingest + region contract', () => {
     ).toBe(true);
     expect(
       isSameOriginRumRequest(
+        new Request('http://localhost/api/rum', {
+          headers: { 'sec-fetch-site': 'same-site' },
+        })
+      )
+    ).toBe(false);
+    expect(
+      isSameOriginRumRequest(
         rumPost({ headers: { origin: 'https://other.example' } })
       )
     ).toBe(false);
+    expect(isSameOriginRumRequest(rumPost())).toBe(true);
   });
 
-  it('CN / missing region default-off; intl guest default-on', () => {
+  it('missing / unknown region default-off; known intl session can enable', () => {
     expect(resolveRumClientPolicy(null)).toMatchObject({
-      region_id: 'us-west',
-      enabled: true,
-      endpoint: '/api/rum',
+      region_id: null,
+      enabled: false,
     });
 
     expect(
@@ -160,6 +169,53 @@ describe('KAZI-567 P1 rum ingest + region contract', () => {
         directory_version: 4,
       })
     ).toMatchObject({ enabled: false, region_id: null });
+
+    expect(
+      resolveRumClientPolicy({
+        token: 't',
+        home_api_base: 'https://bot.kazispace.ai',
+        data_region: 'global',
+        directory_version: 4,
+      })
+    ).toMatchObject({
+      region_id: 'us-west',
+      enabled: true,
+      endpoint: '/api/rum',
+    });
+  });
+
+  it('ignores client XFF / X-Real-IP; only trusted proxy header is a key', () => {
+    const spoofed = rumPost({
+      headers: {
+        'x-forwarded-for': '203.0.113.9',
+        'x-real-ip': '198.51.100.7',
+      },
+    });
+    expect(rumClientKey(spoofed)).toBe('unknown');
+
+    const trusted = rumPost({
+      headers: {
+        'x-forwarded-for': '203.0.113.9',
+        'x-rum-client-ip': '203.0.113.10',
+      },
+    });
+    expect(rumClientKey(trusted)).toBe('203.0.113.10');
+  });
+
+  it('bounds the in-process bucket map (TTL + max, fail-closed)', () => {
+    const now = 1_000_000;
+    const tiny = {
+      ...RUM_INGEST_POLICY,
+      max_buckets: 2,
+      bucket_ttl_seconds: 1,
+    };
+    expect(allowRumIngest('10.0.0.1', now, tiny)).toBe(true);
+    expect(allowRumIngest('10.0.0.2', now, tiny)).toBe(true);
+    expect(allowRumIngest('10.0.0.3', now, tiny)).toBe(false);
+    expect(rumIngestBucketCountForTests()).toBe(2);
+
+    expect(allowRumIngest('10.0.0.1', now + 2_000, tiny)).toBe(true);
+    expect(rumIngestBucketCountForTests()).toBeLessThanOrEqual(2);
   });
 
   it('env can only force RUM off, not enable an undeclared CN endpoint', () => {
@@ -191,19 +247,31 @@ describe('KAZI-567 P1 rum ingest + region contract', () => {
     expect(isAllowedRumEndpoint('http://localhost/api/rum')).toBe(false);
   });
 
-  it('deploy ingest policy is the single rate/body authority', () => {
-    const nginx = readRel('../deploy/rum-ingest.nginx.conf');
+  it('deploy ingest policy is wired on public-edge and Netlify', () => {
+    const edgeNginx = readRel('../deploy/public-edge/nginx.conf');
+    const rumNginx = readRel('../deploy/public-edge/rum-ingest.conf');
     const netlify = readRel('../netlify.toml');
+    const edgeFn = readRel('../netlify/edge-functions/rum-ingest.js');
     expect(RUM_INGEST_POLICY.max_body_bytes).toBe(2048);
     expect(RUM_INGEST_POLICY.rate).toEqual({
       points: 30,
       period_seconds: 60,
       burst: 10,
     });
-    expect(nginx).toMatch(/client_max_body_size 2k/);
-    expect(nginx).toMatch(/rate=30r\/m/);
-    expect(nginx).toMatch(/burst=10/);
-    expect(netlify).toMatch(/rum-ingest-policy\.json/);
+    expect(RUM_INGEST_POLICY.require_same_origin).toBe(true);
+    expect(RUM_INGEST_POLICY.trusted_client_ip_header).toBe('x-rum-client-ip');
+    expect(edgeNginx).toMatch(/include rum-ingest\.conf/);
+    expect(rumNginx).toMatch(/client_max_body_size 2k/);
+    expect(rumNginx).toMatch(/rate=30r\/m/);
+    expect(rumNginx).toMatch(/burst=10/);
+    expect(rumNginx).toMatch(/X-Rum-Client-Ip \$remote_addr/);
+    expect(rumNginx).toMatch(/proxy_set_header X-Forwarded-For ""/);
+    expect(netlify).toMatch(/function = "rum-ingest"/);
+    expect(netlify).toMatch(/path = "\/api\/rum"/);
+    expect(edgeFn).toMatch(/windowLimit: 30/);
+    expect(edgeFn).toMatch(/windowSize: 60/);
+    expect(edgeFn).toMatch(/x-rum-client-ip/);
+    expect(edgeFn).toMatch(/headers\.delete\('x-forwarded-for'\)/);
     expect(RUM_REGION_POLICY.fail_closed).toBe(true);
     expect(RUM_REGION_POLICY.by_region_id['cn-chengdu']?.enabled).toBe(false);
     expect(RUM_REGION_POLICY.by_region_id['us-west']?.enabled).toBe(true);
