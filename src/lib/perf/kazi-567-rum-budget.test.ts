@@ -103,6 +103,9 @@ describe('KAZI-567 RUM + budget gates', () => {
     );
     expect(src).toMatch(/onLCP\(report\)/);
     expect(src).toMatch(/Register once/);
-    expect(src).not.toMatch(/onLCP\(report\);[\s\S]*\}, \[pathname\]\)/);
+    const afterOnLcp = src.slice(src.indexOf('onLCP(report)'));
+    const observerBlock = afterOnLcp.slice(0, afterOnLcp.indexOf('useEffect'));
+    expect(observerBlock).toMatch(/\},\s*\[\]\);/);
+    expect(observerBlock).not.toMatch(/\[pathname\]/);
   });
 });
