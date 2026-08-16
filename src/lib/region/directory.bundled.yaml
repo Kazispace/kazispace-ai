@@ -1,6 +1,7 @@
 # Source SSOT mirror (backend): kazispace-backend/backend/config/region_profiles/_directory.yaml
 # FE runtime loads directory.bundled.json (typed JSON — no YAML parser in client chunks).
-# Keep this file in sync when regenerating the JSON snapshot (KAZI-565 / KAZI-533).
+# Regenerate: npm run sync:region-directory
+# CI gate: node scripts/sync-region-directory.mjs --check
 schema_version: "1.0"
 directory_version: 4
 default_data_region: global

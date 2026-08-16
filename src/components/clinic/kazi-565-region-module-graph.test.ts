@@ -55,4 +55,15 @@ describe('KAZI-565 region directory module graph', () => {
     expect(json.directory_version).toBe(4);
     expect(json.regions.length).toBeGreaterThan(0);
   });
+
+  it('YAML mirror and JSON snapshot are semantically equal', () => {
+    const { spawnSync } = require('child_process') as typeof import('child_process');
+    const result = spawnSync(
+      process.execPath,
+      ['scripts/sync-region-directory.mjs', '--check'],
+      { cwd: path.resolve(root, '..'), encoding: 'utf8' }
+    );
+    expect(result.status, result.stderr || result.stdout).toBe(0);
+    expect(result.stdout).toMatch(/YAML↔JSON snapshot OK/);
+  });
 });
