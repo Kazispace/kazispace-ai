@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getSpace } from '@/lib/spaces-api';
 import { CLINIC_SPACE_ID, isSpacesEnabled } from '@/lib/spaces/constants';
+import { SPACE_DETAIL_STALE_MS } from '@/lib/spaces/perf-policy';
 import { useAuthStore } from '@/lib/store';
 import type { SpaceDetail } from '@/types/spaces';
 
@@ -12,8 +13,16 @@ import type { SpaceDetail } from '@/types/spaces';
 export const spaceDetailQueryKey = (spaceId: string) =>
   ['space-detail', spaceId] as const;
 
-async function fetchSpaceDetail(spaceId: string): Promise<SpaceDetail> {
-  const res = await getSpace(spaceId);
+export async function fetchSpaceDetail(
+  spaceId: string,
+  signal?: AbortSignal
+): Promise<SpaceDetail> {
+  const res = await getSpace(spaceId, { signal });
+  if (signal?.aborted) {
+    const err = new Error('Aborted');
+    err.name = 'AbortError';
+    throw err;
+  }
   if (!res.success || !res.data) {
     throw new Error(res.error ?? 'Failed to load space');
   }
@@ -31,9 +40,9 @@ export function useSpaceDetail(spaceId: string | null) {
 
   const query = useQuery({
     queryKey: spaceDetailQueryKey(spaceId ?? ''),
-    queryFn: () => fetchSpaceDetail(spaceId!),
+    queryFn: ({ signal }) => fetchSpaceDetail(spaceId!, signal),
     enabled: queryEnabled,
-    staleTime: 30_000,
+    staleTime: SPACE_DETAIL_STALE_MS,
     retry: 1,
   });
 

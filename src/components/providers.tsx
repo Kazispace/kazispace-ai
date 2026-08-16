@@ -9,7 +9,10 @@ import { useAuthStore } from "@/lib/store";
 import { useTmaInit, reauthTelegramIfPossible } from "@/hooks/use-tma-init";
 import { isTelegramWebApp } from "@/lib/telegram";
 import { DEFAULT_LOCALE } from "@/lib/constants";
-import { ensureDirectoryLoaded } from "@/lib/region";
+import {
+  DIRECTORY_FALLBACK_DELAY_MS,
+  DIRECTORY_IDLE_TIMEOUT_MS,
+} from "@/lib/spaces/perf-policy";
 import type { User } from "@/types";
 
 function localeFromPathname(pathname: string): string {
@@ -34,12 +37,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   useTmaInit();
 
-  // KAZI-565: bundled directory is enough for first paint. Public refresh is
-  // background-only with idle/timeout so it does not compete with Clinic RSC.
+  // KAZI-565: do not statically import region/directory (YAML parser) into the
+  // Providers chunk. Bundled directory is enough for first paint; public refresh
+  // is a dynamic import behind idle/timeout.
   useEffect(() => {
     let cancelled = false;
     const run = () => {
-      if (!cancelled) void ensureDirectoryLoaded();
+      if (cancelled) return;
+      void import("@/lib/region").then((m) => {
+        if (!cancelled) void m.ensureDirectoryLoaded();
+      });
     };
     let idleId: number | undefined;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -53,9 +60,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       }
     ).requestIdleCallback;
     if (typeof ric === "function") {
-      idleId = ric(run, { timeout: 2500 });
+      idleId = ric(run, { timeout: DIRECTORY_IDLE_TIMEOUT_MS });
     } else {
-      timeoutId = setTimeout(run, 2000);
+      timeoutId = setTimeout(run, DIRECTORY_FALLBACK_DELAY_MS);
     }
     return () => {
       cancelled = true;

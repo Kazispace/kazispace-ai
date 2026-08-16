@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 
 /**
- * KAZI-565 — public Clinic first paint must not statically pull rails / shell.
+ * KAZI-565 — public Clinic first paint must not statically pull rails / shell / YAML.
  */
 describe('KAZI-565 dynamic ClinicShell and rails', () => {
   it('chat page uses next/dynamic for ClinicShell', () => {
@@ -24,11 +24,19 @@ describe('KAZI-565 dynamic ClinicShell and rails', () => {
       'utf8'
     );
     expect(src).toMatch(/next\/dynamic/);
-    expect(src).not.toMatch(
-      /import\s+\{\s*CvWorkspaceRail\s*\}\s+from/
+    expect(src).not.toMatch(/import\s+\{\s*CvWorkspaceRail\s*\}\s+from/);
+    expect(src).not.toMatch(/import\s+\{\s*JobDetailRail\s*\}\s+from/);
+  });
+
+  it('Providers does not statically import ensureDirectoryLoaded', () => {
+    const src = readFileSync(
+      path.resolve(__dirname, '../providers.tsx'),
+      'utf8'
     );
     expect(src).not.toMatch(
-      /import\s+\{\s*JobDetailRail\s*\}\s+from/
+      /import\s*\{[^}]*ensureDirectoryLoaded[^}]*\}\s*from\s*["']@\/lib\/region["']/
     );
+    expect(src).toMatch(/import\(["']@\/lib\/region["']\)/);
+    expect(src).toMatch(/DIRECTORY_IDLE_TIMEOUT_MS/);
   });
 });
