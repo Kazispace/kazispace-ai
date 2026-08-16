@@ -10,6 +10,7 @@ import {
   type RumRating,
 } from '@/lib/perf/budgets';
 import { postRumEvent } from '@/lib/perf/rum';
+import { resolveRumClientPolicy, shouldSampleRum } from '@/lib/region/rum-policy';
 
 function rumSessionId(): string {
   const key = 'ks.rum.session.v1';
@@ -38,6 +39,7 @@ function toEvent(metric: Metric, route: string, session: string): RumEvent {
 
 /**
  * KAZI-567: LCP/INP/CLS/TTFB/FCP + client route-transition duration.
+ * Observers start only when Region Profile rum.enabled is on.
  * First-party beacon only — does not replace Langfuse LLM traces.
  */
 export function WebVitalsReporter() {
@@ -49,6 +51,8 @@ export function WebVitalsReporter() {
   const lastPath = useRef<string | null>(null);
 
   useEffect(() => {
+    const policy = resolveRumClientPolicy();
+    if (!policy.enabled || !shouldSampleRum(policy.sample_rate)) return;
     sessionRef.current = rumSessionId();
     lastPath.current = pathname || '/';
     const report = (metric: Metric) => {
@@ -66,6 +70,11 @@ export function WebVitalsReporter() {
   }, []);
 
   useEffect(() => {
+    const policy = resolveRumClientPolicy();
+    if (!policy.enabled || !shouldSampleRum(policy.sample_rate)) {
+      lastPath.current = pathname;
+      return;
+    }
     const now = performance.now();
     if (lastPath.current && lastPath.current !== pathname) {
       const value = now - navStartedAt.current;

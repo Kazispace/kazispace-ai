@@ -4,6 +4,7 @@ import path from 'path';
 
 import { POST } from '@/app/api/rum/route';
 import { PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES, RUM_METRIC_NAMES } from '@/lib/perf/budgets';
+import { resetRumIngestLimiterForTests } from '@/lib/perf/rum-ingest';
 import { sanitizeRumEvent } from '@/lib/perf/rum';
 
 describe('KAZI-567 RUM + budget gates', () => {
@@ -59,10 +60,16 @@ describe('KAZI-567 RUM + budget gates', () => {
   });
 
   it('accepts a sanitized RUM POST and rejects junk', async () => {
+    resetRumIngestLimiterForTests();
     const log = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const headers = {
+      origin: 'http://localhost',
+      'content-type': 'application/json',
+    };
     const ok = await POST(
       new Request('http://localhost/api/rum', {
         method: 'POST',
+        headers,
         body: JSON.stringify({
           name: 'INP',
           value: 80,
@@ -79,6 +86,7 @@ describe('KAZI-567 RUM + budget gates', () => {
     const bad = await POST(
       new Request('http://localhost/api/rum', {
         method: 'POST',
+        headers,
         body: JSON.stringify({ name: 'HACK', value: 1 }),
       })
     );

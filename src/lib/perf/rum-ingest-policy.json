@@ -1,0 +1,13 @@
+{
+  "schema_version": "1",
+  "path": "/api/rum",
+  "methods": ["POST"],
+  "max_body_bytes": 2048,
+  "rate": {
+    "points": 30,
+    "period_seconds": 60,
+    "burst": 10
+  },
+  "same_site": true,
+  "require_same_origin": true
+}

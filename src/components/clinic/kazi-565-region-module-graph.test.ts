@@ -56,6 +56,17 @@ describe('KAZI-565 region directory module graph', () => {
     expect(json.regions.length).toBeGreaterThan(0);
   });
 
+  it('RUM policy uses region leaves — not the barrel or yaml', () => {
+    const policy = readSrc('lib/region/rum-policy.ts');
+    const reporter = readSrc('components/perf/web-vitals-reporter.tsx');
+    expect(policy).toMatch(/from ['"]\.\/directory['"]/);
+    expect(policy).toMatch(/from ['"]\.\/session['"]/);
+    expect(policy).not.toMatch(/from ['"]@\/lib\/region['"]/);
+    expect(policy).not.toMatch(/from ['"]yaml['"]/);
+    expect(reporter).toMatch(/from ['"]@\/lib\/region\/rum-policy['"]/);
+    expect(reporter).not.toMatch(/from ['"]@\/lib\/region['"]/);
+  });
+
   it('YAML mirror and JSON snapshot are semantically equal', () => {
     const { spawnSync } = require('child_process') as typeof import('child_process');
     const result = spawnSync(

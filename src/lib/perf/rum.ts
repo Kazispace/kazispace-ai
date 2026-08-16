@@ -1,8 +1,7 @@
 import type { RumEvent, RumMetricName, RumRating } from '@/lib/perf/budgets';
 import { RUM_METRIC_NAMES } from '@/lib/perf/budgets';
-
-const RUM_PATH = '/api/rum';
-const MAX_BODY = 2048;
+import { RUM_INGEST_POLICY } from '@/lib/perf/rum-ingest';
+import { resolveRumClientPolicy, shouldSampleRum } from '@/lib/region/rum-policy';
 
 export function isRumMetricName(name: string): name is RumMetricName {
   return (RUM_METRIC_NAMES as readonly string[]).includes(name);
@@ -43,18 +42,21 @@ export function sanitizeRumEvent(raw: unknown): RumEvent | null {
 
 export function postRumEvent(event: RumEvent): void {
   if (typeof window === 'undefined') return;
+  const policy = resolveRumClientPolicy();
+  if (!policy.enabled || !policy.endpoint) return;
+  if (!shouldSampleRum(policy.sample_rate)) return;
   const body = JSON.stringify(event);
-  if (body.length > MAX_BODY) return;
+  if (body.length > RUM_INGEST_POLICY.max_body_bytes) return;
   try {
     if (navigator.sendBeacon) {
       const blob = new Blob([body], { type: 'application/json' });
-      navigator.sendBeacon(RUM_PATH, blob);
+      navigator.sendBeacon(policy.endpoint, blob);
       return;
     }
   } catch {
     // fall through
   }
-  void fetch(RUM_PATH, {
+  void fetch(policy.endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body,

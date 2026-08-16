@@ -1,3 +1,8 @@
+# KAZI-567 rum_ingest (src/lib/perf/rum-ingest-policy.json):
+# POST /api/rum — 30 req / 60s / IP, max body 2048 bytes, same-origin.
+# App route fail-closes (Content-Length + capped read + token bucket).
+# CN public-edge: include deploy/rum-ingest.nginx.conf
+
 [build]
   command = "npm run build"
   publish = ".next"
