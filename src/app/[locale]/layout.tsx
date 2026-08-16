@@ -5,6 +5,7 @@ import { SUPPORTED_LOCALES } from "@/lib/constants";
 import { Providers } from "@/components/providers";
 import { AppChrome } from "@/components/app-chrome";
 import { TmaScript } from "@/components/tma/tma-script";
+import { WebVitalsReporter } from "@/components/perf/web-vitals-reporter";
 
 export function generateStaticParams() {
   return SUPPORTED_LOCALES.map((locale) => ({ locale }));
@@ -41,6 +42,7 @@ export default async function LocaleLayout({
               {children}
             </div>
             <AppChrome />
+            <WebVitalsReporter />
           </NextIntlClientProvider>
         </Providers>
       </body>
