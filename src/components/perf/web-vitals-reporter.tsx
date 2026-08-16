@@ -50,16 +50,20 @@ export function WebVitalsReporter() {
 
   useEffect(() => {
     sessionRef.current = rumSessionId();
-    const route = pathname || '/';
+    lastPath.current = pathname || '/';
     const report = (metric: Metric) => {
-      postRumEvent(toEvent(metric, route, sessionRef.current));
+      postRumEvent(
+        toEvent(metric, lastPath.current || '/', sessionRef.current)
+      );
     };
     onLCP(report);
     onINP(report);
     onCLS(report);
     onTTFB(report);
     onFCP(report);
-  }, [pathname]);
+    // Register once — web-vitals observers must not stack on client navigations.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const now = performance.now();

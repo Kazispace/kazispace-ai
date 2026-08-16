@@ -21,5 +21,16 @@ export async function POST(request: Request) {
   if (!event) {
     return NextResponse.json({ error: 'invalid rum event' }, { status: 400 });
   }
+  // Structured, no-PII line for first-party 对账 (route + session + metric).
+  console.info(
+    JSON.stringify({
+      type: 'rum',
+      name: event.name,
+      value: event.value,
+      rating: event.rating,
+      route: event.route,
+      session: event.session ?? null,
+    })
+  );
   return new NextResponse(null, { status: 204 });
 }

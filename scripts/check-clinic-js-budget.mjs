@@ -30,6 +30,17 @@ function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
 
+/** Public Clinic first paint: locale home (redirect) + /chat. */
+function isClinicFirstLoadPage(key) {
+  const normalized = String(key);
+  return (
+    normalized === '/[locale]/page' ||
+    normalized.endsWith('/[locale]/page') ||
+    normalized.includes('/(workspace)/chat') ||
+    /\/chat\/page$/.test(normalized)
+  );
+}
+
 function collectFirstLoadFiles() {
   const files = new Set();
   const buildManifest = path.join(NEXT_DIR, 'build-manifest.json');
@@ -40,16 +51,12 @@ function collectFirstLoadFiles() {
     for (const key of ['polyfillFiles', 'lowPriorityFiles', 'rootMainFiles']) {
       for (const file of manifest[key] ?? []) files.add(file);
     }
-    for (const pageFiles of Object.values(manifest.pages ?? {})) {
-      if (!Array.isArray(pageFiles)) continue;
-      for (const file of pageFiles) files.add(file);
-    }
   }
 
   if (fs.existsSync(appBuildManifest)) {
     const manifest = readJson(appBuildManifest);
-    for (const pageFiles of Object.values(manifest.pages ?? {})) {
-      if (!Array.isArray(pageFiles)) continue;
+    for (const [pageKey, pageFiles] of Object.entries(manifest.pages ?? {})) {
+      if (!isClinicFirstLoadPage(pageKey) || !Array.isArray(pageFiles)) continue;
       for (const file of pageFiles) files.add(file);
     }
   }

@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import path from 'path';
 
+import { POST } from '@/app/api/rum/route';
 import { PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES, RUM_METRIC_NAMES } from '@/lib/perf/budgets';
 import { sanitizeRumEvent } from '@/lib/perf/rum';
 
@@ -55,5 +56,53 @@ describe('KAZI-567 RUM + budget gates', () => {
     );
     expect(send).toMatch(/0 history fetches/);
     expect(detail).toMatch(/dedupes concurrent history/);
+  });
+
+  it('accepts a sanitized RUM POST and rejects junk', async () => {
+    const log = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const ok = await POST(
+      new Request('http://localhost/api/rum', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'INP',
+          value: 80,
+          rating: 'good',
+          id: 'v4-inp',
+          route: '/en/chat',
+          session: 'rum_abc',
+        }),
+      })
+    );
+    expect(ok.status).toBe(204);
+    expect(log).toHaveBeenCalled();
+
+    const bad = await POST(
+      new Request('http://localhost/api/rum', {
+        method: 'POST',
+        body: JSON.stringify({ name: 'HACK', value: 1 }),
+      })
+    );
+    expect(bad.status).toBe(400);
+    log.mockRestore();
+  });
+
+  it('scopes the CI budget to public Clinic first-load pages', () => {
+    const src = readFileSync(
+      path.resolve(__dirname, '../../../scripts/check-clinic-js-budget.mjs'),
+      'utf8'
+    );
+    expect(src).toMatch(/isClinicFirstLoadPage/);
+    expect(src).toMatch(/\(workspace\)\/chat/);
+    expect(src).toMatch(/PUBLIC_CLINIC_FIRST_JS_DECODED_BYTES = 1_200_000/);
+  });
+
+  it('registers web-vitals observers once', () => {
+    const src = readFileSync(
+      path.resolve(__dirname, '../../components/perf/web-vitals-reporter.tsx'),
+      'utf8'
+    );
+    expect(src).toMatch(/onLCP\(report\)/);
+    expect(src).toMatch(/Register once/);
+    expect(src).not.toMatch(/onLCP\(report\);[\s\S]*\}, \[pathname\]\)/);
   });
 });
