@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { ChatHeader } from "./chat-header";
 import { WelcomeView } from "./welcome-view";
 import { MessageBubble } from "./message-bubble";
+import { ClinicMessageRow } from "./clinic-message-row";
 import { SwitchingOverlay } from "./switching-overlay";
 import { LayerIndicator } from "./layer-indicator";
 import { AgentSwitchDialog } from "./agent-switch-dialog";
@@ -112,9 +113,7 @@ import {
   resolveNextActionChatPrompt,
   resolveNextActionHref,
 } from "@/lib/next-action/resolve";
-import {
-  resolveStrategySelectTurnContext,
-} from "@/lib/strategy-select";
+import { mapStrategySelectTurnContexts } from "@/lib/strategy-select";
 import { resolveActionSelectSubmit } from "@/lib/next-action-submit";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
 import { isEnglishTutorReviseAction } from "@/lib/english-tutor/custom-components";
@@ -539,6 +538,10 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     (key) => tSessionNav(key)
   );
   const messages = isAgentMode ? agentMessages : clinicMessages;
+  const strategyContexts = useMemo(
+    () => mapStrategySelectTurnContexts(messages, locale),
+    [locale, messages]
+  );
   const agentActiveWorkflow = useMemo(
     () => (isAgentMode ? resolveWorkflowFromMessages(messages) : undefined),
     [isAgentMode, messages]
@@ -1113,31 +1116,43 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     await reloadClinicIfNeeded(result);
   };
 
-  const handleReferralAccept = async (agentId: string, messageId?: string) => {
-    if (messageId) dismissMessageReferral(messageId);
-    setPendingReferral(null);
-    if (isMockInterviewAgent(agentId)) {
-      const prompt = resolveNextActionChatPrompt(
-        { type: "mock_interview" },
-        locale
-      );
-      if (prompt) {
-        void handleSendFromNextAction(prompt);
+  const handleReferralAccept = useCallback(
+    async (agentId: string, messageId?: string) => {
+      if (messageId) dismissMessageReferral(messageId);
+      setPendingReferral(null);
+      if (isMockInterviewAgent(agentId)) {
+        const prompt = resolveNextActionChatPrompt(
+          { type: "mock_interview" },
+          locale
+        );
+        if (prompt) {
+          void handleSendFromNextAction(prompt);
+        }
+        return;
       }
-      return;
-    }
-    if (isEnglishTutorAgent(agentId)) {
-      routeEnglishPage();
-      return;
-    }
-    await handleAgentSelect(agentId);
-  };
+      if (isEnglishTutorAgent(agentId)) {
+        routeEnglishPage();
+        return;
+      }
+      await handleAgentSelect(agentId);
+    },
+    [
+      dismissMessageReferral,
+      handleAgentSelect,
+      handleSendFromNextAction,
+      locale,
+      routeEnglishPage,
+    ]
+  );
 
-  const handleReferralDismiss = (agentId: string, messageId?: string) => {
-    dismissReferral(agentId);
-    if (messageId) dismissMessageReferral(messageId);
-    setPendingReferral(null);
-  };
+  const handleReferralDismiss = useCallback(
+    (agentId: string, messageId?: string) => {
+      dismissReferral(agentId);
+      if (messageId) dismissMessageReferral(messageId);
+      setPendingReferral(null);
+    },
+    [dismissMessageReferral]
+  );
 
   const handleSpaceNudgeAccept = useCallback(
     async (nudge: SpaceNudgePayload, messageId?: string) => {
@@ -1282,6 +1297,14 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     isSending: isSending || isSwitching,
     ready: scrollReady,
   });
+
+  const handleRetryById = useCallback(
+    (messageId: string) => {
+      pinToLatestOnSend();
+      void retryMessage(messageId);
+    },
+    [pinToLatestOnSend, retryMessage]
+  );
 
   /** Same-thread research handoff from web_search upgrade CTA (KAZI-233). */
   const handleUpgradeResearch = useCallback(
@@ -1465,99 +1488,28 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             <p className="text-sm">{tSessions("sessionSwitching")}</p>
           </div>
         ) : (
-          messages.map((msg, messageIndex) => {
-            const referralEntry =
-              msg.referral &&
-              AGENT_REGISTRY.find((a) => a.agentId === msg.referral?.agentId);
-            const { activeNextActions, selectedStrategyPayload } =
-              resolveStrategySelectTurnContext(messages, messageIndex, locale);
-            return (
-              <MessageBubble
-                key={msg.id}
-                role={msg.role === "user" ? "user" : "assistant"}
-                content={msg.content}
-                messageId={msg.id}
-                serverMessageId={msg.serverMessageId}
-                feedbackEnabled={!isAgentMode}
-                intent={msg.intent}
-                status={msg.status}
-                referral={msg.referral}
-                spaceNudge={!isAgentMode ? msg.spaceNudge : undefined}
-                nextActions={msg.nextActions}
-                selectedStrategyPayload={selectedStrategyPayload}
-                assistantMeta={msg.assistantMeta}
-                cards={msg.cards}
-                citations={msg.citations}
-                customComponents={msg.customComponents}
-                // Clinic-only: Agent Hub owns its own depth / tooling; do not surface
-                // L1 web_search→research Handoff CTAs while an Agent session is active.
-                upgradeCta={!isAgentMode ? msg.upgradeCta : undefined}
-                capabilityId={!isAgentMode ? msg.capabilityId : undefined}
-                playbookId={!isAgentMode ? msg.playbookId : undefined}
-                pendingCapability={
-                  !isAgentMode ? msg.pendingCapability : undefined
-                }
-                composerTarget="clinic"
-                locale={locale}
-                streamComplete={msg.streamComplete ?? true}
-                isStreaming={isStreaming && msg.content === ""}
-                variant={isAgentMode ? "agent" : "clinic"}
-                agentEmoji={referralEntry?.emoji}
-                agentName={
-                  referralEntry
-                    ? getAgentLabel(referralEntry, locale, "name")
-                    : undefined
-                }
-                onRetry={
-                  !isAgentMode && msg.role === "user" && msg.status === "failed"
-                    ? () => {
-                        pinToLatestOnSend();
-                        void retryMessage(msg.id);
-                      }
-                    : undefined
-                }
-                onReferralAccept={
-                  msg.referral && !msg.referral.dismissed
-                    ? () => void handleReferralAccept(msg.referral!.agentId, msg.id)
-                    : undefined
-                }
-                onReferralDismiss={
-                  msg.referral && !msg.referral.dismissed
-                    ? () => handleReferralDismiss(msg.referral!.agentId, msg.id)
-                    : undefined
-                }
-                onSpaceNudgeAccept={
-                  !isAgentMode &&
-                  msg.spaceNudge &&
-                  !msg.spaceNudge.dismissed
-                    ? () => void handleSpaceNudgeAccept(msg.spaceNudge!, msg.id)
-                    : undefined
-                }
-                onSpaceNudgeDismiss={
-                  !isAgentMode &&
-                  msg.spaceNudge &&
-                  !msg.spaceNudge.dismissed
-                    ? () => handleSpaceNudgeDismiss(msg.spaceNudge!, msg.id)
-                    : undefined
-                }
-                onUpgradeResearch={
-                  !isAgentMode &&
-                  msg.upgradeCta &&
-                  !msg.upgradeCta.dismissed
-                    ? () => void handleUpgradeResearch(msg.id)
-                    : undefined
-                }
-                referralDisabled={isSending || isSwitching || spaceNudgeBusy}
-                onNextAction={
-                  activeNextActions ? handleNextAction : undefined
-                }
-                onFocusComposer={handleFocusComposer}
-                onExamSelect={handleExamSelect}
-                onJobCardClick={handleJobCardClick}
-                actionsDisabled={isSending || isSwitching || spaceNudgeBusy}
-              />
-            );
-          })
+          messages.map((msg, messageIndex) => (
+            <ClinicMessageRow
+              key={msg.id}
+              message={msg}
+              strategy={strategyContexts[messageIndex] ?? {}}
+              locale={locale}
+              isAgentMode={isAgentMode}
+              isStreamingEmpty={isStreaming && msg.content === ""}
+              actionsDisabled={isSending || isSwitching || spaceNudgeBusy}
+              referralDisabled={isSending || isSwitching || spaceNudgeBusy}
+              onRetryById={handleRetryById}
+              onReferralAccept={handleReferralAccept}
+              onReferralDismiss={handleReferralDismiss}
+              onSpaceNudgeAccept={handleSpaceNudgeAccept}
+              onSpaceNudgeDismiss={handleSpaceNudgeDismiss}
+              onUpgradeResearch={handleUpgradeResearch}
+              onNextAction={handleNextAction}
+              onFocusComposer={handleFocusComposer}
+              onExamSelect={handleExamSelect}
+              onJobCardClick={handleJobCardClick}
+            />
+          ))
         )}
         </div>
       </div>

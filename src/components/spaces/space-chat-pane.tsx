@@ -19,9 +19,8 @@ import {
   resolveNextActionChatPrompt,
   resolveNextActionHref,
 } from '@/lib/next-action/resolve';
-import {
-  resolveStrategySelectTurnContext,
-} from '@/lib/strategy-select';
+import { mapStrategySelectTurnContexts } from '@/lib/strategy-select';
+import { SpaceMessageRow } from '@/components/spaces/space-message-row';
 import { resolveActionSelectSubmit } from '@/lib/next-action-submit';
 import { isEnglishTutorReviseAction } from '@/lib/english-tutor/custom-components';
 import {
@@ -356,10 +355,22 @@ export function SpaceChatPane({
         })
       : composer;
 
+  const handleRetryById = useCallback(
+    (messageId: string) => {
+      pinToLatestOnSend();
+      void retryMessage(messageId);
+    },
+    [pinToLatestOnSend, retryMessage]
+  );
+
+  const strategyContexts = useMemo(
+    () => mapStrategySelectTurnContexts(messages, locale),
+    [locale, messages]
+  );
+
   const handleRetryNotice = () => {
     if (!replyNotice?.retryMessageId) return;
-    pinToLatestOnSend();
-    void retryMessage(replyNotice.retryMessageId);
+    handleRetryById(replyNotice.retryMessageId);
   };
 
   const jumpOverlay = showJumpToLatest ? (
@@ -414,47 +425,20 @@ export function SpaceChatPane({
           ) : messages.length === 0 ? (
             <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
           ) : (
-            messages.map((message, messageIndex) => {
-              const { activeNextActions, selectedStrategyPayload } =
-                resolveStrategySelectTurnContext(messages, messageIndex, locale);
-              return (
-              // Omit surface="workspace": that prop only changes MessageBubble
-              // assistant chrome (peach vs clinic gray). Cards / next_actions / CV
-              // routing use composerTarget="space", not surface.
-              <MessageBubble
+            messages.map((message, messageIndex) => (
+              <SpaceMessageRow
                 key={message.id}
-                role={message.role}
-                content={message.content}
-                messageId={message.id}
-                serverMessageId={message.serverMessageId}
-                status={message.status}
-                cards={message.cards}
-                nextActions={message.nextActions}
-                selectedStrategyPayload={selectedStrategyPayload}
-                assistantMeta={message.assistantMeta}
-                customComponents={message.customComponents}
+                message={message}
+                strategy={strategyContexts[messageIndex] ?? {}}
                 locale={locale}
-                variant="clinic"
-                composerTarget="space"
-                streamComplete
-                onJobCardClick={handleJobCardClick}
-                onNextAction={
-                  activeNextActions ? handleNextAction : undefined
-                }
+                actionsDisabled={isSending}
+                onRetryById={handleRetryById}
+                onNextAction={handleNextAction}
                 onFocusComposer={handleFocusComposer}
                 onExamSelect={handleExamSelect}
-                actionsDisabled={isSending}
-                onRetry={
-                  message.role === 'user' && message.status === 'failed'
-                    ? () => {
-                        pinToLatestOnSend();
-                        void retryMessage(message.id);
-                      }
-                    : undefined
-                }
+                onJobCardClick={handleJobCardClick}
               />
-              );
-            })
+            ))
           )}
           {isSending ? (
             <MessageBubble

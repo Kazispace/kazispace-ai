@@ -12,6 +12,7 @@ import {
   resolveActiveNextActions,
   resolveStrategySelectReply,
   resolveStrategySelectSubmit,
+  mapStrategySelectTurnContexts,
   resolveStrategySelectTurnContext,
   strategyIdFromPayload,
 } from '@/lib/strategy-select';
@@ -143,6 +144,13 @@ describe('strategy-select', () => {
     expect(normalizeStrategyMatchText('在现有版本上精修。')).toBe(
       '在现有版本上精修'
     );
+  });
+
+  it('mapStrategySelectTurnContexts matches per-index resolve', () => {
+    const pending = [{ role: 'assistant', content: '', nextActions: sampleAActions }];
+    expect(mapStrategySelectTurnContexts(pending, 'zh')).toEqual([
+      resolveStrategySelectTurnContext(pending, 0, 'zh'),
+    ]);
   });
 
   it('resolves active vs historical turn context', () => {
