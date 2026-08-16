@@ -78,10 +78,12 @@ export async function listSpaces(): Promise<ApiResponse<SpaceListResponse>> {
 }
 
 export async function getSpace(
-  spaceId: string
+  spaceId: string,
+  options?: { signal?: AbortSignal }
 ): Promise<ApiResponse<SpaceDetail>> {
   const res = await apiRequest<Record<string, unknown>>(
-    `/api/v1/spaces/${encodeURIComponent(spaceId)}`
+    `/api/v1/spaces/${encodeURIComponent(spaceId)}`,
+    { signal: options?.signal }
   );
   return detailFromResponse(res);
 }

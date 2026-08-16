@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { User, ChatMessage, CreditBalance } from '@/types';
 import { clearAuthToken, setUserInfo } from './auth';
-import { getSession as getRegionSession } from './region';
+import { getSession as getRegionSession } from './region/session';
 import { publishAuthSessionCleared } from './auth-session-events';
 import { publishWorkspaceAssetsInvalidate } from './workspace-assets-invalidate';
 import { clearBillingCache } from './billing-cache';

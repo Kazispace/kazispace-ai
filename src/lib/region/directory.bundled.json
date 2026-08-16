@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "directory_version": 4,
+  "default_data_region": "global",
+  "regions": [
+    {
+      "data_region": "cn-mainland",
+      "region_id": "cn-chengdu",
+      "api_base": "https://api-cn.kazispace.ai",
+      "currency": "CNY",
+      "phone_prefixes": [
+        "+86"
+      ],
+      "public_status": "not_ready"
+    },
+    {
+      "data_region": "global",
+      "region_id": "us-west",
+      "api_base": "https://bot.kazispace.ai",
+      "currency": "USD",
+      "phone_prefixes": [
+        "+7",
+        "+998"
+      ],
+      "public_status": "advertised"
+    }
+  ]
+}

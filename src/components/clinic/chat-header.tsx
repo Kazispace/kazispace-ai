@@ -137,7 +137,7 @@ export function ChatHeader({
         </Button>
       ) : null}
 
-      <Link href={`/${locale}/mine`} className="shrink-0">
+      <Link href={`/${locale}/mine`} prefetch={false} className="shrink-0">
         <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
           {tNav("profile")}
         </Button>

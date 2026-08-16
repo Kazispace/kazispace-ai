@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import {
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
@@ -12,8 +13,6 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 
-import { CvWorkspaceRail } from '@/components/cv/cv-workspace-rail';
-import { JobDetailRail } from '@/components/jobs/job-detail-rail';
 import { useIsDesktop } from '@/hooks/use-is-desktop';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { publishSessionNavChatSideRailOpen } from '@/lib/session-nav-events';
@@ -21,6 +20,18 @@ import { useEmbeddedInWorkspaceShell } from '@/lib/workspace-shell-context';
 import { useWorkspaceRailPortal } from '@/lib/workspace-rail-portal';
 import type { JobPracticeContext } from '@/types/jobs';
 import { cn } from '@/lib/utils';
+
+/** KAZI-565: rails only load when opened — keep them out of Clinic/Space first paint. */
+const CvWorkspaceRail = dynamic(
+  () =>
+    import('@/components/cv/cv-workspace-rail').then((m) => m.CvWorkspaceRail),
+  { ssr: false }
+);
+const JobDetailRail = dynamic(
+  () =>
+    import('@/components/jobs/job-detail-rail').then((m) => m.JobDetailRail),
+  { ssr: false }
+);
 
 const DEFAULT_RAIL_WIDTH = 480;
 const MIN_RAIL_WIDTH = 320;

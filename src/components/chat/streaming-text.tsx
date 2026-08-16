@@ -1,28 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+/**
+ * @deprecated KAZI-561 — Do not use for complete HTTP replies.
+ * Clinic/Space use long POST + full Markdown; fake char typewriter caused
+ * long-reply flicker and restart-on-rerender. Kept only for a future real
+ * SSE draft path; prefer MarkdownContent for authoritative content.
+ */
 interface StreamingTextProps {
   text: string;
   onComplete?: () => void;
 }
 
-export function StreamingText({ text, onComplete }: StreamingTextProps) {
-  const [displayed, setDisplayed] = useState("");
-
-  useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < text.length) {
-        setDisplayed(text.slice(0, index + 1));
-        index++;
-      } else {
-        clearInterval(interval);
-        onComplete?.();
-      }
-    }, 20);
-    return () => clearInterval(interval);
-  }, [text, onComplete]);
-
-  return <span>{displayed}</span>;
+/** @deprecated See file header — not used by Clinic HTTP reply path. */
+export function StreamingText({ text }: StreamingTextProps) {
+  // Immediate paint — never 20ms/char replay (KAZI-561).
+  return <span>{text}</span>;
 }

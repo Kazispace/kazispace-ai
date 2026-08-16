@@ -169,6 +169,11 @@ export function resolveStrategySelectReply(
   return match?.payload?.trim() ?? null;
 }
 
+export type StrategySelectTurnContext = {
+  activeNextActions?: ChatNextAction[];
+  selectedStrategyPayload?: string;
+};
+
 /** Active vs historical strategy_select state for a rendered assistant turn. */
 export function resolveStrategySelectTurnContext(
   messages: ReadonlyArray<{
@@ -178,15 +183,29 @@ export function resolveStrategySelectTurnContext(
   }>,
   messageIndex: number,
   locale: string
-): {
-  activeNextActions?: ChatNextAction[];
-  selectedStrategyPayload?: string;
-} {
+): StrategySelectTurnContext {
   const activeNextActions = resolveActiveNextActions(messages, messageIndex);
   const selectedStrategyPayload = activeNextActions
     ? undefined
     : resolveStrategySelectReply(messages, messageIndex, locale) ?? undefined;
   return { activeNextActions, selectedStrategyPayload };
+}
+
+/**
+ * KAZI-564: precompute strategy context once per list render.
+ * Do not call resolveStrategySelectTurnContext inside each row map.
+ */
+export function mapStrategySelectTurnContexts(
+  messages: ReadonlyArray<{
+    role: string;
+    content: string;
+    nextActions?: ChatNextAction[];
+  }>,
+  locale: string
+): StrategySelectTurnContext[] {
+  return messages.map((_, index) =>
+    resolveStrategySelectTurnContext(messages, index, locale)
+  );
 }
 
 /**

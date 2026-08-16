@@ -46,6 +46,7 @@ export function SessionIconRailCredits({ locale }: SessionIconRailCreditsProps) 
     return (
       <Link
         href={`/${locale}/login`}
+        prefetch={false}
         className={chipClass(false)}
         aria-label={t('creditsSignIn')}
         title={t('creditsSignIn')}

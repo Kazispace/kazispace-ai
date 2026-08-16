@@ -50,6 +50,7 @@ export function CvHeader({
       <div className="flex items-center gap-3 px-4 py-3">
         <Link
           href={`/${locale}/mine`}
+          prefetch={false}
           className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0"
           aria-label={t('backToMine')}
         >
