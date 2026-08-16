@@ -15,7 +15,6 @@ import {
   resolveActiveCapabilityFromTurn,
 } from '@/lib/spaces/capability';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
-import { SPACE_HISTORY_RECOVERY_ATTEMPTS } from '@/lib/spaces/perf-policy';
 import {
   applyCachedSpaceJobCards,
   rehydrateSpaceMessagesWithCards,
@@ -25,7 +24,6 @@ import { preserveSpaceMessageRows } from '@/lib/spaces/space-history-query';
 import { hydrateStrategyPayloadUserLabels } from '@/lib/strategy-select';
 import {
   isPlaceholderReply,
-  latestAssistantAfterLastUser,
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnCards,
   resolveSpaceTurnAssistantMeta,
@@ -34,6 +32,7 @@ import {
   resolveSpaceTurnReply,
   type SpaceChatMessage,
 } from '@/lib/spaces/turn';
+import { resolveSpaceSendHistory } from '@/lib/spaces/space-send-history';
 import { useFetchSpaceHistory, useSpaceHistoryQuery } from '@/hooks/use-space-history';
 import { useSpaceStore, type SpaceReplyNotice } from '@/lib/store';
 
@@ -287,8 +286,7 @@ export function useSpaceTurn(
         const turnNextActions = resolveSpaceTurnNextActions(res.data);
         const turnAssistantMeta = resolveSpaceTurnAssistantMeta(res.data);
         const turnCustomComponents = resolveSpaceTurnCustomComponents(res.data);
-        let history: SpaceChatMessage[] = [];
-        let recoveredFromHistory = false;
+        const assistantMessageId = extractAssistantMessageId(res.data);
 
         const nextCapability = resolveActiveCapabilityFromTurn(res.data);
         if (nextCapability) {
@@ -300,34 +298,32 @@ export function useSpaceTurn(
           setSpaceActivePanelHint(spaceId, nextPanel);
         }
 
-        if (isPlaceholderReply(reply)) {
-          try {
-            // Single shared-query recovery (SPACE_HISTORY_RECOVERY_ATTEMPTS).
-            for (
-              let attempt = 0;
-              attempt < SPACE_HISTORY_RECOVERY_ATTEMPTS;
-              attempt++
-            ) {
-              history = await fetchSpaceHistory(resolvedMasterId, locale);
-              reply = latestAssistantAfterLastUser(history);
-              if (!isPlaceholderReply(reply)) {
-                recoveredFromHistory = true;
-                break;
-              }
-            }
-            if (isStale()) {
-              return { ok: false as const, error: 'Navigated away' };
-            }
-          } catch (error) {
-            console.warn('[useSpaceTurn] history recovery failed after send', error);
-          }
+        let historyOutcome;
+        try {
+          historyOutcome = await resolveSpaceSendHistory({
+            reply,
+            assistantMessageId,
+            fetchHistory: () => fetchSpaceHistory(resolvedMasterId, locale),
+          });
+        } catch (error) {
+          console.warn('[useSpaceTurn] history recovery failed after send', error);
+          historyOutcome = {
+            reply,
+            history: [] as SpaceChatMessage[],
+            recoveredFromHistory: false,
+            pending: isPlaceholderReply(reply),
+            skipHistoryRefresh: true,
+          };
         }
 
         if (isStale()) {
           return { ok: false as const, error: 'Navigated away' };
         }
 
-        if (isPlaceholderReply(reply)) {
+        reply = historyOutcome.reply;
+        const history = historyOutcome.history;
+
+        if (historyOutcome.pending) {
           patchSpaceMessages(spaceId, (prev) =>
             prev.map((messageRow) =>
               messageRow.id === userId
@@ -342,7 +338,6 @@ export function useSpaceTurn(
           return { ok: true as const, pending: true as const };
         }
 
-        const assistantMessageId = extractAssistantMessageId(res.data);
         const localAssistantId = `assistant_${Date.now()}`;
         nextMessages = [
           ...nextMessages.map((messageRow) =>
@@ -370,19 +365,12 @@ export function useSpaceTurn(
         setSpaceMessages(spaceId, nextMessages);
         rememberSpaceJobCards(spaceId, resolvedMasterId, nextMessages);
 
-        // KAZI-563: authoritative turn response → no full-history scrape.
-        const turnAuthoritative =
-          !recoveredFromHistory &&
-          isServerAssistantMessageId(assistantMessageId);
-
-        if (turnAuthoritative) {
+        // KAZI-563: authoritative turn → skipHistoryRefresh (0 history reads).
+        if (historyOutcome.skipHistoryRefresh) {
           return { ok: true as const };
         }
 
         try {
-          if (!recoveredFromHistory) {
-            history = await fetchSpaceHistory(resolvedMasterId, locale);
-          }
           if (isStale()) {
             return { ok: false as const, error: 'Navigated away' };
           }

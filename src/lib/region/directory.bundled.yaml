@@ -1,6 +1,6 @@
-# Full region directory snapshot (KAZI-533 / IR-FE-1).
-# Source SSOT: kazispace-backend/backend/config/region_profiles/_directory.yaml
-# Must include not_ready CN — public GET /region-directory only returns advertised rows.
+# Source SSOT mirror (backend): kazispace-backend/backend/config/region_profiles/_directory.yaml
+# FE runtime loads directory.bundled.json (typed JSON — no YAML parser in client chunks).
+# Keep this file in sync when regenerating the JSON snapshot (KAZI-565 / KAZI-533).
 schema_version: "1.0"
 directory_version: 4
 default_data_region: global

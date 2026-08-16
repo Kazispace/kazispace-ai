@@ -1,6 +1,4 @@
-import { parse as parseYaml } from 'yaml';
-
-import bundledYaml from './directory.bundled.yaml';
+import bundledDirectoryJson from './directory.bundled.json';
 import { normalizePhone } from './phone';
 import type {
   DataRegion,
@@ -91,7 +89,8 @@ export function parseRegionDirectory(raw: unknown): RegionDirectory | null {
 }
 
 function loadBundledDirectory(): RegionDirectory {
-  const parsed = parseRegionDirectory(parseYaml(bundledYaml));
+  // KAZI-565: typed JSON at build time — never ship `yaml` parser to the browser.
+  const parsed = parseRegionDirectory(bundledDirectoryJson);
   if (!parsed) {
     throw new Error('Invalid bundled region directory');
   }

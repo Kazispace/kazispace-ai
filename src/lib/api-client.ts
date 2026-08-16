@@ -13,18 +13,18 @@ import { isPlaceholderReply, resolveSpaceTurnReply } from './spaces/turn';
 import { extractAssistantMessageId } from './clinic/message-feedback';
 import { getTmaClientHeaders } from './telegram';
 import { parseRetryAfterSeconds } from './retry-after';
+import { assertOtpAttempt, createOtpAttempt, type OtpAttempt } from './region/otp-attempt';
 import {
   BUNDLED_DIRECTORY,
-  assertOtpAttempt,
   bootstrapBase,
-  buildSessionFromVerify,
-  createOtpAttempt,
   ensureDirectoryLoaded,
   findRowByApiBase,
-  regionAwareApiClient,
+} from './region/directory';
+import { buildSessionFromVerify } from './region/session';
+import {
   RegionAccountFetchError,
-  type OtpAttempt,
-} from './region';
+  regionAwareApiClient,
+} from './region/client';
 import type {
   ApiResponse,
   OtpRequestResponse,

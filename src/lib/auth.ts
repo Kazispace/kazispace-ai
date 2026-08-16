@@ -3,8 +3,8 @@ import {
   clearSession as clearRegionSession,
   getSession as getRegionSession,
   setSession as setRegionSession,
-  type RegionSession,
-} from './region';
+} from './region/session';
+import type { RegionSession } from './region/types';
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
