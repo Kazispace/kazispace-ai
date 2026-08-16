@@ -1,39 +1,58 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { getSpace } from '@/lib/spaces-api';
-import { isSpacesEnabled } from '@/lib/spaces/constants';
+import { CLINIC_SPACE_ID, isSpacesEnabled } from '@/lib/spaces/constants';
 import { useAuthStore } from '@/lib/store';
 import type { SpaceDetail } from '@/types/spaces';
+
+/** Shared key so Header + Workspace share one detail request (KAZI-562). */
+export const spaceDetailQueryKey = (spaceId: string) =>
+  ['space-detail', spaceId] as const;
+
+async function fetchSpaceDetail(spaceId: string): Promise<SpaceDetail> {
+  const res = await getSpace(spaceId);
+  if (!res.success || !res.data) {
+    throw new Error(res.error ?? 'Failed to load space');
+  }
+  return res.data;
+}
 
 export function useSpaceDetail(spaceId: string | null) {
   const enabled = isSpacesEnabled();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const [space, setSpace] = useState<SpaceDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  /** Clinic chrome falls back to local titles — skip GET /spaces/__clinic__. */
+  const isClinicChrome = spaceId === CLINIC_SPACE_ID;
+  const queryEnabled =
+    enabled && isLoggedIn && Boolean(spaceId) && !isClinicChrome;
+
+  const query = useQuery({
+    queryKey: spaceDetailQueryKey(spaceId ?? ''),
+    queryFn: () => fetchSpaceDetail(spaceId!),
+    enabled: queryEnabled,
+    staleTime: 30_000,
+    retry: 1,
+  });
 
   const refresh = useCallback(async () => {
-    if (!enabled || !isLoggedIn || !spaceId) {
-      setSpace(null);
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    const res = await getSpace(spaceId);
-    setIsLoading(false);
-    if (!res.success || !res.data) {
-      setError(res.error ?? 'Failed to load space');
-      setSpace(null);
-      return;
-    }
-    setSpace(res.data);
-  }, [enabled, isLoggedIn, spaceId]);
+    if (!queryEnabled || !spaceId) return;
+    await queryClient.invalidateQueries({
+      queryKey: spaceDetailQueryKey(spaceId),
+    });
+  }, [queryClient, queryEnabled, spaceId]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  return { space, isLoading, error, refresh, enabled };
+  return {
+    space: query.data ?? null,
+    isLoading: queryEnabled && query.isLoading,
+    error: query.error
+      ? query.error instanceof Error
+        ? query.error.message
+        : 'Failed to load space'
+      : null,
+    refresh,
+    enabled,
+  };
 }

@@ -36,8 +36,11 @@ import {
 } from '@/lib/spaces/turn';
 import { useSpaceStore, type SpaceReplyNotice } from '@/lib/store';
 
-const HISTORY_RECOVERY_ATTEMPTS = 3;
-const HISTORY_RECOVERY_DELAY_MS = 700;
+/**
+ * KAZI-563: placeholder recovery is a single history read (Clinic parity).
+ * Do not 3× scrape master history on the success path.
+ */
+const HISTORY_RECOVERY_ATTEMPTS = 1;
 
 export type SpaceSendResult =
   | { ok: true; pending?: false }
@@ -55,26 +58,25 @@ function resolveSpaceMasterSessionId(
 
 async function loadSpaceHistory(
   masterSessionId: string,
-  locale?: string
+  locale?: string,
+  signal?: AbortSignal
 ): Promise<SpaceChatMessage[]> {
-  const res = await fetchChatHistory(masterSessionId);
+  const res = await fetchChatHistory(masterSessionId, { signal });
+  if (signal?.aborted) return [];
   if (!res.success || !res.data) return [];
   const list = Array.isArray(res.data) ? res.data : (res.data.messages ?? []);
   return mapSpaceHistoryMessages(list, locale);
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 async function recoverReplyFromMasterHistory(
   masterSessionId: string,
-  locale?: string
+  locale?: string,
+  signal?: AbortSignal
 ): Promise<{ reply: string; history: SpaceChatMessage[] }> {
   let history: SpaceChatMessage[] = [];
   for (let attempt = 0; attempt < HISTORY_RECOVERY_ATTEMPTS; attempt++) {
-    if (attempt > 0) await sleep(HISTORY_RECOVERY_DELAY_MS);
-    history = await loadSpaceHistory(masterSessionId, locale);
+    if (signal?.aborted) break;
+    history = await loadSpaceHistory(masterSessionId, locale, signal);
     const reply = latestAssistantAfterLastUser(history);
     if (!isPlaceholderReply(reply)) {
       return { reply, history };
@@ -168,34 +170,58 @@ export function useSpaceTurn(
       return;
     }
 
-    let cancelled = false;
-    setHistoryReady(false);
-    setSpaceHydrating(spaceId, true);
+    // KAZI-562: warm switch — show cache immediately; revalidate without blanking.
+    const cached = useSpaceStore.getState().getSpaceSlice(spaceId);
+    const hasWarmCache =
+      cached.masterSessionId === resolvedMasterId &&
+      cached.messages.length > 0 &&
+      !cached.isHydrating;
+
+    const abort = new AbortController();
+    if (hasWarmCache) {
+      setHistoryReady(true);
+      setSpaceHydrating(spaceId, false);
+    } else {
+      setHistoryReady(false);
+      setSpaceHydrating(spaceId, true);
+    }
 
     void (async () => {
       // Capture before await — SPA switch-away must not lose in-memory cards.
       const previous =
         useSpaceStore.getState().getSpaceSlice(spaceId)?.messages ?? [];
-      const next = await loadSpaceHistory(resolvedMasterId, locale);
-      if (cancelled) return;
-      setSpaceMessages(
-        spaceId,
-        rehydrateSpaceMessagesWithCards(
-          spaceId,
+      try {
+        const next = await loadSpaceHistory(
           resolvedMasterId,
-          next,
-          previous
-        )
-      );
-      setSpaceHydrating(spaceId, false);
-      setHistoryReady(true);
+          locale,
+          abort.signal
+        );
+        if (abort.signal.aborted) return;
+        setSpaceMessages(
+          spaceId,
+          rehydrateSpaceMessagesWithCards(
+            spaceId,
+            resolvedMasterId,
+            next,
+            previous
+          )
+        );
+        setSpaceHydrating(spaceId, false);
+        setHistoryReady(true);
+      } catch (error) {
+        if (abort.signal.aborted) return;
+        console.warn('[useSpaceTurn] history hydrate failed', error);
+        setSpaceHydrating(spaceId, false);
+        setHistoryReady(true);
+      }
     })();
 
     return () => {
-      cancelled = true;
+      abort.abort();
     };
   }, [
     enabled,
+    locale,
     masterSessionId,
     setSpaceHydrating,
     setSpaceMessages,
@@ -382,6 +408,17 @@ export function useSpaceTurn(
         ];
         setSpaceMessages(spaceId, nextMessages);
         rememberSpaceJobCards(spaceId, resolvedMasterId, nextMessages);
+
+        // KAZI-563: authoritative turn response → no full-history scrape.
+        // Only reconcile from history when recovery already fetched it, or
+        // when the turn lacks a server message id (feedback / identity).
+        const turnAuthoritative =
+          !recoveredFromHistory &&
+          isServerAssistantMessageId(assistantMessageId);
+
+        if (turnAuthoritative) {
+          return { ok: true as const };
+        }
 
         try {
           if (!recoveredFromHistory) {

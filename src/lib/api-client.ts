@@ -452,9 +452,12 @@ export async function sendChatMessage(
 }
 
 export async function fetchChatHistory(
-  sessionId: string
+  sessionId: string,
+  options?: { signal?: AbortSignal }
 ): Promise<ApiResponse<{ messages: ChatMessage[] } | ChatMessage[]>> {
-  return apiRequest(`/api/v1/chat/sessions/${sessionId}/messages`);
+  return apiRequest(`/api/v1/chat/sessions/${sessionId}/messages`, {
+    signal: options?.signal,
+  });
 }
 
 /** @deprecated Use getBillingSummary */

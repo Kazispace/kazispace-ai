@@ -1,17 +1,38 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import type { SpacePanelConfig } from '@/types/spaces';
 
 import { AgentTransitionProvider } from '@/components/agent-transition/agent-transition-provider';
-import { IeltsPrepEppPanel } from '@/components/spaces/panels/ielts-prep-epp-panel';
-import { JobSprintCvPanel } from '@/components/spaces/panels/job-sprint-cv-panel';
-import { JobSprintInterviewPanel } from '@/components/spaces/panels/job-sprint-interview-panel';
 import { SpacePanelUnavailable } from '@/components/spaces/panels/space-panel-unavailable';
 import {
   getSpacePanelReturnHref,
   resolveSpacePanelAgentConfig,
 } from '@/lib/spaces/panel-agent-config';
 import { useAuthStore } from '@/lib/store';
+
+/** KAZI-565: template panels pull CV/IRP/EPP — load only for the active surface. */
+const JobSprintCvPanel = dynamic(
+  () =>
+    import('@/components/spaces/panels/job-sprint-cv-panel').then(
+      (m) => m.JobSprintCvPanel
+    ),
+  { ssr: false }
+);
+const JobSprintInterviewPanel = dynamic(
+  () =>
+    import('@/components/spaces/panels/job-sprint-interview-panel').then(
+      (m) => m.JobSprintInterviewPanel
+    ),
+  { ssr: false }
+);
+const IeltsPrepEppPanel = dynamic(
+  () =>
+    import('@/components/spaces/panels/ielts-prep-epp-panel').then(
+      (m) => m.IeltsPrepEppPanel
+    ),
+  { ssr: false }
+);
 
 interface SpacePanelHostProps {
   panel: SpacePanelConfig;

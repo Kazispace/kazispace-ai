@@ -1,7 +1,7 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import { ClinicShell } from "@/components/clinic/clinic-shell";
 import { Loader2 } from "lucide-react";
 
 interface ChatPageProps {
@@ -15,6 +15,13 @@ function ChatPageLoading() {
     </div>
   );
 }
+
+/** KAZI-565: defer heavy ClinicShell (CV/Job/Agent/Hub) until after first paint. */
+const ClinicShell = dynamic(
+  () =>
+    import("@/components/clinic/clinic-shell").then((m) => m.ClinicShell),
+  { loading: () => <ChatPageLoading />, ssr: false }
+);
 
 export default function ChatPage({ params }: ChatPageProps) {
   return (
