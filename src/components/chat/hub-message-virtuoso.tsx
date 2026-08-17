@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import { HubMessageRow } from '@/components/chat/hub-message-row';
@@ -21,6 +21,32 @@ export type HubMessageVirtuosoProps = HubMessageListBodyProps & {
   initialScrollTop?: number;
 };
 
+type HubVirtuosoContext = {
+  header?: ReactNode;
+};
+
+function HubMessageVirtuosoHeader({ context }: { context: HubVirtuosoContext }) {
+  return <>{context.header ?? null}</>;
+}
+
+const HUB_MESSAGE_VIRTUOSO_COMPONENTS = {
+  Header: HubMessageVirtuosoHeader,
+};
+
+function hubMessageItemClass(
+  index: number,
+  lastIndex: number,
+  constrainToColumn: boolean
+): string | undefined {
+  if (!constrainToColumn) {
+    return index < lastIndex ? 'pb-3' : undefined;
+  }
+  const parts = ['px-4 max-w-3xl mx-auto w-full'];
+  if (index === 0) parts.push('pt-4');
+  parts.push(index < lastIndex ? 'pb-3' : 'pb-4');
+  return parts.join(' ');
+}
+
 /**
  * Variable-height hub bubbles inside the existing overflow parent (KAZI-576).
  */
@@ -28,6 +54,7 @@ export function HubMessageVirtuoso({
   messages,
   locale,
   isStreaming,
+  header,
   scrollParentRef,
   initialScrollTop = 0,
 }: HubMessageVirtuosoProps) {
@@ -52,7 +79,9 @@ export function HubMessageVirtuoso({
     tryRestore();
   });
 
-  const rowProps = { messages, locale, isStreaming };
+  const rowProps = { messages, locale, isStreaming, header };
+  const constrainToColumn = header != null;
+  const lastIndex = messages.length - 1;
 
   if (!scrollParent) {
     return <StaticHubMessageRows {...rowProps} />;
@@ -61,6 +90,8 @@ export function HubMessageVirtuoso({
   return (
     <Virtuoso
       data={messages}
+      context={{ header }}
+      components={HUB_MESSAGE_VIRTUOSO_COMPONENTS}
       customScrollParent={scrollParent}
       defaultItemHeight={SPACE_CHAT_VIRTUOSO_DEFAULT_ITEM_HEIGHT}
       increaseViewportBy={{
@@ -70,7 +101,7 @@ export function HubMessageVirtuoso({
       computeItemKey={(_, message) => message.id}
       totalListHeightChanged={tryRestore}
       itemContent={(index, message) => (
-        <div className={index < messages.length - 1 ? 'pb-3' : undefined}>
+        <div className={hubMessageItemClass(index, lastIndex, constrainToColumn)}>
           <HubMessageRow
             message={message}
             locale={locale}

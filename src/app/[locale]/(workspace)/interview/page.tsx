@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 
 import { ChatInput } from "@/components/chat/chat-input";
 import { HubMessageList } from "@/components/chat/hub-message-list";
+import { HUB_CHAT_COLUMN_CLASS, HUB_CHAT_TRAILING_COLUMN_CLASS } from "@/components/chat/hub-message-static-rows";
 import {
   AgentTransitionProvider,
   useAgentTransition,
@@ -239,31 +240,39 @@ function InterviewPageContent({ locale }: { locale: string }) {
         ref={scrollRef}
         className="flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0"
       >
-        <HubWorkflowStrip workflow={activeWorkflow} locale={locale} />
-        <div className="flex-1 p-4 flex flex-col gap-3 max-w-3xl mx-auto w-full">
         {showJobBootstrapping && messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-12">
-            <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
-            <p className="text-sm text-gray-600">{t("sessionLoading")}</p>
-          </div>
+          <>
+            <HubWorkflowStrip workflow={activeWorkflow} locale={locale} />
+            <div className={HUB_CHAT_COLUMN_CLASS}>
+              <div className="flex flex-col items-center justify-center gap-3 py-12">
+                <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+                <p className="text-sm text-gray-600">{t("sessionLoading")}</p>
+              </div>
+            </div>
+          </>
         ) : (
           <HubMessageList
             messages={messages}
             locale={locale}
             isStreaming={false}
             scrollParentRef={scrollRef}
+            header={
+              <HubWorkflowStrip workflow={activeWorkflow} locale={locale} />
+            }
           />
         )}
 
         {phase === "feedback_pending" && (
-          <div className="flex items-center gap-2 text-sm text-gray-500 self-start">
-            <div className="w-4 h-4 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin shrink-0" />
-            <span>{t("feedbackPending")}</span>
+          <div className={HUB_CHAT_TRAILING_COLUMN_CLASS}>
+            <div className="flex items-center gap-2 text-sm text-gray-500 self-start">
+              <div className="w-4 h-4 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin shrink-0" />
+              <span>{t("feedbackPending")}</span>
+            </div>
           </div>
         )}
 
         {phase === "feedback_ready" && (
-          <>
+          <div className={HUB_CHAT_TRAILING_COLUMN_CLASS}>
             <InterviewFeedbackActions
               ctas={diagnosisCtas}
               locale={locale}
@@ -274,24 +283,27 @@ function InterviewPageContent({ locale }: { locale: string }) {
               enabled={irpEnabled}
               baselineUpdatedAt={profileBaselineUpdatedAt}
             />
-          </>
+          </div>
         )}
 
         {phase === "feedback_failed" && (
-          <Button size="sm" onClick={handleReset} className="self-start">
-            {t("tryAgain")}
-          </Button>
-        )}
-
-        {isJobMode && phase === "role_select" && !isStarting && !needsLogin && (
-          <div className="self-start space-y-2">
-            <p className="text-sm text-gray-700">{t("startFailed")}</p>
-            <Button size="sm" onClick={() => void startJobSession()}>
-              {t("retryStart")}
+          <div className={HUB_CHAT_TRAILING_COLUMN_CLASS}>
+            <Button size="sm" onClick={handleReset} className="self-start">
+              {t("tryAgain")}
             </Button>
           </div>
         )}
-        </div>
+
+        {isJobMode && phase === "role_select" && !isStarting && !needsLogin && (
+          <div className={HUB_CHAT_TRAILING_COLUMN_CLASS}>
+            <div className="self-start space-y-2">
+              <p className="text-sm text-gray-700">{t("startFailed")}</p>
+              <Button size="sm" onClick={() => void startJobSession()}>
+                {t("retryStart")}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

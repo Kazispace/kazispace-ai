@@ -27,7 +27,9 @@ describe('KAZI-576 hub chat virtualize after threshold', () => {
     expect(english).not.toMatch(/react-virtuoso/);
     expect(interview).not.toMatch(/hub-message-virtuoso/);
     expect(english).not.toMatch(/hub-message-virtuoso/);
-    expect(interview).toMatch(/HubWorkflowStrip/);
+    expect(interview).toMatch(/header=\{[\s\S]*HubWorkflowStrip/);
+    const englishList = english.match(/<HubMessageList[\s\S]*?\/>/);
+    expect(englishList?.[0]).not.toMatch(/header=/);
   });
 
   it('keeps static rows until the virtuoso chunk resolves', () => {
@@ -49,5 +51,18 @@ describe('KAZI-576 hub chat virtualize after threshold', () => {
     expect(virtuoso).toMatch(/StaticHubMessageRows/);
     expect(virtuoso).not.toMatch(/followOutput/);
     expect(virtuoso).not.toMatch(/return null/);
+  });
+
+  it('measures the optional header inside static rows and Virtuoso Header', () => {
+    const list = readSrc('../../components/chat/hub-message-list.tsx');
+    const staticRows = readSrc(
+      '../../components/chat/hub-message-static-rows.tsx'
+    );
+    const virtuoso = readSrc('../../components/chat/hub-message-virtuoso.tsx');
+    expect(list).toMatch(/header/);
+    expect(staticRows).toMatch(/header/);
+    expect(virtuoso).toMatch(/components=\{HUB_MESSAGE_VIRTUOSO_COMPONENTS\}/);
+    expect(virtuoso).toMatch(/Header: HubMessageVirtuosoHeader/);
+    expect(virtuoso).toMatch(/context=\{\{ header \}\}/);
   });
 });
