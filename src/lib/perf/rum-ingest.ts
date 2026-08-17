@@ -103,9 +103,9 @@ export function isSameOriginRumRequest(request: Request): boolean {
 
 function sweepExpired(now: number, policy: RumIngestPolicy): void {
   const ttlMs = policy.bucket_ttl_seconds * 1000;
-  for (const [key, bucket] of buckets) {
+  buckets.forEach((bucket, key) => {
     if (now - bucket.lastSeen > ttlMs) buckets.delete(key);
-  }
+  });
 }
 
 export function allowRumIngest(

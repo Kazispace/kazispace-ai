@@ -205,6 +205,12 @@ describe('KAZI-567 P1 rum ingest + region contract', () => {
     expect(rumClientKey(trusted)).toBe('203.0.113.10');
   });
 
+  it('does not for-of iterate the bucket Map (Next typecheck target)', () => {
+    const src = readRel('lib/perf/rum-ingest.ts');
+    expect(src).toMatch(/buckets\.forEach\(/);
+    expect(src).not.toMatch(/for \(const \[key, bucket\] of buckets\)/);
+  });
+
   it('bounds the in-process bucket map (TTL + max, fail-closed)', () => {
     const now = 1_000_000;
     const tiny = {
