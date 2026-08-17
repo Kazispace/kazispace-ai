@@ -1,0 +1,15 @@
+{
+  "schema_version": "1",
+  "path": "/api/rum",
+  "methods": ["POST"],
+  "max_body_bytes": 2048,
+  "rate": {
+    "points": 30,
+    "period_seconds": 60,
+    "burst": 10
+  },
+  "require_same_origin": true,
+  "trusted_client_ip_header": "x-rum-client-ip",
+  "max_buckets": 4096,
+  "bucket_ttl_seconds": 120
+}

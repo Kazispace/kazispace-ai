@@ -1,0 +1,21 @@
+{
+  "schema_version": "1",
+  "fail_closed": true,
+  "same_origin_path": "/api/rum",
+  "by_region_id": {
+    "us-west": {
+      "enabled": true,
+      "endpoint": "/api/rum",
+      "sample_rate": 1,
+      "retention": "platform-stdout",
+      "log_sink": "first-party-api-rum"
+    },
+    "cn-chengdu": {
+      "enabled": false,
+      "endpoint": "",
+      "sample_rate": 0,
+      "retention": "undeclared",
+      "log_sink": "undeclared"
+    }
+  }
+}

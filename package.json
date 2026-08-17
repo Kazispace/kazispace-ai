@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && node scripts/check-clinic-js-budget.mjs",
+    "test:perf-budget": "node scripts/check-clinic-js-budget.mjs --optional",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run && bash scripts/grep-region-api-base.sh && node scripts/sync-region-directory.mjs --check",
+    "test": "vitest run && bash scripts/grep-region-api-base.sh && node scripts/sync-region-directory.mjs --check && node scripts/check-clinic-js-budget.mjs --optional",
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:region-gate": "bash scripts/grep-region-api-base.sh && node scripts/sync-region-directory.mjs --check",
@@ -35,6 +36,7 @@
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "web-vitals": "^4.2.4",
     "zustand": "^4.5.4"
   },
   "devDependencies": {
