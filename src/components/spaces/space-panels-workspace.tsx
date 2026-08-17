@@ -33,10 +33,16 @@ type SpacePanelsWelcomeKey = 'jobSprintWelcome' | 'ieltsWelcome';
 interface SpacePanelsWorkspaceProps {
   space: SpaceDetail;
   welcomeKey: SpacePanelsWelcomeKey;
+  /** Keep-alive hidden instance must not mount CV/IRP/EPP (KAZI-573). */
+  active?: boolean;
 }
 
 /** ADR-006 Phase B — chat_with_panels layout: space chat + template panels. */
-export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspaceProps) {
+export function SpacePanelsWorkspace({
+  space,
+  welcomeKey,
+  active = true,
+}: SpacePanelsWorkspaceProps) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -146,9 +152,8 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
     };
   }, [closeWorkspacePanel, openWorkspacePanel]);
 
-  const workspaceChromeOpen = isDesktop
-    ? desktopPanelOpen
-    : mobileView !== 'chat';
+  const workspaceChromeOpen =
+    active && (isDesktop ? desktopPanelOpen : mobileView !== 'chat');
 
   useEffect(() => {
     workspacePortal?.setChatSideRailOpen(workspaceChromeOpen);
@@ -261,7 +266,8 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             mobileView !== 'chat' && 'flex flex-1 lg:flex-none'
           )}
         >
-          {(desktopPanelOpen || mobileView !== 'chat') &&
+          {active &&
+          (desktopPanelOpen || mobileView !== 'chat') &&
           (mobilePanel || activePanel) ? (
             <SpacePanelHost
               panel={(mobilePanel ?? activePanel)!}

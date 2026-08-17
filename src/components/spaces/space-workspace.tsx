@@ -14,6 +14,8 @@ import type { SpaceDetail } from '@/types/spaces';
 
 interface SpaceWorkspaceProps {
   spaceId: string;
+  /** False when keep-alive hides this instance — unmount template panels. */
+  active?: boolean;
 }
 
 /** Ensures loading/error/template views share the same h-full flex chain as panels. */
@@ -21,20 +23,20 @@ function SpaceWorkspaceFrame({ children }: { children: React.ReactNode }) {
   return <div className="flex h-full min-h-0 flex-col">{children}</div>;
 }
 
-function renderTemplateWorkspace(space: SpaceDetail) {
+function renderTemplateWorkspace(space: SpaceDetail, active: boolean) {
   switch (space.template_id) {
     case 'blank_conversation':
       return <BlankConversationWorkspace space={space} />;
     case 'job_sprint':
-      return <JobSprintWorkspace space={space} />;
+      return <JobSprintWorkspace space={space} active={active} />;
     case 'ielts_prep':
-      return <IeltsPrepWorkspace space={space} />;
+      return <IeltsPrepWorkspace space={space} active={active} />;
     default:
       return <SpaceWorkspaceError reason="unsupportedTemplate" />;
   }
 }
 
-export function SpaceWorkspace({ spaceId }: SpaceWorkspaceProps) {
+export function SpaceWorkspace({ spaceId, active = true }: SpaceWorkspaceProps) {
   const { space, isLoading, error } = useSpaceDetail(spaceId);
 
   if (isLoading && !space) {
@@ -63,7 +65,7 @@ export function SpaceWorkspace({ spaceId }: SpaceWorkspaceProps) {
 
   return (
     <SpaceWorkspaceFrame key={space.id}>
-      {renderTemplateWorkspace(space)}
+      {renderTemplateWorkspace(space, active)}
     </SpaceWorkspaceFrame>
   );
 }
