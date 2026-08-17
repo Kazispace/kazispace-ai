@@ -9,12 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
 import { isValidOtpPhone } from "@/lib/api-mappers";
 import type { OtpAttempt } from "@/lib/region";
-import {
-  getLastOtpPhone,
-  resumeAuthSession,
-  setLastOtpPhone,
-} from "@/lib/auth";
-import type { User } from "@/types";
+import { getPendingOtpPhone, setPendingOtpPhone } from "@/lib/auth";
 import {
   resolvePostLoginLocale,
   switchLocalePath,
@@ -37,62 +32,39 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
   const [otp, setOtp] = useState("");
   const [otpAttempt, setOtpAttempt] = useState<OtpAttempt | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [resuming, setResuming] = useState(true);
   const [error, setError] = useState("");
   const [sessionExpired, setSessionExpired] = useState(false);
+  const authReady = useAuthStore((s) => s.authReady);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const user = useAuthStore((s) => s.user);
+  const resuming = !authReady || Boolean(isLoggedIn && user);
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
     if (search.get("expired") === "1") {
       setSessionExpired(true);
     }
-    const lastPhone = getLastOtpPhone();
-    if (lastPhone) setPhone(lastPhone);
+    const pendingPhone = getPendingOtpPhone();
+    if (pendingPhone) setPhone(pendingPhone);
+  }, []);
 
-    let cancelled = false;
-    const finishResume = () => {
-      if (!cancelled) setResuming(false);
-    };
-
-    async function resume() {
-      const session = resumeAuthSession();
-      if (!session) {
-        finishResume();
-        return;
-      }
-      let user = session.user as User | null;
-      if (!user) {
-        const me = await getMe();
-        if (cancelled) return;
-        if (!me.success || !me.data) {
-          finishResume();
-          return;
-        }
-        user = me.data;
-      }
-      useAuthStore.getState().login(session.token, user);
-      await syncMasterSession();
-      if (cancelled) return;
-      const redirect = search.get("redirect");
-      const targetLocale = resolvePostLoginLocale({
-        languagePreference: user.primaryLocale,
-        phone: getLastOtpPhone() ?? "",
-      });
-      syncProfileLanguageCookie(
-        readLanguagePreference(user.primaryLocale) ?? targetLocale
-      );
-      const destination =
-        redirect && redirect.startsWith("/")
-          ? switchLocalePath(redirect, targetLocale)
-          : `/${targetLocale}/chat`;
-      router.replace(destination);
-    }
-
-    void resume();
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
+  useEffect(() => {
+    if (!authReady || !isLoggedIn || !user) return;
+    const search = new URLSearchParams(window.location.search);
+    const redirect = search.get("redirect");
+    const targetLocale = resolvePostLoginLocale({
+      languagePreference: user.primaryLocale,
+      phone: user.phone ?? "",
+    });
+    syncProfileLanguageCookie(
+      readLanguagePreference(user.primaryLocale) ?? targetLocale
+    );
+    const destination =
+      redirect && redirect.startsWith("/")
+        ? switchLocalePath(redirect, targetLocale)
+        : `/${targetLocale}/chat`;
+    router.replace(destination);
+  }, [authReady, isLoggedIn, user, router]);
 
   const normalizedPhone = phone.replace(/\s/g, "");
 
@@ -110,7 +82,7 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
     try {
       const result = await requestOtp(normalizedPhone);
       if (result.success && result.attempt) {
-        setLastOtpPhone(normalizedPhone);
+        setPendingOtpPhone(normalizedPhone);
         setOtpAttempt(result.attempt);
         setStep("otp");
       } else if (result.success) {
@@ -136,7 +108,6 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
       if (result.success && result.data) {
         const { token, user: otpUser } = result.data;
         // Region session already persisted inside verifyOtp (KAZI-533).
-        setLastOtpPhone(normalizedPhone);
         const me = await getMe();
         const user = me.success && me.data ? me.data : otpUser;
         useAuthStore.getState().login(token, user);

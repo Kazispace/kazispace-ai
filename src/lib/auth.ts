@@ -5,15 +5,23 @@ import {
   setSession as setRegionSession,
 } from './region/session';
 import type { RegionSession } from './region/types';
+import type { User } from '@/types';
 
 /** Align with API spec `expires_in` (2592000s). Middleware only checks presence. */
 export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
-function setCookie(
-  name: string,
-  value: string,
-  maxAge = AUTH_COOKIE_MAX_AGE_SECONDS
-) {
+/** Pending OTP phone — sessionStorage only; never localStorage (KAZI-577 R1). */
+export const PENDING_OTP_PHONE_SESSION_KEY = 'kazi_pending_otp_phone';
+const LEGACY_LAST_OTP_PHONE_KEY = 'kazi_last_otp_phone';
+
+function cookieMaxAgeForToken(token: string, now = Date.now()): number {
+  const expMs = decodeJwtExpMs(token);
+  if (expMs == null) return AUTH_COOKIE_MAX_AGE_SECONDS;
+  const remaining = Math.floor((expMs - now) / 1000);
+  return Math.max(1, Math.min(AUTH_COOKIE_MAX_AGE_SECONDS, remaining));
+}
+
+function setCookie(name: string, value: string, maxAge: number) {
   if (typeof document === 'undefined') return;
   const secure =
     typeof window !== 'undefined' && window.location.protocol === 'https:'
@@ -117,32 +125,92 @@ export function syncAuthCookieFromSession(): boolean {
     if (session?.token) clearAuthToken();
     return false;
   }
-  setCookie(STORAGE_KEYS.AUTH_COOKIE, session.token);
+  setCookie(STORAGE_KEYS.AUTH_COOKIE, session.token, cookieMaxAgeForToken(session.token));
   return true;
+}
+
+export function isPersistedUser(value: unknown): value is User {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const row = value as Record<string, unknown>;
+  return (
+    typeof row.id === 'string' &&
+    row.id.trim() !== '' &&
+    typeof row.displayName === 'string'
+  );
+}
+
+export type AuthHydrateResult =
+  | { status: 'authenticated'; token: string; user: User }
+  | { status: 'anonymous' }
+  | { status: 'invalid' };
+
+/**
+ * Resume a still-valid region session via GET /me. Never sets isLoggedIn —
+ * caller must `login(token, user)` only after `authenticated` (KAZI-577 R1).
+ * Cached USER_INFO is not enough: token-without-validated-user is invalid.
+ */
+export async function hydrateAuthFromSession(fetchMe: () => Promise<{
+  success: boolean;
+  data?: User;
+}>): Promise<AuthHydrateResult> {
+  if (!syncAuthCookieFromSession()) return { status: 'anonymous' };
+  const token = getAuthToken();
+  if (!token) return { status: 'anonymous' };
+
+  const me = await fetchMe();
+  if (me.success && isPersistedUser(me.data)) {
+    return { status: 'authenticated', token, user: me.data };
+  }
+
+  clearAuthToken();
+  return { status: 'invalid' };
 }
 
 /** Resume a still-valid login without another OTP (KAZI-577). Never reads a cached code. */
 export function resumeAuthSession(): {
   token: string;
-  user: unknown | null;
+  user: User | null;
 } | null {
   if (!syncAuthCookieFromSession()) return null;
   const token = getAuthToken();
   if (!token) return null;
-  return { token, user: getUserInfo() };
+  const user = getUserInfo();
+  return { token, user: isPersistedUser(user) ? user : null };
 }
 
-export function getLastOtpPhone(): string | null {
+export function getPendingOtpPhone(): string | null {
   if (typeof window === 'undefined') return null;
-  const raw = localStorage.getItem(STORAGE_KEYS.LAST_OTP_PHONE);
-  return raw && raw.trim() ? raw.trim() : null;
+  try {
+    const raw = sessionStorage.getItem(PENDING_OTP_PHONE_SESSION_KEY);
+    return raw && raw.trim() ? raw.trim() : null;
+  } catch {
+    return null;
+  }
 }
 
-export function setLastOtpPhone(phone: string): void {
+export function setPendingOtpPhone(phone: string): void {
   if (typeof window === 'undefined') return;
   const trimmed = phone.trim();
   if (!trimmed) return;
-  localStorage.setItem(STORAGE_KEYS.LAST_OTP_PHONE, trimmed);
+  try {
+    sessionStorage.setItem(PENDING_OTP_PHONE_SESSION_KEY, trimmed);
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+export function clearPendingOtpPhone(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem(PENDING_OTP_PHONE_SESSION_KEY);
+  } catch {
+    // ignore
+  }
+  try {
+    localStorage.removeItem(LEGACY_LAST_OTP_PHONE_KEY);
+  } catch {
+    // ignore
+  }
 }
 
 /**
@@ -154,7 +222,11 @@ export function setRegionAuthSession(session: RegionSession): void {
   setRegionSession(session);
   // Keep legacy key cleared — session blob is SSOT.
   localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-  setCookie(STORAGE_KEYS.AUTH_COOKIE, session.token);
+  setCookie(
+    STORAGE_KEYS.AUTH_COOKIE,
+    session.token,
+    cookieMaxAgeForToken(session.token)
+  );
 }
 
 /**
@@ -165,7 +237,11 @@ export function setAuthToken(token: string): void {
   if (typeof window === 'undefined') return;
   // Do not persist bare token as a valid session — callers must use setRegionAuthSession.
   localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-  setCookie(STORAGE_KEYS.AUTH_COOKIE, token);
+  setCookie(
+    STORAGE_KEYS.AUTH_COOKIE,
+    token,
+    cookieMaxAgeForToken(token)
+  );
 }
 
 /**
@@ -176,6 +252,7 @@ export function clearAuthToken(): void {
   clearRegionSession();
   localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.USER_INFO);
+  clearPendingOtpPhone();
   clearCookie(STORAGE_KEYS.AUTH_COOKIE);
 }
 

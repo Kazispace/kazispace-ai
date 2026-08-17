@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { User, ChatMessage, CreditBalance } from '@/types';
-import { clearAuthToken, setUserInfo } from './auth';
+import { clearAuthToken, clearPendingOtpPhone, setUserInfo } from './auth';
 import { getSession as getRegionSession } from './region/session';
 import { publishAuthSessionCleared } from './auth-session-events';
 import { publishWorkspaceAssetsInvalidate } from './workspace-assets-invalidate';
@@ -29,6 +29,8 @@ interface AuthStore {
   token: string | null;
   user: User | null;
   isLoggedIn: boolean;
+  /** False until Providers finishes session resume (KAZI-577 R1). */
+  authReady: boolean;
   login: (token: string, user: User) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
@@ -38,7 +40,12 @@ export const useAuthStore = create<AuthStore>()((set) => ({
   token: null,
   user: null,
   isLoggedIn: false,
+  authReady: false,
   login: (token, user) => {
+    if (!user?.id?.trim()) {
+      console.warn('[auth] login() refused without a validated user');
+      return;
+    }
     // KAZI-533: token must already live in the region session blob.
     // Do not write a bare token — that would invalidate getAuthToken().
     const session = getRegionSession();
@@ -49,7 +56,8 @@ export const useAuthStore = create<AuthStore>()((set) => ({
       );
     }
     setUserInfo(user);
-    set({ token, user, isLoggedIn: true });
+    clearPendingOtpPhone();
+    set({ token, user, isLoggedIn: true, authReady: true });
     publishWorkspaceAssetsInvalidate();
   },
   logout: () => {
@@ -60,7 +68,7 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     useAgentStore.getState().reset();
     useSpaceStore.getState().reset();
     publishAuthSessionCleared();
-    set({ token: null, user: null, isLoggedIn: false });
+    set({ token: null, user: null, isLoggedIn: false, authReady: true });
   },
   updateUser: (partialUser) =>
     set((state) => ({

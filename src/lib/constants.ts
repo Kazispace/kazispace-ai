@@ -47,8 +47,6 @@ export const STORAGE_KEYS = {
   SPACE_NUDGE_DISMISSED: 'kazi_space_nudge_dismissed',
   TMA_PENDING_ACTION: 'kazi_tma_pending_action',
   CV_AGENT_HANDOFF: 'kazi_cv_agent_handoff',
-  /** Last phone used on the OTP login form — never the 6-digit code. */
-  LAST_OTP_PHONE: 'kazi_last_otp_phone',
 } as const;
 
 export const AGENT_NAME = 'Serík';

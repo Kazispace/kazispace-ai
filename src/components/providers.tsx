@@ -3,7 +3,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getAuthToken, getUserInfo, syncAuthCookieFromSession } from "@/lib/auth";
+import { getMe } from "@/lib/api-client";
+import {
+  hydrateAuthFromSession,
+} from "@/lib/auth";
 import { AUTH_SESSION_CLEARED_EVENT } from "@/lib/auth-session-events";
 import { useAuthStore } from "@/lib/store";
 import { useTmaInit, reauthTelegramIfPossible } from "@/hooks/use-tma-init";
@@ -13,11 +16,15 @@ import {
   DIRECTORY_FALLBACK_DELAY_MS,
   DIRECTORY_IDLE_TIMEOUT_MS,
 } from "@/lib/spaces/perf-policy";
-import type { User } from "@/types";
 
 function localeFromPathname(pathname: string): string {
   const segment = pathname.split("/")[1];
   return segment || DEFAULT_LOCALE;
+}
+
+function isLoginPath(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  return parts[1] === "login" || parts[0] === "login";
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -76,14 +83,32 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    syncAuthCookieFromSession();
-    const token = getAuthToken();
-    const user = getUserInfo<User>();
-    if (token && user) {
-      useAuthStore.setState({ token, user, isLoggedIn: true });
-    } else if (token) {
-      useAuthStore.setState({ token, isLoggedIn: true });
+    let cancelled = false;
+    const pathAtBoot = pathname;
+    async function boot() {
+      const result = await hydrateAuthFromSession(() => getMe());
+      if (cancelled) return;
+      if (result.status === "authenticated") {
+        useAuthStore.getState().login(result.token, result.user);
+        return;
+      }
+      useAuthStore.setState({
+        token: null,
+        user: null,
+        isLoggedIn: false,
+        authReady: true,
+      });
+      if (result.status === "invalid" && !isLoginPath(pathAtBoot)) {
+        router.replace(`/${localeFromPathname(pathAtBoot)}/login`);
+      }
     }
+    void boot();
+    return () => {
+      cancelled = true;
+    };
+    // Session resume is once per mount. Pathname is only used for the
+    // invalid-token redirect, not as a re-fetch trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
