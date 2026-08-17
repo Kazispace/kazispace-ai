@@ -26,7 +26,7 @@ function SpaceWorkspaceFrame({ children }: { children: React.ReactNode }) {
 function renderTemplateWorkspace(space: SpaceDetail, active: boolean) {
   switch (space.template_id) {
     case 'blank_conversation':
-      return <BlankConversationWorkspace space={space} />;
+      return <BlankConversationWorkspace space={space} active={active} />;
     case 'job_sprint':
       return <JobSprintWorkspace space={space} active={active} />;
     case 'ielts_prep':

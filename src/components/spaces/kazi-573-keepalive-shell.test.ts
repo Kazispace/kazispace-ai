@@ -31,7 +31,17 @@ describe('KAZI-573 keep-alive shell contracts', () => {
     );
     expect(host).toMatch(/active=\{active\}/);
     expect(host).toMatch(/!active && 'hidden'/);
-    expect(panels).toMatch(/active &&/);
+    expect(panels).toMatch(/useActiveWorkspaceRailEvents/);
+    expect(panels).toMatch(/useActiveWorkspacePortalWrite/);
     expect(panels).toMatch(/SpacePanelHost/);
+  });
+
+  it('SpaceChatPane gates rail events on active', () => {
+    const pane = readFileSync(
+      path.resolve(__dirname, './space-chat-pane.tsx'),
+      'utf8'
+    );
+    expect(pane).toMatch(/useActiveWorkspaceRailEvents\(active && !hasCvPanel/);
+    expect(pane).not.toMatch(/window\.addEventListener/);
   });
 });
