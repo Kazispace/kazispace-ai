@@ -5,14 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { ChatInput } from "@/components/chat/chat-input";
+import { HubMessageList } from "@/components/chat/hub-message-list";
 import {
   AgentTransitionProvider,
   useAgentTransition,
 } from "@/components/agent-transition/agent-transition-provider";
 import { HubAgentShell } from "@/components/hub/hub-agent-shell";
-import { AssistantTurn } from "@/components/chat/assistant-turn";
 import { HubWorkflowStrip } from "@/components/hub/hub-workflow-strip";
-import { MessageBubble } from "@/components/clinic/message-bubble";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { InterviewFeedbackActions } from "@/components/interview/interview-feedback-actions";
 import { InterviewWorkspace } from "@/components/interview/interview-workspace";
@@ -68,6 +67,8 @@ function InterviewPageContent({ locale }: { locale: string }) {
     agentSessionId,
     resyncSession,
   } = useInterview(jobId);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const sessionStale = useHubSessionStaleBanner(
     MOCK_INTERVIEW_AGENT_ID,
@@ -234,7 +235,10 @@ function InterviewPageContent({ locale }: { locale: string }) {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0"
+      >
         <HubWorkflowStrip workflow={activeWorkflow} locale={locale} />
         <div className="flex-1 p-4 flex flex-col gap-3 max-w-3xl mx-auto w-full">
         {showJobBootstrapping && messages.length === 0 ? (
@@ -243,24 +247,12 @@ function InterviewPageContent({ locale }: { locale: string }) {
             <p className="text-sm text-gray-600">{t("sessionLoading")}</p>
           </div>
         ) : (
-          messages.map((msg) =>
-            msg.role === "user" ? (
-              <MessageBubble
-                key={msg.id}
-                role="user"
-                content={msg.content}
-                variant="agent"
-                locale={locale}
-              />
-            ) : (
-              <AssistantTurn
-                key={msg.id}
-                content={msg.content}
-                variant="agent"
-                locale={locale}
-              />
-            )
-          )
+          <HubMessageList
+            messages={messages}
+            locale={locale}
+            isStreaming={false}
+            scrollParentRef={scrollRef}
+          />
         )}
 
         {phase === "feedback_pending" && (

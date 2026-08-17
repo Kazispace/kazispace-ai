@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useMemo } from "react";
+import { Suspense, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 
@@ -8,9 +8,8 @@ import {
   AgentTransitionProvider,
   useAgentTransition,
 } from "@/components/agent-transition/agent-transition-provider";
-import { AssistantTurn } from "@/components/chat/assistant-turn";
+import { HubMessageList } from "@/components/chat/hub-message-list";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
-import { MessageBubble } from "@/components/clinic/message-bubble";
 import { QuickReplies } from "@/components/clinic/quick-replies";
 import { EnglishWorkspace } from "@/components/english/english-workspace";
 import { HubAgentShell } from "@/components/hub/hub-agent-shell";
@@ -60,6 +59,8 @@ function EnglishPageContent({ locale }: { locale: string }) {
 
   useHubActiveAgentSync(locale, ENGLISH_TUTOR_AGENT_ID, EPP_PROFILE_ENABLED && !needsLogin);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const quickActionLabels = useMemo(
     () =>
       Object.fromEntries(
@@ -102,7 +103,10 @@ function EnglishPageContent({ locale }: { locale: string }) {
   );
 
   const chatBody = (
-    <div className="flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0">
+    <div
+      ref={scrollRef}
+      className="flex-1 overflow-y-auto flex flex-col bg-gray-bg min-h-0"
+    >
       <div className="flex-1 p-4 flex flex-col gap-3 max-w-3xl mx-auto w-full">
         {isOpening && messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12">
@@ -110,25 +114,12 @@ function EnglishPageContent({ locale }: { locale: string }) {
             <p className="text-sm text-gray-600">{t("chatLoading")}</p>
           </div>
         ) : (
-          messages.map((msg) =>
-            msg.role === "user" ? (
-              <MessageBubble
-                key={msg.id}
-                role="user"
-                content={msg.content}
-                variant="agent"
-                locale={locale}
-              />
-            ) : (
-              <AssistantTurn
-                key={msg.id}
-                content={msg.content}
-                variant="agent"
-                locale={locale}
-                isStreaming={isSending && msg.content === ""}
-              />
-            )
-          )
+          <HubMessageList
+            messages={messages}
+            locale={locale}
+            isStreaming={isSending}
+            scrollParentRef={scrollRef}
+          />
         )}
 
         {openError ? (
