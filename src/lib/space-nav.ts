@@ -94,6 +94,7 @@ export function spaceSummaryToNavRow(
     disabled: false,
     badge,
     badgeDetail: isClinic ? null : space.template_display_name ?? space.template_id,
+    masterSessionId: space.master_session_id,
   };
 }
 

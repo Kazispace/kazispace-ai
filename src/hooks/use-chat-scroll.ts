@@ -179,7 +179,8 @@ export function useChatScroll({
     }
     const el = scrollRef.current;
     if (!el) return;
-    scrollElementToBottom(el, 'smooth');
+    // Instant follow — smooth + growing markdown height jittered the viewport (KAZI-566).
+    scrollElementToBottom(el, 'auto');
     lastScrollTopRef.current = el.scrollTop;
     setShowJumpToLatest(false);
   }, [messageCount, isSending, ready, updateJumpVisibility]);

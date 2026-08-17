@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -45,6 +46,10 @@ import {
   type SessionViewRow,
 } from '@/lib/session-nav';
 import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
+import {
+  isPrefetchableSpaceNavId,
+  prefetchSpaceSwitch,
+} from '@/lib/spaces/prefetch-space-switch';
 import { filterSpaceNavRows, type SpaceNavFilter } from '@/lib/space-nav';
 import { canRunSpaceLifecycle, type SpaceLifecycleAction } from '@/lib/spaces/lifecycle';
 import { cn } from '@/lib/utils';
@@ -161,6 +166,7 @@ export function SessionNavPanel({
 }: SessionNavPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const t = useTranslations('sessionNav');
   const tSpaces = useTranslations('spaces');
   const [listQuery, setListQuery] = useState('');
@@ -203,6 +209,30 @@ export function SessionNavPanel({
   const showHubActions =
     !spacesMode && Boolean(activeHubAgentId) && viewTab === 'agent';
   const listRows = spacesMode ? filteredSpaceRows : agentRows;
+
+  const prefetchNavRow = useCallback(
+    (row: SessionNavRow) => {
+      if (row.disabled) return;
+      if (row.href) router.prefetch(row.href);
+      if (isPrefetchableSpaceNavId(row.id)) {
+        prefetchSpaceSwitch(queryClient, {
+          spaceId: row.id,
+          masterSessionId: row.masterSessionId ?? null,
+          locale,
+        });
+      }
+    },
+    [locale, queryClient, router]
+  );
+
+  const goToNavRow = useCallback(
+    (row: SessionNavRow) => {
+      prefetchNavRow(row);
+      navigateToSessionNavTarget(router, row);
+      if (mobileDrawer) onClose();
+    },
+    [mobileDrawer, onClose, prefetchNavRow, router]
+  );
 
   useEffect(() => {
     if (!mobileDrawer) return;
@@ -298,10 +328,10 @@ export function SessionNavPanel({
             <button
               type="button"
               disabled={row.disabled}
-              onClick={() => {
-                navigateToSessionNavTarget(router, row);
-                if (mobileDrawer) onClose();
-              }}
+              onMouseEnter={() => prefetchNavRow(row)}
+              onFocus={() => prefetchNavRow(row)}
+              onPointerDown={() => prefetchNavRow(row)}
+              onClick={() => goToNavRow(row)}
               className={cn(
                 'min-w-0 flex-1 rounded-lg px-2 py-3 text-left transition-colors',
                 row.disabled
@@ -512,10 +542,10 @@ export function SessionNavPanel({
                     <button
                       type="button"
                       disabled={row.disabled}
-                      onClick={() => {
-                        navigateToSessionNavTarget(router, row);
-                        if (mobileDrawer) onClose();
-                      }}
+                      onMouseEnter={() => prefetchNavRow(row)}
+                      onFocus={() => prefetchNavRow(row)}
+                      onPointerDown={() => prefetchNavRow(row)}
+                      onClick={() => goToNavRow(row)}
                       onContextMenu={(e) => {
                         if (!showMenu) return;
                         e.preventDefault();

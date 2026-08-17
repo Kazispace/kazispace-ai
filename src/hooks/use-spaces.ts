@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import { listSpaces } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
+import { seedSpaceDetailPlaceholders } from '@/lib/spaces/space-detail-from-summary';
 import { SPACES_LIST_INVALIDATE_EVENT } from '@/lib/spaces-list-invalidate';
 import { useAuthStore } from '@/lib/store';
 import type { SpaceSummary } from '@/types/spaces';
@@ -20,6 +23,7 @@ export function useSpaces(options?: {
   const panelOpen = options?.panelOpen ?? false;
   const fetchImmediately = options?.fetchImmediately ?? false;
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const queryClient = useQueryClient();
 
   const [spaces, setSpaces] = useState<SpaceSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,8 +53,9 @@ export function useSpaces(options?: {
 
       lastFetchedAt.current = now;
       setSpaces(res.data.spaces);
+      seedSpaceDetailPlaceholders(queryClient, res.data.spaces);
     },
-    [enabled, isLoggedIn]
+    [enabled, isLoggedIn, queryClient]
   );
 
   useEffect(() => {

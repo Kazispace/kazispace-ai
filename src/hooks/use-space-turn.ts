@@ -33,6 +33,7 @@ import {
   type SpaceChatMessage,
 } from '@/lib/spaces/turn';
 import { resolveSpaceSendHistory } from '@/lib/spaces/space-send-history';
+import { isSpaceHistoryReadyFromSlice } from '@/lib/spaces/space-history-ready';
 import { useFetchSpaceHistory, useSpaceHistoryQuery } from '@/hooks/use-space-history';
 import { useSpaceStore, type SpaceReplyNotice } from '@/lib/store';
 
@@ -90,10 +91,16 @@ export function useSpaceTurn(
   const sendInFlightRef = useRef(false);
   /**
    * Mount-local settle flag for scroll restore.
-   * Store `isHydrating` can still be false on the first paint after remount (leftover from
-   * the previous visit), which would restore against cached height and lock restoredRef.
+   * Warm Zustand rows from a previous visit must be ready on the first paint
+   * (KAZI-566) — do not start false and wait an effect tick.
    */
-  const [historyReady, setHistoryReady] = useState(false);
+  const [historyReady, setHistoryReady] = useState(() =>
+    isSpaceHistoryReadyFromSlice(
+      spaceId,
+      resolvedMasterId,
+      spaceId ? useSpaceStore.getState().getSpaceSlice(spaceId) : null
+    )
+  );
 
   const messages = slice?.messages ?? [];
   const isHydrating = slice?.isHydrating ?? false;
