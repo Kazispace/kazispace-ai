@@ -17,6 +17,9 @@ export const spaceHistoryQueryKey = (
 export const SPACE_HISTORY_QUERY_DEFAULTS = {
   staleTime: SPACE_HISTORY_STALE_MS,
   gcTime: SPACE_HISTORY_GC_MS,
+  /** Warm A→B→A must not refetch on remount (KAZI-566). Send path uses fetchQuery. */
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
 } as const;
 
 /**

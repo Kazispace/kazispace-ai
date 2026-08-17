@@ -39,6 +39,7 @@ import {
   resolveSpacePanelAgentConfig,
 } from '@/lib/spaces/panel-agent-config';
 import { spaceChatScrollStorageKey } from '@/lib/spaces/chat-scroll';
+import { spaceChatFirstPaintKind } from '@/lib/spaces/space-history-ready';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import { cn } from '@/lib/utils';
@@ -417,7 +418,11 @@ export function SpaceChatPane({
         <div className="mx-auto flex w-full max-w-3xl min-h-0 flex-col gap-3">
           {!spaceSessionReady ? (
             <p className="py-8 text-center text-sm text-red-600">{t('spaceNotReady')}</p>
-          ) : (!historyReady || isHydrating) && messages.length === 0 ? (
+          ) : spaceChatFirstPaintKind({
+              historyReady,
+              isHydrating,
+              messageCount: messages.length,
+            }) === 'loading' ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
               <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
               <p className="text-sm">{t('loading')}</p>

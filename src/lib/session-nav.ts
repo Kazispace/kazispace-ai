@@ -48,6 +48,8 @@ export interface SessionNavRow {
   /** Dynamic badge detail (e.g. pipeline_state or session title snippet). */
   badgeDetail?: string | null;
   currentSession?: AgentSessionSummary | null;
+  /** Space master session — hover/click prefetch of history (KAZI-566). */
+  masterSessionId?: string | null;
 }
 
 /**

@@ -33,6 +33,10 @@ import {
   type SpaceChatMessage,
 } from '@/lib/spaces/turn';
 import { resolveSpaceSendHistory } from '@/lib/spaces/space-send-history';
+import {
+  resolveSpaceHistoryReadyState,
+  spaceHistoryReadyKey,
+} from '@/lib/spaces/space-history-ready';
 import { useFetchSpaceHistory, useSpaceHistoryQuery } from '@/hooks/use-space-history';
 import { useSpaceStore, type SpaceReplyNotice } from '@/lib/store';
 
@@ -89,11 +93,28 @@ export function useSpaceTurn(
   /** Sync mutex — `isSending` store flag alone loses to double-click before re-render (KAZI-296). */
   const sendInFlightRef = useRef(false);
   /**
-   * Mount-local settle flag for scroll restore.
-   * Store `isHydrating` can still be false on the first paint after remount (leftover from
-   * the previous visit), which would restore against cached height and lock restoredRef.
+   * Keyed by (spaceId, masterSessionId). App Router reuses SpaceChatPane across
+   * A→B; useState init alone would keep A's ready on B's first commit (KAZI-566).
    */
-  const [historyReady, setHistoryReady] = useState(false);
+  const historyReadyKey = spaceHistoryReadyKey(spaceId, resolvedMasterId);
+  const [historyReadyState, setHistoryReadyState] = useState(() =>
+    resolveSpaceHistoryReadyState(
+      spaceId,
+      resolvedMasterId,
+      spaceId ? useSpaceStore.getState().getSpaceSlice(spaceId) : null,
+      null
+    )
+  );
+  const historyReadyResolved = resolveSpaceHistoryReadyState(
+    spaceId,
+    resolvedMasterId,
+    spaceId ? slice : null,
+    historyReadyState
+  );
+  if (historyReadyState.key !== historyReadyResolved.key) {
+    setHistoryReadyState(historyReadyResolved);
+  }
+  const historyReady = historyReadyResolved.ready;
 
   const messages = slice?.messages ?? [];
   const isHydrating = slice?.isHydrating ?? false;
@@ -131,14 +152,14 @@ export function useSpaceTurn(
   // Sync shared history query → Zustand slice (cards rehydrate; row identity preserved).
   useEffect(() => {
     if (!enabled || !spaceId) {
-      setHistoryReady(false);
+      setHistoryReadyState({ key: historyReadyKey, ready: false });
       return;
     }
 
     if (!resolvedMasterId) {
       setSpaceMessages(spaceId, []);
       setSpaceHydrating(spaceId, false);
-      setHistoryReady(true);
+      setHistoryReadyState({ key: historyReadyKey, ready: true });
       return;
     }
 
@@ -149,10 +170,10 @@ export function useSpaceTurn(
       !cached.isHydrating;
 
     if (hasWarmCache || historyQuery.dataUpdatedAt > 0) {
-      setHistoryReady(true);
+      setHistoryReadyState({ key: historyReadyKey, ready: true });
       setSpaceHydrating(spaceId, false);
     } else if (historyQuery.isFetching && !historyQuery.data) {
-      setHistoryReady(false);
+      setHistoryReadyState({ key: historyReadyKey, ready: false });
       setSpaceHydrating(spaceId, true);
     }
 
@@ -171,12 +192,13 @@ export function useSpaceTurn(
       setSpaceMessages(spaceId, next);
     }
     setSpaceHydrating(spaceId, false);
-    setHistoryReady(true);
+    setHistoryReadyState({ key: historyReadyKey, ready: true });
   }, [
     enabled,
     historyQuery.data,
     historyQuery.dataUpdatedAt,
     historyQuery.isFetching,
+    historyReadyKey,
     resolvedMasterId,
     setSpaceHydrating,
     setSpaceMessages,

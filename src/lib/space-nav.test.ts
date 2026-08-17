@@ -41,6 +41,7 @@ describe('space-nav', () => {
     expect(rows[0]?.href).toBe('/zh/chat');
     expect(rows[1]?.href).toBe('/zh/spaces/sp_abc123');
     expect(rows[1]?.emoji).toBe('🎯');
+    expect(rows[1]?.masterSessionId).toBe('sess_sp_abc123');
   });
 
   it('sorts clinic first then last_active_at desc', () => {

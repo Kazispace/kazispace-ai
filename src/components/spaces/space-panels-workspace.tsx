@@ -243,6 +243,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
           )}
         >
           <SpaceChatPane
+            key={space.id}
             locale={locale}
             space={space}
             welcomeKey={welcomeKey}
@@ -260,7 +261,8 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             mobileView !== 'chat' && 'flex flex-1 lg:flex-none'
           )}
         >
-          {mobilePanel || activePanel ? (
+          {(desktopPanelOpen || mobileView !== 'chat') &&
+          (mobilePanel || activePanel) ? (
             <SpacePanelHost
               panel={(mobilePanel ?? activePanel)!}
               locale={locale}

@@ -18,6 +18,7 @@ export function BlankConversationWorkspace({ space }: BlankConversationWorkspace
 
   return (
     <SpaceChatPane
+      key={space.id}
       locale={locale}
       space={space}
       welcomeKey="blankWelcome"
