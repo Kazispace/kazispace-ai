@@ -1,5 +1,6 @@
 import {
   CLINIC_CHAT_VIRTUALIZE_AFTER,
+  HUB_CHAT_VIRTUALIZE_AFTER,
   SPACE_CHAT_VIRTUALIZE_AFTER,
 } from '@/lib/spaces/perf-policy';
 
@@ -11,6 +12,11 @@ export function shouldVirtualizeSpaceMessages(count: number): boolean {
 /** Long Clinic threads virtualize; public welcome / short lists stay mapped. */
 export function shouldVirtualizeClinicMessages(count: number): boolean {
   return count >= CLINIC_CHAT_VIRTUALIZE_AFTER;
+}
+
+/** Long Interview / English hub threads virtualize; short ones stay mapped. */
+export function shouldVirtualizeHubMessages(count: number): boolean {
+  return count >= HUB_CHAT_VIRTUALIZE_AFTER;
 }
 
 /**
