@@ -20,7 +20,7 @@ import {
   resolveNextActionHref,
 } from '@/lib/next-action/resolve';
 import { mapStrategySelectTurnContexts } from '@/lib/strategy-select';
-import { SpaceMessageRow } from '@/components/spaces/space-message-row';
+import { SpaceMessageList } from '@/components/spaces/space-message-list';
 import { resolveActionSelectSubmit } from '@/lib/next-action-submit';
 import { isEnglishTutorReviseAction } from '@/lib/english-tutor/custom-components';
 import {
@@ -424,20 +424,18 @@ export function SpaceChatPane({
           ) : messages.length === 0 ? (
             <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
           ) : (
-            messages.map((message, messageIndex) => (
-              <SpaceMessageRow
-                key={message.id}
-                message={message}
-                strategy={strategyContexts[messageIndex] ?? {}}
-                locale={locale}
-                actionsDisabled={isSending}
-                onRetryById={handleRetryById}
-                onNextAction={handleNextAction}
-                onFocusComposer={handleFocusComposer}
-                onExamSelect={handleExamSelect}
-                onJobCardClick={handleJobCardClick}
-              />
-            ))
+            <SpaceMessageList
+              messages={messages}
+              strategyContexts={strategyContexts}
+              scrollParentRef={scrollRef}
+              locale={locale}
+              actionsDisabled={isSending}
+              onRetryById={handleRetryById}
+              onNextAction={handleNextAction}
+              onFocusComposer={handleFocusComposer}
+              onExamSelect={handleExamSelect}
+              onJobCardClick={handleJobCardClick}
+            />
           )}
           {isSending ? (
             <MessageBubble

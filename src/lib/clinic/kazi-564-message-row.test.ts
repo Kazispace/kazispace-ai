@@ -95,17 +95,26 @@ describe('KAZI-564 message row isolation', () => {
   });
 
   it('Space and Clinic lists no longer scan history inside map', () => {
-    const space = readFileSync(
+    const spacePane = readFileSync(
       path.resolve(__dirname, '../../components/spaces/space-chat-pane.tsx'),
+      'utf8'
+    );
+    const spaceList = readFileSync(
+      path.resolve(
+        __dirname,
+        '../../components/spaces/space-message-static-rows.tsx'
+      ),
       'utf8'
     );
     const clinic = readFileSync(
       path.resolve(__dirname, '../../components/clinic/clinic-shell.tsx'),
       'utf8'
     );
-    expect(space).toMatch(/mapStrategySelectTurnContexts/);
-    expect(space).toMatch(/SpaceMessageRow/);
-    expect(space).not.toMatch(/resolveStrategySelectTurnContext\(/);
+    expect(spacePane).toMatch(/mapStrategySelectTurnContexts/);
+    expect(spacePane).toMatch(/SpaceMessageList/);
+    expect(spacePane).not.toMatch(/resolveStrategySelectTurnContext\(/);
+    expect(spaceList).toMatch(/SpaceMessageRow/);
+    expect(spaceList).not.toMatch(/resolveStrategySelectTurnContext\(/);
     expect(clinic).toMatch(/mapStrategySelectTurnContexts/);
     expect(clinic).toMatch(/ClinicMessageRow/);
     expect(clinic).not.toMatch(/resolveStrategySelectTurnContext\(/);
