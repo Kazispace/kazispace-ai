@@ -6,11 +6,40 @@ import {
 } from './region/session';
 import type { RegionSession } from './region/types';
 
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+/** Align with API spec `expires_in` (2592000s). Middleware only checks presence. */
+export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 
-function setCookie(name: string, value: string, maxAge = COOKIE_MAX_AGE) {
+function setCookie(
+  name: string,
+  value: string,
+  maxAge = AUTH_COOKIE_MAX_AGE_SECONDS
+) {
   if (typeof document === 'undefined') return;
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  const secure =
+    typeof window !== 'undefined' && window.location.protocol === 'https:'
+      ? '; Secure'
+      : '';
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax${secure}`;
+}
+
+function decodeJwtExpMs(token: string): number | null {
+  const parts = token.split('.');
+  if (parts.length < 2 || !parts[1]) return null;
+  try {
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = b64 + '='.repeat((4 - (b64.length % 4)) % 4);
+    const payload = JSON.parse(atob(padded)) as { exp?: unknown };
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Opaque tokens (no `exp`) are left to the API 401 path. */
+export function isAuthTokenExpired(token: string, now = Date.now()): boolean {
+  const expMs = decodeJwtExpMs(token);
+  if (expMs == null) return false;
+  return expMs <= now + 30_000;
 }
 
 function clearCookie(name: string) {
@@ -60,7 +89,13 @@ export function getWebUserId(): string {
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
   const session = getRegionSession();
-  if (session?.token) return session.token;
+  if (session?.token) {
+    if (isAuthTokenExpired(session.token)) {
+      clearAuthToken();
+      return null;
+    }
+    return session.token;
+  }
 
   // Legacy bare token → invalid under IR-FE-1; force re-login.
   const legacy = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
@@ -69,6 +104,45 @@ export function getAuthToken(): string | null {
     clearCookie(STORAGE_KEYS.AUTH_COOKIE);
   }
   return null;
+}
+
+/**
+ * Rewrite the middleware cookie from the persisted region session.
+ * Returns false when there is no usable session (missing or JWT expired).
+ */
+export function syncAuthCookieFromSession(): boolean {
+  if (typeof window === 'undefined') return false;
+  const session = getRegionSession();
+  if (!session?.token || isAuthTokenExpired(session.token)) {
+    if (session?.token) clearAuthToken();
+    return false;
+  }
+  setCookie(STORAGE_KEYS.AUTH_COOKIE, session.token);
+  return true;
+}
+
+/** Resume a still-valid login without another OTP (KAZI-577). Never reads a cached code. */
+export function resumeAuthSession(): {
+  token: string;
+  user: unknown | null;
+} | null {
+  if (!syncAuthCookieFromSession()) return null;
+  const token = getAuthToken();
+  if (!token) return null;
+  return { token, user: getUserInfo() };
+}
+
+export function getLastOtpPhone(): string | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(STORAGE_KEYS.LAST_OTP_PHONE);
+  return raw && raw.trim() ? raw.trim() : null;
+}
+
+export function setLastOtpPhone(phone: string): void {
+  if (typeof window === 'undefined') return;
+  const trimmed = phone.trim();
+  if (!trimmed) return;
+  localStorage.setItem(STORAGE_KEYS.LAST_OTP_PHONE, trimmed);
 }
 
 /**

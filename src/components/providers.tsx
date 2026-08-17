@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getAuthToken, getUserInfo } from "@/lib/auth";
+import { getAuthToken, getUserInfo, syncAuthCookieFromSession } from "@/lib/auth";
 import { AUTH_SESSION_CLEARED_EVENT } from "@/lib/auth-session-events";
 import { useAuthStore } from "@/lib/store";
 import { useTmaInit, reauthTelegramIfPossible } from "@/hooks/use-tma-init";
@@ -76,10 +76,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    syncAuthCookieFromSession();
     const token = getAuthToken();
     const user = getUserInfo<User>();
     if (token && user) {
       useAuthStore.setState({ token, user, isLoggedIn: true });
+    } else if (token) {
+      useAuthStore.setState({ token, isLoggedIn: true });
     }
   }, []);
 

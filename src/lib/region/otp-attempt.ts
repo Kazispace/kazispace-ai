@@ -4,6 +4,7 @@ import { normalizePhone } from './phone';
 /**
  * Pre-auth OTP attempt — pins request + verify to the same API host (KAZI-533 P1-3).
  * No JWT. Only valid for unauthenticated OTP request/verify.
+ * Do not persist this object or the 6-digit code (KAZI-577).
  */
 export interface OtpAttempt {
   phone: string;

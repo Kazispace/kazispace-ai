@@ -10,6 +10,12 @@ import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
 import { isValidOtpPhone } from "@/lib/api-mappers";
 import type { OtpAttempt } from "@/lib/region";
 import {
+  getLastOtpPhone,
+  resumeAuthSession,
+  setLastOtpPhone,
+} from "@/lib/auth";
+import type { User } from "@/types";
+import {
   resolvePostLoginLocale,
   switchLocalePath,
   syncProfileLanguageCookie,
@@ -22,16 +28,16 @@ interface LoginPageProps {
   params: { locale: string };
 }
 
-export default function LoginPage({ params }: LoginPageProps) {
+export default function LoginPage({ params: _params }: LoginPageProps) {
   const t = useTranslations("login");
   const router = useRouter();
-  const { locale } = params;
 
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [otpAttempt, setOtpAttempt] = useState<OtpAttempt | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [resuming, setResuming] = useState(true);
   const [error, setError] = useState("");
   const [sessionExpired, setSessionExpired] = useState(false);
 
@@ -40,7 +46,53 @@ export default function LoginPage({ params }: LoginPageProps) {
     if (search.get("expired") === "1") {
       setSessionExpired(true);
     }
-  }, []);
+    const lastPhone = getLastOtpPhone();
+    if (lastPhone) setPhone(lastPhone);
+
+    let cancelled = false;
+    const finishResume = () => {
+      if (!cancelled) setResuming(false);
+    };
+
+    async function resume() {
+      const session = resumeAuthSession();
+      if (!session) {
+        finishResume();
+        return;
+      }
+      let user = session.user as User | null;
+      if (!user) {
+        const me = await getMe();
+        if (cancelled) return;
+        if (!me.success || !me.data) {
+          finishResume();
+          return;
+        }
+        user = me.data;
+      }
+      useAuthStore.getState().login(session.token, user);
+      await syncMasterSession();
+      if (cancelled) return;
+      const redirect = search.get("redirect");
+      const targetLocale = resolvePostLoginLocale({
+        languagePreference: user.primaryLocale,
+        phone: getLastOtpPhone() ?? "",
+      });
+      syncProfileLanguageCookie(
+        readLanguagePreference(user.primaryLocale) ?? targetLocale
+      );
+      const destination =
+        redirect && redirect.startsWith("/")
+          ? switchLocalePath(redirect, targetLocale)
+          : `/${targetLocale}/chat`;
+      router.replace(destination);
+    }
+
+    void resume();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   const normalizedPhone = phone.replace(/\s/g, "");
 
@@ -58,6 +110,7 @@ export default function LoginPage({ params }: LoginPageProps) {
     try {
       const result = await requestOtp(normalizedPhone);
       if (result.success && result.attempt) {
+        setLastOtpPhone(normalizedPhone);
         setOtpAttempt(result.attempt);
         setStep("otp");
       } else if (result.success) {
@@ -83,6 +136,7 @@ export default function LoginPage({ params }: LoginPageProps) {
       if (result.success && result.data) {
         const { token, user: otpUser } = result.data;
         // Region session already persisted inside verifyOtp (KAZI-533).
+        setLastOtpPhone(normalizedPhone);
         const me = await getMe();
         const user = me.success && me.data ? me.data : otpUser;
         useAuthStore.getState().login(token, user);
@@ -127,7 +181,11 @@ export default function LoginPage({ params }: LoginPageProps) {
               {t("sessionExpiredContent")}
             </p>
           )}
-          {step === "phone" ? (
+          {resuming ? (
+            <div className="flex justify-center py-8">
+              <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+            </div>
+          ) : step === "phone" ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-text mb-1 block">
