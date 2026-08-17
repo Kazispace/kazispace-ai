@@ -68,11 +68,11 @@ describe('KAZI-574 Space chat virtualize after threshold', () => {
     expect(restoreSpaceChatScrollAfterVirtualize(tall, 0)).toBe(false);
   });
 
-  it('does not virtualize the public Clinic first-paint list', () => {
+  it('does not statically import virtuoso on the public Clinic shell', () => {
     const clinic = readSrc('../../components/clinic/clinic-shell.tsx');
-    expect(clinic).toMatch(/messages\.map\(/);
+    expect(clinic).toMatch(/ClinicMessageList/);
     expect(clinic).not.toMatch(/react-virtuoso/);
+    expect(clinic).not.toMatch(/from ['"]react-virtuoso['"]/);
     expect(clinic).not.toMatch(/SpaceMessageList/);
-    expect(clinic).not.toMatch(/shouldVirtualizeSpaceMessages/);
   });
 });

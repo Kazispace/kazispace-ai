@@ -106,8 +106,15 @@ describe('KAZI-564 message row isolation', () => {
       ),
       'utf8'
     );
-    const clinic = readFileSync(
+    const clinicPane = readFileSync(
       path.resolve(__dirname, '../../components/clinic/clinic-shell.tsx'),
+      'utf8'
+    );
+    const clinicList = readFileSync(
+      path.resolve(
+        __dirname,
+        '../../components/clinic/clinic-message-static-rows.tsx'
+      ),
       'utf8'
     );
     expect(spacePane).toMatch(/mapStrategySelectTurnContexts/);
@@ -115,8 +122,10 @@ describe('KAZI-564 message row isolation', () => {
     expect(spacePane).not.toMatch(/resolveStrategySelectTurnContext\(/);
     expect(spaceList).toMatch(/SpaceMessageRow/);
     expect(spaceList).not.toMatch(/resolveStrategySelectTurnContext\(/);
-    expect(clinic).toMatch(/mapStrategySelectTurnContexts/);
-    expect(clinic).toMatch(/ClinicMessageRow/);
-    expect(clinic).not.toMatch(/resolveStrategySelectTurnContext\(/);
+    expect(clinicPane).toMatch(/mapStrategySelectTurnContexts/);
+    expect(clinicPane).toMatch(/ClinicMessageList/);
+    expect(clinicPane).not.toMatch(/resolveStrategySelectTurnContext\(/);
+    expect(clinicList).toMatch(/ClinicMessageRow/);
+    expect(clinicList).not.toMatch(/resolveStrategySelectTurnContext\(/);
   });
 });
