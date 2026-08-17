@@ -11,7 +11,11 @@ import {
   seedSpaceDetailPlaceholders,
   spaceDetailFromSummary,
 } from '@/lib/spaces/space-detail-from-summary';
-import { isSpaceHistoryReadyFromSlice } from '@/lib/spaces/space-history-ready';
+import {
+  isSpaceHistoryReadyFromSlice,
+  resolveSpaceHistoryReadyState,
+  spaceChatFirstPaintKind,
+} from '@/lib/spaces/space-history-ready';
 import {
   SPACE_HISTORY_QUERY_DEFAULTS,
   spaceHistoryQueryKey,
@@ -148,5 +152,52 @@ describe('KAZI-566 space switch + load contracts', () => {
     ).toBe(false);
     expect(isSpaceHistoryReadyFromSlice('sp_abc123', null, null)).toBe(true);
     expect(isSpaceHistoryReadyFromSlice(null, 'sess', null)).toBe(false);
+  });
+
+  it('A(warm)→B(cold) first commit is loading, not welcome', () => {
+    const warmA = {
+      masterSessionId: 'ms_a',
+      messages: [{ id: 'm1', role: 'assistant' as const, content: 'hi' }],
+      isHydrating: false,
+    };
+    const coldB = {
+      masterSessionId: 'ms_b',
+      messages: [] as typeof warmA.messages,
+      isHydrating: false,
+    };
+
+    const paintA = resolveSpaceHistoryReadyState('sp_a', 'ms_a', warmA, null);
+    expect(paintA.ready).toBe(true);
+    expect(
+      spaceChatFirstPaintKind({
+        historyReady: paintA.ready,
+        isHydrating: false,
+        messageCount: warmA.messages.length,
+      })
+    ).toBe('messages');
+
+    // Same hook instance, new space props — must not inherit A's ready.
+    const paintB = resolveSpaceHistoryReadyState('sp_b', 'ms_b', coldB, paintA);
+    expect(paintB.key).not.toBe(paintA.key);
+    expect(paintB.ready).toBe(false);
+    expect(
+      spaceChatFirstPaintKind({
+        historyReady: paintB.ready,
+        isHydrating: coldB.isHydrating,
+        messageCount: coldB.messages.length,
+      })
+    ).toBe('loading');
+
+    const paintBWarm = resolveSpaceHistoryReadyState(
+      'sp_b',
+      'ms_b',
+      {
+        masterSessionId: 'ms_b',
+        messages: [{ id: 'm2', role: 'assistant' as const, content: 'yo' }],
+        isHydrating: false,
+      },
+      paintB
+    );
+    expect(paintBWarm.ready).toBe(true);
   });
 });

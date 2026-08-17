@@ -25,7 +25,7 @@ export default function SpacePage({
         </div>
       }
     >
-      <SpaceWorkspace spaceId={params.spaceId} />
+      <SpaceWorkspace key={params.spaceId} spaceId={params.spaceId} />
     </Suspense>
   );
 }

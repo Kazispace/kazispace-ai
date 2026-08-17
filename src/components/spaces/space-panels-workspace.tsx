@@ -243,6 +243,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
           )}
         >
           <SpaceChatPane
+            key={space.id}
             locale={locale}
             space={space}
             welcomeKey={welcomeKey}

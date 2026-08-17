@@ -61,5 +61,9 @@ export function SpaceWorkspace({ spaceId }: SpaceWorkspaceProps) {
     );
   }
 
-  return <SpaceWorkspaceFrame>{renderTemplateWorkspace(space)}</SpaceWorkspaceFrame>;
+  return (
+    <SpaceWorkspaceFrame key={space.id}>
+      {renderTemplateWorkspace(space)}
+    </SpaceWorkspaceFrame>
+  );
 }
