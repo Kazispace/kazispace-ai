@@ -19,6 +19,9 @@ import {
   resolveRumClientPolicy,
   shouldSampleRum,
 } from '@/lib/region/rum-policy';
+import rumIngest, {
+  config as rumIngestEdgeConfig,
+} from '../../../netlify/edge-functions/rum-ingest.js';
 
 const root = path.resolve(__dirname, '../..');
 
@@ -268,13 +271,39 @@ describe('KAZI-567 P1 rum ingest + region contract', () => {
     expect(rumNginx).toMatch(/proxy_set_header X-Forwarded-For ""/);
     expect(netlify).toMatch(/function = "rum-ingest"/);
     expect(netlify).toMatch(/path = "\/api\/rum"/);
-    expect(edgeFn).toMatch(/windowLimit: 30/);
-    expect(edgeFn).toMatch(/windowSize: 60/);
-    expect(edgeFn).toMatch(/x-rum-client-ip/);
-    expect(edgeFn).toMatch(/headers\.delete\('x-forwarded-for'\)/);
+    expect(edgeFn).toMatch(/context\.next\(new Request\(/);
+    expect(edgeFn).not.toMatch(/context\.next\(\s*\{\s*request:/);
     expect(RUM_REGION_POLICY.fail_closed).toBe(true);
     expect(RUM_REGION_POLICY.by_region_id['cn-chengdu']?.enabled).toBe(false);
     expect(RUM_REGION_POLICY.by_region_id['us-west']?.enabled).toBe(true);
+  });
+
+  it('Netlify edge handler forwards a Request with trusted IP', async () => {
+    const next = vi.fn(async () => new Response(null, { status: 204 }));
+    const request = new Request('https://kazispace.ai/api/rum', {
+      method: 'POST',
+      headers: {
+        origin: 'https://kazispace.ai',
+        'x-forwarded-for': '203.0.113.9',
+        'x-real-ip': '198.51.100.7',
+      },
+      body: '{}',
+    });
+
+    await rumIngest(request, { ip: '203.0.113.10', next });
+
+    expect(next).toHaveBeenCalledTimes(1);
+    const forwarded = next.mock.calls[0][0];
+    expect(forwarded).toBeInstanceOf(Request);
+    expect(next.mock.calls[0][1]).toBeUndefined();
+    expect(forwarded.headers.get('x-rum-client-ip')).toBe('203.0.113.10');
+    expect(forwarded.headers.get('x-forwarded-for')).toBeNull();
+    expect(forwarded.headers.get('x-real-ip')).toBeNull();
+    expect(rumIngestEdgeConfig.rateLimit).toEqual({
+      windowLimit: 30,
+      windowSize: 60,
+      aggregateBy: ['ip', 'domain'],
+    });
   });
 
   it('RUM leaves do not import the region barrel or yaml', () => {

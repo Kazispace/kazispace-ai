@@ -8,9 +8,7 @@ export default async (request, context) => {
   headers.delete('x-forwarded-for');
   headers.delete('x-real-ip');
   headers.set('x-rum-client-ip', context.ip || 'unknown');
-  return context.next({
-    request: new Request(request, { headers }),
-  });
+  return context.next(new Request(request, { headers }));
 };
 
 export const config = {
