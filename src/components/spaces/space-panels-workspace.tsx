@@ -19,9 +19,9 @@ import {
 } from '@/lib/spaces/panels';
 import { resolveSpaceJobId } from '@/lib/spaces/space-context';
 import {
-  SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
-  SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
-} from '@/lib/session-nav-events';
+  useActiveWorkspacePortalWrite,
+  useActiveWorkspaceRailEvents,
+} from '@/hooks/use-active-workspace-chrome';
 import { useIsDesktop } from '@/hooks/use-is-desktop';
 import { useWorkspaceRailPortal } from '@/lib/workspace-rail-portal';
 import { useSpaceStore } from '@/lib/store';
@@ -33,10 +33,16 @@ type SpacePanelsWelcomeKey = 'jobSprintWelcome' | 'ieltsWelcome';
 interface SpacePanelsWorkspaceProps {
   space: SpaceDetail;
   welcomeKey: SpacePanelsWelcomeKey;
+  /** Keep-alive hidden instance must not mount CV/IRP/EPP (KAZI-573). */
+  active?: boolean;
 }
 
 /** ADR-006 Phase B — chat_with_panels layout: space chat + template panels. */
-export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspaceProps) {
+export function SpacePanelsWorkspace({
+  space,
+  welcomeKey,
+  active = true,
+}: SpacePanelsWorkspaceProps) {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -77,12 +83,13 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
   mobileViewRef.current = mobileView;
 
   useEffect(() => {
+    if (!active) return;
     if (panelFromUrl && isValidPanelId(panels, panelFromUrl)) {
       setMobileView(panelFromUrl);
       setDesktopPanelId(panelFromUrl);
       setDesktopPanelOpen(true);
     }
-  }, [panelFromUrl, panels]);
+  }, [active, panelFromUrl, panels]);
 
   const syncPanelQuery = useCallback(
     (panelId: string) => {
@@ -115,49 +122,32 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
     }
   }, []);
 
-  useEffect(() => {
-    const onOpenWorkspaceRail = () => {
-      openWorkspacePanel();
-    };
-    const onToggleWorkspaceRail = () => {
-      const open = isDesktopRef.current
-        ? desktopPanelOpenRef.current
-        : mobileViewRef.current !== 'chat';
-      if (open) {
-        closeWorkspacePanel();
-        return;
-      }
-      openWorkspacePanel();
-    };
-    window.addEventListener(SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT, onOpenWorkspaceRail);
-    window.addEventListener(
-      SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
-      onToggleWorkspaceRail
-    );
-    return () => {
-      window.removeEventListener(
-        SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
-        onOpenWorkspaceRail
-      );
-      window.removeEventListener(
-        SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
-        onToggleWorkspaceRail
-      );
-    };
+  const onOpenWorkspaceRail = useCallback(() => {
+    openWorkspacePanel();
+  }, [openWorkspacePanel]);
+  const onToggleWorkspaceRail = useCallback(() => {
+    const open = isDesktopRef.current
+      ? desktopPanelOpenRef.current
+      : mobileViewRef.current !== 'chat';
+    if (open) {
+      closeWorkspacePanel();
+      return;
+    }
+    openWorkspacePanel();
   }, [closeWorkspacePanel, openWorkspacePanel]);
+  useActiveWorkspaceRailEvents(active, {
+    onOpen: onOpenWorkspaceRail,
+    onToggle: onToggleWorkspaceRail,
+  });
 
-  const workspaceChromeOpen = isDesktop
-    ? desktopPanelOpen
-    : mobileView !== 'chat';
+  const workspaceChromeOpen =
+    active && (isDesktop ? desktopPanelOpen : mobileView !== 'chat');
 
-  useEffect(() => {
-    workspacePortal?.setChatSideRailOpen(workspaceChromeOpen);
-  }, [workspaceChromeOpen, workspacePortal]);
-
-  useEffect(() => {
-    const clear = workspacePortal?.setChatSideRailOpen;
-    return () => clear?.(false);
-  }, [workspacePortal]);
+  useActiveWorkspacePortalWrite(
+    active,
+    workspacePortal?.setChatSideRailOpen,
+    workspaceChromeOpen
+  );
 
 
   const handleMobileViewChange = useCallback(
@@ -191,7 +181,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
 
   /** Envelope `meta.active_panel` / `ui_hints.panel_id` → switch + clear hint. */
   useEffect(() => {
-    if (!activePanelHint) return;
+    if (!active || !activePanelHint) return;
     if (!isValidPanelId(panels, activePanelHint)) {
       setSpaceActivePanelHint(space.id, null);
       return;
@@ -202,6 +192,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
     syncPanelQuery(activePanelHint);
     setSpaceActivePanelHint(space.id, null);
   }, [
+    active,
     activePanelHint,
     panels,
     setSpaceActivePanelHint,
@@ -247,6 +238,7 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             locale={locale}
             space={space}
             welcomeKey={welcomeKey}
+            active={active}
             composer={(ctx) => (
               <SpaceComposerWithStarter space={space} muted={muted} {...ctx} />
             )}
@@ -261,7 +253,8 @@ export function SpacePanelsWorkspace({ space, welcomeKey }: SpacePanelsWorkspace
             mobileView !== 'chat' && 'flex flex-1 lg:flex-none'
           )}
         >
-          {(desktopPanelOpen || mobileView !== 'chat') &&
+          {active &&
+          (desktopPanelOpen || mobileView !== 'chat') &&
           (mobilePanel || activePanel) ? (
             <SpacePanelHost
               panel={(mobilePanel ?? activePanel)!}

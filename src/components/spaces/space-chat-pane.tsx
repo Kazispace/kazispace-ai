@@ -44,11 +44,8 @@ import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/lib/store';
-import {
-  publishSessionNavChatSideRailOpen,
-  SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
-  SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
-} from '@/lib/session-nav-events';
+import { publishSessionNavChatSideRailOpen } from '@/lib/session-nav-events';
+import { useActiveWorkspaceRailEvents } from '@/hooks/use-active-workspace-chrome';
 
 type SpaceWelcomeKey = 'blankWelcome' | 'jobSprintWelcome' | 'ieltsWelcome';
 
@@ -64,6 +61,8 @@ interface SpaceChatPaneProps {
   locale: string;
   space: SpaceDetail;
   welcomeKey?: SpaceWelcomeKey;
+  /** Keep-alive: inactive instances must not take rail events (KAZI-573). */
+  active?: boolean;
   composer?:
     | ReactNode
     | ((ctx: SpaceComposerRenderProps) => ReactNode);
@@ -105,6 +104,7 @@ export function SpaceChatPane({
   locale,
   space,
   welcomeKey = 'blankWelcome',
+  active = true,
   composer,
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
@@ -122,21 +122,29 @@ export function SpaceChatPane({
   const [cvRailDrillDown, setCvRailDrillDown] = useState(false);
   const [cvRailHubEnabled, setCvRailHubEnabled] = useState(false);
 
+  const publishRail = useCallback(
+    (open: boolean) => {
+      if (!active) return;
+      publishSessionNavChatSideRailOpen(open);
+    },
+    [active]
+  );
+
   const closeCvRail = useCallback(() => {
     setCvRailOpen(false);
     setCvRailJobId(null);
     setCvRailDrillDown(false);
     setCvRailHubEnabled(false);
-    publishSessionNavChatSideRailOpen(false);
-  }, []);
+    publishRail(false);
+  }, [publishRail]);
 
   const openWorkspaceRail = useCallback(() => {
     setCvRailJobId(null);
     setCvRailDrillDown(false);
     setCvRailHubEnabled(true);
     setCvRailOpen(true);
-    publishSessionNavChatSideRailOpen(true);
-  }, []);
+    publishRail(true);
+  }, [publishRail]);
 
   const openCvRail = useCallback(
     (
@@ -148,9 +156,9 @@ export function SpaceChatPane({
       setCvRailDrillDown(Boolean(options?.drillDown) || Boolean(jobId));
       setCvRailHubEnabled(false);
       setCvRailOpen(true);
-      publishSessionNavChatSideRailOpen(true);
+      publishRail(true);
     },
-    []
+    [publishRail]
   );
 
   const openCvRailRef = useRef(openCvRail);
@@ -162,34 +170,20 @@ export function SpaceChatPane({
   const cvRailOpenRef = useRef(cvRailOpen);
   cvRailOpenRef.current = cvRailOpen;
 
-  useEffect(() => {
-    if (hasCvPanel) return;
-    const onOpenWorkspaceRail = () => {
-      openWorkspaceRailRef.current();
-    };
-    const onToggleWorkspaceRail = () => {
-      if (cvRailOpenRef.current) {
-        closeCvRailRef.current();
-        return;
-      }
-      openWorkspaceRailRef.current();
-    };
-    window.addEventListener(SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT, onOpenWorkspaceRail);
-    window.addEventListener(
-      SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
-      onToggleWorkspaceRail
-    );
-    return () => {
-      window.removeEventListener(
-        SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
-        onOpenWorkspaceRail
-      );
-      window.removeEventListener(
-        SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
-        onToggleWorkspaceRail
-      );
-    };
-  }, [hasCvPanel]);
+  const onOpenWorkspaceRail = useCallback(() => {
+    openWorkspaceRailRef.current();
+  }, []);
+  const onToggleWorkspaceRail = useCallback(() => {
+    if (cvRailOpenRef.current) {
+      closeCvRailRef.current();
+      return;
+    }
+    openWorkspaceRailRef.current();
+  }, []);
+  useActiveWorkspaceRailEvents(active && !hasCvPanel, {
+    onOpen: onOpenWorkspaceRail,
+    onToggle: onToggleWorkspaceRail,
+  });
   const {
     messages,
     isHydrating,
@@ -226,7 +220,7 @@ export function SpaceChatPane({
   }, [hasCvPanel, locale, space.id]);
 
   useEffect(() => {
-    if (hasCvPanel) return;
+    if (!active || hasCvPanel) return;
     if (!searchParamsRequestCvRailOpen(searchParams)) return;
 
     const jobId = searchParams.get('job_id')?.trim() || null;
@@ -237,7 +231,7 @@ export function SpaceChatPane({
       `/${locale}/spaces/${encodeURIComponent(space.id)}${q ? `?${q}` : ''}`,
       { scroll: false }
     );
-  }, [hasCvPanel, searchParams, locale, router, space.id]);
+  }, [active, hasCvPanel, searchParams, locale, router, space.id]);
 
   // Defensive: BE should always bind master_session_id; empty means provision incomplete.
   const spaceSessionReady = Boolean(space.master_session_id?.trim());

@@ -23,3 +23,6 @@ export const DIRECTORY_IDLE_TIMEOUT_MS = 2500;
 
 /** Fallback when requestIdleCallback is unavailable. */
 export const DIRECTORY_FALLBACK_DELAY_MS = 2000;
+
+/** Mounted SpaceWorkspace instances kept across A→B→A (KAZI-573). */
+export const SPACE_WORKSPACE_KEEPALIVE_LIMIT = 3;

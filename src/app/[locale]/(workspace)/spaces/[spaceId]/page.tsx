@@ -1,9 +1,11 @@
-import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 
-import { SpaceWorkspace } from '@/components/spaces/space-workspace';
 import { CLINIC_SPACE_ID, isSpacesEnabled } from '@/lib/spaces/constants';
 
+/**
+ * Workspace chrome lives in `spaces/layout.tsx` (KAZI-573 keep-alive).
+ * This page only guards the route.
+ */
 export default function SpacePage({
   params,
 }: {
@@ -17,15 +19,5 @@ export default function SpacePage({
     redirect(`/${params.locale}/chat`);
   }
 
-  return (
-    <Suspense
-      fallback={
-        <div className="flex h-full items-center justify-center text-sm text-[#86909C]">
-          …
-        </div>
-      }
-    >
-      <SpaceWorkspace key={params.spaceId} spaceId={params.spaceId} />
-    </Suspense>
-  );
+  return null;
 }
