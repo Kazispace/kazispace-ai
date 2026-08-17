@@ -34,3 +34,15 @@ export const SPACE_WORKSPACE_KEEPALIVE_LIMIT = 3;
  * benefit before the DOM is already huge.
  */
 export const SPACE_CHAT_VIRTUALIZE_AFTER = 60;
+
+/**
+ * Virtuoso probe skip. Markdown bubbles vary (cards / tables / short replies);
+ * 160px is a mid-size text row so the first estimate is not a one-line stub.
+ */
+export const SPACE_CHAT_VIRTUOSO_DEFAULT_ITEM_HEIGHT = 160;
+
+/**
+ * Extra pixels rendered above/below the viewport. Fast flick through
+ * markdown-heavy rows should not flash empty gutters.
+ */
+export const SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN = 800;

@@ -4,3 +4,18 @@ import { SPACE_CHAT_VIRTUALIZE_AFTER } from '@/lib/spaces/perf-policy';
 export function shouldVirtualizeSpaceMessages(count: number): boolean {
   return count >= SPACE_CHAT_VIRTUALIZE_AFTER;
 }
+
+/**
+ * Re-apply the pre-swap scrollTop after static rows unmount.
+ * No-op until the parent actually has overflow — otherwise the browser
+ * clamps to 0 and we would lock that in.
+ */
+export function restoreSpaceChatScrollAfterVirtualize(
+  el: Pick<HTMLElement, 'scrollHeight' | 'clientHeight' | 'scrollTop'>,
+  initialScrollTop: number
+): boolean {
+  if (initialScrollTop <= 0) return false;
+  if (el.scrollHeight <= el.clientHeight) return false;
+  el.scrollTop = initialScrollTop;
+  return true;
+}

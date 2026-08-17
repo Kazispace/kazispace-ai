@@ -100,7 +100,10 @@ describe('KAZI-564 message row isolation', () => {
       'utf8'
     );
     const spaceList = readFileSync(
-      path.resolve(__dirname, '../../components/spaces/space-message-list.tsx'),
+      path.resolve(
+        __dirname,
+        '../../components/spaces/space-message-static-rows.tsx'
+      ),
       'utf8'
     );
     const clinic = readFileSync(
