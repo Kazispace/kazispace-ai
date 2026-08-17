@@ -1,8 +1,16 @@
-import { SPACE_CHAT_VIRTUALIZE_AFTER } from '@/lib/spaces/perf-policy';
+import {
+  CLINIC_CHAT_VIRTUALIZE_AFTER,
+  SPACE_CHAT_VIRTUALIZE_AFTER,
+} from '@/lib/spaces/perf-policy';
 
 /** Long Space threads virtualize; short ones keep the existing map. */
 export function shouldVirtualizeSpaceMessages(count: number): boolean {
   return count >= SPACE_CHAT_VIRTUALIZE_AFTER;
+}
+
+/** Long Clinic threads virtualize; public welcome / short lists stay mapped. */
+export function shouldVirtualizeClinicMessages(count: number): boolean {
+  return count >= CLINIC_CHAT_VIRTUALIZE_AFTER;
 }
 
 /**

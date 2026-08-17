@@ -35,6 +35,9 @@ export const SPACE_WORKSPACE_KEEPALIVE_LIMIT = 3;
  */
 export const SPACE_CHAT_VIRTUALIZE_AFTER = 60;
 
+/** Clinic uses the same threshold so markdown-heavy threads match Space (KAZI-575). */
+export const CLINIC_CHAT_VIRTUALIZE_AFTER = SPACE_CHAT_VIRTUALIZE_AFTER;
+
 /**
  * Virtuoso probe skip. Markdown bubbles vary (cards / tables / short replies);
  * 160px is a mid-size text row so the first estimate is not a one-line stub.

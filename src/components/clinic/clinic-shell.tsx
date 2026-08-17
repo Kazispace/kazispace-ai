@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { ChatHeader } from "./chat-header";
 import { WelcomeView } from "./welcome-view";
 import { MessageBubble } from "./message-bubble";
-import { ClinicMessageRow } from "./clinic-message-row";
+import { ClinicMessageList } from "./clinic-message-list";
 import { SwitchingOverlay } from "./switching-overlay";
 import { LayerIndicator } from "./layer-indicator";
 import { AgentSwitchDialog } from "./agent-switch-dialog";
@@ -1488,28 +1488,26 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             <p className="text-sm">{tSessions("sessionSwitching")}</p>
           </div>
         ) : (
-          messages.map((msg, messageIndex) => (
-            <ClinicMessageRow
-              key={msg.id}
-              message={msg}
-              strategy={strategyContexts[messageIndex] ?? {}}
-              locale={locale}
-              isAgentMode={isAgentMode}
-              isStreamingEmpty={isStreaming && msg.content === ""}
-              actionsDisabled={isSending || isSwitching || spaceNudgeBusy}
-              referralDisabled={isSending || isSwitching || spaceNudgeBusy}
-              onRetryById={handleRetryById}
-              onReferralAccept={handleReferralAccept}
-              onReferralDismiss={handleReferralDismiss}
-              onSpaceNudgeAccept={handleSpaceNudgeAccept}
-              onSpaceNudgeDismiss={handleSpaceNudgeDismiss}
-              onUpgradeResearch={handleUpgradeResearch}
-              onNextAction={handleNextAction}
-              onFocusComposer={handleFocusComposer}
-              onExamSelect={handleExamSelect}
-              onJobCardClick={handleJobCardClick}
-            />
-          ))
+          <ClinicMessageList
+            messages={messages}
+            strategyContexts={strategyContexts}
+            isStreaming={isStreaming}
+            scrollParentRef={scrollRef}
+            locale={locale}
+            isAgentMode={isAgentMode}
+            actionsDisabled={isSending || isSwitching || spaceNudgeBusy}
+            referralDisabled={isSending || isSwitching || spaceNudgeBusy}
+            onRetryById={handleRetryById}
+            onReferralAccept={handleReferralAccept}
+            onReferralDismiss={handleReferralDismiss}
+            onSpaceNudgeAccept={handleSpaceNudgeAccept}
+            onSpaceNudgeDismiss={handleSpaceNudgeDismiss}
+            onUpgradeResearch={handleUpgradeResearch}
+            onNextAction={handleNextAction}
+            onFocusComposer={handleFocusComposer}
+            onExamSelect={handleExamSelect}
+            onJobCardClick={handleJobCardClick}
+          />
         )}
         </div>
       </div>
