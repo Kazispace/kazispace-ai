@@ -199,6 +199,10 @@ describe('KAZI-577 resume login session without caching OTP', () => {
     expect(login).not.toMatch(/localStorage\.setItem/);
     expect(providers).toMatch(/hydrateAuthFromSession/);
     expect(providers).not.toMatch(/isLoggedIn: true/);
+    const tmaLaunch = readSrc('../app/[locale]/tma/launch/page.tsx');
+    const tmaInit = readSrc('../hooks/use-tma-init.ts');
+    expect(tmaLaunch).not.toMatch(/isLoggedIn: true/);
+    expect(tmaInit).not.toMatch(/isLoggedIn: true/);
     expect(auth).toMatch(/PENDING_OTP_PHONE_SESSION_KEY/);
     expect(auth).toMatch(/sessionStorage/);
     expect(auth).toMatch(/LEGACY_LAST_OTP_PHONE_KEY/);
