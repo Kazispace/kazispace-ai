@@ -1,11 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { Menu } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-
-import { SpaceTemplatePicker } from '@/components/spaces/space-template-picker';
 
 import { ConfirmAbandonSessionDialog } from '@/components/session-nav/confirm-abandon-session-dialog';
 import {
@@ -13,10 +12,13 @@ import {
   type SessionNavOpenOptions,
 } from '@/components/session-nav/session-nav-controller';
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
-import { SessionFileLibraryPanel } from '@/components/session-nav/session-file-library-panel';
-import { SessionGlobalSearchPanel } from '@/components/session-nav/session-global-search-panel';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
-import { SessionNavPanel } from '@/components/session-nav/session-nav-panel';
+import {
+  loadSessionFileLibraryPanel,
+  loadSessionGlobalSearchPanel,
+  loadSessionNavPanel,
+  loadSpaceTemplatePicker,
+} from '@/lib/session-nav/load-session-nav-panels';
 import { useActiveAgentSessions, ActiveAgentSessionsProvider } from '@/hooks/use-active-agent-sessions';
 import { useAgentSessionActions } from '@/hooks/use-agent-session-actions';
 import { useIsDesktop } from '@/hooks/use-is-desktop';
@@ -51,6 +53,35 @@ interface SessionNavShellProps {
   locale: string;
   children: React.ReactNode;
 }
+
+/** Same 260px column as SessionNavPanel — no opacity hide (KAZI-578). */
+function SessionNavPanelSlot() {
+  return (
+    <aside
+      aria-hidden
+      className="hidden w-[260px] shrink-0 overflow-hidden border-r border-[#E5E6EB] md:block"
+    />
+  );
+}
+
+const SessionNavPanel = dynamic(
+  () => loadSessionNavPanel().then((m) => m.SessionNavPanel),
+  { loading: () => <SessionNavPanelSlot /> }
+);
+
+const SessionFileLibraryPanel = dynamic(
+  () => loadSessionFileLibraryPanel().then((m) => m.SessionFileLibraryPanel),
+  { loading: () => <SessionNavPanelSlot /> }
+);
+
+const SessionGlobalSearchPanel = dynamic(
+  () => loadSessionGlobalSearchPanel().then((m) => m.SessionGlobalSearchPanel),
+  { loading: () => <SessionNavPanelSlot /> }
+);
+
+const SpaceTemplatePicker = dynamic(() =>
+  loadSpaceTemplatePicker().then((m) => m.SpaceTemplatePicker)
+);
 
 export function SessionNavShell({ locale, children }: SessionNavShellProps) {
   return (
