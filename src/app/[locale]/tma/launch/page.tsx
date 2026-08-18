@@ -62,11 +62,15 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
       const me = await getMe();
       if (cancelled) return;
 
-      if (me.success && me.data) {
-        useAuthStore.getState().login(token, me.data);
-      } else {
-        useAuthStore.setState({ token, isLoggedIn: true, user: null });
+      if (!me.success || !me.data) {
+        // KAZI-577 R2: never enter isLoggedIn=true without a validated user.
+        useAuthStore.getState().logout();
+        setError(me.error ?? tRef.current('authFailed'));
+        setStatus('error');
+        return;
       }
+
+      useAuthStore.getState().login(token, me.data);
 
       const action = captureStartParamFromContext();
       useUIStore.getState().setTmaInitComplete(true);

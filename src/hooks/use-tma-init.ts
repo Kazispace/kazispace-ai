@@ -33,8 +33,9 @@ async function authenticateWithInitData(): Promise<boolean> {
     return true;
   }
 
-  useAuthStore.setState({ token, isLoggedIn: true, user: null });
-  return true;
+  // KAZI-577 R2: /me failure is fail-closed — no token-only half-auth.
+  useAuthStore.getState().logout();
+  return false;
 }
 
 export function useTmaInit() {

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
 import { isValidOtpPhone } from "@/lib/api-mappers";
 import type { OtpAttempt } from "@/lib/region";
+import { getPendingOtpPhone, setPendingOtpPhone } from "@/lib/auth";
 import {
   resolvePostLoginLocale,
   switchLocalePath,
@@ -22,10 +23,9 @@ interface LoginPageProps {
   params: { locale: string };
 }
 
-export default function LoginPage({ params }: LoginPageProps) {
+export default function LoginPage({ params: _params }: LoginPageProps) {
   const t = useTranslations("login");
   const router = useRouter();
-  const { locale } = params;
 
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [phone, setPhone] = useState("");
@@ -34,13 +34,37 @@ export default function LoginPage({ params }: LoginPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [sessionExpired, setSessionExpired] = useState(false);
+  const authReady = useAuthStore((s) => s.authReady);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const user = useAuthStore((s) => s.user);
+  const resuming = !authReady || Boolean(isLoggedIn && user);
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
     if (search.get("expired") === "1") {
       setSessionExpired(true);
     }
+    const pendingPhone = getPendingOtpPhone();
+    if (pendingPhone) setPhone(pendingPhone);
   }, []);
+
+  useEffect(() => {
+    if (!authReady || !isLoggedIn || !user) return;
+    const search = new URLSearchParams(window.location.search);
+    const redirect = search.get("redirect");
+    const targetLocale = resolvePostLoginLocale({
+      languagePreference: user.primaryLocale,
+      phone: user.phone ?? "",
+    });
+    syncProfileLanguageCookie(
+      readLanguagePreference(user.primaryLocale) ?? targetLocale
+    );
+    const destination =
+      redirect && redirect.startsWith("/")
+        ? switchLocalePath(redirect, targetLocale)
+        : `/${targetLocale}/chat`;
+    router.replace(destination);
+  }, [authReady, isLoggedIn, user, router]);
 
   const normalizedPhone = phone.replace(/\s/g, "");
 
@@ -58,6 +82,7 @@ export default function LoginPage({ params }: LoginPageProps) {
     try {
       const result = await requestOtp(normalizedPhone);
       if (result.success && result.attempt) {
+        setPendingOtpPhone(normalizedPhone);
         setOtpAttempt(result.attempt);
         setStep("otp");
       } else if (result.success) {
@@ -127,7 +152,11 @@ export default function LoginPage({ params }: LoginPageProps) {
               {t("sessionExpiredContent")}
             </p>
           )}
-          {step === "phone" ? (
+          {resuming ? (
+            <div className="flex justify-center py-8">
+              <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+            </div>
+          ) : step === "phone" ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-text mb-1 block">
