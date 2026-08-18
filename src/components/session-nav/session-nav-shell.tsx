@@ -1,11 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import { Menu } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-
-import { SpaceTemplatePicker } from '@/components/spaces/space-template-picker';
 
 import { ConfirmAbandonSessionDialog } from '@/components/session-nav/confirm-abandon-session-dialog';
 import {
@@ -13,10 +12,13 @@ import {
   type SessionNavOpenOptions,
 } from '@/components/session-nav/session-nav-controller';
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
-import { SessionFileLibraryPanel } from '@/components/session-nav/session-file-library-panel';
-import { SessionGlobalSearchPanel } from '@/components/session-nav/session-global-search-panel';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
-import { SessionNavPanel } from '@/components/session-nav/session-nav-panel';
+import {
+  loadSessionFileLibraryPanel,
+  loadSessionGlobalSearchPanel,
+  loadSessionNavPanel,
+  loadSpaceTemplatePicker,
+} from '@/lib/session-nav/load-session-nav-panels';
 import { useActiveAgentSessions, ActiveAgentSessionsProvider } from '@/hooks/use-active-agent-sessions';
 import { useAgentSessionActions } from '@/hooks/use-agent-session-actions';
 import { useIsDesktop } from '@/hooks/use-is-desktop';
@@ -51,6 +53,36 @@ interface SessionNavShellProps {
   locale: string;
   children: React.ReactNode;
 }
+
+/** Same 260px column as SessionNavPanel — no opacity hide (KAZI-578). */
+function SessionNavPanelSlot() {
+  return (
+    <aside
+      aria-hidden
+      data-testid="session-nav-panel-slot"
+      className="hidden w-[260px] shrink-0 overflow-hidden border-r border-[#E5E6EB] md:block"
+    />
+  );
+}
+
+const SessionNavPanel = dynamic(
+  () => loadSessionNavPanel().then((m) => m.SessionNavPanel),
+  { loading: () => <SessionNavPanelSlot /> }
+);
+
+const SessionFileLibraryPanel = dynamic(
+  () => loadSessionFileLibraryPanel().then((m) => m.SessionFileLibraryPanel),
+  { loading: () => <SessionNavPanelSlot /> }
+);
+
+const SessionGlobalSearchPanel = dynamic(
+  () => loadSessionGlobalSearchPanel().then((m) => m.SessionGlobalSearchPanel),
+  { loading: () => <SessionNavPanelSlot /> }
+);
+
+const SpaceTemplatePicker = dynamic(() =>
+  loadSpaceTemplatePicker().then((m) => m.SpaceTemplatePicker)
+);
 
 export function SessionNavShell({ locale, children }: SessionNavShellProps) {
   return (
@@ -121,10 +153,18 @@ function SessionNavShellLayout({
     setExpandedAgentId,
     panelMode,
     setPanelMode,
+    hydrated,
   } = navState;
 
   const pinNavPanel = isDesktop && shouldPinWorkspaceNavPanel(pathname);
   const panelVisible = panelOpen || mobileDrawerOpen;
+  // First paint: icon rail + center only. Mount the heavy list after
+  // hydration, and only when desktop open/pinned or the mobile drawer is open.
+  const mountDesktopPanel =
+    hydrated && isDesktop && (panelOpen || pinNavPanel);
+  const mountMobilePanel = hydrated && mobileDrawerOpen;
+  const mountSideSurface = mountDesktopPanel || mountMobilePanel;
+  const desktopPanelOpen = mountDesktopPanel;
   const contextHeaderSpaceId =
     spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
   const showContextHeader =
@@ -312,9 +352,9 @@ function SessionNavShellLayout({
     [handleRequestNewSession, openPanel]
   );
 
-  const showAgentsPanel = panelMode === 'agents';
-  const showFilesPanel = panelMode === 'files';
-  const showSearchPanel = panelMode === 'search';
+  const showAgentsPanel = mountSideSurface && panelMode === 'agents';
+  const showFilesPanel = mountSideSurface && panelMode === 'files';
+  const showSearchPanel = mountSideSurface && panelMode === 'search';
 
   return (
     <SessionNavControllerProvider value={controllerValue}>
@@ -336,7 +376,7 @@ function SessionNavShellLayout({
         {showAgentsPanel ? (
           <SessionNavPanel
             locale={locale}
-            open={panelOpen}
+            open={desktopPanelOpen}
             mobileDrawer={mobileDrawerOpen}
             viewTab={viewTab}
             onViewTabChange={setViewTab}
@@ -364,7 +404,7 @@ function SessionNavShellLayout({
         {showFilesPanel ? (
           <SessionFileLibraryPanel
             locale={locale}
-            open={panelOpen}
+            open={desktopPanelOpen}
             mobileDrawer={mobileDrawerOpen}
             onClose={closePanel}
           />
@@ -373,7 +413,7 @@ function SessionNavShellLayout({
         {showSearchPanel ? (
           <SessionGlobalSearchPanel
             locale={locale}
-            open={panelOpen}
+            open={desktopPanelOpen}
             mobileDrawer={mobileDrawerOpen}
             onClose={closePanel}
           />
@@ -391,12 +431,14 @@ function SessionNavShellLayout({
         </WorkspaceCenterColumn>
       </div>
 
-      <SpaceTemplatePicker
-        open={templatePickerOpen}
-        isCreating={isCreatingSpace}
-        onClose={() => setTemplatePickerOpen(false)}
-        onSelect={(templateId) => void handleCreateSpace(templateId)}
-      />
+      {templatePickerOpen ? (
+        <SpaceTemplatePicker
+          open={templatePickerOpen}
+          isCreating={isCreatingSpace}
+          onClose={() => setTemplatePickerOpen(false)}
+          onSelect={(templateId) => void handleCreateSpace(templateId)}
+        />
+      ) : null}
 
       <ConfirmAbandonSessionDialog
         open={Boolean(confirmAgentId)}
