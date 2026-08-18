@@ -59,6 +59,7 @@ function SessionNavPanelSlot() {
   return (
     <aside
       aria-hidden
+      data-testid="session-nav-panel-slot"
       className="hidden w-[260px] shrink-0 overflow-hidden border-r border-[#E5E6EB] md:block"
     />
   );
@@ -152,10 +153,18 @@ function SessionNavShellLayout({
     setExpandedAgentId,
     panelMode,
     setPanelMode,
+    hydrated,
   } = navState;
 
   const pinNavPanel = isDesktop && shouldPinWorkspaceNavPanel(pathname);
   const panelVisible = panelOpen || mobileDrawerOpen;
+  // First paint: icon rail + center only. Mount the heavy list after
+  // hydration, and only when desktop open/pinned or the mobile drawer is open.
+  const mountDesktopPanel =
+    hydrated && isDesktop && (panelOpen || pinNavPanel);
+  const mountMobilePanel = hydrated && mobileDrawerOpen;
+  const mountSideSurface = mountDesktopPanel || mountMobilePanel;
+  const desktopPanelOpen = mountDesktopPanel;
   const contextHeaderSpaceId =
     spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
   const showContextHeader =
@@ -343,9 +352,9 @@ function SessionNavShellLayout({
     [handleRequestNewSession, openPanel]
   );
 
-  const showAgentsPanel = panelMode === 'agents';
-  const showFilesPanel = panelMode === 'files';
-  const showSearchPanel = panelMode === 'search';
+  const showAgentsPanel = mountSideSurface && panelMode === 'agents';
+  const showFilesPanel = mountSideSurface && panelMode === 'files';
+  const showSearchPanel = mountSideSurface && panelMode === 'search';
 
   return (
     <SessionNavControllerProvider value={controllerValue}>
@@ -367,7 +376,7 @@ function SessionNavShellLayout({
         {showAgentsPanel ? (
           <SessionNavPanel
             locale={locale}
-            open={panelOpen}
+            open={desktopPanelOpen}
             mobileDrawer={mobileDrawerOpen}
             viewTab={viewTab}
             onViewTabChange={setViewTab}
@@ -395,7 +404,7 @@ function SessionNavShellLayout({
         {showFilesPanel ? (
           <SessionFileLibraryPanel
             locale={locale}
-            open={panelOpen}
+            open={desktopPanelOpen}
             mobileDrawer={mobileDrawerOpen}
             onClose={closePanel}
           />
@@ -404,7 +413,7 @@ function SessionNavShellLayout({
         {showSearchPanel ? (
           <SessionGlobalSearchPanel
             locale={locale}
-            open={panelOpen}
+            open={desktopPanelOpen}
             mobileDrawer={mobileDrawerOpen}
             onClose={closePanel}
           />
@@ -422,12 +431,14 @@ function SessionNavShellLayout({
         </WorkspaceCenterColumn>
       </div>
 
-      <SpaceTemplatePicker
-        open={templatePickerOpen}
-        isCreating={isCreatingSpace}
-        onClose={() => setTemplatePickerOpen(false)}
-        onSelect={(templateId) => void handleCreateSpace(templateId)}
-      />
+      {templatePickerOpen ? (
+        <SpaceTemplatePicker
+          open={templatePickerOpen}
+          isCreating={isCreatingSpace}
+          onClose={() => setTemplatePickerOpen(false)}
+          onSelect={(templateId) => void handleCreateSpace(templateId)}
+        />
+      ) : null}
 
       <ConfirmAbandonSessionDialog
         open={Boolean(confirmAgentId)}

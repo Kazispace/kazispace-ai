@@ -25,6 +25,9 @@ describe('KAZI-578 SessionNav first-paint split', () => {
     expect(src).toMatch(/loadSpaceTemplatePicker/);
     expect(src).toMatch(/SessionNavPanelSlot/);
     expect(src).toMatch(/w-\[260px\]/);
+    expect(src).toMatch(/mountDesktopPanel/);
+    expect(src).toMatch(/mountMobilePanel/);
+    expect(src).toMatch(/hydrated/);
     expect(src).not.toMatch(/opacity-0|setTimeout|debounce/);
     expect(src).not.toMatch(
       /import\s+\{\s*SessionNavPanel\s*\}\s+from\s+['"]@\/components\/session-nav\/session-nav-panel['"]/
