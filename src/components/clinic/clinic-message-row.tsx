@@ -2,7 +2,9 @@
 
 import { memo, useCallback, useMemo } from 'react';
 
+import { HistoryStubPlaceholder } from '@/components/chat/history-stub-placeholder';
 import { MessageBubble } from '@/components/clinic/message-bubble';
+import { isHistoryStub } from '@/lib/chat/history-window';
 import {
   AGENT_REGISTRY,
   getAgentLabel,
@@ -117,6 +119,15 @@ function ClinicMessageRowImpl({
   const handleUpgradeResearch = useCallback(() => {
     onUpgradeResearch(message.id);
   }, [message.id, onUpgradeResearch]);
+
+  if (isHistoryStub(message)) {
+    return (
+      <HistoryStubPlaceholder
+        id={message.id}
+        role={message.role === 'user' ? 'user' : 'assistant'}
+      />
+    );
+  }
 
   return (
     <MessageBubble

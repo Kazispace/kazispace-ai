@@ -2,7 +2,9 @@
 
 import { memo, useCallback } from 'react';
 
+import { HistoryStubPlaceholder } from '@/components/chat/history-stub-placeholder';
 import { MessageBubble } from '@/components/clinic/message-bubble';
+import { isHistoryStub } from '@/lib/chat/history-window';
 import type { StrategySelectTurnContext } from '@/lib/strategy-select';
 import type { SpaceChatMessage } from '@/lib/spaces/turn';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
@@ -53,6 +55,10 @@ function SpaceMessageRowImpl({
   const handleRetry = useCallback(() => {
     onRetryById(message.id);
   }, [message.id, onRetryById]);
+
+  if (isHistoryStub(message)) {
+    return <HistoryStubPlaceholder id={message.id} role={message.role} />;
+  }
 
   return (
     <MessageBubble

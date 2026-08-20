@@ -6,6 +6,8 @@ import { useCallback } from 'react';
 import {
   SPACE_HISTORY_QUERY_DEFAULTS,
   fetchSpaceHistoryMessages,
+  hydrateSpaceHistoryMessages,
+  mergeHydratedSpaceHistoryRows,
   spaceHistoryQueryKey,
 } from '@/lib/spaces/space-history-query';
 import type { SpaceChatMessage } from '@/lib/spaces/turn';
@@ -47,6 +49,33 @@ export function useFetchSpaceHistory() {
           fetchSpaceHistoryMessages(masterSessionId, locale, signal),
         staleTime: 0,
       });
+    },
+    [queryClient]
+  );
+}
+
+/** Hydrate stub ids into the shared history query (KAZI-580). */
+export function useHydrateSpaceHistory() {
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    async (
+      masterSessionId: string,
+      locale: string,
+      ids: string[]
+    ): Promise<SpaceChatMessage[]> => {
+      const hydrated = await hydrateSpaceHistoryMessages(
+        masterSessionId,
+        locale,
+        ids
+      );
+      if (hydrated.length === 0) return hydrated;
+      queryClient.setQueryData(
+        spaceHistoryQueryKey(masterSessionId, locale),
+        (previous: SpaceChatMessage[] | undefined) =>
+          mergeHydratedSpaceHistoryRows(previous ?? [], hydrated)
+      );
+      return hydrated;
     },
     [queryClient]
   );

@@ -138,6 +138,8 @@ export type SpaceChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  /** KAZI-580 — older history row waiting for scroll hydrate. */
+  contentPending?: boolean;
   /**
    * Rich cards from assistant_response (today: job teasers via ChatJobCard).
    * MessageBubble already filters `type === 'job'`; keep ChatJobCard[] so other
@@ -169,6 +171,14 @@ function stableMessageIdFallback(
   return `msg_${role}_${hash.toString(36)}`;
 }
 
+function rawHistoryMessageId(raw: Record<string, unknown>): string {
+  if (typeof raw.id === 'string' && raw.id) return raw.id;
+  if (typeof raw.message_id === 'string' && raw.message_id) return raw.message_id;
+  if (typeof raw.id === 'number') return String(raw.id);
+  if (typeof raw.message_id === 'number') return String(raw.message_id);
+  return '';
+}
+
 export function normalizeSpaceHistoryMessage(
   raw: Record<string, unknown>,
   index = 0
@@ -187,15 +197,14 @@ export function normalizeSpaceHistoryMessage(
   }
 
   content = content.trim();
+  const rawId = rawHistoryMessageId(raw);
+  if (raw.content_pending === true && rawId) {
+    return { id: rawId, role, content: '', contentPending: true };
+  }
   if (!content) return null;
   if (role === 'assistant' && isPlaceholderReply(content)) return null;
 
-  const id =
-    typeof raw.id === 'string' && raw.id
-      ? raw.id
-      : typeof raw.message_id === 'string' && raw.message_id
-        ? raw.message_id
-        : stableMessageIdFallback(role, content, index);
+  const id = rawId || stableMessageIdFallback(role, content, index);
 
   const cards =
     role === 'assistant' ? resolveSpaceTurnCards(raw) : [];
