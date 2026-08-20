@@ -23,13 +23,10 @@ export function isSpaceHistoryReadyFromSlice(
   slice: Pick<SpaceSlice, 'masterSessionId' | 'messages' | 'isHydrating'> | null
 ): boolean {
   if (!spaceId) return false;
+  if (!slice || slice.isHydrating) return false;
+  if (slice.messages.length === 0) return false;
   if (!masterSessionId) return true;
-  if (!slice) return false;
-  return (
-    slice.masterSessionId === masterSessionId &&
-    slice.messages.length > 0 &&
-    !slice.isHydrating
-  );
+  return slice.masterSessionId === masterSessionId;
 }
 
 /**

@@ -58,7 +58,7 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
   it('workspace layout hosts keep-alive so Clinic cannot unmount Space instances', () => {
     const workspaceLayout = readSrc('app/[locale]/(workspace)/layout.tsx');
     const spacesLayout = readSrc('app/[locale]/(workspace)/spaces/layout.tsx');
-    expect(workspaceLayout).toMatch(/SpaceWorkspaceKeepAlive/);
+    expect(workspaceLayout).toMatch(/SpaceWorkspaceKeepAlive locale=\{params\.locale\}/);
     expect(spacesLayout).not.toMatch(/SpaceWorkspaceKeepAlive/);
   });
 
@@ -66,8 +66,12 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     const host = readSrc('components/spaces/space-workspace-keep-alive.tsx');
     expect(host).not.toMatch(/if \(!spaceId\) \{\s*return children/);
     expect(host).not.toMatch(/if \(!spaceId\) return children/);
-    expect(host).toMatch(/spaceId && 'hidden'/);
+    expect(host).toMatch(/hideRouteChildren/);
+    expect(host).toMatch(/clinicCached/);
     expect(host).toMatch(/!active && 'hidden'/);
+    expect(host).toMatch(/!isClinic && 'hidden'/);
+    expect(host).toMatch(/next\/dynamic/);
+    expect(host).toMatch(/clinic-shell/);
   });
 
   it('space chat pins latest instead of restoring the last browse pixel', () => {
@@ -88,6 +92,24 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     expect(virtuoso).toMatch(/shouldPinChatScrollToLatest/);
     expect(virtuoso).not.toMatch(/followOutput/);
     expect(virtuoso).not.toMatch(/alreadyPinned: restoredRef\.current && !isNearBottom/);
+  });
+
+  it('clinic chat pins latest the same way and is hosted by keep-alive', () => {
+    const shell = readSrc('components/clinic/clinic-shell.tsx');
+    expect(shell).toMatch(/alignToLatest:\s*true/);
+    expect(shell).toMatch(/activationKey:\s*active \? ['"]active['"] : ['"]idle['"]/);
+    expect(shell).toMatch(/didClinicBootstrapRef/);
+    expect(shell).not.toMatch(/followOutput/);
+
+    const list = readSrc('components/clinic/clinic-message-list.tsx');
+    expect(list).toMatch(/alignToLatest/);
+    expect(list).toMatch(/activationKey/);
+
+    const clinicVirtuoso = readSrc('components/clinic/clinic-message-virtuoso.tsx');
+    expect(clinicVirtuoso).toMatch(/pinChatScrollToLatest/);
+    expect(clinicVirtuoso).toMatch(/shouldPinChatScrollToLatest/);
+    expect(clinicVirtuoso).toMatch(/didFreezeInitialRef/);
+    expect(clinicVirtuoso).not.toMatch(/followOutput/);
   });
 
   it('pinChatScrollToLatest ignores leftover pixels and lands on overflow bottom', () => {
@@ -181,5 +203,41 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
         })
       );
     });
+  });
+
+  it('failed history fetch does not cache a successful empty thread', async () => {
+    fetchChatHistory.mockResolvedValue({
+      success: false,
+      error: 'history unavailable',
+    });
+    const { fetchSpaceHistoryMessages, spaceHistoryQueryKey } = await import(
+      '@/lib/spaces/space-history-query'
+    );
+
+    await expect(fetchSpaceHistoryMessages('sess_blank', 'zh')).rejects.toThrow(
+      'history unavailable'
+    );
+
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    await client.prefetchQuery({
+      queryKey: spaceHistoryQueryKey('sess_blank', 'zh'),
+      queryFn: ({ signal }) =>
+        fetchSpaceHistoryMessages('sess_blank', 'zh', signal),
+    });
+    expect(client.getQueryData(spaceHistoryQueryKey('sess_blank', 'zh'))).toBeUndefined();
+    expect(client.getQueryState(spaceHistoryQueryKey('sess_blank', 'zh'))?.status).toBe(
+      'error'
+    );
+  });
+
+  it('space turn does not treat a failed fetch as ready-empty welcome', () => {
+    const turn = readSrc('hooks/use-space-turn.ts');
+    expect(turn).toMatch(/historyQuery.isSuccess/);
+    expect(turn).not.toMatch(/historyQuery.dataUpdatedAt > 0/);
+    expect(turn).not.toMatch(/setSpaceMessages\(spaceId, \[\]\)/);
+    const history = readSrc('hooks/use-space-history.ts');
+    expect(history).toMatch(/query\.state\.status === 'error'/);
   });
 });

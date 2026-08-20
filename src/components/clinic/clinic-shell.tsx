@@ -44,11 +44,10 @@ import { getAgentHubPath } from "@/lib/agent-transition/surfaces";
 import { publishSessionNavInvalidate } from "@/lib/session-nav-invalidate";
 import {
   publishSessionNavChatSideRailOpen,
-  SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
-  SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
 } from "@/lib/session-nav-events";
 import { useLayerStatusBadge } from "@/hooks/use-layer-status-badge";
 import { useActiveAgentSync } from "@/hooks/use-active-agent-sync";
+import { useActiveWorkspaceRailEvents } from "@/hooks/use-active-workspace-chrome";
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, stripAgentParamsFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useNbaAction } from "@/hooks/use-nba-action";
@@ -121,9 +120,11 @@ import { isEnglishTutorReviseAction } from "@/lib/english-tutor/custom-component
 
 interface ClinicShellProps {
   locale: string;
+  /** Keep-alive hidden instance must not re-bootstrap or steal rail events (KAZI-588). */
+  active?: boolean;
 }
 
-export function ClinicShell({ locale }: ClinicShellProps) {
+export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("chat");
@@ -181,6 +182,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   /** In-app / external `?open_cv=1` (or legacy `?cv=1`) — not tied to bootstrap layerReady. */
   useEffect(() => {
+    if (!active) return;
     if (!searchParamsRequestCvRailOpen(searchParams)) return;
 
     const jobId = searchParams.get("job_id")?.trim() || null;
@@ -188,38 +190,22 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
     const q = stripCvRailOpenParams(searchParams).toString();
     router.replace(`/${locale}/chat${q ? `?${q}` : ""}`, { scroll: false });
-  }, [searchParams, locale, router]);
+  }, [active, searchParams, locale, router]);
 
-  useEffect(() => {
-    const onOpenWorkspaceRail = () => {
-      openCvRailRef.current(undefined, { drillDown: false });
-    };
-    const onToggleWorkspaceRail = () => {
-      if (cvRailOpenRef.current) {
-        closeCvRailRef.current();
-        return;
-      }
-      openCvRailRef.current(undefined, { drillDown: false });
-    };
-    window.addEventListener(
-      SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
-      onOpenWorkspaceRail
-    );
-    window.addEventListener(
-      SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
-      onToggleWorkspaceRail
-    );
-    return () => {
-      window.removeEventListener(
-        SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT,
-        onOpenWorkspaceRail
-      );
-      window.removeEventListener(
-        SESSION_NAV_TOGGLE_WORKSPACE_RAIL_EVENT,
-        onToggleWorkspaceRail
-      );
-    };
+  const onOpenWorkspaceRail = useCallback(() => {
+    openCvRailRef.current(undefined, { drillDown: false });
   }, []);
+  const onToggleWorkspaceRail = useCallback(() => {
+    if (cvRailOpenRef.current) {
+      closeCvRailRef.current();
+      return;
+    }
+    openCvRailRef.current(undefined, { drillDown: false });
+  }, []);
+  useActiveWorkspaceRailEvents(active, {
+    onOpen: onOpenWorkspaceRail,
+    onToggle: onToggleWorkspaceRail,
+  });
 
   const routeInterviewPage = useCallback(
     (targetJobId?: string | null) => {
@@ -317,6 +303,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   /** Hub agent id already cold-opened on Clinic — avoids reconcile/focus reload loops. */
   const clinicHubColdOpenRef = useRef<string | null>(null);
   const pendingClinicHistoryReloadRef = useRef(false);
+  const didClinicBootstrapRef = useRef(false);
 
   const reloadClinicHistoryIfIdle = useCallback(async () => {
     if (useChatStore.getState().isSending) {
@@ -619,14 +606,24 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   useEffect(() => {
     if (!isLoggedIn) {
+      didClinicBootstrapRef.current = false;
       skipHistoryLoad();
       useAgentStore.getState().setActiveAgent(null, null);
       setLayerReady(true);
       return;
     }
+    if (!active) return;
     if (isTelegramMiniApp && !tmaInitComplete) return;
+    // Keep-alive re-show must not re-run bootstrap / loadHistory (KAZI-588 R2).
+    if (didClinicBootstrapRef.current) return;
 
     let cancelled = false;
+
+    const markClinicBootstrapped = () => {
+      if (cancelled) return;
+      didClinicBootstrapRef.current = true;
+      setLayerReady(true);
+    };
 
     const bootstrapClinicLayer = async () => {
       setLayerReady(false);
@@ -636,7 +633,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         if (pending.agentId === CV_BUILDER_AGENT_ID) {
           openCvRailRef.current();
           await loadHistoryRef.current();
-          if (!cancelled) setLayerReady(true);
+          markClinicBootstrapped();
           return;
         }
         if (pending.agentId === MOCK_INTERVIEW_AGENT_ID) {
@@ -649,7 +646,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         }
         if (AGENT_REGISTRY.some((a) => a.agentId === pending.agentId)) {
           await requestAgentSwitchRef.current(pending.agentId);
-          if (!cancelled) setLayerReady(true);
+          markClinicBootstrapped();
           return;
         }
       }
@@ -662,7 +659,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         } else {
           await loadHistoryRef.current();
         }
-        if (!cancelled) setLayerReady(true);
+        markClinicBootstrapped();
         return;
       }
       if (pending?.type === 'subscription') {
@@ -688,7 +685,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         openCvRailRef.current();
         stripAgentParamsFromUrl();
         await loadHistoryRef.current();
-        if (!cancelled) setLayerReady(true);
+        markClinicBootstrapped();
         return;
       }
       if (deepLinkAgent && shouldOpenInterviewPage(deepLinkAgent)) {
@@ -704,23 +701,23 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         AGENT_REGISTRY.some((a) => a.agentId === deepLinkAgent)
       ) {
         await requestAgentSwitchRef.current(deepLinkAgent);
-        if (!cancelled) setLayerReady(true);
+        markClinicBootstrapped();
         return;
       }
 
-      const active = await fetchActiveAgentRef.current();
-      if (hasStickyActiveAgent(active)) {
-        if (isDedicatedHubAgent(active.active_agent)) {
-          await stayInClinicForDedicatedHub(active.active_agent);
-        } else if (isCvBuilderAgent(active.active_agent)) {
+      const stickyAgent = await fetchActiveAgentRef.current();
+      if (hasStickyActiveAgent(stickyAgent)) {
+        if (isDedicatedHubAgent(stickyAgent.active_agent)) {
+          await stayInClinicForDedicatedHub(stickyAgent.active_agent);
+        } else if (isCvBuilderAgent(stickyAgent.active_agent)) {
           clinicHubColdOpenRef.current = null;
           useAgentStore.getState().setActiveAgent(null, null);
           await loadHistoryRef.current();
         } else {
           clinicHubColdOpenRef.current = null;
           await resumeActiveAgentSilentlyRef.current(
-            active.active_agent,
-            active.session_id
+            stickyAgent.active_agent,
+            stickyAgent.session_id
           );
           skipHistoryLoad();
         }
@@ -730,7 +727,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
         await loadHistoryRef.current();
       }
 
-      if (!cancelled) setLayerReady(true);
+      markClinicBootstrapped();
     };
 
     void bootstrapClinicLayer();
@@ -739,6 +736,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
       cancelled = true;
     };
   }, [
+    active,
     isLoggedIn,
     isTelegramMiniApp,
     tmaInitComplete,
@@ -753,7 +751,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     stayInClinicForDedicatedHub,
   ]);
 
-  useActiveAgentSync(isLoggedIn && layerReady, async () => {
+  useActiveAgentSync(active && isLoggedIn && layerReady, async () => {
     await reconcileActiveAgentLayer();
   });
 
@@ -769,6 +767,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
 
   useEffect(() => {
     const onPopState = () => {
+      if (!active) return;
       const agentFromUrl = getDeepLinkAgentId(window.location.search);
       const current = useAgentStore.getState().activeAgentId;
 
@@ -806,6 +805,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, [
+    active,
     exitToClinic,
     isLoggedIn,
     loadHistory,
@@ -826,6 +826,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
   const emptyHistoryRecoveryAttemptedRef = useRef(false);
   useEffect(() => {
     if (
+      !active ||
       !isLoggedIn ||
       !layerReady ||
       isAgentMode ||
@@ -855,6 +856,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     isLoggedIn,
     layerReady,
     loadHistory,
+    active,
   ]);
 
   const retryClinicHistoryLoad = useCallback(() => {
@@ -1298,6 +1300,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     messageCount: messages.length,
     isSending: isSending || isSwitching,
     ready: scrollReady,
+    alignToLatest: true,
+    activationKey: active ? "active" : "idle",
   });
 
   useHistoryStubHydrate({
@@ -1516,6 +1520,8 @@ export function ClinicShell({ locale }: ClinicShellProps) {
             onFocusComposer={handleFocusComposer}
             onExamSelect={handleExamSelect}
             onJobCardClick={handleJobCardClick}
+            alignToLatest
+            activationKey={active ? "active" : "idle"}
           />
         )}
         </div>

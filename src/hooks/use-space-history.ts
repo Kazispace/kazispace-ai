@@ -31,6 +31,8 @@ export function useSpaceHistoryQuery(
     enabled,
     ...SPACE_HISTORY_QUERY_DEFAULTS,
     retry: 1,
+    /** Warm remount must not refetch; a failed fetch must (KAZI-588 R2). */
+    refetchOnMount: (query) => query.state.status === 'error',
   });
 }
 
