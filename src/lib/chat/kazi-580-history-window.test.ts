@@ -101,7 +101,7 @@ describe('KAZI-580 chat history window', () => {
     ]);
     expect(rows).toEqual([
       { id: '1', role: 'user', content: '', contentPending: true },
-      { id: '3', role: 'assistant', content: 'hello' },
+      { id: '3', role: 'assistant', content: 'hello', serverMessageId: '3' },
     ]);
     expect(isHistoryStub(rows[0]!)).toBe(true);
     expect(isHistoryStub(rows[1]!)).toBe(false);
@@ -184,7 +184,7 @@ describe('KAZI-580 fetchSpaceHistoryMessages', () => {
     );
     expect(rows).toEqual([
       { id: '1', role: 'user', content: '', contentPending: true },
-      { id: '40', role: 'assistant', content: 'recent' },
+      { id: '40', role: 'assistant', content: 'recent', serverMessageId: '40' },
     ]);
   });
 
