@@ -10,6 +10,10 @@ import {
 } from './spaces/space-nudge';
 import { isSpacesEnabled } from './spaces/constants';
 import { isPlaceholderReply, resolveSpaceTurnReply } from './spaces/turn';
+import {
+  buildChatHistoryQuery,
+  windowedHistoryQuery,
+} from '@/lib/chat/history-window';
 import { extractAssistantMessageId } from './clinic/message-feedback';
 import { getTmaClientHeaders } from './telegram';
 import { parseRetryAfterSeconds } from './retry-after';
@@ -453,11 +457,24 @@ export async function sendChatMessage(
 
 export async function fetchChatHistory(
   sessionId: string,
-  options?: { signal?: AbortSignal }
+  options?: {
+    signal?: AbortSignal;
+    limit?: number;
+    fields?: 'full' | 'ids';
+    ids?: string;
+    before?: string;
+  }
 ): Promise<ApiResponse<{ messages: ChatMessage[] } | ChatMessage[]>> {
-  return apiRequest(`/api/v1/chat/sessions/${sessionId}/messages`, {
-    signal: options?.signal,
+  const query = windowedHistoryQuery({
+    limit: options?.limit,
+    fields: options?.fields,
+    ids: options?.ids,
+    before: options?.before,
   });
+  return apiRequest(
+    `/api/v1/chat/sessions/${sessionId}/messages${buildChatHistoryQuery(query)}`,
+    { signal: options?.signal }
+  );
 }
 
 /** @deprecated Use getBillingSummary */

@@ -52,6 +52,8 @@ export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  /** KAZI-580 — older history row waiting for scroll hydrate. */
+  contentPending?: boolean;
   timestamp: string;
   sessionId: string;
   intent?: string;

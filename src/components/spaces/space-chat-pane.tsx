@@ -9,6 +9,7 @@ import { MessageBubble } from '@/components/clinic/message-bubble';
 import { ChatSideRailsHost } from '@/components/chat/chat-side-rails-host';
 import { SpaceShell } from '@/components/spaces/space-shell';
 import { useChatScroll } from '@/hooks/use-chat-scroll';
+import { useHistoryStubHydrate } from '@/hooks/use-history-stub-hydrate';
 import {
   useSpaceTurn,
   type SpaceSendResult,
@@ -192,6 +193,7 @@ export function SpaceChatPane({
     replyNotice,
     sendMessage,
     retryMessage,
+    hydrateHistoryStubs,
   } = useSpaceTurn(space.id, space.master_session_id, locale, space.space_state);
 
   const handleJobCardClick = useCallback(
@@ -237,8 +239,7 @@ export function SpaceChatPane({
   const spaceSessionReady = Boolean(space.master_session_id?.trim());
   // Use mount-local historyReady — store !isHydrating is stale-false on remount first paint.
   const scrollReady = spaceSessionReady && historyReady;
-  // Spaces hydrate full master-session history (not infinite-scroll pages) — safe for Starter.
-  // If history ever becomes windowed, replace with a BE/meta flag (PR #130 P3).
+  // Windowed history (KAZI-580): first pack is 200 full + older stubs.
   const hasUserMessage = messages.some((m) => m.role === 'user');
 
   const {
@@ -252,6 +253,13 @@ export function SpaceChatPane({
     messageCount: messages.length,
     isSending,
     ready: scrollReady,
+  });
+
+  useHistoryStubHydrate({
+    enabled: active && scrollReady,
+    messages,
+    scrollRoot: scrollRef,
+    hydrate: hydrateHistoryStubs,
   });
 
   const sendAndPin = useCallback(

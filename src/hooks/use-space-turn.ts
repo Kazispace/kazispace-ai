@@ -20,7 +20,7 @@ import {
   rehydrateSpaceMessagesWithCards,
   rememberSpaceJobCards,
 } from '@/lib/spaces/space-job-cards-cache';
-import { preserveSpaceMessageRows } from '@/lib/spaces/space-history-query';
+import { applySpaceHistoryWindowRows } from '@/lib/spaces/space-history-query';
 import { hydrateStrategyPayloadUserLabels } from '@/lib/strategy-select';
 import {
   isPlaceholderReply,
@@ -37,7 +37,7 @@ import {
   resolveSpaceHistoryReadyState,
   spaceHistoryReadyKey,
 } from '@/lib/spaces/space-history-ready';
-import { useFetchSpaceHistory, useSpaceHistoryQuery } from '@/hooks/use-space-history';
+import { useFetchSpaceHistory, useHydrateSpaceHistory, useSpaceHistoryQuery } from '@/hooks/use-space-history';
 import { useSpaceStore, type SpaceReplyNotice } from '@/lib/store';
 
 export type SpaceSendResult =
@@ -70,6 +70,7 @@ export function useSpaceTurn(
   const enabled = isSpacesEnabled() && Boolean(spaceId);
   const resolvedMasterId = resolveSpaceMasterSessionId(masterSessionId);
   const fetchSpaceHistory = useFetchSpaceHistory();
+  const hydrateSpaceHistory = useHydrateSpaceHistory();
 
   const historyQuery = useSpaceHistoryQuery(resolvedMasterId, locale, {
     enabled,
@@ -187,7 +188,7 @@ export function useSpaceTurn(
       historyQuery.data,
       previous
     );
-    const next = preserveSpaceMessageRows(previous, hydrated);
+    const next = applySpaceHistoryWindowRows(previous, hydrated);
     if (next !== previous) {
       setSpaceMessages(spaceId, next);
     }
@@ -448,6 +449,14 @@ export function useSpaceTurn(
     [messages, sendMessage]
   );
 
+  const hydrateHistoryStubs = useCallback(
+    async (ids: string[]) => {
+      if (!enabled || !spaceId || !resolvedMasterId || ids.length === 0) return;
+      await hydrateSpaceHistory(resolvedMasterId, locale, ids);
+    },
+    [enabled, hydrateSpaceHistory, locale, resolvedMasterId, spaceId]
+  );
+
   return {
     messages,
     isHydrating,
@@ -458,6 +467,7 @@ export function useSpaceTurn(
     replyNotice,
     sendMessage,
     retryMessage,
+    hydrateHistoryStubs,
     enabled,
   };
 }

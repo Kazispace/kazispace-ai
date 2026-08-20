@@ -9,6 +9,15 @@ export const SPACE_DETAIL_STALE_MS = 30_000;
 /** Space master-session history Query stale window. */
 export const SPACE_HISTORY_STALE_MS = 30_000;
 
+/**
+ * KAZI-579/580 — first pack full bodies. Older rows are id stubs.
+ * Must match BE HISTORY_LIMIT_MAX.
+ */
+export const CHAT_HISTORY_WINDOW_LIMIT = 200;
+
+/** KAZI-579 — hydrate-by-ids cap. Must match BE HISTORY_IDS_MAX. */
+export const CHAT_HISTORY_HYDRATE_IDS_MAX = 50;
+
 /** Keep unused history queries briefly for A→B→A warm revisits. */
 export const SPACE_HISTORY_GC_MS = 5 * 60_000;
 

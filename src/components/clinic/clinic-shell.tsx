@@ -30,6 +30,7 @@ import type { JobPracticeContext } from "@/types/jobs";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { buildReadinessPracticePrompt } from "@/lib/jobs/readiness-practice-prompt";
 import { useChatScroll } from "@/hooks/use-chat-scroll";
+import { useHistoryStubHydrate } from "@/hooks/use-history-stub-hydrate";
 import { clinicChatScrollStorageKey } from "@/lib/spaces/chat-scroll";
 import { cn } from "@/lib/utils";
 import { useActiveAgentSessions } from "@/hooks/use-active-agent-sessions";
@@ -255,6 +256,7 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     dismissMessageReferral,
     dismissMessageSpaceNudge,
     dismissMessageUpgradeCta,
+    hydrateHistoryStubs,
   } = useClinicChat(locale);
 
   const {
@@ -1296,6 +1298,13 @@ export function ClinicShell({ locale }: ClinicShellProps) {
     messageCount: messages.length,
     isSending: isSending || isSwitching,
     ready: scrollReady,
+  });
+
+  useHistoryStubHydrate({
+    enabled: scrollReady && !isAgentMode,
+    messages,
+    scrollRoot: scrollRef,
+    hydrate: hydrateHistoryStubs,
   });
 
   const handleRetryById = useCallback(

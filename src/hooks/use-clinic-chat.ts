@@ -17,6 +17,12 @@ import { looksLikeResearchRequest } from '@/lib/clinic/upgrade-cta';
 import { isPlaceholderReply, resolveSpaceTurnReply } from '@/lib/spaces/turn';
 import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import {
+  applyHistoryWindowRows,
+  capHistoryHydrateIds,
+  mergeHydratedHistoryRows,
+  parseChatHistoryResponse,
+} from '@/lib/chat/history-window';
 import type { ChatMessage } from '@/types';
 
 function extractHistoryMessageContent(
@@ -48,14 +54,31 @@ function normalizeHistoryMessage(
     roleRaw === 'user' ? 'user' : roleRaw === 'assistant' || roleRaw === 'ai' ? 'assistant' : 'assistant';
 
   const content = extractHistoryMessageContent(raw, role);
+  const rawId =
+    (typeof raw.id === 'string' && raw.id) ||
+    (typeof raw.message_id === 'string' && raw.message_id) ||
+    (typeof raw.id === 'number' ? String(raw.id) : '') ||
+    (typeof raw.message_id === 'number' ? String(raw.message_id) : '');
+  if (raw.content_pending === true && rawId) {
+    return {
+      id: rawId,
+      role,
+      content: '',
+      timestamp:
+        (raw.timestamp as string) ??
+        (raw.created_at as string) ??
+        new Date().toISOString(),
+      sessionId,
+      status: 'sent',
+      streamComplete: true,
+      contentPending: true,
+    };
+  }
   if (!content) return null;
   if (role === 'assistant' && isPlaceholderReply(content)) return null;
 
   const id =
-    (typeof raw.id === 'string' && raw.id) ||
-    (typeof raw.message_id === 'string' && raw.message_id) ||
-    (typeof raw.id === 'number' ? String(raw.id) : '') ||
-    (typeof raw.message_id === 'number' ? String(raw.message_id) : '') ||
+    rawId ||
     crypto.randomUUID();
 
   const envelope =
@@ -92,18 +115,38 @@ function normalizeHistoryMessage(
   };
 }
 
+function clinicHistoryFingerprint(message: ChatMessage): string {
+  return [
+    message.id,
+    message.content,
+    message.contentPending ? 'pending' : '',
+    String(message.cards?.length ?? 0),
+  ].join('\0');
+}
+
 async function fetchNormalizedHistory(sessionId: string): Promise<ChatMessage[]> {
   const res = await fetchChatHistory(sessionId);
   if (!res.success || !res.data) return [];
 
-  const list = Array.isArray(res.data)
-    ? res.data
-    : (res.data as { messages: ChatMessage[] }).messages ?? [];
+  const parsed = parseChatHistoryResponse(res.data);
 
-  return list
-    .map((m) =>
-      normalizeHistoryMessage(m as unknown as Record<string, unknown>, sessionId)
-    )
+  return parsed.rows
+    .map((m) => normalizeHistoryMessage(m, sessionId))
+    .filter((message): message is ChatMessage => message != null);
+}
+
+async function hydrateNormalizedHistory(
+  sessionId: string,
+  ids: string[]
+): Promise<ChatMessage[]> {
+  const capped = capHistoryHydrateIds(ids);
+  if (capped.length === 0) return [];
+  const res = await fetchChatHistory(sessionId, { ids: capped.join(',') });
+  if (!res.success || !res.data) return [];
+  const parsed = parseChatHistoryResponse(res.data);
+  return parsed.rows
+    .filter((row) => row.content_pending !== true)
+    .map((m) => normalizeHistoryMessage(m, sessionId))
     .filter((message): message is ChatMessage => message != null);
 }
 
@@ -128,9 +171,13 @@ async function recoverPlaceholderReplyFromHistory(
   const refreshed = await fetchNormalizedHistory(sessionId);
   const reply = assistantAfterUserId(refreshed, userMsgId);
   if (!isPlaceholderReply(reply)) {
-    setMessages(
-      mergeClinicMessagesAfterHistoryLoad(useChatStore.getState().messages, refreshed)
+    const local = useChatStore.getState().messages;
+    const mergedWindow = applyHistoryWindowRows(
+      local,
+      refreshed,
+      clinicHistoryFingerprint
     );
+    setMessages(mergeClinicMessagesAfterHistoryLoad(local, mergedWindow));
   }
   return reply;
 }
@@ -198,7 +245,12 @@ export function useClinicChat(locale?: string) {
       const sessionId = await ensureMasterSession();
       const fromServer = await fetchNormalizedHistory(sessionId);
       const local = useChatStore.getState().messages;
-      setMessages(mergeClinicMessagesAfterHistoryLoad(local, fromServer));
+      const mergedWindow = applyHistoryWindowRows(
+        local,
+        fromServer,
+        clinicHistoryFingerprint
+      );
+      setMessages(mergeClinicMessagesAfterHistoryLoad(local, mergedWindow));
       return true;
     } catch (error) {
       console.error('[useClinicChat] loadHistory failed', error);
@@ -207,6 +259,17 @@ export function useClinicChat(locale?: string) {
       setIsHistoryLoading(false);
     }
   }, [setMessages]);
+
+  const hydrateHistoryStubs = useCallback(
+    async (ids: string[]) => {
+      const sessionId = await ensureMasterSession();
+      const hydrated = await hydrateNormalizedHistory(sessionId, ids);
+      if (hydrated.length === 0) return;
+      const local = useChatStore.getState().messages;
+      setMessages(mergeHydratedHistoryRows(local, hydrated));
+    },
+    [setMessages]
+  );
 
   const skipHistoryLoad = useCallback(() => {
     setIsHistoryLoading(false);
@@ -417,6 +480,7 @@ export function useClinicChat(locale?: string) {
     isHistoryLoading,
     loadHistory,
     skipHistoryLoad,
+    hydrateHistoryStubs,
     sendMessage,
     retryMessage,
     markStreamComplete,
