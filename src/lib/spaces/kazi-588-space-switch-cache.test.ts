@@ -9,8 +9,8 @@ import { QueryClient } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { windowedHistoryQuery } from '@/lib/chat/history-window';
-import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import { pinChatScrollToLatest } from '@/lib/spaces/chat-scroll';
+import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import {
   CHAT_HISTORY_WINDOW_LIMIT,
   SPACE_WORKSPACE_KEEPALIVE_LIMIT,
