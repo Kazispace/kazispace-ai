@@ -13,8 +13,8 @@ import {
 import { cn } from '@/lib/utils';
 
 /**
- * Persist the last N Space workspaces across `/spaces/{id}` navigations
- * so A→B→A does not remount markdown bubbles (KAZI-573).
+ * Persist the last N Space workspaces across Clinic/hub/`/spaces/{id}`
+ * navigations so A→Clinic→A does not remount markdown bubbles (KAZI-588).
  * Inactive instances stay `hidden` and do not mount template panels.
  */
 export function SpaceWorkspaceKeepAlive({ children }: { children: ReactNode }) {
@@ -36,8 +36,6 @@ export function SpaceWorkspaceKeepAlive({ children }: { children: ReactNode }) {
     setCachedIds(nextIds);
   }
 
-  if (!spaceId) return children;
-
   return (
     <div className="flex h-full min-h-0 flex-col">
       {nextIds.map((id) => {
@@ -55,7 +53,15 @@ export function SpaceWorkspaceKeepAlive({ children }: { children: ReactNode }) {
           </div>
         );
       })}
-      {children}
+      <div
+        className={cn(
+          'flex h-full min-h-0 min-w-0 flex-col',
+          spaceId && 'hidden'
+        )}
+        aria-hidden={Boolean(spaceId)}
+      >
+        {children}
+      </div>
     </div>
   );
 }

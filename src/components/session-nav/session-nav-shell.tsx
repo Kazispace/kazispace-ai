@@ -186,7 +186,7 @@ function SessionNavShellLayout({
     isLoading: spacesLoading,
     error: spacesError,
     refresh: refreshSpaces,
-  } = useSpaces({ panelOpen: panelVisible });
+  } = useSpaces({ panelOpen: panelVisible, locale });
 
   const {
     requestNewSession,

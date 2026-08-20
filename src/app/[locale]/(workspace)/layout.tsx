@@ -1,4 +1,5 @@
 import { SessionNavShell } from '@/components/session-nav';
+import { SpaceWorkspaceKeepAlive } from '@/components/spaces/space-workspace-keep-alive';
 
 export default function WorkspaceLayout({
   children,
@@ -7,5 +8,9 @@ export default function WorkspaceLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  return <SessionNavShell locale={params.locale}>{children}</SessionNavShell>;
+  return (
+    <SessionNavShell locale={params.locale}>
+      <SpaceWorkspaceKeepAlive>{children}</SpaceWorkspaceKeepAlive>
+    </SessionNavShell>
+  );
 }

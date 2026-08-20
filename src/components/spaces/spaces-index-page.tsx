@@ -18,7 +18,7 @@ interface SpacesIndexPageProps {
  */
 export function SpacesIndexPage({ locale }: SpacesIndexPageProps) {
   const router = useRouter();
-  const { spaces, isLoading } = useSpaces({ fetchImmediately: true });
+  const { spaces, isLoading } = useSpaces({ fetchImmediately: true, locale });
   const latestUserSpace = useMemo(() => pickLatestUserSpace(spaces), [spaces]);
 
   useEffect(() => {

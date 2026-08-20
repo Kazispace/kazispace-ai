@@ -27,6 +27,8 @@ describe('KAZI-574 Space chat virtualize after threshold', () => {
   it('space-chat-pane does not statically import react-virtuoso', () => {
     const pane = readSrc('../../components/spaces/space-chat-pane.tsx');
     expect(pane).toMatch(/SpaceMessageList/);
+    expect(pane).toMatch(/alignToLatest/);
+    expect(pane).toMatch(/activationKey/);
     expect(pane).not.toMatch(/react-virtuoso/);
     expect(pane).not.toMatch(/space-message-virtuoso/);
     expect(pane).toMatch(/isSending \? \(/);
@@ -52,6 +54,10 @@ describe('KAZI-574 Space chat virtualize after threshold', () => {
     expect(virtuoso).toMatch(/SPACE_CHAT_VIRTUOSO_DEFAULT_ITEM_HEIGHT/);
     expect(virtuoso).toMatch(/SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN/);
     expect(virtuoso).toMatch(/StaticSpaceMessageRows/);
+    expect(virtuoso).toMatch(/pinChatScrollToLatest/);
+    expect(virtuoso).toMatch(/shouldPinChatScrollToLatest/);
+    expect(virtuoso).toMatch(/alignToLatest/);
+    expect(virtuoso).toMatch(/didFreezeInitialRef/);
     expect(virtuoso).not.toMatch(/followOutput/);
     expect(virtuoso).not.toMatch(/return null/);
   });
