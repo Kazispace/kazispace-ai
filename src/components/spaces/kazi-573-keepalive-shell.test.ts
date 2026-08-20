@@ -31,7 +31,9 @@ describe('KAZI-573 keep-alive shell contracts', () => {
       'utf8'
     );
     expect(host).not.toMatch(/if \(!spaceId\) return children/);
-    expect(host).toMatch(/spaceId && 'hidden'/);
+    expect(host).toMatch(/hideRouteChildren/);
+    expect(host).toMatch(/clinicCached/);
+    expect(host).toMatch(/ClinicShell locale=\{locale\} active=\{isClinic\}/);
   });
 
   it('hides inactive workspaces and does not mount panels when inactive', () => {
@@ -48,6 +50,17 @@ describe('KAZI-573 keep-alive shell contracts', () => {
     expect(panels).toMatch(/useActiveWorkspaceRailEvents/);
     expect(panels).toMatch(/useActiveWorkspacePortalWrite/);
     expect(panels).toMatch(/SpacePanelHost/);
+  });
+
+  it('ClinicShell gates rail events on active and does not remount-bootstrap', () => {
+    const shell = readFileSync(
+      path.resolve(__dirname, '../clinic/clinic-shell.tsx'),
+      'utf8'
+    );
+    expect(shell).toMatch(/useActiveWorkspaceRailEvents\(active/);
+    expect(shell).toMatch(/didClinicBootstrapRef/);
+    expect(shell).toMatch(/alignToLatest:\s*true/);
+    expect(shell).not.toMatch(/window\.addEventListener\(\s*SESSION_NAV_OPEN_WORKSPACE_RAIL_EVENT/);
   });
 
   it('SpaceChatPane gates rail events on active', () => {

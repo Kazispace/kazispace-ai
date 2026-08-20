@@ -6,16 +6,31 @@ import path from 'path';
  * KAZI-565 — public Clinic first paint must not statically pull rails / shell / YAML.
  */
 describe('KAZI-565 dynamic ClinicShell and rails', () => {
-  it('chat page uses next/dynamic for ClinicShell', () => {
-    const src = readFileSync(
+  it('keep-alive dynamically loads ClinicShell; chat page does not pull it', () => {
+    const page = readFileSync(
       path.resolve(__dirname, '../../app/[locale]/(workspace)/chat/page.tsx'),
       'utf8'
     );
-    expect(src).toMatch(/next\/dynamic/);
-    expect(src).toMatch(/clinic-shell/);
-    expect(src).not.toMatch(
+    const host = readFileSync(
+      path.resolve(
+        __dirname,
+        '../spaces/space-workspace-keep-alive.tsx'
+      ),
+      'utf8'
+    );
+    const layout = readFileSync(
+      path.resolve(__dirname, '../../app/[locale]/(workspace)/layout.tsx'),
+      'utf8'
+    );
+    expect(page).toMatch(/return null/);
+    expect(page).not.toMatch(/clinic-shell/);
+    expect(page).not.toMatch(/ClinicShell/);
+    expect(host).toMatch(/next\/dynamic/);
+    expect(host).toMatch(/clinic-shell/);
+    expect(host).not.toMatch(
       /import\s+\{\s*ClinicShell\s*\}\s+from\s+["']@\/components\/clinic\/clinic-shell["']/
     );
+    expect(layout).not.toMatch(/clinic-shell/);
   });
 
   it('ChatSideRailsHost dynamically imports CV and Job rails', () => {

@@ -10,7 +10,9 @@ export default function WorkspaceLayout({
 }) {
   return (
     <SessionNavShell locale={params.locale}>
-      <SpaceWorkspaceKeepAlive>{children}</SpaceWorkspaceKeepAlive>
+      <SpaceWorkspaceKeepAlive locale={params.locale}>
+        {children}
+      </SpaceWorkspaceKeepAlive>
     </SessionNavShell>
   );
 }

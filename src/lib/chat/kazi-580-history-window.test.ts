@@ -233,4 +233,15 @@ describe('KAZI-580 fetchSpaceHistoryMessages', () => {
     expect(sent.split(',')).toHaveLength(CHAT_HISTORY_HYDRATE_IDS_MAX);
     expect(fetchChatHistory.mock.calls[0]?.[1]).not.toHaveProperty('limit');
   });
+
+  it('throws on an unsuccessful envelope instead of returning []', async () => {
+    fetchChatHistory.mockReset();
+    fetchChatHistory.mockResolvedValue({
+      success: false,
+      error: 'history unavailable',
+    });
+    await expect(fetchSpaceHistoryMessages('sess_fail', 'zh')).rejects.toThrow(
+      'history unavailable'
+    );
+  });
 });

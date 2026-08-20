@@ -12,6 +12,9 @@ import { shouldVirtualizeClinicMessages } from '@/lib/spaces/space-message-virtu
 
 export type ClinicMessageListProps = ClinicMessageListBodyProps & {
   scrollParentRef: { readonly current: HTMLElement | null };
+  /** Pin to the last bubble after Virtuoso swap (KAZI-588). */
+  alignToLatest?: boolean;
+  activationKey?: string;
 };
 
 /**
@@ -37,6 +40,8 @@ export function ClinicMessageList({
   onFocusComposer,
   onExamSelect,
   onJobCardClick,
+  alignToLatest = false,
+  activationKey,
 }: ClinicMessageListProps) {
   const virtualize = shouldVirtualizeClinicMessages(messages.length);
   const [VirtuosoComp, setVirtuosoComp] = useState<ComponentType<
@@ -93,6 +98,8 @@ export function ClinicMessageList({
       {...rowProps}
       scrollParentRef={scrollParentRef}
       initialScrollTop={preservedScrollTopRef.current}
+      alignToLatest={alignToLatest}
+      activationKey={activationKey}
     />
   );
 }
