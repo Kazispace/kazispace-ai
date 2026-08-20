@@ -6,6 +6,7 @@ import {
   isNearBottom,
   pinChatScrollToLatest,
   readChatScrollTop,
+  shouldPinChatScrollToLatest,
   spaceChatScrollStorageKey,
   writeChatScrollTop,
 } from '@/lib/spaces/chat-scroll';
@@ -93,5 +94,32 @@ describe('chat-scroll helpers', () => {
     const short = { scrollHeight: 100, clientHeight: 400, scrollTop: 12 };
     expect(pinChatScrollToLatest(short)).toBe(false);
     expect(short.scrollTop).toBe(12);
+  });
+
+  it('does not keep pinning after the first successful align (no followOutput)', () => {
+    expect(
+      shouldPinChatScrollToLatest({
+        alignToLatest: true,
+        activationKey: 'active',
+        alreadyPinned: false,
+        hasOverflow: true,
+      })
+    ).toBe(true);
+    expect(
+      shouldPinChatScrollToLatest({
+        alignToLatest: true,
+        activationKey: 'active',
+        alreadyPinned: true,
+        hasOverflow: true,
+      })
+    ).toBe(false);
+    expect(
+      shouldPinChatScrollToLatest({
+        alignToLatest: true,
+        activationKey: 'idle',
+        alreadyPinned: false,
+        hasOverflow: true,
+      })
+    ).toBe(false);
   });
 });

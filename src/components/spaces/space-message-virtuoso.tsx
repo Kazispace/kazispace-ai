@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import { SpaceMessageRow } from '@/components/spaces/space-message-row';
@@ -8,7 +8,10 @@ import {
   StaticSpaceMessageRows,
   type SpaceMessageListBodyProps,
 } from '@/components/spaces/space-message-static-rows';
-import { isNearBottom, pinChatScrollToLatest } from '@/lib/spaces/chat-scroll';
+import {
+  pinChatScrollToLatest,
+  shouldPinChatScrollToLatest,
+} from '@/lib/spaces/chat-scroll';
 import {
   SPACE_CHAT_VIRTUOSO_DEFAULT_ITEM_HEIGHT,
   SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN,
@@ -68,12 +71,19 @@ export function SpaceMessageVirtuoso({
     restoredRef.current = false;
   }, [activationKey]);
 
-  const tryRestore = () => {
+  const tryRestore = useCallback(() => {
     if (!scrollParent) return;
     if (alignToLatest) {
-      if (activationKey === 'idle') return;
-      if (scrollParent.scrollHeight <= scrollParent.clientHeight) return;
-      if (restoredRef.current && !isNearBottom(scrollParent)) return;
+      if (
+        !shouldPinChatScrollToLatest({
+          alignToLatest,
+          activationKey,
+          alreadyPinned: restoredRef.current,
+          hasOverflow: scrollParent.scrollHeight > scrollParent.clientHeight,
+        })
+      ) {
+        return;
+      }
       pinChatScrollToLatest(scrollParent);
       restoredRef.current = true;
       return;
@@ -82,11 +92,11 @@ export function SpaceMessageVirtuoso({
     if (restoreSpaceChatScrollAfterVirtualize(scrollParent, initialScrollTop)) {
       restoredRef.current = true;
     }
-  };
+  }, [activationKey, alignToLatest, initialScrollTop, scrollParent]);
 
   useLayoutEffect(() => {
     tryRestore();
-  });
+  }, [messages.length, tryRestore]);
 
   const rowProps = {
     messages,

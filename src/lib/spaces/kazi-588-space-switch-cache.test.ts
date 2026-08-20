@@ -85,8 +85,9 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     expect(virtuoso).toMatch(/pinChatScrollToLatest/);
     expect(virtuoso).toMatch(/alignToLatest/);
     expect(virtuoso).toMatch(/didFreezeInitialRef/);
-    expect(virtuoso).toMatch(/activationKey === 'idle'/);
+    expect(virtuoso).toMatch(/shouldPinChatScrollToLatest/);
     expect(virtuoso).not.toMatch(/followOutput/);
+    expect(virtuoso).not.toMatch(/alreadyPinned: restoredRef\.current && !isNearBottom/);
   });
 
   it('pinChatScrollToLatest ignores leftover pixels and lands on overflow bottom', () => {

@@ -55,6 +55,7 @@ describe('KAZI-574 Space chat virtualize after threshold', () => {
     expect(virtuoso).toMatch(/SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN/);
     expect(virtuoso).toMatch(/StaticSpaceMessageRows/);
     expect(virtuoso).toMatch(/pinChatScrollToLatest/);
+    expect(virtuoso).toMatch(/shouldPinChatScrollToLatest/);
     expect(virtuoso).toMatch(/alignToLatest/);
     expect(virtuoso).toMatch(/didFreezeInitialRef/);
     expect(virtuoso).not.toMatch(/followOutput/);

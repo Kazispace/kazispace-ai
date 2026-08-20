@@ -154,17 +154,20 @@ export function useChatScroll({
       followBaselineSendingRef.current = isSending;
       updateJumpVisibility();
 
-      // Re-clamp once layout grows (markdown/tables) so we don't stick to a false "bottom".
-      if (saved != null) {
-        requestAnimationFrame(() => {
-          const n = scrollRef.current;
-          if (!n || !restoredRef.current) return;
+      // One extra frame after markdown/tables/Virtuoso height settle.
+      // Not a follow loop — only this restore, then user scroll wins.
+      requestAnimationFrame(() => {
+        const n = scrollRef.current;
+        if (!n || !restoredRef.current) return;
+        if (saved != null) {
           if (stickToBottomRef.current) return;
           n.scrollTop = clampScrollTop(n, saved);
-          lastScrollTopRef.current = n.scrollTop;
-          updateJumpVisibility();
-        });
-      }
+        } else if (stickToBottomRef.current) {
+          scrollElementToBottom(n, 'auto');
+        }
+        lastScrollTopRef.current = n.scrollTop;
+        updateJumpVisibility();
+      });
     };
 
     requestAnimationFrame(() => {
