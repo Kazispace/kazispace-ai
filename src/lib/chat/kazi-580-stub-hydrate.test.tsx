@@ -12,7 +12,7 @@ function Harness({
   hydrate,
   messages,
 }: {
-  hydrate: (ids: string[]) => void;
+  hydrate: (ids: string[]) => Promise<void> | void;
   messages: { id: string; contentPending?: boolean }[];
 }) {
   const scrollRoot = useRef<HTMLElement | null>(null);
@@ -157,5 +157,93 @@ describe('KAZI-580 stub scroll hydrate', () => {
     expect(
       observeSpy!.mock.calls.some((call) => call[0] === late)
     ).toBe(true);
+  });
+
+  it('retries once after a rejected hydrate without waiting for another scroll', async () => {
+    const hydrate = vi
+      .fn<(ids: string[]) => Promise<void>>()
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce(undefined);
+
+    await act(async () => {
+      root!.render(
+        <Harness
+          hydrate={hydrate}
+          messages={[{ id: '1', contentPending: true }]}
+        />
+      );
+    });
+
+    const stub = host!.querySelector('[data-history-stub]')!;
+    await act(async () => {
+      observerCallback!(
+        [
+          {
+            isIntersecting: true,
+            target: stub,
+          } as unknown as IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver
+      );
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(hydrate).toHaveBeenCalledTimes(2);
+    expect(hydrate).toHaveBeenNthCalledWith(1, ['1']);
+    expect(hydrate).toHaveBeenNthCalledWith(2, ['1']);
+    expect(stub.getAttribute('data-failed')).toBeNull();
+  });
+
+  it('marks a stub failed after retries exhaust and hydrates again on click', async () => {
+    const hydrate = vi
+      .fn<(ids: string[]) => Promise<void>>()
+      .mockRejectedValue(new Error('network'));
+
+    await act(async () => {
+      root!.render(
+        <Harness
+          hydrate={hydrate}
+          messages={[{ id: '1', contentPending: true }]}
+        />
+      );
+    });
+
+    const stub = host!.querySelector('[data-history-stub]') as HTMLElement;
+    await act(async () => {
+      observerCallback!(
+        [
+          {
+            isIntersecting: true,
+            target: stub,
+          } as unknown as IntersectionObserverEntry,
+        ],
+        {} as IntersectionObserver
+      );
+    });
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(hydrate).toHaveBeenCalledTimes(2);
+    expect(stub.dataset.failed).toBe('true');
+    expect(stub.getAttribute('aria-label')).toBe('Retry loading message');
+
+    hydrate.mockReset();
+    hydrate.mockResolvedValue(undefined);
+
+    await act(async () => {
+      stub.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await Promise.resolve();
+    });
+
+    expect(hydrate).toHaveBeenCalledWith(['1']);
+    expect(stub.dataset.failed).toBeUndefined();
   });
 });

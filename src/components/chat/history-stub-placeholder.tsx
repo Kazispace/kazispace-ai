@@ -23,10 +23,15 @@ export function HistoryStubPlaceholder({
       aria-busy="true"
       aria-label="Loading message"
       className={cn(
-        'min-h-[48px] w-full max-w-[85%] rounded-2xl bg-[#F2F3F5]',
+        'group flex min-h-[48px] w-full max-w-[85%] items-center justify-center rounded-2xl bg-[#F2F3F5]',
+        'data-[failed=true]:cursor-pointer',
         role === 'user' ? 'ml-auto' : 'mr-auto',
         className
       )}
-    />
+    >
+      <span className="hidden text-xs text-[#86909C] group-data-[failed=true]:inline">
+        Retry
+      </span>
+    </div>
   );
 }

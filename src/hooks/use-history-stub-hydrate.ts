@@ -9,9 +9,37 @@ type StubRow = {
   contentPending?: boolean;
 };
 
+/** Initial fetch + one automatic retry after a rejected hydrate. */
+export const HISTORY_STUB_HYDRATE_MAX_ATTEMPTS = 2;
+
+function stubNodes(root: HTMLElement, id: string): HTMLElement[] {
+  return Array.from(
+    root.querySelectorAll<HTMLElement>(`[data-history-stub="${id}"]`)
+  );
+}
+
+function setStubFailed(root: HTMLElement, id: string, failed: boolean) {
+  for (const el of stubNodes(root, id)) {
+    if (failed) {
+      el.dataset.failed = 'true';
+      el.tabIndex = 0;
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-busy', 'false');
+      el.setAttribute('aria-label', 'Retry loading message');
+    } else {
+      delete el.dataset.failed;
+      el.removeAttribute('tabindex');
+      el.removeAttribute('role');
+      el.setAttribute('aria-busy', 'true');
+      el.setAttribute('aria-label', 'Loading message');
+    }
+  }
+}
+
 /**
  * When a stub row enters the scroll viewport, hydrate full bodies by id.
  * IntersectionObserver for visibility; MutationObserver for Virtuoso mounts.
+ * Transient hydrate failures retry once, then the stub is clickable.
  * No setTimeout/debounce to fake smoothness.
  */
 export function useHistoryStubHydrate(opts: {
@@ -23,6 +51,7 @@ export function useHistoryStubHydrate(opts: {
   const hydrateRef = useRef(opts.hydrate);
   hydrateRef.current = opts.hydrate;
   const inFlightRef = useRef(new Set<string>());
+  const attemptsRef = useRef(new Map<string, number>());
 
   const hasStubs = opts.messages.some((row) => isHistoryStub(row));
 
@@ -36,10 +65,52 @@ export function useHistoryStubHydrate(opts: {
         ids.filter((id) => !inFlightRef.current.has(id))
       );
       if (capped.length === 0) return;
-      for (const id of capped) inFlightRef.current.add(id);
-      void Promise.resolve(hydrateRef.current(capped)).finally(() => {
-        for (const id of capped) inFlightRef.current.delete(id);
-      });
+      for (const id of capped) {
+        inFlightRef.current.add(id);
+        setStubFailed(root, id, false);
+      }
+
+      let retryIds: string[] = [];
+      void Promise.resolve(hydrateRef.current(capped))
+        .then(() => {
+          for (const id of capped) attemptsRef.current.delete(id);
+        })
+        .catch(() => {
+          retryIds = [];
+          for (const id of capped) {
+            const next = (attemptsRef.current.get(id) ?? 0) + 1;
+            attemptsRef.current.set(id, next);
+            if (next < HISTORY_STUB_HYDRATE_MAX_ATTEMPTS) {
+              retryIds.push(id);
+            } else {
+              setStubFailed(root, id, true);
+            }
+          }
+        })
+        .finally(() => {
+          for (const id of capped) inFlightRef.current.delete(id);
+        })
+        .then(() => {
+          if (retryIds.length > 0) flush(retryIds);
+        });
+    };
+
+    const retryFailedStub = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const stub = target.closest('[data-history-stub]');
+      if (!(stub instanceof HTMLElement) || stub.dataset.failed !== 'true') {
+        return;
+      }
+      if (event instanceof KeyboardEvent) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+      }
+      const id = stub.dataset.historyStub;
+      if (!id) return;
+      attemptsRef.current.delete(id);
+      setStubFailed(root, id, false);
+      flush([id]);
     };
 
     const observer = new IntersectionObserver(
@@ -65,7 +136,11 @@ export function useHistoryStubHydrate(opts: {
     scan();
     const mutations = new MutationObserver(scan);
     mutations.observe(root, { childList: true, subtree: true });
+    root.addEventListener('click', retryFailedStub);
+    root.addEventListener('keydown', retryFailedStub);
     return () => {
+      root.removeEventListener('click', retryFailedStub);
+      root.removeEventListener('keydown', retryFailedStub);
       mutations.disconnect();
       observer.disconnect();
     };

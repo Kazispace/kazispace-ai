@@ -33,6 +33,12 @@ describe('KAZI-580 wiring', () => {
     expect(readSrc('../../hooks/use-history-stub-hydrate.ts')).not.toMatch(
       /setTimeout\s*\(/
     );
+    expect(readSrc('../../hooks/use-history-stub-hydrate.ts')).toMatch(
+      /HISTORY_STUB_HYDRATE_MAX_ATTEMPTS/
+    );
+    expect(readSrc('../../hooks/use-history-stub-hydrate.ts')).toMatch(
+      /dataset\.failed/
+    );
   });
 
   it('send path still must not scrape full history on success', () => {
