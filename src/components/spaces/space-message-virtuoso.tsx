@@ -8,6 +8,7 @@ import {
   StaticSpaceMessageRows,
   type SpaceMessageListBodyProps,
 } from '@/components/spaces/space-message-static-rows';
+import { isNearBottom, pinChatScrollToLatest } from '@/lib/spaces/chat-scroll';
 import {
   SPACE_CHAT_VIRTUOSO_DEFAULT_ITEM_HEIGHT,
   SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN,
@@ -19,6 +20,10 @@ export type SpaceMessageVirtuosoProps = SpaceMessageListBodyProps & {
   scrollParentRef: { readonly current: HTMLElement | null };
   /** Parent scrollTop captured before static rows unmount. */
   initialScrollTop?: number;
+  /** Ignore pixel restore; pin the parent to the last item (KAZI-588). */
+  alignToLatest?: boolean;
+  /** Keep-alive show retriggers pin; do not pin while `idle` (zero height). */
+  activationKey?: string;
 };
 
 /**
@@ -37,19 +42,43 @@ export function SpaceMessageVirtuoso({
   onFocusComposer,
   onExamSelect,
   onJobCardClick,
+  alignToLatest = false,
+  activationKey = 'default',
 }: SpaceMessageVirtuosoProps) {
   const [scrollParent, setScrollParent] = useState<HTMLElement | null>(
     () => scrollParentRef.current
   );
   const restoredRef = useRef(false);
+  const initialTopMostRef = useRef<number | { index: number; align: 'end' }>(0);
+  const didFreezeInitialRef = useRef(false);
+  if (alignToLatest && messages.length > 0 && !didFreezeInitialRef.current) {
+    didFreezeInitialRef.current = true;
+    initialTopMostRef.current = {
+      index: messages.length - 1,
+      align: 'end',
+    };
+  }
 
   useLayoutEffect(() => {
     const node = scrollParentRef.current;
     setScrollParent((prev) => (prev === node ? prev : node));
   }, [scrollParentRef]);
 
+  useLayoutEffect(() => {
+    restoredRef.current = false;
+  }, [activationKey]);
+
   const tryRestore = () => {
-    if (restoredRef.current || !scrollParent) return;
+    if (!scrollParent) return;
+    if (alignToLatest) {
+      if (activationKey === 'idle') return;
+      if (scrollParent.scrollHeight <= scrollParent.clientHeight) return;
+      if (restoredRef.current && !isNearBottom(scrollParent)) return;
+      pinChatScrollToLatest(scrollParent);
+      restoredRef.current = true;
+      return;
+    }
+    if (restoredRef.current) return;
     if (restoreSpaceChatScrollAfterVirtualize(scrollParent, initialScrollTop)) {
       restoredRef.current = true;
     }
@@ -85,6 +114,7 @@ export function SpaceMessageVirtuoso({
         bottom: SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN,
       }}
       computeItemKey={(_, message) => message.id}
+      initialTopMostItemIndex={initialTopMostRef.current}
       totalListHeightChanged={tryRestore}
       itemContent={(index, message) => (
         <div className={index < messages.length - 1 ? 'pb-3' : undefined}>

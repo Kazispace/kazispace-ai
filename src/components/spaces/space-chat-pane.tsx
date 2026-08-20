@@ -253,6 +253,8 @@ export function SpaceChatPane({
     messageCount: messages.length,
     isSending,
     ready: scrollReady,
+    alignToLatest: true,
+    activationKey: active ? 'active' : 'idle',
   });
 
   useHistoryStubHydrate({
@@ -438,6 +440,8 @@ export function SpaceChatPane({
               scrollParentRef={scrollRef}
               locale={locale}
               actionsDisabled={isSending}
+              alignToLatest
+              activationKey={active ? 'active' : 'idle'}
               onRetryById={handleRetryById}
               onNextAction={handleNextAction}
               onFocusComposer={handleFocusComposer}

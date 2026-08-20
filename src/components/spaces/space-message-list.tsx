@@ -12,6 +12,9 @@ import { shouldVirtualizeSpaceMessages } from '@/lib/spaces/space-message-virtua
 
 export type SpaceMessageListProps = SpaceMessageListBodyProps & {
   scrollParentRef: { readonly current: HTMLElement | null };
+  /** Pin to the last bubble after Virtuoso swap (KAZI-588). */
+  alignToLatest?: boolean;
+  activationKey?: string;
 };
 
 /**
@@ -30,6 +33,8 @@ export function SpaceMessageList({
   onFocusComposer,
   onExamSelect,
   onJobCardClick,
+  alignToLatest = false,
+  activationKey,
 }: SpaceMessageListProps) {
   const virtualize = shouldVirtualizeSpaceMessages(messages.length);
   const [VirtuosoComp, setVirtuosoComp] = useState<ComponentType<
@@ -78,6 +83,8 @@ export function SpaceMessageList({
       {...rowProps}
       scrollParentRef={scrollParentRef}
       initialScrollTop={preservedScrollTopRef.current}
+      alignToLatest={alignToLatest}
+      activationKey={activationKey}
     />
   );
 }

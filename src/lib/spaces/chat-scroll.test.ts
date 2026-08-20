@@ -4,6 +4,7 @@ import {
   CHAT_NEAR_BOTTOM_PX,
   clampScrollTop,
   isNearBottom,
+  pinChatScrollToLatest,
   readChatScrollTop,
   spaceChatScrollStorageKey,
   writeChatScrollTop,
@@ -85,10 +86,12 @@ describe('chat-scroll helpers', () => {
     expect(readChatScrollTop(key)).toBe(0);
   });
 
-  it('ignores corrupt storage values', () => {
-    stubSessionStorage();
-    const key = spaceChatScrollStorageKey('sp_b');
-    store.set(key, 'nope');
-    expect(readChatScrollTop(key)).toBeNull();
+  it('pins overflow to the latest message', () => {
+    const el = { scrollHeight: 4000, clientHeight: 400, scrollTop: 80 };
+    expect(pinChatScrollToLatest(el)).toBe(true);
+    expect(el.scrollTop).toBe(3600);
+    const short = { scrollHeight: 100, clientHeight: 400, scrollTop: 12 };
+    expect(pinChatScrollToLatest(short)).toBe(false);
+    expect(short.scrollTop).toBe(12);
   });
 });

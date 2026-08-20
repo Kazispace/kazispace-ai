@@ -64,6 +64,19 @@ export function scrollElementToBottom(
   el.scrollTo({ top: el.scrollHeight, behavior });
 }
 
+/**
+ * Pin the chat parent to the latest message after Virtuoso reports height.
+ * Pixel scrollTop from the static list is not comparable to virtual height
+ * (KAZI-588) — that left users on early stubs.
+ */
+export function pinChatScrollToLatest(
+  el: Pick<HTMLElement, 'scrollHeight' | 'clientHeight' | 'scrollTop'>
+): boolean {
+  if (el.scrollHeight <= el.clientHeight) return false;
+  el.scrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+  return true;
+}
+
 /** Clamp a saved scrollTop into the element's current scroll range. */
 export function clampScrollTop(el: HTMLElement, saved: number): number {
   const max = Math.max(0, el.scrollHeight - el.clientHeight);

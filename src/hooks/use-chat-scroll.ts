@@ -20,6 +20,13 @@ export type UseChatScrollOptions = {
    * Must stay false while a fetch may still replace the message list.
    */
   ready: boolean;
+  /**
+   * Space switch (KAZI-588): pin to the latest message instead of the last
+   * sessionStorage scrollTop. Pixel restore + Virtuoso left users on stubs.
+   */
+  alignToLatest?: boolean;
+  /** Rising edge retriggers align (keep-alive show). */
+  activationKey?: string;
 };
 
 /**
@@ -32,6 +39,8 @@ export function useChatScroll({
   messageCount,
   isSending,
   ready,
+  alignToLatest = false,
+  activationKey = 'default',
 }: UseChatScrollOptions) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
@@ -41,6 +50,8 @@ export function useChatScroll({
   const lastScrollTopRef = useRef(0);
   const readyRef = useRef(ready);
   readyRef.current = ready;
+  const activationKeyRef = useRef(activationKey);
+  activationKeyRef.current = activationKey;
   /** null until first follow-effect sync after restore — prevents restore→follow overwrite. */
   const followBaselineCountRef = useRef<number | null>(null);
   const followBaselineSendingRef = useRef(false);
@@ -86,7 +97,7 @@ export function useChatScroll({
     }, 350);
   }, [persistScroll]);
 
-  // Reset when conversation scope changes
+  // Reset when conversation scope changes, or keep-alive shows this surface.
   useEffect(() => {
     restoredRef.current = false;
     stickToBottomRef.current = true;
@@ -94,7 +105,7 @@ export function useChatScroll({
     followBaselineCountRef.current = null;
     followBaselineSendingRef.current = false;
     setShowJumpToLatest(false);
-  }, [storageKey]);
+  }, [storageKey, activationKey]);
 
   // History re-fetch / layer unload: allow a fresh restore; do not wipe sessionStorage
   // (ready flickering used to flush lastScrollTop=0 and destroy the saved position).
@@ -106,8 +117,11 @@ export function useChatScroll({
   }, [ready]);
 
   // Restore after history is ready — never mark restored while messageCount is still 0 mid-hydrate.
+  // activationKey must be a dep: keep-alive show does not change storageKey/ready, but must re-pin.
   useEffect(() => {
     if (!ready || restoredRef.current) return;
+    // Hidden keep-alive instances have 0 height; pinning now would lock a false restore.
+    if (alignToLatest && activationKey === 'idle') return;
     const el = scrollRef.current;
     if (!el) return;
 
@@ -123,9 +137,10 @@ export function useChatScroll({
     const apply = () => {
       // ready may have flipped false between schedule and rAF (re-hydrate).
       if (!readyRef.current || restoredRef.current || !scrollRef.current) return;
+      if (alignToLatest && activationKeyRef.current === 'idle') return;
       const node = scrollRef.current;
       // Height may still be settling — re-read after a second frame if needed.
-      const saved = readChatScrollTop(storageKey);
+      const saved = alignToLatest ? null : readChatScrollTop(storageKey);
       if (saved != null) {
         node.scrollTop = clampScrollTop(node, saved);
         stickToBottomRef.current = isNearBottom(node);
@@ -155,7 +170,15 @@ export function useChatScroll({
     requestAnimationFrame(() => {
       requestAnimationFrame(apply);
     });
-  }, [ready, storageKey, messageCount, isSending, updateJumpVisibility]);
+  }, [
+    ready,
+    storageKey,
+    messageCount,
+    isSending,
+    updateJumpVisibility,
+    alignToLatest,
+    activationKey,
+  ]);
 
   // Follow only when count/sending advances *after* restore baseline is set.
   useEffect(() => {

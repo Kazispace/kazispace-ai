@@ -6,6 +6,8 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { listSpaces } from '@/lib/spaces-api';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
+import { getActiveLanguagePreference } from '@/lib/locale';
+import { prefetchRecentSpaceSwitches } from '@/lib/spaces/prefetch-space-switch';
 import { seedSpaceDetailPlaceholders } from '@/lib/spaces/space-detail-from-summary';
 import { SPACES_LIST_INVALIDATE_EVENT } from '@/lib/spaces-list-invalidate';
 import { useAuthStore } from '@/lib/store';
@@ -18,10 +20,13 @@ export function useSpaces(options?: {
   enabled?: boolean;
   /** Bypass stale-time on mount (e.g. `/spaces` index resolver). */
   fetchImmediately?: boolean;
+  /** Route locale — must match `useSpaceHistoryQuery` or prefetch misses. */
+  locale?: string;
 }) {
   const enabled = (options?.enabled ?? true) && isSpacesEnabled();
   const panelOpen = options?.panelOpen ?? false;
   const fetchImmediately = options?.fetchImmediately ?? false;
+  const locale = options?.locale ?? getActiveLanguagePreference();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const queryClient = useQueryClient();
 
@@ -54,8 +59,9 @@ export function useSpaces(options?: {
       lastFetchedAt.current = now;
       setSpaces(res.data.spaces);
       seedSpaceDetailPlaceholders(queryClient, res.data.spaces);
+      prefetchRecentSpaceSwitches(queryClient, res.data.spaces, locale);
     },
-    [enabled, isLoggedIn, queryClient]
+    [enabled, isLoggedIn, locale, queryClient]
   );
 
   useEffect(() => {
