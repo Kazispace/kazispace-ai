@@ -1,32 +1,8 @@
-"use client";
-
-import dynamic from "next/dynamic";
-import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
-
-interface ChatPageProps {
-  params: { locale: string };
-}
-
-function ChatPageLoading() {
-  return (
-    <div className="flex flex-1 items-center justify-center py-16 text-gray-500">
-      <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
-    </div>
-  );
-}
-
-/** KAZI-565: defer heavy ClinicShell (CV/Job/Agent/Hub) until after first paint. */
-const ClinicShell = dynamic(
-  () =>
-    import("@/components/clinic/clinic-shell").then((m) => m.ClinicShell),
-  { loading: () => <ChatPageLoading />, ssr: false }
-);
-
-export default function ChatPage({ params }: ChatPageProps) {
-  return (
-    <Suspense fallback={<ChatPageLoading />}>
-      <ClinicShell locale={params.locale} />
-    </Suspense>
-  );
+/**
+ * Clinic chat is hosted by the workspace keep-alive layer (KAZI-588) so
+ * Space→Clinic does not remount the thread. This route only keeps /chat
+ * in the App Router.
+ */
+export default function ChatPage() {
+  return null;
 }

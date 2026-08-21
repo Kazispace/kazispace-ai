@@ -150,8 +150,40 @@ describe('KAZI-566 space switch + load contracts', () => {
         isHydrating: false,
       })
     ).toBe(false);
-    expect(isSpaceHistoryReadyFromSlice('sp_abc123', null, null)).toBe(true);
+    expect(isSpaceHistoryReadyFromSlice('sp_abc123', null, null)).toBe(false);
+    expect(
+      isSpaceHistoryReadyFromSlice('sp_abc123', null, {
+        masterSessionId: 'sess_sp_abc123',
+        messages: [{ id: 'm1', role: 'assistant', content: 'hi' }],
+        isHydrating: false,
+      })
+    ).toBe(true);
     expect(isSpaceHistoryReadyFromSlice(null, 'sess', null)).toBe(false);
+  });
+
+  it('unconfirmed empty first paint is loading, not blank welcome', () => {
+    expect(
+      spaceChatFirstPaintKind({
+        historyReady: false,
+        isHydrating: false,
+        messageCount: 0,
+      })
+    ).toBe('loading');
+    expect(
+      spaceChatFirstPaintKind({
+        historyReady: true,
+        isHydrating: false,
+        messageCount: 0,
+      })
+    ).toBe('welcome');
+    expect(
+      spaceChatFirstPaintKind({
+        historyReady: false,
+        isHydrating: false,
+        messageCount: 0,
+        historyError: true,
+      })
+    ).toBe('error');
   });
 
   it('A(warm)→B(cold) first commit is loading, not welcome', () => {

@@ -316,6 +316,8 @@
 		"createFailed": "Could not create space",
 		"spaceNotReady": "This space is not ready yet. Refresh the page or try again later.",
 		"loading": "Loading…",
+		"historyLoadFailed": "Could not load conversation history",
+		"historyRetry": "Try again",
 		"loadFailed": "Could not load space",
 		"apiNotReadyHint": "Ensure backend SPACES_ENABLED is on",
 		"emptyState": "Send a message to start",

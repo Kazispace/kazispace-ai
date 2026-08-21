@@ -44,6 +44,9 @@ describe('KAZI-575 Clinic chat virtualize after threshold', () => {
     expect(virtuoso).toMatch(/customScrollParent/);
     expect(virtuoso).toMatch(/scrollParentRef/);
     expect(virtuoso).toMatch(/StaticClinicMessageRows/);
+    expect(virtuoso).toMatch(/pinChatScrollToLatest/);
+    expect(virtuoso).toMatch(/shouldPinChatScrollToLatest/);
+    expect(virtuoso).toMatch(/didFreezeInitialRef/);
     expect(virtuoso).not.toMatch(/followOutput/);
     expect(virtuoso).not.toMatch(/return null/);
   });

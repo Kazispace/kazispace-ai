@@ -124,9 +124,14 @@ function clinicHistoryFingerprint(message: ChatMessage): string {
   ].join('\0');
 }
 
-async function fetchNormalizedHistory(sessionId: string): Promise<ChatMessage[]> {
+/** Throws on transport/envelope failure so callers cannot treat it as empty success. */
+export async function fetchNormalizedClinicHistory(
+  sessionId: string
+): Promise<ChatMessage[]> {
   const res = await fetchChatHistory(sessionId);
-  if (!res.success || !res.data) return [];
+  if (!res.success || res.data == null) {
+    throw new Error(res.error ?? 'Failed to load clinic history');
+  }
 
   const parsed = parseChatHistoryResponse(res.data);
 
@@ -168,7 +173,12 @@ async function recoverPlaceholderReplyFromHistory(
   userMsgId: string,
   setMessages: (messages: ChatMessage[]) => void
 ): Promise<string> {
-  const refreshed = await fetchNormalizedHistory(sessionId);
+  let refreshed: ChatMessage[];
+  try {
+    refreshed = await fetchNormalizedClinicHistory(sessionId);
+  } catch {
+    return '';
+  }
   const reply = assistantAfterUserId(refreshed, userMsgId);
   if (!isPlaceholderReply(reply)) {
     const local = useChatStore.getState().messages;
@@ -243,7 +253,7 @@ export function useClinicChat(locale?: string) {
         masterSessionSyncedRef.current = true;
       }
       const sessionId = await ensureMasterSession();
-      const fromServer = await fetchNormalizedHistory(sessionId);
+      const fromServer = await fetchNormalizedClinicHistory(sessionId);
       const local = useChatStore.getState().messages;
       const mergedWindow = applyHistoryWindowRows(
         local,

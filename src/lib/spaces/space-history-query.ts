@@ -46,7 +46,12 @@ export async function fetchSpaceHistoryMessages(
     err.name = 'AbortError';
     throw err;
   }
-  if (!res.success || !res.data) return [];
+  // Failed/aborted fetches must not become a successful `[]` — TanStack would
+  // cache that empty array and Space chat would paint the blank welcome
+  // (KAZI-588 R2).
+  if (!res.success || res.data == null) {
+    throw new Error(res.error ?? 'Failed to load space history');
+  }
   const parsed = parseChatHistoryResponse(res.data);
   return mapSpaceHistoryMessages(parsed.rows, locale);
 }

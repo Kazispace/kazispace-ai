@@ -23,13 +23,10 @@ export function isSpaceHistoryReadyFromSlice(
   slice: Pick<SpaceSlice, 'masterSessionId' | 'messages' | 'isHydrating'> | null
 ): boolean {
   if (!spaceId) return false;
+  if (!slice || slice.isHydrating) return false;
+  if (slice.messages.length === 0) return false;
   if (!masterSessionId) return true;
-  if (!slice) return false;
-  return (
-    slice.masterSessionId === masterSessionId &&
-    slice.messages.length > 0 &&
-    !slice.isHydrating
-  );
+  return slice.masterSessionId === masterSessionId;
 }
 
 /**
@@ -50,15 +47,17 @@ export function resolveSpaceHistoryReadyState(
   return { key, ready: fromSlice };
 }
 
-/** SpaceChatPane first paint: loading vs welcome vs rows. */
+/** SpaceChatPane first paint: loading vs welcome vs rows vs recoverable error. */
 export function spaceChatFirstPaintKind(opts: {
   historyReady: boolean;
   isHydrating: boolean;
   messageCount: number;
-}): 'loading' | 'welcome' | 'messages' {
-  if ((!opts.historyReady || opts.isHydrating) && opts.messageCount === 0) {
-    return 'loading';
-  }
-  if (opts.messageCount === 0) return 'welcome';
-  return 'messages';
+  historyError?: boolean;
+  isFetching?: boolean;
+}): 'loading' | 'welcome' | 'messages' | 'error' {
+  if (opts.messageCount > 0) return 'messages';
+  if (opts.isHydrating || opts.isFetching) return 'loading';
+  if (opts.historyError) return 'error';
+  if (!opts.historyReady) return 'loading';
+  return 'welcome';
 }

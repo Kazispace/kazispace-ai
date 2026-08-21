@@ -158,9 +158,16 @@ export function useSpaceTurn(
     }
 
     if (!resolvedMasterId) {
-      setSpaceMessages(spaceId, []);
-      setSpaceHydrating(spaceId, false);
-      setHistoryReadyState({ key: historyReadyKey, ready: true });
+      const cached = useSpaceStore.getState().getSpaceSlice(spaceId);
+      // Do not wipe a warm slice or claim the thread is empty while detail
+      // still has no master id — that painted blank_conversation welcome.
+      if (cached.messages.length > 0) {
+        setSpaceHydrating(spaceId, false);
+        setHistoryReadyState({ key: historyReadyKey, ready: true });
+        return;
+      }
+      setSpaceHydrating(spaceId, true);
+      setHistoryReadyState({ key: historyReadyKey, ready: false });
       return;
     }
 
@@ -170,12 +177,15 @@ export function useSpaceTurn(
       cached.messages.length > 0 &&
       !cached.isHydrating;
 
-    if (hasWarmCache || historyQuery.dataUpdatedAt > 0) {
+    if (hasWarmCache || historyQuery.isSuccess) {
       setHistoryReadyState({ key: historyReadyKey, ready: true });
       setSpaceHydrating(spaceId, false);
     } else if (historyQuery.isFetching && !historyQuery.data) {
       setHistoryReadyState({ key: historyReadyKey, ready: false });
       setSpaceHydrating(spaceId, true);
+    } else if (historyQuery.isError) {
+      setHistoryReadyState({ key: historyReadyKey, ready: false });
+      setSpaceHydrating(spaceId, false);
     }
 
     if (!historyQuery.data) return;
@@ -197,8 +207,9 @@ export function useSpaceTurn(
   }, [
     enabled,
     historyQuery.data,
-    historyQuery.dataUpdatedAt,
+    historyQuery.isError,
     historyQuery.isFetching,
+    historyQuery.isSuccess,
     historyReadyKey,
     resolvedMasterId,
     setSpaceHydrating,
@@ -457,9 +468,16 @@ export function useSpaceTurn(
     [enabled, hydrateSpaceHistory, locale, resolvedMasterId, spaceId]
   );
 
+  const retryHistory = useCallback(async () => {
+    if (!resolvedMasterId) return;
+    await historyQuery.refetch();
+  }, [historyQuery, resolvedMasterId]);
+
   return {
     messages,
     isHydrating,
+    isHistoryFetching: historyQuery.isFetching,
+    historyError: historyQuery.isError,
     /** True only after this mount's history fetch settles — safer than `!isHydrating` for scroll. */
     historyReady,
     isSending,
@@ -467,6 +485,7 @@ export function useSpaceTurn(
     replyNotice,
     sendMessage,
     retryMessage,
+    retryHistory,
     hydrateHistoryStubs,
     enabled,
   };
