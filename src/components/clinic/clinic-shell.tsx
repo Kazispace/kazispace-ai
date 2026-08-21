@@ -26,6 +26,7 @@ import { ClinicParkedCapabilityBanner } from "./clinic-parked-capability-banner"
 import { ConfirmAbandonSessionDialog } from "@/components/session-nav/confirm-abandon-session-dialog";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
 import { ChatHistoryLoadError } from "@/components/chat/chat-history-load-error";
+import { ChatSideRailsHost } from "@/components/chat/chat-side-rails-host";
 import type { JobPracticeContext } from "@/types/jobs";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { buildReadinessPracticePrompt } from "@/lib/jobs/readiness-practice-prompt";
