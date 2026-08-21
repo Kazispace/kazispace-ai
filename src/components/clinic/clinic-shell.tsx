@@ -25,7 +25,7 @@ import {
 import { ClinicParkedCapabilityBanner } from "./clinic-parked-capability-banner";
 import { ConfirmAbandonSessionDialog } from "@/components/session-nav/confirm-abandon-session-dialog";
 import { VoiceEnabledChatInput } from "@/components/chat/voice-enabled-chat-input";
-import { ChatSideRailsHost } from "@/components/chat/chat-side-rails-host";
+import { ChatHistoryLoadError } from "@/components/chat/chat-history-load-error";
 import type { JobPracticeContext } from "@/types/jobs";
 import { useClinicChat } from "@/hooks/use-clinic-chat";
 import { buildReadinessPracticePrompt } from "@/lib/jobs/readiness-practice-prompt";
@@ -108,7 +108,7 @@ import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { bootstrapBase } from "@/lib/region";
-import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
+import { clinicHistoryBootstrapOutcome } from "@/lib/clinic/history-bootstrap";
 import {
   resolveNextActionChatPrompt,
   resolveNextActionHref,
@@ -308,10 +308,10 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   const reloadClinicHistoryIfIdle = useCallback(async () => {
     if (useChatStore.getState().isSending) {
       pendingClinicHistoryReloadRef.current = true;
-      return;
+      return true;
     }
     pendingClinicHistoryReloadRef.current = false;
-    await loadHistoryRef.current();
+    return loadHistoryRef.current();
   }, []);
 
   /**
@@ -330,8 +330,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       }
       clinicHubColdOpenRef.current = hubAgentId;
       useAgentStore.getState().setActiveAgent(null, null);
-      await reloadClinicHistoryIfIdle();
-      return true;
+      return reloadClinicHistoryIfIdle();
     },
     [reloadClinicHistoryIfIdle]
   );
@@ -619,9 +618,13 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
 
     let cancelled = false;
 
-    const markClinicBootstrapped = () => {
+    const applyHistoryBootstrap = (historyOk: boolean) => {
       if (cancelled) return;
-      didClinicBootstrapRef.current = true;
+      const outcome = clinicHistoryBootstrapOutcome(historyOk);
+      setClinicHistoryLoadFailed(outcome.showHistoryFailed);
+      if (outcome.markComplete) {
+        didClinicBootstrapRef.current = true;
+      }
       setLayerReady(true);
     };
 
@@ -632,8 +635,8 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       if (pending?.type === 'activate_agent') {
         if (pending.agentId === CV_BUILDER_AGENT_ID) {
           openCvRailRef.current();
-          await loadHistoryRef.current();
-          markClinicBootstrapped();
+          const ok = await loadHistoryRef.current();
+          applyHistoryBootstrap(ok !== false);
           return;
         }
         if (pending.agentId === MOCK_INTERVIEW_AGENT_ID) {
@@ -646,7 +649,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
         }
         if (AGENT_REGISTRY.some((a) => a.agentId === pending.agentId)) {
           await requestAgentSwitchRef.current(pending.agentId);
-          markClinicBootstrapped();
+          applyHistoryBootstrap(true);
           return;
         }
       }
@@ -654,12 +657,16 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
         if (useAgentStore.getState().activeAgentId) {
           const result = await exitToClinicRef.current();
           if (result?.reloadClinic && isLoggedIn) {
-            await loadHistoryRef.current();
+            const ok = await loadHistoryRef.current();
+            applyHistoryBootstrap(ok !== false);
+            return;
           }
         } else {
-          await loadHistoryRef.current();
+          const ok = await loadHistoryRef.current();
+          applyHistoryBootstrap(ok !== false);
+          return;
         }
-        markClinicBootstrapped();
+        applyHistoryBootstrap(true);
         return;
       }
       if (pending?.type === 'subscription') {
@@ -684,8 +691,8 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       if (deepLinkAgent && shouldOpenCvBuilderPage(deepLinkAgent)) {
         openCvRailRef.current();
         stripAgentParamsFromUrl();
-        await loadHistoryRef.current();
-        markClinicBootstrapped();
+        const ok = await loadHistoryRef.current();
+        applyHistoryBootstrap(ok !== false);
         return;
       }
       if (deepLinkAgent && shouldOpenInterviewPage(deepLinkAgent)) {
@@ -701,33 +708,38 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
         AGENT_REGISTRY.some((a) => a.agentId === deepLinkAgent)
       ) {
         await requestAgentSwitchRef.current(deepLinkAgent);
-        markClinicBootstrapped();
+        applyHistoryBootstrap(true);
         return;
       }
 
       const stickyAgent = await fetchActiveAgentRef.current();
       if (hasStickyActiveAgent(stickyAgent)) {
         if (isDedicatedHubAgent(stickyAgent.active_agent)) {
-          await stayInClinicForDedicatedHub(stickyAgent.active_agent);
-        } else if (isCvBuilderAgent(stickyAgent.active_agent)) {
+          const ok = await stayInClinicForDedicatedHub(stickyAgent.active_agent);
+          applyHistoryBootstrap(ok !== false);
+          return;
+        }
+        if (isCvBuilderAgent(stickyAgent.active_agent)) {
           clinicHubColdOpenRef.current = null;
           useAgentStore.getState().setActiveAgent(null, null);
-          await loadHistoryRef.current();
-        } else {
-          clinicHubColdOpenRef.current = null;
-          await resumeActiveAgentSilentlyRef.current(
-            stickyAgent.active_agent,
-            stickyAgent.session_id
-          );
-          skipHistoryLoad();
+          const ok = await loadHistoryRef.current();
+          applyHistoryBootstrap(ok !== false);
+          return;
         }
-      } else {
         clinicHubColdOpenRef.current = null;
-        useAgentStore.getState().setActiveAgent(null, null);
-        await loadHistoryRef.current();
+        await resumeActiveAgentSilentlyRef.current(
+          stickyAgent.active_agent,
+          stickyAgent.session_id
+        );
+        skipHistoryLoad();
+        applyHistoryBootstrap(true);
+        return;
       }
 
-      markClinicBootstrapped();
+      clinicHubColdOpenRef.current = null;
+      useAgentStore.getState().setActiveAgent(null, null);
+      const ok = await loadHistoryRef.current();
+      applyHistoryBootstrap(ok !== false);
     };
 
     void bootstrapClinicLayer();
@@ -840,6 +852,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       setClinicHistoryLoadFailed(false);
       return;
     }
+    if (clinicHistoryLoadFailed) return;
     if (emptyHistoryRecoveryAttemptedRef.current) return;
     emptyHistoryRecoveryAttemptedRef.current = true;
     void loadHistory().then((ok) => {
@@ -857,6 +870,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     layerReady,
     loadHistory,
     active,
+    clinicHistoryLoadFailed,
   ]);
 
   const retryClinicHistoryLoad = useCallback(() => {
@@ -866,7 +880,9 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       if (!ok) {
         console.error('[ClinicShell] clinic history load failed (manual retry)');
         setClinicHistoryLoadFailed(true);
+        return;
       }
+      didClinicBootstrapRef.current = true;
     });
   }, [loadHistory]);
 
@@ -1466,18 +1482,12 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
         ) : !isAgentMode &&
           clinicHistoryLoadFailed &&
           clinicMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-gray-500">
-            <p className="text-sm text-red-600">{tClinic("historyLoadFailed")}</p>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={retryClinicHistoryLoad}
-            >
-              {tClinic("historyRetry")}
-            </Button>
-          </div>
-        ) : !isAgentMode &&
+          <ChatHistoryLoadError
+            message={tClinic("historyLoadFailed")}
+            retryLabel={tClinic("historyRetry")}
+            onRetry={retryClinicHistoryLoad}
+            disabled={isHistoryLoading}
+          /> : !isAgentMode &&
           isHistoryLoading &&
           clinicMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">

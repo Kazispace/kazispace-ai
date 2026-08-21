@@ -176,6 +176,14 @@ describe('KAZI-566 space switch + load contracts', () => {
         messageCount: 0,
       })
     ).toBe('welcome');
+    expect(
+      spaceChatFirstPaintKind({
+        historyReady: false,
+        isHydrating: false,
+        messageCount: 0,
+        historyError: true,
+      })
+    ).toBe('error');
   });
 
   it('A(warm)→B(cold) first commit is loading, not welcome', () => {

@@ -468,9 +468,16 @@ export function useSpaceTurn(
     [enabled, hydrateSpaceHistory, locale, resolvedMasterId, spaceId]
   );
 
+  const retryHistory = useCallback(async () => {
+    if (!resolvedMasterId) return;
+    await historyQuery.refetch();
+  }, [historyQuery, resolvedMasterId]);
+
   return {
     messages,
     isHydrating,
+    isHistoryFetching: historyQuery.isFetching,
+    historyError: historyQuery.isError,
     /** True only after this mount's history fetch settles — safer than `!isHydrating` for scroll. */
     historyReady,
     isSending,
@@ -478,6 +485,7 @@ export function useSpaceTurn(
     replyNotice,
     sendMessage,
     retryMessage,
+    retryHistory,
     hydrateHistoryStubs,
     enabled,
   };

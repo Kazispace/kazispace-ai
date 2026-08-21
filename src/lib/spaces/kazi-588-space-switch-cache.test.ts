@@ -239,5 +239,12 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     expect(turn).not.toMatch(/setSpaceMessages\(spaceId, \[\]\)/);
     const history = readSrc('hooks/use-space-history.ts');
     expect(history).toMatch(/query\.state\.status === 'error'/);
+    const pane = readSrc('components/spaces/space-chat-pane.tsx');
+    expect(pane).toMatch(/ChatHistoryLoadError/);
+    expect(pane).toMatch(/retryHistory/);
+    const clinic = readSrc('components/clinic/clinic-shell.tsx');
+    expect(clinic).toMatch(/clinicHistoryBootstrapOutcome/);
+    expect(clinic).toMatch(/ChatHistoryLoadError/);
+    expect(clinic).not.toMatch(/markClinicBootstrapped\(\);\s*$/m);
   });
 });

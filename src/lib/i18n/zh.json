@@ -242,6 +242,8 @@
 		"createFailed": "无法创建空间",
 		"spaceNotReady": "空间尚未就绪，请刷新页面或稍后再试。",
 		"loading": "加载中…",
+		"historyLoadFailed": "无法加载对话历史",
+		"historyRetry": "重试",
 		"loadFailed": "无法加载空间",
 		"apiNotReadyHint": "请确认后端已开启 SPACES_ENABLED",
 		"emptyState": "发送消息开始对话",

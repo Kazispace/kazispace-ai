@@ -47,15 +47,17 @@ export function resolveSpaceHistoryReadyState(
   return { key, ready: fromSlice };
 }
 
-/** SpaceChatPane first paint: loading vs welcome vs rows. */
+/** SpaceChatPane first paint: loading vs welcome vs rows vs recoverable error. */
 export function spaceChatFirstPaintKind(opts: {
   historyReady: boolean;
   isHydrating: boolean;
   messageCount: number;
-}): 'loading' | 'welcome' | 'messages' {
-  if ((!opts.historyReady || opts.isHydrating) && opts.messageCount === 0) {
-    return 'loading';
-  }
-  if (opts.messageCount === 0) return 'welcome';
-  return 'messages';
+  historyError?: boolean;
+  isFetching?: boolean;
+}): 'loading' | 'welcome' | 'messages' | 'error' {
+  if (opts.messageCount > 0) return 'messages';
+  if (opts.isHydrating || opts.isFetching) return 'loading';
+  if (opts.historyError) return 'error';
+  if (!opts.historyReady) return 'loading';
+  return 'welcome';
 }
