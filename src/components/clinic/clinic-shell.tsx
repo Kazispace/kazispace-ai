@@ -109,6 +109,7 @@ import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
 import { bootstrapBase } from "@/lib/region";
 import { clinicHistoryBootstrapOutcome } from "@/lib/clinic/history-bootstrap";
+import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
 import {
   resolveNextActionChatPrompt,
   resolveNextActionHref,
@@ -1487,7 +1488,8 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
             retryLabel={tClinic("historyRetry")}
             onRetry={retryClinicHistoryLoad}
             disabled={isHistoryLoading}
-          /> : !isAgentMode &&
+          />
+        ) : !isAgentMode &&
           isHistoryLoading &&
           clinicMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
