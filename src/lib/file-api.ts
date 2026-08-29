@@ -7,7 +7,7 @@ import type {
   UserFileUrlResponse,
 } from '@/types/user-files';
 
-function useMockFallback(error?: string): boolean {
+function shouldUseMockFallback(error?: string): boolean {
   // Explicit opt-in only — avoid masking real 404s / misconfigured routes.
   if (process.env.NEXT_PUBLIC_MOCK_FILES === 'true') return true;
   if (process.env.NEXT_PUBLIC_AGENT_API_MOCK === 'true') return true;
@@ -84,7 +84,7 @@ export async function fetchUserFiles(
   const query = params.toString() ? `?${params.toString()}` : '';
   const res = await apiRequest<UserFileListResponse>(`/api/v1/files${query}`);
   if (res.success && res.data) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     warnMockFallback(`GET /api/v1/files${query}`);
     const filtered = category
       ? MOCK_FILES.filter((f) => f.category === category)
@@ -104,7 +104,7 @@ export async function getFileDownloadUrl(
     `/api/v1/files/${encodeURIComponent(fileId)}/url`
   );
   if (res.success && res.data) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     warnMockFallback(`GET /api/v1/files/${fileId}/url`);
     return {
       success: true,
@@ -126,7 +126,7 @@ export async function deleteUserFile(
     { method: 'DELETE' }
   );
   if (res.success) return { success: true, data: undefined };
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     warnMockFallback(`DELETE /api/v1/files/${fileId}`);
     return { success: true, data: undefined };
   }
@@ -150,7 +150,7 @@ export async function uploadFile(
     body: formData as unknown as BodyInit,
   });
   if (res.success && res.data) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     warnMockFallback('POST /api/v1/files/upload');
     return {
       success: true,

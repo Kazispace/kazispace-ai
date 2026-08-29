@@ -15,7 +15,7 @@ import type {
 } from '@/types/session-library';
 import type { AgentSessionSummary } from '@/types';
 
-function useMockFallback(error?: string): boolean {
+function shouldUseMockFallback(error?: string): boolean {
   if (process.env.NEXT_PUBLIC_AGENT_API_MOCK === 'true') return true;
   if (process.env.NODE_ENV === 'production') return false;
   if (!error) return false;
@@ -156,7 +156,7 @@ export async function fetchGlobalLibraryFiles(): Promise<
 > {
   const res = await apiRequest<SessionLibraryFilesResponse>('/api/v1/library/files');
   if (res.success && res.data) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     warnMockFallback('GET /library/files');
     const sessions = await loadCurrentSessions();
     return { success: true, data: { files: buildMockGlobalFiles(sessions) } };
@@ -172,7 +172,7 @@ export async function fetchSessionFiles(
     `/api/v1/agents/sessions/${encodeURIComponent(sessionId)}/files`
   );
   if (res.success && res.data) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     warnMockFallback(`GET /agents/sessions/${sessionId}/files`);
     return {
       success: true,
@@ -194,7 +194,7 @@ export async function searchLibrary(
     `/api/v1/library/search?q=${encodeURIComponent(trimmed)}`
   );
   if (res.success && res.data) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     warnMockFallback('GET /library/search');
     const hits = await buildMockSearchHits(trimmed);
     return { success: true, data: { hits } };
