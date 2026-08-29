@@ -432,10 +432,15 @@ export function MessageActions({
 
       {feedbackEnabled && downOpen ? (
         <div
-          // KAZI-662: was a bare #FAFAFA literal, a near-exact match (diff of
-          // 0/1/2 per RGB channel) for workspace.header (#FAFBFC) — merged
-          // rather than kept as a separate near-neighbor value.
-          className="ml-0.5 flex max-w-md flex-col gap-2 rounded-md border border-workspace-border bg-workspace-header p-2"
+          // KAZI-662 (review correction): was a bare #FAFAFA literal. It's
+          // RGB-nearest to workspace.header (#FAFBFC, diff of 0/1/2 per
+          // channel), but this is a feedback-reason popover, not header
+          // chrome — merging into that token would mislead a future reader
+          // into treating it as a generic light-gray/header color. Merged
+          // into workspace.bg instead: semantically this is a floating
+          // static surface, the same category as the other near-neighbor
+          // merges below (#ECEEF2 -> workspace-bg).
+          className="ml-0.5 flex max-w-md flex-col gap-2 rounded-md border border-workspace-border bg-workspace-bg p-2"
           role="group"
           aria-label={t('messageActions.feedbackReasonsLabel')}
         >
