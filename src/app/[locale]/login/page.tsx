@@ -86,12 +86,12 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
         setOtpAttempt(result.attempt);
         setStep("otp");
       } else if (result.success) {
-        setError("Failed to pin OTP region host");
+        setError(t("otpRegionHostFailed"));
       } else {
-        setError(result.error || "Failed to send code");
+        setError(result.error || t("sendCodeFailed"));
       }
     } catch {
-      setError("Network error");
+      setError(t("networkError"));
     } finally {
       setIsLoading(false);
     }
@@ -128,10 +128,10 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
             : `/${targetLocale}/chat`;
         router.push(destination);
       } else {
-        setError(result.error || "Invalid code");
+        setError(result.error || t("invalidCode"));
       }
     } catch {
-      setError("Network error");
+      setError(t("networkError"));
     } finally {
       setIsLoading(false);
     }

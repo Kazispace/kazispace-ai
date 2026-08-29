@@ -5,6 +5,10 @@
 		"phonePlaceholder": "+77015551234",
 		"phoneHint": "Faqat Qozog'iston (+7), O'zbekiston (+998) yoki Xitoy (+86) raqamlari",
 		"phoneInvalid": "+7, +998 yoki +86 formatida raqam kiriting",
+		"otpRegionHostFailed": "OTP mintaqaviy hostini biriktirib bo'lmadi",
+		"sendCodeFailed": "Kodni yuborib bo'lmadi",
+		"networkError": "Tarmoq xatosi",
+		"invalidCode": "Kod noto'g'ri",
 		"sendCode": "Kod olish",
 		"sending": "Yuborilmoqda...",
 		"otpLabel": "Tasdiqlash kodi",
@@ -327,7 +331,10 @@
 		"continueFree": "Bepul davom etish"
 	},
 	"errors": {
-		"profileIncomplete": "Shaxsiylashtirish uchun profilni to'ldiring — bu yerda suhbatni davom ettira olasiz."
+		"profileIncomplete": "Shaxsiylashtirish uchun profilni to'ldiring — bu yerda suhbatni davom ettira olasiz.",
+		"comingSoon": "Tez orada",
+		"failedReturnToClinic": "Klinikaga qaytib bo'lmadi",
+		"failedActivateExpert": "Ekspertni faollashtirib bo'lmadi"
 	},
 	"sessionNav": {
 		"confirmAbandonTitle": "Yangi sessiya boshlansinmi?",

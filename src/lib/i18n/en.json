@@ -5,6 +5,10 @@
 		"phonePlaceholder": "+77015551234",
 		"phoneHint": "Kazakhstan (+7), Uzbekistan (+998), or China (+86) numbers only",
 		"phoneInvalid": "Enter a valid phone number starting with +7, +998, or +86",
+		"otpRegionHostFailed": "Failed to pin OTP region host",
+		"sendCodeFailed": "Failed to send code",
+		"networkError": "Network error",
+		"invalidCode": "Invalid code",
 		"sendCode": "Send Code",
 		"sending": "Sending...",
 		"otpLabel": "Verification Code",
@@ -662,7 +666,10 @@
 	"errors": {
 		"profileIncomplete": "Add a few profile details to unlock personalized features — you can keep chatting here.",
 		"llmBusy": "The AI is busy right now. Please try again in a moment.",
-		"llmBusyWithRetry": "The AI is busy right now. Please try again in {seconds}s."
+		"llmBusyWithRetry": "The AI is busy right now. Please try again in {seconds}s.",
+		"comingSoon": "Coming soon",
+		"failedReturnToClinic": "Failed to return to clinic",
+		"failedActivateExpert": "Failed to activate expert"
 	},
 	"agentSessions": {
 		"sessionHistory": "Session history",
