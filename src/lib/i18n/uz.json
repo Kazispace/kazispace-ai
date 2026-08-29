@@ -952,5 +952,11 @@
 		"openInTelegramDesc": "Bu ilova KaziSpace boti ichida ishlaydi. Botni oching va menyu tugmasini bosing.",
 		"continueInBrowser": "Brauzerda davom etish",
 		"backToBot": "← Botga qaytish"
+	},
+	"errorBoundary": {
+		"title": "Nimadir noto'g'ri ketdi",
+		"description": "Kutilmagan xatolik yuz berdi. Qayta urinib ko'ring yoki klinikaga qayting.",
+		"tryAgain": "Qayta urinish",
+		"backToClinic": "Klinikaga qaytish"
 	}
 }

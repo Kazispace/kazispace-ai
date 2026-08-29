@@ -1335,5 +1335,11 @@
 		"openInTelegramDesc": "This experience works best inside the KaziSpace Telegram bot. Open the bot and tap the menu button.",
 		"continueInBrowser": "Continue in browser",
 		"backToBot": "← Back to bot"
+	},
+	"errorBoundary": {
+		"title": "Something went wrong",
+		"description": "An unexpected error occurred. You can try again or go back to the clinic.",
+		"tryAgain": "Try again",
+		"backToClinic": "Back to clinic"
 	}
 }
