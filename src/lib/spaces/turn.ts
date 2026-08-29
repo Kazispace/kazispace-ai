@@ -1,7 +1,10 @@
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import { hydrateStrategyPayloadUserLabels } from '@/lib/strategy-select';
 import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
+import { isReferralDismissed } from '@/lib/referral-dismiss';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
+import type { ReferralPayload } from '@/types';
+import type { UpgradeCtaPayload } from '@/lib/clinic/upgrade-cta';
 
 /** Unicode ellipsis (U+2026) and ASCII three-dot placeholder. */
 const PLACEHOLDER_REPLIES = new Set(['…', '...']);
@@ -134,6 +137,59 @@ export function resolveSpaceTurnCustomComponents(
   return [];
 }
 
+/**
+ * KAZI-651 Phase A — carry a specialist-agent referral on a Space turn, same
+ * extraction as Clinic's `parseClinicReply` (root `referral_agent_id`/
+ * `referral.agent_id`, or an `intent` starting with `REFERRAL_`). Additive
+ * only: nothing in the Space UI reads `SpaceChatMessage.referral` yet, so
+ * this has no visible effect until a later phase wires up rendering — see
+ * KAZI-651 for the referral -> Space-capability-switch design question.
+ */
+export function resolveSpaceTurnReferral(data: unknown): ReferralPayload | undefined {
+  if (!data || typeof data !== 'object') return undefined;
+  const raw = data as Record<string, unknown>;
+
+  const referralRecord =
+    raw.referral && typeof raw.referral === 'object'
+      ? (raw.referral as Record<string, unknown>)
+      : undefined;
+
+  let agentId =
+    (typeof raw.referral_agent_id === 'string' && raw.referral_agent_id) ||
+    (typeof referralRecord?.agent_id === 'string' ? referralRecord.agent_id : '');
+  const reason =
+    (typeof raw.referral_reason === 'string' && raw.referral_reason) ||
+    (typeof referralRecord?.reason === 'string' ? referralRecord.reason : '') ||
+    '';
+
+  if (!agentId && typeof raw.intent === 'string' && raw.intent.startsWith('REFERRAL_')) {
+    agentId = raw.intent.replace(/^REFERRAL_/, '');
+  }
+
+  if (!agentId || isReferralDismissed(agentId)) return undefined;
+  return { agentId, reason };
+}
+
+/**
+ * KAZI-651 Phase A — carry the web_search -> research upgrade CTA (KAZI-233)
+ * on a Space turn. `parseAssistantEnvelope` already extracts this generically
+ * from `meta.upgrade_cta`/`meta.cta`; Space's sendMessage flow just never
+ * read it back out. Additive only, same rationale as resolveSpaceTurnReferral
+ * above — no Space UI renders `SpaceChatMessage.upgradeCta` yet.
+ */
+export function resolveSpaceTurnUpgradeCta(data: unknown): UpgradeCtaPayload | undefined {
+  if (!data || typeof data !== 'object') return undefined;
+  const raw = data as Record<string, unknown>;
+
+  for (const candidate of [data, raw.envelope]) {
+    if (!candidate) continue;
+    const upgradeCta = parseAssistantEnvelope(candidate).upgradeCta;
+    if (upgradeCta) return upgradeCta;
+  }
+
+  return undefined;
+}
+
 export type SpaceChatMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -152,6 +208,16 @@ export type SpaceChatMessage = {
   assistantMeta?: Record<string, unknown>;
   /** english_tutor Cap custom_components (KAZI-502). */
   customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
+  /**
+   * KAZI-651 Phase A — specialist-agent referral, carried but not yet
+   * rendered by any Space UI (see resolveSpaceTurnReferral).
+   */
+  referral?: ReferralPayload;
+  /**
+   * KAZI-651 Phase A — web_search -> research upgrade CTA, carried but not
+   * yet rendered by any Space UI (see resolveSpaceTurnUpgradeCta).
+   */
+  upgradeCta?: UpgradeCtaPayload;
   /** Present on optimistic local turns (KAZI-186 retry). */
   status?: 'sending' | 'sent' | 'failed';
   /** Persisted chat_messages.id for feedback (KAZI-254). */
@@ -214,6 +280,10 @@ export function normalizeSpaceHistoryMessage(
     role === 'assistant' ? resolveSpaceTurnAssistantMeta(raw) : undefined;
   const customComponents =
     role === 'assistant' ? resolveSpaceTurnCustomComponents(raw) : [];
+  const referral =
+    role === 'assistant' ? resolveSpaceTurnReferral(raw) : undefined;
+  const upgradeCta =
+    role === 'assistant' ? resolveSpaceTurnUpgradeCta(raw) : undefined;
 
   return {
     id,
@@ -223,6 +293,8 @@ export function normalizeSpaceHistoryMessage(
     ...(nextActions.length > 0 ? { nextActions } : {}),
     ...(assistantMeta ? { assistantMeta } : {}),
     ...(customComponents.length > 0 ? { customComponents } : {}),
+    ...(referral ? { referral } : {}),
+    ...(upgradeCta ? { upgradeCta } : {}),
     ...(role === 'assistant' && isServerAssistantMessageId(id)
       ? { serverMessageId: id }
       : {}),
@@ -295,6 +367,8 @@ export function mergeSpaceMessagesAfterSend(
     nextActions?: ChatNextAction[];
     assistantMeta?: Record<string, unknown>;
     customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
+    referral?: ReferralPayload;
+    upgradeCta?: UpgradeCtaPayload;
   }[] = [];
   for (const message of local) {
     if (message.role !== 'assistant') continue;
@@ -309,6 +383,8 @@ export function mergeSpaceMessagesAfterSend(
       ...(message.customComponents && message.customComponents.length > 0
         ? { customComponents: message.customComponents }
         : {}),
+      ...(message.referral ? { referral: message.referral } : {}),
+      ...(message.upgradeCta ? { upgradeCta: message.upgradeCta } : {}),
     });
   }
 
@@ -335,6 +411,12 @@ export function mergeSpaceMessagesAfterSend(
       localExtras.customComponents
     ) {
       next = { ...next, customComponents: localExtras.customComponents };
+    }
+    if (!message.referral && localExtras.referral) {
+      next = { ...next, referral: localExtras.referral };
+    }
+    if (!message.upgradeCta && localExtras.upgradeCta) {
+      next = { ...next, upgradeCta: localExtras.upgradeCta };
     }
     return next;
   });
