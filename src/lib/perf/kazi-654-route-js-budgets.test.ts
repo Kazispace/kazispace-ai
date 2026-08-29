@@ -1,8 +1,46 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
 import routeJsBudgets from '@/lib/perf/route-js-budgets.json';
+
+const ROOT = path.resolve(__dirname, '../../..');
+const NEXT_DIR = path.join(ROOT, '.next');
+
+function fileSize(rel: string): number {
+  for (const candidate of [
+    path.join(NEXT_DIR, rel),
+    path.join(NEXT_DIR, 'static', rel.replace(/^static\//, '')),
+  ]) {
+    if (existsSync(candidate)) return statSync(candidate).size;
+  }
+  return 0;
+}
+
+function measureLoadableKey(loadableKey: string): number {
+  const manifest = JSON.parse(
+    readFileSync(path.join(NEXT_DIR, 'react-loadable-manifest.json'), 'utf8')
+  );
+  const files: string[] = manifest[loadableKey]?.files ?? [];
+  return files.filter((f) => f.endsWith('.js')).reduce((sum, f) => sum + fileSize(f), 0);
+}
+
+function measurePageKey(pageKey: string): number {
+  const files = new Set<string>();
+  const buildManifest = JSON.parse(
+    readFileSync(path.join(NEXT_DIR, 'build-manifest.json'), 'utf8')
+  );
+  for (const key of ['polyfillFiles', 'lowPriorityFiles', 'rootMainFiles']) {
+    for (const f of buildManifest[key] ?? []) files.add(f);
+  }
+  const appManifest = JSON.parse(
+    readFileSync(path.join(NEXT_DIR, 'app-build-manifest.json'), 'utf8')
+  );
+  for (const f of appManifest.pages?.[pageKey] ?? []) files.add(f);
+  return Array.from(files)
+    .filter((f) => f.endsWith('.js'))
+    .reduce((sum, f) => sum + fileSize(f), 0);
+}
 
 describe('KAZI-654 per-route JS budget gate', () => {
   it('defines a budget for each of the four target routes', () => {
@@ -62,5 +100,26 @@ describe('KAZI-654 per-route JS budget gate', () => {
     expect(cv.loadable_key).toBe(
       'components/chat/chat-side-rails-host.tsx -> @/components/cv/cv-workspace-rail'
     );
+  });
+
+  // KAZI-654 PR #209 review point 5: the tests above only check config shape
+  // (page_key/loadable_key present, wired into package.json) — none of them
+  // actually run a measurement, so a manifest-key typo or a silent revert to
+  // page_key for "cv" would still pass vitest. When a production build is
+  // present (as it is in the CI step that runs `npm run build` right after
+  // `npm test`, and in local post-build runs), assert the real numbers still
+  // tell the two graphs apart. This is a guard, not the enforcement — the
+  // hard `npm run build` gate remains the actual authority on the budget.
+  it('when a build exists, confirms cv measures a materially smaller graph than the legacy redirect-page measurement', () => {
+    if (!existsSync(NEXT_DIR)) return;
+    const cv = routeJsBudgets.routes.cv as { loadable_key: string };
+    const cvChunkTotal = measureLoadableKey(cv.loadable_key);
+    if (cvChunkTotal === 0) return; // this build didn't enable the flag that mounts CvWorkspaceRail
+    const legacyRedirectPageTotal = measurePageKey('/[locale]/(workspace)/cv/page');
+    // Before the #209 fix, "cv" measured this legacy page_key and landed on
+    // the exact same ~416 KB total as "space" (both are ~100% shared
+    // workspace-layout tax). CvWorkspaceRail's own chunk should be a small
+    // fraction of that shared graph, not equal to or larger than it.
+    expect(cvChunkTotal).toBeLessThan(legacyRedirectPageTotal * 0.5);
   });
 });

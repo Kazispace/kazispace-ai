@@ -27,6 +27,21 @@
  *   dynamic import's source location to its real chunk file list — that's
  *   what this mode measures instead.
  *
+ * What "space" is actually gating (review finding on PR #209): its page_key
+ * (`spaces/[spaceId]/page.tsx`) renders `null` — its whole measured total is
+ * the *shared* (workspace) layout tax (SessionNav + SpaceWorkspaceKeepAlive,
+ * which eagerly imports `SpaceWorkspace`) that interview/english/cv also pay
+ * as part of their own totals. "space" is the most sensitive detector for a
+ * regression there (its budget has the least headroom relative to a graph
+ * that's ~100% shared chunks), but interview/english would eventually trip
+ * too if that shared tax grew enough. This is intentional: KAZI-573 made
+ * `SpaceWorkspaceKeepAlive` an eager import for every workspace route, so
+ * gating its weight via the cheapest page to measure it from is legitimate.
+ *
+ * Budgets here are a starting gate, not a target size (see
+ * route-js-budgets.json's `budget_policy`) — see also `scope_note` there for
+ * why Hub/login/Clinic aren't gated by this script.
+ *
  * Runs after `next build`.
  *
  *   node scripts/check-route-js-budgets.mjs

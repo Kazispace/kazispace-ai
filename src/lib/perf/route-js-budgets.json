@@ -1,5 +1,7 @@
 {
   "unit": "decoded_bytes",
+  "budget_policy": "Starting gate, not a target size: first_js_decoded_bytes is ~25% headroom over the initial 2026-08-29 measured_decoded_bytes, meant to catch regressions from today's baseline, not to bless that baseline as acceptable. Ratchet these down as each route gets dedicated budget-diet work; do not read 1.2 MB as interview's intended ceiling.",
+  "scope_note": "KAZI-654's AC names exactly these 4 routes (space, interview, english, cv) — the ones with the worst recent perf incidents. Hub and login are intentionally NOT gated here: Hub shares the same (workspace) layout tax as these routes but has no route-owned budget of its own yet, and login is a separate first-load graph nobody has profiled for a budget yet. Clinic (home + /chat) already has its own gate — scripts/check-clinic-js-budget.mjs (KAZI-567) — kept separate because it scans multiple candidate page keys, not one. See KAZI-654 for scope discussion.",
   "routes": {
     "space": {
       "page_key": "/[locale]/(workspace)/spaces/[spaceId]/page",
