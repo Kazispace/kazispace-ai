@@ -37,7 +37,10 @@ export function AgentSwitchDialog({
 
   useDialogFocusTrap({
     open: true,
-    onClose: onCancel,
+    // Match the disabled close button: Escape must not let the dialog
+    // unmount while confirmPendingAgentSwitch() is still in flight, or the
+    // activate can finish in the background with no dialog left to show it.
+    onClose: isConfirming ? () => {} : onCancel,
     dialogRef,
     initialFocusRef: closeButtonRef,
   });
