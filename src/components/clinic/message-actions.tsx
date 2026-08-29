@@ -432,6 +432,9 @@ export function MessageActions({
 
       {feedbackEnabled && downOpen ? (
         <div
+          // KAZI-656: #FAFAFA is a near-neighbor of workspace.bg (#F4F5F7) and
+          // workspace.header (#FAFBFC), not an exact match — left as a literal
+          // pending design confirmation of which is canonical.
           className="ml-0.5 flex max-w-md flex-col gap-2 rounded-md border border-workspace-border bg-[#FAFAFA] p-2"
           role="group"
           aria-label={t('messageActions.feedbackReasonsLabel')}

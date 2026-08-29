@@ -438,6 +438,9 @@ export function ChatInput({
       {isCard ? (
         <div
           className={cn(
+            // KAZI-656: #D0E3FF (border) + rgba(208,227,255,...) (matching glow
+            // shadow) are a deliberate bespoke pairing, not a token candidate —
+            // left as literals rather than forced onto an unrelated token.
             "rounded-2xl border border-[#D0E3FF]/90 bg-white",
             "shadow-[0_0_0_1px_rgba(208,227,255,0.35),0_8px_24px_-12px_rgba(15,23,42,0.18)]",
             "transition-shadow focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/25 focus-within:shadow-[0_8px_24px_-12px] focus-within:shadow-primary/20",

@@ -137,6 +137,8 @@ function FileRow({
         <button
           type="button"
           onClick={() => onDownload(file.file_id)}
+          // KAZI-656: #E8F3FF is a near-neighbor of workspace.active (#EFF6FF),
+          // not an exact match — left as a literal pending design confirmation.
           className="rounded p-1.5 text-workspace-muted hover:bg-[#E8F3FF] hover:text-blue-600"
           aria-label={t('downloadFile')}
         >

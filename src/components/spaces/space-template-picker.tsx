@@ -39,7 +39,7 @@ function TemplateButton({
       onClick={() => onSelect(template.template_id)}
       className={cn(
         'w-full rounded-lg border border-workspace-border px-4 py-3 text-left transition-colors',
-        'hover:border-primary hover:bg-[#FFF9F5] disabled:opacity-50'
+        'hover:border-primary hover:bg-workspace-active disabled:opacity-50'
       )}
     >
       <span className="flex items-center gap-2 text-sm font-medium text-workspace-text">
