@@ -743,7 +743,6 @@ export function useCvAgent(jobId?: string | null, options?: { enabled?: boolean 
       locale,
       openPaywall,
       refreshSessions,
-      router,
       sessionId,
       showToast,
       t,

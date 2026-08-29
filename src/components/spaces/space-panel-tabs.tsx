@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { cn } from '@/lib/utils';
@@ -33,10 +33,13 @@ export function SpacePanelTabs({
     [t]
   );
 
-  const tabs: { id: SpaceWorkspaceView; label: string }[] = [
-    { id: 'chat', label: t('panelChat') },
-    ...panels.map((panel) => ({ id: panel.panel_id, label: panelLabel(panel) })),
-  ];
+  const tabs = useMemo<{ id: SpaceWorkspaceView; label: string }[]>(
+    () => [
+      { id: 'chat', label: t('panelChat') },
+      ...panels.map((panel) => ({ id: panel.panel_id, label: panelLabel(panel) })),
+    ],
+    [panels, panelLabel, t]
+  );
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>, current: SpaceWorkspaceView) => {

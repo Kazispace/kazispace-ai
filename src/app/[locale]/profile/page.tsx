@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
@@ -159,15 +159,18 @@ function ProfilePageContent({ locale }: { locale: string }) {
   const preferenceMismatch =
     loadedPreference && routeLocale && loadedPreference !== routeLocale;
 
-  const applyLoadedUser = (user: User) => {
-    const loaded = formFromUser(user);
-    updateUser(user);
-    setUserInfo(user);
-    setForm(loaded);
-    setInitialForm(loaded);
-    setProfileCompletion(user.profileCompletion ?? null);
-    setLoadedPreference(readLanguagePreference(user.primaryLocale));
-  };
+  const applyLoadedUser = useCallback(
+    (user: User) => {
+      const loaded = formFromUser(user);
+      updateUser(user);
+      setUserInfo(user);
+      setForm(loaded);
+      setInitialForm(loaded);
+      setProfileCompletion(user.profileCompletion ?? null);
+      setLoadedPreference(readLanguagePreference(user.primaryLocale));
+    },
+    [updateUser]
+  );
 
   useEffect(() => {
     if (!isLoggedIn || !token) {
@@ -196,7 +199,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
     return () => {
       cancelled = true;
     };
-  }, [isLoggedIn, token, updateUser]);
+  }, [isLoggedIn, token, updateUser, applyLoadedUser]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
