@@ -61,8 +61,13 @@ describe('KAZI-659 /credits page', () => {
     });
 
     expect(host?.textContent).toContain('title');
-    expect(host?.textContent).toContain('3');
-    expect(host?.textContent).toContain('5');
+    // Review follow-up (PR #215): a bare `toContain('3')`/`toContain('5')`
+    // still passes if cvCredits/interviewCredits render in the swapped card --
+    // pin each value to its own `.text-4xl` card in DOM order instead.
+    const values = Array.from(host?.querySelectorAll('.text-4xl') ?? []).map(
+      (el) => el.textContent
+    );
+    expect(values).toEqual(['3', '5']);
     expect(host?.textContent).not.toContain('loadError');
   });
 

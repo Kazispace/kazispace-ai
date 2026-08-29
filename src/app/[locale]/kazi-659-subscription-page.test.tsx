@@ -79,25 +79,41 @@ describe('KAZI-659 /subscription page', () => {
     expect(host?.textContent).not.toContain('proFeature1');
   });
 
-  it('does not render the plan badge while billing is still loading', async () => {
-    // Badge uses a `rounded-full` base class; the "savePercentage" badge inside the
-    // PRO card always renders, so isolate the header's plan badge by counting.
+  // Review follow-up (PR #215): the original version of this test counted
+  // `.rounded-full` elements (a base class every `Badge` carries, including
+  // the always-rendered "savePercentage" badge inside the PRO card) instead
+  // of asserting the badge's own copy, and its `loaded` fixture used a
+  // `tier` field the page never reads -- `planBadgeKey()` reads `plan_type`
+  // (see api-mappers.ts), so that fixture was silently exercising the same
+  // `freeTrialBadge` fallback as `plan: null`, not a real "loaded" plan.
+  it('renders no plan badge copy while billing is loading, then the free-tier badge once loaded', async () => {
     useBillingMock.mockReturnValue({ plan: null, isLoading: true });
     await act(async () => {
       root!.render(<SubscriptionPage params={{ locale: 'en' }} />);
     });
-    const loadingBadgeCount = host?.querySelectorAll('.rounded-full').length ?? 0;
+    expect(host?.textContent).not.toContain('freeTrialBadge');
+    expect(host?.textContent).not.toContain('proBadge');
+    expect(host?.textContent).not.toContain('sprintBadge');
 
     act(() => {
       root!.unmount();
     });
     root = createRoot(host!);
-    useBillingMock.mockReturnValue({ plan: { tier: 'free' }, isLoading: false });
+    useBillingMock.mockReturnValue({ plan: { plan_type: 'free' }, isLoading: false });
     await act(async () => {
       root!.render(<SubscriptionPage params={{ locale: 'en' }} />);
     });
-    const loadedBadgeCount = host?.querySelectorAll('.rounded-full').length ?? 0;
 
-    expect(loadedBadgeCount).toBe(loadingBadgeCount + 1);
+    expect(host?.textContent).toContain('freeTrialBadge');
+  });
+
+  it('renders the pro-tier badge for a pro plan_type', async () => {
+    useBillingMock.mockReturnValue({ plan: { plan_type: 'pro_monthly' }, isLoading: false });
+    await act(async () => {
+      root!.render(<SubscriptionPage params={{ locale: 'en' }} />);
+    });
+
+    expect(host?.textContent).toContain('proBadge');
+    expect(host?.textContent).not.toContain('freeTrialBadge');
   });
 });

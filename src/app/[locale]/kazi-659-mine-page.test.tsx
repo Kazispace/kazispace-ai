@@ -97,8 +97,15 @@ describe('KAZI-659 /mine page', () => {
     });
 
     expect(host?.textContent).toContain('Ada Lovelace');
-    expect(host?.textContent).toContain('2');
-    expect(host?.textContent).toContain('1');
+    // Review follow-up (PR #215): bare `toContain` digits don't catch
+    // cvCredits/interviewCredits rendering in the swapped card -- pin each
+    // to its own credit card in DOM order (cv, interview, streak) instead.
+    // Scoped to the `grid-cols-3` credits row, not `.text-2xl.font-bold`
+    // globally (the page header's own wordmark also matches that class).
+    const values = Array.from(
+      host?.querySelectorAll('.grid-cols-3 .text-2xl.font-bold') ?? []
+    ).map((el) => el.textContent);
+    expect(values).toEqual(['2', '1', '0']);
   });
 
   it('falls back to a guest label when there is no user', async () => {

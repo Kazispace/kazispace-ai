@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getPendingOtpPhone } from '@/lib/auth';
+import { BUNDLED_DIRECTORY, setSession } from '@/lib/region';
 import { useAuthStore } from '@/lib/store';
 import type { User } from '@/types';
 
@@ -56,6 +57,15 @@ function sampleUser(overrides: Partial<User> = {}): User {
     updatedAt: '2026-08-17T00:00:00Z',
     ...overrides,
   };
+}
+
+function writeRegionSession(token: string) {
+  setSession({
+    token,
+    home_api_base: 'https://bot.kazispace.ai',
+    data_region: 'global',
+    directory_version: BUNDLED_DIRECTORY.directory_version,
+  });
 }
 
 describe('KAZI-659 /login page', () => {
@@ -233,6 +243,139 @@ describe('KAZI-659 /login page', () => {
       });
 
       expect(replaceMock).toHaveBeenCalledWith('/en/chat');
+    });
+  });
+
+  // Review follow-up (PR #215): the suite above only exercised requestOtp and
+  // the resume state machine, never the OTP-verify path itself -- the actual
+  // "key interaction" (submit the code, log a real user in) the ticket's AC
+  // asks each page to cover.
+  describe('OTP verify — main path', () => {
+    const validPhone = '+77001234567';
+
+    function otpInput(): HTMLInputElement {
+      return host!.querySelector('input[type="text"]') as HTMLInputElement;
+    }
+
+    function currentForm(): HTMLFormElement {
+      return host!.querySelector('form') as HTMLFormElement;
+    }
+
+    async function advanceToOtpStep() {
+      requestOtpMock.mockResolvedValue({ success: true, attempt: { id: 'attempt-1' } });
+      await act(async () => {
+        root!.render(<LoginPage params={{ locale: 'en' }} />);
+      });
+      await act(async () => {
+        setInputValue(host!.querySelector('input[type="tel"]') as HTMLInputElement, validPhone);
+      });
+      await act(async () => {
+        currentForm().dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+    }
+
+    beforeEach(() => {
+      // Matches the token verifyOtp will report, so useAuthStore's login()
+      // doesn't warn about a session/token mismatch (KAZI-533).
+      writeRegionSession('otp-session-token');
+    });
+
+    it('does not call verifyOtp before a full 6-digit code is entered', async () => {
+      await advanceToOtpStep();
+
+      await act(async () => {
+        setInputValue(otpInput(), '123');
+      });
+      await act(async () => {
+        currentForm().dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      expect(verifyOtpMock).not.toHaveBeenCalled();
+    });
+
+    it('verifies a 6-digit code, prefers getMe over the OTP-issued user, logs in, and pushes to chat', async () => {
+      await advanceToOtpStep();
+      verifyOtpMock.mockResolvedValue({
+        success: true,
+        data: { token: 'otp-session-token', user: sampleUser({ id: 'otp-user' }) },
+      });
+      getMeMock.mockResolvedValue({
+        success: true,
+        data: sampleUser({ id: 'me-user', displayName: 'FromMe' }),
+      });
+
+      await act(async () => {
+        setInputValue(otpInput(), '123456');
+      });
+      await act(async () => {
+        currentForm().dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      expect(verifyOtpMock).toHaveBeenCalledWith(validPhone, '123456', { id: 'attempt-1' });
+      expect(getMeMock).toHaveBeenCalled();
+      expect(useAuthStore.getState().isLoggedIn).toBe(true);
+      expect(useAuthStore.getState().user).toMatchObject({ id: 'me-user' });
+      // +7 numbers infer `ru` as the Language Preference with no manual/profile
+      // override (SDD §11.2-A) -- this is not the default `/en/chat`.
+      expect(pushMock).toHaveBeenCalledWith('/ru/chat');
+    });
+
+    it('falls back to the OTP-issued user when getMe fails after a successful verify', async () => {
+      await advanceToOtpStep();
+      verifyOtpMock.mockResolvedValue({
+        success: true,
+        data: { token: 'otp-session-token', user: sampleUser({ id: 'otp-fallback-user' }) },
+      });
+      getMeMock.mockResolvedValue({ success: false });
+
+      await act(async () => {
+        setInputValue(otpInput(), '123456');
+      });
+      await act(async () => {
+        currentForm().dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      expect(useAuthStore.getState().isLoggedIn).toBe(true);
+      expect(useAuthStore.getState().user).toMatchObject({ id: 'otp-fallback-user' });
+      expect(pushMock).toHaveBeenCalledWith('/ru/chat');
+    });
+
+    it('honors a same-origin ?redirect= target instead of the default /chat destination', async () => {
+      window.history.replaceState(null, '', '/en/login?redirect=/en/jobs');
+      await advanceToOtpStep();
+      verifyOtpMock.mockResolvedValue({
+        success: true,
+        data: { token: 'otp-session-token', user: sampleUser({ id: 'otp-user' }) },
+      });
+      getMeMock.mockResolvedValue({ success: true, data: sampleUser({ id: 'otp-user' }) });
+
+      await act(async () => {
+        setInputValue(otpInput(), '123456');
+      });
+      await act(async () => {
+        currentForm().dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      // switchLocalePath rewrites the redirect's locale segment to the
+      // resolved target locale (ru for a +7 phone), it doesn't drop it.
+      expect(pushMock).toHaveBeenCalledWith('/ru/jobs');
+    });
+
+    it('surfaces a verify error and stays on the OTP step when verifyOtp fails', async () => {
+      await advanceToOtpStep();
+      verifyOtpMock.mockResolvedValue({ success: false, error: 'invalidCodeFailed' });
+
+      await act(async () => {
+        setInputValue(otpInput(), '000000');
+      });
+      await act(async () => {
+        currentForm().dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      expect(host?.textContent).toContain('invalidCodeFailed');
+      expect(otpInput()).not.toBeNull();
+      expect(pushMock).not.toHaveBeenCalled();
+      expect(useAuthStore.getState().isLoggedIn).toBe(false);
     });
   });
 });
