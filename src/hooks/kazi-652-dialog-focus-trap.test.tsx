@@ -196,6 +196,9 @@ describe('KAZI-652 useDialogFocusTrap', () => {
 
     // Focus must stay put — the effect must not have re-run and re-focused `first`.
     expect(document.activeElement).toBe(last);
+    // Scroll lock must still be applied (not restored-then-reapplied,
+    // which would be a symptom of the effect having re-run).
+    expect(document.body.style.overflow).toBe('hidden');
 
     // The latest onClose is still the one Escape calls.
     await act(async () => {
