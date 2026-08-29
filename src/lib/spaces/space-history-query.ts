@@ -109,6 +109,12 @@ export function spaceMessageRowFingerprint(message: SpaceChatMessage): string {
     String(message.cards?.length ?? 0),
     String(message.nextActions?.length ?? 0),
     String(message.customComponents?.length ?? 0),
+    // KAZI-651 Phase A review (PR #212): without these, a row that gains a
+    // referral/upgradeCta on a later fetch fingerprints identically to the
+    // earlier one without it, so preserveSpaceMessageRows/warm-cache dedup
+    // would keep the stale reference and silently drop the field.
+    message.referral ? message.referral.agentId : '',
+    message.upgradeCta ? 'upgradeCta' : '',
   ].join('\0');
 }
 

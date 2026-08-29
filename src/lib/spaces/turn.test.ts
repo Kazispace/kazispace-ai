@@ -8,7 +8,9 @@ import {
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnCards,
   resolveSpaceTurnNextActions,
+  resolveSpaceTurnReferral,
   resolveSpaceTurnReply,
+  resolveSpaceTurnUpgradeCta,
 } from '@/lib/spaces/turn';
 
 describe('isPlaceholderReply', () => {
@@ -182,6 +184,83 @@ describe('resolveSpaceTurnNextActions', () => {
   });
 });
 
+describe('resolveSpaceTurnReferral', () => {
+  it('reads referral_agent_id on the turn root', () => {
+    expect(
+      resolveSpaceTurnReferral({
+        referral_agent_id: 'cv',
+        referral_reason: 'looks like a resume question',
+      })
+    ).toEqual({ agentId: 'cv', reason: 'looks like a resume question' });
+  });
+
+  it('reads nested referral.agent_id / referral.reason', () => {
+    expect(
+      resolveSpaceTurnReferral({
+        referral: { agent_id: 'interview', reason: 'mock interview ask' },
+      })
+    ).toEqual({ agentId: 'interview', reason: 'mock interview ask' });
+  });
+
+  it('derives agentId from a REFERRAL_ intent when no explicit field is present', () => {
+    expect(resolveSpaceTurnReferral({ intent: 'REFERRAL_english' })).toEqual({
+      agentId: 'english',
+      reason: '',
+    });
+  });
+
+  it('returns undefined when there is no referral signal', () => {
+    expect(resolveSpaceTurnReferral({ reply_text: 'just a normal reply' })).toBeUndefined();
+    expect(resolveSpaceTurnReferral(null)).toBeUndefined();
+  });
+
+  it('also reads referral fields nested under envelope (KAZI-651 review: match sibling resolvers)', () => {
+    expect(
+      resolveSpaceTurnReferral({
+        envelope: { referral_agent_id: 'cv', referral_reason: 'nested case' },
+      })
+    ).toEqual({ agentId: 'cv', reason: 'nested case' });
+  });
+
+  it('prefers root referral over an envelope-nested one', () => {
+    expect(
+      resolveSpaceTurnReferral({
+        referral_agent_id: 'interview',
+        envelope: { referral_agent_id: 'cv' },
+      })
+    ).toEqual({ agentId: 'interview', reason: '' });
+  });
+});
+
+describe('resolveSpaceTurnUpgradeCta', () => {
+  const upgradeCta = {
+    upgrade_to: 'research' as const,
+    seed: { question: '深入研究一下这家公司', citations: [] },
+  };
+
+  it('reads meta.upgrade_cta on the turn root', () => {
+    expect(
+      resolveSpaceTurnUpgradeCta({
+        assistant_response: { content: 'ok', meta: { upgrade_cta: upgradeCta } },
+      })
+    ).toEqual(upgradeCta);
+  });
+
+  it('reads meta.upgrade_cta nested under envelope', () => {
+    expect(
+      resolveSpaceTurnUpgradeCta({
+        envelope: {
+          assistant_response: { content: 'ok', meta: { upgrade_cta: upgradeCta } },
+        },
+      })
+    ).toEqual(upgradeCta);
+  });
+
+  it('returns undefined when there is no upgrade_cta', () => {
+    expect(resolveSpaceTurnUpgradeCta({ reply_text: 'no cta here' })).toBeUndefined();
+  });
+});
+
 describe('latestAssistantAfterLastUser', () => {
   it('returns assistant after the last user turn by position', () => {
     expect(
@@ -351,6 +430,61 @@ describe('mergeSpaceMessagesAfterSend', () => {
     expect(merged[1]?.cards).toEqual(cardsA);
     expect(merged[3]?.cards).toEqual(cardsB);
   });
+
+  it('preserves local referral when server history omits it', () => {
+    const referral = { agentId: 'cv', reason: 'looks like a resume ask' };
+    const local = [
+      { id: 'u1', role: 'user' as const, content: '帮我改简历' },
+      {
+        id: 'local_a1',
+        role: 'assistant' as const,
+        content: '这个问题更适合简历专家',
+        referral,
+      },
+    ];
+    const server = [
+      { id: 'u1', role: 'user' as const, content: '帮我改简历' },
+      { id: 'srv_a1', role: 'assistant' as const, content: '这个问题更适合简历专家' },
+    ];
+    expect(mergeSpaceMessagesAfterSend(local, server)).toEqual([
+      { id: 'u1', role: 'user', content: '帮我改简历' },
+      {
+        id: 'srv_a1',
+        role: 'assistant',
+        content: '这个问题更适合简历专家',
+        referral,
+      },
+    ]);
+  });
+
+  it('preserves local upgradeCta when server history omits it', () => {
+    const upgradeCta = {
+      upgrade_to: 'research' as const,
+      seed: { question: '深入研究竞品', citations: [] },
+    };
+    const local = [
+      { id: 'u1', role: 'user' as const, content: '帮我查一下竞品' },
+      {
+        id: 'local_a1',
+        role: 'assistant' as const,
+        content: '要不要我深入研究一下？',
+        upgradeCta,
+      },
+    ];
+    const server = [
+      { id: 'u1', role: 'user' as const, content: '帮我查一下竞品' },
+      { id: 'srv_a1', role: 'assistant' as const, content: '要不要我深入研究一下？' },
+    ];
+    expect(mergeSpaceMessagesAfterSend(local, server)).toEqual([
+      { id: 'u1', role: 'user', content: '帮我查一下竞品' },
+      {
+        id: 'srv_a1',
+        role: 'assistant',
+        content: '要不要我深入研究一下？',
+        upgradeCta,
+      },
+    ]);
+  });
 });
 
 describe('mapSpaceHistoryMessages', () => {
@@ -391,6 +525,45 @@ describe('mapSpaceHistoryMessages', () => {
         company: 'Acme',
       }),
     ]);
+  });
+
+  it('carries referral from a history row (KAZI-651 Phase A)', () => {
+    const rows = mapSpaceHistoryMessages([
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: '这个问题更适合简历专家',
+        referral_agent_id: 'cv',
+        referral_reason: 'looks like a resume ask',
+      },
+    ]);
+    expect(rows[0]?.referral).toEqual({
+      agentId: 'cv',
+      reason: 'looks like a resume ask',
+    });
+  });
+
+  it('carries upgradeCta from a history row (KAZI-651 Phase A)', () => {
+    const rows = mapSpaceHistoryMessages([
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: '要不要我深入研究一下？',
+        assistant_response: {
+          content: '要不要我深入研究一下？',
+          meta: {
+            upgrade_cta: {
+              upgrade_to: 'research',
+              seed: { question: '深入研究竞品', citations: [] },
+            },
+          },
+        },
+      },
+    ]);
+    expect(rows[0]?.upgradeCta).toEqual({
+      upgrade_to: 'research',
+      seed: { question: '深入研究竞品', citations: [] },
+    });
   });
 
   it('uses stable fallback ids when server omits message ids', () => {
