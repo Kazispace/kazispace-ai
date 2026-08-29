@@ -281,10 +281,16 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   const fetchActiveAgentRef = useRef(fetchActiveAgent);
   const resumeActiveAgentSilentlyRef = useRef(resumeActiveAgentSilently);
   const exitToClinicRef = useRef(exitToClinic);
+  // KAZI-660 review (PR #210): parkedInteractive changes identity whenever
+  // sessionsByAgent updates (session refresh / park / agent switch), which
+  // would undermine the same stability requestAgentSwitchRef exists to give
+  // handleAgentSelect. Read the latest value via ref instead of a dep.
+  const parkedInteractiveRef = useRef(parkedInteractive);
   requestAgentSwitchRef.current = requestAgentSwitch;
   fetchActiveAgentRef.current = fetchActiveAgent;
   resumeActiveAgentSilentlyRef.current = resumeActiveAgentSilently;
   exitToClinicRef.current = exitToClinic;
+  parkedInteractiveRef.current = parkedInteractive;
 
   const {
     messages: agentMessages,
@@ -361,6 +367,13 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     setLayerReady(true);
   }, [skipHistoryLoad, stayInClinicForDedicatedHub, reloadClinicHistoryIfIdle]);
 
+  // Calls loadHistory directly rather than via loadHistoryRef (KAZI-660
+  // review, PR #210): loadHistory's own deps are just [setMessages], and
+  // setMessages is a useChatStore action defined once in create() — stable
+  // for the store's lifetime — so loadHistory (and this callback, and
+  // handleBackToClinic below which depends on this) don't churn identity on
+  // Clinic re-renders. If setMessages is ever replaced with an inline
+  // selector closure, this stops holding and should move to a ref.
   const reloadClinicIfNeeded = useCallback(
     async (result?: { reloadClinic?: boolean; ok?: boolean }) => {
       if (result?.reloadClinic && isLoggedIn) {
@@ -1076,19 +1089,22 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
         router.push(`/${locale}/login`);
         return;
       }
-      if (needsParkReplaceConfirm(parkedInteractive, agentId)) {
+      if (needsParkReplaceConfirm(parkedInteractiveRef.current, agentId)) {
         setParkReplaceTargetId(agentId);
         return;
       }
-      // Uses the ref (not `requestAgentSwitch` directly) so this stays a
-      // stable callback even though useAgentSwitch() doesn't memoize it.
+      // Uses the refs (not `requestAgentSwitch`/`parkedInteractive` directly)
+      // so this stays a stable callback even though useAgentSwitch() doesn't
+      // memoize its function, and even though parkedInteractive's identity
+      // changes on every sessionsByAgent update — the park-replace check
+      // above still reads the latest parked session at call time.
       const result = await requestAgentSwitchRef.current(agentId);
       if (result && !result.ok && result.needsConfirm) return;
       if (result && !result.ok) {
         showToast(result.error ?? tClinic("activateFailed"), "error");
       }
     },
-    [isLoggedIn, locale, parkedInteractive, router, showToast, tClinic]
+    [isLoggedIn, locale, router, showToast, tClinic]
   );
 
   const handleConfirmParkReplace = async () => {
