@@ -4,12 +4,10 @@ import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals';
 
-import {
-  ROUTE_TRANSITION_BUDGET_MS,
-  type RumEvent,
-  type RumRating,
-} from '@/lib/perf/budgets';
+import type { RumEvent, RumRating } from '@/lib/perf/budgets';
+import { consumeNavIntent, markNavIntent } from '@/lib/perf/nav-intent';
 import { postRumEvent } from '@/lib/perf/rum';
+import { resolveRouteTransitionRumEvent } from '@/lib/perf/route-transition';
 import { resolveRumClientPolicy, shouldSampleRum } from '@/lib/region/rum-policy';
 
 function rumSessionId(): string {
@@ -45,9 +43,6 @@ function toEvent(metric: Metric, route: string, session: string): RumEvent {
 export function WebVitalsReporter() {
   const pathname = usePathname();
   const sessionRef = useRef<string>('rum_anon');
-  const navStartedAt = useRef<number>(
-    typeof performance !== 'undefined' ? performance.now() : 0
-  );
   const lastPath = useRef<string | null>(null);
 
   useEffect(() => {
@@ -65,6 +60,11 @@ export function WebVitalsReporter() {
     onCLS(report);
     onTTFB(report);
     onFCP(report);
+    // Back/forward is not a tracked click (navigateToSessionNavTarget) — mark
+    // intent here too so its transition duration is still measured.
+    const onPopState = () => markNavIntent();
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
     // Register once — web-vitals observers must not stack on client navigations.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -75,27 +75,15 @@ export function WebVitalsReporter() {
       lastPath.current = pathname;
       return;
     }
-    const now = performance.now();
-    if (lastPath.current && lastPath.current !== pathname) {
-      const value = now - navStartedAt.current;
-      const rating =
-        value <= ROUTE_TRANSITION_BUDGET_MS
-          ? 'good'
-          : value <= ROUTE_TRANSITION_BUDGET_MS * 2
-            ? 'needs-improvement'
-            : 'poor';
-      postRumEvent({
-        name: 'route-transition',
-        value,
-        rating,
-        id: `rt_${lastPath.current}_${pathname}`,
-        route: pathname || '/',
-        navigationType: 'navigate',
-        session: sessionRef.current,
-      });
-    }
+    const event = resolveRouteTransitionRumEvent({
+      lastPath: lastPath.current,
+      pathname,
+      intentAt: consumeNavIntent(),
+      now: performance.now(),
+      session: sessionRef.current,
+    });
+    if (event) postRumEvent(event);
     lastPath.current = pathname;
-    navStartedAt.current = now;
   }, [pathname]);
 
   return null;
