@@ -15,8 +15,9 @@
  * in two other locales. Translating ~150 keys of production UI copy into
  * Kazakh/Uzbek isn't something to do without a native speaker (see this
  * ticket's own guidance against shipping pure MT), so that's flagged as a
- * warning here rather than silently fixed or silently ignored — it should
- * become its own follow-up ticket.
+ * warning here rather than silently fixed or silently ignored — tracked as
+ * KAZI-666 (non-blocking; add 'kk'/'uz' to HARD_GATE_LOCALES once that
+ * ticket lands real translations).
  *
  * Not a hard gate at all (yet): full deep-key parity. Every locale is also
  * missing hundreds of individual keys within namespaces it does have —
