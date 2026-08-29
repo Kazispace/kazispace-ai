@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 
@@ -54,7 +55,15 @@ export function AgentSwitchDialog({
     initialFocusRef: closeButtonRef,
   });
 
-  return (
+  // Portal to <body> (KAZI-664, matching KAZI-652's ConfirmDialog): this
+  // dialog is mounted from clinic-shell.tsx, which today isn't inside any
+  // overflow-hidden/transform ancestor, but nothing structurally prevents
+  // that from changing later — portaling all 5 dialogs consistently means
+  // a future refactor can't silently reintroduce the clipping bug KAZI-652
+  // fixed for the other two.
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 p-4"
       role="dialog"
@@ -89,6 +98,7 @@ export function AgentSwitchDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

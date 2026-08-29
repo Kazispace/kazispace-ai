@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
@@ -30,8 +31,11 @@ export function CvNewSessionDialog({
   });
 
   if (!open) return null;
+  // Portal to <body> (KAZI-664, matching KAZI-652's ConfirmDialog) so a
+  // future overflow-hidden/transform ancestor can't clip this overlay.
+  if (typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4"
       role="dialog"
@@ -63,6 +67,7 @@ export function CvNewSessionDialog({
           <Button onClick={onConfirm}>{t("newCvConfirmAction")}</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
