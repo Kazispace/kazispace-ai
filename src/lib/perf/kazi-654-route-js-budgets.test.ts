@@ -7,6 +7,21 @@ import routeJsBudgets from '@/lib/perf/route-js-budgets.json';
 const ROOT = path.resolve(__dirname, '../../..');
 const NEXT_DIR = path.join(ROOT, '.next');
 
+// CI's job order is typecheck → lint → `npm test` → `npm run build` (see
+// .github/workflows/ci.yml) — `npm test` runs BEFORE the real production
+// build, and `next lint` (which runs even earlier) leaves behind a stub
+// `.next` (cache dir, no manifests). So `existsSync(NEXT_DIR)` alone is true
+// in CI's `npm test` step despite there being no usable build yet — check
+// for the actual manifest files this test reads, not just the directory
+// (PR #209 review round 3: this test crashed CI with ENOENT before this fix).
+function hasUsableNextBuild(): boolean {
+  return (
+    existsSync(path.join(NEXT_DIR, 'app-build-manifest.json')) &&
+    existsSync(path.join(NEXT_DIR, 'build-manifest.json')) &&
+    existsSync(path.join(NEXT_DIR, 'react-loadable-manifest.json'))
+  );
+}
+
 function fileSize(rel: string): number {
   for (const candidate of [
     path.join(NEXT_DIR, rel),
@@ -105,13 +120,14 @@ describe('KAZI-654 per-route JS budget gate', () => {
   // KAZI-654 PR #209 review point 5: the tests above only check config shape
   // (page_key/loadable_key present, wired into package.json) — none of them
   // actually run a measurement, so a manifest-key typo or a silent revert to
-  // page_key for "cv" would still pass vitest. When a production build is
-  // present (as it is in the CI step that runs `npm run build` right after
-  // `npm test`, and in local post-build runs), assert the real numbers still
-  // tell the two graphs apart. This is a guard, not the enforcement — the
-  // hard `npm run build` gate remains the actual authority on the budget.
+  // page_key for "cv" would still pass vitest. When a real production build
+  // is present locally (this test is a no-op in CI's `npm test` step, which
+  // runs before `npm run build` — see hasUsableNextBuild above), assert the
+  // real numbers still tell the two graphs apart. This is a guard, not the
+  // enforcement — the hard `npm run build` gate remains the actual authority
+  // on the budget.
   it('when a build exists, confirms cv measures a materially smaller graph than the legacy redirect-page measurement', () => {
-    if (!existsSync(NEXT_DIR)) return;
+    if (!hasUsableNextBuild()) return;
     const cv = routeJsBudgets.routes.cv as { loadable_key: string };
     const cvChunkTotal = measureLoadableKey(cv.loadable_key);
     if (cvChunkTotal === 0) return; // this build didn't enable the flag that mounts CvWorkspaceRail

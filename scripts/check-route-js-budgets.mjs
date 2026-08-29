@@ -15,7 +15,7 @@
  *   `SpaceWorkspace` — eagerly, for every route under `(workspace)`). So
  *   this "space" number is really gating that eager import's weight, not
  *   route-owned code — legitimate to gate, just not what the label implies
- *   on its own; see the JSON's `measures` field.
+ *   on its own; see the JSON's `budget_policy`/`scope_note` fields.
  *
  * - `loadable_key` mode (cv): `/[locale]/(workspace)/cv/page.tsx` is a
  *   redirect-only stub (real CV UI never renders there), so measuring its
@@ -155,10 +155,24 @@ function measureRoute(budget) {
   return { total, measured };
 }
 
+// CI runs `npm test` (this in --optional mode) *before* `npm run build` —
+// and `next lint` (which runs even earlier) leaves behind a stub `.next`
+// (cache dir, no manifests) that makes `fs.existsSync(NEXT_DIR)` true on its
+// own. --optional must treat "no usable build" the same whether `.next` is
+// completely absent or just a lint-stage stub, or collectLoadableFiles's
+// deliberately-loud throw for a missing manifest fires on every CI test run,
+// not just on a genuinely stale config (PR #209 review round 3).
+function hasUsableNextBuild() {
+  return (
+    fs.existsSync(path.join(NEXT_DIR, 'app-build-manifest.json')) &&
+    fs.existsSync(path.join(NEXT_DIR, 'react-loadable-manifest.json'))
+  );
+}
+
 function main() {
-  if (!fs.existsSync(NEXT_DIR)) {
+  if (!fs.existsSync(NEXT_DIR) || (OPTIONAL && !hasUsableNextBuild())) {
     if (OPTIONAL) {
-      console.log('KAZI-654 route JS budgets skipped (no .next; --optional)');
+      console.log('KAZI-654 route JS budgets skipped (no full .next build; --optional)');
       return;
     }
     console.error('KAZI-654 route JS budgets: .next missing. Run next build first.');
