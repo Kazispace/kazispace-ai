@@ -148,6 +148,80 @@
 			"job_seeker": "求职中"
 		}
 	},
+	"billing": {
+		"subscriptionTitle": "升级 PRO / 冲刺计划",
+		"creditsTitle": "购买积分",
+		"proTab": "PRO 订阅",
+		"sprintTab": "职业冲刺",
+		"proTabDesc": "解锁无限 AI 练习与 ATS 简历优化。",
+		"sprintTabDesc": "结构化的短期目标路线图，帮助你快速完成求职准备。",
+		"proMonthlyName": "PRO 月度版",
+		"proAnnualName": "PRO 年度版",
+		"savePercentage": "节省 40%",
+		"billedAnnually": "按年计费",
+		"proFeature1": "无限次生成简历",
+		"proFeature2": "无限次模拟面试",
+		"proFeature3": "全面的四维诊断反馈",
+		"proFeature4": "AI 智能岗位定制改写",
+		"freeFeature1": "1 份简历草稿",
+		"freeFeature2": "1 次模拟面试练习",
+		"freeFeature3": "仅提供基础评分",
+		"freeFeature4": "不支持岗位定制优化",
+		"sprint7dName": "7 天冲刺",
+		"sprint14dName": "14 天冲刺",
+		"sprint28dName": "28 天冲刺",
+		"sprint7dDesc": "获得模拟反馈和 1 份优化简历草稿",
+		"sprint14dDesc": "高强度面试训练与深度简历重写",
+		"sprint28dDesc": "培养备考习惯，全面提升求职准备度",
+		"cvCreditsTab": "简历积分",
+		"interviewCreditsTab": "面试积分",
+		"cvTabDesc": "重新生成或优化简历将消耗 1 个简历积分。",
+		"interviewTabDesc": "提交一次模拟面试将消耗 1 个面试积分。",
+		"cvPack1Name": "简历体验包",
+		"cvPack2Name": "简历超值包",
+		"cvPack3Name": "简历冲刺包",
+		"cvPack1Desc": "1 个简历积分",
+		"cvPack2Desc": "5 个简历积分",
+		"cvPack3Desc": "10 个简历积分",
+		"interviewPack1Name": "面试体验包",
+		"interviewPack2Name": "面试超值包",
+		"interviewPack3Name": "面试冲刺包",
+		"interviewPack1Desc": "1 个面试积分",
+		"interviewPack2Desc": "3 个面试积分",
+		"interviewPack3Desc": "5 个面试积分",
+		"payNow": "立即购买",
+		"simulatePayment": "模拟 Stripe 支付",
+		"cardInputTitle": "输入银行卡信息",
+		"cardNumber": "卡号",
+		"cardNumberPlaceholder": "4242 4242 4242 4242",
+		"cardExpiry": "有效期",
+		"cardExpiryPlaceholder": "MM/YY",
+		"cardCvv": "安全码（CVC/CVV）",
+		"cardCvvPlaceholder": "123",
+		"paymentSuccess": "支付成功！",
+		"paymentFailed": "已取消支付模拟。",
+		"confirmPayment": "确认支付"
+	},
+	"ledger": {
+		"title": "积分明细",
+		"balanceSummary": "积分概览",
+		"cvCredits": "简历积分",
+		"interviewCredits": "面试积分",
+		"allFilter": "全部",
+		"consumptionFilter": "消耗",
+		"rechargeFilter": "充值",
+		"emptyState": "暂无交易记录",
+		"comingSoon": "交易记录即将推出",
+		"typeCvConsume": "简历优化",
+		"typeInterviewConsume": "模拟面试准备",
+		"typeCvRecharge": "简历积分充值",
+		"typeInterviewRecharge": "面试积分充值",
+		"typeWelcomeGift": "新人礼包奖励",
+		"typeProRecharge": "PRO 订阅赠送",
+		"detailPrice": "支付 {price}",
+		"detailFree": "系统发放",
+		"remaining": "余额：{count}"
+	},
 	"nav": {
 		"home": "首页",
 		"chat": "对话",
@@ -437,6 +511,55 @@
 		"statusLabel": "状态：{status}",
 		"panelsLayout": "多面板工作区"
 	},
+	"jobs": {
+		"title": "岗位推荐",
+		"loading": "正在加载岗位…",
+		"loadError": "无法加载岗位列表",
+		"empty": "暂无推荐岗位，请先在对话中完善你的资料。",
+		"loginBanner": "登录后查看个性化岗位推荐。",
+		"signIn": "登录",
+		"matchScore": "匹配度 {score}%",
+		"matchLevel": {
+			"excellent": "极佳匹配",
+			"good": "良好匹配",
+			"fair": "一般匹配"
+		},
+		"matchDimensions": {
+			"skills": "技能",
+			"experience": "经验",
+			"language": "语言",
+			"preference": "偏好"
+		},
+		"overallMatch": "匹配分析",
+		"requiredSkills": "所需技能",
+		"locked": "Pro",
+		"unlockPro": "升级 Pro 解锁",
+		"viewDetails": "查看详情",
+		"upgradeHint": "升级以查看更多定制岗位",
+		"engineTotal": "为你匹配到 {count} 个岗位",
+		"detailTitle": "岗位详情",
+		"detailLoading": "加载中…",
+		"detailError": "未找到该岗位",
+		"closeDetail": "关闭岗位详情",
+		"resizeDetail": "调整岗位详情大小",
+		"navBack": "后退",
+		"navForward": "前进",
+		"applyEmbedBlocked": "如果页面显示空白，请在新标签页中打开。",
+		"applyOpenExternal": "在新标签页中打开",
+		"apply": "申请",
+		"proLocked": "Pro 功能已锁定",
+		"whyMatched": "为什么适合你",
+		"gaps": "待提升的差距",
+		"backToList": "← 返回岗位列表",
+		"profileCtaHint": "在对话中完善资料，解锁完整的岗位推荐。",
+		"ctaCompleteProfile": "完善资料",
+		"cta": {
+			"edit_cv": "优化简历",
+			"start_interview": "练习面试",
+			"assess_readiness": "查看面试准备度",
+			"unlock_pro": "升级 Pro 解锁"
+		}
+	},
 	"chat": {
 		"title": "{name} · AI 职业伙伴",
 		"backToClinic": "← 返回门诊",
@@ -507,6 +630,21 @@
 			"recommendedBadge": "推荐",
 			"recommendedOption": "推荐：{label}"
 		}
+	},
+	"referral": {
+		"accept": "打开{agentName}",
+		"dismiss": "或继续在这里聊天",
+		"defaultReason": "看起来 {name} 可以帮到你——要切换过去吗？"
+	},
+	"paywall": {
+		"close": "关闭",
+		"proTitle": "升级 PRO",
+		"proDescription": "此功能需要 PRO 订阅。升级即可解锁无限练习。",
+		"creditsTitle": "积分不足",
+		"creditsDescription": "此操作所需的积分已用完，请购买积分包或升级套餐。",
+		"upgradePro": "查看 PRO 套餐",
+		"buyCredits": "购买积分",
+		"continueFree": "继续使用免费版"
 	},
 	"errors": {
 		"network": "网络错误，请重试。",
@@ -610,6 +748,22 @@
 		"parkContinue": "可继续",
 		"parkResumed": "已继续 {agent}",
 		"parkResumeFailed": "无法继续任务"
+	},
+	"subscription": {
+		"title": "升级 PRO / 冲刺计划",
+		"proTab": "PRO 订阅",
+		"sprintTab": "职业冲刺",
+		"proMonthlyName": "PRO 月度版",
+		"savePercentage": "节省 40%",
+		"payNow": "立即购买"
+	},
+	"credits": {
+		"title": "购买积分",
+		"currentBalance": "当前余额",
+		"buyCredits": "购买积分",
+		"totalCredits": "积分总数",
+		"loading": "加载中…",
+		"loadError": "无法加载余额"
 	},
 	"cv": {
 		"title": "简历助手",
@@ -747,6 +901,78 @@
 			}
 		}
 	},
+	"nba": {
+		"sectionTitle": "建议的下一步",
+		"cta": "继续",
+		"default": {
+			"title": "你的下一步",
+			"description": "继续你在 KaziSpace 的职业之旅。"
+		},
+		"complete_profile": {
+			"title": "完善你的资料",
+			"description": "回答几个问题，我们将为你推荐最合适的下一步。"
+		},
+		"start_interview": {
+			"title": "进行一次模拟面试",
+			"description": "针对目标岗位进行练习，获取 AI 对你回答的反馈。"
+		},
+		"view_job_recommendations": {
+			"title": "查看匹配岗位",
+			"description": "查看根据你的资料匹配的岗位，选择从哪里开始准备。"
+		},
+		"start_job_focused_preparation": {
+			"title": "为目标岗位做准备",
+			"description": "你已经看过匹配的岗位——现在为心仪岗位开始简历或面试准备吧。"
+		},
+		"continue_highest_leverage_preparation": {
+			"title": "更新你的简历",
+			"description": "趁热打铁，为目标岗位打磨你的简历。"
+		},
+		"return_via_new_job_opportunity": {
+			"title": "查看新的匹配岗位",
+			"description": "又有新岗位与你的资料匹配——从最推荐的一个开始吧。"
+		},
+		"upgrade_to_unlock_more": {
+			"title": "解锁更多相关岗位",
+			"description": "升级 Pro，为每个匹配岗位获取 AI 备考支持。"
+		},
+		"use_pro_to_accelerate_results": {
+			"title": "借助 Pro 持续提升",
+			"description": "使用 Pro 工具，更快实现你的职业目标。"
+		},
+		"edit_cv": {
+			"title": "制作你的简历",
+			"description": "使用简历助手创建或更新你的简历。"
+		},
+		"pay_upgrade": {
+			"title": "升级你的套餐",
+			"description": "解锁 Pro 功能，加速你的求职进程。"
+		}
+	},
+	"hub": {
+		"workspaceExpand": "展开工作区",
+		"workspaceCollapse": "收起工作区",
+		"escalationSwitching": "正在切换专家…",
+		"escalationFailed": "切换专家失败，请重试。",
+		"sessionStaleMessage": "此会话已在其他标签页更新。",
+		"sessionStaleRefresh": "刷新",
+		"sessionStaleDismiss": "忽略"
+	},
+	"workflow": {
+		"trackAria": "会话进度",
+		"progressLabel": "进度"
+	},
+	"interview": {
+		"irp": {
+			"practice": {
+				"chatPromptWithGaps": "帮我练习面试，目标工作是{title}，主要针对我的 Readiness 的以下几个弱点：{weaknesses}。",
+				"chatPrompt": "帮我练习面试，目标工作是{title}。",
+				"chatPromptNoTitleWithGaps": "帮我练习面试，主要针对我的 Readiness 的以下几个弱点：{weaknesses}。",
+				"chatPromptNoTitle": "帮我练习面试，目标是我刚才在看的那个工作。",
+				"weaknessSeparator": "；"
+			}
+		}
+	},
 	"english": {
 		"retry": "重试",
 		"passportPage": {
@@ -796,25 +1022,14 @@
 			}
 		}
 	},
-	"hub": {
-		"workspaceExpand": "展开工作区",
-		"workspaceCollapse": "收起工作区",
-		"escalationSwitching": "正在切换专家…",
-		"escalationFailed": "切换专家失败，请重试。",
-		"sessionStaleMessage": "此会话已在其他标签页更新。",
-		"sessionStaleRefresh": "刷新",
-		"sessionStaleDismiss": "忽略"
-	},
-	"interview": {
-		"irp": {
-			"practice": {
-				"chatPromptWithGaps": "帮我练习面试，目标工作是{title}，主要针对我的 Readiness 的以下几个弱点：{weaknesses}。",
-				"chatPrompt": "帮我练习面试，目标工作是{title}。",
-				"chatPromptNoTitleWithGaps": "帮我练习面试，主要针对我的 Readiness 的以下几个弱点：{weaknesses}。",
-				"chatPromptNoTitle": "帮我练习面试，目标是我刚才在看的那个工作。",
-				"weaknessSeparator": "；"
-			}
-		}
+	"tma": {
+		"launching": "正在打开 KaziSpace…",
+		"authFailed": "Telegram 登录失败",
+		"useOtpLogin": "使用手机号登录",
+		"openInTelegramTitle": "在 Telegram 中打开",
+		"openInTelegramDesc": "此功能在 KaziSpace Telegram 机器人内体验最佳。请打开机器人并点击菜单按钮。",
+		"continueInBrowser": "在浏览器中继续",
+		"backToBot": "← 返回机器人"
 	},
 	"errorBoundary": {
 		"title": "出现错误",
