@@ -10,7 +10,18 @@ describe('KAZI-654 per-route JS budget gate', () => {
       ['cv', 'english', 'interview', 'space'].sort()
     );
     for (const [name, budget] of Object.entries(routeJsBudgets.routes)) {
-      expect(budget.page_key, name).toMatch(/^\/\[locale\]\/\(workspace\)\//);
+      // Each route measures either a page's first-load JS (page_key) or a
+      // specific next/dynamic() chunk's own files (loadable_key) — never
+      // both, and never neither (KAZI-654 PR #209 review: a redirect-only
+      // page's page_key silently re-measures a shared layout import instead
+      // of the route's real content, so "cv" uses loadable_key).
+      const key = 'page_key' in budget ? budget.page_key : budget.loadable_key;
+      expect(key, name).toBeTruthy();
+      if ('page_key' in budget) {
+        expect(budget.page_key, name).toMatch(/^\/\[locale\]\/\(workspace\)\//);
+      } else {
+        expect(budget.loadable_key, name).toContain(' -> ');
+      }
       expect(budget.first_js_decoded_bytes, name).toBeGreaterThan(0);
       // Budgets must be traceable to a real measured build, not guessed.
       expect(budget.measured_decoded_bytes, name).toBeGreaterThan(0);
@@ -30,12 +41,26 @@ describe('KAZI-654 per-route JS budget gate', () => {
     expect(pkg.scripts.test).toMatch(/check-route-js-budgets\.mjs --optional/);
   });
 
-  it('scopes each route to its own app-build-manifest page key', () => {
+  it('scopes each route to its own app-build-manifest page key or loadable chunk', () => {
     const src = readFileSync(
       path.resolve(__dirname, '../../../scripts/check-route-js-budgets.mjs'),
       'utf8'
     );
     expect(src).toMatch(/route-js-budgets\.json/);
     expect(src).toMatch(/manifest\.pages\?\.\[pageKey\]/);
+    // KAZI-654 PR #209 review: "cv" is a redirect-only page, so it must be
+    // measured via its actual next/dynamic() chunk (react-loadable-manifest),
+    // not the app-build-manifest page key — assert the script still branches
+    // on this rather than silently falling back to page_key for everything.
+    expect(src).toMatch(/react-loadable-manifest\.json/);
+    expect(src).toMatch(/collectLoadableFiles/);
+  });
+
+  it('measures the cv route via its CvWorkspaceRail dynamic import, not the redirect-only page', () => {
+    const cv = routeJsBudgets.routes.cv as { loadable_key?: string; page_key?: string };
+    expect(cv.page_key).toBeUndefined();
+    expect(cv.loadable_key).toBe(
+      'components/chat/chat-side-rails-host.tsx -> @/components/cv/cv-workspace-rail'
+    );
   });
 });

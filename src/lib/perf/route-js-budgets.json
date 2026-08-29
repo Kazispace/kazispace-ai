@@ -15,15 +15,15 @@
     },
     "english": {
       "page_key": "/[locale]/(workspace)/english/page",
-      "measured_at": "2026-08-29 build",
-      "measured_decoded_bytes": 912255,
+      "measured_at": "2026-08-29 build, NEXT_PUBLIC_EPP_PROFILE_ENABLED=true",
+      "measured_decoded_bytes": 912323,
       "first_js_decoded_bytes": 1140000
     },
     "cv": {
-      "page_key": "/[locale]/(workspace)/cv/page",
+      "loadable_key": "components/chat/chat-side-rails-host.tsx -> @/components/cv/cv-workspace-rail",
       "measured_at": "2026-08-29 build, NEXT_PUBLIC_WORKSPACE_ASSET_RAIL_V2=true",
-      "measured_decoded_bytes": 416178,
-      "first_js_decoded_bytes": 520000
+      "measured_decoded_bytes": 55298,
+      "first_js_decoded_bytes": 70000
     }
   }
 }
