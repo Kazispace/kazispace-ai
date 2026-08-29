@@ -46,7 +46,7 @@ export default function SubscriptionPage({ params }: SubscriptionPageProps) {
             type="button"
             onClick={() => setTab("pro")}
             className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-              tab === "pro" ? "bg-kazi-orange text-white" : "bg-white text-gray-500"
+              tab === "pro" ? "bg-primary text-white" : "bg-white text-gray-500"
             }`}
           >
             {t("proTab")}
@@ -55,7 +55,7 @@ export default function SubscriptionPage({ params }: SubscriptionPageProps) {
             type="button"
             onClick={() => setTab("sprint")}
             className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-              tab === "sprint" ? "bg-kazi-orange text-white" : "bg-white text-gray-500"
+              tab === "sprint" ? "bg-primary text-white" : "bg-white text-gray-500"
             }`}
           >
             {t("sprintTab")}
@@ -65,12 +65,12 @@ export default function SubscriptionPage({ params }: SubscriptionPageProps) {
         {tab === "pro" && (
           <div className="space-y-4">
             <p className="text-sm text-gray-600">{t("proTabDesc")}</p>
-            <Card className="border-2 border-kazi-orange">
+            <Card className="border-2 border-primary">
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-xl font-bold">{t("proMonthlyName")}</h3>
-                    <p className="text-3xl font-extrabold text-kazi-orange mt-1">
+                    <p className="text-3xl font-extrabold text-primary mt-1">
                       $19<span className="text-base text-gray-500">/mo</span>
                     </p>
                   </div>

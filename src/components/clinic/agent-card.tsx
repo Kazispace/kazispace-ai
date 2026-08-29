@@ -51,9 +51,9 @@ export function AgentCard({
         "text-left rounded-xl border bg-gray-50 p-4 min-h-[180px] flex flex-col",
         "transition-all duration-200",
         isActive
-          ? "border-kazi-orange/60 ring-1 ring-kazi-orange/20"
+          ? "border-primary/60 ring-1 ring-primary/20"
           : "border-gray-200",
-        !isDisabled && "hover:-translate-y-0.5 hover:shadow-md hover:border-kazi-orange/40",
+        !isDisabled && "hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40",
         isDisabled && "opacity-80 cursor-not-allowed",
         locked && !isDisabled && "opacity-90"
       )}

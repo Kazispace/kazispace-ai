@@ -30,8 +30,8 @@ export function QuickReplies({ options, disabled, onSelect, theme = "default" }:
           className={cn(
             "text-[11px] px-2.5 py-1 rounded border transition-colors disabled:opacity-50",
             isWorkspace
-              ? "border-workspace-border bg-white text-workspace-text hover:border-kazi-orange hover:text-kazi-orange hover:bg-workspace-active"
-              : "border-gray-200 bg-white hover:border-kazi-orange hover:text-kazi-orange"
+              ? "border-workspace-border bg-white text-workspace-text hover:border-primary hover:text-primary hover:bg-workspace-active"
+              : "border-gray-200 bg-white hover:border-primary hover:text-primary"
           )}
         >
           {option}

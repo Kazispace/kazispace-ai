@@ -23,7 +23,10 @@ export function creditsChipShellClass(low: boolean): string {
     'flex min-h-[3rem] w-10 flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 py-1 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-colors',
     low
       ? 'border-orange-200 bg-gradient-to-b from-orange-50 to-white hover:border-orange-300'
-      : 'border-[#E0E3E8] bg-white hover:border-emerald-200/80 hover:bg-emerald-50/40'
+      : // KAZI-656: #E0E3E8 is a near-neighbor of workspace.border (#E5E6EB), not an
+        // exact match — left as a literal pending design confirmation of which is
+        // canonical, rather than guessing.
+        'border-[#E0E3E8] bg-white hover:border-emerald-200/80 hover:bg-emerald-50/40'
   );
 }
 
@@ -51,8 +54,8 @@ export function SessionIconRailCredits({ locale }: SessionIconRailCreditsProps) 
         aria-label={t('creditsSignIn')}
         title={t('creditsSignIn')}
       >
-        <Coins className="h-4 w-4 text-[#4E5969]" strokeWidth={PRIMARY_ICON_STROKE} aria-hidden />
-        <span className="text-xs font-bold leading-none text-[#86909C]">—</span>
+        <Coins className="h-4 w-4 text-workspace-secondary" strokeWidth={PRIMARY_ICON_STROKE} aria-hidden />
+        <span className="text-xs font-bold leading-none text-workspace-muted">—</span>
       </Link>
     );
   }
@@ -114,10 +117,12 @@ export function SessionNavPrimaryIconButton({
     <button
       type="button"
       className={cn(
-        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D0D3D9] bg-white text-[#1D2129]',
+        // KAZI-656: #D0D3D9 is a near-neighbor of workspace.border (#E5E6EB), not
+        // an exact match — left as a literal pending design confirmation.
+        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D0D3D9] bg-white text-workspace-text',
         'shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-colors',
-        'hover:border-kazi-orange/45 hover:bg-workspace-active hover:text-kazi-orange',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+        'hover:border-primary/45 hover:bg-workspace-active hover:text-primary',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}

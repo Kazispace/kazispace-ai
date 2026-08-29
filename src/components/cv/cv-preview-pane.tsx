@@ -66,7 +66,7 @@ export function CvPreviewPane({
       <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="h-7 w-7 text-kazi-orange animate-spin mb-3" />
+            <Loader2 className="h-7 w-7 text-primary animate-spin mb-3" />
             <p className="text-sm text-gray-500">{t('previewLoading')}</p>
           </div>
         ) : preview ? (

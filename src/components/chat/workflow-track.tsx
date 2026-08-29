@@ -60,7 +60,7 @@ export function WorkflowTrack({ workflow, locale, className }: WorkflowTrackProp
                 className={cn(
                   'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border',
                   isCurrent &&
-                    'border-kazi-orange bg-blue-50 text-kazi-orange',
+                    'border-primary bg-blue-50 text-primary',
                   isDone && 'border-green-200 bg-green-50 text-green-700',
                   !isCurrent && !isDone && 'border-gray-200 bg-gray-50 text-gray-400'
                 )}
@@ -86,7 +86,7 @@ export function WorkflowTrack({ workflow, locale, className }: WorkflowTrackProp
       {typeof workflow.progress_pct === 'number' ? (
         <div className="mt-2 h-1 rounded-full bg-gray-100 overflow-hidden">
           <div
-            className="h-full bg-kazi-orange transition-all duration-300"
+            className="h-full bg-primary transition-all duration-300"
             style={{ width: `${workflow.progress_pct}%` }}
           />
         </div>

@@ -28,18 +28,18 @@ export function WorkspaceAssetPreviewPanel({
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col', className)}>
       <div className="shrink-0 border-b border-gray-200/80 px-4 py-3">
-        <p className="truncate text-sm font-semibold text-[#1D2129]">
+        <p className="truncate text-sm font-semibold text-workspace-text">
           {asset.display_name}
         </p>
         {asset.subtitle ? (
-          <p className="truncate text-xs text-[#86909C]">{asset.subtitle}</p>
+          <p className="truncate text-xs text-workspace-muted">{asset.subtitle}</p>
         ) : null}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="mb-3 h-7 w-7 animate-spin text-kazi-orange" />
+            <Loader2 className="mb-3 h-7 w-7 animate-spin text-primary" />
             <p className="text-sm text-gray-500">{t('previewLoading')}</p>
           </div>
         ) : error ? (

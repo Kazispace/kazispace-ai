@@ -21,7 +21,7 @@ interface ClinicActiveSessionsBannerProps {
 }
 
 const bannerShellClass =
-  'w-full mb-6 rounded-xl border border-kazi-orange/30 bg-blue-50/80 overflow-hidden';
+  'w-full mb-6 rounded-xl border border-primary/30 bg-blue-50/80 overflow-hidden';
 
 export function ClinicActiveSessionsBanner({
   locale,
@@ -59,11 +59,11 @@ export function ClinicActiveSessionsBanner({
         onClick={() => openEntry(entry)}
         className={cn(
           bannerShellClass,
-          'flex items-center gap-3 px-4 py-3 text-left hover:border-kazi-orange/50 hover:bg-blue-50 transition-colors',
+          'flex items-center gap-3 px-4 py-3 text-left hover:border-primary/50 hover:bg-blue-50 transition-colors',
           className
         )}
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-kazi-orange/20">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/20">
           <AgentNavIcon agentId={entry.agentId} sizeClassName="h-5 w-5" />
         </span>
         <span className="min-w-0 flex-1">
@@ -80,7 +80,7 @@ export function ClinicActiveSessionsBanner({
         >
           {badgeLabel}
         </span>
-        <ChevronRight className="h-4 w-4 shrink-0 text-kazi-orange" aria-hidden />
+        <ChevronRight className="h-4 w-4 shrink-0 text-primary" aria-hidden />
       </button>
     );
   }
@@ -90,7 +90,7 @@ export function ClinicActiveSessionsBanner({
       <p className="px-4 pt-3 pb-2 text-xs font-semibold uppercase tracking-wide text-kazi-navy/70">
         {tClinic('activeSessionsTitle')}
       </p>
-      <ul className="divide-y divide-kazi-orange/15">
+      <ul className="divide-y divide-primary/15">
         {entries.map((entry) => {
           const badgeLabel = badgeLabelFor(entry);
           return (
@@ -100,7 +100,7 @@ export function ClinicActiveSessionsBanner({
                 onClick={() => openEntry(entry)}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-blue-50 transition-colors"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-kazi-orange/15">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-primary/15">
                   <AgentNavIcon agentId={entry.agentId} sizeClassName="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -121,7 +121,7 @@ export function ClinicActiveSessionsBanner({
                 >
                   {badgeLabel}
                 </span>
-                <ChevronRight className="h-4 w-4 shrink-0 text-kazi-orange/70" aria-hidden />
+                <ChevronRight className="h-4 w-4 shrink-0 text-primary/70" aria-hidden />
               </button>
             </li>
           );

@@ -84,11 +84,11 @@ export function NbaActionCard({ locale, action, className }: NbaActionCardProps)
         className
       )}
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-kazi-orange mb-2">
+      <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-2">
         {t('sectionTitle')}
       </p>
       <div className="flex gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white border border-blue-100 text-kazi-orange">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white border border-blue-100 text-primary">
           <Icon className="h-5 w-5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">

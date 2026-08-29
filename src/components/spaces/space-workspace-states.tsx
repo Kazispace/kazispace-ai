@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 export function SpaceWorkspaceLoading() {
   const t = useTranslations('spaces');
   return (
-    <div className="flex h-full items-center justify-center text-sm text-[#86909C]">
+    <div className="flex h-full items-center justify-center text-sm text-workspace-muted">
       {t('loading')}
     </div>
   );
@@ -28,10 +28,10 @@ export function SpaceWorkspaceError({
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-      <p className="text-sm text-[#4E5969]">
+      <p className="text-sm text-workspace-secondary">
         {message ?? t(reason === 'unsupportedTemplate' ? 'unsupportedTemplate' : 'loadFailed')}
       </p>
-      <p className="text-xs text-[#86909C]">{hint}</p>
+      <p className="text-xs text-workspace-muted">{hint}</p>
     </div>
   );
 }

@@ -230,11 +230,11 @@ export function SessionContextHeader({
 
   return (
     <div className="relative shrink-0">
-      <header className="flex h-12 items-center justify-between gap-3 border-b border-[#E5E6EB] bg-white px-4">
+      <header className="flex h-12 items-center justify-between gap-3 border-b border-workspace-border bg-white px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <h1 className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold text-[#1D2129]">
+          <h1 className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold text-workspace-text">
             {titleAgentId ? (
-              <AgentNavIcon agentId={titleAgentId} className="text-kazi-orange" />
+              <AgentNavIcon agentId={titleAgentId} className="text-primary" />
             ) : null}
             <span className="truncate">{title}</span>
           </h1>
@@ -256,8 +256,8 @@ export function SessionContextHeader({
               type="button"
               onClick={() => publishSessionNavToggleWorkspaceRail()}
               className={cn(
-                'rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]',
-                workspaceRailOpen && 'bg-workspace-active text-kazi-orange'
+                'rounded-lg p-2 text-workspace-muted hover:bg-workspace-hover hover:text-workspace-text',
+                workspaceRailOpen && 'bg-workspace-active text-primary'
               )}
               aria-label={tRailHub('openWorkspaceRail')}
               aria-pressed={workspaceRailOpen}
@@ -272,8 +272,8 @@ export function SessionContextHeader({
                 type="button"
                 onClick={() => setDrawer(drawer === 'files' ? null : 'files')}
                 className={cn(
-                  'rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]',
-                  drawer === 'files' && 'bg-workspace-active text-kazi-orange'
+                  'rounded-lg p-2 text-workspace-muted hover:bg-workspace-hover hover:text-workspace-text',
+                  drawer === 'files' && 'bg-workspace-active text-primary'
                 )}
                 aria-label={t('sessionFiles')}
                 title={t('sessionFiles')}
@@ -284,8 +284,8 @@ export function SessionContextHeader({
                 type="button"
                 onClick={() => setDrawer(drawer === 'search' ? null : 'search')}
                 className={cn(
-                  'rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]',
-                  drawer === 'search' && 'bg-workspace-active text-kazi-orange'
+                  'rounded-lg p-2 text-workspace-muted hover:bg-workspace-hover hover:text-workspace-text',
+                  drawer === 'search' && 'bg-workspace-active text-primary'
                 )}
                 aria-label={t('sessionSearch')}
                 title={t('sessionSearch')}
@@ -299,8 +299,8 @@ export function SessionContextHeader({
                 type="button"
                 onClick={() => setDrawer(drawer === 'more' ? null : 'more')}
                 className={cn(
-                  'rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]',
-                  drawer === 'more' && 'bg-workspace-active text-kazi-orange'
+                  'rounded-lg p-2 text-workspace-muted hover:bg-workspace-hover hover:text-workspace-text',
+                  drawer === 'more' && 'bg-workspace-active text-primary'
                 )}
                 aria-label={t('moreActions')}
                 title={t('moreActions')}
@@ -321,26 +321,26 @@ export function SessionContextHeader({
           {filesLoading ? (
             Array.from({ length: 2 }).map((_, index) => (
               <li key={`session-file-skeleton-${index}`} className="rounded-lg px-3 py-2.5">
-                <div className="h-4 w-3/4 animate-pulse rounded bg-[#F2F3F5]" />
+                <div className="h-4 w-3/4 animate-pulse rounded bg-workspace-hover" />
               </li>
             ))
           ) : files.length === 0 ? (
-            <li className="px-3 py-6 text-center text-sm text-[#86909C]">{t('noFiles')}</li>
+            <li className="px-3 py-6 text-center text-sm text-workspace-muted">{t('noFiles')}</li>
           ) : (
             files.map((file) => (
               <li key={file.file_id}>
                 <button
                   type="button"
                   onClick={() => handleOpenSessionFile(file)}
-                  className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left hover:bg-[#F2F3F5]"
+                  className="flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left hover:bg-workspace-hover"
                 >
-                  <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#86909C]" />
+                  <FileText className="mt-0.5 h-4 w-4 shrink-0 text-workspace-muted" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-[#1D2129]">
+                    <span className="block truncate text-sm font-medium text-workspace-text">
                       {file.name}
                     </span>
                     {file.mime_type ? (
-                      <span className="mt-0.5 block truncate text-xs text-[#86909C]">
+                      <span className="mt-0.5 block truncate text-xs text-workspace-muted">
                         {file.mime_type}
                       </span>
                     ) : null}
@@ -357,13 +357,13 @@ export function SessionContextHeader({
         title={t('searchInSession')}
         onClose={closeDrawer}
       >
-        <div className="border-b border-[#F2F3F5] px-3 py-2">
+        <div className="border-b border-workspace-hover px-3 py-2">
           <input
             type="search"
             value={sessionSearchQuery}
             onChange={(event) => setSessionSearchQuery(event.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-lg border border-[#E5E6EB] bg-[#FAFBFC] px-3 py-2 text-sm text-[#1D2129] placeholder:text-[#86909C] focus:border-kazi-orange focus:outline-none"
+            className="w-full rounded-lg border border-workspace-border bg-workspace-header px-3 py-2 text-sm text-workspace-text placeholder:text-workspace-muted focus:border-primary focus:outline-none"
           />
         </div>
         <ul className="p-2">
@@ -373,26 +373,26 @@ export function SessionContextHeader({
             </li>
           ) : null}
           {!sessionSearchQuery.trim() ? (
-            <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+            <li className="px-3 py-6 text-center text-sm text-workspace-muted">
               {t('searchInSession')}
             </li>
           ) : searchLoading ? (
             Array.from({ length: 2 }).map((_, index) => (
               <li key={`session-search-skeleton-${index}`} className="rounded-lg px-3 py-2.5">
-                <div className="h-4 w-full animate-pulse rounded bg-[#F2F3F5]" />
+                <div className="h-4 w-full animate-pulse rounded bg-workspace-hover" />
               </li>
             ))
           ) : messageHits.length === 0 ? (
-            <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+            <li className="px-3 py-6 text-center text-sm text-workspace-muted">
               {t('noSearchResults')}
             </li>
           ) : (
             messageHits.map((hit) => (
               <li key={hit.message_id} className="rounded-lg px-3 py-2.5">
-                <span className="block text-[10px] font-medium uppercase tracking-wide text-[#86909C]">
+                <span className="block text-[10px] font-medium uppercase tracking-wide text-workspace-muted">
                   {hit.role}
                 </span>
-                <span className="mt-0.5 block text-sm text-[#1D2129]">{hit.snippet}</span>
+                <span className="mt-0.5 block text-sm text-workspace-text">{hit.snippet}</span>
               </li>
             ))
           )}
@@ -405,7 +405,7 @@ export function SessionContextHeader({
             <Link
               href={getSurfacePath(locale, 'clinic')}
               onClick={closeDrawer}
-              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[#1D2129] hover:bg-[#F2F3F5]"
+              className="block rounded-lg px-3 py-2.5 text-sm font-medium text-workspace-text hover:bg-workspace-hover"
             >
               {t('backToClinic')}
             </Link>
@@ -440,8 +440,8 @@ export function SessionContextHeader({
                         })();
                       }}
                       className={cn(
-                        'w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-[#F2F3F5] disabled:opacity-50',
-                        action === 'delete' ? 'text-red-600' : 'text-[#1D2129]'
+                        'w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-workspace-hover disabled:opacity-50',
+                        action === 'delete' ? 'text-red-600' : 'text-workspace-text'
                       )}
                     >
                       {tSpaces(labelKey)}

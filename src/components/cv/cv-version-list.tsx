@@ -46,7 +46,7 @@ export function CvVersionList({ className }: CvVersionListProps) {
   if (isLoading) {
     return (
       <div className={cn('flex items-center justify-center py-12', className)}>
-        <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -76,7 +76,7 @@ export function CvVersionList({ className }: CvVersionListProps) {
         >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-[#1D2129]">{v.label}</span>
+              <span className="text-sm font-semibold text-workspace-text">{v.label}</span>
               {v.is_current && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">
                   <Badge className="h-3 w-3" />
@@ -84,7 +84,7 @@ export function CvVersionList({ className }: CvVersionListProps) {
                 </span>
               )}
             </div>
-            <p className="mt-0.5 truncate text-xs text-[#86909C]">
+            <p className="mt-0.5 truncate text-xs text-workspace-muted">
               {v.filename} · {formatFileDate(v.created_at, locale)} ·{' '}
               {formatFileSize(v.size_bytes)}
             </p>
@@ -92,7 +92,7 @@ export function CvVersionList({ className }: CvVersionListProps) {
           <button
             type="button"
             onClick={() => void handleDownload(v.file_id)}
-            className="shrink-0 rounded-lg p-2 text-[#86909C] hover:bg-blue-50 hover:text-blue-600 transition-colors"
+            className="shrink-0 rounded-lg p-2 text-workspace-muted hover:bg-blue-50 hover:text-blue-600 transition-colors"
             aria-label={t('downloadPdf')}
           >
             <Download className="h-4 w-4" />

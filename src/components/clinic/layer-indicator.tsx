@@ -47,7 +47,7 @@ export function LayerIndicator({
           <button
             type="button"
             onClick={onClinicClick}
-            className="shrink-0 font-medium text-gray-500 hover:text-kazi-orange transition-colors"
+            className="shrink-0 font-medium text-gray-500 hover:text-primary transition-colors"
           >
             {t('layerClinic')}
           </button>
@@ -80,7 +80,7 @@ export function LayerIndicator({
       {statusDetail ? (
         <p className="text-[11px] text-gray-500 mt-1 truncate">{statusDetail}</p>
       ) : inAgentLayer ? (
-        <p className="text-[11px] text-kazi-orange/80 mt-1">{t('layerAgentActive')}</p>
+        <p className="text-[11px] text-primary/80 mt-1">{t('layerAgentActive')}</p>
       ) : (
         <p className="text-[11px] text-gray-500 mt-1">{t('layerClinicActive')}</p>
       )}

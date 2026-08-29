@@ -43,27 +43,27 @@ export function SessionGlobalSearchPanel({
 
   const panelBody = (
     <div className="flex h-full flex-col bg-white">
-      <div className="flex items-center justify-between border-b border-[#E5E6EB] px-3 py-2">
-        <h2 className="text-sm font-semibold text-[#1D2129]">{t('globalSearch')}</h2>
+      <div className="flex items-center justify-between border-b border-workspace-border px-3 py-2">
+        <h2 className="text-sm font-semibold text-workspace-text">{t('globalSearch')}</h2>
         <button
           type="button"
           onClick={onClose}
-          className="rounded p-1 text-[#86909C] hover:bg-[#F2F3F5]"
+          className="rounded p-1 text-workspace-muted hover:bg-workspace-hover"
           aria-label={t('collapsePanel')}
         >
           {mobileDrawer ? <X className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
         </button>
       </div>
 
-      <div className="border-b border-[#E5E6EB] px-3 py-2">
+      <div className="border-b border-workspace-border px-3 py-2">
         <label className="relative block">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86909C]" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-workspace-muted" />
           <input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-lg border border-[#E5E6EB] bg-[#FAFBFC] py-2 pl-8 pr-3 text-sm text-[#1D2129] placeholder:text-[#86909C] focus:border-kazi-orange focus:outline-none"
+            className="w-full rounded-lg border border-workspace-border bg-workspace-header py-2 pl-8 pr-3 text-sm text-workspace-text placeholder:text-workspace-muted focus:border-primary focus:outline-none"
           />
         </label>
       </div>
@@ -76,18 +76,18 @@ export function SessionGlobalSearchPanel({
 
       <ul className="flex-1 space-y-1 overflow-y-auto p-2">
         {!query.trim() ? (
-          <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+          <li className="px-3 py-6 text-center text-sm text-workspace-muted">
             {t('searchPlaceholder')}
           </li>
         ) : isLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
             <li key={`search-skeleton-${index}`} className="rounded-lg px-3 py-2.5">
-              <div className="h-4 w-3/4 animate-pulse rounded bg-[#F2F3F5]" />
-              <div className="mt-1.5 h-3 w-full animate-pulse rounded bg-[#F2F3F5]" />
+              <div className="h-4 w-3/4 animate-pulse rounded bg-workspace-hover" />
+              <div className="mt-1.5 h-3 w-full animate-pulse rounded bg-workspace-hover" />
             </li>
           ))
         ) : hits.length === 0 ? (
-          <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+          <li className="px-3 py-6 text-center text-sm text-workspace-muted">
             {t('noSearchResults')}
           </li>
         ) : (
@@ -96,13 +96,13 @@ export function SessionGlobalSearchPanel({
               <button
                 type="button"
                 onClick={() => openHit(hit)}
-                className="w-full rounded-lg px-3 py-2.5 text-left hover:bg-[#F2F3F5]"
+                className="w-full rounded-lg px-3 py-2.5 text-left hover:bg-workspace-hover"
               >
-                <span className="block truncate text-sm font-medium text-[#1D2129]">
+                <span className="block truncate text-sm font-medium text-workspace-text">
                   {hit.title}
                 </span>
                 {hit.snippet ? (
-                  <span className="mt-0.5 block truncate text-xs text-[#86909C]">
+                  <span className="mt-0.5 block truncate text-xs text-workspace-muted">
                     {hit.snippet}
                   </span>
                 ) : null}
@@ -134,7 +134,7 @@ export function SessionGlobalSearchPanel({
     <aside
       aria-hidden={!open}
       className={cn(
-        'hidden shrink-0 overflow-hidden border-r border-[#E5E6EB] transition-[width] duration-200 ease-out md:block',
+        'hidden shrink-0 overflow-hidden border-r border-workspace-border transition-[width] duration-200 ease-out md:block',
         open ? 'w-[260px]' : 'w-0'
       )}
     >

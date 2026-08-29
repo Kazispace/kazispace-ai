@@ -250,7 +250,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
         <main className="pt-20 px-4 max-w-lg mx-auto text-center space-y-4">
           <Link
             href={`/${locale}/chat`}
-            className="text-sm text-kazi-orange font-medium inline-block mb-4"
+            className="text-sm text-primary font-medium inline-block mb-4"
           >
             {tChat("backToClinic")}
           </Link>
@@ -265,7 +265,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
     return (
       <ProfilePageShell locale={locale}>
         <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
         </main>
       </ProfilePageShell>
     );
@@ -276,7 +276,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
       <main className="pt-20 px-4 max-w-lg mx-auto">
         <Link
           href={`/${locale}/chat`}
-          className="text-sm text-kazi-orange font-medium mb-4 inline-block"
+          className="text-sm text-primary font-medium mb-4 inline-block"
         >
           {tChat("backToClinic")}
         </Link>
@@ -470,7 +470,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
       fallback={
         <ProfilePageShell locale={locale}>
           <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
-            <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
           </main>
         </ProfilePageShell>
       }

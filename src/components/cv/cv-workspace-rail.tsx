@@ -126,19 +126,19 @@ export function CvWorkspaceRail({
               <button
                 type="button"
                 onClick={backToHub}
-                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4E5969] hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+                className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 aria-label={tHub('backToHub')}
               >
                 <ArrowLeft className="h-5 w-5" aria-hidden />
               </button>
             ) : null}
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#1D2129]">
+              <p className="truncate text-sm font-semibold text-workspace-text">
                 {view === 'asset-preview' && previewAsset
                   ? previewAsset.display_name
                   : t('title')}
               </p>
-              <p className="truncate text-xs text-[#86909C]">
+              <p className="truncate text-xs text-workspace-muted">
                 {view === 'asset-preview' && previewAsset?.subtitle
                   ? previewAsset.subtitle
                   : jobId?.trim()
@@ -150,7 +150,7 @@ export function CvWorkspaceRail({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4E5969] hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             aria-label={t('closeRail')}
           >
             <X className="h-5 w-5" aria-hidden />

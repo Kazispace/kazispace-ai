@@ -128,7 +128,7 @@ function AgentRowHistory({
 }) {
   const { sessions, isLoading } = useAgentSessionList(agentId, true);
   return (
-    <div className="border-t border-[#F2F3F5] bg-[#FAFBFC] px-1 py-1">
+    <div className="border-t border-workspace-hover bg-workspace-header px-1 py-1">
       <AgentSessionList
         sessions={sessions}
         activeSessionId={activeSessionId}
@@ -311,7 +311,7 @@ export function SessionNavPanel({
             {canExpand ? (
               <button
                 type="button"
-                className="flex w-8 shrink-0 items-center justify-center text-[#86909C] hover:text-[#1D2129]"
+                className="flex w-8 shrink-0 items-center justify-center text-workspace-muted hover:text-workspace-text"
                 aria-label={isExpanded ? t('collapseHistory') : t('expandHistory')}
                 onClick={() =>
                   onExpandedAgentIdChange(isExpanded ? null : row.agentId)
@@ -337,8 +337,8 @@ export function SessionNavPanel({
                 'min-w-0 flex-1 rounded-lg px-2 py-3 text-left transition-colors',
                 row.disabled
                   ? 'cursor-not-allowed opacity-60'
-                  : 'hover:bg-[#F2F3F5]',
-                !isActive && !row.disabled && 'text-[#1D2129]'
+                  : 'hover:bg-workspace-hover',
+                !isActive && !row.disabled && 'text-workspace-text'
               )}
             >
               <div className="flex items-center gap-2.5">
@@ -348,7 +348,7 @@ export function SessionNavPanel({
                 </span>
               </div>
               {badge && (
-                <p className="mt-0.5 pl-7 text-xs text-[#86909C]">{badge}</p>
+                <p className="mt-0.5 pl-7 text-xs text-workspace-muted">{badge}</p>
               )}
             </button>
           </div>
@@ -400,7 +400,7 @@ export function SessionNavPanel({
           className={cn(
             'w-full rounded-lg px-3 py-3 text-left transition-colors',
             isActive && 'bg-workspace-active',
-            'hover:bg-[#F2F3F5] text-[#1D2129]'
+            'hover:bg-workspace-hover text-workspace-text'
           )}
         >
           <div className="flex items-center gap-2.5">
@@ -408,7 +408,7 @@ export function SessionNavPanel({
             <span className="flex-1 truncate text-sm font-medium">{label}</span>
           </div>
           {badge && (
-            <p className="mt-0.5 pl-7 text-xs text-[#86909C]">{badge}</p>
+            <p className="mt-0.5 pl-7 text-xs text-workspace-muted">{badge}</p>
           )}
         </button>
       </li>
@@ -417,7 +417,7 @@ export function SessionNavPanel({
 
   const panelBody = (
     <div className="flex h-full flex-col bg-white">
-      <div className="border-b border-[#E5E6EB] px-2 py-1.5">
+      <div className="border-b border-workspace-border px-2 py-1.5">
         <div className="flex items-center justify-between gap-1">
           {spacesMode ? (
             <>
@@ -438,15 +438,15 @@ export function SessionNavPanel({
               ) : null}
             </>
           ) : (
-            <div className="flex min-w-0 flex-1 rounded-lg bg-[#F2F3F5] p-0.5">
+            <div className="flex min-w-0 flex-1 rounded-lg bg-workspace-hover p-0.5">
               <button
                 type="button"
                 onClick={() => onViewTabChange('agent')}
                 className={cn(
                   'flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
                   viewTab === 'agent'
-                    ? 'bg-white text-[#1D2129] shadow-sm'
-                    : 'text-[#86909C]'
+                    ? 'bg-white text-workspace-text shadow-sm'
+                    : 'text-workspace-muted'
                 )}
               >
                 {t('tabAgent')}
@@ -457,8 +457,8 @@ export function SessionNavPanel({
                 className={cn(
                   'flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors',
                   viewTab === 'session'
-                    ? 'bg-white text-[#1D2129] shadow-sm'
-                    : 'text-[#86909C]'
+                    ? 'bg-white text-workspace-text shadow-sm'
+                    : 'text-workspace-muted'
                 )}
               >
                 {t('tabSession')}
@@ -468,7 +468,7 @@ export function SessionNavPanel({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-workspace-muted hover:bg-workspace-hover"
             aria-label={t('collapsePanel')}
           >
             {mobileDrawer ? <X className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
@@ -484,15 +484,15 @@ export function SessionNavPanel({
 
       {/* Spaces MVP: in-list search removed (low space count); restore when space list grows. */}
       {!spacesMode ? (
-      <div className="border-b border-[#E5E6EB] px-3 py-2">
+      <div className="border-b border-workspace-border px-3 py-2">
         <label className="relative block">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#86909C]" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-workspace-muted" />
           <input
             type="search"
             value={listQuery}
             onChange={(event) => setListQuery(event.target.value)}
             placeholder={t('panelSearchPlaceholder')}
-            className="w-full rounded-lg border border-[#E5E6EB] bg-[#FAFBFC] py-2 pl-8 pr-3 text-sm text-[#1D2129] placeholder:text-[#86909C] focus:border-kazi-orange focus:outline-none"
+            className="w-full rounded-lg border border-workspace-border bg-workspace-header py-2 pl-8 pr-3 text-sm text-workspace-text placeholder:text-workspace-muted focus:border-primary focus:outline-none"
           />
         </label>
       </div>
@@ -507,13 +507,13 @@ export function SessionNavPanel({
             : sessionRows.length <= 1) ? (
           Array.from({ length: 3 }).map((_, index) => (
             <li key={`skeleton-${index}`} className="rounded-lg px-3 py-2.5">
-              <div className="h-4 w-3/4 animate-pulse rounded bg-[#F2F3F5]" />
-              <div className="mt-1.5 h-3 w-1/2 animate-pulse rounded bg-[#F2F3F5]" />
+              <div className="h-4 w-3/4 animate-pulse rounded bg-workspace-hover" />
+              <div className="mt-1.5 h-3 w-1/2 animate-pulse rounded bg-workspace-hover" />
             </li>
           ))
         ) : spacesMode ? (
           listRows.length === 0 ? (
-            <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+            <li className="px-3 py-6 text-center text-sm text-workspace-muted">
               {t('noSearchResults')}
             </li>
           ) : (
@@ -538,7 +538,7 @@ export function SessionNavPanel({
                     className={cn(
                       'group flex items-center rounded-lg transition-colors',
                       isActive && 'bg-workspace-active',
-                      !isActive && !row.disabled && 'hover:bg-[#F2F3F5]'
+                      !isActive && !row.disabled && 'hover:bg-workspace-hover'
                     )}
                   >
                     <button
@@ -560,12 +560,12 @@ export function SessionNavPanel({
                     >
                       <div className="flex items-center gap-2.5">
                         {rowLeadingIcon(row, space)}
-                        <span className="flex-1 truncate text-sm font-medium text-[#1D2129]">
+                        <span className="flex-1 truncate text-sm font-medium text-workspace-text">
                           {row.displayName}
                         </span>
                       </div>
                       {badge ? (
-                        <p className="mt-0.5 pl-6 text-[11px] leading-tight text-[#86909C]">{badge}</p>
+                        <p className="mt-0.5 pl-6 text-[11px] leading-tight text-workspace-muted">{badge}</p>
                       ) : null}
                     </button>
                     {showMenu ? (
@@ -576,8 +576,8 @@ export function SessionNavPanel({
                           setContextMenuId(isMenuOpen ? null : row.id);
                         }}
                         className={cn(
-                          'mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#86909C] transition-opacity',
-                          'hover:bg-[#E5E6EB] hover:text-[#1D2129]',
+                          'mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-workspace-muted transition-opacity',
+                          'hover:bg-workspace-border hover:text-workspace-text',
                           isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                         )}
                         aria-label={tSpaces('spaceActions')}
@@ -592,7 +592,7 @@ export function SessionNavPanel({
                     <div
                       ref={contextMenuRef}
                       role="menu"
-                      className="absolute right-2 top-full z-30 mt-1 w-44 rounded-lg border border-[#E5E6EB] bg-white py-1 shadow-lg"
+                      className="absolute right-2 top-full z-30 mt-1 w-44 rounded-lg border border-workspace-border bg-white py-1 shadow-lg"
                     >
                       {lifecycleActions
                         .filter(({ action }) => canRunSpaceLifecycle(space, action))
@@ -604,8 +604,8 @@ export function SessionNavPanel({
                             disabled={rowPending}
                             onClick={() => handleSpaceAction(space.id, action)}
                             className={cn(
-                              'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-[#F2F3F5] disabled:opacity-50',
-                              destructive ? 'text-red-600' : 'text-[#1D2129]'
+                              'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-workspace-hover disabled:opacity-50',
+                              destructive ? 'text-red-600' : 'text-workspace-text'
                             )}
                           >
                             <Icon className="h-4 w-4" />
@@ -620,14 +620,14 @@ export function SessionNavPanel({
           )
         ) : viewTab === 'agent' ? (
           agentRows.length === 0 ? (
-            <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+            <li className="px-3 py-6 text-center text-sm text-workspace-muted">
               {t('noSearchResults')}
             </li>
           ) : (
             agentRows.map(renderAgentRow)
           )
         ) : sessionRows.length === 0 ? (
-          <li className="px-3 py-6 text-center text-sm text-[#86909C]">
+          <li className="px-3 py-6 text-center text-sm text-workspace-muted">
             {t('noSearchResults')}
           </li>
         ) : (
@@ -636,13 +636,13 @@ export function SessionNavPanel({
       </ul>
 
       {showHubActions && activeHubAgentId ? (
-        <div className="flex shrink-0 gap-1 border-t border-[#E5E6EB] p-2">
+        <div className="flex shrink-0 gap-1 border-t border-workspace-border p-2">
           {onNewSession ? (
             <button
               type="button"
               disabled={actionsDisabled}
               onClick={() => onNewSession(activeHubAgentId)}
-              className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-[#E5E6EB] px-2 py-2 text-xs font-medium text-[#1D2129] hover:bg-[#F2F3F5] disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-workspace-border px-2 py-2 text-xs font-medium text-workspace-text hover:bg-workspace-hover disabled:opacity-50"
             >
               <Plus className="h-3.5 w-3.5" />
               {t('newSession')}
@@ -653,7 +653,7 @@ export function SessionNavPanel({
               type="button"
               disabled={actionsDisabled}
               onClick={() => onExitSession(activeHubAgentId)}
-              className="flex flex-1 items-center justify-center rounded-lg border border-[#E5E6EB] px-2 py-2 text-xs font-medium text-[#4E5969] hover:bg-[#F2F3F5] disabled:opacity-50"
+              className="flex flex-1 items-center justify-center rounded-lg border border-workspace-border px-2 py-2 text-xs font-medium text-workspace-secondary hover:bg-workspace-hover disabled:opacity-50"
             >
               {t('exitSession')}
             </button>
@@ -694,7 +694,7 @@ export function SessionNavPanel({
     <aside
       aria-hidden={!open}
       className={cn(
-        'hidden shrink-0 overflow-hidden border-r border-[#E5E6EB] transition-[width] duration-200 ease-out md:block',
+        'hidden shrink-0 overflow-hidden border-r border-workspace-border transition-[width] duration-200 ease-out md:block',
         open ? 'w-[260px]' : 'w-0'
       )}
     >

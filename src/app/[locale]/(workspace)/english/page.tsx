@@ -110,7 +110,7 @@ function EnglishPageContent({ locale }: { locale: string }) {
       <div className="flex-1 p-4 flex flex-col gap-3 max-w-3xl mx-auto w-full">
         {isOpening && messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-12">
-            <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
             <p className="text-sm text-gray-600">{t("chatLoading")}</p>
           </div>
         ) : (

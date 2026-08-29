@@ -138,7 +138,7 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-navy via-navy-2 to-blue-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-kazi-navy via-kazi-navy2 to-blue-950 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-white/95 backdrop-blur">
         <CardHeader className="text-center pb-2">
           <div className="text-3xl font-bold mb-2">
@@ -155,7 +155,7 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
           )}
           {resuming ? (
             <div className="flex justify-center py-8">
-              <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
             </div>
           ) : step === "phone" ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
@@ -205,7 +205,7 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
                   setOtp("");
                   setStep("phone");
                 }}
-                className="w-full text-sm text-muted hover:text-orange"
+                className="w-full text-sm text-muted hover:text-primary"
               >
                 {t("back")}
               </button>

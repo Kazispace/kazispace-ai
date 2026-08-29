@@ -60,7 +60,7 @@ function SessionNavPanelSlot() {
     <aside
       aria-hidden
       data-testid="session-nav-panel-slot"
-      className="hidden w-[260px] shrink-0 overflow-hidden border-r border-[#E5E6EB] md:block"
+      className="hidden w-[260px] shrink-0 overflow-hidden border-r border-workspace-border md:block"
     />
   );
 }
@@ -361,7 +361,7 @@ function SessionNavShellLayout({
       {/* Provider wraps floating sheets too — Clinic/Space shells must see embedded=true. */}
       <WorkspaceShellProvider>
       <WorkspaceRailPortalProvider>
-      <div className="flex h-[100dvh] w-full overflow-hidden bg-[#F4F5F7]">
+      <div className="flex h-[100dvh] w-full overflow-hidden bg-workspace-bg">
         <SessionIconRail
           locale={locale}
           panelOpen={panelVisible}
@@ -491,11 +491,11 @@ function WorkspaceCenterColumn({
 
   return (
     <div className="relative flex min-w-0 flex-1 min-h-0 flex-col">
-      <div className="flex items-center border-b border-[#E5E6EB] bg-white md:hidden">
+      <div className="flex items-center border-b border-workspace-border bg-white md:hidden">
         <button
           type="button"
           onClick={onOpenMobilePanel}
-          className="m-2 rounded-lg p-2 text-[#1D2129] hover:bg-[#F2F3F5]"
+          className="m-2 rounded-lg p-2 text-workspace-text hover:bg-workspace-hover"
           aria-label={mobilePanelLabel}
         >
           <Menu className="h-5 w-5" />
@@ -519,7 +519,7 @@ function WorkspaceCenterColumn({
             'hidden min-h-0 min-w-0 shrink-0 self-stretch overflow-hidden md:flex md:flex-col',
             'transition-[width,min-width] duration-200 ease-out',
             showPortalColumn
-              ? 'min-w-[320px] border-l border-[#E5E6EB] bg-white'
+              ? 'min-w-[320px] border-l border-workspace-border bg-white'
               : 'pointer-events-none w-0 max-w-0 border-l-0'
           )}
           aria-hidden={!showPortalColumn}

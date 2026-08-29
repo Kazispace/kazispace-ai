@@ -54,7 +54,7 @@ export function HubAgentShell({
           <button
             type="button"
             onClick={() => setWorkspaceOpen((open) => !open)}
-            className="w-full px-4 py-2 text-xs font-medium text-kazi-orange text-left"
+            className="w-full px-4 py-2 text-xs font-medium text-primary text-left"
           >
             {workspaceOpen ? t('workspaceCollapse') : t('workspaceExpand')}
           </button>

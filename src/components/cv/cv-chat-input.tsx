@@ -92,7 +92,7 @@ export function CvChatInput({
           rows={1}
           className={cn(
             "w-full resize-none rounded-[24px] border border-gray-200 bg-gray-50 px-4 py-3 text-sm",
-            "focus:outline-none focus:border-kazi-orange focus:bg-white transition-colors",
+            "focus:outline-none focus:border-primary focus:bg-white transition-colors",
             "disabled:opacity-50 disabled:cursor-not-allowed max-h-32"
           )}
           style={{ minHeight: "48px" }}

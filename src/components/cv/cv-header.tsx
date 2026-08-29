@@ -58,7 +58,7 @@ export function CvHeader({
         </Link>
 
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 shrink-0">
-          <FileText className="h-5 w-5 text-kazi-orange" aria-hidden />
+          <FileText className="h-5 w-5 text-primary" aria-hidden />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -92,7 +92,7 @@ export function CvHeader({
               size="sm"
               disabled={actionsDisabled || isExporting}
               onClick={onDownload}
-              className="h-9 gap-1.5 bg-kazi-orange hover:bg-kazi-orange-dark text-white border-0"
+              className="h-9 gap-1.5 bg-primary hover:bg-primary-dark text-white border-0"
             >
               {isExporting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

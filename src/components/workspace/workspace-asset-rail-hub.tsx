@@ -41,7 +41,7 @@ type AssetTone = 'resume' | 'interview' | 'work' | 'spaces' | 'muted';
 const TONE_ICON_CLASS: Record<AssetTone, string> = {
   resume: 'bg-sky-50 text-sky-900 ring-sky-200/90',
   interview: 'bg-violet-50 text-violet-900 ring-violet-200/90',
-  work: 'bg-workspace-active text-kazi-navy ring-kazi-orange/25',
+  work: 'bg-workspace-active text-kazi-navy ring-primary/25',
   spaces: 'bg-workspace-hover text-kazi-navy ring-gray-200/90',
   muted: 'bg-gray-50 text-workspace-muted ring-gray-200/80',
 };
@@ -90,7 +90,7 @@ export function WorkspaceAssetRailHub({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-1.5 top-1.5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#4E5969] shadow-sm ring-1 ring-gray-200/80 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+          className="absolute right-1.5 top-1.5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-workspace-secondary shadow-sm ring-1 ring-gray-200/80 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           aria-label={tCv('closeRail')}
         >
           <X className="h-4 w-4" aria-hidden />
@@ -188,7 +188,7 @@ function SubcategoryHeader({
 }) {
   return (
     <div className="col-span-full mb-1 flex items-center justify-between gap-2 px-0.5">
-      <p className="text-[10px] font-medium text-[#4E5969]">
+      <p className="text-[10px] font-medium text-workspace-secondary">
         {label} · {count}
       </p>
       {historyCount > 0 ? (
@@ -389,7 +389,7 @@ function WorkspaceAssetIcon({
       title={asset.display_name}
       className={cn(
         'relative flex min-w-0 flex-col items-center gap-0.5 rounded-lg p-1',
-        'hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+        'hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         (isPending || isFailed) && 'opacity-80'
       )}
     >
@@ -406,7 +406,7 @@ function WorkspaceAssetIcon({
         ) : (
           <FileText className="h-4 w-4" aria-hidden />
         )}
-        <span className="absolute -bottom-0.5 -right-0.5 rounded bg-white px-0.5 text-[8px] font-semibold leading-none text-[#4E5969] ring-1 ring-gray-200">
+        <span className="absolute -bottom-0.5 -right-0.5 rounded bg-white px-0.5 text-[8px] font-semibold leading-none text-workspace-secondary ring-1 ring-gray-200">
           {mimeLabel}
         </span>
         {historical ? (
@@ -415,7 +415,7 @@ function WorkspaceAssetIcon({
           </span>
         ) : null}
       </span>
-      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-[#4E5969]">
+      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-workspace-secondary">
         {isFailed
           ? reindexEnabled
             ? t('indexFailed')
@@ -449,7 +449,7 @@ function RouteAssetIcon({
       title={label}
       className={cn(
         'flex min-w-0 flex-col items-center gap-0.5 rounded-lg p-1',
-        'hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40'
+        'hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
       )}
     >
       <span
@@ -460,7 +460,7 @@ function RouteAssetIcon({
       >
         <Icon className="h-4 w-4" aria-hidden />
       </span>
-      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-[#4E5969]">
+      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-workspace-secondary">
         {label}
       </span>
     </button>

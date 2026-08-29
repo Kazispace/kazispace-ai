@@ -226,9 +226,9 @@ export function ChatInput({
       onClick={openAttachOrAgents}
       disabled={inputDisabled}
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full text-[#86909C]",
+        "flex shrink-0 items-center justify-center rounded-full text-workspace-muted",
         iconBtn,
-        "hover:bg-gray-200/60 hover:text-[#1D2129] transition-colors",
+        "hover:bg-gray-200/60 hover:text-workspace-text transition-colors",
         "disabled:cursor-not-allowed disabled:opacity-50"
       )}
       aria-label={t("attachFile")}
@@ -249,7 +249,7 @@ export function ChatInput({
         isTranscribing ? (
           <div
             className={cn(
-              "flex shrink-0 items-center justify-center text-kazi-orange",
+              "flex shrink-0 items-center justify-center text-primary",
               iconBtn
             )}
             aria-label={t("voiceTranscribing")}
@@ -271,7 +271,7 @@ export function ChatInput({
             "flex shrink-0 items-center justify-center rounded-full transition-colors",
             iconBtn,
             hasContent && !inputDisabled
-              ? "bg-kazi-orange text-white hover:bg-kazi-orange/90"
+              ? "bg-primary text-white hover:bg-primary/90"
               : "text-[#C9CDD4] cursor-not-allowed"
           )}
         >
@@ -306,9 +306,9 @@ export function ChatInput({
       // leading-5 to match the denser single-row footer alongside icon buttons.
       className={cn(
         "box-border w-full min-w-0 max-h-32 resize-none overflow-hidden",
-        "bg-transparent text-sm leading-6 text-[#1D2129]",
+        "bg-transparent text-sm leading-6 text-workspace-text",
         isCard ? "min-h-[40px] py-2" : "min-h-[36px] flex-1 py-1.5 leading-5",
-        "placeholder:text-[#86909C] focus:outline-none",
+        "placeholder:text-workspace-muted focus:outline-none",
         "disabled:cursor-not-allowed"
       )}
     />
@@ -350,7 +350,7 @@ export function ChatInput({
           onClick={() =>
             openFilePicker({ accept: "image/jpeg,image/png" })
           }
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-[#F7F8FA]"
         >
           <ImageIcon className="h-5 w-5 text-green-500" />
           {t("attachPhoto")}
@@ -363,7 +363,7 @@ export function ChatInput({
                 "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             })
           }
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-[#F7F8FA]"
         >
           <FileText className="h-5 w-5 text-blue-500" />
           {t("attachDocument")}
@@ -376,7 +376,7 @@ export function ChatInput({
               capture: true,
             })
           }
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#1D2129] hover:bg-[#F7F8FA]"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-[#F7F8FA]"
         >
           <Camera className="h-5 w-5 text-orange-500" />
           {t("attachCamera")}
@@ -395,20 +395,20 @@ export function ChatInput({
       {attachment && (
         <div className={cn("flex items-center gap-3 pt-3", isCard ? "px-1" : "px-4")}>
           <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
-            <FileText className="h-4 w-4 shrink-0 text-[#86909C]" />
-            <span className="max-w-[180px] truncate text-[#1D2129]">
+            <FileText className="h-4 w-4 shrink-0 text-workspace-muted" />
+            <span className="max-w-[180px] truncate text-workspace-text">
               {attachment.file.name}
             </span>
-            <span className="text-xs text-[#86909C]">
+            <span className="text-xs text-workspace-muted">
               {formatFileSize(attachment.file.size)}
             </span>
             {isUploading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-kazi-orange" />
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
             ) : (
               <button
                 type="button"
                 onClick={removeAttachment}
-                className="rounded p-0.5 text-[#86909C] hover:text-red-500"
+                className="rounded p-0.5 text-workspace-muted hover:text-red-500"
                 aria-label={t("attachmentPreviewRemove")}
               >
                 <X className="h-3.5 w-3.5" />
@@ -438,9 +438,12 @@ export function ChatInput({
       {isCard ? (
         <div
           className={cn(
+            // KAZI-656: #D0E3FF (border) + rgba(208,227,255,...) (matching glow
+            // shadow) are a deliberate bespoke pairing, not a token candidate —
+            // left as literals rather than forced onto an unrelated token.
             "rounded-2xl border border-[#D0E3FF]/90 bg-white",
             "shadow-[0_0_0_1px_rgba(208,227,255,0.35),0_8px_24px_-12px_rgba(15,23,42,0.18)]",
-            "transition-shadow focus-within:border-kazi-orange/50 focus-within:ring-1 focus-within:ring-kazi-orange/25 focus-within:shadow-[0_8px_24px_-12px] focus-within:shadow-kazi-orange/20",
+            "transition-shadow focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/25 focus-within:shadow-[0_8px_24px_-12px] focus-within:shadow-primary/20",
             inputDisabled && "opacity-50"
           )}
         >
@@ -470,7 +473,7 @@ export function ChatInput({
           <div
             className={cn(
               "flex items-end gap-1 rounded-2xl border bg-gray-50 px-2 py-1.5 transition-colors",
-              "focus-within:border-kazi-orange focus-within:bg-white",
+              "focus-within:border-primary focus-within:bg-white",
               inputDisabled ? "opacity-50" : "border-gray-200"
             )}
           >

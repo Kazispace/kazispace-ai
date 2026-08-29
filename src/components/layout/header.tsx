@@ -71,8 +71,8 @@ export function Header({ locale }: HeaderProps) {
               item.label,
               `text-sm font-medium transition-colors ${
                 pathname === item.href
-                  ? "text-kazi-orange"
-                  : "text-white/75 hover:text-kazi-orange"
+                  ? "text-primary"
+                  : "text-white/75 hover:text-primary"
               }`
             )
           )}
@@ -83,14 +83,14 @@ export function Header({ locale }: HeaderProps) {
           <Link
             href={`/${locale}/mine`}
             prefetch={false}
-            className="text-sm font-medium text-white/75 hover:text-kazi-orange transition-colors"
+            className="text-sm font-medium text-white/75 hover:text-primary transition-colors"
           >
             {t("profile")}
           </Link>
           {renderClinicNav(
             chatHref,
             t("chat"),
-            "bg-kazi-orange hover:bg-kazi-orange-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            "bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
           )}
         </div>
       </div>

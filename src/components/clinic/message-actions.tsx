@@ -89,11 +89,11 @@ function ActionButton({
       aria-pressed={pressed}
       className={cn(
         'flex h-7 w-7 items-center justify-center rounded-md',
-        'bg-transparent text-[#86909C]',
-        'transition-colors hover:bg-gray-100 hover:text-[#1D2129]',
+        'bg-transparent text-workspace-muted',
+        'transition-colors hover:bg-gray-100 hover:text-workspace-text',
         'disabled:cursor-not-allowed disabled:opacity-40',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
-        pressed && 'bg-gray-100 text-[#1D2129]',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+        pressed && 'bg-gray-100 text-workspace-text',
       )}
     >
       {children}
@@ -432,11 +432,14 @@ export function MessageActions({
 
       {feedbackEnabled && downOpen ? (
         <div
-          className="ml-0.5 flex max-w-md flex-col gap-2 rounded-md border border-[#E5E6EB] bg-[#FAFAFA] p-2"
+          // KAZI-656: #FAFAFA is a near-neighbor of workspace.bg (#F4F5F7) and
+          // workspace.header (#FAFBFC), not an exact match — left as a literal
+          // pending design confirmation of which is canonical.
+          className="ml-0.5 flex max-w-md flex-col gap-2 rounded-md border border-workspace-border bg-[#FAFAFA] p-2"
           role="group"
           aria-label={t('messageActions.feedbackReasonsLabel')}
         >
-          <p className="text-[11px] text-[#4E5969]">
+          <p className="text-[11px] text-workspace-secondary">
             {t('messageActions.feedbackReasonsHint')}
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -451,10 +454,10 @@ export function MessageActions({
                   onClick={() => toggleReason(reason)}
                   className={cn(
                     'rounded-md px-2 py-1 text-[11px] transition-colors',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
                     selected
-                      ? 'bg-[#1D2129] text-white'
-                      : 'bg-white text-[#4E5969] ring-1 ring-[#E5E6EB] hover:bg-gray-50',
+                      ? 'bg-workspace-text text-white'
+                      : 'bg-white text-workspace-secondary ring-1 ring-workspace-border hover:bg-gray-50',
                   )}
                 >
                   {t(`messageActions.reasons.${reason}`)}
@@ -470,9 +473,9 @@ export function MessageActions({
             maxLength={500}
             placeholder={t('messageActions.feedbackNotePlaceholder')}
             className={cn(
-              'w-full resize-none rounded-md border border-[#E5E6EB] bg-white px-2 py-1.5',
-              'text-[11px] text-[#1D2129] placeholder:text-[#C9CDD4]',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+              'w-full resize-none rounded-md border border-workspace-border bg-white px-2 py-1.5',
+              'text-[11px] text-workspace-text placeholder:text-[#C9CDD4]',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
             )}
           />
           <div className="flex items-center justify-end gap-2">
@@ -487,7 +490,7 @@ export function MessageActions({
                   note: '',
                 });
               }}
-              className="text-[11px] text-[#86909C] hover:text-[#1D2129]"
+              className="text-[11px] text-workspace-muted hover:text-workspace-text"
             >
               {t('messageActions.feedbackCancel')}
             </button>
@@ -496,9 +499,9 @@ export function MessageActions({
               disabled={submitting || !canSubmitDownFeedback(reasons)}
               onClick={() => void submitDown()}
               className={cn(
-                'rounded-md bg-kazi-orange px-2.5 py-1 text-[11px] font-medium text-white',
+                'rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-white',
                 'disabled:cursor-not-allowed disabled:opacity-40',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
               )}
             >
               {t('messageActions.feedbackSubmit')}

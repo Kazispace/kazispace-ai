@@ -39,7 +39,7 @@ function statusBadgeClass(
   activeSessionId: string | null
 ): string {
   if (session.session_id === activeSessionId) {
-    return 'bg-blue-100 text-kazi-orange';
+    return 'bg-blue-100 text-primary';
   }
   if (session.status === 'active') return 'bg-green-100 text-green-800';
   if (session.status === 'archived') return 'bg-gray-100 text-gray-600';

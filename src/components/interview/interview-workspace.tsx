@@ -56,7 +56,7 @@ export function InterviewWorkspace({
           <button
             type="button"
             onClick={() => setView('menu')}
-            className="inline-flex h-8 items-center gap-1 rounded-full px-2 text-xs font-medium text-kazi-orange hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+            className="inline-flex h-8 items-center gap-1 rounded-full px-2 text-xs font-medium text-primary hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden />
             {t('workspaceTitle')}
@@ -127,7 +127,7 @@ function WorkspaceMenu({
           <button
             type="button"
             onClick={() => onOpen('profile')}
-            className="text-left text-sm text-kazi-orange hover:underline"
+            className="text-left text-sm text-primary hover:underline"
           >
             {t('viewProfile')}
           </button>
@@ -135,14 +135,14 @@ function WorkspaceMenu({
         <button
           type="button"
           onClick={() => onOpen('growth')}
-          className="text-left text-sm text-kazi-orange hover:underline"
+          className="text-left text-sm text-primary hover:underline"
         >
           {t('viewHistory')}
         </button>
         <button
           type="button"
           onClick={() => onOpen('readiness')}
-          className="text-left text-sm text-kazi-orange hover:underline"
+          className="text-left text-sm text-primary hover:underline"
         >
           {t('viewReadiness')}
         </button>
@@ -186,7 +186,7 @@ function WorkspaceProfilePane({
   if (isProfileLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-kazi-orange" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-primary" />
       </div>
     );
   }
@@ -254,7 +254,7 @@ function WorkspaceGrowthPane() {
 
       {isHistoryLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-kazi-orange" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-primary" />
         </div>
       ) : null}
 

@@ -35,7 +35,7 @@ export function CitationList({ items, className }: CitationListProps) {
               target="_blank"
               rel="noopener noreferrer"
               title={item.url}
-              className="inline-flex max-w-full items-start gap-1 text-sm text-kazi-orange underline-offset-2 hover:underline"
+              className="inline-flex max-w-full items-start gap-1 text-sm text-primary underline-offset-2 hover:underline"
             >
               <ExternalLink
                 className="mt-0.5 h-3.5 w-3.5 shrink-0 opacity-70"

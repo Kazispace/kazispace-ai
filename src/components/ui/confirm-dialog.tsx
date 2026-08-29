@@ -96,20 +96,20 @@ export function ConfirmDialog({
         <button
           type="button"
           onClick={onCancel}
-          className="absolute right-4 top-4 text-[#86909C] hover:text-[#1D2129]"
+          className="absolute right-4 top-4 text-workspace-muted hover:text-workspace-text"
           aria-label={cancelLabel}
         >
           <X className="h-5 w-5" />
         </button>
         <h2
           id="confirm-dialog-title"
-          className="pr-8 text-lg font-semibold text-[#1D2129]"
+          className="pr-8 text-lg font-semibold text-workspace-text"
         >
           {title}
         </h2>
         <p
           id="confirm-dialog-description"
-          className="mt-2 text-sm leading-relaxed text-[#4E5969]"
+          className="mt-2 text-sm leading-relaxed text-workspace-secondary"
         >
           {description}
         </p>

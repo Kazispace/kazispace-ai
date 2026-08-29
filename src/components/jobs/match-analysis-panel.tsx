@@ -40,7 +40,7 @@ export function MatchAnalysisPanel({ analysis }: MatchAnalysisPanelProps) {
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-kazi-orange rounded-full transition-all"
+                    className="h-full bg-primary rounded-full transition-all"
                     style={{ width: `${Math.min(100, value)}%` }}
                   />
                 </div>

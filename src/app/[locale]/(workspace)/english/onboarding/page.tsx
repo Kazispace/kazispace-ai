@@ -81,7 +81,7 @@ function OnboardingPageContent({ locale }: { locale: string }) {
   return (
     <div className="flex-1 flex flex-col">
       <div className="max-w-lg mx-auto w-full px-4 pt-4">
-        <Link href={`/${locale}/english`} className="text-xs text-kazi-orange font-medium">
+        <Link href={`/${locale}/english`} className="text-xs text-primary font-medium">
           {t("onboardingPage.back")}
         </Link>
       </div>

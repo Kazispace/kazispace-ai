@@ -46,7 +46,7 @@ export function SpaceListScopeMenu({
 
   if (!hasArchivedSpaces) {
     return (
-      <p className="min-w-0 flex-1 truncate px-1 text-sm font-medium text-[#1D2129]">
+      <p className="min-w-0 flex-1 truncate px-1 text-sm font-medium text-workspace-text">
         {title}
       </p>
     );
@@ -57,27 +57,27 @@ export function SpaceListScopeMenu({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex max-w-full items-center gap-0.5 rounded-md px-1 py-0.5 text-sm font-medium text-[#1D2129] hover:bg-[#F2F3F5]"
+        className="flex max-w-full items-center gap-0.5 rounded-md px-1 py-0.5 text-sm font-medium text-workspace-text hover:bg-workspace-hover"
         aria-haspopup="menu"
         aria-expanded={open}
       >
         <span className="truncate">{title}</span>
         <ChevronDown
-          className={cn('h-4 w-4 shrink-0 text-[#86909C] transition-transform', open && 'rotate-180')}
+          className={cn('h-4 w-4 shrink-0 text-workspace-muted transition-transform', open && 'rotate-180')}
           aria-hidden
         />
       </button>
       {open ? (
         <div
           role="menu"
-          className="absolute left-0 top-full z-40 mt-1 min-w-[10rem] rounded-lg border border-[#E5E6EB] bg-white py-1 shadow-lg"
+          className="absolute left-0 top-full z-40 mt-1 min-w-[10rem] rounded-lg border border-workspace-border bg-white py-1 shadow-lg"
         >
           <button
             type="button"
             role="menuitem"
             className={cn(
-              'flex w-full px-3 py-2 text-left text-sm hover:bg-[#F2F3F5]',
-              spaceFilter === 'active' && 'font-medium text-[#1D2129]'
+              'flex w-full px-3 py-2 text-left text-sm hover:bg-workspace-hover',
+              spaceFilter === 'active' && 'font-medium text-workspace-text'
             )}
             onClick={() => {
               onFilterChange('active');
@@ -90,8 +90,8 @@ export function SpaceListScopeMenu({
             type="button"
             role="menuitem"
             className={cn(
-              'flex w-full px-3 py-2 text-left text-sm hover:bg-[#F2F3F5]',
-              spaceFilter === 'archived' && 'font-medium text-[#1D2129]'
+              'flex w-full px-3 py-2 text-left text-sm hover:bg-workspace-hover',
+              spaceFilter === 'archived' && 'font-medium text-workspace-text'
             )}
             onClick={() => {
               onFilterChange('archived');

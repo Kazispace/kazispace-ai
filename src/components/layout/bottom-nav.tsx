@@ -61,7 +61,7 @@ export function BottomNav({ locale, activeAliases }: BottomNavProps) {
               aria-disabled={needsHubExit && isDeactivating}
               className={`flex flex-col items-center gap-1 px-4 py-2 transition-colors ${
                 isActive
-                  ? "text-kazi-orange"
+                  ? "text-primary"
                   : "text-gray-500 hover:text-gray-900"
               }`}
             >

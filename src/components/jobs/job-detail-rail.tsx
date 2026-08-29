@@ -123,7 +123,7 @@ export function JobDetailRail({
           type="button"
           onClick={goBack}
           disabled={!canGoBack}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           aria-label={t('navBack')}
         >
           <ChevronLeft className="h-4 w-4" aria-hidden />
@@ -132,7 +132,7 @@ export function JobDetailRail({
           type="button"
           onClick={goForward}
           disabled={!canGoForward}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           aria-label={t('navForward')}
         >
           <ChevronRight className="h-4 w-4" aria-hidden />
@@ -143,7 +143,7 @@ export function JobDetailRail({
         <button
           type="button"
           onClick={onClose}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           aria-label={t('closeDetail')}
         >
           <X className="h-4 w-4" aria-hidden />

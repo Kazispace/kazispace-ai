@@ -305,9 +305,9 @@ export function ChatSideRailsHost({
           onKeyDown={onResizeKeyDown}
           className={cn(
             'absolute inset-y-0 left-0 z-10 w-1.5 -translate-x-1/2 cursor-col-resize touch-none',
-            'bg-gray-200/70 hover:bg-kazi-orange/35',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
-            isResizing && 'bg-kazi-orange/40'
+            'bg-gray-200/70 hover:bg-primary/35',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+            isResizing && 'bg-primary/40'
           )}
         />
         {railInner}

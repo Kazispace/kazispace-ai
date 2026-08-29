@@ -96,7 +96,7 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
   if (isCreating || (!session && phase !== 'error')) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -115,7 +115,7 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
   if (isScoring) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3">
-        <div className="w-10 h-10 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+        <div className="w-10 h-10 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
         <p className="text-sm text-gray-600">{t('scoring')}</p>
       </div>
     );

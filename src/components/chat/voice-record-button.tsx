@@ -35,7 +35,7 @@ function WaveformBars({ level }: { level: number }) {
         return (
           <div
             key={i}
-            className="w-[3px] rounded-full bg-kazi-orange transition-[height] duration-75"
+            className="w-[3px] rounded-full bg-primary transition-[height] duration-75"
             style={{ height: `${h}px` }}
           />
         );
@@ -154,7 +154,7 @@ export function VoiceRecordButton({
         <p
           className={cn(
             'text-xs font-medium',
-            isCancelling ? 'text-red-500' : 'text-kazi-orange'
+            isCancelling ? 'text-red-500' : 'text-primary'
           )}
         >
           {isCancelling ? t('releaseToCancel') : t('releaseToSend')}
@@ -162,7 +162,7 @@ export function VoiceRecordButton({
 
         <WaveformBars level={audioLevel} />
 
-        <p className="text-lg font-semibold tabular-nums text-[#1D2129]">
+        <p className="text-lg font-semibold tabular-nums text-workspace-text">
           {formatDuration(duration)}
         </p>
 
@@ -171,12 +171,12 @@ export function VoiceRecordButton({
             <X className="h-6 w-6" />
           </div>
         ) : (
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-kazi-orange text-white animate-pulse">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white animate-pulse">
             <Mic className="h-6 w-6" />
           </div>
         )}
 
-        <p className="text-xs text-[#86909C]">{t('slideToCancelHint')}</p>
+        <p className="text-xs text-workspace-muted">{t('slideToCancelHint')}</p>
       </div>
     );
   }
@@ -188,9 +188,9 @@ export function VoiceRecordButton({
       onTouchStart={handleTouchStart}
       onMouseDown={handleMouseDown}
       className={cn(
-        'flex shrink-0 items-center justify-center rounded-full text-[#86909C]',
+        'flex shrink-0 items-center justify-center rounded-full text-workspace-muted',
         compact ? 'h-7 w-7' : 'h-8 w-8',
-        'hover:bg-blue-50 hover:text-kazi-orange transition-colors',
+        'hover:bg-blue-50 hover:text-primary transition-colors',
         'disabled:opacity-50 disabled:cursor-not-allowed'
       )}
       aria-label={t('holdToTalk')}

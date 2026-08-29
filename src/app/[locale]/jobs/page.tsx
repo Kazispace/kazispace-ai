@@ -75,7 +75,7 @@ export default function JobsPage({ params }: JobsPageProps) {
         ) : (
           <>
             {showProfileCta && (
-              <Card className="mb-4 border-kazi-orange/30 bg-blue-50">
+              <Card className="mb-4 border-primary/30 bg-blue-50">
                 <CardContent className="p-4">
                   <p className="text-sm text-gray-700 mb-3">{t("profileCtaHint")}</p>
                   <Button size="sm" onClick={() => router.push(`/${locale}/chat`)}>
@@ -132,7 +132,7 @@ export default function JobsPage({ params }: JobsPageProps) {
                       </div>
 
                       {job.salary && (
-                        <p className="text-sm font-medium text-kazi-orange mt-2">
+                        <p className="text-sm font-medium text-primary mt-2">
                           {job.salary}
                         </p>
                       )}

@@ -59,7 +59,7 @@ export function AgentNavIcon({
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center justify-center text-kazi-orange',
+        'inline-flex shrink-0 items-center justify-center text-primary',
         className
       )}
       aria-hidden
@@ -93,7 +93,7 @@ export function SpaceTemplateNavIcon({
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center justify-center text-kazi-orange',
+        'inline-flex shrink-0 items-center justify-center text-primary',
         className
       )}
       aria-hidden

@@ -67,7 +67,7 @@ export function LocaleSwitcher({ locale, variant = "row" }: LocaleSwitcherProps)
           type="button"
           onClick={() => setIsOpen((v) => !v)}
           disabled={isSaving}
-          className="flex items-center gap-1 text-sm text-white/80 hover:text-kazi-orange transition-colors"
+          className="flex items-center gap-1 text-sm text-white/80 hover:text-primary transition-colors"
         >
           {LOCALE_LABELS[current]}
           <ChevronDown className="w-4 h-4" />
@@ -135,7 +135,7 @@ function LocaleMenu({
             type="button"
             onClick={() => onSelect(loc)}
             className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
-              loc === current ? "font-semibold text-kazi-orange" : "text-gray-700"
+              loc === current ? "font-semibold text-primary" : "text-gray-700"
             }`}
           >
             {LOCALE_LABELS[loc]}

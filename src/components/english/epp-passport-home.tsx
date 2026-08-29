@@ -113,7 +113,7 @@ export function EppPassportHome({
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-kazi-orange"
+                    className="h-full rounded-full bg-primary"
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
@@ -123,7 +123,7 @@ export function EppPassportHome({
 
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-kazi-orange" />
+              <TrendingUp className="w-4 h-4 text-primary" />
               <h3 className="text-sm font-semibold text-kazi-navy">{t('dimensionsTitle')}</h3>
             </div>
             <EppDimensionBars dimensions={profile.dimensions} />

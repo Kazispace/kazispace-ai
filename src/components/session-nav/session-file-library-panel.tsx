@@ -79,7 +79,7 @@ function DeleteConfirm({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-[#1D2129] hover:bg-gray-50"
+          className="flex-1 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-workspace-text hover:bg-gray-50"
         >
           {t('deleteConfirmCancel')}
         </button>
@@ -128,8 +128,8 @@ function FileRow({
     <div className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-[#F7F8FA] transition-colors">
       <FileIcon mimeType={file.mime_type} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-[#1D2129]">{file.filename}</p>
-        <p className="text-xs text-[#86909C]">
+        <p className="truncate text-sm font-medium text-workspace-text">{file.filename}</p>
+        <p className="text-xs text-workspace-muted">
           {formatFileSize(file.size_bytes)} · {formatFileDate(file.created_at, locale)}
         </p>
       </div>
@@ -137,7 +137,9 @@ function FileRow({
         <button
           type="button"
           onClick={() => onDownload(file.file_id)}
-          className="rounded p-1.5 text-[#86909C] hover:bg-[#E8F3FF] hover:text-blue-600"
+          // KAZI-656: #E8F3FF is a near-neighbor of workspace.active (#EFF6FF),
+          // not an exact match — left as a literal pending design confirmation.
+          className="rounded p-1.5 text-workspace-muted hover:bg-[#E8F3FF] hover:text-blue-600"
           aria-label={t('downloadFile')}
         >
           <Download className="h-4 w-4" />
@@ -145,7 +147,7 @@ function FileRow({
         <button
           type="button"
           onClick={() => setConfirming(true)}
-          className="rounded p-1.5 text-[#86909C] hover:bg-red-50 hover:text-red-500"
+          className="rounded p-1.5 text-workspace-muted hover:bg-red-50 hover:text-red-500"
           aria-label={t('deleteFile')}
         >
           <Trash2 className="h-4 w-4" />
@@ -199,12 +201,12 @@ export function SessionFileLibraryPanel({
 
   const panelBody = (
     <div className="flex h-full flex-col bg-white">
-      <div className="flex items-center justify-between border-b border-[#E5E6EB] px-3 py-2">
-        <h2 className="text-sm font-semibold text-[#1D2129]">{t('globalFileLibrary')}</h2>
+      <div className="flex items-center justify-between border-b border-workspace-border px-3 py-2">
+        <h2 className="text-sm font-semibold text-workspace-text">{t('globalFileLibrary')}</h2>
         <button
           type="button"
           onClick={onClose}
-          className="rounded p-1 text-[#86909C] hover:bg-[#F2F3F5]"
+          className="rounded p-1 text-workspace-muted hover:bg-workspace-hover"
           aria-label={t('collapsePanel')}
         >
           {mobileDrawer ? <X className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
@@ -212,7 +214,7 @@ export function SessionFileLibraryPanel({
       </div>
 
       {/* Category tabs */}
-      <div className="flex flex-wrap gap-1 border-b border-[#E5E6EB] px-3 py-1.5">
+      <div className="flex flex-wrap gap-1 border-b border-workspace-border px-3 py-1.5">
         {FILE_CATEGORY_TABS.map((tab) => {
           const isActive =
             tab.id === 'all' ? activeCategory === undefined : activeCategory === tab.id;
@@ -224,8 +226,8 @@ export function SessionFileLibraryPanel({
               className={cn(
                 'rounded-full px-3 py-1 text-xs font-medium transition-colors',
                 isActive
-                  ? 'bg-[#1D2129] text-white'
-                  : 'text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]'
+                  ? 'bg-workspace-text text-white'
+                  : 'text-workspace-muted hover:bg-workspace-hover hover:text-workspace-text'
               )}
             >
               {t(tab.labelKey)}
@@ -239,11 +241,11 @@ export function SessionFileLibraryPanel({
         {!canFetchFiles ? (
           <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
             <FolderOpen className="h-10 w-10 text-[#C9CDD4]" />
-            <p className="text-sm font-medium text-[#86909C]">{t('filesLoginRequired')}</p>
+            <p className="text-sm font-medium text-workspace-muted">{t('filesLoginRequired')}</p>
             <button
               type="button"
               onClick={() => router.push(`/${locale}/login`)}
-              className="rounded-lg bg-kazi-orange px-3 py-1.5 text-xs font-medium text-white hover:bg-kazi-orange/90"
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary/90"
             >
               {t('filesLoginCta')}
             </button>
@@ -265,7 +267,7 @@ export function SessionFileLibraryPanel({
             <button
               type="button"
               onClick={() => void refresh()}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E6EB] px-3 py-1.5 text-xs font-medium text-[#1D2129] hover:bg-[#F2F3F5]"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-workspace-border px-3 py-1.5 text-xs font-medium text-workspace-text hover:bg-workspace-hover"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               {t('retryLoadFiles')}
@@ -274,7 +276,7 @@ export function SessionFileLibraryPanel({
         ) : files.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
             <FolderOpen className="h-10 w-10 text-[#C9CDD4]" />
-            <p className="text-sm font-medium text-[#86909C]">{t('noFiles')}</p>
+            <p className="text-sm font-medium text-workspace-muted">{t('noFiles')}</p>
             <p className="text-xs text-[#C9CDD4]">{t('noFilesHint')}</p>
           </div>
         ) : (
@@ -314,7 +316,7 @@ export function SessionFileLibraryPanel({
     <aside
       aria-hidden={!open}
       className={cn(
-        'hidden shrink-0 overflow-hidden border-r border-[#E5E6EB] transition-[width] duration-200 ease-out md:block',
+        'hidden shrink-0 overflow-hidden border-r border-workspace-border transition-[width] duration-200 ease-out md:block',
         open ? 'w-[260px]' : 'w-0'
       )}
     >
