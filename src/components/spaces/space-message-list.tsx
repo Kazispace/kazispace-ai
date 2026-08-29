@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ComponentType } from 'react';
-
+import { useLazyVirtuosoSwap } from '@/hooks/use-lazy-virtuoso-swap';
 import {
   StaticSpaceMessageRows,
   type SpaceMessageListBodyProps,
@@ -9,6 +8,11 @@ import {
 import type { SpaceMessageVirtuosoProps } from '@/components/spaces/space-message-virtuoso';
 import { loadSpaceMessageVirtuoso } from '@/lib/spaces/load-space-message-virtuoso';
 import { shouldVirtualizeSpaceMessages } from '@/lib/spaces/space-message-virtualize';
+
+/** Module-scope so useLazyVirtuosoSwap gets a referentially stable loader. */
+function loadSpaceVirtuosoComponent() {
+  return loadSpaceMessageVirtuoso().then((mod) => mod.SpaceMessageVirtuoso);
+}
 
 export type SpaceMessageListProps = SpaceMessageListBodyProps & {
   scrollParentRef: { readonly current: HTMLElement | null };
@@ -37,30 +41,12 @@ export function SpaceMessageList({
   activationKey,
 }: SpaceMessageListProps) {
   const virtualize = shouldVirtualizeSpaceMessages(messages.length);
-  const [VirtuosoComp, setVirtuosoComp] = useState<ComponentType<
-    SpaceMessageVirtuosoProps
-  > | null>(null);
-  const showingVirtuosoRef = useRef(false);
-  const preservedScrollTopRef = useRef(0);
-
-  useEffect(() => {
-    if (!virtualize || VirtuosoComp) return;
-    let cancelled = false;
-    void loadSpaceMessageVirtuoso()
-      .then((mod) => {
-        if (!cancelled) setVirtuosoComp(() => mod.SpaceMessageVirtuoso);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [virtualize, VirtuosoComp]);
-
-  const showVirtuoso = virtualize && VirtuosoComp != null;
-  if (showVirtuoso && !showingVirtuosoRef.current) {
-    preservedScrollTopRef.current = scrollParentRef.current?.scrollTop ?? 0;
-  }
-  showingVirtuosoRef.current = showVirtuoso;
+  const { VirtuosoComponent: VirtuosoComp, showVirtuoso, preservedScrollTop } =
+    useLazyVirtuosoSwap<SpaceMessageVirtuosoProps>(
+      virtualize,
+      loadSpaceVirtuosoComponent,
+      scrollParentRef
+    );
 
   const rowProps = {
     messages,
@@ -82,7 +68,7 @@ export function SpaceMessageList({
     <VirtuosoComp
       {...rowProps}
       scrollParentRef={scrollParentRef}
-      initialScrollTop={preservedScrollTopRef.current}
+      initialScrollTop={preservedScrollTop}
       alignToLatest={alignToLatest}
       activationKey={activationKey}
     />

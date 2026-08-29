@@ -44,10 +44,17 @@ describe('KAZI-575 Clinic chat virtualize after threshold', () => {
     expect(virtuoso).toMatch(/customScrollParent/);
     expect(virtuoso).toMatch(/scrollParentRef/);
     expect(virtuoso).toMatch(/StaticClinicMessageRows/);
-    expect(virtuoso).toMatch(/pinChatScrollToLatest/);
-    expect(virtuoso).toMatch(/shouldPinChatScrollToLatest/);
-    expect(virtuoso).toMatch(/didFreezeInitialRef/);
+    // Scroll-pin mechanics live in the shared hook (used by Clinic/Space/Hub).
+    expect(virtuoso).toMatch(/useChatVirtuosoScrollRestore/);
     expect(virtuoso).not.toMatch(/followOutput/);
     expect(virtuoso).not.toMatch(/return null/);
+
+    const scrollHook = readSrc(
+      '../../hooks/use-chat-virtuoso-scroll-restore.ts'
+    );
+    expect(scrollHook).toMatch(/pinChatScrollToLatest/);
+    expect(scrollHook).toMatch(/shouldPinChatScrollToLatest/);
+    expect(scrollHook).toMatch(/didFreezeInitialRef/);
+    expect(scrollHook).not.toMatch(/followOutput/);
   });
 });
