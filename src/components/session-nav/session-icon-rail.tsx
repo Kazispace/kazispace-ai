@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl';
 
 import type { SessionNavPanelMode } from '@/lib/session-nav';
 import { cn } from '@/lib/utils';
+import { markNavIntent } from '@/lib/perf/nav-intent';
 import { getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { SessionIconRailCredits } from '@/components/session-nav/session-nav-primary-chrome';
 
@@ -83,6 +84,7 @@ export function SessionIconRail({
     >
       <Link
         href={`/${locale}`}
+        onClick={() => markNavIntent()}
         className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold text-kazi-orange"
         aria-label="KaziSpace"
       >
@@ -91,6 +93,7 @@ export function SessionIconRail({
 
       <Link
         href={getSurfacePath(locale, 'clinic')}
+        onClick={() => markNavIntent()}
         className={cn(
           'relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
           isClinic
@@ -114,6 +117,7 @@ export function SessionIconRail({
         <Link
           href={`/${locale}/mine`}
           prefetch={false}
+          onClick={() => markNavIntent()}
           className="flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"
           aria-label={t('settings')}
           title={t('settings')}

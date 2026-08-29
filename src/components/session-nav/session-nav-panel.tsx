@@ -46,6 +46,7 @@ import {
   type SessionViewRow,
 } from '@/lib/session-nav';
 import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
+import { markNavIntent } from '@/lib/perf/nav-intent';
 import {
   isPrefetchableSpaceNavId,
   prefetchSpaceSwitch,
@@ -391,6 +392,7 @@ export function SessionNavPanel({
                 row.session.session_id
               );
             } else {
+              markNavIntent();
               router.push(row.href);
             }
             if (mobileDrawer) onClose();

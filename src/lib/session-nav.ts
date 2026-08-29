@@ -302,10 +302,14 @@ export function openAgentSessionTarget(
   const currentAgent = getDedicatedHubAgentFromPathname(pathname);
   if (currentAgent === agentId) {
     publishSessionNavSelectHistory(agentId, sessionId);
-    if (pathname !== href) router.push(href);
+    if (pathname !== href) {
+      markNavIntent();
+      router.push(href);
+    }
     return;
   }
 
   primeSessionNavHandoff(agentId, sessionId);
+  markNavIntent();
   router.push(href);
 }
