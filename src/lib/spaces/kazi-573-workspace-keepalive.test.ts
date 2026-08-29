@@ -18,10 +18,7 @@ describe('KAZI-573 Space workspace keep-alive', () => {
   });
 
   it('evicts the oldest id when over the keepalive limit', () => {
-    // KAZI-567 f/u: raised 3→5 (perf-policy.ts) — mobile/touch switches lean
-    // on the list-load bulk prefetch fan-out, not hover, so a deeper warm
-    // set covers more of a session's active Spaces on tap-only devices.
-    expect(SPACE_WORKSPACE_KEEPALIVE_LIMIT).toBe(5);
+    expect(SPACE_WORKSPACE_KEEPALIVE_LIMIT).toBe(3);
     let ids: string[] = [];
     ids = nextSpaceWorkspaceKeepAliveIds(ids, 'sp_a', 3);
     ids = nextSpaceWorkspaceKeepAliveIds(ids, 'sp_b', 3);
