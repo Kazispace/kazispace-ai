@@ -49,7 +49,7 @@ function ReadinessPageContent({ locale }: { locale: string }) {
       <div>
         <Link
           href={`/${locale}/interview${jobId ? `?job_id=${encodeURIComponent(jobId)}` : ""}`}
-          className="text-xs text-kazi-orange font-medium"
+          className="text-xs text-primary font-medium"
         >
           {t("readiness.back")}
         </Link>
@@ -67,7 +67,7 @@ function ReadinessPageContent({ locale }: { locale: string }) {
 
       {jobId && isReadinessLoading && (
         <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
         </div>
       )}
 

@@ -60,7 +60,7 @@ function ExamPickerBlock({
   const t = useTranslations('english.envelope');
   return (
     <div className="space-y-2">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">
         {t('examPickerTitle')}
       </p>
       <div className="flex flex-col gap-1.5">
@@ -75,13 +75,13 @@ function ExamPickerBlock({
               className={cn(
                 'rounded-lg border px-3 py-2 text-left transition-colors',
                 selected
-                  ? 'border-kazi-orange/50 bg-workspace-active'
+                  ? 'border-primary/50 bg-workspace-active'
                   : 'border-gray-200 bg-white hover:bg-gray-50'
               )}
             >
-              <p className="text-sm font-medium text-[#1D2129]">{option.label}</p>
+              <p className="text-sm font-medium text-workspace-text">{option.label}</p>
               {option.description ? (
-                <p className="mt-0.5 text-xs text-[#86909C]">{option.description}</p>
+                <p className="mt-0.5 text-xs text-workspace-muted">{option.description}</p>
               ) : null}
             </button>
           );
@@ -100,19 +100,19 @@ function EssayPromptBlock({
   return (
     <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50/80 p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm font-semibold text-[#1D2129]">{component.title}</p>
+        <p className="text-sm font-semibold text-workspace-text">{component.title}</p>
         {component.exam_type ? (
-          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-[#4E5969] ring-1 ring-gray-200">
+          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-workspace-secondary ring-1 ring-gray-200">
             {component.exam_type}
           </span>
         ) : null}
         {component.word_limit ? (
-          <span className="text-[10px] text-[#86909C]">
+          <span className="text-[10px] text-workspace-muted">
             {t('wordLimit', { count: component.word_limit })}
           </span>
         ) : null}
       </div>
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#4E5969]">
+      <p className="whitespace-pre-wrap text-sm leading-relaxed text-workspace-secondary">
         {component.body}
       </p>
       {component.ai_synthetic ? <AiSyntheticDisclaimer /> : null}
@@ -157,10 +157,10 @@ function EssayDiffBlock({
   return (
     <div className="space-y-3">
       <div>
-        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">
           {t('essayOriginal')}
         </p>
-        <p className="whitespace-pre-wrap rounded-lg border border-gray-200 bg-white p-3 text-sm leading-relaxed text-[#1D2129]">
+        <p className="whitespace-pre-wrap rounded-lg border border-gray-200 bg-white p-3 text-sm leading-relaxed text-workspace-text">
           {segments.map((segment, index) =>
             segment.issue ? (
               <mark
@@ -198,7 +198,7 @@ function EssayDiffBlock({
 
       {component.rewrite ? (
         <div>
-          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">
             {t('essayRewrite')}
           </p>
           <p className="whitespace-pre-wrap rounded-lg border border-green-100 bg-green-50/60 p-3 text-sm leading-relaxed text-green-950">
@@ -223,7 +223,7 @@ function DimensionBars({
   return (
     <div className="space-y-2">
       {title ? (
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">
           {title}
         </p>
       ) : null}
@@ -235,15 +235,15 @@ function DimensionBars({
           return (
             <div key={dim.key}>
               <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-                <span className="font-medium text-[#4E5969]">{label}</span>
-                <span className="tabular-nums font-semibold text-[#1D2129]">
+                <span className="font-medium text-workspace-secondary">{label}</span>
+                <span className="tabular-nums font-semibold text-workspace-text">
                   {dim.score}
                   {dim.max ? ` / ${dim.max}` : ''}
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-gray-100">
                 <div
-                  className="h-full rounded-full bg-kazi-orange transition-all"
+                  className="h-full rounded-full bg-primary transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -282,7 +282,7 @@ function SpeakingRadarBlock({
 
   return (
     <div className="space-y-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">
         {t('speakingRadarTitle')}
       </p>
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
@@ -313,7 +313,7 @@ function SpeakingRadarBlock({
         </div>
       </div>
       {component.summary ? (
-        <p className="text-sm leading-relaxed text-[#4E5969]">{component.summary}</p>
+        <p className="text-sm leading-relaxed text-workspace-secondary">{component.summary}</p>
       ) : null}
     </div>
   );
@@ -330,7 +330,7 @@ function WritingScorecardBlock({
   return (
     <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-[#1D2129]">{t('writingScorecardTitle')}</p>
+        <p className="text-sm font-semibold text-workspace-text">{t('writingScorecardTitle')}</p>
         {component.overall != null ? (
           <span className="rounded-full bg-workspace-active px-2.5 py-0.5 text-sm font-semibold text-kazi-navy">
             {component.overall}
@@ -339,7 +339,7 @@ function WritingScorecardBlock({
       </div>
       <DimensionBars dimensions={component.dimensions} />
       {component.summary ? (
-        <p className="text-sm leading-relaxed text-[#4E5969]">{component.summary}</p>
+        <p className="text-sm leading-relaxed text-workspace-secondary">{component.summary}</p>
       ) : null}
       {component.show_revise_cta ? (
         <ReviseCtaButton onClick={onFocusComposer} />
@@ -359,7 +359,7 @@ function ModelAnswerBlock({
       <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-900/70">
         {t('modelAnswerTitle')}
       </p>
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#1D2129]">
+      <p className="whitespace-pre-wrap text-sm leading-relaxed text-workspace-text">
         {component.text}
       </p>
       {component.audio_url ? (
@@ -387,15 +387,15 @@ function ProgressSummaryBlock({
 
   return (
     <div className="space-y-2 rounded-lg border border-gray-200 bg-gray-50/80 p-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">
         {t('progressSummaryTitle')}
       </p>
       {hasStructured ? (
         <dl className="space-y-1.5">
           {component.trend ? (
             <div className="flex items-start justify-between gap-3 text-sm">
-              <dt className="text-[#86909C]">{t('progressTrend')}</dt>
-              <dd className="font-medium text-[#1D2129]">
+              <dt className="text-workspace-muted">{t('progressTrend')}</dt>
+              <dd className="font-medium text-workspace-text">
                 {t(`progressTrendValues.${component.trend}`, {
                   defaultValue: component.trend,
                 })}
@@ -404,17 +404,17 @@ function ProgressSummaryBlock({
           ) : null}
           {component.current_estimate != null ? (
             <div className="flex items-start justify-between gap-3 text-sm">
-              <dt className="text-[#86909C]">{t('progressCurrentEstimate')}</dt>
-              <dd className="font-medium text-[#1D2129]">{component.current_estimate}</dd>
+              <dt className="text-workspace-muted">{t('progressCurrentEstimate')}</dt>
+              <dd className="font-medium text-workspace-text">{component.current_estimate}</dd>
             </div>
           ) : null}
           {window &&
           (window.from != null || window.to != null || window.delta != null) ? (
             <div className="flex items-start justify-between gap-3 text-sm">
-              <dt className="text-[#86909C]">
+              <dt className="text-workspace-muted">
                 {t('progressWindow', { count: window.n ?? 0 })}
               </dt>
-              <dd className="font-medium text-[#1D2129]">
+              <dd className="font-medium text-workspace-text">
                 {window.from != null && window.to != null
                   ? t('progressWindowRange', {
                       from: window.from,
@@ -434,7 +434,7 @@ function ProgressSummaryBlock({
           {component.resolved_tags!.map((tag) => (
             <span
               key={tag}
-              className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-[#4E5969] ring-1 ring-gray-200"
+              className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-workspace-secondary ring-1 ring-gray-200"
             >
               {tag}
             </span>
@@ -448,8 +448,8 @@ function ProgressSummaryBlock({
               key={`${item.label}-${index}`}
               className="flex items-start justify-between gap-3 text-sm"
             >
-              <dt className="text-[#86909C]">{item.label}</dt>
-              <dd className="font-medium text-[#1D2129]">{item.value}</dd>
+              <dt className="text-workspace-muted">{item.label}</dt>
+              <dd className="font-medium text-workspace-text">{item.value}</dd>
             </div>
           ))}
         </dl>

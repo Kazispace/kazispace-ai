@@ -18,24 +18,25 @@ const config: Config = {
           foreground: 'hsl(var(--muted-foreground))',
         },
         /**
-         * Primary/CTA color switched from orange to the UX guide's blue
-         * (SSOT: docs/ux/clinic-specialist-ux-guide-v1.0.md §6.1 in the
-         * design repo) — the orange previously here read as too promo/
-         * e-commerce for the product. `kazi.orange` / the flat `orange`
-         * token below are kept pointing at the same blue values so the
-         * ~100 existing call sites don't need a mechanical rename to
-         * pick up the new color; new code should reach for `primary`
-         * directly. `kazi.brand-accent` preserves the literal orange for
-         * the few Header/Hero wordmark spots the guide's compromise keeps
+         * Primary/CTA color: the UX guide's blue (SSOT:
+         * docs/ux/clinic-specialist-ux-guide-v1.0.md §6.1 in the design
+         * repo) — a prior orange here read as too promo/e-commerce for the
+         * product. `kazi.brand-accent` preserves the literal orange for the
+         * few Header/Hero wordmark spots the guide's compromise keeps
          * branded (navy background + orange "Kazi" mark).
+         *
+         * KAZI-656: this used to also carry a `kazi.orange`/flat `orange`
+         * pair of legacy token paths pointing at the same blue, kept only
+         * so ~100 call sites didn't need a mechanical rename in the same
+         * change that flipped the color. That rename is done — every call
+         * site now reaches for `primary`/`kazi-navy` directly — so those
+         * duplicate paths are removed.
          */
         primary: {
           DEFAULT: '#2563EB',
           dark: '#1D4ED8',
         },
         kazi: {
-          orange: '#2563EB',
-          'orange-dark': '#1D4ED8',
           navy: '#0D1B2A',
           navy2: '#132237',
           'brand-accent': '#D96E28',
@@ -45,14 +46,6 @@ const config: Config = {
         /** User-sent message (Clinic) — cool tint, aligns with UX blue user bubble guidance */
         'user-bubble': '#E6F0FF',
         'user-bubble-border': '#C5DBF7',
-        orange: {
-          DEFAULT: '#2563EB',
-          d: '#1D4ED8',
-        },
-        navy: {
-          DEFAULT: '#0D1B2A',
-          2: '#132237',
-        },
         'gray-bg': '#F5F7FA',
         text: '#1A2B3C',
         workspace: {
@@ -62,6 +55,9 @@ const config: Config = {
           header: '#FAFBFC',
           border: '#E5E6EB',
           text: '#1D2129',
+          /** Secondary body text — between `text` and `muted`. Promoted from a
+           * raw `#4E5969` literal reused identically across 14 files (KAZI-656). */
+          secondary: '#4E5969',
           muted: '#86909C',
           hover: '#F2F3F5',
           active: '#EFF6FF',

@@ -89,7 +89,7 @@ export function CvWorkspaceTabs({
               {label}
               {indicator === 'download' ? (
                 <span
-                  className="h-1.5 w-1.5 rounded-full bg-kazi-orange"
+                  className="h-1.5 w-1.5 rounded-full bg-primary"
                   title={t('downloadPdfShort')}
                   aria-hidden
                 />
@@ -102,7 +102,7 @@ export function CvWorkspaceTabs({
               ) : null}
             </span>
             {selected ? (
-              <span className="absolute inset-x-4 bottom-0 h-0.5 rounded-full bg-kazi-orange" />
+              <span className="absolute inset-x-4 bottom-0 h-0.5 rounded-full bg-primary" />
             ) : null}
           </button>
         );

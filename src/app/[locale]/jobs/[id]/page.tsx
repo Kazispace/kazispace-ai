@@ -21,7 +21,7 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
       <main className="pt-20 px-4 max-w-lg mx-auto">
         <Link
           href={`/${locale}/jobs`}
-          className="text-sm text-kazi-orange font-medium mb-4 inline-block"
+          className="text-sm text-primary font-medium mb-4 inline-block"
         >
           {t("backToList")}
         </Link>

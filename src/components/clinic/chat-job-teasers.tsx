@@ -54,7 +54,7 @@ export function ChatJobTeasers({ cards, locale, onCardClick }: ChatJobTeasersPro
               )}
             </div>
             {card.match_score != null && (
-              <span className="text-xs font-semibold text-kazi-orange shrink-0">
+              <span className="text-xs font-semibold text-primary shrink-0">
                 {t("matchScore", { score: Math.round(card.match_score) })}
               </span>
             )}
@@ -65,7 +65,7 @@ export function ChatJobTeasers({ cards, locale, onCardClick }: ChatJobTeasersPro
         );
 
         const cardClassName =
-          "flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:border-kazi-orange/40 hover:bg-blue-50/50";
+          "flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:border-primary/40 hover:bg-blue-50/50";
 
         if (onCardClick) {
           return (

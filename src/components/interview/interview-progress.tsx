@@ -18,7 +18,7 @@ export function InterviewProgress({ questionIndex, questionCount }: InterviewPro
       </p>
       <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-kazi-orange to-red-600 transition-all duration-300"
+          className="h-full bg-gradient-to-r from-primary to-red-600 transition-all duration-300"
           style={{ width: `${Math.min(100, pct)}%` }}
         />
       </div>

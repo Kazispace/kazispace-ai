@@ -62,12 +62,12 @@ export default function MinePage({ params }: MinePageProps) {
 
       <main className="pt-20 px-4 max-w-lg mx-auto space-y-6">
         {/* User Card — compact hero (~25% of prior stacked layout) */}
-        <Card className="bg-gradient-to-br from-navy to-navy-2 border-0">
+        <Card className="bg-gradient-to-br from-kazi-navy to-kazi-navy2 border-0">
           <CardContent className="px-4 py-2.5">
             <div className="flex items-center justify-between gap-2 text-xs leading-none mb-2">
               <Link
                 href={`/${locale}/chat`}
-                className="text-kazi-orange/90 hover:text-kazi-orange font-medium transition-colors shrink-0"
+                className="text-primary/90 hover:text-primary font-medium transition-colors shrink-0"
               >
                 {tChat("backToClinic")}
               </Link>
@@ -80,7 +80,7 @@ export default function MinePage({ params }: MinePageProps) {
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-orange to-amber-500 flex items-center justify-center text-base font-bold text-white">
+              <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center text-base font-bold text-white">
                 {displayInitial}
               </div>
               <div className="min-w-0 flex-1">
@@ -106,8 +106,8 @@ export default function MinePage({ params }: MinePageProps) {
         <div className="grid grid-cols-3 gap-3">
           <Card>
             <CardContent className="p-4 text-center">
-              <FileText className="w-6 h-6 text-orange mx-auto mb-2" />
-              <div className="text-2xl font-bold text-navy">
+              <FileText className="w-6 h-6 text-primary mx-auto mb-2" />
+              <div className="text-2xl font-bold text-kazi-navy">
                 {billingLoading ? "…" : (balance?.cvCredits ?? 0)}
               </div>
               <div className="text-xs text-muted">{t("cvCreditsLabel")}</div>
@@ -116,7 +116,7 @@ export default function MinePage({ params }: MinePageProps) {
           <Card>
             <CardContent className="p-4 text-center">
               <Mic className="w-6 h-6 text-blue mx-auto mb-2" />
-              <div className="text-2xl font-bold text-navy">
+              <div className="text-2xl font-bold text-kazi-navy">
                 {billingLoading ? "…" : (balance?.interviewCredits ?? 0)}
               </div>
               <div className="text-xs text-muted">{t("mockInterviewsLabel")}</div>
@@ -125,7 +125,7 @@ export default function MinePage({ params }: MinePageProps) {
           <Card>
             <CardContent className="p-4 text-center">
               <Zap className="w-6 h-6 text-green mx-auto mb-2" />
-              <div className="text-2xl font-bold text-navy">0</div>
+              <div className="text-2xl font-bold text-kazi-navy">0</div>
               <div className="text-xs text-muted">{t("streakLabel")}</div>
             </CardContent>
           </Card>
@@ -145,10 +145,10 @@ export default function MinePage({ params }: MinePageProps) {
           </h3>
           <div className="space-y-2">
             <Link href={buildClinicChatHref(locale)}>
-              <Card className="hover:border-orange cursor-pointer transition-colors">
+              <Card className="hover:border-primary cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-orange" />
+                    <FileText className="w-5 h-5 text-primary" />
                     <span className="font-medium">{t("cvRepoLabel")}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted">
@@ -159,7 +159,7 @@ export default function MinePage({ params }: MinePageProps) {
               </Card>
             </Link>
             <Link href={`/${locale}/interview`}>
-              <Card className="hover:border-orange cursor-pointer transition-colors">
+              <Card className="hover:border-primary cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Mic className="w-5 h-5 text-blue" />
@@ -179,7 +179,7 @@ export default function MinePage({ params }: MinePageProps) {
           </h3>
           <div className="space-y-2">
             <Link href={`/${locale}/profile`}>
-              <Card className="hover:border-orange cursor-pointer transition-colors">
+              <Card className="hover:border-primary cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <User className="w-5 h-5 text-muted" />
@@ -210,7 +210,7 @@ export default function MinePage({ params }: MinePageProps) {
           </h3>
           <div className="space-y-2">
             <Link href={`/${locale}/subscription`}>
-              <Card className="hover:border-orange cursor-pointer transition-colors">
+              <Card className="hover:border-primary cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <CreditCard className="w-5 h-5 text-muted" />
@@ -221,7 +221,7 @@ export default function MinePage({ params }: MinePageProps) {
               </Card>
             </Link>
             <Link href={`/${locale}/ledger`}>
-              <Card className="hover:border-orange cursor-pointer transition-colors">
+              <Card className="hover:border-primary cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <CreditCard className="w-5 h-5 text-muted" />

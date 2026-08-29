@@ -49,18 +49,18 @@ export function SessionHeaderDrawer({
         aria-modal="true"
         aria-labelledby="session-header-drawer-title"
         className={cn(
-          'absolute inset-x-0 top-12 z-40 max-h-[min(360px,50vh)] overflow-hidden border-b border-[#E5E6EB] bg-white shadow-lg',
+          'absolute inset-x-0 top-12 z-40 max-h-[min(360px,50vh)] overflow-hidden border-b border-workspace-border bg-white shadow-lg',
           className
         )}
       >
-        <div className="flex items-center justify-between border-b border-[#F2F3F5] px-4 py-2">
-          <h2 id="session-header-drawer-title" className="text-sm font-semibold text-[#1D2129]">
+        <div className="flex items-center justify-between border-b border-workspace-hover px-4 py-2">
+          <h2 id="session-header-drawer-title" className="text-sm font-semibold text-workspace-text">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-[#86909C] hover:bg-[#F2F3F5]"
+            className="rounded p-1 text-workspace-muted hover:bg-workspace-hover"
             aria-label={t('closeDrawer')}
           >
             <X className="h-4 w-4" />

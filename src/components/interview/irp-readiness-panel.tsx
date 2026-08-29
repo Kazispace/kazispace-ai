@@ -81,7 +81,7 @@ export function IrpReadinessPanel({
     <Card>
       <CardContent className="p-5 space-y-4">
         <div className="flex items-start gap-3">
-          <Target className="w-5 h-5 text-kazi-orange shrink-0 mt-0.5" />
+          <Target className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div>
             <p className="text-xs uppercase tracking-wide text-gray-500">
               {t('readiness.title')}

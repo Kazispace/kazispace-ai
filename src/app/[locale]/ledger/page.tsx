@@ -42,7 +42,7 @@ export default function LedgerPage({ params }: LedgerPageProps) {
         <div className="grid grid-cols-2 gap-4 mb-6">
           <Card>
             <CardContent className="p-4 text-center">
-              <FileText className="w-5 h-5 text-kazi-orange mx-auto mb-2" />
+              <FileText className="w-5 h-5 text-primary mx-auto mb-2" />
               <div className="text-2xl font-bold">
                 {billingLoading ? "…" : cvBalance}
               </div>

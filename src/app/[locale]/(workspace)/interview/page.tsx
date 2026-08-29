@@ -204,8 +204,8 @@ function InterviewPageContent({ locale }: { locale: string }) {
           </p>
         )}
         {phase === "feedback_pending" && (
-          <div className="flex items-center gap-1.5 text-xs text-kazi-orange mt-0.5">
-            <div className="w-3 h-3 border-2 border-kazi-orange/30 border-t-kazi-orange rounded-full animate-spin shrink-0" />
+          <div className="flex items-center gap-1.5 text-xs text-primary mt-0.5">
+            <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
             <span>{t("feedbackPending")}</span>
           </div>
         )}
@@ -245,7 +245,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
             <HubWorkflowStrip workflow={activeWorkflow} locale={locale} />
             <div className={HUB_CHAT_COLUMN_CLASS}>
               <div className="flex flex-col items-center justify-center gap-3 py-12">
-                <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
                 <p className="text-sm text-gray-600">{t("sessionLoading")}</p>
               </div>
             </div>
@@ -265,7 +265,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
         {phase === "feedback_pending" && (
           <div className={HUB_CHAT_TRAILING_COLUMN_CLASS}>
             <div className="flex items-center gap-2 text-sm text-gray-500 self-start">
-              <div className="w-4 h-4 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin shrink-0" />
+              <div className="w-4 h-4 border-2 border-gray-200 border-t-primary rounded-full animate-spin shrink-0" />
               <span>{t("feedbackPending")}</span>
             </div>
           </div>
@@ -313,7 +313,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
       {phase === "feedback_pending" && (
         <div className="flex items-center justify-between gap-2 px-4 py-2 bg-blue-50 border-b border-blue-100">
           <div className="flex items-center gap-2 text-sm text-gray-700 min-w-0">
-            <div className="w-4 h-4 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin shrink-0" />
+            <div className="w-4 h-4 border-2 border-gray-200 border-t-primary rounded-full animate-spin shrink-0" />
             <span className="truncate">{t("feedbackPending")}</span>
           </div>
           <Button

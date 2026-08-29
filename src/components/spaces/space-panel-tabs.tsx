@@ -81,7 +81,7 @@ export function SpacePanelTabs({
             {label}
             <span
               className={cn(
-                'absolute inset-x-4 bottom-0 h-0.5 rounded-full bg-kazi-orange',
+                'absolute inset-x-4 bottom-0 h-0.5 rounded-full bg-primary',
                 mobileSelected ? 'block lg:hidden' : 'hidden',
                 dtSelected && 'lg:block'
               )}

@@ -126,7 +126,7 @@ export function AgentSessionPanel({
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-8 w-8 text-gray-500 hover:text-kazi-orange"
+                className="h-8 w-8 text-gray-500 hover:text-primary"
                 disabled={disabled}
                 onClick={onNew}
                 aria-label={newLabel ?? t('newSession')}

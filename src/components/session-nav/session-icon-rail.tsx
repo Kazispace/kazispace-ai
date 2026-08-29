@@ -64,9 +64,9 @@ export function SessionIconRail({
       aria-label={label}
       title={label}
       className={cn(
-        'relative flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]',
+        'relative flex h-10 w-10 items-center justify-center rounded-lg text-workspace-muted transition-colors hover:bg-workspace-hover hover:text-workspace-text',
         active &&
-          'bg-workspace-active text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
+          'bg-workspace-active text-primary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary'
       )}
     >
       {icon}
@@ -80,12 +80,12 @@ export function SessionIconRail({
   return (
     <nav
       aria-label={t('iconRail')}
-      className="hidden md:flex w-12 shrink-0 flex-col items-center gap-1 border-r border-[#E5E6EB] bg-[#F4F5F7] py-3"
+      className="hidden md:flex w-12 shrink-0 flex-col items-center gap-1 border-r border-workspace-border bg-workspace-bg py-3"
     >
       <Link
         href={`/${locale}`}
         onClick={() => markNavIntent()}
-        className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold text-kazi-orange"
+        className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold text-primary"
         aria-label="KaziSpace"
       >
         K
@@ -97,8 +97,8 @@ export function SessionIconRail({
         className={cn(
           'relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
           isClinic
-            ? 'bg-workspace-active text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
-            : 'text-[#86909C] hover:bg-[#F2F3F5]'
+            ? 'bg-workspace-active text-primary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary'
+            : 'text-workspace-muted hover:bg-workspace-hover'
         )}
         aria-label={t('clinic')}
         title={t('clinic')}
@@ -118,7 +118,7 @@ export function SessionIconRail({
           href={`/${locale}/mine`}
           prefetch={false}
           onClick={() => markNavIntent()}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-workspace-muted hover:bg-workspace-hover"
           aria-label={t('settings')}
           title={t('settings')}
         >
@@ -132,7 +132,7 @@ export function SessionIconRail({
               else if (panelMode === 'files') onOpenFilesPanel();
               else onOpenSearchPanel();
             }}
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-workspace-muted hover:bg-workspace-hover"
             aria-label={t('collapsePanel')}
             title={t('collapsePanel')}
           >

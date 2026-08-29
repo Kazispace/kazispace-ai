@@ -51,8 +51,8 @@ export function SessionIconRailCredits({ locale }: SessionIconRailCreditsProps) 
         aria-label={t('creditsSignIn')}
         title={t('creditsSignIn')}
       >
-        <Coins className="h-4 w-4 text-[#4E5969]" strokeWidth={PRIMARY_ICON_STROKE} aria-hidden />
-        <span className="text-xs font-bold leading-none text-[#86909C]">—</span>
+        <Coins className="h-4 w-4 text-workspace-secondary" strokeWidth={PRIMARY_ICON_STROKE} aria-hidden />
+        <span className="text-xs font-bold leading-none text-workspace-muted">—</span>
       </Link>
     );
   }
@@ -114,10 +114,10 @@ export function SessionNavPrimaryIconButton({
     <button
       type="button"
       className={cn(
-        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D0D3D9] bg-white text-[#1D2129]',
+        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D0D3D9] bg-white text-workspace-text',
         'shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-colors',
-        'hover:border-kazi-orange/45 hover:bg-workspace-active hover:text-kazi-orange',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+        'hover:border-primary/45 hover:bg-workspace-active hover:text-primary',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className
       )}

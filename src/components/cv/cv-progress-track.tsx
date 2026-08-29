@@ -46,7 +46,7 @@ export function CvProgressTrack({
       <div className="h-1 rounded-full bg-white/10 overflow-hidden">
         <div
           className={cn(
-            'h-full rounded-full bg-kazi-orange transition-all duration-500 ease-out',
+            'h-full rounded-full bg-primary transition-all duration-500 ease-out',
             isWorking && 'animate-pulse'
           )}
           style={{ width: `${Math.max(pct, 8)}%` }}

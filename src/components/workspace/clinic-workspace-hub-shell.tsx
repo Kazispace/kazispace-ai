@@ -105,7 +105,7 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
           <button
             type="button"
             onClick={backToGrid}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4E5969] hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             aria-label={t('backToHub')}
           >
             <ArrowLeft className="h-5 w-5" aria-hidden />
@@ -113,19 +113,19 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
         ) : (
           <Link
             href={chatHref}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#4E5969] hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             aria-label={t('backToHub')}
           >
             <ArrowLeft className="h-5 w-5" aria-hidden />
           </Link>
         )}
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-semibold text-[#1D2129]">
+          <h1 className="truncate text-sm font-semibold text-workspace-text">
             {view === 'preview' && previewAsset
               ? previewAsset.display_name
               : t('title')}
           </h1>
-          <p className="truncate text-xs text-[#86909C]">
+          <p className="truncate text-xs text-workspace-muted">
             {view === 'preview' && previewAsset?.subtitle
               ? previewAsset.subtitle
               : t('subtitle')}
@@ -153,7 +153,7 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
           />
         ) : deepLinkAssetId && deepLinkQuery.isLoading ? (
           <div className="flex flex-1 items-center justify-center py-16 text-gray-500">
-            <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+            <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
           </div>
         ) : deepLinkAssetId && deepLinkQuery.isError ? (
           <div className="flex flex-col items-center justify-center gap-3 px-4 py-16 text-center">
@@ -165,7 +165,7 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
             <button
               type="button"
               onClick={() => router.replace(buildClinicHubHref(locale))}
-              className="text-sm font-medium text-kazi-orange hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+              className="text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               {t('backToHub')}
             </button>
@@ -187,7 +187,7 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
 function ClinicWorkspaceHubLoading() {
   return (
     <div className="flex flex-1 items-center justify-center py-16 text-gray-500">
-      <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+      <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
     </div>
   );
 }

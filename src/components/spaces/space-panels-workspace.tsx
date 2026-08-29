@@ -209,7 +209,7 @@ export function SpacePanelsWorkspace({
 
   if (panels.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center px-6 text-center text-sm text-[#86909C]">
+      <div className="flex h-full items-center justify-center px-6 text-center text-sm text-workspace-muted">
         {t('templateWorkspaceComingSoon')}
       </div>
     );

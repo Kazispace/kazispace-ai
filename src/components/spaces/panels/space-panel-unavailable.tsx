@@ -19,8 +19,8 @@ export function SpacePanelUnavailable({ panelId, className }: SpacePanelUnavaila
         className
       )}
     >
-      <p className="text-sm font-medium text-[#1D2129]">{t('panelUnavailable')}</p>
-      <p className="text-xs text-[#86909C]">
+      <p className="text-sm font-medium text-workspace-text">{t('panelUnavailable')}</p>
+      <p className="text-xs text-workspace-muted">
         {t('panelUnavailableDetail', { panelId })}
       </p>
     </div>

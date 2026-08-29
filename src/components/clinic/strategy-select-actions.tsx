@@ -25,7 +25,7 @@ interface StrategySelectActionsProps {
 
 function RecommendedBadge({ label }: { label: string }) {
   return (
-    <span className="shrink-0 rounded border border-kazi-orange/30 bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-kazi-orange">
+    <span className="shrink-0 rounded border border-primary/30 bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary">
       {label}
     </span>
   );
@@ -75,7 +75,7 @@ export function StrategySelectActions({
           className={cn(
             "h-auto min-h-11 w-full flex-col items-start justify-start gap-1 whitespace-normal py-2.5 text-left",
             isSelected &&
-              "border-kazi-orange bg-blue-50 text-gray-900 hover:bg-blue-50"
+              "border-primary bg-blue-50 text-gray-900 hover:bg-blue-50"
           )}
           aria-label={label}
           aria-pressed={isSelected || undefined}
@@ -125,7 +125,7 @@ export function StrategySelectActions({
                   ? "cursor-default bg-transparent"
                   : "bg-transparent transition-colors hover:bg-gray-50",
                 isSelected && "bg-blue-50/70",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kazi-orange/40",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 !isLast && "border-b border-gray-200"
               )}
@@ -134,7 +134,7 @@ export function StrategySelectActions({
                 className={cn(
                   "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2",
                   isSelected
-                    ? "border-kazi-orange bg-kazi-orange"
+                    ? "border-primary bg-primary"
                     : "border-gray-900"
                 )}
                 aria-hidden

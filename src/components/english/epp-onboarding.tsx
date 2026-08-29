@@ -56,7 +56,7 @@ export function EppOnboarding({ onComplete, isSaving }: EppOnboardingProps) {
                   onClick={() => setCareerGoal(goal)}
                   className={`text-left text-sm rounded-lg border px-3 py-2 transition-colors ${
                     careerGoal === goal
-                      ? 'border-kazi-orange bg-kazi-orange/5 text-kazi-navy'
+                      ? 'border-primary bg-primary/5 text-kazi-navy'
                       : 'border-gray-200 text-gray-700'
                   }`}
                 >
@@ -76,7 +76,7 @@ export function EppOnboarding({ onComplete, isSaving }: EppOnboardingProps) {
                   onClick={() => setSelfBand(band)}
                   className={`text-left text-sm rounded-lg border px-3 py-2 transition-colors ${
                     selfBand === band
-                      ? 'border-kazi-orange bg-kazi-orange/5 text-kazi-navy'
+                      ? 'border-primary bg-primary/5 text-kazi-navy'
                       : 'border-gray-200 text-gray-700'
                   }`}
                 >

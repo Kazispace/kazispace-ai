@@ -98,8 +98,8 @@ export function WelcomeView({
             className={cn(
               "text-sm px-4 py-1.5 rounded-full border transition-colors",
               (selectedLevel ?? getEnglishLevel()) === value
-                ? "bg-kazi-orange text-white border-kazi-orange"
-                : "border-gray-200 text-gray-600 hover:border-kazi-orange"
+                ? "bg-primary text-white border-primary"
+                : "border-gray-200 text-gray-600 hover:border-primary"
             )}
           >
             {tClinic(`englishLevel.${key}`)}

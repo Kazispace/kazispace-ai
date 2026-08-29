@@ -86,9 +86,9 @@ export function StarterCapabilityToolbar({
             requestComposerInsert(t(cap.insertTextKey), insertTarget, 'replace')
           }
           className={cn(
-            'shrink-0 rounded-full border border-[#E5E6EB]/90 bg-[#F7F8FA]/90',
-            'px-2 py-0.5 text-[11px] leading-none text-[#4E5969]',
-            'transition-colors hover:border-kazi-orange/40 hover:bg-workspace-active hover:text-kazi-orange',
+            'shrink-0 rounded-full border border-workspace-border/90 bg-[#F7F8FA]/90',
+            'px-2 py-0.5 text-[11px] leading-none text-workspace-secondary',
+            'transition-colors hover:border-primary/40 hover:bg-workspace-active hover:text-primary',
             'disabled:opacity-50'
           )}
         >
@@ -130,15 +130,15 @@ export function StarterExampleStrip({
         onClick={() => onToggleCollapsed(false)}
         className={cn(
           'group flex w-full items-center justify-between gap-2 rounded-full',
-          'border border-[#E5E6EB]/80 bg-white/70 px-3 py-1.5',
-          'text-left text-[12px] text-[#4E5969]',
-          'transition-colors hover:border-kazi-orange/35 hover:text-[#1D2129]',
+          'border border-workspace-border/80 bg-white/70 px-3 py-1.5',
+          'text-left text-[12px] text-workspace-secondary',
+          'transition-colors hover:border-primary/35 hover:text-workspace-text',
           'disabled:opacity-50'
         )}
       >
         <span className="inline-flex items-center gap-1.5">
           <Sparkles
-            className="h-3.5 w-3.5 text-kazi-orange/70 group-hover:text-kazi-orange"
+            className="h-3.5 w-3.5 text-primary/70 group-hover:text-primary"
             aria-hidden
           />
           {t('starter.tryThese')}
@@ -164,9 +164,9 @@ export function StarterExampleStrip({
             title={t(ex.promptKey)}
             onClick={() => onSendExample(t(ex.promptKey))}
             className={cn(
-              'max-w-full truncate rounded-full border border-[#E5E6EB]/90 bg-white/80',
-              'px-2.5 py-1 text-[11px] text-[#4E5969]',
-              'transition-colors hover:border-kazi-orange/40 hover:bg-workspace-active hover:text-[#1D2129]',
+              'max-w-full truncate rounded-full border border-workspace-border/90 bg-white/80',
+              'px-2.5 py-1 text-[11px] text-workspace-secondary',
+              'transition-colors hover:border-primary/40 hover:bg-workspace-active hover:text-workspace-text',
               'disabled:opacity-50'
             )}
           >
@@ -180,7 +180,7 @@ export function StarterExampleStrip({
         aria-expanded={true}
         aria-controls={panelId}
         onClick={() => onToggleCollapsed(true)}
-        className="inline-flex shrink-0 items-center gap-0.5 pt-0.5 text-[11px] text-[#86909C] hover:text-[#1D2129] disabled:opacity-50"
+        className="inline-flex shrink-0 items-center gap-0.5 pt-0.5 text-[11px] text-workspace-muted hover:text-workspace-text disabled:opacity-50"
       >
         {t('starter.collapse')}
         <ChevronUp className="h-3 w-3" aria-hidden />

@@ -163,7 +163,7 @@ export function IrpGrowthHistory({ items, badges = [], isPro = false }: IrpGrowt
               {badges.map((badge) => (
                 <li
                   key={badge.badge_id}
-                  className="text-xs bg-kazi-orange/10 text-kazi-navy border border-kazi-orange/20 rounded-full px-3 py-1"
+                  className="text-xs bg-primary/10 text-kazi-navy border border-primary/20 rounded-full px-3 py-1"
                 >
                   {badge.label}
                 </li>

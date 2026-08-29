@@ -69,7 +69,7 @@ export function ClinicParkedCapabilityBanner({
   return (
     <div
       className={cn(
-        'flex items-center gap-2 rounded-xl border border-kazi-orange/35 bg-blue-50/90 px-3 py-2',
+        'flex items-center gap-2 rounded-xl border border-primary/35 bg-blue-50/90 px-3 py-2',
         className
       )}
       role="status"
@@ -77,12 +77,12 @@ export function ClinicParkedCapabilityBanner({
       <span className="text-lg shrink-0" aria-hidden>
         {agent?.emoji ?? '📌'}
       </span>
-      <p className="min-w-0 flex-1 text-xs text-[#1D2129]">
+      <p className="min-w-0 flex-1 text-xs text-workspace-text">
         <span className="font-medium">
           {t('parkInProgress', { agent: displayName })}
         </span>
         {session.title?.trim() ? (
-          <span className="mt-0.5 block truncate text-[11px] text-[#4E5969]">
+          <span className="mt-0.5 block truncate text-[11px] text-workspace-secondary">
             {session.title.trim()}
           </span>
         ) : null}
@@ -92,10 +92,10 @@ export function ClinicParkedCapabilityBanner({
         disabled={disabled || busy}
         onClick={() => void handleContinue()}
         className={cn(
-          'inline-flex shrink-0 items-center gap-1 rounded-full bg-kazi-orange px-2.5 py-1',
+          'inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-2.5 py-1',
           'text-[11px] font-medium text-white transition-colors',
-          'hover:bg-kazi-orange/90 disabled:cursor-not-allowed disabled:opacity-50',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40'
+          'hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
         )}
       >
         {busy ? (

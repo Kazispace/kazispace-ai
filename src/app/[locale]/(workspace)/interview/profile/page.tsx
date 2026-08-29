@@ -35,7 +35,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
   if (isProfileLoading) {
     return (
       <div className="flex-1 flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
@@ -54,7 +54,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
   if (!profile) {
     return (
       <div className="flex-1 flex flex-col max-w-lg mx-auto w-full p-4 gap-4">
-        <Link href={`/${locale}/interview`} className="text-xs text-kazi-orange font-medium">
+        <Link href={`/${locale}/interview`} className="text-xs text-primary font-medium">
           {t("profile.back")}
         </Link>
         <p className="text-sm text-gray-600">{t("readiness.noProfile")}</p>
@@ -68,7 +68,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
   return (
     <div className="flex-1 flex flex-col">
       <div className="max-w-lg mx-auto w-full px-4 pt-4">
-        <Link href={`/${locale}/interview`} className="text-xs text-kazi-orange font-medium">
+        <Link href={`/${locale}/interview`} className="text-xs text-primary font-medium">
           {t("profile.back")}
         </Link>
       </div>

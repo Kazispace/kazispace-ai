@@ -396,11 +396,11 @@ export function SpaceChatPane({
         'absolute bottom-3 left-1/2 z-20 flex h-10 w-10 -translate-x-1/2',
         'items-center justify-center rounded-full border border-gray-100 bg-white',
         'shadow-[0_2px_8px_rgba(0,0,0,0.12)] transition-opacity hover:bg-gray-50',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
       )}
       aria-label={t('scrollToLatest')}
     >
-      <ChevronDown className="h-5 w-5 text-[#1D2129]" strokeWidth={2} aria-hidden />
+      <ChevronDown className="h-5 w-5 text-workspace-text" strokeWidth={2} aria-hidden />
     </button>
   ) : null;
 
@@ -434,7 +434,7 @@ export function SpaceChatPane({
             <p className="py-8 text-center text-sm text-red-600">{t('spaceNotReady')}</p>
           ) : firstPaintKind === 'loading' ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
-              <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
               <p className="text-sm">{t('loading')}</p>
             </div>
           ) : firstPaintKind === 'error' ? (
@@ -447,7 +447,7 @@ export function SpaceChatPane({
               disabled={isHistoryFetching}
             />
           ) : firstPaintKind === 'welcome' ? (
-            <p className="py-8 text-center text-sm text-[#86909C]">{t(welcomeKey)}</p>
+            <p className="py-8 text-center text-sm text-workspace-muted">{t(welcomeKey)}</p>
           ) : (
             <SpaceMessageList
               messages={messages}
@@ -479,7 +479,7 @@ export function SpaceChatPane({
               <p
                 className={cn(
                   'text-center text-xs',
-                  replyNotice.kind === 'pending' ? 'text-[#86909C]' : 'text-red-600'
+                  replyNotice.kind === 'pending' ? 'text-workspace-muted' : 'text-red-600'
                 )}
               >
                 {replyNotice.message}

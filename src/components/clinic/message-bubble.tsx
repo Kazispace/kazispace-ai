@@ -249,15 +249,15 @@ export function MessageBubble({
                 ? "bg-workspace-input text-workspace-muted"
                 : "bg-gray-100 text-muted-foreground"
               : isWorkspace
-                ? "bg-workspace-active text-kazi-orange"
-                : "bg-blue-100 text-kazi-orange"
+                ? "bg-workspace-active text-primary"
+                : "bg-blue-100 text-primary"
           )}
         >
           {isUser ? (
             <User className="h-4 w-4" strokeWidth={2.25} aria-hidden />
           ) : (
             <Bot
-              className="h-4 w-4 text-kazi-orange"
+              className="h-4 w-4 text-primary"
               strokeWidth={2.25}
               aria-hidden
             />
@@ -288,7 +288,7 @@ export function MessageBubble({
               isUser
               ? isFailed
                 ? "bg-red-950/40 text-red-200 border border-red-800/60 rounded-br-[4px]"
-                : "bg-user-bubble text-[#1D2129] border border-user-bubble-border rounded-br-[4px]"
+                : "bg-user-bubble text-workspace-text border border-user-bubble-border rounded-br-[4px]"
               : variant === "agent"
                 ? isWorkspace
                   ? "bg-workspace-active text-workspace-text border border-workspace-border rounded-bl-[4px]"
@@ -379,7 +379,7 @@ export function MessageBubble({
             />
           ) : null}
           {showIntentBadge && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-blue-100 text-kazi-orange">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-blue-100 text-primary">
               {intent === "RESUME_OPTIMIZE" ? (
                 <>
                   <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />

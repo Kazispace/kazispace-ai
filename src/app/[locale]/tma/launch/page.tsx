@@ -86,7 +86,7 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 bg-gray-bg">
-        <div className="w-10 h-10 border-2 border-kazi-orange border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="text-sm text-gray-600">{t('launching')}</p>
       </div>
     );

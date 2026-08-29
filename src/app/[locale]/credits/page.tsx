@@ -38,7 +38,7 @@ export default function CreditsPage({ params }: CreditsPageProps) {
           <div className="grid grid-cols-2 gap-4 mb-8">
             <Card>
               <CardContent className="p-6 text-center">
-                <FileText className="w-8 h-8 text-kazi-orange mx-auto mb-3" />
+                <FileText className="w-8 h-8 text-primary mx-auto mb-3" />
                 <div className="text-4xl font-extrabold text-kazi-navy">{total}</div>
                 <div className="text-sm text-gray-500 mt-1">{t("totalCredits")}</div>
               </CardContent>

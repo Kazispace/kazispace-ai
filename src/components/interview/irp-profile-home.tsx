@@ -112,7 +112,7 @@ export function IrpProfileHome({
                   }`}
                 >
                   <div
-                    className={`h-full rounded-full ${isProvisional ? 'bg-gray-400' : 'bg-kazi-orange'}`}
+                    className={`h-full rounded-full ${isProvisional ? 'bg-gray-400' : 'bg-primary'}`}
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
@@ -122,7 +122,7 @@ export function IrpProfileHome({
 
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="w-4 h-4 text-kazi-orange" />
+              <TrendingUp className="w-4 h-4 text-primary" />
               <h3 className="text-sm font-semibold text-kazi-navy">{t('dimensionsTitle')}</h3>
             </div>
             <IrpDimensionBars

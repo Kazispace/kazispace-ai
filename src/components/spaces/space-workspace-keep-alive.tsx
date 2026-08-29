@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
 function ClinicKeepAliveLoading() {
   return (
     <div className="flex flex-1 items-center justify-center py-16 text-gray-500">
-      <Loader2 className="h-6 w-6 animate-spin text-kazi-orange" aria-hidden />
+      <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden />
     </div>
   );
 }

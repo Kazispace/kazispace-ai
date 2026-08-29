@@ -30,27 +30,27 @@ export function EnglishWorkspace({ locale }: EnglishWorkspaceProps) {
       <nav className="flex flex-col gap-2">
         <Link
           href={`/${locale}/english/passport`}
-          className="text-sm text-kazi-orange hover:underline"
+          className="text-sm text-primary hover:underline"
         >
           {t('workspaceLinks.passportDetail')}
         </Link>
         {showOnboardingLink ? (
           <Link
             href={`/${locale}/english/onboarding`}
-            className="text-sm text-kazi-orange hover:underline"
+            className="text-sm text-primary hover:underline"
           >
             {t('workspaceLinks.onboarding')}
           </Link>
         ) : null}
         <Link
           href={`/${locale}/english/passport#sample-jobs`}
-          className="text-sm text-kazi-orange hover:underline"
+          className="text-sm text-primary hover:underline"
         >
           {t('workspaceLinks.sampleJobs')}
         </Link>
         <Link
           href={`/${locale}/english/growth`}
-          className="text-sm text-kazi-orange hover:underline"
+          className="text-sm text-primary hover:underline"
         >
           {t('workspaceLinks.growth')}
         </Link>

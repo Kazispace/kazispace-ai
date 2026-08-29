@@ -69,7 +69,7 @@ const markdownComponents: Components = {
       );
     }
     return (
-      <code className="rounded bg-blue-50 px-1 text-sm text-kazi-orange">
+      <code className="rounded bg-blue-50 px-1 text-sm text-primary">
         {children}
       </code>
     );
@@ -80,7 +80,7 @@ const markdownComponents: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="break-words text-kazi-orange underline underline-offset-2 hover:text-kazi-orange/80"
+      className="break-words text-primary underline underline-offset-2 hover:text-primary/80"
     >
       {children}
     </a>

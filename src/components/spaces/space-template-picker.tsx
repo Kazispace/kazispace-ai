@@ -38,16 +38,16 @@ function TemplateButton({
       disabled={disabled}
       onClick={() => onSelect(template.template_id)}
       className={cn(
-        'w-full rounded-lg border border-[#E5E6EB] px-4 py-3 text-left transition-colors',
-        'hover:border-kazi-orange hover:bg-[#FFF9F5] disabled:opacity-50'
+        'w-full rounded-lg border border-workspace-border px-4 py-3 text-left transition-colors',
+        'hover:border-primary hover:bg-[#FFF9F5] disabled:opacity-50'
       )}
     >
-      <span className="flex items-center gap-2 text-sm font-medium text-[#1D2129]">
+      <span className="flex items-center gap-2 text-sm font-medium text-workspace-text">
         <span aria-hidden>{emoji}</span>
         {title}
       </span>
       {desc ? (
-        <span className="mt-0.5 block pl-7 text-xs text-[#86909C]">{desc}</span>
+        <span className="mt-0.5 block pl-7 text-xs text-workspace-muted">{desc}</span>
       ) : null}
     </button>
   );
@@ -93,14 +93,14 @@ export function SpaceTemplatePicker({
         className="relative z-10 w-[min(400px,92vw)] rounded-xl bg-white p-4 shadow-xl"
       >
         <div className="mb-4 flex items-center justify-between gap-2">
-          <h2 id="space-template-picker-title" className="text-base font-semibold text-[#1D2129]">
+          <h2 id="space-template-picker-title" className="text-base font-semibold text-workspace-text">
             {t('pickerTitle')}
           </h2>
           <button
             ref={closeButtonRef}
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-[#86909C] hover:bg-[#F2F3F5]"
+            className="rounded p-1 text-workspace-muted hover:bg-workspace-hover"
             aria-label={t('closePicker')}
           >
             <X className="h-5 w-5" />
@@ -108,7 +108,7 @@ export function SpaceTemplatePicker({
         </div>
 
         {isLoading ? (
-          <p className="py-4 text-center text-sm text-[#86909C]">{t('loadingTemplates')}</p>
+          <p className="py-4 text-center text-sm text-workspace-muted">{t('loadingTemplates')}</p>
         ) : (
           <ul className="space-y-2">
             {templates.map((template) => (
@@ -124,8 +124,8 @@ export function SpaceTemplatePicker({
         )}
 
         {comingSoon.length > 0 ? (
-          <div className="mt-4 border-t border-[#E5E6EB] pt-3">
-            <p className="mb-2 text-xs font-medium text-[#86909C]">{t('comingSoonSection')}</p>
+          <div className="mt-4 border-t border-workspace-border pt-3">
+            <p className="mb-2 text-xs font-medium text-workspace-muted">{t('comingSoonSection')}</p>
             <ul className="space-y-2 opacity-60">
               {comingSoon.map((template) => (
                 <li key={template.template_id}>
@@ -135,7 +135,7 @@ export function SpaceTemplatePicker({
             </ul>
           </div>
         ) : (
-          <p className="mt-4 text-center text-xs text-[#86909C]">{t('browseMoreComingSoon')}</p>
+          <p className="mt-4 text-center text-xs text-workspace-muted">{t('browseMoreComingSoon')}</p>
         )}
       </div>
     </div>

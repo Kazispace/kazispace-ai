@@ -133,7 +133,7 @@ export function JobDetailBody({
           {job.salary && (
             <p
               className={cn(
-                'mb-4 font-semibold text-kazi-orange',
+                'mb-4 font-semibold text-primary',
                 isRail ? 'text-base' : 'text-lg'
               )}
             >

@@ -55,7 +55,7 @@ const TONE_ICON_CLASS: Record<AssetTone, string> = {
   readiness: 'bg-amber-50 text-amber-900 ring-amber-200/90',
   interview: 'bg-violet-50 text-violet-900 ring-violet-200/90',
   english: 'bg-emerald-50 text-emerald-900 ring-emerald-200/90',
-  work: 'bg-workspace-active text-kazi-navy ring-kazi-orange/25',
+  work: 'bg-workspace-active text-kazi-navy ring-primary/25',
   spaces: 'bg-workspace-hover text-kazi-navy ring-gray-200/90',
   muted: 'bg-gray-50 text-workspace-muted ring-gray-200/80',
 };
@@ -114,7 +114,7 @@ export function WorkspaceSideRailHub({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-1.5 top-1.5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#4E5969] shadow-sm ring-1 ring-gray-200/80 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+          className="absolute right-1.5 top-1.5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-workspace-secondary shadow-sm ring-1 ring-gray-200/80 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           aria-label={tCv('closeRail')}
         >
           <X className="h-4 w-4" aria-hidden />
@@ -391,7 +391,7 @@ function AssetIcon({
       title={label}
       className={cn(
         'flex min-w-0 flex-col items-center gap-0.5 rounded-lg p-1',
-        'hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40'
+        'hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
       )}
     >
       <span
@@ -402,7 +402,7 @@ function AssetIcon({
       >
         <Icon className="h-4 w-4" aria-hidden />
       </span>
-      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-[#4E5969]">
+      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-workspace-secondary">
         {label}
       </span>
     </button>

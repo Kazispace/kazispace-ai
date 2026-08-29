@@ -75,7 +75,7 @@ export function ChatHeader({
         <button
           type="button"
           onClick={onBackToClinic}
-          className="text-sm font-medium text-kazi-orange hover:text-white transition-colors shrink-0"
+          className="text-sm font-medium text-primary hover:text-white transition-colors shrink-0"
         >
           {t("backToClinic")}
         </button>
