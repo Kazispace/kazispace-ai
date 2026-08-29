@@ -116,7 +116,7 @@ export function SessionNavPrimaryIconButton({
       className={cn(
         'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D0D3D9] bg-white text-[#1D2129]',
         'shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-colors',
-        'hover:border-kazi-orange/45 hover:bg-[#FFF4EC] hover:text-kazi-orange',
+        'hover:border-kazi-orange/45 hover:bg-workspace-active hover:text-kazi-orange',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40',
         'disabled:cursor-not-allowed disabled:opacity-50',
         className

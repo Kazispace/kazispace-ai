@@ -303,7 +303,7 @@ export function SessionNavPanel({
         <div
           className={cn(
             'rounded-lg transition-colors',
-            isActive && 'bg-[#FFF4EC]'
+            isActive && 'bg-workspace-active'
           )}
         >
           <div className="flex items-stretch">
@@ -397,7 +397,7 @@ export function SessionNavPanel({
           }}
           className={cn(
             'w-full rounded-lg px-3 py-3 text-left transition-colors',
-            isActive && 'bg-[#FFF4EC]',
+            isActive && 'bg-workspace-active',
             'hover:bg-[#F2F3F5] text-[#1D2129]'
           )}
         >
@@ -535,7 +535,7 @@ export function SessionNavPanel({
                   <div
                     className={cn(
                       'group flex items-center rounded-lg transition-colors',
-                      isActive && 'bg-[#FFF4EC]',
+                      isActive && 'bg-workspace-active',
                       !isActive && !row.disabled && 'hover:bg-[#F2F3F5]'
                     )}
                   >

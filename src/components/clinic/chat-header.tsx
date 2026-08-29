@@ -82,7 +82,8 @@ export function ChatHeader({
       ) : (
         <Link href={`/${locale}/chat`} className="text-white shrink-0">
           <span className="text-lg font-bold">
-            <span className="text-kazi-orange">Kazi</span>Space
+            {/* Brand wordmark keeps the literal orange (UX guide Header/Hero compromise). */}
+            <span className="text-kazi-brand-accent">Kazi</span>Space
           </span>
         </Link>
       )}

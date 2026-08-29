@@ -55,9 +55,9 @@ const TONE_ICON_CLASS: Record<AssetTone, string> = {
   readiness: 'bg-amber-50 text-amber-900 ring-amber-200/90',
   interview: 'bg-violet-50 text-violet-900 ring-violet-200/90',
   english: 'bg-emerald-50 text-emerald-900 ring-emerald-200/90',
-  work: 'bg-[#FFF4EC] text-kazi-navy ring-kazi-orange/25',
-  spaces: 'bg-[#F2F3F5] text-kazi-navy ring-gray-200/90',
-  muted: 'bg-gray-50 text-[#86909C] ring-gray-200/80',
+  work: 'bg-workspace-active text-kazi-navy ring-kazi-orange/25',
+  spaces: 'bg-workspace-hover text-kazi-navy ring-gray-200/90',
+  muted: 'bg-gray-50 text-workspace-muted ring-gray-200/80',
 };
 
 /** Dense vertical asset hub — zones stacked; each asset is a compact icon link. */
@@ -106,7 +106,7 @@ export function WorkspaceSideRailHub({
   return (
     <div
       className={cn(
-        'relative flex min-h-0 flex-1 flex-col overflow-y-auto text-[#1D2129]',
+        'relative flex min-h-0 flex-1 flex-col overflow-y-auto text-workspace-text',
         className
       )}
     >
@@ -260,7 +260,7 @@ export function WorkspaceSideRailHub({
           label={t('tileSpaces')}
           onClick={() => push(`/${locale}/spaces`)}
         />
-        <p className="col-span-full px-1 text-[10px] leading-snug text-[#86909C]">
+        <p className="col-span-full px-1 text-[10px] leading-snug text-workspace-muted">
           {t('zoneBusinessHint')}
         </p>
       </ZoneBlock>
@@ -281,7 +281,7 @@ function ZoneBlock({
     <section
       className={cn('border-b border-gray-100 px-3 py-3', className)}
     >
-      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
+      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">
         {title}
       </h2>
       <div className={HUB_ASSET_GRID_CLASS}>{children}</div>
@@ -306,7 +306,7 @@ function CollapsibleOlder({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-1 rounded-md px-0.5 py-1 text-left text-[10px] font-medium text-[#86909C] hover:bg-gray-50"
+        className="flex w-full items-center gap-1 rounded-md px-0.5 py-1 text-left text-[10px] font-medium text-workspace-muted hover:bg-gray-50"
       >
         <ChevronDown
           className={cn(

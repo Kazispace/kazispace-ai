@@ -75,7 +75,7 @@ function ExamPickerBlock({
               className={cn(
                 'rounded-lg border px-3 py-2 text-left transition-colors',
                 selected
-                  ? 'border-kazi-orange/50 bg-[#FFF4EC]'
+                  ? 'border-kazi-orange/50 bg-workspace-active'
                   : 'border-gray-200 bg-white hover:bg-gray-50'
               )}
             >
@@ -332,7 +332,7 @@ function WritingScorecardBlock({
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-[#1D2129]">{t('writingScorecardTitle')}</p>
         {component.overall != null ? (
-          <span className="rounded-full bg-[#FFF4EC] px-2.5 py-0.5 text-sm font-semibold text-kazi-navy">
+          <span className="rounded-full bg-workspace-active px-2.5 py-0.5 text-sm font-semibold text-kazi-navy">
             {component.overall}
           </span>
         ) : null}

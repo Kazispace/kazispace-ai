@@ -65,7 +65,7 @@ export function SessionIconRail({
       className={cn(
         'relative flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]',
         active &&
-          'bg-[#FFF4EC] text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
+          'bg-workspace-active text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
       )}
     >
       {icon}
@@ -94,7 +94,7 @@ export function SessionIconRail({
         className={cn(
           'relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
           isClinic
-            ? 'bg-[#FFF4EC] text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
+            ? 'bg-workspace-active text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
             : 'text-[#86909C] hover:bg-[#F2F3F5]'
         )}
         aria-label={t('clinic')}
