@@ -23,10 +23,9 @@ export function creditsChipShellClass(low: boolean): string {
     'flex min-h-[3rem] w-10 flex-col items-center justify-center gap-0.5 rounded-xl border px-0.5 py-1 shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-colors',
     low
       ? 'border-orange-200 bg-gradient-to-b from-orange-50 to-white hover:border-orange-300'
-      : // KAZI-656: #E0E3E8 is a near-neighbor of workspace.border (#E5E6EB), not an
-        // exact match — left as a literal pending design confirmation of which is
-        // canonical, rather than guessing.
-        'border-[#E0E3E8] bg-white hover:border-emerald-200/80 hover:bg-emerald-50/40'
+      : // KAZI-662: was a bare #E0E3E8 literal, a near-neighbor of
+        // workspace.border (#E5E6EB) — merged into the existing token.
+        'border-workspace-border bg-white hover:border-emerald-200/80 hover:bg-emerald-50/40'
   );
 }
 
@@ -117,8 +116,11 @@ export function SessionNavPrimaryIconButton({
     <button
       type="button"
       className={cn(
-        // KAZI-656: #D0D3D9 is a near-neighbor of workspace.border (#E5E6EB), not
-        // an exact match — left as a literal pending design confirmation.
+        // KAZI-662: #D0D3D9 is not a drift/near-neighbor of workspace.border
+        // (#E5E6EB) despite looking like one at a glance — it's noticeably
+        // more saturated (confirmed with design, Owen): this icon-button
+        // border deliberately reads darker than a subtle divider border for
+        // more contrast against white. Kept as a literal, not merged.
         'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#D0D3D9] bg-white text-workspace-text',
         'shadow-[0_1px_2px_rgba(0,0,0,0.06)] transition-colors',
         'hover:border-primary/45 hover:bg-workspace-active hover:text-primary',

@@ -72,7 +72,9 @@ export function JobSprintCvPanel({ locale, jobId, className }: JobSprintCvPanelP
     return (
       <div
         className={cn(
-          'flex h-full flex-col items-center justify-center gap-3 bg-[#ECEEF2] p-6 text-center',
+          // KAZI-662: was a bare #ECEEF2 literal — merged into workspace-bg,
+          // same rationale as cv-preview-pane.tsx's identical near-neighbor.
+          'flex h-full flex-col items-center justify-center gap-3 bg-workspace-bg p-6 text-center',
           className
         )}
       >

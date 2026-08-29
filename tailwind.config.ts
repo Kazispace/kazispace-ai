@@ -46,6 +46,16 @@ const config: Config = {
         /** User-sent message (Clinic) — cool tint, aligns with UX blue user bubble guidance */
         'user-bubble': '#E6F0FF',
         'user-bubble-border': '#C5DBF7',
+        /**
+         * KAZI-662: resolved the "gray-bg vs. #F7F8FA" question left open
+         * since KAZI-656/657 — they were never actually competing for the
+         * same job. Every real #F7F8FA call site was either a `:hover`
+         * background (mapped to `workspace.hover`, the token that already
+         * exists for exactly that) or a passive resting surface (mapped to
+         * `workspace.bg`). `gray-bg` keeps its own established, actively-used
+         * role (Clinic/Space/Hub page backgrounds) — neither value needed to
+         * "win," the bare #F7F8FA literal just needed to go.
+         */
         'gray-bg': '#F5F7FA',
         text: '#1A2B3C',
         workspace: {
@@ -55,10 +65,28 @@ const config: Config = {
           header: '#FAFBFC',
           border: '#E5E6EB',
           text: '#1D2129',
-          /** Secondary body text — between `text` and `muted`. Promoted from a
-           * raw `#4E5969` literal reused identically across 14 files (KAZI-656). */
+          /**
+           * Secondary body text — between `text` and `muted`. Promoted from a
+           * raw `#4E5969` literal reused identically across 14 files (KAZI-656).
+           * KAZI-662: formally adopted (Owen sign-off) as a real type-hierarchy
+           * tier, not a drift artifact — synced to kazispace-design's SDD
+           * (`docs/sdd/kazispace-web-app-v1.0.md` §12.2.1), NOT the UX guide's
+           * §6.1 (that section is Clinic chat-bubble-scoped and still lists an
+           * unrelated `#6B7280`/`#111827` text-color pair for that surface —
+           * §12.2.1 is the SSOT for `workspace.*` chrome specifically).
+           */
           secondary: '#4E5969',
           muted: '#86909C',
+          /**
+           * Disabled/placeholder/empty-state foreground — lighter than `muted`,
+           * used for de-emphasized text and icons (form placeholders, disabled
+           * buttons, "no results" hints). Promoted from a raw `#C9CDD4` literal
+           * reused identically across 8 call sites in 4 files (KAZI-662, same
+           * high-frequency-reuse justification as `secondary` above) — synced
+           * to kazispace-design's SDD §12.2.1 (see `secondary` above for why
+           * that's §12.2.1 and not the UX guide's §6.1).
+           */
+          placeholder: '#C9CDD4',
           hover: '#F2F3F5',
           active: '#EFF6FF',
           input: '#FFFFFF',

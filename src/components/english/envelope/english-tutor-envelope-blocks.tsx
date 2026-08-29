@@ -294,6 +294,10 @@ function SpeakingRadarBlock({
               cy={center}
               r={radius * level}
               fill="none"
+              // KAZI-662: coincidentally an exact match for workspace.border,
+              // but this is an SVG chart gridline color, not workspace chrome
+              // — out of this sweep's scope (chart/data-viz colors are a
+              // separate design domain). Not converted to the token.
               stroke="#E5E6EB"
               strokeWidth="1"
             />

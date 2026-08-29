@@ -40,7 +40,10 @@ export function CvPreviewPane({
       role="tabpanel"
       aria-labelledby={panelId ? 'cv-tab-resume' : undefined}
       className={cn(
-        'flex flex-col min-h-0 min-w-0 bg-[#ECEEF2]',
+        // KAZI-662: was a bare #ECEEF2 literal — merged into workspace-bg, a
+        // passive canvas backdrop behind the CV document preview, closest to
+        // this near-neighbor value.
+        'flex flex-col min-h-0 min-w-0 bg-workspace-bg',
         'lg:w-[min(440px,40vw)] lg:shrink-0 lg:border-l lg:border-gray-200/80',
         className
       )}
