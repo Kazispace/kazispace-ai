@@ -84,6 +84,11 @@ export function AgentSessionPanel({
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
+      // Deliberately read returnFocusRef.current live rather than snapshotting
+      // it at effect-setup time: it's a ref the caller owns and can repoint
+      // while the panel is open, and focus should restore to wherever it
+      // currently points at close time, not to a stale target captured on open.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       const restore = returnFocusRef?.current ?? previousFocusRef.current;
       restore?.focus();
     };

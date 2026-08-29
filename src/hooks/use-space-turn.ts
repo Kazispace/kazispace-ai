@@ -47,6 +47,10 @@ export type SpaceSendResult =
 
 export type { SpaceReplyNotice };
 
+/** Stable identity for the "no slice yet" case, so `messages` doesn't get a
+ * fresh array (and bust downstream useCallback deps) on every render. */
+const EMPTY_SPACE_MESSAGES: SpaceChatMessage[] = [];
+
 function resolveSpaceMasterSessionId(
   spaceMasterSessionId: string | null | undefined
 ): string | null {
@@ -117,7 +121,7 @@ export function useSpaceTurn(
   }
   const historyReady = historyReadyResolved.ready;
 
-  const messages = slice?.messages ?? [];
+  const messages = slice?.messages ?? EMPTY_SPACE_MESSAGES;
   const isHydrating = slice?.isHydrating ?? false;
   const isSending = slice?.isSending ?? false;
   const replyNotice = slice?.replyNotice ?? null;
