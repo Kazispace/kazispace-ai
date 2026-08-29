@@ -35,3 +35,12 @@ jobs:
 
       - name: Production build (includes Clinic JS budget gate)
         run: npm run build
+        env:
+          # NEXT_PUBLIC_* is baked in at build time — mirror netlify.toml's
+          # [build.environment] flags so the Clinic JS budget gate measures
+          # the same first-load graph CI checks and Netlify actually ships
+          # (KAZI-588 was burned by these diverging).
+          NEXT_PUBLIC_SPACES_ENABLED: 'true'
+          NEXT_PUBLIC_IRP_PROFILE_ENABLED: 'true'
+          NEXT_PUBLIC_EPP_PROFILE_ENABLED: 'true'
+          NEXT_PUBLIC_WORKSPACE_ASSET_RAIL_V2: 'true'
