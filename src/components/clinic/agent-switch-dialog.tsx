@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 
@@ -35,12 +35,26 @@ export function AgentSwitchDialog({
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  useDialogFocusTrap({
-    open: true,
+  // Refs, not deps: useDialogFocusTrap's effect re-runs (and re-focuses the
+  // close button) whenever `onClose` changes identity, so `handleClose` must
+  // stay referentially stable across renders even while isConfirming/onCancel
+  // change — otherwise every render while confirming would steal focus back
+  // to the X button (review follow-up on the isConfirming guard below).
+  const isConfirmingRef = useRef(isConfirming);
+  isConfirmingRef.current = isConfirming;
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
+  const handleClose = useCallback(() => {
     // Match the disabled close button: Escape must not let the dialog
     // unmount while confirmPendingAgentSwitch() is still in flight, or the
     // activate can finish in the background with no dialog left to show it.
-    onClose: isConfirming ? () => {} : onCancel,
+    if (isConfirmingRef.current) return;
+    onCancelRef.current();
+  }, []);
+
+  useDialogFocusTrap({
+    open: true,
+    onClose: handleClose,
     dialogRef,
     initialFocusRef: closeButtonRef,
   });
