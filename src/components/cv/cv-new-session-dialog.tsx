@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
@@ -13,6 +14,11 @@ interface CvNewSessionDialogProps {
   onCancel: () => void;
 }
 
+// KAZI-664 review: no production caller wires this up today (only this
+// file and its own test import it) — the "new CV session" confirm flow
+// this was built for hasn't been connected. Portaled below for consistency
+// with the hook's other 5 callers regardless; not a claim that this
+// confirm step is live in any user-facing path yet.
 export function CvNewSessionDialog({
   open,
   onConfirm,
@@ -30,8 +36,11 @@ export function CvNewSessionDialog({
   });
 
   if (!open) return null;
+  // Portal to <body> (KAZI-664, matching KAZI-652's ConfirmDialog) so a
+  // future overflow-hidden/transform ancestor can't clip this overlay.
+  if (typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-4"
       role="dialog"
@@ -63,6 +72,7 @@ export function CvNewSessionDialog({
           <Button onClick={onConfirm}>{t("newCvConfirmAction")}</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

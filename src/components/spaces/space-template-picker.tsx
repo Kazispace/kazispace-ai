@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslations, useLocale } from 'next-intl';
 import { X } from 'lucide-react';
 
@@ -72,8 +73,12 @@ export function SpaceTemplatePicker({
   });
 
   if (!open) return null;
+  // Portal to <body> (KAZI-664 review: this hook has 6 callers, not 5 —
+  // this one was missed in the original pass) so a future overflow-hidden/
+  // transform ancestor can't clip this overlay, matching the other 5.
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="presentation"
@@ -138,6 +143,7 @@ export function SpaceTemplatePicker({
           <p className="mt-4 text-center text-xs text-workspace-muted">{t('browseMoreComingSoon')}</p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
