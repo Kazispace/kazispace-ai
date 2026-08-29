@@ -86,7 +86,10 @@ export function StarterCapabilityToolbar({
             requestComposerInsert(t(cap.insertTextKey), insertTarget, 'replace')
           }
           className={cn(
-            'shrink-0 rounded-full border border-workspace-border/90 bg-[#F7F8FA]/90',
+            // KAZI-662: was a bare #F7F8FA literal (resting chip background,
+            // not a hover state) — merged into workspace-bg, the closest
+            // existing surface token.
+            'shrink-0 rounded-full border border-workspace-border/90 bg-workspace-bg/90',
             'px-2 py-0.5 text-[11px] leading-none text-workspace-secondary',
             'transition-colors hover:border-primary/40 hover:bg-workspace-active hover:text-primary',
             'disabled:opacity-50'

@@ -272,7 +272,7 @@ export function ChatInput({
             iconBtn,
             hasContent && !inputDisabled
               ? "bg-primary text-white hover:bg-primary/90"
-              : "text-[#C9CDD4] cursor-not-allowed"
+              : "text-workspace-placeholder cursor-not-allowed"
           )}
         >
           {isUploading ? (
@@ -350,7 +350,7 @@ export function ChatInput({
           onClick={() =>
             openFilePicker({ accept: "image/jpeg,image/png" })
           }
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-[#F7F8FA]"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-workspace-hover"
         >
           <ImageIcon className="h-5 w-5 text-green-500" />
           {t("attachPhoto")}
@@ -363,7 +363,7 @@ export function ChatInput({
                 "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             })
           }
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-[#F7F8FA]"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-workspace-hover"
         >
           <FileText className="h-5 w-5 text-blue-500" />
           {t("attachDocument")}
@@ -376,7 +376,7 @@ export function ChatInput({
               capture: true,
             })
           }
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-[#F7F8FA]"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-workspace-hover"
         >
           <Camera className="h-5 w-5 text-orange-500" />
           {t("attachCamera")}
@@ -438,9 +438,10 @@ export function ChatInput({
       {isCard ? (
         <div
           className={cn(
-            // KAZI-656: #D0E3FF (border) + rgba(208,227,255,...) (matching glow
-            // shadow) are a deliberate bespoke pairing, not a token candidate —
-            // left as literals rather than forced onto an unrelated token.
+            // KAZI-656/662: #D0E3FF (border) + rgba(208,227,255,...) (matching
+            // glow shadow) are a deliberate bespoke pairing, not a token
+            // candidate — confirmed by design (Owen), not re-opened for
+            // review in KAZI-662's near-neighbor sweep. Left as literals.
             "rounded-2xl border border-[#D0E3FF]/90 bg-white",
             "shadow-[0_0_0_1px_rgba(208,227,255,0.35),0_8px_24px_-12px_rgba(15,23,42,0.18)]",
             "transition-shadow focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/25 focus-within:shadow-[0_8px_24px_-12px] focus-within:shadow-primary/20",

@@ -432,10 +432,10 @@ export function MessageActions({
 
       {feedbackEnabled && downOpen ? (
         <div
-          // KAZI-656: #FAFAFA is a near-neighbor of workspace.bg (#F4F5F7) and
-          // workspace.header (#FAFBFC), not an exact match — left as a literal
-          // pending design confirmation of which is canonical.
-          className="ml-0.5 flex max-w-md flex-col gap-2 rounded-md border border-workspace-border bg-[#FAFAFA] p-2"
+          // KAZI-662: was a bare #FAFAFA literal, a near-exact match (diff of
+          // 0/1/2 per RGB channel) for workspace.header (#FAFBFC) — merged
+          // rather than kept as a separate near-neighbor value.
+          className="ml-0.5 flex max-w-md flex-col gap-2 rounded-md border border-workspace-border bg-workspace-header p-2"
           role="group"
           aria-label={t('messageActions.feedbackReasonsLabel')}
         >
@@ -474,7 +474,7 @@ export function MessageActions({
             placeholder={t('messageActions.feedbackNotePlaceholder')}
             className={cn(
               'w-full resize-none rounded-md border border-workspace-border bg-white px-2 py-1.5',
-              'text-[11px] text-workspace-text placeholder:text-[#C9CDD4]',
+              'text-[11px] text-workspace-text placeholder:text-workspace-placeholder',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
             )}
           />

@@ -125,7 +125,7 @@ function FileRow({
   }
 
   return (
-    <div className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-[#F7F8FA] transition-colors">
+    <div className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-workspace-hover transition-colors">
       <FileIcon mimeType={file.mime_type} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-workspace-text">{file.filename}</p>
@@ -137,9 +137,9 @@ function FileRow({
         <button
           type="button"
           onClick={() => onDownload(file.file_id)}
-          // KAZI-656: #E8F3FF is a near-neighbor of workspace.active (#EFF6FF),
-          // not an exact match — left as a literal pending design confirmation.
-          className="rounded p-1.5 text-workspace-muted hover:bg-[#E8F3FF] hover:text-blue-600"
+          // KAZI-662: was a bare #E8F3FF literal, a near-neighbor of
+          // workspace.active (#EFF6FF) — merged into the existing token.
+          className="rounded p-1.5 text-workspace-muted hover:bg-workspace-active hover:text-blue-600"
           aria-label={t('downloadFile')}
         >
           <Download className="h-4 w-4" />
@@ -240,7 +240,7 @@ export function SessionFileLibraryPanel({
       <div className="flex-1 overflow-y-auto px-1 py-1">
         {!canFetchFiles ? (
           <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
-            <FolderOpen className="h-10 w-10 text-[#C9CDD4]" />
+            <FolderOpen className="h-10 w-10 text-workspace-placeholder" />
             <p className="text-sm font-medium text-workspace-muted">{t('filesLoginRequired')}</p>
             <button
               type="button"
@@ -260,7 +260,7 @@ export function SessionFileLibraryPanel({
           <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
             <p className="text-xs text-red-500">{t('loadFilesFailed')}</p>
             {error !== 'Failed to load files' ? (
-              <p className="max-w-[200px] truncate text-[10px] text-[#C9CDD4]" title={error}>
+              <p className="max-w-[200px] truncate text-[10px] text-workspace-placeholder" title={error}>
                 {error}
               </p>
             ) : null}
@@ -275,9 +275,9 @@ export function SessionFileLibraryPanel({
           </div>
         ) : files.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-            <FolderOpen className="h-10 w-10 text-[#C9CDD4]" />
+            <FolderOpen className="h-10 w-10 text-workspace-placeholder" />
             <p className="text-sm font-medium text-workspace-muted">{t('noFiles')}</p>
-            <p className="text-xs text-[#C9CDD4]">{t('noFilesHint')}</p>
+            <p className="text-xs text-workspace-placeholder">{t('noFilesHint')}</p>
           </div>
         ) : (
           <div className="space-y-0.5">

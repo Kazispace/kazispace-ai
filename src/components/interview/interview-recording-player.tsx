@@ -59,7 +59,7 @@ function TranscriptView({ entries }: { entries: TranscriptEntry[] }) {
     <div className="space-y-3 p-4">
       {entries.map((entry, i) => (
         <div key={i} className="flex gap-2">
-          <span className="w-10 shrink-0 text-[10px] tabular-nums text-[#C9CDD4]">
+          <span className="w-10 shrink-0 text-[10px] tabular-nums text-workspace-placeholder">
             [{formatDuration(entry.timestamp)}]
           </span>
           <div>
@@ -98,7 +98,7 @@ function RecordingCard({
       className={cn(
         'w-full rounded-xl border-l-4 bg-white p-4 text-left shadow-sm transition-colors',
         scoreColor,
-        isSelected ? 'ring-2 ring-primary/30' : 'hover:bg-[#F7F8FA]'
+        isSelected ? 'ring-2 ring-primary/30' : 'hover:bg-workspace-hover'
       )}
     >
       <p className="text-sm font-semibold text-workspace-text">{recording.session_title}</p>
@@ -266,7 +266,7 @@ function PlayerExpanded({
               </div>
             )}
             {recording.ai_feedback && (
-              <div className="rounded-lg bg-[#F7F8FA] p-3">
+              <div className="rounded-lg bg-workspace-bg p-3">
                 <p className="text-xs font-medium text-workspace-text mb-1">{t('aiFeedback')}</p>
                 <p className="text-xs text-workspace-secondary leading-relaxed">{recording.ai_feedback}</p>
               </div>
@@ -274,7 +274,7 @@ function PlayerExpanded({
             <button
               type="button"
               onClick={() => void handleDownload()}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-medium text-workspace-text hover:bg-[#F7F8FA]"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-2.5 text-sm font-medium text-workspace-text hover:bg-workspace-hover"
             >
               <Download className="h-4 w-4" />
               {t('downloadRecording')}
@@ -329,7 +329,7 @@ export function InterviewRecordingPlayer({ className }: { className?: string }) 
   if (recordings.length === 0) {
     return (
       <div className={cn('flex flex-col items-center justify-center gap-3 py-12 text-center', className)}>
-        <Headphones className="h-10 w-10 text-[#C9CDD4]" />
+        <Headphones className="h-10 w-10 text-workspace-placeholder" />
         <p className="text-sm text-workspace-muted">{t('noRecordings')}</p>
       </div>
     );
