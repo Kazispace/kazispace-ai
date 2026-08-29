@@ -33,12 +33,12 @@ jobs:
       - name: Unit tests + region/perf gates
         run: npm test
 
-      - name: Production build (includes Clinic JS budget gate)
+      - name: Production build (includes Clinic + Space/Interview/English/CV JS budget gates)
         run: npm run build
         env:
           # NEXT_PUBLIC_* is baked in at build time — mirror netlify.toml's
-          # [build.environment] flags so the Clinic JS budget gate measures
-          # the same first-load graph CI checks and Netlify actually ships
+          # [build.environment] flags so the JS budget gates measure the
+          # same first-load graph CI checks and Netlify actually ships
           # (KAZI-588 was burned by these diverging).
           NEXT_PUBLIC_SPACES_ENABLED: 'true'
           NEXT_PUBLIC_IRP_PROFILE_ENABLED: 'true'
