@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -40,8 +41,13 @@ export function ConfirmDialog({
   });
 
   if (!open) return null;
+  // Portal to <body>: callers mount this inside scrollable/overflow-hidden
+  // panels (e.g. a mobile session-nav drawer), which would otherwise become
+  // this dialog's `fixed`-position containing block and risk clipping the
+  // overlay instead of covering the full viewport.
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 p-4"
       role="presentation"
@@ -93,6 +99,7 @@ export function ConfirmDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

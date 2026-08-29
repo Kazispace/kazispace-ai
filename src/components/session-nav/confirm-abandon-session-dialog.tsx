@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 
@@ -39,13 +40,18 @@ export function ConfirmAbandonSessionDialog({
   });
 
   if (!open) return null;
+  // Portal to <body>: callers mount this inside scrollable/overflow-hidden
+  // panels (e.g. a mobile session-nav drawer), which would otherwise become
+  // this dialog's `fixed`-position containing block and risk clipping the
+  // overlay instead of covering the full viewport.
+  if (typeof document === 'undefined') return null;
 
   const title = t('confirmAbandonTitle');
   const body = t('confirmAbandonBody', {
     agent: agentName ?? t('confirmAbandonFallbackAgent'),
   });
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 p-4"
       role="presentation"
@@ -82,6 +88,7 @@ export function ConfirmAbandonSessionDialog({
           <Button onClick={onConfirm}>{t('confirmAbandonAction')}</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 const FOCUSABLE =
   'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -26,6 +26,14 @@ export function useDialogFocusTrap({
   initialFocusRef,
   lockBodyScroll = true,
 }: UseDialogFocusTrapOptions) {
+  // Always call the latest onClose without needing it in the effect's deps —
+  // an inline arrow prop (`onClose={() => ...}`) is a fresh function every
+  // render, and putting it in the deps array would re-run the whole effect
+  // (re-focus, re-lock scroll, re-register the listener) on every parent
+  // render while the dialog is open, not just on open/close transitions.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
 
@@ -43,7 +51,7 @@ export function useDialogFocusTrap({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab' || !dialogRef.current) return;
@@ -74,5 +82,6 @@ export function useDialogFocusTrap({
         previousFocus.focus();
       }
     };
-  }, [open, onClose, dialogRef, initialFocusRef, lockBodyScroll]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onClose is read via onCloseRef, see above.
+  }, [open, dialogRef, initialFocusRef, lockBodyScroll]);
 }
