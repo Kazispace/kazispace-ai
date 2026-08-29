@@ -1,10 +1,12 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/lib/store";
+import { useDialogFocusTrap } from "@/hooks/use-dialog-focus-trap";
 
 interface PaywallModalProps {
   locale: string;
@@ -13,6 +15,15 @@ interface PaywallModalProps {
 export function PaywallModal({ locale }: PaywallModalProps) {
   const t = useTranslations("paywall");
   const { paywallModalOpen, paywallTrigger, closePaywall } = useUIStore();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useDialogFocusTrap({
+    open: paywallModalOpen,
+    onClose: closePaywall,
+    dialogRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   if (!paywallModalOpen) return null;
 
@@ -25,9 +36,13 @@ export function PaywallModal({ locale }: PaywallModalProps) {
       aria-modal="true"
       aria-labelledby="paywall-title"
     >
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 relative animate-fade-up">
+      <div
+        ref={dialogRef}
+        className="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 relative animate-fade-up"
+      >
         <button
           type="button"
+          ref={closeButtonRef}
           onClick={closePaywall}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
           aria-label={t("close")}

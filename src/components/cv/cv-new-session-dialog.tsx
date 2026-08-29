@@ -1,9 +1,11 @@
 "use client";
 
+import { useRef } from "react";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useDialogFocusTrap } from "@/hooks/use-dialog-focus-trap";
 
 interface CvNewSessionDialogProps {
   open: boolean;
@@ -17,6 +19,15 @@ export function CvNewSessionDialog({
   onCancel,
 }: CvNewSessionDialogProps) {
   const t = useTranslations("cv");
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useDialogFocusTrap({
+    open,
+    onClose: onCancel,
+    dialogRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   if (!open) return null;
 
@@ -27,9 +38,10 @@ export function CvNewSessionDialog({
       aria-modal="true"
       aria-labelledby="cv-new-session-title"
     >
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 relative animate-fade-up">
+      <div ref={dialogRef} className="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 relative animate-fade-up">
         <button
           type="button"
+          ref={closeButtonRef}
           onClick={onCancel}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
           aria-label={t("newCvConfirmCancel")}
