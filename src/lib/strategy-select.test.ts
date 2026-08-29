@@ -96,7 +96,7 @@ describe('strategy-select', () => {
 
   it('deactivates pending CTAs after a user reply', () => {
     const messages = [
-      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'assistant', content: '', nextActions: sampleAActions },
       { role: 'user', content: 'picked' },
     ];
     expect(resolveActiveNextActions(messages, 0)).toBeUndefined();
@@ -105,7 +105,7 @@ describe('strategy-select', () => {
 
   it('resolves historical strategy_select reply by payload or label', () => {
     const messages = [
-      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'assistant', content: '', nextActions: sampleAActions },
       { role: 'user', content: '__strategy:continue_current' },
     ];
     expect(resolveStrategySelectReply(messages, 0, 'zh')).toBe(
@@ -113,7 +113,7 @@ describe('strategy-select', () => {
     );
 
     const hydrated = [
-      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'assistant', content: '', nextActions: sampleAActions },
       { role: 'user', content: '在现有版本上精修' },
     ];
     expect(resolveStrategySelectReply(hydrated, 0, 'zh')).toBe(
@@ -121,7 +121,7 @@ describe('strategy-select', () => {
     );
 
     const trailingPunctuation = [
-      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'assistant', content: '', nextActions: sampleAActions },
       { role: 'user', content: '在现有版本上精修。' },
     ];
     expect(resolveStrategySelectReply(trailingPunctuation, 0, 'zh')).toBe(
@@ -133,7 +133,7 @@ describe('strategy-select', () => {
 
   it('only inspects the first user reply below the assistant turn', () => {
     const messages = [
-      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'assistant', content: '', nextActions: sampleAActions },
       { role: 'user', content: '随便说一句' },
       { role: 'user', content: '__strategy:continue_current' },
     ];
@@ -154,14 +154,14 @@ describe('strategy-select', () => {
   });
 
   it('resolves active vs historical turn context', () => {
-    const pending = [{ role: 'assistant', nextActions: sampleAActions }];
+    const pending = [{ role: 'assistant', content: '', nextActions: sampleAActions }];
     expect(resolveStrategySelectTurnContext(pending, 0, 'zh')).toEqual({
       activeNextActions: sampleAActions,
       selectedStrategyPayload: undefined,
     });
 
     const answered = [
-      { role: 'assistant', nextActions: sampleAActions },
+      { role: 'assistant', content: '', nextActions: sampleAActions },
       { role: 'user', content: '在现有版本上精修' },
     ];
     expect(resolveStrategySelectTurnContext(answered, 0, 'zh')).toEqual({

@@ -285,7 +285,7 @@ describe('KAZI-567 P1 rum ingest + region contract', () => {
   });
 
   it('Netlify edge handler forwards a Request with trusted IP', async () => {
-    const next = vi.fn(async () => new Response(null, { status: 204 }));
+    const next = vi.fn(async (_request: Request, _extra?: unknown) => new Response(null, { status: 204 }));
     const request = new Request('https://kazispace.ai/api/rum', {
       method: 'POST',
       headers: {

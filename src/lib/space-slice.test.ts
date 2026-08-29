@@ -35,7 +35,7 @@ describe('space-slice', () => {
   });
 
   it('evicts oldest slices beyond LRU limit', () => {
-    let spaces = {};
+    let spaces: Record<string, ReturnType<typeof emptySpaceSlice>> = {};
     let order: string[] = [];
     for (let i = 0; i < SPACE_SLICE_LRU_LIMIT + 3; i++) {
       const id = `sp_${i}`;

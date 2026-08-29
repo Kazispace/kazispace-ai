@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { resolveLatestClinicNextActions } from '@/lib/clinic/starter-prompts/clinic-nba';
 import type { ChatNextAction } from '@/types/chat-envelope';
+import type { ChatMessage } from '@/types';
 
 const continueMock: ChatNextAction[] = [
   { type: 'open_interview', label: 'Continue mock interview' },
@@ -58,7 +59,9 @@ describe('resolveLatestClinicNextActions', () => {
   });
 
   it('async arrival: assistant gains next_actions while thread ends on assistant', () => {
-    const messages = [{ role: 'assistant' as const, nextActions: undefined }];
+    const messages: Pick<ChatMessage, 'role' | 'nextActions'>[] = [
+      { role: 'assistant', nextActions: undefined },
+    ];
     expect(resolveLatestClinicNextActions(messages)).toEqual([]);
 
     messages[0] = { role: 'assistant', nextActions: continueMock };

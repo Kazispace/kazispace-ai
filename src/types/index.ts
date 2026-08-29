@@ -246,6 +246,13 @@ export interface AgentChatMeta {
   error_code?: string;
   paywall_source?: string;
   event?: string;
+  /** L4 nested session patch (mock interview etc.); parsed defensively via interview-agent-meta.ts. */
+  agent_session_patch?: unknown;
+  agentSessionPatch?: unknown;
+  mock_interview?: unknown;
+  mockInterview?: unknown;
+  question_index?: number;
+  question_count?: number;
   analysis?: {
     cv_analysis?: {
       parsed_sections?: Record<string, string>;
