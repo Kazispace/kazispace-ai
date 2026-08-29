@@ -7,6 +7,7 @@ import {
 } from '@/lib/agent-transition/surfaces';
 import { primeSessionNavHandoff } from '@/lib/session-nav-handoff';
 import { publishSessionNavSelectHistory } from '@/lib/session-nav-events';
+import { markNavIntent } from '@/lib/perf/nav-intent';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 import { AGENT_REGISTRY, getAgentLabel, type AgentRegistryEntry } from '@/lib/agents/registry';
 import type { SupportedLocale } from '@/lib/constants';
@@ -184,6 +185,7 @@ export function navigateToSessionNavTarget(
   row: SessionNavRow
 ): void {
   if (row.disabled || !row.href) return;
+  markNavIntent();
   router.push(row.href);
 }
 
@@ -300,10 +302,14 @@ export function openAgentSessionTarget(
   const currentAgent = getDedicatedHubAgentFromPathname(pathname);
   if (currentAgent === agentId) {
     publishSessionNavSelectHistory(agentId, sessionId);
-    if (pathname !== href) router.push(href);
+    if (pathname !== href) {
+      markNavIntent();
+      router.push(href);
+    }
     return;
   }
 
   primeSessionNavHandoff(agentId, sessionId);
+  markNavIntent();
   router.push(href);
 }

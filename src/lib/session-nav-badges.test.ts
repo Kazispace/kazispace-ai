@@ -32,8 +32,7 @@ describe('session-nav-badges', () => {
   });
 
   it('warns in development for unmapped pipeline states', () => {
-    const prev = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       resolvePipelineBadgeLabel('brand_new_state', t);
@@ -41,7 +40,7 @@ describe('session-nav-badges', () => {
         expect.stringContaining('brand_new_state')
       );
     } finally {
-      process.env.NODE_ENV = prev;
+      vi.unstubAllEnvs();
     }
     warn.mockRestore();
   });

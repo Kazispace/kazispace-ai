@@ -379,7 +379,7 @@ describe('TMA session pin (P1-4)', () => {
   });
 
   it('ignores BE home_api_base=CN and keeps intl liveBase', async () => {
-    const fetchMock = vi.fn(async () =>
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) =>
       new Response(
         JSON.stringify({
           access_token: 'tma-tok',

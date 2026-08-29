@@ -86,12 +86,12 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
         setOtpAttempt(result.attempt);
         setStep("otp");
       } else if (result.success) {
-        setError("Failed to pin OTP region host");
+        setError(t("otpRegionHostFailed"));
       } else {
-        setError(result.error || "Failed to send code");
+        setError(result.error || t("sendCodeFailed"));
       }
     } catch {
-      setError("Network error");
+      setError(t("networkError"));
     } finally {
       setIsLoading(false);
     }
@@ -128,10 +128,10 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
             : `/${targetLocale}/chat`;
         router.push(destination);
       } else {
-        setError(result.error || "Invalid code");
+        setError(result.error || t("invalidCode"));
       }
     } catch {
-      setError("Network error");
+      setError(t("networkError"));
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +142,8 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
       <Card className="w-full max-w-md bg-white/95 backdrop-blur">
         <CardHeader className="text-center pb-2">
           <div className="text-3xl font-bold mb-2">
-            <span className="text-orange">Kazi</span>Space
+            {/* Brand wordmark keeps the literal orange (UX guide Header/Hero compromise). */}
+            <span className="text-kazi-brand-accent">Kazi</span>Space
           </div>
           <CardTitle className="text-xl">{t("title")}</CardTitle>
         </CardHeader>

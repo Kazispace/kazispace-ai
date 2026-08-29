@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ComponentType } from 'react';
-
+import { useLazyVirtuosoSwap } from '@/hooks/use-lazy-virtuoso-swap';
 import {
   StaticClinicMessageRows,
   type ClinicMessageListBodyProps,
@@ -9,6 +8,11 @@ import {
 import type { ClinicMessageVirtuosoProps } from '@/components/clinic/clinic-message-virtuoso';
 import { loadClinicMessageVirtuoso } from '@/lib/clinic/load-clinic-message-virtuoso';
 import { shouldVirtualizeClinicMessages } from '@/lib/spaces/space-message-virtualize';
+
+/** Module-scope so useLazyVirtuosoSwap gets a referentially stable loader. */
+function loadClinicVirtuosoComponent() {
+  return loadClinicMessageVirtuoso().then((mod) => mod.ClinicMessageVirtuoso);
+}
 
 export type ClinicMessageListProps = ClinicMessageListBodyProps & {
   scrollParentRef: { readonly current: HTMLElement | null };
@@ -44,30 +48,12 @@ export function ClinicMessageList({
   activationKey,
 }: ClinicMessageListProps) {
   const virtualize = shouldVirtualizeClinicMessages(messages.length);
-  const [VirtuosoComp, setVirtuosoComp] = useState<ComponentType<
-    ClinicMessageVirtuosoProps
-  > | null>(null);
-  const showingVirtuosoRef = useRef(false);
-  const preservedScrollTopRef = useRef(0);
-
-  useEffect(() => {
-    if (!virtualize || VirtuosoComp) return;
-    let cancelled = false;
-    void loadClinicMessageVirtuoso()
-      .then((mod) => {
-        if (!cancelled) setVirtuosoComp(() => mod.ClinicMessageVirtuoso);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [virtualize, VirtuosoComp]);
-
-  const showVirtuoso = virtualize && VirtuosoComp != null;
-  if (showVirtuoso && !showingVirtuosoRef.current) {
-    preservedScrollTopRef.current = scrollParentRef.current?.scrollTop ?? 0;
-  }
-  showingVirtuosoRef.current = showVirtuoso;
+  const { VirtuosoComponent: VirtuosoComp, showVirtuoso, preservedScrollTop } =
+    useLazyVirtuosoSwap<ClinicMessageVirtuosoProps>(
+      virtualize,
+      loadClinicVirtuosoComponent,
+      scrollParentRef
+    );
 
   const rowProps = {
     messages,
@@ -97,7 +83,7 @@ export function ClinicMessageList({
     <VirtuosoComp
       {...rowProps}
       scrollParentRef={scrollParentRef}
-      initialScrollTop={preservedScrollTopRef.current}
+      initialScrollTop={preservedScrollTop}
       alignToLatest={alignToLatest}
       activationKey={activationKey}
     />

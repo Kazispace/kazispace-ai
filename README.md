@@ -129,7 +129,8 @@ The app integrates with the KaziSpace Bot API:
 
 ## Design System
 
-- **Primary Color**: Orange `#F47920`
+- **Primary Color**: Blue `#2563EB` (`primary` in `tailwind.config.ts`) — CTAs, links, active states
+- **Brand Accent**: Orange `#D96E28` (`kazi.brand-accent`) — Header/Hero wordmark only
 - **Dark Colors**: Navy `#0D1B2A`, `#132237`
 - **Background**: White `#FFFFFF`, Light Gray `#F5F7FA`
 - **Font**: Inter (Google Fonts)

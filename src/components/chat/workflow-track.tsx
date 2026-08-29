@@ -60,7 +60,7 @@ export function WorkflowTrack({ workflow, locale, className }: WorkflowTrackProp
                 className={cn(
                   'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium border',
                   isCurrent &&
-                    'border-kazi-orange bg-orange-50 text-kazi-orange',
+                    'border-kazi-orange bg-blue-50 text-kazi-orange',
                   isDone && 'border-green-200 bg-green-50 text-green-700',
                   !isCurrent && !isDone && 'border-gray-200 bg-gray-50 text-gray-400'
                 )}

@@ -88,7 +88,7 @@ export function StarterCapabilityToolbar({
           className={cn(
             'shrink-0 rounded-full border border-[#E5E6EB]/90 bg-[#F7F8FA]/90',
             'px-2 py-0.5 text-[11px] leading-none text-[#4E5969]',
-            'transition-colors hover:border-kazi-orange/40 hover:bg-[#FFF4EC] hover:text-kazi-orange',
+            'transition-colors hover:border-kazi-orange/40 hover:bg-workspace-active hover:text-kazi-orange',
             'disabled:opacity-50'
           )}
         >
@@ -166,7 +166,7 @@ export function StarterExampleStrip({
             className={cn(
               'max-w-full truncate rounded-full border border-[#E5E6EB]/90 bg-white/80',
               'px-2.5 py-1 text-[11px] text-[#4E5969]',
-              'transition-colors hover:border-kazi-orange/40 hover:bg-[#FFF4EC] hover:text-[#1D2129]',
+              'transition-colors hover:border-kazi-orange/40 hover:bg-workspace-active hover:text-[#1D2129]',
               'disabled:opacity-50'
             )}
           >

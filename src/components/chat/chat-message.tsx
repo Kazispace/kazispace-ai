@@ -38,7 +38,7 @@ export function ChatMessage({ role, content, intent, timestamp }: ChatMessagePro
             className={cn(
               "text-xs font-semibold px-2 py-0.5 rounded-full self-start",
               intent === "RESUME_OPTIMIZE"
-                ? "bg-orange-100 text-kazi-orange"
+                ? "bg-blue-100 text-kazi-orange"
                 : intent === "PAYMENT"
                 ? "bg-purple-100 text-purple-600"
                 : "bg-green-100 text-green-600"

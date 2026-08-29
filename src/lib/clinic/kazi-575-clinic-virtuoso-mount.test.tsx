@@ -182,9 +182,7 @@ describe('KAZI-575 Clinic threshold swap keeps rows and scroll', () => {
     });
 
     expect(host.querySelector('[data-testid="clinic-virtuoso"]')).toBeNull();
-    const idsWhilePending = [
-      ...host.querySelectorAll('[data-message-id]'),
-    ].map((node) => node.getAttribute('data-message-id'));
+    const idsWhilePending = Array.from(host.querySelectorAll('[data-message-id]')).map((node) => node.getAttribute('data-message-id'));
     expect(idsWhilePending).toHaveLength(60);
     expect(idsWhilePending.slice(0, 59)).toEqual(
       Array.from({ length: 59 }, (_, i) => `c${i + 1}`)
@@ -199,9 +197,7 @@ describe('KAZI-575 Clinic threshold swap keeps rows and scroll', () => {
       '[data-testid="scroll-parent"]'
     ) as HTMLElement;
     expect(afterParent).toBe(scrollParent);
-    const idsAfter = [
-      ...host.querySelectorAll('[data-message-id]'),
-    ].map((node) => node.getAttribute('data-message-id'));
+    const idsAfter = Array.from(host.querySelectorAll('[data-message-id]')).map((node) => node.getAttribute('data-message-id'));
     expect(new Set(idsAfter).size).toBe(60);
     expect(idsAfter).toHaveLength(60);
     expect(host.querySelector('[data-testid="clinic-virtuoso"]')).not.toBeNull();

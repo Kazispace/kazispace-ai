@@ -1,10 +1,12 @@
 'use client';
 
+import { useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
+import { useDialogFocusTrap } from '@/hooks/use-dialog-focus-trap';
 
 interface AgentSwitchDialogProps {
   locale: string;
@@ -30,6 +32,32 @@ export function AgentSwitchDialog({
     ? getAgentLabel(fromEntry, locale, 'name')
     : fromAgentId;
   const toName = toEntry ? getAgentLabel(toEntry, locale, 'name') : toAgentId;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Refs, not deps: useDialogFocusTrap's effect re-runs (and re-focuses the
+  // close button) whenever `onClose` changes identity, so `handleClose` must
+  // stay referentially stable across renders even while isConfirming/onCancel
+  // change — otherwise every render while confirming would steal focus back
+  // to the X button (review follow-up on the isConfirming guard below).
+  const isConfirmingRef = useRef(isConfirming);
+  isConfirmingRef.current = isConfirming;
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
+  const handleClose = useCallback(() => {
+    // Match the disabled close button: Escape must not let the dialog
+    // unmount while confirmPendingAgentSwitch() is still in flight, or the
+    // activate can finish in the background with no dialog left to show it.
+    if (isConfirmingRef.current) return;
+    onCancelRef.current();
+  }, []);
+
+  useDialogFocusTrap({
+    open: true,
+    onClose: handleClose,
+    dialogRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   return (
     <div
@@ -38,9 +66,10 @@ export function AgentSwitchDialog({
       aria-modal="true"
       aria-labelledby="agent-switch-title"
     >
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 relative">
+      <div ref={dialogRef} className="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 relative">
         <button
           type="button"
+          ref={closeButtonRef}
           onClick={onCancel}
           disabled={isConfirming}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 disabled:opacity-50"

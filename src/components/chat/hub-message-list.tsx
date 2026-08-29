@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ComponentType } from 'react';
-
+import { useLazyVirtuosoSwap } from '@/hooks/use-lazy-virtuoso-swap';
 import {
   StaticHubMessageRows,
   type HubMessageListBodyProps,
@@ -9,6 +8,11 @@ import {
 import type { HubMessageVirtuosoProps } from '@/components/chat/hub-message-virtuoso';
 import { loadHubMessageVirtuoso } from '@/lib/chat/load-hub-message-virtuoso';
 import { shouldVirtualizeHubMessages } from '@/lib/spaces/space-message-virtualize';
+
+/** Module-scope so useLazyVirtuosoSwap gets a referentially stable loader. */
+function loadHubVirtuosoComponent() {
+  return loadHubMessageVirtuoso().then((mod) => mod.HubMessageVirtuoso);
+}
 
 export type HubMessageListProps = HubMessageListBodyProps & {
   scrollParentRef: { readonly current: HTMLElement | null };
@@ -26,30 +30,12 @@ export function HubMessageList({
   scrollParentRef,
 }: HubMessageListProps) {
   const virtualize = shouldVirtualizeHubMessages(messages.length);
-  const [VirtuosoComp, setVirtuosoComp] = useState<ComponentType<
-    HubMessageVirtuosoProps
-  > | null>(null);
-  const showingVirtuosoRef = useRef(false);
-  const preservedScrollTopRef = useRef(0);
-
-  useEffect(() => {
-    if (!virtualize || VirtuosoComp) return;
-    let cancelled = false;
-    void loadHubMessageVirtuoso()
-      .then((mod) => {
-        if (!cancelled) setVirtuosoComp(() => mod.HubMessageVirtuoso);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [virtualize, VirtuosoComp]);
-
-  const showVirtuoso = virtualize && VirtuosoComp != null;
-  if (showVirtuoso && !showingVirtuosoRef.current) {
-    preservedScrollTopRef.current = scrollParentRef.current?.scrollTop ?? 0;
-  }
-  showingVirtuosoRef.current = showVirtuoso;
+  const { VirtuosoComponent: VirtuosoComp, showVirtuoso, preservedScrollTop } =
+    useLazyVirtuosoSwap<HubMessageVirtuosoProps>(
+      virtualize,
+      loadHubVirtuosoComponent,
+      scrollParentRef
+    );
 
   const rowProps = { messages, locale, isStreaming, header };
 
@@ -61,7 +47,7 @@ export function HubMessageList({
     <VirtuosoComp
       {...rowProps}
       scrollParentRef={scrollParentRef}
-      initialScrollTop={preservedScrollTopRef.current}
+      initialScrollTop={preservedScrollTop}
     />
   );
 }

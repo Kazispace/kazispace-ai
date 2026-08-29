@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   activateAgent,
   fetchAgentMessages,
@@ -115,6 +116,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
     setPendingAgentSwitch,
   } = useAgentStore();
   const showToast = useUIStore((s) => s.showToast);
+  const tErrors = useTranslations('errors');
 
   const applyTransitionNavigation = useCallback(
     (targetAgentId: string) => {
@@ -152,7 +154,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
       const triggerMessage = options?.triggerMessage;
       const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
       if (!entry || entry.status === 'coming_soon') {
-        showToast('Coming soon', 'info');
+        showToast(tErrors('comingSoon'), 'info');
         return { ok: false };
       }
 
@@ -171,7 +173,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
             skipBroadcast: true,
           });
           if (!deact.ok) {
-            showToast(deact.error ?? 'Failed to return to clinic', 'error');
+            showToast(deact.error ?? tErrors('failedReturnToClinic'), 'error');
             return { ok: false, error: deact.error };
           }
         }
@@ -215,7 +217,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
                 return queueSwitchConfirm(active, agentId);
               }
             }
-            showToast(hub.error ?? 'Failed to activate expert', 'error');
+            showToast(hub.error ?? tErrors('failedActivateExpert'), 'error');
             return { ok: false, error: hub.error };
           }
           applyTransitionNavigation(agentId);
@@ -231,7 +233,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
               return queueSwitchConfirm(active, agentId);
             }
           }
-          showToast(res.error ?? 'Failed to activate expert', 'error');
+          showToast(res.error ?? tErrors('failedActivateExpert'), 'error');
           return { ok: false, error: res.error };
         }
 
@@ -280,7 +282,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
         await sleep(FADE_IN_MS);
         return { ok: true, resumed: Boolean(resumed) };
       } catch {
-        showToast('Failed to activate expert', 'error');
+        showToast(tErrors('failedActivateExpert'), 'error');
         return { ok: false };
       } finally {
         setSwitching(false);
@@ -296,6 +298,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
       setAgentMessages,
       showToast,
       queueSwitchConfirm,
+      tErrors,
     ]
   );
 
@@ -304,7 +307,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
     async (agentId: string, triggerMessage?: string): Promise<AgentSwitchResult> => {
       const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
       if (!entry || entry.status === 'coming_soon') {
-        showToast('Coming soon', 'info');
+        showToast(tErrors('comingSoon'), 'info');
         return { ok: false };
       }
 
@@ -317,7 +320,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
         knownActiveAgentId: current,
       });
     },
-    [performAgentSwitch, queueSwitchConfirm, showToast]
+    [performAgentSwitch, queueSwitchConfirm, showToast, tErrors]
   );
 
   const confirmPendingAgentSwitch = useCallback(async () => {
@@ -378,7 +381,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
                 return { ok: false as const, needsConfirm: true as const };
               }
             }
-            showToast(activateRes.error ?? 'Failed to activate expert', 'error');
+            showToast(activateRes.error ?? tErrors('failedActivateExpert'), 'error');
             return { ok: false as const, error: activateRes.error };
           }
           sessionId = activateRes.data.session_id;
@@ -401,7 +404,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
         await sleep(FADE_IN_MS);
         return { ok: true as const };
       } catch {
-        showToast('Failed to activate expert', 'error');
+        showToast(tErrors('failedActivateExpert'), 'error');
         return { ok: false as const };
       } finally {
         setSwitching(false);
@@ -415,6 +418,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
       setAgentMessages,
       showToast,
       queueSwitchConfirm,
+      tErrors,
     ]
   );
 
@@ -443,7 +447,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
         });
         if (!result.ok) {
           if (!options?.bestEffort) {
-            showToast(result.error ?? 'Failed to return to clinic', 'error');
+            showToast(result.error ?? tErrors('failedReturnToClinic'), 'error');
           }
           return { ok: false as const };
         }
@@ -463,7 +467,7 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
         setSwitching(false);
       }
     },
-    [locale, setSwitching, showToast]
+    [locale, setSwitching, showToast, tErrors]
   );
 
   return {

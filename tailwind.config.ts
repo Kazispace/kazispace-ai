@@ -17,12 +17,28 @@ const config: Config = {
           DEFAULT: 'hsl(var(--muted))',
           foreground: 'hsl(var(--muted-foreground))',
         },
+        /**
+         * Primary/CTA color switched from orange to the UX guide's blue
+         * (SSOT: docs/ux/clinic-specialist-ux-guide-v1.0.md §6.1 in the
+         * design repo) — the orange previously here read as too promo/
+         * e-commerce for the product. `kazi.orange` / the flat `orange`
+         * token below are kept pointing at the same blue values so the
+         * ~100 existing call sites don't need a mechanical rename to
+         * pick up the new color; new code should reach for `primary`
+         * directly. `kazi.brand-accent` preserves the literal orange for
+         * the few Header/Hero wordmark spots the guide's compromise keeps
+         * branded (navy background + orange "Kazi" mark).
+         */
+        primary: {
+          DEFAULT: '#2563EB',
+          dark: '#1D4ED8',
+        },
         kazi: {
-          // UI v1.0: slightly desaturated ochre-orange (less promo/e-commerce feel)
-          orange: '#D96E28',
-          'orange-dark': '#B85A1F',
+          orange: '#2563EB',
+          'orange-dark': '#1D4ED8',
           navy: '#0D1B2A',
           navy2: '#132237',
+          'brand-accent': '#D96E28',
         },
         'clinic-bubble': '#F0F2F5',
         'agent-bubble': '#F0FDF4',
@@ -30,8 +46,8 @@ const config: Config = {
         'user-bubble': '#E6F0FF',
         'user-bubble-border': '#C5DBF7',
         orange: {
-          DEFAULT: '#D96E28',
-          d: '#B85A1F',
+          DEFAULT: '#2563EB',
+          d: '#1D4ED8',
         },
         navy: {
           DEFAULT: '#0D1B2A',
@@ -48,9 +64,9 @@ const config: Config = {
           text: '#1D2129',
           muted: '#86909C',
           hover: '#F2F3F5',
-          active: '#FFF4EC',
+          active: '#EFF6FF',
           input: '#FFFFFF',
-          accent: '#D96E28',
+          accent: '#2563EB',
         },
       },
       fontFamily: {

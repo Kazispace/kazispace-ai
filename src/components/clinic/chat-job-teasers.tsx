@@ -65,7 +65,7 @@ export function ChatJobTeasers({ cards, locale, onCardClick }: ChatJobTeasersPro
         );
 
         const cardClassName =
-          "flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:border-kazi-orange/40 hover:bg-orange-50/50";
+          "flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-left transition-colors hover:border-kazi-orange/40 hover:bg-blue-50/50";
 
         if (onCardClick) {
           return (

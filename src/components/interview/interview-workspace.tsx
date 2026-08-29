@@ -56,7 +56,7 @@ export function InterviewWorkspace({
           <button
             type="button"
             onClick={() => setView('menu')}
-            className="inline-flex h-8 items-center gap-1 rounded-full px-2 text-xs font-medium text-kazi-orange hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
+            className="inline-flex h-8 items-center gap-1 rounded-full px-2 text-xs font-medium text-kazi-orange hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kazi-orange/40"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden />
             {t('workspaceTitle')}

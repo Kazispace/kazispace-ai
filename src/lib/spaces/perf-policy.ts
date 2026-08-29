@@ -33,7 +33,18 @@ export const DIRECTORY_IDLE_TIMEOUT_MS = 2500;
 /** Fallback when requestIdleCallback is unavailable. */
 export const DIRECTORY_FALLBACK_DELAY_MS = 2000;
 
-/** Mounted SpaceWorkspace instances kept across A→B→A (KAZI-573). */
+/**
+ * Mounted SpaceWorkspace instances kept across A→B→A (KAZI-573), and also
+ * the fan-out for `prefetchRecentSpaceSwitches` (bulk detail+history warm on
+ * the Spaces list load). Locked at 3 per KAZI-573/588.
+ *
+ * A PR review (2026-08-29) correctly pushed back on raising this to 5
+ * speculatively: it's an eager-GET-count / hidden-workspace-tree-count
+ * trade-off with no ticket and no live RUM behind it (KAZI-567 ingest was
+ * still 403ing at the time). Once `route-transition` RUM data actually
+ * lands for `/spaces/*` (see lib/perf/nav-intent.ts), re-tune this from
+ * real p50/p95 numbers under a dedicated ticket — not in a hygiene PR.
+ */
 export const SPACE_WORKSPACE_KEEPALIVE_LIMIT = 3;
 
 /**

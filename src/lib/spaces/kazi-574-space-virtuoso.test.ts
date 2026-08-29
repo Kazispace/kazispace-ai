@@ -54,12 +54,19 @@ describe('KAZI-574 Space chat virtualize after threshold', () => {
     expect(virtuoso).toMatch(/SPACE_CHAT_VIRTUOSO_DEFAULT_ITEM_HEIGHT/);
     expect(virtuoso).toMatch(/SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN/);
     expect(virtuoso).toMatch(/StaticSpaceMessageRows/);
-    expect(virtuoso).toMatch(/pinChatScrollToLatest/);
-    expect(virtuoso).toMatch(/shouldPinChatScrollToLatest/);
     expect(virtuoso).toMatch(/alignToLatest/);
-    expect(virtuoso).toMatch(/didFreezeInitialRef/);
+    // Scroll-pin mechanics live in the shared hook (used by Clinic/Space/Hub).
+    expect(virtuoso).toMatch(/useChatVirtuosoScrollRestore/);
     expect(virtuoso).not.toMatch(/followOutput/);
     expect(virtuoso).not.toMatch(/return null/);
+
+    const scrollHook = readSrc(
+      '../../hooks/use-chat-virtuoso-scroll-restore.ts'
+    );
+    expect(scrollHook).toMatch(/pinChatScrollToLatest/);
+    expect(scrollHook).toMatch(/shouldPinChatScrollToLatest/);
+    expect(scrollHook).toMatch(/didFreezeInitialRef/);
+    expect(scrollHook).not.toMatch(/followOutput/);
   });
 
   it('restores the pre-swap scrollTop only after the parent has overflow', () => {

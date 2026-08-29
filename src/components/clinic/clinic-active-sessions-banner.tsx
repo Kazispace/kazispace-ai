@@ -21,7 +21,7 @@ interface ClinicActiveSessionsBannerProps {
 }
 
 const bannerShellClass =
-  'w-full mb-6 rounded-xl border border-kazi-orange/30 bg-orange-50/80 overflow-hidden';
+  'w-full mb-6 rounded-xl border border-kazi-orange/30 bg-blue-50/80 overflow-hidden';
 
 export function ClinicActiveSessionsBanner({
   locale,
@@ -59,7 +59,7 @@ export function ClinicActiveSessionsBanner({
         onClick={() => openEntry(entry)}
         className={cn(
           bannerShellClass,
-          'flex items-center gap-3 px-4 py-3 text-left hover:border-kazi-orange/50 hover:bg-orange-50 transition-colors',
+          'flex items-center gap-3 px-4 py-3 text-left hover:border-kazi-orange/50 hover:bg-blue-50 transition-colors',
           className
         )}
       >
@@ -98,7 +98,7 @@ export function ClinicActiveSessionsBanner({
               <button
                 type="button"
                 onClick={() => openEntry(entry)}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 transition-colors"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-blue-50 transition-colors"
               >
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-kazi-orange/15">
                   <AgentNavIcon agentId={entry.agentId} sizeClassName="h-4 w-4" />

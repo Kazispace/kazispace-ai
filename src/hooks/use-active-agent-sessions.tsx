@@ -115,9 +115,11 @@ export function useActiveAgentSessions(options?: {
 }): ActiveAgentSessionsValue {
   const context = useContext(ActiveAgentSessionsContext);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  if (context) return context;
-  return useActiveAgentSessionsState({
+  // Always call the hook (rules-of-hooks) but disable its side effects when a
+  // provider already supplies the value, so we never fetch/subscribe twice.
+  const standalone = useActiveAgentSessionsState({
     ...options,
-    enabled: options?.enabled ?? isLoggedIn,
+    enabled: !context && (options?.enabled ?? isLoggedIn),
   });
+  return context ?? standalone;
 }

@@ -86,12 +86,16 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     expect(scroll).toMatch(/activationKey,/);
 
     const virtuoso = readSrc('components/spaces/space-message-virtuoso.tsx');
-    expect(virtuoso).toMatch(/pinChatScrollToLatest/);
     expect(virtuoso).toMatch(/alignToLatest/);
-    expect(virtuoso).toMatch(/didFreezeInitialRef/);
-    expect(virtuoso).toMatch(/shouldPinChatScrollToLatest/);
+    expect(virtuoso).toMatch(/useChatVirtuosoScrollRestore/);
     expect(virtuoso).not.toMatch(/followOutput/);
-    expect(virtuoso).not.toMatch(/alreadyPinned: restoredRef\.current && !isNearBottom/);
+
+    const scrollHook = readSrc('hooks/use-chat-virtuoso-scroll-restore.ts');
+    expect(scrollHook).toMatch(/pinChatScrollToLatest/);
+    expect(scrollHook).toMatch(/didFreezeInitialRef/);
+    expect(scrollHook).toMatch(/shouldPinChatScrollToLatest/);
+    expect(scrollHook).not.toMatch(/followOutput/);
+    expect(scrollHook).not.toMatch(/alreadyPinned: restoredRef\.current && !isNearBottom/);
   });
 
   it('clinic chat pins latest the same way and is hosted by keep-alive', () => {
@@ -106,10 +110,14 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     expect(list).toMatch(/activationKey/);
 
     const clinicVirtuoso = readSrc('components/clinic/clinic-message-virtuoso.tsx');
-    expect(clinicVirtuoso).toMatch(/pinChatScrollToLatest/);
-    expect(clinicVirtuoso).toMatch(/shouldPinChatScrollToLatest/);
-    expect(clinicVirtuoso).toMatch(/didFreezeInitialRef/);
+    expect(clinicVirtuoso).toMatch(/useChatVirtuosoScrollRestore/);
     expect(clinicVirtuoso).not.toMatch(/followOutput/);
+
+    const scrollHook = readSrc('hooks/use-chat-virtuoso-scroll-restore.ts');
+    expect(scrollHook).toMatch(/pinChatScrollToLatest/);
+    expect(scrollHook).toMatch(/shouldPinChatScrollToLatest/);
+    expect(scrollHook).toMatch(/didFreezeInitialRef/);
+    expect(scrollHook).not.toMatch(/followOutput/);
   });
 
   it('pinChatScrollToLatest ignores leftover pixels and lands on overflow bottom', () => {

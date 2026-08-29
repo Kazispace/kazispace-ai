@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import { HubMessageRow } from '@/components/chat/hub-message-row';
@@ -8,11 +8,11 @@ import {
   StaticHubMessageRows,
   type HubMessageListBodyProps,
 } from '@/components/chat/hub-message-static-rows';
+import { useChatVirtuosoScrollRestore } from '@/hooks/use-chat-virtuoso-scroll-restore';
 import {
   SPACE_CHAT_VIRTUOSO_DEFAULT_ITEM_HEIGHT,
   SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN,
 } from '@/lib/spaces/perf-policy';
-import { restoreSpaceChatScrollAfterVirtualize } from '@/lib/spaces/space-message-virtualize';
 
 export type HubMessageVirtuosoProps = HubMessageListBodyProps & {
   /** Existing hub overflow node — do not invent a second scroller. */
@@ -58,25 +58,10 @@ export function HubMessageVirtuoso({
   scrollParentRef,
   initialScrollTop = 0,
 }: HubMessageVirtuosoProps) {
-  const [scrollParent, setScrollParent] = useState<HTMLElement | null>(
-    () => scrollParentRef.current
-  );
-  const restoredRef = useRef(false);
-
-  useLayoutEffect(() => {
-    const node = scrollParentRef.current;
-    setScrollParent((prev) => (prev === node ? prev : node));
-  }, [scrollParentRef]);
-
-  const tryRestore = () => {
-    if (restoredRef.current || !scrollParent) return;
-    if (restoreSpaceChatScrollAfterVirtualize(scrollParent, initialScrollTop)) {
-      restoredRef.current = true;
-    }
-  };
-
-  useLayoutEffect(() => {
-    tryRestore();
+  const { scrollParent, tryRestore } = useChatVirtuosoScrollRestore({
+    scrollParentRef,
+    initialScrollTop,
+    messagesLength: messages.length,
   });
 
   const rowProps = { messages, locale, isStreaming, header };

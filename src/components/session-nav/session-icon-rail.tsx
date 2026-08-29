@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl';
 
 import type { SessionNavPanelMode } from '@/lib/session-nav';
 import { cn } from '@/lib/utils';
+import { markNavIntent } from '@/lib/perf/nav-intent';
 import { getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { SessionIconRailCredits } from '@/components/session-nav/session-nav-primary-chrome';
 
@@ -65,7 +66,7 @@ export function SessionIconRail({
       className={cn(
         'relative flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] transition-colors hover:bg-[#F2F3F5] hover:text-[#1D2129]',
         active &&
-          'bg-[#FFF4EC] text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
+          'bg-workspace-active text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
       )}
     >
       {icon}
@@ -83,6 +84,7 @@ export function SessionIconRail({
     >
       <Link
         href={`/${locale}`}
+        onClick={() => markNavIntent()}
         className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold text-kazi-orange"
         aria-label="KaziSpace"
       >
@@ -91,10 +93,11 @@ export function SessionIconRail({
 
       <Link
         href={getSurfacePath(locale, 'clinic')}
+        onClick={() => markNavIntent()}
         className={cn(
           'relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
           isClinic
-            ? 'bg-[#FFF4EC] text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
+            ? 'bg-workspace-active text-kazi-orange before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-kazi-orange'
             : 'text-[#86909C] hover:bg-[#F2F3F5]'
         )}
         aria-label={t('clinic')}
@@ -114,6 +117,7 @@ export function SessionIconRail({
         <Link
           href={`/${locale}/mine`}
           prefetch={false}
+          onClick={() => markNavIntent()}
           className="flex h-10 w-10 items-center justify-center rounded-lg text-[#86909C] hover:bg-[#F2F3F5]"
           aria-label={t('settings')}
           title={t('settings')}

@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { act } from 'react';
+import { act, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -54,11 +54,11 @@ vi.mock('@/hooks/use-active-workspace-chrome', () => ({
 }));
 
 vi.mock('@/components/chat/chat-side-rails-host', () => ({
-  ChatSideRailsHost: ({ children }: { children: unknown }) => children,
+  ChatSideRailsHost: ({ children }: { children: ReactNode }) => children,
 }));
 
 vi.mock('@/components/spaces/space-shell', () => ({
-  SpaceShell: ({ children }: { children: unknown }) => <div>{children}</div>,
+  SpaceShell: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/components/clinic/message-bubble', () => ({

@@ -69,7 +69,7 @@ export function ClinicParkedCapabilityBanner({
   return (
     <div
       className={cn(
-        'flex items-center gap-2 rounded-xl border border-kazi-orange/35 bg-orange-50/90 px-3 py-2',
+        'flex items-center gap-2 rounded-xl border border-kazi-orange/35 bg-blue-50/90 px-3 py-2',
         className
       )}
       role="status"

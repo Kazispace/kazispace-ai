@@ -64,7 +64,7 @@ function mockCvBuilderDiff(variant: 'job' | 'regen' = 'job') {
 const MOCK_CV_PREVIEW_SAVED =
   '# Alex Developer\n\n## Experience\n- Senior Engineer at Tech Co (2020–present)\n- Built scalable web apps with React & Python';
 
-function useMockFallback(error?: string): boolean {
+function shouldUseMockFallback(error?: string): boolean {
   if (process.env.NEXT_PUBLIC_AGENT_API_MOCK === 'true') return true;
   if (!error) return false;
   return error.includes('404') || error.includes('Not Found');
@@ -167,7 +167,7 @@ export type ActivateAgentOptions = {
 export async function getActiveAgent(): Promise<ApiResponse<ActiveAgentState>> {
   const res = await apiRequest<ActiveAgentState>('/api/v1/agents/active');
   if (res.success) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     return { success: true, data: getMockActive() };
   }
   return res;
@@ -205,7 +205,7 @@ export async function activateAgent(
     mockSimulateSwitch409 &&
     mockActive.active_agent &&
     mockActive.active_agent !== agentId &&
-    useMockFallback(res.error)
+    shouldUseMockFallback(res.error)
   ) {
     return {
       success: false,
@@ -214,7 +214,7 @@ export async function activateAgent(
     };
   }
 
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     return {
       success: true,
       data: {
@@ -236,7 +236,7 @@ export async function deactivateAgent(
     { method: 'POST', body: '{}' }
   );
   if (res.success) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     return { success: true, data: mockDeactivate(agentId, locale) };
   }
   return res;
@@ -280,7 +280,7 @@ export async function sendAgentChat(
     }),
   });
   if (res.success) return withSessionNavRefresh(res);
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     const entry = AGENT_REGISTRY.find((a) => a.agentId === agentId);
     const emoji = entry?.emoji ?? '🤖';
 
@@ -477,7 +477,7 @@ export async function fetchAgentSessions(
     `/api/v1/agents/sessions?${params}`
   );
   if (res.success) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     const active = getMockActive();
     const now = Date.now();
     const mockRows = [
@@ -519,7 +519,7 @@ export async function fetchCurrentAgentSessions(): Promise<
     '/api/v1/agents/sessions?status=current'
   );
   if (res.success) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     const now = Date.now();
     const seen = new Set<string>();
     const sessions: AgentSessionsListResponse['sessions'] = [];
@@ -577,7 +577,7 @@ export async function openAgentSession(
     { method: 'POST', body: JSON.stringify(body) }
   );
   if (res.success) return withSessionNavRefresh(res);
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     return withSessionNavRefresh({
       success: true,
       data: {
@@ -621,7 +621,7 @@ export async function newAgentSession(
   ) {
     return res;
   }
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     mockSessions.forEach((state, key) => {
       if (state.active_agent === agentId) mockSessions.delete(key);
     });
@@ -648,7 +648,7 @@ export async function exitAgentSession(
     { method: 'POST', body: '{}' }
   );
   if (res.success) return withSessionNavRefresh(res);
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     const active = getMockActive();
     if (active.active_agent !== agentId) {
       return withSessionNavRefresh({
@@ -677,7 +677,7 @@ export async function fetchAgentMessages(
     `/api/v1/agents/sessions/${sessionId}/messages`
   );
   if (res.success) return res;
-  if (useMockFallback(res.error)) {
+  if (shouldUseMockFallback(res.error)) {
     return {
       success: true,
       data: { session_id: sessionId, agent_id: '', messages: [] },

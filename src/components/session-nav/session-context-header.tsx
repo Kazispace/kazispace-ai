@@ -257,7 +257,7 @@ export function SessionContextHeader({
               onClick={() => publishSessionNavToggleWorkspaceRail()}
               className={cn(
                 'rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]',
-                workspaceRailOpen && 'bg-[#FFF4EC] text-kazi-orange'
+                workspaceRailOpen && 'bg-workspace-active text-kazi-orange'
               )}
               aria-label={tRailHub('openWorkspaceRail')}
               aria-pressed={workspaceRailOpen}
@@ -273,7 +273,7 @@ export function SessionContextHeader({
                 onClick={() => setDrawer(drawer === 'files' ? null : 'files')}
                 className={cn(
                   'rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]',
-                  drawer === 'files' && 'bg-[#FFF4EC] text-kazi-orange'
+                  drawer === 'files' && 'bg-workspace-active text-kazi-orange'
                 )}
                 aria-label={t('sessionFiles')}
                 title={t('sessionFiles')}
@@ -285,7 +285,7 @@ export function SessionContextHeader({
                 onClick={() => setDrawer(drawer === 'search' ? null : 'search')}
                 className={cn(
                   'rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]',
-                  drawer === 'search' && 'bg-[#FFF4EC] text-kazi-orange'
+                  drawer === 'search' && 'bg-workspace-active text-kazi-orange'
                 )}
                 aria-label={t('sessionSearch')}
                 title={t('sessionSearch')}
@@ -300,7 +300,7 @@ export function SessionContextHeader({
                 onClick={() => setDrawer(drawer === 'more' ? null : 'more')}
                 className={cn(
                   'rounded-lg p-2 text-[#86909C] hover:bg-[#F2F3F5] hover:text-[#1D2129]',
-                  drawer === 'more' && 'bg-[#FFF4EC] text-kazi-orange'
+                  drawer === 'more' && 'bg-workspace-active text-kazi-orange'
                 )}
                 aria-label={t('moreActions')}
                 title={t('moreActions')}

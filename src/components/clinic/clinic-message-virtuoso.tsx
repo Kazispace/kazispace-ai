@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import { ClinicMessageRow } from '@/components/clinic/clinic-message-row';
@@ -8,15 +7,11 @@ import {
   StaticClinicMessageRows,
   type ClinicMessageListBodyProps,
 } from '@/components/clinic/clinic-message-static-rows';
-import {
-  pinChatScrollToLatest,
-  shouldPinChatScrollToLatest,
-} from '@/lib/spaces/chat-scroll';
+import { useChatVirtuosoScrollRestore } from '@/hooks/use-chat-virtuoso-scroll-restore';
 import {
   SPACE_CHAT_VIRTUOSO_DEFAULT_ITEM_HEIGHT,
   SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN,
 } from '@/lib/spaces/perf-policy';
-import { restoreSpaceChatScrollAfterVirtualize } from '@/lib/spaces/space-message-virtualize';
 
 export type ClinicMessageVirtuosoProps = ClinicMessageListBodyProps & {
   /** Existing Clinic overflow node — do not invent a second scroller. */
@@ -56,55 +51,14 @@ export function ClinicMessageVirtuoso({
   alignToLatest = false,
   activationKey = 'default',
 }: ClinicMessageVirtuosoProps) {
-  const [scrollParent, setScrollParent] = useState<HTMLElement | null>(
-    () => scrollParentRef.current
-  );
-  const restoredRef = useRef(false);
-  const initialTopMostRef = useRef<number | { index: number; align: 'end' }>(0);
-  const didFreezeInitialRef = useRef(false);
-  if (alignToLatest && messages.length > 0 && !didFreezeInitialRef.current) {
-    didFreezeInitialRef.current = true;
-    initialTopMostRef.current = {
-      index: messages.length - 1,
-      align: 'end',
-    };
-  }
-
-  useLayoutEffect(() => {
-    const node = scrollParentRef.current;
-    setScrollParent((prev) => (prev === node ? prev : node));
-  }, [scrollParentRef]);
-
-  useLayoutEffect(() => {
-    restoredRef.current = false;
-  }, [activationKey]);
-
-  const tryRestore = useCallback(() => {
-    if (!scrollParent) return;
-    if (alignToLatest) {
-      if (
-        !shouldPinChatScrollToLatest({
-          alignToLatest,
-          activationKey,
-          alreadyPinned: restoredRef.current,
-          hasOverflow: scrollParent.scrollHeight > scrollParent.clientHeight,
-        })
-      ) {
-        return;
-      }
-      pinChatScrollToLatest(scrollParent);
-      restoredRef.current = true;
-      return;
-    }
-    if (restoredRef.current) return;
-    if (restoreSpaceChatScrollAfterVirtualize(scrollParent, initialScrollTop)) {
-      restoredRef.current = true;
-    }
-  }, [activationKey, alignToLatest, initialScrollTop, scrollParent]);
-
-  useLayoutEffect(() => {
-    tryRestore();
-  }, [messages.length, tryRestore]);
+  const { scrollParent, initialTopMostItemIndex, tryRestore } =
+    useChatVirtuosoScrollRestore({
+      scrollParentRef,
+      initialScrollTop,
+      alignToLatest,
+      activationKey,
+      messagesLength: messages.length,
+    });
 
   const rowProps = {
     messages,
@@ -140,7 +94,7 @@ export function ClinicMessageVirtuoso({
         bottom: SPACE_CHAT_VIRTUOSO_VIEWPORT_OVERSCAN,
       }}
       computeItemKey={(_, message) => message.id}
-      initialTopMostItemIndex={initialTopMostRef.current}
+      initialTopMostItemIndex={initialTopMostItemIndex}
       totalListHeightChanged={tryRestore}
       itemContent={(index, message) => (
         <div className={index < messages.length - 1 ? 'pb-4' : undefined}>

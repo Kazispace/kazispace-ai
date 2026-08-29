@@ -41,9 +41,9 @@ type AssetTone = 'resume' | 'interview' | 'work' | 'spaces' | 'muted';
 const TONE_ICON_CLASS: Record<AssetTone, string> = {
   resume: 'bg-sky-50 text-sky-900 ring-sky-200/90',
   interview: 'bg-violet-50 text-violet-900 ring-violet-200/90',
-  work: 'bg-[#FFF4EC] text-kazi-navy ring-kazi-orange/25',
-  spaces: 'bg-[#F2F3F5] text-kazi-navy ring-gray-200/90',
-  muted: 'bg-gray-50 text-[#86909C] ring-gray-200/80',
+  work: 'bg-workspace-active text-kazi-navy ring-kazi-orange/25',
+  spaces: 'bg-workspace-hover text-kazi-navy ring-gray-200/90',
+  muted: 'bg-gray-50 text-workspace-muted ring-gray-200/80',
 };
 
 const CATEGORY_TONE: Record<WorkspaceAssetCategory, AssetTone> = {
@@ -82,7 +82,7 @@ export function WorkspaceAssetRailHub({
   return (
     <div
       className={cn(
-        'relative flex min-h-0 flex-1 flex-col overflow-y-auto text-[#1D2129]',
+        'relative flex min-h-0 flex-1 flex-col overflow-y-auto text-workspace-text',
         className
       )}
     >
@@ -150,7 +150,7 @@ export function WorkspaceAssetRailHub({
           label={t('tileSpaces')}
           onClick={() => push(`/${locale}/spaces`)}
         />
-        <p className="col-span-full px-1 text-[10px] leading-snug text-[#86909C]">
+        <p className="col-span-full px-1 text-[10px] leading-snug text-workspace-muted">
           {t('zoneBusinessHint')}
         </p>
       </ZoneBlock>
@@ -169,7 +169,7 @@ function ZoneBlock({
 }) {
   return (
     <section className={cn('border-b border-gray-100 px-3 py-3', className)}>
-      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#86909C]">
+      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">
         {title}
       </h2>
       <div className={HUB_ASSET_GRID_CLASS}>{children}</div>
@@ -192,7 +192,7 @@ function SubcategoryHeader({
         {label} · {count}
       </p>
       {historyCount > 0 ? (
-        <span className="text-[10px] text-[#86909C]">+{historyCount}</span>
+        <span className="text-[10px] text-workspace-muted">+{historyCount}</span>
       ) : null}
     </div>
   );
@@ -238,7 +238,7 @@ function CareerAssetSubcategory({
       {!authReady ? (
         <AssetSkeletonRow />
       ) : !authenticated ? (
-        <p className="col-span-full px-1 text-[10px] text-[#86909C]">{loginRequiredLabel}</p>
+        <p className="col-span-full px-1 text-[10px] text-workspace-muted">{loginRequiredLabel}</p>
       ) : isLoading ? (
         <AssetSkeletonRow />
       ) : error ? (
@@ -313,7 +313,7 @@ function CategoryHistoryFold({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-1 rounded-md px-0.5 py-1 text-left text-[10px] font-medium text-[#86909C] hover:bg-gray-50"
+        className="flex w-full items-center gap-1 rounded-md px-0.5 py-1 text-left text-[10px] font-medium text-workspace-muted hover:bg-gray-50"
       >
         <ChevronDown
           className={cn(
@@ -410,7 +410,7 @@ function WorkspaceAssetIcon({
           {mimeLabel}
         </span>
         {historical ? (
-          <span className="absolute -left-0.5 -top-0.5 rounded bg-[#86909C] px-0.5 text-[7px] font-medium leading-none text-white">
+          <span className="absolute -left-0.5 -top-0.5 rounded bg-workspace-muted px-0.5 text-[7px] font-medium leading-none text-white">
             {t('historyBadge')}
           </span>
         ) : null}
@@ -423,7 +423,7 @@ function WorkspaceAssetIcon({
           : asset.display_name}
       </span>
       {asset.subtitle ? (
-        <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-[#86909C]">
+        <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-workspace-muted">
           {asset.subtitle}
         </span>
       ) : null}
