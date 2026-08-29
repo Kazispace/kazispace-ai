@@ -59,6 +59,7 @@ function TranscriptView({ entries }: { entries: TranscriptEntry[] }) {
     <div className="space-y-3 p-4">
       {entries.map((entry, i) => (
         <div key={i} className="flex gap-2">
+          {/* KAZI-662: #C9CDD4 (reused a few times in this file) near-neighbor gray, no exact token match — pending design confirmation. */}
           <span className="w-10 shrink-0 text-[10px] tabular-nums text-[#C9CDD4]">
             [{formatDuration(entry.timestamp)}]
           </span>
@@ -98,6 +99,7 @@ function RecordingCard({
       className={cn(
         'w-full rounded-xl border-l-4 bg-white p-4 text-left shadow-sm transition-colors',
         scoreColor,
+        // KAZI-662: #F7F8FA (reused a few times in this file) near-neighbor of gray-bg (#F5F7FA), no exact token match — pending design confirmation.
         isSelected ? 'ring-2 ring-primary/30' : 'hover:bg-[#F7F8FA]'
       )}
     >

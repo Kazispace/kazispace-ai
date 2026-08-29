@@ -125,6 +125,7 @@ function FileRow({
   }
 
   return (
+    // KAZI-662: #F7F8FA near-neighbor of gray-bg (#F5F7FA), no exact token match — pending design confirmation.
     <div className="group flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-[#F7F8FA] transition-colors">
       <FileIcon mimeType={file.mime_type} />
       <div className="min-w-0 flex-1">
@@ -239,6 +240,9 @@ export function SessionFileLibraryPanel({
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-1 py-1">
         {!canFetchFiles ? (
+          // KAZI-662: #C9CDD4 (this empty-state icon/text color, reused a few
+          // times below in this file) is a near-neighbor gray with no exact
+          // token match — pending design confirmation.
           <div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
             <FolderOpen className="h-10 w-10 text-[#C9CDD4]" />
             <p className="text-sm font-medium text-workspace-muted">{t('filesLoginRequired')}</p>

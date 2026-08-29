@@ -474,6 +474,7 @@ export function MessageActions({
             placeholder={t('messageActions.feedbackNotePlaceholder')}
             className={cn(
               'w-full resize-none rounded-md border border-workspace-border bg-white px-2 py-1.5',
+              // KAZI-662: #C9CDD4 near-neighbor gray, no exact token match — pending design confirmation.
               'text-[11px] text-workspace-text placeholder:text-[#C9CDD4]',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
             )}

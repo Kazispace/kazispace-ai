@@ -86,6 +86,7 @@ export function StarterCapabilityToolbar({
             requestComposerInsert(t(cap.insertTextKey), insertTarget, 'replace')
           }
           className={cn(
+            // KAZI-662: #F7F8FA near-neighbor of gray-bg (#F5F7FA), no exact token match — pending design confirmation.
             'shrink-0 rounded-full border border-workspace-border/90 bg-[#F7F8FA]/90',
             'px-2 py-0.5 text-[11px] leading-none text-workspace-secondary',
             'transition-colors hover:border-primary/40 hover:bg-workspace-active hover:text-primary',

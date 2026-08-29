@@ -272,7 +272,8 @@ export function ChatInput({
             iconBtn,
             hasContent && !inputDisabled
               ? "bg-primary text-white hover:bg-primary/90"
-              : "text-[#C9CDD4] cursor-not-allowed"
+              : // KAZI-662: #C9CDD4 near-neighbor gray, no exact token match — pending design confirmation.
+                "text-[#C9CDD4] cursor-not-allowed"
           )}
         >
           {isUploading ? (
@@ -350,6 +351,7 @@ export function ChatInput({
           onClick={() =>
             openFilePicker({ accept: "image/jpeg,image/png" })
           }
+          // KAZI-662: #F7F8FA near-neighbor of gray-bg (#F5F7FA), no exact token match — pending design confirmation.
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-[#F7F8FA]"
         >
           <ImageIcon className="h-5 w-5 text-green-500" />
@@ -363,6 +365,7 @@ export function ChatInput({
                 "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             })
           }
+          // KAZI-662: #F7F8FA near-neighbor of gray-bg (#F5F7FA), no exact token match — pending design confirmation.
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-[#F7F8FA]"
         >
           <FileText className="h-5 w-5 text-blue-500" />
@@ -376,6 +379,7 @@ export function ChatInput({
               capture: true,
             })
           }
+          // KAZI-662: #F7F8FA near-neighbor of gray-bg (#F5F7FA), no exact token match — pending design confirmation.
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-workspace-text hover:bg-[#F7F8FA]"
         >
           <Camera className="h-5 w-5 text-orange-500" />
@@ -438,9 +442,11 @@ export function ChatInput({
       {isCard ? (
         <div
           className={cn(
-            // KAZI-656: #D0E3FF (border) + rgba(208,227,255,...) (matching glow
-            // shadow) are a deliberate bespoke pairing, not a token candidate —
-            // left as literals rather than forced onto an unrelated token.
+            // KAZI-662: #D0E3FF (border) + matching rgba(208,227,255,...) glow
+            // shadow look like a deliberate bespoke pairing (not a leftover —
+            // the shadow color matches the border exactly), but that's an
+            // observation, not a design sign-off. Pending confirmation like
+            // the other near-neighbor colors in this PR.
             "rounded-2xl border border-[#D0E3FF]/90 bg-white",
             "shadow-[0_0_0_1px_rgba(208,227,255,0.35),0_8px_24px_-12px_rgba(15,23,42,0.18)]",
             "transition-shadow focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/25 focus-within:shadow-[0_8px_24px_-12px] focus-within:shadow-primary/20",

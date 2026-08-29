@@ -56,7 +56,9 @@ const config: Config = {
           border: '#E5E6EB',
           text: '#1D2129',
           /** Secondary body text — between `text` and `muted`. Promoted from a
-           * raw `#4E5969` literal reused identically across 14 files (KAZI-656). */
+           * raw `#4E5969` literal reused identically across 14 files (KAZI-656).
+           * NOT yet design-confirmed — not in the UX guide's §6.1 palette.
+           * Formalize or revert: see KAZI-662. */
           secondary: '#4E5969',
           muted: '#86909C',
           hover: '#F2F3F5',

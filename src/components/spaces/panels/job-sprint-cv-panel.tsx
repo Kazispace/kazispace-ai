@@ -72,6 +72,7 @@ export function JobSprintCvPanel({ locale, jobId, className }: JobSprintCvPanelP
     return (
       <div
         className={cn(
+          // KAZI-662: #ECEEF2 near-neighbor of workspace.hover (#F2F3F5), no exact token match — pending design confirmation.
           'flex h-full flex-col items-center justify-center gap-3 bg-[#ECEEF2] p-6 text-center',
           className
         )}
