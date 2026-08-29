@@ -25,7 +25,7 @@ interface StrategySelectActionsProps {
 
 function RecommendedBadge({ label }: { label: string }) {
   return (
-    <span className="shrink-0 rounded border border-kazi-orange/30 bg-orange-50 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-kazi-orange">
+    <span className="shrink-0 rounded border border-kazi-orange/30 bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-kazi-orange">
       {label}
     </span>
   );
@@ -75,7 +75,7 @@ export function StrategySelectActions({
           className={cn(
             "h-auto min-h-11 w-full flex-col items-start justify-start gap-1 whitespace-normal py-2.5 text-left",
             isSelected &&
-              "border-kazi-orange bg-orange-50 text-gray-900 hover:bg-orange-50"
+              "border-kazi-orange bg-blue-50 text-gray-900 hover:bg-blue-50"
           )}
           aria-label={label}
           aria-pressed={isSelected || undefined}
@@ -124,7 +124,7 @@ export function StrategySelectActions({
                 readOnly
                   ? "cursor-default bg-transparent"
                   : "bg-transparent transition-colors hover:bg-gray-50",
-                isSelected && "bg-orange-50/70",
+                isSelected && "bg-blue-50/70",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-kazi-orange/40",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 !isLast && "border-b border-gray-200"

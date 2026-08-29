@@ -39,7 +39,7 @@ function statusBadgeClass(
   activeSessionId: string | null
 ): string {
   if (session.session_id === activeSessionId) {
-    return 'bg-orange-100 text-kazi-orange';
+    return 'bg-blue-100 text-kazi-orange';
   }
   if (session.status === 'active') return 'bg-green-100 text-green-800';
   if (session.status === 'archived') return 'bg-gray-100 text-gray-600';
@@ -85,7 +85,7 @@ export function AgentSessionList({
               className={cn(
                 'w-full text-left rounded-lg px-3 py-2.5 transition-colors',
                 isHighlighted
-                  ? 'bg-orange-50 text-kazi-navy ring-1 ring-orange-200/80'
+                  ? 'bg-blue-50 text-kazi-navy ring-1 ring-blue-200/80'
                   : 'text-gray-700 hover:bg-gray-50'
               )}
             >

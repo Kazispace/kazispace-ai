@@ -69,7 +69,7 @@ const markdownComponents: Components = {
       );
     }
     return (
-      <code className="rounded bg-orange-50 px-1 text-sm text-kazi-orange">
+      <code className="rounded bg-blue-50 px-1 text-sm text-kazi-orange">
         {children}
       </code>
     );

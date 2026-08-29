@@ -84,7 +84,7 @@ export function JobDetailBody({
   return (
     <div className={cn(isRail ? 'px-4 py-3' : undefined, className)}>
       {needsLogin ? (
-        <div className="rounded-xl border border-orange-100 bg-orange-50 p-6 text-center">
+        <div className="rounded-xl border border-blue-100 bg-blue-50 p-6 text-center">
           <p className="mb-4 text-sm text-gray-700">{t('loginBanner')}</p>
           <Button size="sm" onClick={() => navigateTo(`/${locale}/login`)}>
             {t('signIn')}

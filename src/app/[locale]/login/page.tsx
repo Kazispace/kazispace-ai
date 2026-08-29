@@ -142,7 +142,8 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
       <Card className="w-full max-w-md bg-white/95 backdrop-blur">
         <CardHeader className="text-center pb-2">
           <div className="text-3xl font-bold mb-2">
-            <span className="text-orange">Kazi</span>Space
+            {/* Brand wordmark keeps the literal orange (UX guide Header/Hero compromise). */}
+            <span className="text-kazi-brand-accent">Kazi</span>Space
           </div>
           <CardTitle className="text-xl">{t("title")}</CardTitle>
         </CardHeader>

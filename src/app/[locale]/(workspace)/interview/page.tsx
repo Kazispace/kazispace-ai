@@ -311,7 +311,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
   const composerPrefix = (
     <>
       {phase === "feedback_pending" && (
-        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-orange-50 border-b border-orange-100">
+        <div className="flex items-center justify-between gap-2 px-4 py-2 bg-blue-50 border-b border-blue-100">
           <div className="flex items-center gap-2 text-sm text-gray-700 min-w-0">
             <div className="w-4 h-4 border-2 border-gray-200 border-t-kazi-orange rounded-full animate-spin shrink-0" />
             <span className="truncate">{t("feedbackPending")}</span>
@@ -348,7 +348,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
       <main className="flex min-h-0 flex-1 w-full flex-col">
         {needsLogin ? (
           <div className="flex-1 flex items-center justify-center p-6">
-            <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 text-center max-w-sm">
               <p className="text-sm text-gray-700 mb-4">{t("loginBanner")}</p>
               <Button size="sm" onClick={() => router.push(`/${locale}/login`)}>
                 {t("signIn")}

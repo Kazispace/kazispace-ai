@@ -250,7 +250,7 @@ export function MessageBubble({
                 : "bg-gray-100 text-muted-foreground"
               : isWorkspace
                 ? "bg-workspace-active text-kazi-orange"
-                : "bg-orange-100 text-kazi-orange"
+                : "bg-blue-100 text-kazi-orange"
           )}
         >
           {isUser ? (
@@ -379,7 +379,7 @@ export function MessageBubble({
             />
           ) : null}
           {showIntentBadge && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-orange-100 text-kazi-orange">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-blue-100 text-kazi-orange">
               {intent === "RESUME_OPTIMIZE" ? (
                 <>
                   <FileText className="h-3.5 w-3.5 shrink-0" aria-hidden />

@@ -150,7 +150,7 @@ function EnglishPageContent({ locale }: { locale: string }) {
       <main className="flex min-h-0 flex-1 w-full flex-col">
         {needsLogin ? (
           <div className="flex-1 flex items-center justify-center p-6">
-            <div className="bg-orange-50 border border-orange-100 rounded-xl p-6 text-center max-w-sm">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 text-center max-w-sm">
               <p className="text-sm text-gray-700 mb-4">{t("loginBanner")}</p>
               <Button size="sm" onClick={() => router.push(`/${locale}/login`)}>
                 {t("signIn")}

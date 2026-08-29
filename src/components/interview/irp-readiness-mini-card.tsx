@@ -38,7 +38,7 @@ export function IrpReadinessMiniCard({ jobId, locale }: IrpReadinessMiniCardProp
   const detailHref = `/${locale}/interview/readiness?job_id=${encodeURIComponent(jobId)}&source=interview_prep`;
 
   return (
-    <Card className="border-kazi-orange/20 bg-orange-50/50">
+    <Card className="border-kazi-orange/20 bg-blue-50/50">
       <CardContent className="p-4">
         {isReadinessLoading && (
           <p className="text-xs text-gray-600">{t('readiness.loading')}</p>

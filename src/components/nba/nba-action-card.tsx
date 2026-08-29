@@ -80,7 +80,7 @@ export function NbaActionCard({ locale, action, className }: NbaActionCardProps)
   return (
     <div
       className={cn(
-        'rounded-xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-4 shadow-sm',
+        'rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm',
         className
       )}
     >
@@ -88,7 +88,7 @@ export function NbaActionCard({ locale, action, className }: NbaActionCardProps)
         {t('sectionTitle')}
       </p>
       <div className="flex gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white border border-orange-100 text-kazi-orange">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white border border-blue-100 text-kazi-orange">
           <Icon className="h-5 w-5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
