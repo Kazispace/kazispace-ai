@@ -428,6 +428,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       activeAgentId,
       agentSessionId,
       agentSessions,
+      locale,
       setActiveAgent,
       setAgentMessages,
       showToast,
@@ -977,7 +978,6 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       openCvRail,
       routeEnglishPage,
       routeInterviewPage,
-      setCvAgentHandoff,
       showToast,
       syncActiveAgentFromGateway,
       tClinic,
@@ -1069,22 +1069,27 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     [isAgentMode, isSending, isSwitching, sendAgentMessage]
   );
 
-  const handleAgentSelect = async (agentId: string) => {
-    if (!isLoggedIn) {
-      showToast(tClinic("loginToContinue"), "info");
-      router.push(`/${locale}/login`);
-      return;
-    }
-    if (needsParkReplaceConfirm(parkedInteractive, agentId)) {
-      setParkReplaceTargetId(agentId);
-      return;
-    }
-    const result = await requestAgentSwitch(agentId);
-    if (result && !result.ok && result.needsConfirm) return;
-    if (result && !result.ok) {
-      showToast(result.error ?? tClinic("activateFailed"), "error");
-    }
-  };
+  const handleAgentSelect = useCallback(
+    async (agentId: string) => {
+      if (!isLoggedIn) {
+        showToast(tClinic("loginToContinue"), "info");
+        router.push(`/${locale}/login`);
+        return;
+      }
+      if (needsParkReplaceConfirm(parkedInteractive, agentId)) {
+        setParkReplaceTargetId(agentId);
+        return;
+      }
+      // Uses the ref (not `requestAgentSwitch` directly) so this stays a
+      // stable callback even though useAgentSwitch() doesn't memoize it.
+      const result = await requestAgentSwitchRef.current(agentId);
+      if (result && !result.ok && result.needsConfirm) return;
+      if (result && !result.ok) {
+        showToast(result.error ?? tClinic("activateFailed"), "error");
+      }
+    },
+    [isLoggedIn, locale, parkedInteractive, router, showToast, tClinic]
+  );
 
   const handleConfirmParkReplace = async () => {
     if (!parkReplaceTargetId) return;
@@ -1129,14 +1134,16 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     }
   };
 
-  const handleBackToClinic = async () => {
-    const result = await exitToClinic();
+  const handleBackToClinic = useCallback(async () => {
+    // Uses the ref (not `exitToClinic` directly) so this stays a stable
+    // callback even though useAgentSwitch() doesn't memoize exitToClinic.
+    const result = await exitToClinicRef.current();
     if (result && !result.ok) {
       showToast(tClinic("deactivateFailed"), "error");
       return;
     }
     await reloadClinicIfNeeded(result);
-  };
+  }, [reloadClinicIfNeeded, showToast, tClinic]);
 
   const handleReferralAccept = useCallback(
     async (agentId: string, messageId?: string) => {

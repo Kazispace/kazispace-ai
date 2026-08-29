@@ -290,7 +290,6 @@ export function useAgentSwitch(locale: string, context?: AgentSwitchContext) {
     },
     [
       locale,
-      context,
       applyTransitionNavigation,
       setSwitching,
       setSwitcherOpen,
