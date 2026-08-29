@@ -8,7 +8,7 @@
     "test:perf-budget": "node scripts/check-clinic-js-budget.mjs --optional && node scripts/check-route-js-budgets.mjs --optional",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run && bash scripts/grep-region-api-base.sh && node scripts/sync-region-directory.mjs --check && node scripts/check-clinic-js-budget.mjs --optional && node scripts/check-route-js-budgets.mjs --optional",
+    "test": "vitest run && bash scripts/grep-region-api-base.sh && node scripts/sync-region-directory.mjs --check && node scripts/check-i18n-namespace-parity.mjs && node scripts/check-clinic-js-budget.mjs --optional && node scripts/check-route-js-budgets.mjs --optional",
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:region-gate": "bash scripts/grep-region-api-base.sh && node scripts/sync-region-directory.mjs --check",
