@@ -213,6 +213,23 @@ describe('resolveSpaceTurnReferral', () => {
     expect(resolveSpaceTurnReferral({ reply_text: 'just a normal reply' })).toBeUndefined();
     expect(resolveSpaceTurnReferral(null)).toBeUndefined();
   });
+
+  it('also reads referral fields nested under envelope (KAZI-651 review: match sibling resolvers)', () => {
+    expect(
+      resolveSpaceTurnReferral({
+        envelope: { referral_agent_id: 'cv', referral_reason: 'nested case' },
+      })
+    ).toEqual({ agentId: 'cv', reason: 'nested case' });
+  });
+
+  it('prefers root referral over an envelope-nested one', () => {
+    expect(
+      resolveSpaceTurnReferral({
+        referral_agent_id: 'interview',
+        envelope: { referral_agent_id: 'cv' },
+      })
+    ).toEqual({ agentId: 'interview', reason: '' });
+  });
 });
 
 describe('resolveSpaceTurnUpgradeCta', () => {

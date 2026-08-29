@@ -1,7 +1,6 @@
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
 import { hydrateStrategyPayloadUserLabels } from '@/lib/strategy-select';
 import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
-import { isReferralDismissed } from '@/lib/referral-dismiss';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import type { ReferralPayload } from '@/types';
 import type { UpgradeCtaPayload } from '@/lib/clinic/upgrade-cta';
@@ -139,43 +138,78 @@ export function resolveSpaceTurnCustomComponents(
 
 /**
  * KAZI-651 Phase A — carry a specialist-agent referral on a Space turn, same
- * extraction as Clinic's `parseClinicReply` (root `referral_agent_id`/
- * `referral.agent_id`, or an `intent` starting with `REFERRAL_`). Additive
- * only: nothing in the Space UI reads `SpaceChatMessage.referral` yet, so
- * this has no visible effect until a later phase wires up rendering — see
- * KAZI-651 for the referral -> Space-capability-switch design question.
+ * field shape as Clinic's `parseClinicReply` (root `referral_agent_id`/
+ * `referral.agent_id`, or an `intent` starting with `REFERRAL_`).
+ *
+ * Per docs/openapi.json, `SpaceTurnResponse` today is just `{ envelope }`
+ * with no root referral fields or `intent` — so this will not fire against
+ * a real Space turn as things stand. It exists as forward groundwork for a
+ * Phase C design question: if Clinic's send path is ever unified onto this
+ * resolver (rather than staying on `parseClinicReply`), Clinic's raw
+ * response *does* carry these fields at root today. Scanning `raw.envelope`
+ * too, like the sibling resolvers below, covers the Space-native shape as
+ * well in case a future BE revision nests it there instead.
+ *
+ * Deliberately does NOT apply `isReferralDismissed` here (review on PR
+ * #212): that would make this "additive, no behavior change" parser start
+ * making a dismiss decision with no UI yet to act on it, and would mean a
+ * referral Clinic's user already dismissed shows as permanently absent to
+ * Space too (same agentId, same global localStorage map) with no way to
+ * tell "never sent" apart from "dismissed". Dismiss-filtering belongs at
+ * render time, same as `MessageBubble` already checks `!referral.dismissed`
+ * for Clinic — a later phase decides whether Space reads the same map.
  */
 export function resolveSpaceTurnReferral(data: unknown): ReferralPayload | undefined {
   if (!data || typeof data !== 'object') return undefined;
   const raw = data as Record<string, unknown>;
 
-  const referralRecord =
-    raw.referral && typeof raw.referral === 'object'
-      ? (raw.referral as Record<string, unknown>)
-      : undefined;
+  for (const candidate of [raw, raw.envelope]) {
+    if (!candidate || typeof candidate !== 'object') continue;
+    const record = candidate as Record<string, unknown>;
 
-  let agentId =
-    (typeof raw.referral_agent_id === 'string' && raw.referral_agent_id) ||
-    (typeof referralRecord?.agent_id === 'string' ? referralRecord.agent_id : '');
-  const reason =
-    (typeof raw.referral_reason === 'string' && raw.referral_reason) ||
-    (typeof referralRecord?.reason === 'string' ? referralRecord.reason : '') ||
-    '';
+    const referralRecord =
+      record.referral && typeof record.referral === 'object'
+        ? (record.referral as Record<string, unknown>)
+        : undefined;
 
-  if (!agentId && typeof raw.intent === 'string' && raw.intent.startsWith('REFERRAL_')) {
-    agentId = raw.intent.replace(/^REFERRAL_/, '');
+    let agentId =
+      (typeof record.referral_agent_id === 'string' && record.referral_agent_id) ||
+      (typeof referralRecord?.agent_id === 'string' ? referralRecord.agent_id : '');
+    const reason =
+      (typeof record.referral_reason === 'string' && record.referral_reason) ||
+      (typeof referralRecord?.reason === 'string' ? referralRecord.reason : '') ||
+      '';
+
+    if (
+      !agentId &&
+      typeof record.intent === 'string' &&
+      record.intent.startsWith('REFERRAL_')
+    ) {
+      agentId = record.intent.replace(/^REFERRAL_/, '');
+    }
+
+    if (agentId) return { agentId, reason };
   }
 
-  if (!agentId || isReferralDismissed(agentId)) return undefined;
-  return { agentId, reason };
+  return undefined;
 }
 
 /**
  * KAZI-651 Phase A — carry the web_search -> research upgrade CTA (KAZI-233)
  * on a Space turn. `parseAssistantEnvelope` already extracts this generically
- * from `meta.upgrade_cta`/`meta.cta`; Space's sendMessage flow just never
- * read it back out. Additive only, same rationale as resolveSpaceTurnReferral
- * above — no Space UI renders `SpaceChatMessage.upgradeCta` yet.
+ * from `meta.upgrade_cta`/`meta.cta`, scanning `[data, raw.envelope]` exactly
+ * like `resolveSpaceTurnAssistantMeta` above — Space's sendMessage flow just
+ * never read it back out. Unlike referral (see resolveSpaceTurnReferral),
+ * `meta.upgrade_cta` under `assistant_response`/`envelope` is a passthrough
+ * path Space turns already use for cards/next_actions/assistantMeta, so this
+ * one plausibly *can* fire against a real Space turn today if the BE ever
+ * populates it — it isn't purely aspirational the way the referral path is.
+ *
+ * Same caveat as cards (space-job-cards-cache.ts): whether `GET
+ * .../messages` echoes `meta.upgrade_cta` back on history rows is
+ * unverified — this phase doesn't add cache/rehydration for it the way
+ * cards has, so a value present on a live send may not survive a cold
+ * history reload. Same class of gap, not fixed here.
  */
 export function resolveSpaceTurnUpgradeCta(data: unknown): UpgradeCtaPayload | undefined {
   if (!data || typeof data !== 'object') return undefined;
@@ -218,6 +252,12 @@ export type SpaceChatMessage = {
    * yet rendered by any Space UI (see resolveSpaceTurnUpgradeCta).
    */
   upgradeCta?: UpgradeCtaPayload;
+  // Deliberately no `spaceNudge` field here: its premise (KAZI-181, "Clinic
+  // -> Space progressive nudge") is nudging the user to leave Clinic and
+  // create a Space, which is incoherent on a turn a Space itself already
+  // produced. This is scoped out of Phase A by design, not an oversight —
+  // whether the concept gets redefined or dropped is a Phase B product
+  // decision (see KAZI-651).
   /** Present on optimistic local turns (KAZI-186 retry). */
   status?: 'sending' | 'sent' | 'failed';
   /** Persisted chat_messages.id for feedback (KAZI-254). */
