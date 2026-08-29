@@ -16,8 +16,11 @@ type UseDialogFocusTrapOptions = {
    *
    * KAZI-664 verified (real Chromium via Playwright, not jsdom — hit-testing
    * needs actual layout) what this does and doesn't protect against, for a
-   * dialog using the `fixed inset-0 ... bg-black/40` pattern all 5 of this
-   * hook's callers use:
+   * dialog using the `fixed inset-0 ... bg-black/40` pattern all 6 of this
+   * hook's callers use (ConfirmDialog, ConfirmAbandonSessionDialog,
+   * AgentSwitchDialog, PaywallModal, CvNewSessionDialog, SpaceTemplatePicker
+   * — an earlier pass of this comment said 5 and missed the last one; all 6
+   * are now portaled to document.body):
    *
    * - This flag has ZERO effect on a nested `overflow-y:auto` container
    *   behind the dialog (e.g. the Clinic/Space virtuoso message list) —
@@ -44,6 +47,16 @@ type UseDialogFocusTrapOptions = {
    * insurance for that specific case, not a guard for nested containers —
    * do not extend this hook with per-container locking to "fix" the nested
    * case above, there is nothing there to fix.
+   *
+   * Known pre-existing gap (not introduced or fixed by KAZI-664): if two of
+   * these dialogs are ever open at once, each captures body's overflow
+   * value at its own open time and restores that value on its own close.
+   * Closing them out of LIFO order (the one opened first closes first)
+   * restores the pre-first-dialog value while the second is still open,
+   * unlocking body scroll early. Whether any two of the 6 callers can
+   * actually stack today (e.g. a paywall trigger firing while
+   * AgentSwitchDialog is open) hasn't been audited — flagged so the
+   * verification above isn't misread as covering the stacked case too.
    */
   lockBodyScroll?: boolean;
 };

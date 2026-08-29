@@ -14,6 +14,11 @@ interface CvNewSessionDialogProps {
   onCancel: () => void;
 }
 
+// KAZI-664 review: no production caller wires this up today (only this
+// file and its own test import it) — the "new CV session" confirm flow
+// this was built for hasn't been connected. Portaled below for consistency
+// with the hook's other 5 callers regardless; not a claim that this
+// confirm step is live in any user-facing path yet.
 export function CvNewSessionDialog({
   open,
   onConfirm,

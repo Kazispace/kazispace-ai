@@ -55,12 +55,17 @@ export function AgentSwitchDialog({
     initialFocusRef: closeButtonRef,
   });
 
-  // Portal to <body> (KAZI-664, matching KAZI-652's ConfirmDialog): this
-  // dialog is mounted from clinic-shell.tsx, which today isn't inside any
-  // overflow-hidden/transform ancestor, but nothing structurally prevents
-  // that from changing later — portaling all 5 dialogs consistently means
-  // a future refactor can't silently reintroduce the clipping bug KAZI-652
-  // fixed for the other two.
+  // Portal to <body> (KAZI-664, matching KAZI-652's ConfirmDialog). Review
+  // correction: clinic-shell.tsx actually renders under (workspace)/layout
+  // -> SessionNavShell's `h-[100dvh] overflow-hidden` wrapper and its
+  // `overflow-hidden` <main>, so this IS inside overflow-hidden ancestors
+  // today — an earlier version of this comment claimed otherwise, which was
+  // wrong. It isn't observed to clip today only because `overflow: hidden`
+  // alone doesn't change a `position: fixed` element's containing block
+  // (that needs `transform`/`filter`/`contain`/`perspective` on an
+  // ancestor, which none of these have) — a fragile "not yet" that a future
+  // ancestor change could break at any time. Portaling removes the
+  // dependency on that fact entirely.
   if (typeof document === 'undefined') return null;
 
   return createPortal(
