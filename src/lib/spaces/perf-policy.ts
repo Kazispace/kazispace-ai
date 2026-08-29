@@ -33,8 +33,18 @@ export const DIRECTORY_IDLE_TIMEOUT_MS = 2500;
 /** Fallback when requestIdleCallback is unavailable. */
 export const DIRECTORY_FALLBACK_DELAY_MS = 2000;
 
-/** Mounted SpaceWorkspace instances kept across A→B→A (KAZI-573). */
-export const SPACE_WORKSPACE_KEEPALIVE_LIMIT = 3;
+/**
+ * Mounted SpaceWorkspace instances kept across A→B→A (KAZI-573), and also
+ * the fan-out for `prefetchRecentSpaceSwitches` (bulk detail+history warm on
+ * the Spaces list load). The latter is what actually protects touch/mobile
+ * switches — `onMouseEnter`/`onFocus` hover-prefetch never fires on tap, and
+ * `onPointerDown` fires too close to the navigation itself to give a cold
+ * fetch meaningful lead time. Raised 3→5 so more of a typical session's
+ * active Spaces are warm without hovering; re-tune from real p50/p95
+ * `route-transition` RUM data (filtered to `/spaces/*`) rather than again by
+ * feel — each extra slot is an eager GET on every Spaces list load.
+ */
+export const SPACE_WORKSPACE_KEEPALIVE_LIMIT = 5;
 
 /**
  * Space chat virtualizes after this many bubbles (KAZI-574).

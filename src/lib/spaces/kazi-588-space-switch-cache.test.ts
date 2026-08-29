@@ -132,8 +132,10 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
 
   it('selectRecentPrefetchSpaces warms the keep-alive window, newest first', () => {
     const spaces = [
+      space('ancient', '2025-11-01T00:00:00.000Z'),
       space('old', '2026-01-01T00:00:00.000Z'),
       space('mid', '2026-06-01T00:00:00.000Z'),
+      space('newer', '2026-07-15T00:00:00.000Z'),
       space('new', '2026-08-01T00:00:00.000Z'),
       space('newest', '2026-08-20T00:00:00.000Z'),
       {
@@ -144,7 +146,13 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     ];
     const recent = selectRecentPrefetchSpaces(spaces);
     expect(recent).toHaveLength(SPACE_WORKSPACE_KEEPALIVE_LIMIT);
-    expect(recent.map((row) => row.id)).toEqual(['newest', 'new', 'mid']);
+    expect(recent.map((row) => row.id)).toEqual([
+      'newest',
+      'new',
+      'newer',
+      'mid',
+      'old',
+    ]);
   });
 
   it('prefetchRecentSpaceSwitches prefetches detail + windowed history', async () => {
@@ -157,8 +165,10 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     prefetchRecentSpaceSwitches(
       client,
       [
+        space('ancient', '2025-11-01T00:00:00.000Z'),
         space('old', '2026-01-01T00:00:00.000Z'),
         space('mid', '2026-06-01T00:00:00.000Z'),
+        space('newer', '2026-07-15T00:00:00.000Z'),
         space('new', '2026-08-01T00:00:00.000Z'),
         space('newest', '2026-08-20T00:00:00.000Z'),
       ],
@@ -173,9 +183,15 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     const historySessions = fetchChatHistory.mock.calls.map((call) => call[0]);
     expect(historySessions).toHaveLength(SPACE_WORKSPACE_KEEPALIVE_LIMIT);
     expect(historySessions).toEqual(
-      expect.arrayContaining(['sess_newest', 'sess_new', 'sess_mid'])
+      expect.arrayContaining([
+        'sess_newest',
+        'sess_new',
+        'sess_newer',
+        'sess_mid',
+        'sess_old',
+      ])
     );
-    expect(historySessions).not.toContain('sess_old');
+    expect(historySessions).not.toContain('sess_ancient');
     expect(fetchChatHistory.mock.calls[0]?.[1]).toMatchObject(windowedHistoryQuery());
     expect(windowedHistoryQuery().limit).toBe(CHAT_HISTORY_WINDOW_LIMIT);
   });
