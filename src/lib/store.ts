@@ -302,10 +302,38 @@ function applySpacePatch(
   state: Pick<SpaceStore, 'spaces' | 'spaceLruOrder' | 'activeSpaceId'>,
   spaceId: string,
   patch: Partial<SpaceSlice>
-) {
-  return patchSpaceSliceWithLru(state.spaces, state.spaceLruOrder, spaceId, patch, {
+): { spaces: Record<string, SpaceSlice>; spaceLruOrder: string[] } {
+  const result = patchSpaceSliceWithLru(state.spaces, state.spaceLruOrder, spaceId, patch, {
     protectSpaceId: state.activeSpaceId,
   });
+  // Review on PR #217: this used to spread `result` (`{ spaces, lruOrder }`)
+  // directly into `set()`, but the store's real field is `spaceLruOrder` —
+  // `lruOrder` landed as a stray unused key and `spaceLruOrder` itself never
+  // actually updated through this path (KAZI-668, same root cause as the
+  // setActiveSpaceId bug already fixed below). Harmless on its own before
+  // this migration (Clinic's own store was untouched by Space's LRU), but
+  // now that Clinic's slice lives in this same `spaces` record, the stale
+  // `spaceLruOrder` meant the very next real Space write would silently
+  // prune `__clinic__` out entirely via `pruneSpacesToLru` — a real
+  // regression this migration would have introduced. Fixed here, not
+  // deferred: unlike the general LRU-tracking bug (KAZI-668, still real for
+  // ordinary multi-Space eviction correctness), this one is now squarely
+  // this PR's problem to not ship broken.
+  //
+  // `__clinic__` is also exempted from eviction unconditionally, not just
+  // via `protectSpaceId` (which only covers the *active* space) — it's a
+  // system-default space, not an ordinary LRU entry, matching `reset()`'s
+  // existing Clinic-preserving precedent below.
+  const clinicSlice = state.spaces[CLINIC_SPACE_ID];
+  const spaces =
+    clinicSlice && !result.spaces[CLINIC_SPACE_ID]
+      ? { ...result.spaces, [CLINIC_SPACE_ID]: clinicSlice }
+      : result.spaces;
+  const spaceLruOrder =
+    clinicSlice && !result.lruOrder.includes(CLINIC_SPACE_ID)
+      ? [...result.lruOrder, CLINIC_SPACE_ID]
+      : result.lruOrder;
+  return { spaces, spaceLruOrder };
 }
 
 export const useSpaceStore = create<SpaceStore>()((set, get) => ({
@@ -378,7 +406,11 @@ export const useSpaceStore = create<SpaceStore>()((set, get) => ({
       return applySpacePatch(state, spaceId, { activePanelHint });
     }),
   clearSpaceSlice: (spaceId) =>
-    set((state) => removeSpaceFromLru(state.spaces, state.spaceLruOrder, spaceId)),
+    set((state) => {
+      const removed = removeSpaceFromLru(state.spaces, state.spaceLruOrder, spaceId);
+      // Same field-name bug as applySpacePatch above (KAZI-668) — fixed here too.
+      return { spaces: removed.spaces, spaceLruOrder: removed.lruOrder };
+    }),
   // KAZI-651 Phase C.1b: logout is the only production caller of reset() and
   // has never cleared Clinic's own thread (there was no useChatStore.clearMessages()
   // call in the logout flow before Clinic's messages moved into this store) —

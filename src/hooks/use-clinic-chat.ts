@@ -129,12 +129,26 @@ function normalizeHistoryMessage(
   };
 }
 
-function clinicHistoryFingerprint(message: SpaceChatMessage): string {
+export function clinicHistoryFingerprint(message: SpaceChatMessage): string {
   return [
     message.id,
     message.content,
     message.contentPending ? 'pending' : '',
     String(message.cards?.length ?? 0),
+    // Review on PR #217: this fingerprint predates KAZI-651 and was never
+    // updated when `normalizeHistoryMessage` started extracting
+    // intent/citations/capabilityId/playbookId (same lesson C.1a already
+    // applied to `spaceMessageRowFingerprint` — a row gaining one of these
+    // on a later fetch must not fingerprint identically to the one without
+    // it, or `applyHistoryWindowRows` silently keeps the stale row).
+    message.intent ?? '',
+    String(message.citations?.length ?? 0),
+    message.capabilityId ?? '',
+    message.playbookId === undefined
+      ? ''
+      : message.playbookId === null
+        ? '\0null'
+        : message.playbookId,
   ].join('\0');
 }
 
