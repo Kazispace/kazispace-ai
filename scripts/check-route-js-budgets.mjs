@@ -3,6 +3,11 @@
  * KAZI-654 — JS budgets (decoded bytes) for the bundles behind the routes
  * with the worst recent perf incidents: Space, Interview, English, CV.
  *
+ * File-resolution mechanics (readJson/fileSize/manifest reading) live in
+ * scripts/lib/js-budget-measure.mjs, shared with check-clinic-js-budget.mjs
+ * (KAZI-665) — this script only decides *which* files each route's budget
+ * asks about, via the two modes below.
+ *
  * Two measurement modes, because "first-load JS for this page" is not the
  * same question for every route here (review finding on PR #209 — thanks,
  * this caught a real gap):
@@ -50,109 +55,32 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import {
+  readJson,
+  collectManifestFiles,
+  collectLoadableFiles,
+  measureFiles,
+  measureAllStaticChunks,
+} from './lib/js-budget-measure.mjs';
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const NEXT_DIR = path.join(ROOT, '.next');
 const OPTIONAL = process.argv.includes('--optional');
 const BUDGET_PATH = path.join(ROOT, 'src/lib/perf/route-js-budgets.json');
 
-function readJson(file) {
-  return JSON.parse(fs.readFileSync(file, 'utf8'));
-}
-
 const routeBudgets = readJson(BUDGET_PATH).routes;
 
-function walkJs(dir, acc = []) {
-  if (!fs.existsSync(dir)) return acc;
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walkJs(full, acc);
-    else if (entry.name.endsWith('.js')) acc.push(full);
-  }
-  return acc;
-}
-
-function collectPageKeyFiles(pageKey) {
-  const files = new Set();
-  const buildManifest = path.join(NEXT_DIR, 'build-manifest.json');
-  const appBuildManifest = path.join(NEXT_DIR, 'app-build-manifest.json');
-
-  if (fs.existsSync(buildManifest)) {
-    const manifest = readJson(buildManifest);
-    for (const key of ['polyfillFiles', 'lowPriorityFiles', 'rootMainFiles']) {
-      for (const file of manifest[key] ?? []) files.add(file);
-    }
-  }
-
-  if (fs.existsSync(appBuildManifest)) {
-    const manifest = readJson(appBuildManifest);
-    const pageFiles = manifest.pages?.[pageKey];
-    if (Array.isArray(pageFiles)) {
-      for (const file of pageFiles) files.add(file);
-    }
-  }
-
-  return [...files].filter((file) => file.endsWith('.js'));
-}
-
-function collectLoadableFiles(loadableKey) {
-  const loadableManifestPath = path.join(NEXT_DIR, 'react-loadable-manifest.json');
-  if (!fs.existsSync(loadableManifestPath)) {
-    throw new Error('react-loadable-manifest.json missing — run next build first.');
-  }
-  const manifest = readJson(loadableManifestPath);
-  const entry = manifest[loadableKey];
-  if (!entry || !Array.isArray(entry.files)) {
-    // Fail loud, not silent: a missing entry means the dynamic import this
-    // budget targets was renamed/moved/removed, and the config is stale —
-    // NOT that its bundle shrank to zero. Falling back to "measure
-    // everything" (like page_key mode does) would report a nonsense total
-    // for a single-chunk target; better to force the budget config to be
-    // updated to match the real import.
-    throw new Error(
-      `react-loadable-manifest.json has no entry "${loadableKey}" — update route-js-budgets.json to the current dynamic import's source path.`
-    );
-  }
-  return entry.files.filter((file) => file.endsWith('.js'));
-}
-
-function fileSize(rel) {
-  const candidates = [
-    path.join(NEXT_DIR, rel),
-    path.join(NEXT_DIR, 'static', rel.replace(/^static\//, '')),
-    path.join(ROOT, rel),
-  ];
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) return fs.statSync(candidate).size;
-  }
-  return 0;
-}
-
 function measureRoute(budget) {
-  const listed = budget.loadable_key
-    ? collectLoadableFiles(budget.loadable_key)
-    : collectPageKeyFiles(budget.page_key);
-  let total = 0;
-  const measured = [];
-  for (const rel of listed) {
-    const size = fileSize(rel);
-    if (size > 0) {
-      total += size;
-      measured.push({ rel, size });
-    }
+  if (budget.loadable_key) {
+    // collectLoadableFiles throws loud on a missing/stale entry — never
+    // silently falls through to the static-chunk fallback below.
+    return measureFiles(NEXT_DIR, ROOT, collectLoadableFiles(NEXT_DIR, budget.loadable_key));
   }
 
+  const listed = collectManifestFiles(NEXT_DIR, (pageKey) => pageKey === budget.page_key);
+  const result = measureFiles(NEXT_DIR, ROOT, listed);
   // Fallback: all static chunks if page_key mode didn't resolve any files.
-  // (loadable_key mode never reaches here on a bad key — collectLoadableFiles
-  // throws instead, so this only guards a page_key manifest miss.)
-  if (total === 0 && !budget.loadable_key) {
-    for (const file of walkJs(path.join(NEXT_DIR, 'static'))) {
-      const size = fs.statSync(file).size;
-      total += size;
-      measured.push({ rel: path.relative(NEXT_DIR, file), size });
-    }
-  }
-
-  return { total, measured };
+  return result.total === 0 ? measureAllStaticChunks(NEXT_DIR) : result;
 }
 
 // CI runs `npm test` (this in --optional mode) *before* `npm run build` —

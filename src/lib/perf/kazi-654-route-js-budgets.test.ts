@@ -100,13 +100,28 @@ describe('KAZI-654 per-route JS budget gate', () => {
       'utf8'
     );
     expect(src).toMatch(/route-js-budgets\.json/);
-    expect(src).toMatch(/manifest\.pages\?\.\[pageKey\]/);
+    // KAZI-665: the app-build-manifest.pages iteration itself moved into the
+    // shared scripts/lib/js-budget-measure.mjs (collectManifestFiles), reused
+    // by check-clinic-js-budget.mjs too — assert the route script still does
+    // an *exact* single-key match via its predicate, not a broad scan.
+    expect(src).toMatch(/pageKey\s*===\s*budget\.page_key/);
     // KAZI-654 PR #209 review: "cv" is a redirect-only page, so it must be
     // measured via its actual next/dynamic() chunk (react-loadable-manifest),
     // not the app-build-manifest page key — assert the script still branches
     // on this rather than silently falling back to page_key for everything.
     expect(src).toMatch(/react-loadable-manifest\.json/);
     expect(src).toMatch(/collectLoadableFiles/);
+
+    const sharedLibSrc = readFileSync(
+      path.resolve(__dirname, '../../../scripts/lib/js-budget-measure.mjs'),
+      'utf8'
+    );
+    expect(sharedLibSrc).toMatch(/manifest\.pages\s*\?\?\s*\{\}/);
+    // Review on PR #219: matching the iteration alone doesn't prove the
+    // predicate is actually applied as a filter -- someone could drop
+    // `matchPageKey(pageKey)` entirely (collecting every page's files) and
+    // the assertion above would still pass. Pin the actual filter call.
+    expect(sharedLibSrc).toMatch(/matchPageKey\(pageKey\)/);
   });
 
   it('measures the cv route via its CvWorkspaceRail dynamic import, not the redirect-only page', () => {
