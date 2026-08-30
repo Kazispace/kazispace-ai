@@ -27,8 +27,12 @@ import {
   mergeSpaceMessagesAfterSend,
   resolveSpaceTurnCards,
   resolveSpaceTurnAssistantMeta,
+  resolveSpaceTurnCapabilityId,
+  resolveSpaceTurnCitations,
   resolveSpaceTurnCustomComponents,
+  resolveSpaceTurnIntent,
   resolveSpaceTurnNextActions,
+  resolveSpaceTurnPlaybookId,
   resolveSpaceTurnReferral,
   resolveSpaceTurnReply,
   resolveSpaceTurnUpgradeCta,
@@ -328,6 +332,10 @@ export function useSpaceTurn(
         const turnCustomComponents = resolveSpaceTurnCustomComponents(res.data);
         const turnReferral = resolveSpaceTurnReferral(res.data);
         const turnUpgradeCta = resolveSpaceTurnUpgradeCta(res.data);
+        const turnIntent = resolveSpaceTurnIntent(res.data);
+        const turnCitations = resolveSpaceTurnCitations(res.data);
+        const turnCapabilityId = resolveSpaceTurnCapabilityId(res.data);
+        const turnPlaybookId = resolveSpaceTurnPlaybookId(res.data);
         const assistantMessageId = extractAssistantMessageId(res.data);
 
         const nextCapability = resolveActiveCapabilityFromTurn(res.data);
@@ -401,6 +409,12 @@ export function useSpaceTurn(
               : {}),
             ...(turnReferral ? { referral: turnReferral } : {}),
             ...(turnUpgradeCta ? { upgradeCta: turnUpgradeCta } : {}),
+            ...(turnIntent ? { intent: turnIntent } : {}),
+            ...(turnCitations && turnCitations.length > 0
+              ? { citations: turnCitations }
+              : {}),
+            ...(turnCapabilityId ? { capabilityId: turnCapabilityId } : {}),
+            ...(turnPlaybookId !== undefined ? { playbookId: turnPlaybookId } : {}),
             ...(isServerAssistantMessageId(assistantMessageId)
               ? { serverMessageId: assistantMessageId }
               : {}),
