@@ -62,7 +62,17 @@ export function AgentCard({
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white ring-1 ring-gray-200/80">
           <AgentNavIcon agentId={agent.agentId} sizeClassName="h-5 w-5" />
         </div>
-        {badgeLabel ? (
+        {/*
+          `clinicInline`'s label is a full sentence ("Start from Clinic
+          chat"), not a short status word like the other badge kinds -- the
+          `max-w-[55%] truncate` below (correct safety net for short labels)
+          was cutting it off mid-word on the narrower desktop card grid. The
+          exact same text already renders in full at the bottom of the card
+          (isClinicInline branch below), so skip the pill for this kind
+          entirely rather than widening/un-truncating a corner badge that
+          was never the right place for a sentence-length hint.
+        */}
+        {badgeLabel && !isClinicInline ? (
           <span
             className={cn(
               "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium max-w-[55%] truncate",
@@ -92,14 +102,15 @@ export function AgentCard({
             {t("loginToContinue")}
           </span>
         ) : (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="w-full pointer-events-none"
-            tabIndex={-1}
-          >
-            {t("openAgent")} →
+          // KAZI-675: this is a purely decorative CTA -- the whole card
+          // above is already the real `<button>` that handles the click.
+          // Render via `asChild` (Button already supports it, via Radix
+          // Slot) so this lands as a `<span>` styled like a button instead
+          // of an actual nested `<button>`, which is invalid HTML and was
+          // only "safe" because `pointer-events-none`/`tabIndex={-1}` made
+          // it inert -- neither is needed once it isn't a real button.
+          <Button asChild size="sm" variant="outline" className="w-full">
+            <span>{t("openAgent")} →</span>
           </Button>
         )}
       </div>

@@ -91,6 +91,31 @@ export function ChatInput({
   const clearComposerInsert = useUIStore((s) => s.clearComposerInsert);
   const showToast = useUIStore((s) => s.showToast);
 
+  /**
+   * KAZI-675: the `toolbar` chip row (capability quick-actions) scrolls
+   * horizontally when it doesn't fit -- on a narrow phone viewport the last
+   * chip sits right at the screen edge with nothing hinting there's more to
+   * swipe to. Track whether there's unscrolled content to the right so a
+   * fade can be shown only when it's actually true (never on a row that
+   * already fits, and gone once scrolled to the end).
+   */
+  const toolbarScrollRef = useRef<HTMLDivElement>(null);
+  const [toolbarOverflowing, setToolbarOverflowing] = useState(false);
+  const updateToolbarOverflow = useCallback(() => {
+    const el = toolbarScrollRef.current;
+    if (!el) return;
+    setToolbarOverflowing(el.scrollWidth - el.scrollLeft - el.clientWidth > 1);
+  }, []);
+
+  useEffect(() => {
+    updateToolbarOverflow();
+  }, [toolbar, updateToolbarOverflow]);
+
+  useEffect(() => {
+    window.addEventListener("resize", updateToolbarOverflow);
+    return () => window.removeEventListener("resize", updateToolbarOverflow);
+  }, [updateToolbarOverflow]);
+
   /** Grow with content up to max-h-32; avoid internal scroll until capped. */
   const resizeTextarea = useCallback(() => {
     const el = textareaRef.current;
@@ -455,13 +480,25 @@ export function ChatInput({
             {plusButton}
             {attachMenu}
             {toolbar ? (
-              <div
-                className={cn(
-                  "min-w-0 flex-1 overflow-x-auto",
-                  "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-                )}
-              >
-                {toolbar}
+              <div className="relative min-w-0 flex-1">
+                <div
+                  ref={toolbarScrollRef}
+                  onScroll={updateToolbarOverflow}
+                  data-testid="chat-input-toolbar-scroll"
+                  className={cn(
+                    "overflow-x-auto",
+                    "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                  )}
+                >
+                  {toolbar}
+                </div>
+                {toolbarOverflowing ? (
+                  <div
+                    aria-hidden
+                    data-testid="chat-input-toolbar-fade"
+                    className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-white to-transparent"
+                  />
+                ) : null}
               </div>
             ) : (
               <div className="flex-1" />

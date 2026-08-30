@@ -180,9 +180,16 @@ export async function apiRequest<T>(
         errorCode: err.code,
       };
     }
+    // A thrown fetch() failure (no HTTP response at all) surfaces here as a
+    // raw browser exception -- `err.message` is literally "Failed to fetch"
+    // in Chromium, "Load failed" in Safari, etc. Callers that don't check
+    // `errorCode` and just render `error` directly (several do) were
+    // showing that verbatim to users. `errorCode: 'NETWORK_ERROR'` already
+    // lets callers translate properly; keep the fallback text generic too,
+    // not the engine-specific exception string.
     return {
       success: false,
-      error: err instanceof Error ? err.message : 'Network error',
+      error: 'Network error',
       errorCode: 'NETWORK_ERROR',
     };
   }

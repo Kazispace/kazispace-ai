@@ -176,6 +176,37 @@ describe('KAZI-659 /login page', () => {
     expect(host?.querySelector('input[type="tel"]')).not.toBeNull();
   });
 
+  // Real bug found via manual review: apiRequest's catch-all network-error
+  // branch (api-client.ts) sets `error` to the raw `err.message` -- for a
+  // thrown fetch() failure that's the literal browser string "Failed to
+  // fetch", which `result.error || t(...)` then rendered straight into the
+  // UI verbatim. `errorCode: 'NETWORK_ERROR'` was already set alongside it
+  // and simply never checked. Assert the translated key wins instead.
+  it('shows the translated network-error message, not the raw fetch() error string', async () => {
+    requestOtpMock.mockResolvedValue({
+      success: false,
+      error: 'Failed to fetch',
+      errorCode: 'NETWORK_ERROR',
+    });
+
+    await act(async () => {
+      root!.render(<LoginPage params={{ locale: 'en' }} />);
+    });
+
+    const input = host!.querySelector('input[type="tel"]') as HTMLInputElement;
+    const form = host!.querySelector('form') as HTMLFormElement;
+
+    await act(async () => {
+      setInputValue(input, '+77001234567');
+    });
+    await act(async () => {
+      form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    });
+
+    expect(host?.textContent).toContain('networkError');
+    expect(host?.textContent).not.toContain('Failed to fetch');
+  });
+
   it('shows the "session expired" banner from ?expired=1', async () => {
     window.history.replaceState(null, '', '/en/login?expired=1');
 
@@ -376,6 +407,25 @@ describe('KAZI-659 /login page', () => {
       expect(otpInput()).not.toBeNull();
       expect(pushMock).not.toHaveBeenCalled();
       expect(useAuthStore.getState().isLoggedIn).toBe(false);
+    });
+
+    it('shows the translated network-error message on verify, not the raw fetch() error string', async () => {
+      await advanceToOtpStep();
+      verifyOtpMock.mockResolvedValue({
+        success: false,
+        error: 'Failed to fetch',
+        errorCode: 'NETWORK_ERROR',
+      });
+
+      await act(async () => {
+        setInputValue(otpInput(), '123456');
+      });
+      await act(async () => {
+        currentForm().dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      expect(host?.textContent).toContain('networkError');
+      expect(host?.textContent).not.toContain('Failed to fetch');
     });
   });
 });
