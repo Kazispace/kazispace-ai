@@ -328,12 +328,24 @@ export type SpaceChatMessage = {
   capabilityId?: SearchCapabilityId;
   /** Bound playbook id from BE meta (tooltip only). */
   playbookId?: string | null;
-  // Deliberately no `spaceNudge` field here: its premise (KAZI-181, "Clinic
-  // -> Space progressive nudge") is nudging the user to leave Clinic and
-  // create a Space, which is incoherent on a turn a Space itself already
-  // produced. This is scoped out of Phase A by design, not an oversight —
-  // whether the concept gets redefined or dropped is a Phase B product
-  // decision (see KAZI-651).
+  /**
+   * KAZI-651 Phase C.1b — populated only by the `__clinic__` slice's own
+   * send path (`parseClinicReply`), never by a generic Space turn resolver:
+   * a real Space's own live turn producing this is still incoherent (Phase
+   * A's reasoning holds), but the *storage type* now has to carry it once
+   * Clinic's message state lives in this same per-space slice shape.
+   */
+  spaceNudge?: import('@/lib/spaces/space-nudge').SpaceNudgePayload;
+  /**
+   * KAZI-651 Phase C.1b — waiting-copy hint while an optimistic assistant
+   * placeholder is empty (KAZI-233). Clinic-only in practice: Space's own
+   * row renderer (`SpaceMessageRow`) hardcodes `streamComplete` as a fixed
+   * `MessageBubble` prop rather than reading either of these two fields off
+   * the message, since a Space turn is always a single complete response.
+   */
+  pendingCapability?: 'web_search' | 'research';
+  /** See `pendingCapability` above — same Clinic-only scope. */
+  streamComplete?: boolean;
   /** Present on optimistic local turns (KAZI-186 retry). */
   status?: 'sending' | 'sent' | 'failed';
   /** Persisted chat_messages.id for feedback (KAZI-254). */

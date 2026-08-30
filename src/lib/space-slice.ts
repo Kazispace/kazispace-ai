@@ -16,6 +16,14 @@ export interface SpaceSlice {
   messages: SpaceChatMessage[];
   isHydrating: boolean;
   isSending: boolean;
+  /**
+   * KAZI-651 Phase C.1b — assistant-bubble typing indicator, distinct from
+   * `isSending` (composer-disable, spans the whole request). Real Space
+   * turns are single-shot (no SSE) and have never set this; it exists so
+   * the `__clinic__` slice can carry Clinic's two genuinely different
+   * busy signals without collapsing them into one.
+   */
+  isStreaming: boolean;
   replyNotice: SpaceReplyNotice | null;
   /** Worker foreground for this space only (KAZI-195). */
   activeCapability: string | null;
@@ -34,6 +42,7 @@ export function emptySpaceSlice(
     messages: [],
     isHydrating: false,
     isSending: false,
+    isStreaming: false,
     replyNotice: null,
     activeCapability: null,
     activePanelHint: null,

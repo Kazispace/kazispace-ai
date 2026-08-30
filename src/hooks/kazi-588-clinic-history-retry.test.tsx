@@ -7,7 +7,8 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 
 import { ChatHistoryLoadError } from '@/components/chat/chat-history-load-error';
 import { clinicHistoryBootstrapOutcome } from '@/lib/clinic/history-bootstrap';
-import { useAuthStore, useChatStore } from '@/lib/store';
+import { useAuthStore, useSpaceStore } from '@/lib/store';
+import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 
 const fetchChatHistory = vi.fn();
 
@@ -70,7 +71,7 @@ describe('KAZI-588 R3 Clinic history failure is retryable', () => {
 
   beforeEach(() => {
     fetchChatHistory.mockReset();
-    useChatStore.getState().clearMessages();
+    useSpaceStore.getState().clearSpaceSlice(CLINIC_SPACE_ID);
     useAuthStore.setState({ isLoggedIn: true });
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -80,7 +81,7 @@ describe('KAZI-588 R3 Clinic history failure is retryable', () => {
   afterEach(() => {
     act(() => root.unmount());
     container.remove();
-    useChatStore.getState().clearMessages();
+    useSpaceStore.getState().clearSpaceSlice(CLINIC_SPACE_ID);
   });
 
   it('does not mark a failed history GET as a completed bootstrap', () => {

@@ -52,9 +52,9 @@ import { useActiveWorkspaceRailEvents } from "@/hooks/use-active-workspace-chrom
 import { getDeepLinkAgentId, getDeepLinkReferralId, clearReferralFromUrl, stripAgentParamsFromUrl, useAgentSwitch } from "@/hooks/use-agent-switch";
 import { useAgentChat } from "@/hooks/use-agent-chat";
 import { useNbaAction } from "@/hooks/use-nba-action";
-import { useAuthStore, useAgentStore, useChatStore, useUIStore } from "@/lib/store";
+import { useAuthStore, useAgentStore, useSpaceStore, useUIStore } from "@/lib/store";
 import { useEmbeddedInWorkspaceShell } from "@/lib/workspace-shell-context";
-import { isSpacesEnabled } from "@/lib/spaces/constants";
+import { CLINIC_SPACE_ID, isSpacesEnabled } from "@/lib/spaces/constants";
 import {
   AGENT_REGISTRY,
   AGENT_QUICK_REPLIES,
@@ -314,7 +314,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   const didClinicBootstrapRef = useRef(false);
 
   const reloadClinicHistoryIfIdle = useCallback(async () => {
-    if (useChatStore.getState().isSending) {
+    if (useSpaceStore.getState().getSpaceSlice(CLINIC_SPACE_ID).isSending) {
       pendingClinicHistoryReloadRef.current = true;
       return true;
     }
@@ -368,12 +368,13 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   }, [skipHistoryLoad, stayInClinicForDedicatedHub, reloadClinicHistoryIfIdle]);
 
   // Calls loadHistory directly rather than via loadHistoryRef (KAZI-660
-  // review, PR #210): loadHistory's own deps are just [setMessages], and
-  // setMessages is a useChatStore action defined once in create() — stable
-  // for the store's lifetime — so loadHistory (and this callback, and
-  // handleBackToClinic below which depends on this) don't churn identity on
-  // Clinic re-renders. If setMessages is ever replaced with an inline
-  // selector closure, this stops holding and should move to a ref.
+  // review, PR #210): loadHistory's own deps are just [setSpaceMessages,
+  // setSpaceMasterSessionId] (KAZI-651 Phase C.1b), both `useSpaceStore`
+  // actions defined once in create() — stable for the store's lifetime —
+  // so loadHistory (and this callback, and handleBackToClinic below which
+  // depends on this) don't churn identity on Clinic re-renders. If either
+  // setter is ever replaced with an inline selector closure, this stops
+  // holding and should move to a ref.
   const reloadClinicIfNeeded = useCallback(
     async (result?: { reloadClinic?: boolean; ok?: boolean }) => {
       if (result?.reloadClinic && isLoggedIn) {
@@ -920,8 +921,9 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
         // Park may appear after yield (news/greeting) — refresh Current+parked.
         void refreshCurrentSessions(true);
 
-        const msg = useChatStore
+        const msg = useSpaceStore
           .getState()
+          .getSpaceSlice(CLINIC_SPACE_ID)
           .messages.find((m) => m.id === result.assistantId);
 
         // Interim bridge (pre-KAZI-138): L2 still processes inline mock interview;
@@ -958,11 +960,21 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
             return;
           }
           if (msg?.role === "assistant") {
+            // KAZI-651 Phase C.1b: `msg` is now `SpaceChatMessage`-shaped (no
+            // `timestamp`/`sessionId`) — this hand-off to agent-slice.ts
+            // still needs a real `ChatMessage` (untouched, out of scope for
+            // this migration), so synthesize both at the boundary. The
+            // clinic master session id is the same session-scoped value
+            // `msg.sessionId` used to carry here.
+            const clinicMasterSessionId =
+              useSpaceStore.getState().getSpaceSlice(CLINIC_SPACE_ID).masterSessionId;
             const syncResult = await syncActiveAgentFromGateway(
               result.routedToAgent.agentId,
               {
                 ...msg,
-                sessionId: result.routedToAgent.sessionId ?? msg.sessionId,
+                timestamp: new Date().toISOString(),
+                sessionId:
+                  result.routedToAgent.sessionId ?? clinicMasterSessionId ?? "",
               }
             );
             if (syncResult && !syncResult.ok) {
@@ -1363,8 +1375,9 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   /** Same-thread research handoff from web_search upgrade CTA (KAZI-233). */
   const handleUpgradeResearch = useCallback(
     async (messageId: string) => {
-      const msg = useChatStore
+      const msg = useSpaceStore
         .getState()
+        .getSpaceSlice(CLINIC_SPACE_ID)
         .messages.find((m) => m.id === messageId);
       const cta = msg?.upgradeCta;
       if (!cta || cta.dismissed) return;

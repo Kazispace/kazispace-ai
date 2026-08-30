@@ -11,11 +11,22 @@ import {
 } from '@/lib/agents/registry';
 import type { StrategySelectTurnContext } from '@/lib/strategy-select';
 import type { SpaceNudgePayload } from '@/lib/spaces/space-nudge';
+import type { SpaceChatMessage } from '@/lib/spaces/turn';
 import type { ChatJobCard, ChatMessage, ChatNextAction } from '@/types';
 import type { ExamPickerOption } from '@/types/english-tutor-envelope';
 
 export type ClinicMessageRowProps = {
-  message: ChatMessage;
+  /**
+   * KAZI-651 Phase C.1b: Clinic's own messages now live in the same
+   * per-space slice shape Space uses (`SpaceChatMessage`) — this row never
+   * read `.timestamp`/`.sessionId` (the two fields that shape lacks), so
+   * that side is a no-op retype. Still a union with `ChatMessage`, not a
+   * clean swap: `isAgentMode` renders Hub agent messages through this same
+   * row (`agent-slice.ts`, untouched by this migration, still `ChatMessage[]`)
+   * — every `.role` read below already narrows defensively
+   * (`message.role === 'user' ? 'user' : 'assistant'`), so the union is safe.
+   */
+  message: SpaceChatMessage | ChatMessage;
   strategy: StrategySelectTurnContext;
   locale: string;
   isAgentMode: boolean;

@@ -15,7 +15,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { ClinicMessageVirtuosoProps } from '@/components/clinic/clinic-message-virtuoso';
 import { StaticClinicMessageRows } from '@/components/clinic/clinic-message-static-rows';
 import { restoreSpaceChatScrollAfterVirtualize } from '@/lib/spaces/space-message-virtualize';
-import type { ChatMessage } from '@/types';
+import type { SpaceChatMessage } from '@/lib/spaces/turn';
 
 const virtuosoGate = vi.hoisted(() => {
   let resolveMod: ((value: { ClinicMessageVirtuoso: unknown }) => void) | null =
@@ -73,13 +73,11 @@ function TestVirtuoso({
   );
 }
 
-function makeMessages(count: number): ChatMessage[] {
+function makeMessages(count: number): SpaceChatMessage[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `c${i + 1}`,
     role: i % 2 === 0 ? 'user' : 'assistant',
     content: `row ${i + 1}`,
-    timestamp: '2026-08-17T00:00:00Z',
-    sessionId: 'sess_clinic',
   }));
 }
 
