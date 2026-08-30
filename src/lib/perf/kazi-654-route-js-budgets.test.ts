@@ -117,6 +117,11 @@ describe('KAZI-654 per-route JS budget gate', () => {
       'utf8'
     );
     expect(sharedLibSrc).toMatch(/manifest\.pages\s*\?\?\s*\{\}/);
+    // Review on PR #219: matching the iteration alone doesn't prove the
+    // predicate is actually applied as a filter -- someone could drop
+    // `matchPageKey(pageKey)` entirely (collecting every page's files) and
+    // the assertion above would still pass. Pin the actual filter call.
+    expect(sharedLibSrc).toMatch(/matchPageKey\(pageKey\)/);
   });
 
   it('measures the cv route via its CvWorkspaceRail dynamic import, not the redirect-only page', () => {
