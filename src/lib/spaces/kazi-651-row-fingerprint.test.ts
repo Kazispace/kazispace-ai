@@ -91,6 +91,23 @@ describe('KAZI-651 Phase C.1a: spaceMessageRowFingerprint covers intent/citation
     );
   });
 
+  it('differs between two same-length citation lists with different URLs (review PR #216)', () => {
+    const citationsA: SpaceChatMessage = {
+      ...base,
+      citations: [{ url: 'https://example.com/a', title: 'Example A' }],
+    };
+    const citationsB: SpaceChatMessage = {
+      ...base,
+      citations: [{ url: 'https://example.com/b', title: 'Example B' }],
+    };
+    // Before this fix, a bare `citations?.length` fingerprinted these two
+    // identically (both length 1), so preserveSpaceMessageRows would keep
+    // the stale row instead of picking up the changed source.
+    expect(spaceMessageRowFingerprint(citationsA)).not.toBe(
+      spaceMessageRowFingerprint(citationsB)
+    );
+  });
+
   it('differs when a row gains a capabilityId', () => {
     const withCapability: SpaceChatMessage = { ...base, capabilityId: 'web_search' };
     expect(spaceMessageRowFingerprint(base)).not.toBe(

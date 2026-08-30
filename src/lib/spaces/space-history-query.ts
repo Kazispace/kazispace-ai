@@ -118,7 +118,10 @@ export function spaceMessageRowFingerprint(message: SpaceChatMessage): string {
     // Phase C.1a: same lesson applied up front for the four new read-path
     // parity fields, instead of waiting for review to catch it again.
     message.intent ?? '',
-    String(message.citations?.length ?? 0),
+    // Review (PR #216): a bare `citations?.length` doesn't catch two
+    // same-length citation lists with different URLs -- join the actual
+    // URLs so a content change is detected, not just a count change.
+    message.citations ? message.citations.map((c) => c.url).join('\0') : '',
     message.capabilityId ?? '',
     // playbookId has three meaningfully different states (resolveSearchCapability):
     // undefined = BE omitted the field, null = unbound/general search, string =

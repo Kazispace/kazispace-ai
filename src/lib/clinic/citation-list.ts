@@ -1,7 +1,8 @@
 /**
  * Research citation_list helpers (KAZI-223).
- * TODO(spaces): Space turn messages do not yet carry citations — wire when
- * workspace Research envelopes include custom_components.
+ * KAZI-651 Phase C.1a: `SpaceChatMessage`/`normalizeSpaceHistoryMessage` can
+ * now carry `citations` (data layer only) — no Space UI reads the field back
+ * out yet. Update this note again once a Space surface actually renders them.
  */
 
 export type CitationItem = {
