@@ -5,10 +5,12 @@ import {
   type ClinicMessageRowProps,
 } from '@/components/clinic/clinic-message-row';
 import type { StrategySelectTurnContext } from '@/lib/strategy-select';
+import type { SpaceChatMessage } from '@/lib/spaces/turn';
 import type { ChatMessage } from '@/types';
 
 export type ClinicMessageListBodyProps = {
-  messages: ChatMessage[];
+  /** See ClinicMessageRowProps.message — union covers isAgentMode's ChatMessage[] too. */
+  messages: (SpaceChatMessage | ChatMessage)[];
   strategyContexts: StrategySelectTurnContext[];
   isStreaming: boolean;
 } & Omit<ClinicMessageRowProps, 'message' | 'strategy' | 'isStreamingEmpty'>;

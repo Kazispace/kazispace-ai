@@ -16,7 +16,8 @@ import {
 } from '@/lib/clinic/starter-prompts/config';
 import type { SpaceStarterConfig } from '@/lib/spaces/starter-prompts/types';
 import { readCachedMasterSessionId } from '@/lib/master-session';
-import { useChatStore } from '@/lib/store';
+import { useSpaceStore } from '@/lib/store';
+import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 
 export { resolveLatestClinicNextActions } from '@/lib/clinic/starter-prompts/clinic-nba';
 
@@ -28,7 +29,9 @@ export function useClinicStarterPromptsController(
   hasUserMessage: boolean
 ): StarterPromptsController | null {
   const panelId = useId();
-  const storeSessionId = useChatStore((s) => s.currentSessionId);
+  const storeSessionId = useSpaceStore(
+    (s) => s.getSpaceSlice(CLINIC_SPACE_ID).masterSessionId
+  );
   const clinicSessionId =
     storeSessionId ?? readCachedMasterSessionId() ?? 'pending';
 

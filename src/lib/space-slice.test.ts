@@ -17,6 +17,10 @@ describe('space-slice', () => {
     expect(getSpaceSliceFromRecord({}, 'sp_1')).toEqual(emptySpaceSlice());
   });
 
+  it('defaults isStreaming to false (KAZI-651 Phase C.1b)', () => {
+    expect(emptySpaceSlice().isStreaming).toBe(false);
+  });
+
   it('patches by spaceId without clobbering siblings', () => {
     const a = patchSpaceSlice({}, 'sp_a', {
       messages: [{ id: 'u1', role: 'user', content: 'hi' }],

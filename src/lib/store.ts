@@ -23,6 +23,7 @@ import {
   type SpaceSlice,
 } from './space-slice';
 import type { SpaceChatMessage } from './spaces/turn';
+import { CLINIC_SPACE_ID } from './spaces/constants';
 
 // ---- Auth Store ----
 interface AuthStore {
@@ -74,44 +75,6 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     set((state) => ({
       user: state.user ? { ...state.user, ...partialUser } : null,
     })),
-}));
-
-// ---- Chat Store ----
-interface ChatStore {
-  currentSessionId: string | null;
-  messages: ChatMessage[];
-  isStreaming: boolean;
-  isSending: boolean;
-  setCurrentSession: (sessionId: string) => void;
-  addMessage: (message: ChatMessage) => void;
-  updateMessage: (id: string, patch: Partial<ChatMessage>) => void;
-  removeMessage: (id: string) => void;
-  setMessages: (messages: ChatMessage[]) => void;
-  setStreaming: (streaming: boolean) => void;
-  setSending: (sending: boolean) => void;
-  clearMessages: () => void;
-}
-
-export const useChatStore = create<ChatStore>()((set) => ({
-  currentSessionId: null,
-  messages: [],
-  isStreaming: false,
-  isSending: false,
-  setCurrentSession: (sessionId) => set({ currentSessionId: sessionId }),
-  addMessage: (message) =>
-    set((state) => ({ messages: [...state.messages, message] })),
-  updateMessage: (id, patch) =>
-    set((state) => ({
-      messages: state.messages.map((m) => (m.id === id ? { ...m, ...patch } : m)),
-    })),
-  removeMessage: (id) =>
-    set((state) => ({
-      messages: state.messages.filter((m) => m.id !== id),
-    })),
-  setMessages: (messages) => set({ messages }),
-  setStreaming: (streaming) => set({ isStreaming: streaming }),
-  setSending: (sending) => set({ isSending: sending }),
-  clearMessages: () => set({ messages: [], currentSessionId: null }),
 }));
 
 // ---- UI Store ----
@@ -326,6 +289,8 @@ interface SpaceStore {
   ) => void;
   setSpaceHydrating: (spaceId: string, isHydrating: boolean) => void;
   setSpaceSending: (spaceId: string, isSending: boolean) => void;
+  /** KAZI-651 Phase C.1b — see SpaceSlice.isStreaming. */
+  setSpaceStreaming: (spaceId: string, isStreaming: boolean) => void;
   setSpaceReplyNotice: (spaceId: string, notice: SpaceReplyNotice | null) => void;
   setSpaceActiveCapability: (spaceId: string, activeCapability: string | null) => void;
   setSpaceActivePanelHint: (spaceId: string, activePanelHint: string | null) => void;
@@ -337,10 +302,25 @@ function applySpacePatch(
   state: Pick<SpaceStore, 'spaces' | 'spaceLruOrder' | 'activeSpaceId'>,
   spaceId: string,
   patch: Partial<SpaceSlice>
-) {
-  return patchSpaceSliceWithLru(state.spaces, state.spaceLruOrder, spaceId, patch, {
+): { spaces: Record<string, SpaceSlice>; spaceLruOrder: string[] } {
+  // Review on PR #217: this used to spread `result` (`{ spaces, lruOrder }`)
+  // directly into `set()`, but the store's real field is `spaceLruOrder` —
+  // `lruOrder` landed as a stray unused key and `spaceLruOrder` itself never
+  // actually updated through this path (KAZI-668, same root cause as the
+  // setActiveSpaceId bug already fixed below). Fixed here by naming the
+  // field explicitly.
+  //
+  // `__clinic__`'s exemption from LRU eviction lives in `touchSpaceLruOrder`
+  // / `pruneSpacesToLru` themselves (space-slice.ts) — a follow-up review
+  // caught that stitching it back in only this one caller left
+  // `setActiveSpaceId`'s separate `touchExistingSpaceLru` call path
+  // unprotected, since it calls those helpers directly without going
+  // through `applySpacePatch`. Baking the exemption into the shared helpers
+  // covers every call site uniformly, so nothing extra is needed here.
+  const result = patchSpaceSliceWithLru(state.spaces, state.spaceLruOrder, spaceId, patch, {
     protectSpaceId: state.activeSpaceId,
   });
+  return { spaces: result.spaces, spaceLruOrder: result.lruOrder };
 }
 
 export const useSpaceStore = create<SpaceStore>()((set, get) => ({
@@ -357,7 +337,17 @@ export const useSpaceStore = create<SpaceStore>()((set, get) => ({
         spaceId,
         { protectSpaceId: spaceId }
       );
-      return { activeSpaceId: spaceId, ...touched };
+      // KAZI-651 Phase C.1b test discovery: `touched.lruOrder` was being
+      // spread directly, but this store's field is `spaceLruOrder` — the
+      // touch-to-front never actually persisted (a stray unused `lruOrder`
+      // key sat on the state object instead). Pre-existing bug, unrelated
+      // to this migration; fixed here since it's a one-line adjacent fix
+      // caught by this phase's own regression test.
+      return {
+        activeSpaceId: spaceId,
+        spaces: touched.spaces,
+        spaceLruOrder: touched.lruOrder,
+      };
     }),
   getSpaceSlice: (spaceId) => getSpaceSliceFromRecord(get().spaces, spaceId),
   setSpaceMasterSessionId: (spaceId, masterSessionId) =>
@@ -381,6 +371,11 @@ export const useSpaceStore = create<SpaceStore>()((set, get) => ({
       if (!isSending && !state.spaces[spaceId]) return {};
       return applySpacePatch(state, spaceId, { isSending });
     }),
+  setSpaceStreaming: (spaceId, isStreaming) =>
+    set((state) => {
+      if (!isStreaming && !state.spaces[spaceId]) return {};
+      return applySpacePatch(state, spaceId, { isStreaming });
+    }),
   setSpaceReplyNotice: (spaceId, notice) =>
     set((state) => {
       if (notice == null && !state.spaces[spaceId]) return {};
@@ -398,8 +393,27 @@ export const useSpaceStore = create<SpaceStore>()((set, get) => ({
       return applySpacePatch(state, spaceId, { activePanelHint });
     }),
   clearSpaceSlice: (spaceId) =>
-    set((state) => removeSpaceFromLru(state.spaces, state.spaceLruOrder, spaceId)),
-  reset: () => set({ activeSpaceId: null, spaces: {}, spaceLruOrder: [] }),
+    set((state) => {
+      const removed = removeSpaceFromLru(state.spaces, state.spaceLruOrder, spaceId);
+      // Same field-name bug as applySpacePatch above (KAZI-668) — fixed here too.
+      return { spaces: removed.spaces, spaceLruOrder: removed.lruOrder };
+    }),
+  // KAZI-651 Phase C.1b: logout is the only production caller of reset() and
+  // has never cleared Clinic's own thread (there was no useChatStore.clearMessages()
+  // call in the logout flow before Clinic's messages moved into this store) —
+  // preserve `__clinic__`'s slice so this migration doesn't newly wipe it.
+  reset: () =>
+    set((state) => {
+      const clinicSlice = state.spaces[CLINIC_SPACE_ID];
+      const spaces: Record<string, SpaceSlice> = clinicSlice
+        ? { [CLINIC_SPACE_ID]: clinicSlice }
+        : {};
+      return {
+        activeSpaceId: null,
+        spaces,
+        spaceLruOrder: clinicSlice ? [CLINIC_SPACE_ID] : [],
+      };
+    }),
 }));
 
 export type { SpaceReplyNotice, SpaceSlice };

@@ -4,14 +4,12 @@ import {
   isInFlightClinicMessage,
   mergeClinicMessagesAfterHistoryLoad,
 } from '@/lib/clinic-chat-merge';
-import type { ChatMessage } from '@/types';
+import type { SpaceChatMessage } from '@/lib/spaces/turn';
 
-const base = (overrides: Partial<ChatMessage>): ChatMessage => ({
+const base = (overrides: Partial<SpaceChatMessage>): SpaceChatMessage => ({
   id: 'm1',
   role: 'user',
   content: 'hello',
-  timestamp: '2026-07-13T10:00:00Z',
-  sessionId: 'sess_1',
   status: 'sent',
   streamComplete: true,
   ...overrides,

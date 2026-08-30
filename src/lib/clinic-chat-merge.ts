@@ -1,8 +1,7 @@
-import { isPlaceholderReply } from '@/lib/spaces/turn';
-import type { ChatMessage } from '@/types';
+import { isPlaceholderReply, type SpaceChatMessage } from '@/lib/spaces/turn';
 
 /** Rows still owned by the client turn loop — not yet fully persisted in session history. */
-export function isInFlightClinicMessage(message: ChatMessage): boolean {
+export function isInFlightClinicMessage(message: SpaceChatMessage): boolean {
   // Already bound to a server row — history reload must not append a second bubble.
   if (message.serverMessageId) return false;
   if (message.status === 'sending') return true;
@@ -13,9 +12,9 @@ export function isInFlightClinicMessage(message: ChatMessage): boolean {
 
 /** Keep in-flight turns when session history reloads; sent/failed rows defer to server. */
 export function mergeClinicMessagesAfterHistoryLoad(
-  local: ChatMessage[],
-  fromServer: ChatMessage[]
-): ChatMessage[] {
+  local: SpaceChatMessage[],
+  fromServer: SpaceChatMessage[]
+): SpaceChatMessage[] {
   if (fromServer.length === 0) return local;
 
   const serverIds = new Set(fromServer.map((message) => message.id));

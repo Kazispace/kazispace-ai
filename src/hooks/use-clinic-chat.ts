@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useAuthStore, useChatStore, useUIStore } from '@/lib/store';
+import { useAuthStore, useSpaceStore, useUIStore } from '@/lib/store';
 import {
   sendChatMessage,
   fetchChatHistory,
@@ -14,16 +14,38 @@ import { getAuthToken } from '@/lib/auth';
 import { ensureMasterSession, syncMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
 import { looksLikeResearchRequest } from '@/lib/clinic/upgrade-cta';
-import { isPlaceholderReply, resolveSpaceTurnReply } from '@/lib/spaces/turn';
+import {
+  isPlaceholderReply,
+  resolveSpaceTurnReply,
+  type SpaceChatMessage,
+} from '@/lib/spaces/turn';
 import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import {
   applyHistoryWindowRows,
   capHistoryHydrateIds,
   mergeHydratedHistoryRows,
   parseChatHistoryResponse,
 } from '@/lib/chat/history-window';
-import type { ChatMessage } from '@/types';
+
+/**
+ * KAZI-651 Phase C.1b — Clinic's message state now lives in `useSpaceStore`'s
+ * `CLINIC_SPACE_ID` slice instead of the standalone `useChatStore` (removed).
+ * This hook's own history parsing/merge logic (`normalizeHistoryMessage`,
+ * `clinicHistoryFingerprint`, `mergeClinicMessagesAfterHistoryLoad`) is
+ * deliberately kept as-is rather than switched to Space's shared
+ * `mapSpaceHistoryMessages`/`normalizeSpaceHistoryMessage` parser: the two
+ * extract assistant reply text differently (this file's
+ * `extractHistoryMessageContent` tries `resolveSpaceTurnReply`'s
+ * envelope-aware fallback chain first; Space's history parser only reads
+ * flat `content`/`text`/`message` fields) and reconciling them is real,
+ * separate work this phase doesn't need to do — only the storage layer
+ * unifies here, not the parsing algorithm. Send path (`sendChatMessage`,
+ * `/chat/messages`) is unchanged.
+ */
+
+const EMPTY_CLINIC_MESSAGES: SpaceChatMessage[] = [];
 
 function extractHistoryMessageContent(
   raw: Record<string, unknown>,
@@ -46,9 +68,8 @@ function extractHistoryMessageContent(
 }
 
 function normalizeHistoryMessage(
-  raw: Record<string, unknown>,
-  sessionId: string
-): ChatMessage | null {
+  raw: Record<string, unknown>
+): SpaceChatMessage | null {
   const roleRaw = (raw.role as string) ?? 'assistant';
   const role: 'user' | 'assistant' =
     roleRaw === 'user' ? 'user' : roleRaw === 'assistant' || roleRaw === 'ai' ? 'assistant' : 'assistant';
@@ -64,11 +85,6 @@ function normalizeHistoryMessage(
       id: rawId,
       role,
       content: '',
-      timestamp:
-        (raw.timestamp as string) ??
-        (raw.created_at as string) ??
-        new Date().toISOString(),
-      sessionId,
       status: 'sent',
       streamComplete: true,
       contentPending: true,
@@ -88,8 +104,6 @@ function normalizeHistoryMessage(
     id,
     role,
     content,
-    timestamp: (raw.timestamp as string) ?? (raw.created_at as string) ?? new Date().toISOString(),
-    sessionId,
     status: 'sent',
     streamComplete: true,
     ...(envelope?.intent ? { intent: envelope.intent } : {}),
@@ -115,19 +129,37 @@ function normalizeHistoryMessage(
   };
 }
 
-function clinicHistoryFingerprint(message: ChatMessage): string {
+export function clinicHistoryFingerprint(message: SpaceChatMessage): string {
   return [
     message.id,
     message.content,
     message.contentPending ? 'pending' : '',
     String(message.cards?.length ?? 0),
+    // Review on PR #217: this fingerprint predates KAZI-651 and was never
+    // updated when `normalizeHistoryMessage` started extracting
+    // intent/citations/capabilityId/playbookId (same lesson C.1a already
+    // applied to `spaceMessageRowFingerprint` — a row gaining one of these
+    // on a later fetch must not fingerprint identically to the one without
+    // it, or `applyHistoryWindowRows` silently keeps the stale row).
+    message.intent ?? '',
+    // Second review round on PR #217: still used `.length`, the exact
+    // `spaceMessageRowFingerprint` bug PR #216 already fixed elsewhere — two
+    // same-length citation lists with different URLs must not collapse to
+    // the same fingerprint. Join actual URLs instead of counting.
+    message.citations ? message.citations.map((c) => c.url).join('\0') : '',
+    message.capabilityId ?? '',
+    message.playbookId === undefined
+      ? ''
+      : message.playbookId === null
+        ? '\0null'
+        : message.playbookId,
   ].join('\0');
 }
 
 /** Throws on transport/envelope failure so callers cannot treat it as empty success. */
 export async function fetchNormalizedClinicHistory(
   sessionId: string
-): Promise<ChatMessage[]> {
+): Promise<SpaceChatMessage[]> {
   const res = await fetchChatHistory(sessionId);
   if (!res.success || res.data == null) {
     throw new Error(res.error ?? 'Failed to load clinic history');
@@ -136,14 +168,14 @@ export async function fetchNormalizedClinicHistory(
   const parsed = parseChatHistoryResponse(res.data);
 
   return parsed.rows
-    .map((m) => normalizeHistoryMessage(m, sessionId))
-    .filter((message): message is ChatMessage => message != null);
+    .map((m) => normalizeHistoryMessage(m))
+    .filter((message): message is SpaceChatMessage => message != null);
 }
 
 async function hydrateNormalizedHistory(
   sessionId: string,
   ids: string[]
-): Promise<ChatMessage[]> {
+): Promise<SpaceChatMessage[]> {
   const capped = capHistoryHydrateIds(ids);
   if (capped.length === 0) return [];
   const res = await fetchChatHistory(sessionId, { ids: capped.join(',') });
@@ -151,11 +183,11 @@ async function hydrateNormalizedHistory(
   const parsed = parseChatHistoryResponse(res.data);
   return parsed.rows
     .filter((row) => row.content_pending !== true)
-    .map((m) => normalizeHistoryMessage(m, sessionId))
-    .filter((message): message is ChatMessage => message != null);
+    .map((m) => normalizeHistoryMessage(m))
+    .filter((message): message is SpaceChatMessage => message != null);
 }
 
-function assistantAfterUserId(messages: ChatMessage[], userMsgId: string): string {
+function assistantAfterUserId(messages: SpaceChatMessage[], userMsgId: string): string {
   const userIndex = messages.findIndex((message) => message.id === userMsgId);
   if (userIndex < 0) return '';
 
@@ -170,10 +202,9 @@ function assistantAfterUserId(messages: ChatMessage[], userMsgId: string): strin
 
 async function recoverPlaceholderReplyFromHistory(
   sessionId: string,
-  userMsgId: string,
-  setMessages: (messages: ChatMessage[]) => void
+  userMsgId: string
 ): Promise<string> {
-  let refreshed: ChatMessage[];
+  let refreshed: SpaceChatMessage[];
   try {
     refreshed = await fetchNormalizedClinicHistory(sessionId);
   } catch {
@@ -181,13 +212,18 @@ async function recoverPlaceholderReplyFromHistory(
   }
   const reply = assistantAfterUserId(refreshed, userMsgId);
   if (!isPlaceholderReply(reply)) {
-    const local = useChatStore.getState().messages;
+    const local = useSpaceStore.getState().getSpaceSlice(CLINIC_SPACE_ID).messages;
     const mergedWindow = applyHistoryWindowRows(
       local,
       refreshed,
       clinicHistoryFingerprint
     );
-    setMessages(mergeClinicMessagesAfterHistoryLoad(local, mergedWindow));
+    useSpaceStore
+      .getState()
+      .setSpaceMessages(
+        CLINIC_SPACE_ID,
+        mergeClinicMessagesAfterHistoryLoad(local, mergedWindow)
+      );
   }
   return reply;
 }
@@ -196,17 +232,17 @@ export function useClinicChat(locale?: string) {
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const masterSessionSyncedRef = useRef(false);
-  const {
-    messages,
-    isStreaming,
-    isSending,
-    addMessage,
-    setMessages,
-    setStreaming,
-    setSending,
-    updateMessage,
-    removeMessage,
-  } = useChatStore();
+
+  const slice = useSpaceStore((s) => s.getSpaceSlice(CLINIC_SPACE_ID));
+  const messages = slice.messages.length > 0 ? slice.messages : EMPTY_CLINIC_MESSAGES;
+  const isStreaming = slice.isStreaming;
+  const isSending = slice.isSending;
+  const setSpaceMessages = useSpaceStore((s) => s.setSpaceMessages);
+  const patchSpaceMessages = useSpaceStore((s) => s.patchSpaceMessages);
+  const setSpaceSending = useSpaceStore((s) => s.setSpaceSending);
+  const setSpaceStreaming = useSpaceStore((s) => s.setSpaceStreaming);
+  const setSpaceMasterSessionId = useSpaceStore((s) => s.setSpaceMasterSessionId);
+
   const showToast = useUIStore((s) => s.showToast);
   const openPaywall = useUIStore((s) => s.openPaywall);
   const tErrors = useTranslations('errors');
@@ -244,7 +280,7 @@ export function useClinicChat(locale?: string) {
   );
 
   const loadHistory = useCallback(async () => {
-    if (useChatStore.getState().isSending) return false;
+    if (useSpaceStore.getState().getSpaceSlice(CLINIC_SPACE_ID).isSending) return false;
 
     setIsHistoryLoading(true);
     try {
@@ -253,14 +289,18 @@ export function useClinicChat(locale?: string) {
         masterSessionSyncedRef.current = true;
       }
       const sessionId = await ensureMasterSession();
+      setSpaceMasterSessionId(CLINIC_SPACE_ID, sessionId);
       const fromServer = await fetchNormalizedClinicHistory(sessionId);
-      const local = useChatStore.getState().messages;
+      const local = useSpaceStore.getState().getSpaceSlice(CLINIC_SPACE_ID).messages;
       const mergedWindow = applyHistoryWindowRows(
         local,
         fromServer,
         clinicHistoryFingerprint
       );
-      setMessages(mergeClinicMessagesAfterHistoryLoad(local, mergedWindow));
+      setSpaceMessages(
+        CLINIC_SPACE_ID,
+        mergeClinicMessagesAfterHistoryLoad(local, mergedWindow)
+      );
       return true;
     } catch (error) {
       console.error('[useClinicChat] loadHistory failed', error);
@@ -268,17 +308,17 @@ export function useClinicChat(locale?: string) {
     } finally {
       setIsHistoryLoading(false);
     }
-  }, [setMessages]);
+  }, [setSpaceMessages, setSpaceMasterSessionId]);
 
   const hydrateHistoryStubs = useCallback(
     async (ids: string[]) => {
       const sessionId = await ensureMasterSession();
       const hydrated = await hydrateNormalizedHistory(sessionId, ids);
       if (hydrated.length === 0) return;
-      const local = useChatStore.getState().messages;
-      setMessages(mergeHydratedHistoryRows(local, hydrated));
+      const local = useSpaceStore.getState().getSpaceSlice(CLINIC_SPACE_ID).messages;
+      setSpaceMessages(CLINIC_SPACE_ID, mergeHydratedHistoryRows(local, hydrated));
     },
-    [setMessages]
+    [setSpaceMessages]
   );
 
   const skipHistoryLoad = useCallback(() => {
@@ -300,6 +340,7 @@ export function useClinicChat(locale?: string) {
       // Clinic Phase 1 path is a single long HTTP POST (not mid-stream SSE).
       // LLM_BUSY surfaces on the response envelope via handleApiFailure + toastShown.
       const sessionId = await ensureMasterSession();
+      setSpaceMasterSessionId(CLINIC_SPACE_ID, sessionId);
       const userMsgId = options?.retryMessageId ?? `user_${Date.now()}`;
       const pendingCapability =
         options?.pendingCapability ??
@@ -307,31 +348,39 @@ export function useClinicChat(locale?: string) {
       const displayContent = options?.displayContent?.trim() || text.trim();
 
       if (options?.retryMessageId) {
-        updateMessage(userMsgId, { status: 'sending', content: displayContent });
+        patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
+          prev.map((message) =>
+            message.id === userMsgId
+              ? { ...message, status: 'sending' as const, content: displayContent }
+              : message
+          )
+        );
       } else {
-        addMessage({
-          id: userMsgId,
-          role: 'user',
-          content: displayContent,
-          timestamp: new Date().toISOString(),
-          sessionId,
-          status: 'sending',
-        });
+        patchSpaceMessages(CLINIC_SPACE_ID, (prev) => [
+          ...prev,
+          {
+            id: userMsgId,
+            role: 'user' as const,
+            content: displayContent,
+            status: 'sending' as const,
+          },
+        ]);
       }
 
-      setSending(true);
+      setSpaceSending(CLINIC_SPACE_ID, true);
 
       const assistantId = `assistant_${Date.now()}`;
-      addMessage({
-        id: assistantId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date().toISOString(),
-        sessionId,
-        streamComplete: false,
-        pendingCapability,
-      });
-      setStreaming(true);
+      patchSpaceMessages(CLINIC_SPACE_ID, (prev) => [
+        ...prev,
+        {
+          id: assistantId,
+          role: 'assistant' as const,
+          content: '',
+          streamComplete: false,
+          pendingCapability,
+        },
+      ]);
+      setSpaceStreaming(CLINIC_SPACE_ID, true);
 
       try {
         const res = await sendChatMessage(sessionId, displayContent, locale, {
@@ -341,8 +390,15 @@ export function useClinicChat(locale?: string) {
         });
 
         if (!res.success || !res.data) {
-          removeMessage(assistantId);
-          updateMessage(userMsgId, { status: 'failed' });
+          patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
+            prev
+              .filter((message) => message.id !== assistantId)
+              .map((message) =>
+                message.id === userMsgId
+                  ? { ...message, status: 'failed' as const }
+                  : message
+              )
+          );
           handleApiFailure(res);
           const busy = isLlmBusy(res);
           return {
@@ -378,46 +434,59 @@ export function useClinicChat(locale?: string) {
 
         if (isPlaceholderReply(reply)) {
           try {
-            reply = await recoverPlaceholderReplyFromHistory(
-              sessionId,
-              userMsgId,
-              setMessages
-            );
+            reply = await recoverPlaceholderReplyFromHistory(sessionId, userMsgId);
           } catch (error) {
             console.warn('[useClinicChat] history refresh failed after send', error);
           }
         }
 
         if (isPlaceholderReply(reply)) {
-          removeMessage(assistantId);
-          updateMessage(userMsgId, { status: 'failed' });
+          patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
+            prev
+              .filter((message) => message.id !== assistantId)
+              .map((message) =>
+                message.id === userMsgId
+                  ? { ...message, status: 'failed' as const }
+                  : message
+              )
+          );
           return { ok: false as const, error: 'Assistant did not return a reply' };
         }
 
-        updateMessage(userMsgId, { status: 'sent' });
-        updateMessage(assistantId, {
-          content: reply,
-          ...(intent ? { intent } : {}),
-          ...(referral ? { referral } : {}),
-          ...(spaceNudge ? { spaceNudge } : {}),
-          ...(nextActions.length > 0 ? { nextActions } : {}),
-          ...(cards.length > 0 ? { cards } : {}),
-          ...(citations && citations.length > 0 ? { citations } : {}),
-          ...(upgradeCta ? { upgradeCta } : {}),
-          ...(capabilityId ? { capabilityId } : {}),
-          ...(playbookId !== undefined ? { playbookId } : {}),
-          ...(assistantMeta ? { assistantMeta } : {}),
-          ...(customComponents && customComponents.length > 0
-            ? { customComponents }
-            : {}),
-          ...(isServerAssistantMessageId(assistantMessageId)
-            ? { serverMessageId: assistantMessageId }
-            : {}),
-          pendingCapability: undefined,
-          // Full HTTP reply — render Markdown immediately (KAZI-561).
-          // Never leave streamComplete=false for a complete string (fake typewriter).
-          streamComplete: true,
-        });
+        patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
+          prev.map((message) => {
+            if (message.id === userMsgId) {
+              return { ...message, status: 'sent' as const };
+            }
+            if (message.id === assistantId) {
+              return {
+                ...message,
+                content: reply,
+                ...(intent ? { intent } : {}),
+                ...(referral ? { referral } : {}),
+                ...(spaceNudge ? { spaceNudge } : {}),
+                ...(nextActions.length > 0 ? { nextActions } : {}),
+                ...(cards.length > 0 ? { cards } : {}),
+                ...(citations && citations.length > 0 ? { citations } : {}),
+                ...(upgradeCta ? { upgradeCta } : {}),
+                ...(capabilityId ? { capabilityId } : {}),
+                ...(playbookId !== undefined ? { playbookId } : {}),
+                ...(assistantMeta ? { assistantMeta } : {}),
+                ...(customComponents && customComponents.length > 0
+                  ? { customComponents }
+                  : {}),
+                ...(isServerAssistantMessageId(assistantMessageId)
+                  ? { serverMessageId: assistantMessageId }
+                  : {}),
+                pendingCapability: undefined,
+                // Full HTTP reply — render Markdown immediately (KAZI-561).
+                // Never leave streamComplete=false for a complete string (fake typewriter).
+                streamComplete: true,
+              };
+            }
+            return message;
+          })
+        );
 
         publishSessionNavInvalidate();
 
@@ -427,56 +496,92 @@ export function useClinicChat(locale?: string) {
           ...(routedToAgent ? { routedToAgent } : {}),
         };
       } finally {
-        setSending(false);
-        setStreaming(false);
+        setSpaceSending(CLINIC_SPACE_ID, false);
+        setSpaceStreaming(CLINIC_SPACE_ID, false);
       }
     },
-    [addMessage, setMessages, setSending, setStreaming, updateMessage, removeMessage, handleApiFailure, locale, tErrors]
+    [
+      patchSpaceMessages,
+      setSpaceSending,
+      setSpaceStreaming,
+      setSpaceMasterSessionId,
+      handleApiFailure,
+      locale,
+      tErrors,
+    ]
   );
 
   const markStreamComplete = useCallback(
     (messageId: string) => {
-      updateMessage(messageId, { streamComplete: true });
+      patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
+        prev.map((message) =>
+          message.id === messageId ? { ...message, streamComplete: true } : message
+        )
+      );
     },
-    [updateMessage]
+    [patchSpaceMessages]
   );
 
   const dismissMessageReferral = useCallback(
     (messageId: string) => {
-      const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
+      const msg = useSpaceStore
+        .getState()
+        .getSpaceSlice(CLINIC_SPACE_ID)
+        .messages.find((m) => m.id === messageId);
       if (!msg?.referral) return;
-      updateMessage(messageId, {
-        referral: { ...msg.referral, dismissed: true },
-      });
+      patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
+        prev.map((message) =>
+          message.id === messageId
+            ? { ...message, referral: { ...msg.referral!, dismissed: true } }
+            : message
+        )
+      );
     },
-    [updateMessage]
+    [patchSpaceMessages]
   );
 
   const dismissMessageSpaceNudge = useCallback(
     (messageId: string) => {
-      const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
+      const msg = useSpaceStore
+        .getState()
+        .getSpaceSlice(CLINIC_SPACE_ID)
+        .messages.find((m) => m.id === messageId);
       if (!msg?.spaceNudge) return;
-      updateMessage(messageId, {
-        spaceNudge: { ...msg.spaceNudge, dismissed: true },
-      });
+      patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
+        prev.map((message) =>
+          message.id === messageId
+            ? { ...message, spaceNudge: { ...msg.spaceNudge!, dismissed: true } }
+            : message
+        )
+      );
     },
-    [updateMessage]
+    [patchSpaceMessages]
   );
 
   const dismissMessageUpgradeCta = useCallback(
     (messageId: string) => {
-      const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
+      const msg = useSpaceStore
+        .getState()
+        .getSpaceSlice(CLINIC_SPACE_ID)
+        .messages.find((m) => m.id === messageId);
       if (!msg?.upgradeCta) return;
-      updateMessage(messageId, {
-        upgradeCta: { ...msg.upgradeCta, dismissed: true },
-      });
+      patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
+        prev.map((message) =>
+          message.id === messageId
+            ? { ...message, upgradeCta: { ...msg.upgradeCta!, dismissed: true } }
+            : message
+        )
+      );
     },
-    [updateMessage]
+    [patchSpaceMessages]
   );
 
   const retryMessage = useCallback(
     async (messageId: string) => {
-      const msg = useChatStore.getState().messages.find((m) => m.id === messageId);
+      const msg = useSpaceStore
+        .getState()
+        .getSpaceSlice(CLINIC_SPACE_ID)
+        .messages.find((m) => m.id === messageId);
       if (!msg || msg.role !== 'user') return { ok: false as const };
       return sendMessage(msg.content, { retryMessageId: messageId });
     },
