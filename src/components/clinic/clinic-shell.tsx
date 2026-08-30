@@ -368,13 +368,16 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   }, [skipHistoryLoad, stayInClinicForDedicatedHub, reloadClinicHistoryIfIdle]);
 
   // Calls loadHistory directly rather than via loadHistoryRef (KAZI-660
-  // review, PR #210): loadHistory's own deps are just [setSpaceMessages,
-  // setSpaceMasterSessionId] (KAZI-651 Phase C.1b), both `useSpaceStore`
-  // actions defined once in create() — stable for the store's lifetime —
-  // so loadHistory (and this callback, and handleBackToClinic below which
-  // depends on this) don't churn identity on Clinic re-renders. If either
-  // setter is ever replaced with an inline selector closure, this stops
-  // holding and should move to a ref.
+  // review, PR #210): loadHistory's own deps are [setSpaceMessages,
+  // setSpaceMasterSessionId, queryClient] (KAZI-651 Phase C.1b, extended in
+  // true Phase C.1b for the shared TanStack Query fetch) — the two
+  // `useSpaceStore` actions are defined once in create(), and `queryClient`
+  // (useQueryClient()) is created once in providers.tsx; all three are
+  // stable for their respective lifetimes, so loadHistory (and this
+  // callback, and handleBackToClinic below which depends on this) don't
+  // churn identity on Clinic re-renders. If any of them is ever replaced
+  // with something that isn't stable, this stops holding and should move to
+  // a ref.
   const reloadClinicIfNeeded = useCallback(
     async (result?: { reloadClinic?: boolean; ok?: boolean }) => {
       if (result?.reloadClinic && isLoggedIn) {

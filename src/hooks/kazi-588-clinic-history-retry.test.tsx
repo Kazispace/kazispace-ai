@@ -3,6 +3,7 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatHistoryLoadError } from '@/components/chat/chat-history-load-error';
@@ -60,6 +61,26 @@ function ClinicHistoryProbe() {
   );
 }
 
+/**
+ * KAZI-651 true Phase C.1b, take 1: `loadHistory` now routes its fetch
+ * through `useQueryClient().fetchQuery` (clinicHistoryQueryKey), so this
+ * probe needs a real QueryClient in context -- one per test to keep runs
+ * isolated, `retry: false` so a mocked failure resolves on the first attempt
+ * (matching this suite's own single-mockResolvedValueOnce-per-call setup).
+ */
+function renderClinicHistoryProbe(root: Root) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  act(() => {
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <ClinicHistoryProbe />
+      </QueryClientProvider>
+    );
+  });
+}
+
 describe('KAZI-588 R3 Clinic history failure is retryable', () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -115,9 +136,7 @@ describe('KAZI-588 R3 Clinic history failure is retryable', () => {
       data: [{ id: 'm1', role: 'assistant', content: 'hello' }],
     });
 
-    act(() => {
-      root.render(<ClinicHistoryProbe />);
-    });
+    renderClinicHistoryProbe(root);
 
     await act(async () => {
       container.querySelector<HTMLButtonElement>('[data-testid="load"]')?.click();
@@ -141,6 +160,36 @@ describe('KAZI-588 R3 Clinic history failure is retryable', () => {
     expect(container.querySelector('[data-testid="ok"]')?.getAttribute('data-ok')).toBe(
       '1'
     );
+    expect(container.querySelector('[data-testid="count"]')?.textContent).toBe('1');
+  });
+
+  /**
+   * KAZI-651 true Phase C.1b, take 1: the actual value of routing
+   * `loadHistory` through `queryClient.fetchQuery` -- two of the 10+
+   * clinic-shell.tsx call sites can genuinely race in the same tick (e.g.
+   * `reconcileActiveAgentLayer`'s reload racing a keep-alive idle reload).
+   * Before this change each call meant its own `fetchChatHistory` network
+   * call; now concurrent calls for the same session share one in-flight
+   * fetch. This must hold without weakening the "always a fresh read"
+   * contract the other test in this suite already covers (second call after
+   * the first *resolves* still hits the network).
+   */
+  it('dedupes concurrent loadHistory calls into a single network fetch', async () => {
+    fetchChatHistory.mockResolvedValue({
+      success: true,
+      data: [{ id: 'm1', role: 'assistant', content: 'hello' }],
+    });
+
+    renderClinicHistoryProbe(root);
+
+    await act(async () => {
+      const button = container.querySelector<HTMLButtonElement>('[data-testid="load"]');
+      button?.click();
+      button?.click();
+      await Promise.resolve();
+    });
+
+    expect(fetchChatHistory).toHaveBeenCalledTimes(1);
     expect(container.querySelector('[data-testid="count"]')?.textContent).toBe('1');
   });
 

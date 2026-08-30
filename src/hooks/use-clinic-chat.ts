@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useAuthStore, useSpaceStore, useUIStore } from '@/lib/store';
 import {
@@ -46,6 +47,32 @@ import {
  */
 
 const EMPTY_CLINIC_MESSAGES: SpaceChatMessage[] = [];
+
+/**
+ * KAZI-651 true Phase C.1b, take 1: `clinicHistoryQueryKey` shares the same
+ * TanStack Query cache/QueryClient instance as Space's `spaceHistoryQueryKey`
+ * (space-history-query.ts), under its own key namespace -- a Clinic session
+ * id and a real Space's `master_session_id` are never the same value (see
+ * ensureMasterSession vs `space.master_session_id`), so there is no
+ * collision risk in sharing the client; the separate key prefix is purely
+ * for readability, not safety.
+ *
+ * Deliberately narrow in scope: only `loadHistory`'s primary window-fetch
+ * (below) routes through this. `loadHistory` is called from 10+ distinct
+ * call sites in clinic-shell.tsx (Hub hand-back reconcile, keep-alive idle
+ * reload, agent-switch reload, online/offline...), each of which relies on
+ * "this call is always a fresh network read" -- a real behavior contract,
+ * not an oversight. Wiring in `queryClient.fetchQuery` with `staleTime: 0`
+ * preserves that contract exactly (a 0 staleTime means any cached data is
+ * immediately considered stale, so a network fetch always fires) while still
+ * gaining TanStack Query's request de-dup for calls that race, and giving
+ * Clinic's history the same cache/devtools visibility Space's already has.
+ * Turning any of those 10+ call sites into an actual stale-tolerant read is
+ * separate, unverified work this slice does not attempt.
+ */
+function clinicHistoryQueryKey(masterSessionId: string) {
+  return ['clinic-history', masterSessionId] as const;
+}
 
 function extractHistoryMessageContent(
   raw: Record<string, unknown>,
@@ -232,6 +259,7 @@ export function useClinicChat(locale?: string) {
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const masterSessionSyncedRef = useRef(false);
+  const queryClient = useQueryClient();
 
   const slice = useSpaceStore((s) => s.getSpaceSlice(CLINIC_SPACE_ID));
   const messages = slice.messages.length > 0 ? slice.messages : EMPTY_CLINIC_MESSAGES;
@@ -290,7 +318,11 @@ export function useClinicChat(locale?: string) {
       }
       const sessionId = await ensureMasterSession();
       setSpaceMasterSessionId(CLINIC_SPACE_ID, sessionId);
-      const fromServer = await fetchNormalizedClinicHistory(sessionId);
+      const fromServer = await queryClient.fetchQuery({
+        queryKey: clinicHistoryQueryKey(sessionId),
+        queryFn: () => fetchNormalizedClinicHistory(sessionId),
+        staleTime: 0,
+      });
       const local = useSpaceStore.getState().getSpaceSlice(CLINIC_SPACE_ID).messages;
       const mergedWindow = applyHistoryWindowRows(
         local,
@@ -308,7 +340,11 @@ export function useClinicChat(locale?: string) {
     } finally {
       setIsHistoryLoading(false);
     }
-  }, [setSpaceMessages, setSpaceMasterSessionId]);
+    // `queryClient` (useQueryClient()) is stable for the app's lifetime
+    // (created once in providers.tsx), same stability class as the two
+    // `useSpaceStore` actions already here -- see clinic-shell.tsx's own
+    // comment on why this identity must not churn across renders.
+  }, [setSpaceMessages, setSpaceMasterSessionId, queryClient]);
 
   const hydrateHistoryStubs = useCallback(
     async (ids: string[]) => {
