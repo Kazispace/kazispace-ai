@@ -184,4 +184,39 @@ describe('KAZI-651 review: __clinic__ survives real Space writes, not just reset
     expect(state.spaces.sp_a).toBeUndefined();
     expect(state.spaceLruOrder).toEqual(['sp_b']);
   });
+
+  /**
+   * Second review round on PR #217: the previous fix only stitched Clinic
+   * back into `applySpacePatch`'s result, which left `spaceLruOrder` up to
+   * 11 items long (10 real spaces + Clinic appended at the end).
+   * `setActiveSpaceId` calls `touchExistingSpaceLru` -> `patchSpaceSliceWithLru`
+   * -> `touchSpaceLruOrder(..., limit=10)` *directly*, bypassing that stitch
+   * entirely, and its own `.slice(0, 10)` truncation would cut off whatever
+   * sits at the end of an 11-item order -- i.e. Clinic. `use-space-turn.ts`
+   * calls `setActiveSpaceId` on every real Space mount, including keep-alive
+   * switch-backs, so this was a live, reachable path to silently losing
+   * Clinic's history. Now fixed at the shared-helper level
+   * (`touchSpaceLruOrder`/`pruneSpacesToLru` in space-slice.ts), so this
+   * exercises `setActiveSpaceId` specifically, not just `setSpaceMessages`.
+   */
+  it('survives setActiveSpaceId after 10+ real Spaces have been visited', () => {
+    useSpaceStore.getState().setSpaceMessages(CLINIC_SPACE_ID, [
+      { id: 'u1', role: 'user', content: 'clinic message' },
+    ]);
+
+    for (let i = 0; i < SPACE_SLICE_LRU_LIMIT + 2; i++) {
+      const id = `sp_${i}`;
+      useSpaceStore.getState().setSpaceMessages(id, [
+        { id: `m_${i}`, role: 'user', content: String(i) },
+      ]);
+      useSpaceStore.getState().setActiveSpaceId(id);
+    }
+
+    const state = useSpaceStore.getState();
+    expect(state.spaces[CLINIC_SPACE_ID]).toBeDefined();
+    expect(state.spaces[CLINIC_SPACE_ID]?.messages).toEqual([
+      { id: 'u1', role: 'user', content: 'clinic message' },
+    ]);
+    expect(state.spaceLruOrder).toContain(CLINIC_SPACE_ID);
+  });
 });

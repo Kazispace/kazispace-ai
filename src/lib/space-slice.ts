@@ -1,4 +1,5 @@
 import type { SpaceChatMessage } from '@/lib/spaces/turn';
+import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 
 export type SpaceReplyNotice = {
   kind: 'error' | 'pending';
@@ -65,13 +66,27 @@ export function patchSpaceSlice(
   return { ...spaces, [spaceId]: { ...prev, ...patch } };
 }
 
-/** Most-recent-first order; trims to `limit`. */
+/**
+ * Most-recent-first order; trims to `limit`.
+ *
+ * `__clinic__` is a system-default space, not an ordinary LRU entry (KAZI-651
+ * review on PR #217) — it must never be trimmed away here, since every caller
+ * that touches LRU order (`patchSpaceSliceWithLru`, and therefore
+ * `setActiveSpaceId`'s `touchExistingSpaceLru` path too) funnels through this
+ * function. Baking the exemption in here, rather than stitching it back in a
+ * single caller, protects every current and future call site uniformly.
+ */
 export function touchSpaceLruOrder(
   order: string[],
   spaceId: string,
   limit: number = SPACE_SLICE_LRU_LIMIT
 ): string[] {
-  return [spaceId, ...order.filter((id) => id !== spaceId)].slice(0, limit);
+  const touched = [spaceId, ...order.filter((id) => id !== spaceId)];
+  const trimmed = touched.slice(0, limit);
+  if (touched.includes(CLINIC_SPACE_ID) && !trimmed.includes(CLINIC_SPACE_ID)) {
+    return [...trimmed, CLINIC_SPACE_ID];
+  }
+  return trimmed;
 }
 
 export function pruneSpacesToLru(
@@ -81,7 +96,9 @@ export function pruneSpacesToLru(
   const keep = new Set(order);
   const next: Record<string, SpaceSlice> = {};
   for (const [id, slice] of Object.entries(spaces)) {
-    if (keep.has(id)) next[id] = slice;
+    // Defense in depth: even if some future caller builds `order` without
+    // going through `touchSpaceLruOrder`, Clinic's slice is never evicted.
+    if (keep.has(id) || id === CLINIC_SPACE_ID) next[id] = slice;
   }
   return next;
 }

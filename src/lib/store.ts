@@ -303,37 +303,24 @@ function applySpacePatch(
   spaceId: string,
   patch: Partial<SpaceSlice>
 ): { spaces: Record<string, SpaceSlice>; spaceLruOrder: string[] } {
-  const result = patchSpaceSliceWithLru(state.spaces, state.spaceLruOrder, spaceId, patch, {
-    protectSpaceId: state.activeSpaceId,
-  });
   // Review on PR #217: this used to spread `result` (`{ spaces, lruOrder }`)
   // directly into `set()`, but the store's real field is `spaceLruOrder` —
   // `lruOrder` landed as a stray unused key and `spaceLruOrder` itself never
   // actually updated through this path (KAZI-668, same root cause as the
-  // setActiveSpaceId bug already fixed below). Harmless on its own before
-  // this migration (Clinic's own store was untouched by Space's LRU), but
-  // now that Clinic's slice lives in this same `spaces` record, the stale
-  // `spaceLruOrder` meant the very next real Space write would silently
-  // prune `__clinic__` out entirely via `pruneSpacesToLru` — a real
-  // regression this migration would have introduced. Fixed here, not
-  // deferred: unlike the general LRU-tracking bug (KAZI-668, still real for
-  // ordinary multi-Space eviction correctness), this one is now squarely
-  // this PR's problem to not ship broken.
+  // setActiveSpaceId bug already fixed below). Fixed here by naming the
+  // field explicitly.
   //
-  // `__clinic__` is also exempted from eviction unconditionally, not just
-  // via `protectSpaceId` (which only covers the *active* space) — it's a
-  // system-default space, not an ordinary LRU entry, matching `reset()`'s
-  // existing Clinic-preserving precedent below.
-  const clinicSlice = state.spaces[CLINIC_SPACE_ID];
-  const spaces =
-    clinicSlice && !result.spaces[CLINIC_SPACE_ID]
-      ? { ...result.spaces, [CLINIC_SPACE_ID]: clinicSlice }
-      : result.spaces;
-  const spaceLruOrder =
-    clinicSlice && !result.lruOrder.includes(CLINIC_SPACE_ID)
-      ? [...result.lruOrder, CLINIC_SPACE_ID]
-      : result.lruOrder;
-  return { spaces, spaceLruOrder };
+  // `__clinic__`'s exemption from LRU eviction lives in `touchSpaceLruOrder`
+  // / `pruneSpacesToLru` themselves (space-slice.ts) — a follow-up review
+  // caught that stitching it back in only this one caller left
+  // `setActiveSpaceId`'s separate `touchExistingSpaceLru` call path
+  // unprotected, since it calls those helpers directly without going
+  // through `applySpacePatch`. Baking the exemption into the shared helpers
+  // covers every call site uniformly, so nothing extra is needed here.
+  const result = patchSpaceSliceWithLru(state.spaces, state.spaceLruOrder, spaceId, patch, {
+    protectSpaceId: state.activeSpaceId,
+  });
+  return { spaces: result.spaces, spaceLruOrder: result.lruOrder };
 }
 
 export const useSpaceStore = create<SpaceStore>()((set, get) => ({

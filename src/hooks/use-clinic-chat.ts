@@ -142,7 +142,11 @@ export function clinicHistoryFingerprint(message: SpaceChatMessage): string {
     // on a later fetch must not fingerprint identically to the one without
     // it, or `applyHistoryWindowRows` silently keeps the stale row).
     message.intent ?? '',
-    String(message.citations?.length ?? 0),
+    // Second review round on PR #217: still used `.length`, the exact
+    // `spaceMessageRowFingerprint` bug PR #216 already fixed elsewhere — two
+    // same-length citation lists with different URLs must not collapse to
+    // the same fingerprint. Join actual URLs instead of counting.
+    message.citations ? message.citations.map((c) => c.url).join('\0') : '',
     message.capabilityId ?? '',
     message.playbookId === undefined
       ? ''

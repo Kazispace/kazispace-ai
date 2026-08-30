@@ -33,6 +33,26 @@ describe('KAZI-651 review: clinicHistoryFingerprint covers intent/citations/capa
     );
   });
 
+  /**
+   * Second review round on PR #217: the fix for "gains citations from none"
+   * alone doesn't catch a same-length citation list whose URLs changed --
+   * a bare `.length` fingerprint collapses those. Mirrors the regression
+   * test already covering `spaceMessageRowFingerprint` for this exact bug.
+   */
+  it('differs between same-length citation lists with different URLs', () => {
+    const original: SpaceChatMessage = {
+      ...base,
+      citations: [{ url: 'https://example.com/a', title: 'Example A' }],
+    };
+    const replaced: SpaceChatMessage = {
+      ...base,
+      citations: [{ url: 'https://example.com/b', title: 'Example B' }],
+    };
+    expect(clinicHistoryFingerprint(original)).not.toBe(
+      clinicHistoryFingerprint(replaced)
+    );
+  });
+
   it('differs when a row gains a capabilityId', () => {
     const withCapability: SpaceChatMessage = { ...base, capabilityId: 'web_search' };
     expect(clinicHistoryFingerprint(base)).not.toBe(
