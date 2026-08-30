@@ -3,6 +3,7 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatHistoryLoadError } from '@/components/chat/chat-history-load-error';
@@ -60,6 +61,31 @@ function ClinicHistoryProbe() {
   );
 }
 
+/**
+ * KAZI-651: `loadHistory` now routes its fetch through
+ * `useQueryClient().fetchQuery` (clinicHistoryQueryKey), so this probe needs
+ * a real QueryClient in context -- one per test to keep runs isolated.
+ * `retry: false` here matches the `retry: false` now pinned explicitly on
+ * `loadHistory`'s own `fetchQuery` call (use-clinic-chat.ts) -- review on
+ * this PR caught that without that explicit pin, the *real* app QueryClient
+ * (providers.tsx) defaults `retry: 1`, so a failed fetch would silently
+ * retry once in production while this suite's own default-false client
+ * masked the mismatch. Both are `false` now, deliberately, not by
+ * coincidence.
+ */
+function renderClinicHistoryProbe(root: Root) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  act(() => {
+    root.render(
+      <QueryClientProvider client={queryClient}>
+        <ClinicHistoryProbe />
+      </QueryClientProvider>
+    );
+  });
+}
+
 describe('KAZI-588 R3 Clinic history failure is retryable', () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -115,9 +141,7 @@ describe('KAZI-588 R3 Clinic history failure is retryable', () => {
       data: [{ id: 'm1', role: 'assistant', content: 'hello' }],
     });
 
-    act(() => {
-      root.render(<ClinicHistoryProbe />);
-    });
+    renderClinicHistoryProbe(root);
 
     await act(async () => {
       container.querySelector<HTMLButtonElement>('[data-testid="load"]')?.click();
@@ -142,6 +166,69 @@ describe('KAZI-588 R3 Clinic history failure is retryable', () => {
       '1'
     );
     expect(container.querySelector('[data-testid="count"]')?.textContent).toBe('1');
+  });
+
+  /**
+   * KAZI-651: the actual value of routing `loadHistory` through
+   * `queryClient.fetchQuery` -- two of the 10+ clinic-shell.tsx call sites
+   * can genuinely race in the same tick (e.g. `reconcileActiveAgentLayer`'s
+   * reload racing a keep-alive idle reload). Before this change each call
+   * meant its own `fetchChatHistory` network call; now concurrent calls for
+   * the same session share one in-flight fetch. This must hold without
+   * weakening the "always a fresh read" contract the other tests in this
+   * suite cover (a failed-then-retried call, and two non-concurrent
+   * successful calls, below, both still hit the network each time).
+   */
+  it('dedupes concurrent loadHistory calls into a single network fetch', async () => {
+    fetchChatHistory.mockResolvedValue({
+      success: true,
+      data: [{ id: 'm1', role: 'assistant', content: 'hello' }],
+    });
+
+    renderClinicHistoryProbe(root);
+
+    await act(async () => {
+      const button = container.querySelector<HTMLButtonElement>('[data-testid="load"]');
+      button?.click();
+      button?.click();
+      await Promise.resolve();
+    });
+
+    expect(fetchChatHistory).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('[data-testid="count"]')?.textContent).toBe('1');
+  });
+
+  /**
+   * Review on this PR: dedup of *concurrent* calls (above) doesn't by
+   * itself prove `staleTime: 0` is doing its job -- a bug that made
+   * `fetchQuery` treat a successful result as cacheable beyond this render
+   * would only show up once the first call has actually *resolved* and a
+   * second, later call is made. Two sequential (not concurrent) successful
+   * `loadHistory()` calls must each hit the network.
+   */
+  it('two sequential successful loadHistory calls each hit the network', async () => {
+    fetchChatHistory.mockResolvedValue({
+      success: true,
+      data: [{ id: 'm1', role: 'assistant', content: 'hello' }],
+    });
+
+    renderClinicHistoryProbe(root);
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-testid="load"]')?.click();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(fetchChatHistory).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[data-testid="load"]')?.click();
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(fetchChatHistory).toHaveBeenCalledTimes(2);
   });
 
   it('retry button is clickable after a failed load', () => {
