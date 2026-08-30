@@ -72,3 +72,50 @@ describe('KAZI-651 Phase A review: spaceMessageRowFingerprint covers referral/up
     expect(preserveSpaceMessageRows(previous, next)).toBe(previous);
   });
 });
+
+describe('KAZI-651 Phase C.1a: spaceMessageRowFingerprint covers intent/citations/capabilityId/playbookId', () => {
+  it('differs when a row gains an intent', () => {
+    const withIntent: SpaceChatMessage = { ...base, intent: 'research' };
+    expect(spaceMessageRowFingerprint(base)).not.toBe(
+      spaceMessageRowFingerprint(withIntent)
+    );
+  });
+
+  it('differs when a row gains citations', () => {
+    const withCitations: SpaceChatMessage = {
+      ...base,
+      citations: [{ url: 'https://example.com/a', title: 'Example A' }],
+    };
+    expect(spaceMessageRowFingerprint(base)).not.toBe(
+      spaceMessageRowFingerprint(withCitations)
+    );
+  });
+
+  it('differs when a row gains a capabilityId', () => {
+    const withCapability: SpaceChatMessage = { ...base, capabilityId: 'web_search' };
+    expect(spaceMessageRowFingerprint(base)).not.toBe(
+      spaceMessageRowFingerprint(withCapability)
+    );
+  });
+
+  it('differs when a row gains a playbookId, including the null (unbound) case', () => {
+    const withNullPlaybook: SpaceChatMessage = { ...base, playbookId: null };
+    const withBoundPlaybook: SpaceChatMessage = { ...base, playbookId: 'pb_123' };
+    expect(spaceMessageRowFingerprint(base)).not.toBe(
+      spaceMessageRowFingerprint(withNullPlaybook)
+    );
+    expect(spaceMessageRowFingerprint(withNullPlaybook)).not.toBe(
+      spaceMessageRowFingerprint(withBoundPlaybook)
+    );
+  });
+
+  it('preserveSpaceMessageRows picks up capability fields that arrive on a later fetch instead of keeping the stale row', () => {
+    const previous = [base];
+    const next: SpaceChatMessage[] = [
+      { ...base, intent: 'research', capabilityId: 'research', playbookId: null },
+    ];
+    const result = preserveSpaceMessageRows(previous, next);
+    expect(result[0]).toBe(next[0]);
+    expect(result[0]?.capabilityId).toBe('research');
+  });
+});

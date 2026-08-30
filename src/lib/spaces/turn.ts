@@ -4,6 +4,8 @@ import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import type { ReferralPayload } from '@/types';
 import type { UpgradeCtaPayload } from '@/lib/clinic/upgrade-cta';
+import type { CitationItem } from '@/lib/clinic/citation-list';
+import type { SearchCapabilityId } from '@/lib/clinic/search-capability';
 
 /** Unicode ellipsis (U+2026) and ASCII three-dot placeholder. */
 const PLACEHOLDER_REPLIES = new Set(['…', '...']);
@@ -224,6 +226,67 @@ export function resolveSpaceTurnUpgradeCta(data: unknown): UpgradeCtaPayload | u
   return undefined;
 }
 
+/**
+ * KAZI-651 Phase C.1a — read-path parity with Clinic's own history parser
+ * (`normalizeHistoryMessage` in use-clinic-chat.ts), which extracts these
+ * four fields from a single `parseAssistantEnvelope(raw)` call on every
+ * history row. `normalizeSpaceHistoryMessage` never did, because no Space UI
+ * has needed them yet — this is pure prerequisite plumbing for Phase C.1b
+ * (moving Clinic's history load onto this shared parser), not a behavior
+ * change for any Space surface today.
+ */
+export function resolveSpaceTurnIntent(data: unknown): string | undefined {
+  if (!data || typeof data !== 'object') return undefined;
+  const raw = data as Record<string, unknown>;
+
+  for (const candidate of [data, raw.envelope]) {
+    if (!candidate) continue;
+    const intent = parseAssistantEnvelope(candidate).intent;
+    if (intent) return intent;
+  }
+
+  return undefined;
+}
+
+export function resolveSpaceTurnCitations(data: unknown): CitationItem[] | undefined {
+  if (!data || typeof data !== 'object') return undefined;
+  const raw = data as Record<string, unknown>;
+
+  for (const candidate of [data, raw.envelope]) {
+    if (!candidate) continue;
+    const citations = parseAssistantEnvelope(candidate).citations;
+    if (citations && citations.length > 0) return citations;
+  }
+
+  return undefined;
+}
+
+export function resolveSpaceTurnCapabilityId(data: unknown): SearchCapabilityId | undefined {
+  if (!data || typeof data !== 'object') return undefined;
+  const raw = data as Record<string, unknown>;
+
+  for (const candidate of [data, raw.envelope]) {
+    if (!candidate) continue;
+    const capabilityId = parseAssistantEnvelope(candidate).capabilityId;
+    if (capabilityId) return capabilityId;
+  }
+
+  return undefined;
+}
+
+export function resolveSpaceTurnPlaybookId(data: unknown): string | null | undefined {
+  if (!data || typeof data !== 'object') return undefined;
+  const raw = data as Record<string, unknown>;
+
+  for (const candidate of [data, raw.envelope]) {
+    if (!candidate) continue;
+    const playbookId = parseAssistantEnvelope(candidate).playbookId;
+    if (playbookId !== undefined) return playbookId;
+  }
+
+  return undefined;
+}
+
 export type SpaceChatMessage = {
   id: string;
   role: 'user' | 'assistant';
@@ -252,6 +315,19 @@ export type SpaceChatMessage = {
    * yet rendered by any Space UI (see resolveSpaceTurnUpgradeCta).
    */
   upgradeCta?: UpgradeCtaPayload;
+  /**
+   * KAZI-651 Phase C.1a — read-path parity fields. Clinic's own
+   * `ChatMessage` has carried these since before this migration; Space
+   * never needed them until now (Phase C.1b: Clinic's history load moves
+   * onto this shared parser and must not lose them on reload).
+   */
+  intent?: string;
+  /** Research sources from citation_list custom_component (KAZI-223). */
+  citations?: CitationItem[];
+  /** Search capability for chip / short-answer density (KAZI-234). */
+  capabilityId?: SearchCapabilityId;
+  /** Bound playbook id from BE meta (tooltip only). */
+  playbookId?: string | null;
   // Deliberately no `spaceNudge` field here: its premise (KAZI-181, "Clinic
   // -> Space progressive nudge") is nudging the user to leave Clinic and
   // create a Space, which is incoherent on a turn a Space itself already
@@ -324,6 +400,14 @@ export function normalizeSpaceHistoryMessage(
     role === 'assistant' ? resolveSpaceTurnReferral(raw) : undefined;
   const upgradeCta =
     role === 'assistant' ? resolveSpaceTurnUpgradeCta(raw) : undefined;
+  const intent =
+    role === 'assistant' ? resolveSpaceTurnIntent(raw) : undefined;
+  const citations =
+    role === 'assistant' ? resolveSpaceTurnCitations(raw) : undefined;
+  const capabilityId =
+    role === 'assistant' ? resolveSpaceTurnCapabilityId(raw) : undefined;
+  const playbookId =
+    role === 'assistant' ? resolveSpaceTurnPlaybookId(raw) : undefined;
 
   return {
     id,
@@ -335,6 +419,10 @@ export function normalizeSpaceHistoryMessage(
     ...(customComponents.length > 0 ? { customComponents } : {}),
     ...(referral ? { referral } : {}),
     ...(upgradeCta ? { upgradeCta } : {}),
+    ...(intent ? { intent } : {}),
+    ...(citations && citations.length > 0 ? { citations } : {}),
+    ...(capabilityId ? { capabilityId } : {}),
+    ...(playbookId !== undefined ? { playbookId } : {}),
     ...(role === 'assistant' && isServerAssistantMessageId(id)
       ? { serverMessageId: id }
       : {}),
@@ -409,6 +497,10 @@ export function mergeSpaceMessagesAfterSend(
     customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
     referral?: ReferralPayload;
     upgradeCta?: UpgradeCtaPayload;
+    intent?: string;
+    citations?: CitationItem[];
+    capabilityId?: SearchCapabilityId;
+    playbookId?: string | null;
   }[] = [];
   for (const message of local) {
     if (message.role !== 'assistant') continue;
@@ -425,6 +517,14 @@ export function mergeSpaceMessagesAfterSend(
         : {}),
       ...(message.referral ? { referral: message.referral } : {}),
       ...(message.upgradeCta ? { upgradeCta: message.upgradeCta } : {}),
+      ...(message.intent ? { intent: message.intent } : {}),
+      ...(message.citations && message.citations.length > 0
+        ? { citations: message.citations }
+        : {}),
+      ...(message.capabilityId ? { capabilityId: message.capabilityId } : {}),
+      ...(message.playbookId !== undefined
+        ? { playbookId: message.playbookId }
+        : {}),
     });
   }
 
@@ -457,6 +557,21 @@ export function mergeSpaceMessagesAfterSend(
     }
     if (!message.upgradeCta && localExtras.upgradeCta) {
       next = { ...next, upgradeCta: localExtras.upgradeCta };
+    }
+    if (!message.intent && localExtras.intent) {
+      next = { ...next, intent: localExtras.intent };
+    }
+    if (
+      !(message.citations && message.citations.length > 0) &&
+      localExtras.citations
+    ) {
+      next = { ...next, citations: localExtras.citations };
+    }
+    if (!message.capabilityId && localExtras.capabilityId) {
+      next = { ...next, capabilityId: localExtras.capabilityId };
+    }
+    if (message.playbookId === undefined && localExtras.playbookId !== undefined) {
+      next = { ...next, playbookId: localExtras.playbookId };
     }
     return next;
   });

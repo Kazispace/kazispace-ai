@@ -6,8 +6,12 @@ import {
   latestAssistantAfterLastUser,
   mapSpaceHistoryMessages,
   mergeSpaceMessagesAfterSend,
+  resolveSpaceTurnCapabilityId,
   resolveSpaceTurnCards,
+  resolveSpaceTurnCitations,
+  resolveSpaceTurnIntent,
   resolveSpaceTurnNextActions,
+  resolveSpaceTurnPlaybookId,
   resolveSpaceTurnReferral,
   resolveSpaceTurnReply,
   resolveSpaceTurnUpgradeCta,
@@ -261,6 +265,85 @@ describe('resolveSpaceTurnUpgradeCta', () => {
   });
 });
 
+describe('resolveSpaceTurnIntent', () => {
+  it('reads intent on the turn root', () => {
+    expect(resolveSpaceTurnIntent({ intent: 'web_search' })).toBe('web_search');
+  });
+
+  it('reads intent nested under envelope', () => {
+    expect(
+      resolveSpaceTurnIntent({ envelope: { intent: 'research' } })
+    ).toBe('research');
+  });
+
+  it('returns undefined when there is no intent', () => {
+    expect(resolveSpaceTurnIntent({ reply_text: 'no intent here' })).toBeUndefined();
+  });
+});
+
+describe('resolveSpaceTurnCitations', () => {
+  const citations = [{ url: 'https://example.com/a', title: 'Example A' }];
+
+  it('reads citation_list from assistant_response.custom_components', () => {
+    expect(
+      resolveSpaceTurnCitations({
+        assistant_response: {
+          content: 'ok',
+          custom_components: [{ type: 'citation_list', items: citations }],
+        },
+      })
+    ).toEqual(citations);
+  });
+
+  it('reads citation_list nested under envelope', () => {
+    expect(
+      resolveSpaceTurnCitations({
+        envelope: {
+          assistant_response: {
+            content: 'ok',
+            custom_components: [{ type: 'citation_list', items: citations }],
+          },
+        },
+      })
+    ).toEqual(citations);
+  });
+
+  it('returns undefined when there is no citation_list', () => {
+    expect(resolveSpaceTurnCitations({ reply_text: 'no citations here' })).toBeUndefined();
+  });
+});
+
+describe('resolveSpaceTurnCapabilityId / resolveSpaceTurnPlaybookId', () => {
+  it('reads meta.capability_id and meta.playbook_id on the turn root', () => {
+    const data = {
+      assistant_response: {
+        content: 'ok',
+        meta: { capability_id: 'research', playbook_id: 'pb_123' },
+      },
+    };
+    expect(resolveSpaceTurnCapabilityId(data)).toBe('research');
+    expect(resolveSpaceTurnPlaybookId(data)).toBe('pb_123');
+  });
+
+  it('reads meta fields nested under envelope', () => {
+    const data = {
+      envelope: {
+        assistant_response: {
+          content: 'ok',
+          meta: { capability_id: 'web_search', playbook_id: null },
+        },
+      },
+    };
+    expect(resolveSpaceTurnCapabilityId(data)).toBe('web_search');
+    expect(resolveSpaceTurnPlaybookId(data)).toBeNull();
+  });
+
+  it('returns undefined when there is no capability/playbook signal', () => {
+    expect(resolveSpaceTurnCapabilityId({ reply_text: 'plain reply' })).toBeUndefined();
+    expect(resolveSpaceTurnPlaybookId({ reply_text: 'plain reply' })).toBeUndefined();
+  });
+});
+
 describe('latestAssistantAfterLastUser', () => {
   it('returns assistant after the last user turn by position', () => {
     expect(
@@ -485,6 +568,57 @@ describe('mergeSpaceMessagesAfterSend', () => {
       },
     ]);
   });
+
+  it('preserves local intent/citations/capabilityId/playbookId when server history omits them', () => {
+    const citations = [{ url: 'https://example.com/a', title: 'Example A' }];
+    const local = [
+      { id: 'u1', role: 'user' as const, content: '研究一下这家公司' },
+      {
+        id: 'local_a1',
+        role: 'assistant' as const,
+        content: '这是研究结果',
+        intent: 'research',
+        citations,
+        capabilityId: 'research' as const,
+        playbookId: 'pb_123',
+      },
+    ];
+    const server = [
+      { id: 'u1', role: 'user' as const, content: '研究一下这家公司' },
+      { id: 'srv_a1', role: 'assistant' as const, content: '这是研究结果' },
+    ];
+    expect(mergeSpaceMessagesAfterSend(local, server)).toEqual([
+      { id: 'u1', role: 'user', content: '研究一下这家公司' },
+      {
+        id: 'srv_a1',
+        role: 'assistant',
+        content: '这是研究结果',
+        intent: 'research',
+        citations,
+        capabilityId: 'research',
+        playbookId: 'pb_123',
+      },
+    ]);
+  });
+
+  it('preserves a local null playbookId (unbound search) when server omits the field entirely', () => {
+    const local = [
+      { id: 'u1', role: 'user' as const, content: '帮我搜一下' },
+      {
+        id: 'local_a1',
+        role: 'assistant' as const,
+        content: '搜索结果',
+        playbookId: null,
+      },
+    ];
+    const server = [
+      { id: 'u1', role: 'user' as const, content: '帮我搜一下' },
+      { id: 'srv_a1', role: 'assistant' as const, content: '搜索结果' },
+    ];
+    expect(mergeSpaceMessagesAfterSend(local, server)[1]).toMatchObject({
+      playbookId: null,
+    });
+  });
 });
 
 describe('mapSpaceHistoryMessages', () => {
@@ -569,5 +703,38 @@ describe('mapSpaceHistoryMessages', () => {
   it('uses stable fallback ids when server omits message ids', () => {
     const rows = [{ role: 'user', text: 'hello' }];
     expect(mapSpaceHistoryMessages(rows)).toEqual(mapSpaceHistoryMessages(rows));
+  });
+
+  it('carries intent/citations/capabilityId/playbookId from a history row (KAZI-651 Phase C.1a)', () => {
+    const citations = [{ url: 'https://example.com/a', title: 'Example A' }];
+    const rows = mapSpaceHistoryMessages([
+      {
+        id: 'a1',
+        role: 'assistant',
+        content: '这是研究结果',
+        intent: 'research',
+        assistant_response: {
+          content: '这是研究结果',
+          custom_components: [{ type: 'citation_list', items: citations }],
+          meta: { capability_id: 'research', playbook_id: 'pb_123' },
+        },
+      },
+    ]);
+    expect(rows[0]).toMatchObject({
+      intent: 'research',
+      citations,
+      capabilityId: 'research',
+      playbookId: 'pb_123',
+    });
+  });
+
+  it('does not carry these fields for a user row', () => {
+    const rows = mapSpaceHistoryMessages([
+      { id: 'u1', role: 'user', text: 'hello', intent: 'research' },
+    ]);
+    expect(rows[0]).not.toHaveProperty('intent');
+    expect(rows[0]).not.toHaveProperty('citations');
+    expect(rows[0]).not.toHaveProperty('capabilityId');
+    expect(rows[0]).not.toHaveProperty('playbookId');
   });
 });

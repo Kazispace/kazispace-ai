@@ -115,6 +115,19 @@ export function spaceMessageRowFingerprint(message: SpaceChatMessage): string {
     // would keep the stale reference and silently drop the field.
     message.referral ? message.referral.agentId : '',
     message.upgradeCta ? 'upgradeCta' : '',
+    // Phase C.1a: same lesson applied up front for the four new read-path
+    // parity fields, instead of waiting for review to catch it again.
+    message.intent ?? '',
+    String(message.citations?.length ?? 0),
+    message.capabilityId ?? '',
+    // playbookId has three meaningfully different states (resolveSearchCapability):
+    // undefined = BE omitted the field, null = unbound/general search, string =
+    // bound playbook. A bare `?? ''` would collapse undefined and null together.
+    message.playbookId === undefined
+      ? ''
+      : message.playbookId === null
+        ? '\0null'
+        : message.playbookId,
   ].join('\0');
 }
 
