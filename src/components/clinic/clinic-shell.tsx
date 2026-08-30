@@ -369,8 +369,8 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
 
   // Calls loadHistory directly rather than via loadHistoryRef (KAZI-660
   // review, PR #210): loadHistory's own deps are [setSpaceMessages,
-  // setSpaceMasterSessionId, queryClient] (KAZI-651 Phase C.1b, extended in
-  // true Phase C.1b for the shared TanStack Query fetch) — the two
+  // setSpaceMasterSessionId, queryClient] (KAZI-651 Phase C.1b; queryClient
+  // added for the fetchQuery-based dedup) — the two
   // `useSpaceStore` actions are defined once in create(), and `queryClient`
   // (useQueryClient()) is created once in providers.tsx; all three are
   // stable for their respective lifetimes, so loadHistory (and this
