@@ -146,7 +146,11 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-kazi-navy via-kazi-navy2 to-blue-950 flex items-center justify-center p-4">
+    // KAZI-675: dead-centering (`items-center`) left ~250px of empty space
+    // above and below the card on a typical mobile viewport height. Anchor
+    // near the top on small screens instead; revert to centered from `sm:`
+    // up, where a shorter/wider viewport doesn't exaggerate the gap.
+    <div className="min-h-screen bg-gradient-to-br from-kazi-navy via-kazi-navy2 to-blue-950 flex items-start sm:items-center justify-center p-4 pt-12 sm:pt-4">
       <Card className="w-full max-w-md bg-white/95 backdrop-blur">
         <CardHeader className="text-center pb-2">
           <div className="text-3xl font-bold mb-2">

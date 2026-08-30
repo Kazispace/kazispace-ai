@@ -102,14 +102,15 @@ export function AgentCard({
             {t("loginToContinue")}
           </span>
         ) : (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="w-full pointer-events-none"
-            tabIndex={-1}
-          >
-            {t("openAgent")} →
+          // KAZI-675: this is a purely decorative CTA -- the whole card
+          // above is already the real `<button>` that handles the click.
+          // Render via `asChild` (Button already supports it, via Radix
+          // Slot) so this lands as a `<span>` styled like a button instead
+          // of an actual nested `<button>`, which is invalid HTML and was
+          // only "safe" because `pointer-events-none`/`tabIndex={-1}` made
+          // it inert -- neither is needed once it isn't a real button.
+          <Button asChild size="sm" variant="outline" className="w-full">
+            <span>{t("openAgent")} →</span>
           </Button>
         )}
       </div>

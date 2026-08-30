@@ -46,7 +46,7 @@ import {
   WorkspaceRailPortalProvider,
   useWorkspaceRailPortal,
 } from '@/lib/workspace-rail-portal';
-import { useUIStore } from '@/lib/store';
+import { useAuthStore, useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 interface SessionNavShellProps {
@@ -123,6 +123,7 @@ function SessionNavShellLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const showToast = useUIStore((s) => s.showToast);
   const t = useTranslations('sessionNav');
   const tSpaces = useTranslations('spaces');
@@ -326,6 +327,21 @@ function SessionNavShellLayout({
     [refreshSpaces, runSidebarLifecycle]
   );
 
+  // KAZI-675: guests could open the full template picker (createSpace would
+  // then fail with an auth error toast after they'd already picked one) --
+  // the other specialist entry points on Clinic's first screen gate up
+  // front instead. Match that: send a guest straight to login, same as the
+  // rest of the app's "requires auth" click handlers (a plain router.push,
+  // not a popup window -- those get blocked by browsers guests won't know
+  // how to unblock).
+  const handleNewSpace = useCallback(() => {
+    if (!isLoggedIn) {
+      router.push(`/${locale}/login`);
+      return;
+    }
+    setTemplatePickerOpen(true);
+  }, [isLoggedIn, locale, router]);
+
   const handleCreateSpace = useCallback(
     async (templateId: string) => {
       setIsCreatingSpace(true);
@@ -393,7 +409,7 @@ function SessionNavShellLayout({
             spacesMode={spacesEnabled}
             spaceRows={spaceNavRows}
             spaces={spaces}
-            onNewSpace={() => setTemplatePickerOpen(true)}
+            onNewSpace={handleNewSpace}
             onSpaceAction={handleSidebarSpaceAction}
             spaceActionPendingId={sidebarPendingSpaceId}
             spaceFilter={spaceFilter}

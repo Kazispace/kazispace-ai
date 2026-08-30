@@ -73,3 +73,41 @@ describe('AgentCard clinicInline badge (found via manual review)', () => {
     expect(host.querySelector('.truncate')).not.toBeNull();
   });
 });
+
+/**
+ * Found via manual review (the previous test run's own React output): the
+ * card's "Open agent →" CTA rendered as a real <Button> (a <button>)
+ * nested inside the card's own outer <button> -- invalid HTML
+ * (validateDOMNesting warning), only "safe" because pointer-events-none +
+ * tabIndex={-1} made it inert. Fixed via Button's `asChild` (Radix Slot)
+ * so it renders as a <span> styled like a button instead.
+ */
+describe('AgentCard does not nest an interactive button inside the card button', () => {
+  let root: Root;
+  let host: HTMLDivElement;
+
+  beforeAll(() => {
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  });
+
+  beforeEach(() => {
+    host = document.createElement('div');
+    document.body.appendChild(host);
+    root = createRoot(host);
+  });
+
+  afterEach(() => {
+    act(() => root.unmount());
+    host.remove();
+  });
+
+  it('renders exactly one <button> for an available, unlocked card', async () => {
+    await act(async () => {
+      root.render(<AgentCard agent={agent()} locale="en" />);
+    });
+
+    const buttons = host.querySelectorAll('button');
+    expect(buttons.length).toBe(1);
+    expect(host.textContent).toContain('openAgent');
+  });
+});
