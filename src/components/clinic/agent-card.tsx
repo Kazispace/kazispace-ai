@@ -62,7 +62,17 @@ export function AgentCard({
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white ring-1 ring-gray-200/80">
           <AgentNavIcon agentId={agent.agentId} sizeClassName="h-5 w-5" />
         </div>
-        {badgeLabel ? (
+        {/*
+          `clinicInline`'s label is a full sentence ("Start from Clinic
+          chat"), not a short status word like the other badge kinds -- the
+          `max-w-[55%] truncate` below (correct safety net for short labels)
+          was cutting it off mid-word on the narrower desktop card grid. The
+          exact same text already renders in full at the bottom of the card
+          (isClinicInline branch below), so skip the pill for this kind
+          entirely rather than widening/un-truncating a corner badge that
+          was never the right place for a sentence-length hint.
+        */}
+        {badgeLabel && !isClinicInline ? (
           <span
             className={cn(
               "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium max-w-[55%] truncate",

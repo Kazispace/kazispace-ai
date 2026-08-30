@@ -88,7 +88,11 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
       } else if (result.success) {
         setError(t("otpRegionHostFailed"));
       } else {
-        setError(result.error || t("sendCodeFailed"));
+        setError(
+          result.errorCode === "NETWORK_ERROR"
+            ? t("networkError")
+            : result.error || t("sendCodeFailed")
+        );
       }
     } catch {
       setError(t("networkError"));
@@ -128,7 +132,11 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
             : `/${targetLocale}/chat`;
         router.push(destination);
       } else {
-        setError(result.error || t("invalidCode"));
+        setError(
+          result.errorCode === "NETWORK_ERROR"
+            ? t("networkError")
+            : result.error || t("invalidCode")
+        );
       }
     } catch {
       setError(t("networkError"));
