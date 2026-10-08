@@ -33,6 +33,7 @@ export function StaticClinicMessageRows({
   onNextAction,
   onFocusComposer,
   onExamSelect,
+  onEtFormSubmit,
   onJobCardClick,
 }: ClinicMessageListBodyProps) {
   return (
@@ -56,6 +57,7 @@ export function StaticClinicMessageRows({
           onNextAction={onNextAction}
           onFocusComposer={onFocusComposer}
           onExamSelect={onExamSelect}
+          onEtFormSubmit={onEtFormSubmit}
           onJobCardClick={onJobCardClick}
         />
       ))}

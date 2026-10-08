@@ -8,6 +8,7 @@ import { isHistoryStub } from '@/lib/chat/history-window';
 import type { StrategySelectTurnContext } from '@/lib/strategy-select';
 import type { SpaceChatMessage } from '@/lib/spaces/turn';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
+import type { EtFormSubmit } from '@/lib/english-tutor/form';
 import type { ExamPickerOption } from '@/types/english-tutor-envelope';
 
 export type SpaceMessageRowProps = {
@@ -19,6 +20,7 @@ export type SpaceMessageRowProps = {
   onNextAction: (action: ChatNextAction) => void;
   onFocusComposer: () => void;
   onExamSelect: (option: ExamPickerOption) => void;
+  onEtFormSubmit: (submit: EtFormSubmit) => void | Promise<void>;
   onJobCardClick: (card: ChatJobCard) => void;
 };
 
@@ -37,6 +39,8 @@ function spaceMessageRowEqual(
     prev.onNextAction === next.onNextAction &&
     prev.onFocusComposer === next.onFocusComposer &&
     prev.onExamSelect === next.onExamSelect &&
+    prev.onEtFormSubmit === next.onEtFormSubmit &&
+    prev.strategy.latestTurn === next.strategy.latestTurn &&
     prev.onJobCardClick === next.onJobCardClick
   );
 }
@@ -50,6 +54,7 @@ function SpaceMessageRowImpl({
   onNextAction,
   onFocusComposer,
   onExamSelect,
+  onEtFormSubmit,
   onJobCardClick,
 }: SpaceMessageRowProps) {
   const handleRetry = useCallback(() => {
@@ -82,6 +87,8 @@ function SpaceMessageRowImpl({
       }
       onFocusComposer={onFocusComposer}
       onExamSelect={onExamSelect}
+      onEtFormSubmit={onEtFormSubmit}
+      etFormActive={strategy.latestTurn === true}
       actionsDisabled={actionsDisabled}
       onRetry={
         message.role === 'user' && message.status === 'failed'

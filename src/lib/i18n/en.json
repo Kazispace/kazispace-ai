@@ -1333,6 +1333,22 @@
 				"fluency": "Fluency",
 				"pronunciation": "Pronunciation"
 			}
+		},
+		"form": {
+			"open": "Open editor",
+			"reopen": "Edit and resubmit",
+			"words": "{count} words",
+			"minWords": "Aim for at least {min} words",
+			"chars": "{count}/{max} characters",
+			"cancel": "Cancel",
+			"close": "Close",
+			"record": "Record answer",
+			"stop": "Stop and submit",
+			"transcribing": "Transcribing…",
+			"typeInstead": "Type your answer instead",
+			"typePlaceholder": "Type your answer…",
+			"essayPlaceholder": "Write your essay here…",
+			"frozen": "This form is closed — answer the latest message."
 		}
 	},
 	"tma": {

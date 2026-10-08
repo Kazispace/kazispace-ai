@@ -1097,6 +1097,22 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     [isAgentMode, isSending, isSwitching, sendAgentMessage]
   );
 
+  // KAZI-1041: english_tutor `meta.form` answer. Agent mode goes straight to
+  // sendAgentMessage (as handleNextAction does) — submitClinicChat drops
+  // actionMeta on that branch.
+  const handleEtFormSubmit = useCallback(
+    async (submit: import('@/lib/english-tutor/form').EtFormSubmit) => {
+      if (isSending || isSwitching) return;
+      const opts = { displayContent: submit.display, actionMeta: submit.meta };
+      if (isAgentMode) {
+        await sendAgentMessage(submit.display, opts);
+        return;
+      }
+      await submitClinicChatRef.current(submit.display, opts);
+    },
+    [isAgentMode, isSending, isSwitching, sendAgentMessage]
+  );
+
   const handleAgentSelect = useCallback(
     async (agentId: string) => {
       if (!isLoggedIn) {
@@ -1571,6 +1587,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
             onNextAction={handleNextAction}
             onFocusComposer={handleFocusComposer}
             onExamSelect={handleExamSelect}
+            onEtFormSubmit={handleEtFormSubmit}
             onJobCardClick={handleJobCardClick}
             alignToLatest
             activationKey={active ? "active" : "idle"}

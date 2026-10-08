@@ -13,6 +13,7 @@ import type { StrategySelectTurnContext } from '@/lib/strategy-select';
 import type { SpaceNudgePayload } from '@/lib/spaces/space-nudge';
 import type { SpaceChatMessage } from '@/lib/spaces/turn';
 import type { ChatJobCard, ChatMessage, ChatNextAction } from '@/types';
+import type { EtFormSubmit } from '@/lib/english-tutor/form';
 import type { ExamPickerOption } from '@/types/english-tutor-envelope';
 
 export type ClinicMessageRowProps = {
@@ -42,6 +43,7 @@ export type ClinicMessageRowProps = {
   onNextAction: (action: ChatNextAction) => void;
   onFocusComposer: () => void;
   onExamSelect: (option: ExamPickerOption) => void;
+  onEtFormSubmit: (submit: EtFormSubmit) => void | Promise<void>;
   onJobCardClick: (card: ChatJobCard) => void;
 };
 
@@ -68,6 +70,8 @@ function clinicMessageRowEqual(
     prev.onNextAction === next.onNextAction &&
     prev.onFocusComposer === next.onFocusComposer &&
     prev.onExamSelect === next.onExamSelect &&
+    prev.onEtFormSubmit === next.onEtFormSubmit &&
+    prev.strategy.latestTurn === next.strategy.latestTurn &&
     prev.onJobCardClick === next.onJobCardClick
   );
 }
@@ -89,6 +93,7 @@ function ClinicMessageRowImpl({
   onNextAction,
   onFocusComposer,
   onExamSelect,
+  onEtFormSubmit,
   onJobCardClick,
 }: ClinicMessageRowProps) {
   const referralEntry = useMemo(
@@ -206,6 +211,8 @@ function ClinicMessageRowImpl({
       onNextAction={strategy.activeNextActions ? onNextAction : undefined}
       onFocusComposer={onFocusComposer}
       onExamSelect={onExamSelect}
+      onEtFormSubmit={onEtFormSubmit}
+      etFormActive={strategy.latestTurn === true}
       onJobCardClick={onJobCardClick}
       actionsDisabled={actionsDisabled}
     />

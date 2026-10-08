@@ -158,6 +158,7 @@ describe('strategy-select', () => {
     expect(resolveStrategySelectTurnContext(pending, 0, 'zh')).toEqual({
       activeNextActions: sampleAActions,
       selectedStrategyPayload: undefined,
+      latestTurn: true,
     });
 
     const answered = [
@@ -167,6 +168,7 @@ describe('strategy-select', () => {
     expect(resolveStrategySelectTurnContext(answered, 0, 'zh')).toEqual({
       activeNextActions: undefined,
       selectedStrategyPayload: '__strategy:continue_current',
+      latestTurn: false,
     });
   });
 

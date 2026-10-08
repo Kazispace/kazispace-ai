@@ -39,6 +39,7 @@ export function SpaceMessageVirtuoso({
   onNextAction,
   onFocusComposer,
   onExamSelect,
+  onEtFormSubmit,
   onJobCardClick,
   alignToLatest = false,
   activationKey = 'default',
@@ -61,6 +62,7 @@ export function SpaceMessageVirtuoso({
     onNextAction,
     onFocusComposer,
     onExamSelect,
+    onEtFormSubmit,
     onJobCardClick,
   };
 
@@ -91,6 +93,7 @@ export function SpaceMessageVirtuoso({
             onNextAction={onNextAction}
             onFocusComposer={onFocusComposer}
             onExamSelect={onExamSelect}
+            onEtFormSubmit={onEtFormSubmit}
             onJobCardClick={onJobCardClick}
           />
         </div>

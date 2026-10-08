@@ -47,6 +47,7 @@ export function ClinicMessageVirtuoso({
   onNextAction,
   onFocusComposer,
   onExamSelect,
+  onEtFormSubmit,
   onJobCardClick,
   alignToLatest = false,
   activationKey = 'default',
@@ -77,6 +78,7 @@ export function ClinicMessageVirtuoso({
     onNextAction,
     onFocusComposer,
     onExamSelect,
+    onEtFormSubmit,
     onJobCardClick,
   };
 
@@ -115,6 +117,7 @@ export function ClinicMessageVirtuoso({
             onNextAction={onNextAction}
             onFocusComposer={onFocusComposer}
             onExamSelect={onExamSelect}
+            onEtFormSubmit={onEtFormSubmit}
             onJobCardClick={onJobCardClick}
           />
         </div>

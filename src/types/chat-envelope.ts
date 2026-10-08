@@ -27,12 +27,16 @@ export interface StrategySelectActionMeta {
   confirm_skipped?: boolean;
 }
 
-/** User message meta when submitting a payload-based next_action (KAZI-469). */
+/**
+ * User message meta when submitting a payload-based next_action (KAZI-469),
+ * or an english_tutor form answer (KAZI-1041: `form_id`, payload only for radio).
+ */
 export interface UserMessageActionMeta {
   action_type: string;
-  action_payload: string;
+  action_payload?: string;
   strategy_id?: string;
   task_id?: string;
+  form_id?: string;
 }
 
 export interface ChatNextAction {
