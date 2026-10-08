@@ -300,6 +300,19 @@ export function SpaceChatPane({
     [isSending, sendAndPin]
   );
 
+  // KAZI-1041: english_tutor `meta.form` answer — same send path as next_action
+  // payloads; returning the promise keeps the form busy until the turn lands.
+  const handleEtFormSubmit = useCallback(
+    async (submit: import('@/lib/english-tutor/form').EtFormSubmit) => {
+      if (isSending) return;
+      await sendAndPin(submit.display, {
+        displayContent: submit.display,
+        actionMeta: submit.meta,
+      });
+    },
+    [isSending, sendAndPin]
+  );
+
   const handlePracticeForJob = useCallback(
     (ctx: JobPracticeContext) => {
       if (isSending) return;
@@ -461,6 +474,7 @@ export function SpaceChatPane({
               onNextAction={handleNextAction}
               onFocusComposer={handleFocusComposer}
               onExamSelect={handleExamSelect}
+              onEtFormSubmit={handleEtFormSubmit}
               onJobCardClick={handleJobCardClick}
             />
           )}

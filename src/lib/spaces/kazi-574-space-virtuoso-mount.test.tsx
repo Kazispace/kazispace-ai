@@ -110,6 +110,7 @@ function Harness({
         onNextAction={noop}
         onFocusComposer={noop}
         onExamSelect={noop}
+        onEtFormSubmit={noop}
         onJobCardClick={noop}
       />
     </div>

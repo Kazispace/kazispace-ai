@@ -42,6 +42,7 @@ function rowProps(
     onNextAction: noop,
     onFocusComposer: noop,
     onExamSelect: noop,
+    onEtFormSubmit: noop,
     onJobCardClick: noop,
     ...overrides,
   };
@@ -75,6 +76,7 @@ describe('KAZI-564 message row isolation', () => {
       onNextAction: () => undefined,
       onFocusComposer: () => undefined,
       onExamSelect: () => undefined,
+      onEtFormSubmit: () => undefined,
       onJobCardClick: () => undefined,
     };
 
@@ -86,6 +88,15 @@ describe('KAZI-564 message row isolation', () => {
     const prevSecond = rowProps(second, handlers);
     const nextSecond = rowProps(patchedSecond, handlers);
     expect(spaceMessageRowEqual(prevSecond, nextSecond)).toBe(false);
+
+    // KAZI-1041: appending a turn moves `latestTurn` off the old last row, so
+    // that row MUST re-render (its form freezes) even though its message is stable.
+    expect(
+      spaceMessageRowEqual(
+        rowProps(first, { ...handlers, strategy: { latestTurn: true } }),
+        rowProps(first, { ...handlers, strategy: { latestTurn: false } })
+      )
+    ).toBe(false);
 
     const appended = msg('a2', 'assistant', 'new');
     expect(spaceMessageRowEqual(prevFirst, rowProps(first, handlers))).toBe(

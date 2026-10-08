@@ -1028,6 +1028,22 @@
 				"fluency": "流利度",
 				"pronunciation": "发音"
 			}
+		},
+		"form": {
+			"open": "打开编辑器",
+			"reopen": "修改后重新提交",
+			"words": "{count} 词",
+			"minWords": "建议至少 {min} 词",
+			"chars": "{count}/{max} 字符",
+			"cancel": "取消",
+			"close": "关闭",
+			"record": "录音作答",
+			"stop": "停止并提交",
+			"transcribing": "识别中…",
+			"typeInstead": "改为打字作答",
+			"typePlaceholder": "输入你的回答…",
+			"essayPlaceholder": "在这里写作文…",
+			"frozen": "这张表单已关闭 —— 请在最新一条消息里作答。"
 		}
 	},
 	"tma": {

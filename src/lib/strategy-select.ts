@@ -5,6 +5,7 @@ import {
   strategyIdFromPayload,
 } from '@/lib/action-payload';
 import { resolveActionSelectSubmit } from '@/lib/next-action-submit';
+import { isLatestTurn } from '@/lib/english-tutor/form';
 import type { ChatNextAction } from '@/types/chat-envelope';
 
 export const STRATEGY_SELECT_ACTION_TYPE = 'strategy_select';
@@ -172,6 +173,11 @@ export function resolveStrategySelectReply(
 export type StrategySelectTurnContext = {
   activeNextActions?: ChatNextAction[];
   selectedStrategyPayload?: string;
+  /**
+   * KAZI-1041: this row is the last message of the thread — the english_tutor
+   * `meta.form` freeze rule (only the latest message's form is interactive).
+   */
+  latestTurn?: boolean;
 };
 
 /** Active vs historical strategy_select state for a rendered assistant turn. */
@@ -188,7 +194,11 @@ export function resolveStrategySelectTurnContext(
   const selectedStrategyPayload = activeNextActions
     ? undefined
     : resolveStrategySelectReply(messages, messageIndex, locale) ?? undefined;
-  return { activeNextActions, selectedStrategyPayload };
+  return {
+    activeNextActions,
+    selectedStrategyPayload,
+    latestTurn: isLatestTurn(messages, messageIndex),
+  };
 }
 
 /**
@@ -242,9 +252,10 @@ export function resolveStrategySelectSubmit(
   locale: string
 ): { payload: string; display: string } | null {
   const submit = resolveActionSelectSubmit(action, locale);
-  if (!submit) return null;
+  const payload = submit?.meta.action_payload;
+  if (!submit || !payload) return null;
   return {
-    payload: submit.meta.action_payload,
+    payload,
     display: submit.display,
   };
 }

@@ -22,6 +22,7 @@ export function StaticSpaceMessageRows({
   onNextAction,
   onFocusComposer,
   onExamSelect,
+  onEtFormSubmit,
   onJobCardClick,
 }: SpaceMessageListBodyProps) {
   return (
@@ -37,6 +38,7 @@ export function StaticSpaceMessageRows({
           onNextAction={onNextAction}
           onFocusComposer={onFocusComposer}
           onExamSelect={onExamSelect}
+          onEtFormSubmit={onEtFormSubmit}
           onJobCardClick={onJobCardClick}
         />
       ))}

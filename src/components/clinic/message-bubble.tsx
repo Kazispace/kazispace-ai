@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Bot, FileText, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,11 +15,13 @@ import { SpaceNudgePrompt } from "./space-nudge-prompt";
 import { UpgradeResearchCta } from "./upgrade-research-cta";
 import { SearchCapabilityChip } from "./search-capability-chip";
 import { EnglishTutorEnvelopeBlocks } from "@/components/english/envelope/english-tutor-envelope-blocks";
+import { EtFormBlock } from "@/components/english/envelope/et-form-block";
 import {
   stripMarkdownSourcesSection,
   type CitationItem,
 } from "@/lib/clinic/citation-list";
 import { isLowConfidenceMeta } from "@/lib/english-tutor/custom-components";
+import { parseEtForm, type EtFormSubmit } from "@/lib/english-tutor/form";
 import type { UpgradeCtaPayload } from "@/lib/clinic/upgrade-cta";
 import {
   isSearchCapability,
@@ -75,6 +78,10 @@ interface MessageBubbleProps {
   onNextAction?: (action: ChatNextAction) => void;
   onFocusComposer?: () => void;
   onExamSelect?: (option: ExamPickerOption) => void;
+  /** KAZI-1041: english_tutor `meta.form` answer → chat send with form meta. */
+  onEtFormSubmit?: (submit: EtFormSubmit) => void | Promise<void>;
+  /** KAZI-1041 freeze rule: true only on the latest message. */
+  etFormActive?: boolean;
   onJobCardClick?: (card: ChatJobCard) => void;
   referralDisabled?: boolean;
   actionsDisabled?: boolean;
@@ -118,6 +125,8 @@ export function MessageBubble({
   onNextAction,
   onFocusComposer,
   onExamSelect,
+  onEtFormSubmit,
+  etFormActive = false,
   onJobCardClick,
   referralDisabled,
   actionsDisabled,
@@ -151,6 +160,11 @@ export function MessageBubble({
   const showEnglishTutorBlocks =
     showEnrichment &&
     ((customComponents?.length ?? 0) > 0 || lowConfidence);
+  const etForm = useMemo(
+    () => (isUser ? null : parseEtForm(assistantMeta)),
+    [isUser, assistantMeta]
+  );
+  const showEtForm = showEnrichment && etForm !== null;
   const showUpgradeCta =
     showEnrichment &&
     upgradeCta &&
@@ -314,6 +328,13 @@ export function MessageBubble({
                 lowConfidence={lowConfidence}
                 onFocusComposer={onFocusComposer}
                 onExamSelect={onExamSelect}
+              />
+            ) : null}
+            {showEtForm && etForm ? (
+              <EtFormBlock
+                form={etForm}
+                active={etFormActive}
+                onSubmit={actionsDisabled ? undefined : onEtFormSubmit}
               />
             ) : null}
             {showNextActionRow ? (

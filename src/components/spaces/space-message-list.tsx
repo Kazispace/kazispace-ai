@@ -36,6 +36,7 @@ export function SpaceMessageList({
   onNextAction,
   onFocusComposer,
   onExamSelect,
+  onEtFormSubmit,
   onJobCardClick,
   alignToLatest = false,
   activationKey,
@@ -57,6 +58,7 @@ export function SpaceMessageList({
     onNextAction,
     onFocusComposer,
     onExamSelect,
+    onEtFormSubmit,
     onJobCardClick,
   };
 

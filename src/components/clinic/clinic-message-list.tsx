@@ -43,6 +43,7 @@ export function ClinicMessageList({
   onNextAction,
   onFocusComposer,
   onExamSelect,
+  onEtFormSubmit,
   onJobCardClick,
   alignToLatest = false,
   activationKey,
@@ -72,6 +73,7 @@ export function ClinicMessageList({
     onNextAction,
     onFocusComposer,
     onExamSelect,
+    onEtFormSubmit,
     onJobCardClick,
   };
 
