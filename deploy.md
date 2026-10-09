@@ -1,163 +1,224 @@
-# KaziSpace Staging 浏览器 UAT 与部署验证手册
+# Staging 浏览器 UAT（实测）
 
-本文档汇总 **staging 浏览器手工 UAT** 的账号、OTP、Space/Clinic 路径、过程记录与 Jira 报告写法。  
-与 **Core API 脚本 UAT** 对齐时，手机号/OTP 以 `kazispace-backend/scripts/uat_fixtures.py` 为 SSOT。
+本文是 us-west staging 上 **浏览器走产品面** 的操作手册，来自 2026-10-09 KAZI-1044 / KAZI-1041 一类票的复测，不是理论清单。
 
-**环境**
-
-| 用途 | URL |
-|------|-----|
-| Web（浏览器 UAT） | https://kazispace.ai（中文常用 `/zh/login`、`/zh/chat`、`/zh/clinic/hub`） |
-| API / 脚本 UAT | https://bot.kazispace.ai |
+手机号 / OTP 的 SSOT 仍是 `kazispace-backend/scripts/uat_fixtures.py`。这里只写 **浏览器里实际会发生什么**，以及脚本 UAT 对不上时该怎么开页。
 
 ---
 
-## 1. 测试账号选择
+## 0. 先选对入口
 
-**原则：先读 Jira 票 / UAT 矩阵里的 Fixture，再登录；不要默认「随便一个号」。**
+| 用途 | URL | 什么时候用 |
+|------|-----|------------|
+| 未合入 / 刚合入、要验 **owen 上的 FE** | `https://owen--kazispace.netlify.app` | 票面写「须含某 sha / 不要用 kazispace.ai」时 **必须用这个** |
+| 已发布到生产前端 | `https://kazispace.ai` | 只验已经打到这个 host 的构建 |
+| API / 脚本 UAT / Trace | `https://bot.kazispace.ai` | 后端 us-west staging |
 
-### 1.1 默认（大多数 Clinic / Hub / CV / Router 观测）
+KAZI-1041 写回 13515 用错过入口：`kazispace.ai` 上的 JS 没有票面要验的 FE 提交。KAZI-1044 派单写明前端用 owen Netlify、须含 `d336261`。
 
-| 名称 | 手机号 | OTP | 说明 |
-|------|--------|-----|------|
-| **Fixture A（China-first）** | `+8613262788342` | `123456` | 落地 `zh` / `CN`；`user_id` 以登录后 `GET /api/v1/me` 为准（历史上常见如 379） |
+核 FE 是否对：打开站点 JS，搜票面关键字（例如 `writing_revision`、`修改后重新提交`）。不要用 `/health` 当「已部署」依据；后端 SHA 只认主机 `git rev-parse HEAD`。
 
-适合：Hub、Workspace 资产 Rail、一般多轮 Clinic、与 `kazispace-backend` 的 `staging_core_*_uat.py` 对齐的浏览器复现。
-
-### 1.2 隔离 / 专用号（状态写脏后难以恢复）
-
-| 场景 | 号码 | 纪律 |
-|------|------|------|
-| 与 A 并行、互不污染 | A2：`+8613262788343` | 同 OTP |
-| 身份冷启动（禁止 PATCH `full_name` 等） | F：`+8613262788344` | **独占**（如 KAZI-892） |
-| `current_status` 从未写过 | G：`+8613262788345` | KAZI-921 / 931 |
-| ET 冷态（`preferences.english` 空） | H：`+8613262788346` | ET 写作会写偏好；需 ops 重置 |
-| KAZI-492 G1/G4 / G2 | `+8613262788352` / `8351` 等 | 见 backend `docs/uat/KAZI-492-STAGING-UAT.md` |
-| Router 等票面条目 | 票上指定（如 831、982） | 与脚本 `STAGING_UAT_PHONE` 一致 |
-
-**经验：** Fixture A 常带 **CV review_confirm / 历史会话**；测干净 leave/stay、G2 intake 时用 **G2 专用号**，避免误判为产品缺陷。
-
-### 1.3 与 kazispace-test 浏览器规则
-
-[kazispace-test：`staging-uat-browser-login.mdc`](https://github.com/Kazispace/kazispace-test/blob/main/.cursor/rules/staging-uat-browser-login.mdc) 仍列 **+7** 系列号，便于 MCP 自动填表。  
-**Core / Router 相关浏览器 UAT 请以 +86 China-first 夹具为准**，并与 backend 脚本使用同一号码与 deploy SHA。
+中文产品面一律走 `/{locale}`，localePrefix 是 `always`。China-first 夹具用 **`/zh`**。
 
 ---
 
-## 2. OTP 登录
+## 1. 账号
 
-Staging 约定（backend `scripts/uat_fixtures.py`）：
+默认 **Fixture A**：
 
-1. **`SMS_PROVIDER=mock`** → 验证码固定 **`123456`**（可用 env `STAGING_UAT_OTP` 覆盖，一般不必）。
-2. 手机号须在 staging **`TEST_PHONE_WHITELIST`**；出口 IP 常需 **`TEST_IP_WHITELIST`**，否则可能 **`RATE_LIMIT_EXCEEDED`**（例如 3600s 冷却）。
-3. **浏览器步骤**
-   - 打开 `/{locale}/login`（如 `/zh/login`）
-   - 输入 E.164 手机号（含 `+86`）
-   - 点击「获取验证码」
-   - 输入 `123456` → 登录
-4. 成功后 JWT 在 **cookie `kazi_token`** 与 **localStorage**（双写策略见 Web SDD）。
-5. **勿**将 OTP / JWT 写入公开文档或 Jira 附件；报告里写 **Fixture 名 + 手机后四位** 即可。
+| 项 | 值 |
+|----|----|
+| 手机 | `+8613262788342` |
+| OTP | `123456`（staging `SMS_PROVIDER=mock`） |
+| locale / country | `zh` / `CN` |
+| 落地用户 | `GET /api/v1/me` 为准；这台 us-west 上常见 `user_id=379` |
 
-**排查：** OTP 失败时先确认 **客户端出口 IP** 与 **号码** 均在 staging 白名单。
+只填国家号 `13262788342` **过不了** 前端校验：`isValidOtpPhone` 要求 `+7` / `+998` / `+86` 的 E.164。登录页 placeholder 是 `+8613800138000`，按钮文案是「发送验证码」不是「获取验证码」。
 
----
-
-## 3. Space 与 Clinic
-
-- **Clinic** 是系统 Space **`__clinic__`**，不是用户创建的；`/zh/chat` 与 `POST /api/v1/spaces/__clinic__/turn` 同源（design：`docs/sdd/kazi-spaces-v1.0.md`）。
-- **新建用户 Space（浏览器）**
-  1. 登录 → Space 列表 / 侧栏
-  2. 创建并选模板：`blank_conversation` · `job_sprint` · `ielts_prep`
-  3. 成功后会进入 `/spaces/{space_id}`，发消息走 `POST /api/v1/spaces/{space_id}/turn`
-- **测专家 / Hub（不新建 Space）**
-  - 门诊：`/zh/chat`
-  - 激活 Cap：Hub 卡片或对话 `activate {cap}` → `POST /api/v1/agents/{id}/activate`
-  - Workspace Hub：`/zh/clinic/hub`（资产 Rail 等）
-
-写 Jira 报告时请标明是 **`__clinic__`** 还是 **`sp_*`**，便于对照 Trace。
+其它夹具（A2 / F / G / H 等）只在票面点名时用，见 backend `uat_fixtures.py`。不要为了「干净一点」自己换号。
 
 ---
 
-## 4. 过程记录
+## 2. OTP：两条路
 
-与 [kazispace-test TEST-PLAN v2.0](https://github.com/Kazispace/kazispace-test/blob/main/docs/TEST-PLAN-v2.0.md) 一致：**PASS/FAIL + 截图或录屏 + 执行人 + 日期**。
+### 2.1 页面上点
 
-### 4.1 Jira / 报告模板
+1. 打开 `{FE}/zh/login`。
+2. 手机号框填 **完整 E.164**。
+3. 点「发送验证码」。成功后切到验证码步（一个 6 位框，placeholder `000000`）。
+4. 填 `123456`，点「验证」。
+5. 登录成功会 `replace` 到 `redirect` 或 `/{locale}/chat`。Fixture A 的 `primary_locale` 会把 locale 钉在 `zh`。
 
-```markdown
-## UAT — KAZI-xxxx · YYYY-MM-DD · staging · browser
+这一步在 **owen Netlify → bot.kazispace.ai** 上，真 Chrome **经常走不通**，见 §3。页面会出「网络错误」（i18n `login.networkError`），Network 里是 `net::ERR_FAILED`。
 
-**环境:** kazispace.ai + bot.kazispace.ai · deploy SHA: `xxxxxxxx`
-**夹具:** Fixture A · +8613262788342 · user_id=…（GET /me）
+### 2.2 API 拿 token，再注入会话（自动化兜底）
 
-| Step | 操作 | 期望 | 结果 | 证据 |
-|------|------|------|------|------|
-| 1 | /zh/login → OTP | 进入 /chat | PASS | [01_login.png](Drive链接) |
-| 2 | … | … | PASS | [录屏](Drive链接) |
+从任意能打到 bot 的环境（本机脚本、CI、关了 CORS 的浏览器都可）：
 
-**Trace:** `trc_xxxxxxxx`
-**Verdict:** PASS n/n · 备注：…
+```http
+POST https://bot.kazispace.ai/api/v1/auth/otp/request
+{"phone":"+8613262788342"}
 ```
 
-### 4.2 截图 vs 录屏
+记下 `otp_request_id`，再：
 
-- 多轮 / 路由 / 澄清：**短录屏**（只录关键轮次）。
-- 静态 UI / Hub：**1～3 张截图**（前态 / 问题态 / 后态）。
-- 与 **`staging_core_*_uat.py`** 同票时，注明 **同号、同 flag、同 SHA**；仅 FE 差异单独标 **FE-only**。
-
----
-
-## 5. 截图存 Google Drive（推荐）
-
-1. 目录示例：`KaziSpace/UAT/YYYY-MM/KAZI-xxxx/`
-2. 命名：`KAZI982_step03_clarify_card.png`
-3. 分享：**知道链接的任何人可查看**（团队内）；避免仅自己可见。
-4. 大图 / 录屏放 Drive，**Jira 只贴链接**，避免附件过大难检索。
-5. 勿上传含真实 PII 的公开链接。
-
----
-
-## 6. Jira 评论中的链接
-
-Jira Cloud 评论支持 Markdown：
-
-```markdown
-### 证据
-- 登录：[01_login.png](https://drive.google.com/file/d/FILE_ID/view?usp=sharing)
-- 全流程：[demo.mp4](https://drive.google.com/file/d/FILE_ID/view?usp=sharing)
-- 脚本对照：[KAZI-982 comment](https://kazispace.atlassian.net/browse/KAZI-982?focusedCommentId=xxxxx)
-- 代码：`kazispace-backend` @ `commit_sha`
+```http
+POST https://bot.kazispace.ai/api/v1/auth/otp/verify
+{"phone":"+8613262788342","otp_code":"123456","otp_request_id":"…","locale":"zh","country":"CN"}
 ```
 
-- 一行一链，链接文字说明步骤含义。
-- 需要对比时用表格 **Step | 期望 | 链接**。
-- 关联票用 `KAZI-xxx` 或完整 browse URL。
+回包里要用的字段：`access_token`、`user`、`home_api_base`、`data_region`、`directory_version`。us-west 上一般是 `home_api_base=https://bot.kazispace.ai`、`data_region=global`、`directory_version` 为数字（实测过 4）。
+
+然后 **三件事一起做**，少一件就会被踢回登录页：
+
+1. `localStorage.kazi.region.session` =  
+   `{ token, home_api_base, data_region, directory_version }`  
+   四个字段都要合法。`home_api_base` 必须在前端 bundled directory 里（`isKnownApiBase`），`data_region` 只能是 `global` 或 `cn-mainland`，且必须和 directory 那一行一致。缺字段或类型不对，`getSession()` 会整包清掉。
+2. Cookie `kazi_token` = 同一个 token（`path=/`、`Secure`、`SameSite=Lax`，domain 写成当前 FE host，例如 `owen--kazispace.netlify.app`）。middleware 只看这颗 cookie，不看 localStorage；`/spaces/*`、`/clinic/*` 不在公开名单里，没 cookie 直接 302 到 `/zh/login?redirect=…`。
+3. `localStorage.kazi_user_info` = verify / `/me` 的 user。可有可无，但注入后 `/me` 失败时前端会清会话，所以 cookie + region session 之后 **立刻打一次 `/me` 必须 200**。
+
+不要只写 `kazi_auth_token`。`setRegionAuthSession` 会清掉这个 legacy key，SSOT 是 `kazi.region.session`。
+
+Playwright 里还要 `addInitScript` 再写一遍 session，否则下一次导航 / 新 document 会丢。`chromium.launch({ userDataDir })` 会被拒；用 `launchPersistentContext('/tmp/…')`。
+
+OTP 失败时先看：号是不是 E.164、是不是 whitelist、出口 IP 是不是 `TEST_IP_WHITELIST`（不在会 `RATE_LIMIT_EXCEEDED`）、以及是不是 CORS 把 request / verify 拦了（那种会显示「网络错误」，不是验证码错）。
 
 ---
 
-## 7. 常见问题
+## 3. CORS：owen 调 bot 会被浏览器拦
 
-| 现象 | 常见原因 |
-|------|----------|
-| OTP 限流 | IP / 号不在白名单 |
-| 与 API 脚本结论相反 | 账号或 deploy/flag 不一致 |
-| Router 像没跑 | 固定 `request_id` 命中 replay；应新会话 |
-| Space 行为像 Clinic | 仍在 `__clinic__` 或未进入新建 `sp_*` |
-| Trace 对不上 | 未记录 `trc_*` / `user_id` / UTC 时间 |
+us-west `deploy/clusters/us-west.env` 里：
+
+```
+CORS_ALLOWED_ORIGINS=https://kazispace.ai,https://www.kazispace.ai,http://localhost:3000
+```
+
+**没有** `https://owen--kazispace.netlify.app`。
+
+实测：
+
+- 真 Chrome 从 owen 发 OPTIONS 到 `bot.kazispace.ai` → **400**，页面「网络错误」。
+- 同一接口从 `https://kazispace.ai` Origin 发 OPTIONS → **200 + ACAO**。
+
+所以：
+
+| 你在验什么 | 怎么开浏览器 |
+|------------|--------------|
+| 已发布 FE（kazispace.ai） | 普通 Chrome 即可 |
+| owen 构建 + 真用户点击 OTP | 过不了，除非先改集群 CORS（测产品 AC 时不要顺手改） |
+| owen 构建的 **产品面行为**（表单、预填、路由） | Chrome `--disable-web-security` + `--disable-features=IsolateOrigins,site-per-process`，或走 §2.2 注入后再操作 |
+
+KAZI-1044 复测用的是 headed Chrome + `launchPersistentContext`，关 web security，只为了让 owen 构建能打到 bot。写回时把 CORS 限制单独记一笔，不要把它写成产品 FAIL。
+
+`localhost:3000` 在 CORS 名单里：本地 `next dev` 对 bot 的浏览器 UAT 不需要关安全。
 
 ---
 
-## 8. 延伸阅读
+## 4. 打开页面
 
-| 主题 | 位置 |
+locale 前缀不能省。常用：
+
+| 目的 | 打开 |
 |------|------|
-| 手机号 / OTP / 专用号 | `kazispace-backend/scripts/uat_fixtures.py` |
-| Staging 脚本 vs 浏览器 | `kazispace-backend/docs/uat/STAGING-UAT-SCRIPTS.md` |
-| Space API | `kazispace-design/docs/sdd/kazi-spaces-v1.0.md` |
-| Hub 浏览器清单示例 | `kazispace-backend/docs/uat/KAZI-402-WORKSPACE-ASSET-RAIL-UAT.md` |
-| UAT 总纲 | [kazispace-test TEST-PLAN v2.0](https://github.com/Kazispace/kazispace-test/blob/main/docs/TEST-PLAN-v2.0.md) |
-| MCP 浏览器登录夹具 | [staging-uat-browser-login.mdc](https://github.com/Kazispace/kazispace-test/blob/main/.cursor/rules/staging-uat-browser-login.mdc) |
+| 登录 | `/zh/login` |
+| 门诊 Clinic（系统 Space `__clinic__`） | `/zh/chat` 或 `/zh/clinic/hub` |
+| 用户 Space | `/zh/spaces/{sp_…}` |
+| 新建 Space | 已登录后侧栏「新建空间」 |
+
+**不要**用 `/zh/english` 当 ET 写作入口。写作表单走 Clinic 对话或 `ielts_prep` Space 的气泡 / 弹窗，不跳到独立 `/english` 页。
+
+公开路径（middleware 不查 cookie）：`/`、`/login`、`/chat`、`/tma`。`/spaces/*`、`/clinic/*`、`/jobs` 等要 cookie。
+
+### 4.1 新建 Space（浏览器）
+
+1. 先保证已经离开 `/login`。
+2. 点「新建空间」。
+3. 选模板。ET / 雅思写作用 **「雅思备考」**（`template_id=ielts_prep`），不要选空白对话再指望写作表单自己出现。
+4. 进 `/zh/spaces/sp_…`。
+
+UI 创建失败时（侧栏没出来、按钮 disabled），用同一 token：
+
+```http
+POST https://bot.kazispace.ai/api/v1/spaces
+Authorization: Bearer <token>
+{"template_id":"ielts_prep","name":"KAZI-1044 改稿表单复测"}
+```
+
+然后 `goto` `{FE}/zh/spaces/{id}`。
+
+票面说「必须新建 Space」时，不要复用脏空间。KAZI-1041 的 `sp_3fc5f6671042` 有遗留 pending，复测会误判。KAZI-1044 主空间是 `sp_7565e870c854`。
+
+写回时同时记：`space_id`、完整 URL、`user_id`。Trace 表 `core_trace_turns` **没有** `space_id` 列，session 长得像 `sess_sp_7565e870c854`。
+
+### 4.2 对话与表单
+
+- 输入框：最后一个 `textbox` / `textarea` / `[contenteditable=true]`。
+- 发送：在输入框里 Enter。
+- 等回复：看 body 文本。**不要**用第一次出现的「批改完成」当第 2 稿——它会匹配第 1 稿。第 2 稿要等「第 2 稿批改完成」。
+- 「处理中…」还在就还没完。
+- 打开写作 / 改稿卡：从 **最后一条还 enabled 的**「打开编辑器」/「写作文」/「修改后重新提交」点起，先 `scrollIntoViewIfNeeded`。更早的卡会冻成「这张表单已关闭」，点了没反应。
+- 弹窗：`[role=dialog]` 里最后一个 `textarea`。提交钮文案是「重新提交」或「修改后重新提交」或「提交作文」。改稿表单标题「修改作文」。
+- 离开 ET：对话框里打的字走 Router（KAZI-1004）。「第二条什么意思」「为什么这篇 Task Response 只有 1 分」在 1044 复测里都会 leave → `job_search`，旧改稿卡冻结。这不是「打开编辑器失败」，是已经不在 ET。
 
 ---
 
-*文档版本：2026-10-09 · 来源：Cloud Agent 浏览器 UAT 实践总结*
+## 5. 抓 Trace，不要只看 UI
+
+浏览器里 `POST /api/v1/spaces/{id}/turn` 的 JSON 顶层是：
+
+```
+envelope, assistant_message_id, routing
+```
+
+`request_id` / `event` / `form` / `leave_stay_verdict` 在 **`envelope.meta`**（有时也在 `meta`），不在顶层。只读 `body.request_id` 会得到 `null`。
+
+对照主机 Trace 时用 `request_id` 或 `trc_*`。改稿表单提交 stay 的形状：`leave_stay_reason=probe_consumable_stay`、`target_capability=english_tutor`、`event=writing_revise_review`。对话框追问 leave 的形状：`leave_stay_verdict=leave`、`leave_task_id=job_search`。
+
+---
+
+## 6. 写回
+
+每步：通过 / 不通过 + Space id + 截图 **或** Trace `request_id`。两步脚本 + 浏览器的票，脚本 JSON 原样贴，浏览器逐步表。
+
+部署版本：
+
+- 后端：主机 `git rev-parse HEAD`，不要写 `/health`。
+- 前端：owen tip / 发布 JS 是否含票面字符串。
+
+Jira `addCommentToJiraIssue` **没有附件字段**。Markdown `![](/opt/cursor/artifacts/…)` 会被转成 media 占位，`id` 空，票面 `attachment` 仍是 `[]`。截图先放 agent 会话（HTML `<img src="/opt/cursor/artifacts/…">`）或外链，再在评论里写 Space / Trace。
+
+未改票状态，除非当前消息明确说转状态。
+
+---
+
+## 7. 踩过的坑（按出现顺序）
+
+| 现象 | 实际原因 |
+|------|----------|
+| 登录页「网络错误」 | owen Origin 不在 `CORS_ALLOWED_ORIGINS`，OPTIONS 400 |
+| 填了号点发送没反应 / phoneInvalid | 没写 `+86` |
+| 注入 token 仍停在 /login | 只写了 localStorage，没写 `kazi_token` cookie；或 `kazi.region.session` 缺字段被 `parseRegionSession` 清掉；或 `/me` 失败被清会话 |
+| `launch({ userDataDir })` 报错 | 改用 `launchPersistentContext` |
+| 打开编辑器没弹出 | 点到了冻结的旧卡 |
+| 第 5 步「已经批改完」其实是第 1 稿 | 等待条件用了「批改完成」而不是「第 2 稿批改完成」 |
+| 追问后打不开改稿卡 | 追问已经 leave 到岗位推荐，不是预填坏了 |
+| 脚本 PASS、浏览器像没进 ET | 进了 `/zh/english`，或复用了脏 Space，或 FE host 不是票面要的那份构建 |
+| turn 响应里没有 request_id | 在 `envelope.meta` |
+
+---
+
+## 8. 最小复现顺序（ET 改稿表单）
+
+1. 确认 FE = owen Netlify（或票面指定的 host），JS 含要验的字符串。
+2. 确认后端 HEAD 是票面 merge；`CURRENT_TASK_PROBE_ET_ENABLED=1`、`ROUTER_PROBE_FRONT_LOAD_ENABLED=1` 只核不改。
+3. Fixture A OTP（页面或 API+注入）。关 CORS 仅当 host 是 owen。
+4. **新建** `ielts_prep` Space，不要 `sp_3fc5f6671042`。
+5. 发「帮我练习雅思考试」→ 应直接出写作题 +「打开编辑器」。
+6. 编辑器交作文 → 判分 +「修改作文」卡。
+7. 打开卡：预填刚判的那一稿，按钮「修改后重新提交」，没有「至少 40 词」。
+8. 改几句再交 → 「第 2 稿批改完成」，没有「你是想继续「英语练习」，还是去做「新的任务」？」。
+9. 对话框追问仍走 Router；要核预填，追问必须还留在 ET。
+
+---
+
+*2026-10-09 · us-west 执行 Agent 浏览器复测（KAZI-1044 为主，入口纪律来自 KAZI-1041 13515）*
