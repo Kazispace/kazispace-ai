@@ -163,11 +163,14 @@ describe('writing_revision (KAZI-1044)', () => {
     });
   });
 
-  it('prefill = the nearest user message before the latest turn, and only for the latest turn', () => {
+  const graded = { form: REVISION, grade_id: 'g1' };
+  const followUp = { form: REVISION };
+
+  it('prefill = the graded essay, only for the latest turn', () => {
     const messages = [
-      { role: 'assistant', content: 'Write about…' },
+      { role: 'assistant', content: 'Write about…', assistantMeta: { form: WRITING } },
       { role: 'user', content: '  My essay.  ' },
-      { role: 'assistant', content: 'Score 6.0' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: graded },
     ];
     expect(revisionPrefill(messages, 2)).toBe('My essay.');
     expect(revisionPrefill(messages, 0)).toBeUndefined();
@@ -176,5 +179,43 @@ describe('writing_revision (KAZI-1044)', () => {
       undefined,
       'My essay.',
     ]);
+  });
+
+  it('a follow-up question after grading does not replace the essay (review #224 🔴)', () => {
+    const messages = [
+      { role: 'user', content: 'My essay.' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: graded },
+      { role: 'user', content: '第二条什么意思' },
+      { role: 'assistant', content: 'It means…', assistantMeta: followUp },
+    ];
+    expect(revisionPrefill(messages, 3)).toBe('My essay.');
+  });
+
+  it('history rows keep only `form` (no grade_id): the earliest turn of the revision-form run anchors it', () => {
+    const messages = [
+      { role: 'user', content: 'My essay.' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: followUp },
+      { role: 'user', content: '第二条什么意思' },
+      { role: 'assistant', content: 'It means…', assistantMeta: followUp },
+    ];
+    expect(revisionPrefill(messages, 3)).toBe('My essay.');
+  });
+
+  it('after a graded revision, prefill is the revision (the newest graded draft)', () => {
+    const messages = [
+      { role: 'user', content: 'My essay.' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: graded },
+      { role: 'user', content: 'My better essay.' },
+      { role: 'assistant', content: 'Score 6.5', assistantMeta: { form: REVISION, grade_id: 'g2' } },
+    ];
+    expect(revisionPrefill(messages, 3)).toBe('My better essay.');
+  });
+
+  it('no revision form and no grade on the latest turn ⇒ no prefill', () => {
+    const messages = [
+      { role: 'user', content: 'Hello' },
+      { role: 'assistant', content: 'Hi', assistantMeta: {} },
+    ];
+    expect(revisionPrefill(messages, 1)).toBeUndefined();
   });
 });

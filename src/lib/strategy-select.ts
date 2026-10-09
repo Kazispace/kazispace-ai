@@ -188,6 +188,7 @@ export function resolveStrategySelectTurnContext(
     role: string;
     content: string;
     nextActions?: ChatNextAction[];
+    assistantMeta?: Record<string, unknown> | null;
   }>,
   messageIndex: number,
   locale: string
@@ -213,6 +214,7 @@ export function mapStrategySelectTurnContexts(
     role: string;
     content: string;
     nextActions?: ChatNextAction[];
+    assistantMeta?: Record<string, unknown> | null;
   }>,
   locale: string
 ): StrategySelectTurnContext[] {

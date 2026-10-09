@@ -147,18 +147,45 @@ export function isLatestTurn(messages: ReadonlyArray<unknown>, messageIndex: num
   return messageIndex === messages.length - 1;
 }
 
+type PrefillMessage = {
+  role: string;
+  content: string;
+  assistantMeta?: Record<string, unknown> | null;
+};
+
 /**
- * KAZI-1044: text to prefill the revision editor with — the nearest user
- * message before this turn (usually the essay that was just graded).
+ * KAZI-1044: text to prefill the revision editor with — **the essay that was
+ * graded**, ⛔ not simply the latest user message.
+ *
+ * The backend offers the revision form on *every* ET turn while the essay sits
+ * graded (`writing_phase = review`, SSOT v1.76 §5.3.6.2), e.g. after a
+ * follow-up question "what does point 2 mean?". So walk back from this turn:
+ * - the nearest assistant turn carrying `grade_id` is the graded turn (live);
+ * - without `grade_id` (history rows only keep `form`), the earliest assistant
+ *   turn of the trailing run that carries the revision form stands in for it;
+ * then take the user message just before that turn.
+ *
  * Local only: the backend form never carries user data (SSOT §5.3.6).
  * Only the latest turn gets a value (frozen forms can't be opened anyway).
  */
 export function revisionPrefill(
-  messages: ReadonlyArray<{ role: string; content: string }>,
+  messages: ReadonlyArray<PrefillMessage>,
   messageIndex: number
 ): string | undefined {
   if (!isLatestTurn(messages, messageIndex)) return undefined;
-  for (let i = messageIndex - 1; i >= 0; i -= 1) {
+  let graded = -1;
+  for (let i = messageIndex; i >= 0; i -= 1) {
+    const message = messages[i];
+    if (message.role !== 'assistant') continue;
+    const meta = message.assistantMeta ?? undefined;
+    if (meta?.grade_id) {
+      graded = i;
+      break;
+    }
+    if (parseEtForm(meta)?.kind !== 'writing_revision') break;
+    graded = i;
+  }
+  for (let i = graded - 1; i >= 0; i -= 1) {
     if (messages[i].role === 'user') return messages[i].content.trim() || undefined;
   }
   return undefined;
