@@ -14,7 +14,7 @@ import type { UserMessageActionMeta } from '@/types/chat-envelope';
 
 export const ET_FORM_SUBMIT_ACTION_TYPE = 'et_form_submit';
 
-export type EtFormKind = 'exam_select' | 'writing_draft' | 'speaking_answer';
+export type EtFormKind = 'exam_select' | 'writing_draft' | 'writing_revision' | 'speaking_answer';
 
 export interface EtFormOption {
   id: string;
@@ -38,6 +38,8 @@ export interface EtForm {
 const SHAPE_BY_KIND: Record<EtFormKind, Pick<EtForm, 'presentation' | 'control'>> = {
   exam_select: { presentation: 'inline', control: 'radio' },
   writing_draft: { presentation: 'modal', control: 'textarea' },
+  // KAZI-1044: after grading, the backend offers a revision editor (same shape as the draft).
+  writing_revision: { presentation: 'modal', control: 'textarea' },
   speaking_answer: { presentation: 'inline', control: 'audio' },
 };
 
@@ -143,4 +145,21 @@ export function countWords(text: string): number {
 /** The freeze rule: a turn is interactive only if no message follows it. */
 export function isLatestTurn(messages: ReadonlyArray<unknown>, messageIndex: number): boolean {
   return messageIndex === messages.length - 1;
+}
+
+/**
+ * KAZI-1044: text to prefill the revision editor with — the nearest user
+ * message before this turn (usually the essay that was just graded).
+ * Local only: the backend form never carries user data (SSOT §5.3.6).
+ * Only the latest turn gets a value (frozen forms can't be opened anyway).
+ */
+export function revisionPrefill(
+  messages: ReadonlyArray<{ role: string; content: string }>,
+  messageIndex: number
+): string | undefined {
+  if (!isLatestTurn(messages, messageIndex)) return undefined;
+  for (let i = messageIndex - 1; i >= 0; i -= 1) {
+    if (messages[i].role === 'user') return messages[i].content.trim() || undefined;
+  }
+  return undefined;
 }

@@ -188,3 +188,48 @@ describe('EtFormBlock · inline audio (speaking_answer)', () => {
     expect(buttonByText('typeInstead', container)).toBeNull();
   });
 });
+
+const REVISION = parseEtForm({
+  form: {
+    form_id: 'et:writing_revision:q1',
+    kind: 'writing_revision',
+    presentation: 'modal',
+    control: 'textarea',
+    title: 'Revise',
+    prompt: 'Discuss.',
+    submit_label: 'Resubmit essay',
+    constraints: { min_words: 40, max_chars: 4000 },
+  },
+}) as EtForm;
+
+describe('EtFormBlock · modal (writing_revision · KAZI-1044)', () => {
+  it('opens the editor prefilled with the graded essay and resubmits through the form channel', async () => {
+    const onSubmit = vi.fn();
+    render(<EtFormBlock form={REVISION} active prefill="My first essay." onSubmit={onSubmit} />);
+    // Prefilled ⇒ the button reads "revise and resubmit".
+    click(buttonByText('reopen', container));
+
+    const dialog = document.querySelector('[role="dialog"]');
+    expect((dialog?.querySelector('textarea') as HTMLTextAreaElement).value).toBe('My first essay.');
+
+    typeInto(dialog!.querySelector('textarea'), 'My better essay.');
+    await act(async () => {
+      buttonByText('Resubmit essay', dialog!)?.click();
+    });
+    expect(onSubmit).toHaveBeenCalledWith({
+      display: 'My better essay.',
+      meta: { action_type: 'et_form_submit', form_id: 'et:writing_revision:q1' },
+    });
+  });
+
+  it('the prefill never leaks into a first-draft editor', () => {
+    render(<EtFormBlock form={WRITING} active prefill="My first essay." onSubmit={vi.fn()} />);
+    click(buttonByText('open', container));
+    expect((document.querySelector('[role="dialog"] textarea') as HTMLTextAreaElement).value).toBe('');
+  });
+
+  it('frozen: the revision editor cannot be opened', () => {
+    render(<EtFormBlock form={REVISION} active={false} prefill="x" onSubmit={vi.fn()} />);
+    expect(buttonByText('reopen', container)?.disabled).toBe(true);
+  });
+});

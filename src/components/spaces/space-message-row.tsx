@@ -41,6 +41,7 @@ function spaceMessageRowEqual(
     prev.onExamSelect === next.onExamSelect &&
     prev.onEtFormSubmit === next.onEtFormSubmit &&
     prev.strategy.latestTurn === next.strategy.latestTurn &&
+    prev.strategy.etFormPrefill === next.strategy.etFormPrefill &&
     prev.onJobCardClick === next.onJobCardClick
   );
 }
@@ -89,6 +90,7 @@ function SpaceMessageRowImpl({
       onExamSelect={onExamSelect}
       onEtFormSubmit={onEtFormSubmit}
       etFormActive={strategy.latestTurn === true}
+      etFormPrefill={strategy.etFormPrefill}
       actionsDisabled={actionsDisabled}
       onRetry={
         message.role === 'user' && message.status === 'failed'

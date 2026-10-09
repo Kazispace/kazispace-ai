@@ -72,6 +72,7 @@ function clinicMessageRowEqual(
     prev.onExamSelect === next.onExamSelect &&
     prev.onEtFormSubmit === next.onEtFormSubmit &&
     prev.strategy.latestTurn === next.strategy.latestTurn &&
+    prev.strategy.etFormPrefill === next.strategy.etFormPrefill &&
     prev.onJobCardClick === next.onJobCardClick
   );
 }
@@ -213,6 +214,7 @@ function ClinicMessageRowImpl({
       onExamSelect={onExamSelect}
       onEtFormSubmit={onEtFormSubmit}
       etFormActive={strategy.latestTurn === true}
+      etFormPrefill={strategy.etFormPrefill}
       onJobCardClick={onJobCardClick}
       actionsDisabled={actionsDisabled}
     />

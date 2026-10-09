@@ -5,6 +5,7 @@ import {
   ET_FORM_SUBMIT_ACTION_TYPE,
   isLatestTurn,
   parseEtForm,
+  revisionPrefill,
   type EtForm,
 } from '@/lib/english-tutor/form';
 import { mapStrategySelectTurnContexts } from '@/lib/strategy-select';
@@ -133,5 +134,47 @@ describe('freeze rule: position, never form_id', () => {
     expect(parseEtForm(messages[0].assistantMeta)?.form_id).toBe(
       parseEtForm(messages[2].assistantMeta)?.form_id
     );
+  });
+});
+
+describe('writing_revision (KAZI-1044)', () => {
+  const REVISION = {
+    ...WRITING,
+    form_id: 'et:writing_revision:ielts_w_task2_discussion_media_015',
+    kind: 'writing_revision',
+    title: '修改作文',
+    submit_label: '重新提交',
+  };
+
+  it('parses as a modal essay editor with the draft constraints', () => {
+    const form = parsed(REVISION);
+    expect(form).toMatchObject({ kind: 'writing_revision', presentation: 'modal', control: 'textarea' });
+    expect(form.constraints).toEqual({ min_words: 40, max_chars: 4000 });
+  });
+
+  it('rejects an off-contract shape', () => {
+    expect(parseEtForm({ form: { ...REVISION, presentation: 'inline' } })).toBeNull();
+  });
+
+  it('submits through the form channel with its own form_id', () => {
+    expect(buildEtFormSubmit(parsed(REVISION), { text: 'Better essay.' })?.meta).toEqual({
+      action_type: ET_FORM_SUBMIT_ACTION_TYPE,
+      form_id: REVISION.form_id,
+    });
+  });
+
+  it('prefill = the nearest user message before the latest turn, and only for the latest turn', () => {
+    const messages = [
+      { role: 'assistant', content: 'Write about…' },
+      { role: 'user', content: '  My essay.  ' },
+      { role: 'assistant', content: 'Score 6.0' },
+    ];
+    expect(revisionPrefill(messages, 2)).toBe('My essay.');
+    expect(revisionPrefill(messages, 0)).toBeUndefined();
+    expect(mapStrategySelectTurnContexts(messages, 'zh').map((c) => c.etFormPrefill)).toEqual([
+      undefined,
+      undefined,
+      'My essay.',
+    ]);
   });
 });
