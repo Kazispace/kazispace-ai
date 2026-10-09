@@ -191,14 +191,26 @@ describe('writing_revision (KAZI-1044)', () => {
     expect(revisionPrefill(messages, 3)).toBe('My essay.');
   });
 
-  it('history rows keep only `form` (no grade_id): the earliest turn of the revision-form run anchors it', () => {
+  it('after a revision + reload (history rows keep form and grade_id), prefill is still the revision (review #224 R2)', () => {
+    const messages = [
+      { role: 'user', content: 'My essay.' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: graded },
+      { role: 'user', content: 'My better essay.' },
+      { role: 'assistant', content: 'Score 6.5', assistantMeta: { form: REVISION, grade_id: 'g2' } },
+      { role: 'user', content: '第二条什么意思' },
+      { role: 'assistant', content: 'It means…', assistantMeta: followUp },
+    ];
+    expect(revisionPrefill(messages, 5)).toBe('My better essay.');
+  });
+
+  it('no graded turn in the revision-form run ⇒ no prefill (⛔ no guessing)', () => {
     const messages = [
       { role: 'user', content: 'My essay.' },
       { role: 'assistant', content: 'Score 6.0', assistantMeta: followUp },
       { role: 'user', content: '第二条什么意思' },
       { role: 'assistant', content: 'It means…', assistantMeta: followUp },
     ];
-    expect(revisionPrefill(messages, 3)).toBe('My essay.');
+    expect(revisionPrefill(messages, 3)).toBeUndefined();
   });
 
   it('after a graded revision, prefill is the revision (the newest graded draft)', () => {

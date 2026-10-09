@@ -159,11 +159,12 @@ type PrefillMessage = {
  *
  * The backend offers the revision form on *every* ET turn while the essay sits
  * graded (`writing_phase = review`, SSOT v1.76 §5.3.6.2), e.g. after a
- * follow-up question "what does point 2 mean?". So walk back from this turn:
- * - the nearest assistant turn carrying `grade_id` is the graded turn (live);
- * - without `grade_id` (history rows only keep `form`), the earliest assistant
- *   turn of the trailing run that carries the revision form stands in for it;
- * then take the user message just before that turn.
+ * follow-up question "what does point 2 mean?". So walk back from this turn
+ * through assistant turns that carry the revision form, stop at the first one
+ * carrying `grade_id` (the graded turn — history rows keep it too, backend
+ * `PERSISTED_SURFACE_META_KEYS`), and take the user message just before it.
+ * No graded turn in that run ⇒ no prefill (⛔ no guessing: guessing the
+ * earliest turn picked the first draft after a revision + reload).
  *
  * Local only: the backend form never carries user data (SSOT §5.3.6).
  * Only the latest turn gets a value (frozen forms can't be opened anyway).
@@ -183,8 +184,8 @@ export function revisionPrefill(
       break;
     }
     if (parseEtForm(meta)?.kind !== 'writing_revision') break;
-    graded = i;
   }
+  if (graded < 0) return undefined;
   for (let i = graded - 1; i >= 0; i -= 1) {
     if (messages[i].role === 'user') return messages[i].content.trim() || undefined;
   }
