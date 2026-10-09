@@ -5,7 +5,7 @@ import {
   strategyIdFromPayload,
 } from '@/lib/action-payload';
 import { resolveActionSelectSubmit } from '@/lib/next-action-submit';
-import { isLatestTurn } from '@/lib/english-tutor/form';
+import { isLatestTurn, revisionPrefill } from '@/lib/english-tutor/form';
 import type { ChatNextAction } from '@/types/chat-envelope';
 
 export const STRATEGY_SELECT_ACTION_TYPE = 'strategy_select';
@@ -178,6 +178,8 @@ export type StrategySelectTurnContext = {
    * `meta.form` freeze rule (only the latest message's form is interactive).
    */
   latestTurn?: boolean;
+  /** KAZI-1044: local prefill for the english_tutor revision editor (latest turn only). */
+  etFormPrefill?: string;
 };
 
 /** Active vs historical strategy_select state for a rendered assistant turn. */
@@ -186,6 +188,7 @@ export function resolveStrategySelectTurnContext(
     role: string;
     content: string;
     nextActions?: ChatNextAction[];
+    assistantMeta?: Record<string, unknown> | null;
   }>,
   messageIndex: number,
   locale: string
@@ -198,6 +201,7 @@ export function resolveStrategySelectTurnContext(
     activeNextActions,
     selectedStrategyPayload,
     latestTurn: isLatestTurn(messages, messageIndex),
+    etFormPrefill: revisionPrefill(messages, messageIndex),
   };
 }
 
@@ -210,6 +214,7 @@ export function mapStrategySelectTurnContexts(
     role: string;
     content: string;
     nextActions?: ChatNextAction[];
+    assistantMeta?: Record<string, unknown> | null;
   }>,
   locale: string
 ): StrategySelectTurnContext[] {

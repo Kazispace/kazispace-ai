@@ -22,6 +22,11 @@ export interface EtFormBlockProps {
   form: EtForm;
   /** Freeze rule (SSOT §5.3.6): only the latest message's form is interactive. */
   active: boolean;
+  /**
+   * KAZI-1044: initial editor text for `writing_revision` (the essay that was
+   * just graded). Local only — the form itself never carries user data.
+   */
+  prefill?: string;
   onSubmit?: (submit: EtFormSubmit) => void | Promise<void>;
 }
 
@@ -29,7 +34,7 @@ export interface EtFormBlockProps {
  * KAZI-1041 · renders `meta.form` (inline radio / inline audio / modal essay).
  * Frozen forms stay visible with whatever the user filled in, but disabled.
  */
-export function EtFormBlock({ form, active, onSubmit }: EtFormBlockProps) {
+export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProps) {
   const t = useTranslations('english.form');
   const interactive = active && Boolean(onSubmit);
   const inFlightRef = useRef(false);
@@ -72,7 +77,12 @@ export function EtFormBlock({ form, active, onSubmit }: EtFormBlockProps) {
       ) : form.control === 'audio' ? (
         <AudioForm form={form} disabled={disabled} onSubmit={submit} />
       ) : (
-        <EssayForm form={form} disabled={disabled} onSubmit={submit} />
+        <EssayForm
+          form={form}
+          disabled={disabled}
+          initialDraft={form.kind === 'writing_revision' ? prefill : undefined}
+          onSubmit={submit}
+        />
       )}
       {!active ? <p className="text-[11px] text-workspace-muted">{t('frozen')}</p> : null}
     </div>
@@ -187,12 +197,22 @@ function AudioForm({ form, disabled, onSubmit }: { form: EtForm; disabled: boole
   );
 }
 
-function EssayForm({ form, disabled, onSubmit }: { form: EtForm; disabled: boolean; onSubmit: SubmitFn }) {
+function EssayForm({
+  form,
+  disabled,
+  initialDraft,
+  onSubmit,
+}: {
+  form: EtForm;
+  disabled: boolean;
+  initialDraft?: string;
+  onSubmit: SubmitFn;
+}) {
   const t = useTranslations('english.form');
   const [open, setOpen] = useState(false);
   // Draft lives here, not in the dialog: closing the editor (or the form
   // freezing) keeps what the user typed for review.
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState(initialDraft ?? '');
   return (
     <div className="space-y-2">
       {form.prompt ? (

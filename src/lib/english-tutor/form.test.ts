@@ -5,6 +5,7 @@ import {
   ET_FORM_SUBMIT_ACTION_TYPE,
   isLatestTurn,
   parseEtForm,
+  revisionPrefill,
   type EtForm,
 } from '@/lib/english-tutor/form';
 import { mapStrategySelectTurnContexts } from '@/lib/strategy-select';
@@ -133,5 +134,100 @@ describe('freeze rule: position, never form_id', () => {
     expect(parseEtForm(messages[0].assistantMeta)?.form_id).toBe(
       parseEtForm(messages[2].assistantMeta)?.form_id
     );
+  });
+});
+
+describe('writing_revision (KAZI-1044)', () => {
+  const REVISION = {
+    ...WRITING,
+    form_id: 'et:writing_revision:ielts_w_task2_discussion_media_015',
+    kind: 'writing_revision',
+    title: '修改作文',
+    submit_label: '重新提交',
+  };
+
+  it('parses as a modal essay editor with the draft constraints', () => {
+    const form = parsed(REVISION);
+    expect(form).toMatchObject({ kind: 'writing_revision', presentation: 'modal', control: 'textarea' });
+    expect(form.constraints).toEqual({ min_words: 40, max_chars: 4000 });
+  });
+
+  it('rejects an off-contract shape', () => {
+    expect(parseEtForm({ form: { ...REVISION, presentation: 'inline' } })).toBeNull();
+  });
+
+  it('submits through the form channel with its own form_id', () => {
+    expect(buildEtFormSubmit(parsed(REVISION), { text: 'Better essay.' })?.meta).toEqual({
+      action_type: ET_FORM_SUBMIT_ACTION_TYPE,
+      form_id: REVISION.form_id,
+    });
+  });
+
+  const graded = { form: REVISION, grade_id: 'g1' };
+  const followUp = { form: REVISION };
+
+  it('prefill = the graded essay, only for the latest turn', () => {
+    const messages = [
+      { role: 'assistant', content: 'Write about…', assistantMeta: { form: WRITING } },
+      { role: 'user', content: '  My essay.  ' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: graded },
+    ];
+    expect(revisionPrefill(messages, 2)).toBe('My essay.');
+    expect(revisionPrefill(messages, 0)).toBeUndefined();
+    expect(mapStrategySelectTurnContexts(messages, 'zh').map((c) => c.etFormPrefill)).toEqual([
+      undefined,
+      undefined,
+      'My essay.',
+    ]);
+  });
+
+  it('a follow-up question after grading does not replace the essay (review #224 🔴)', () => {
+    const messages = [
+      { role: 'user', content: 'My essay.' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: graded },
+      { role: 'user', content: '第二条什么意思' },
+      { role: 'assistant', content: 'It means…', assistantMeta: followUp },
+    ];
+    expect(revisionPrefill(messages, 3)).toBe('My essay.');
+  });
+
+  it('after a revision + reload (history rows keep form and grade_id), prefill is still the revision (review #224 R2)', () => {
+    const messages = [
+      { role: 'user', content: 'My essay.' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: graded },
+      { role: 'user', content: 'My better essay.' },
+      { role: 'assistant', content: 'Score 6.5', assistantMeta: { form: REVISION, grade_id: 'g2' } },
+      { role: 'user', content: '第二条什么意思' },
+      { role: 'assistant', content: 'It means…', assistantMeta: followUp },
+    ];
+    expect(revisionPrefill(messages, 5)).toBe('My better essay.');
+  });
+
+  it('no graded turn in the revision-form run ⇒ no prefill (⛔ no guessing)', () => {
+    const messages = [
+      { role: 'user', content: 'My essay.' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: followUp },
+      { role: 'user', content: '第二条什么意思' },
+      { role: 'assistant', content: 'It means…', assistantMeta: followUp },
+    ];
+    expect(revisionPrefill(messages, 3)).toBeUndefined();
+  });
+
+  it('after a graded revision, prefill is the revision (the newest graded draft)', () => {
+    const messages = [
+      { role: 'user', content: 'My essay.' },
+      { role: 'assistant', content: 'Score 6.0', assistantMeta: graded },
+      { role: 'user', content: 'My better essay.' },
+      { role: 'assistant', content: 'Score 6.5', assistantMeta: { form: REVISION, grade_id: 'g2' } },
+    ];
+    expect(revisionPrefill(messages, 3)).toBe('My better essay.');
+  });
+
+  it('no revision form and no grade on the latest turn ⇒ no prefill', () => {
+    const messages = [
+      { role: 'user', content: 'Hello' },
+      { role: 'assistant', content: 'Hi', assistantMeta: {} },
+    ];
+    expect(revisionPrefill(messages, 1)).toBeUndefined();
   });
 });

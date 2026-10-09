@@ -82,6 +82,8 @@ interface MessageBubbleProps {
   onEtFormSubmit?: (submit: EtFormSubmit) => void | Promise<void>;
   /** KAZI-1041 freeze rule: true only on the latest message. */
   etFormActive?: boolean;
+  /** KAZI-1044: local prefill for the revision editor (previous user message). */
+  etFormPrefill?: string;
   onJobCardClick?: (card: ChatJobCard) => void;
   referralDisabled?: boolean;
   actionsDisabled?: boolean;
@@ -127,6 +129,7 @@ export function MessageBubble({
   onExamSelect,
   onEtFormSubmit,
   etFormActive = false,
+  etFormPrefill,
   onJobCardClick,
   referralDisabled,
   actionsDisabled,
@@ -334,6 +337,7 @@ export function MessageBubble({
               <EtFormBlock
                 form={etForm}
                 active={etFormActive}
+                prefill={etFormPrefill}
                 onSubmit={actionsDisabled ? undefined : onEtFormSubmit}
               />
             ) : null}

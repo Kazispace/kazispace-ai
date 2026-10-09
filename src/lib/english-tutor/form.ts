@@ -14,7 +14,7 @@ import type { UserMessageActionMeta } from '@/types/chat-envelope';
 
 export const ET_FORM_SUBMIT_ACTION_TYPE = 'et_form_submit';
 
-export type EtFormKind = 'exam_select' | 'writing_draft' | 'speaking_answer';
+export type EtFormKind = 'exam_select' | 'writing_draft' | 'writing_revision' | 'speaking_answer';
 
 export interface EtFormOption {
   id: string;
@@ -38,6 +38,8 @@ export interface EtForm {
 const SHAPE_BY_KIND: Record<EtFormKind, Pick<EtForm, 'presentation' | 'control'>> = {
   exam_select: { presentation: 'inline', control: 'radio' },
   writing_draft: { presentation: 'modal', control: 'textarea' },
+  // KAZI-1044: after grading, the backend offers a revision editor (same shape as the draft).
+  writing_revision: { presentation: 'modal', control: 'textarea' },
   speaking_answer: { presentation: 'inline', control: 'audio' },
 };
 
@@ -143,4 +145,49 @@ export function countWords(text: string): number {
 /** The freeze rule: a turn is interactive only if no message follows it. */
 export function isLatestTurn(messages: ReadonlyArray<unknown>, messageIndex: number): boolean {
   return messageIndex === messages.length - 1;
+}
+
+type PrefillMessage = {
+  role: string;
+  content: string;
+  assistantMeta?: Record<string, unknown> | null;
+};
+
+/**
+ * KAZI-1044: text to prefill the revision editor with — **the essay that was
+ * graded**, ⛔ not simply the latest user message.
+ *
+ * The backend offers the revision form on *every* ET turn while the essay sits
+ * graded (`writing_phase = review`, SSOT v1.76 §5.3.6.2), e.g. after a
+ * follow-up question "what does point 2 mean?". So walk back from this turn
+ * through assistant turns that carry the revision form, stop at the first one
+ * carrying `grade_id` (the graded turn — history rows keep it too, backend
+ * `PERSISTED_SURFACE_META_KEYS`), and take the user message just before it.
+ * No graded turn in that run ⇒ no prefill (⛔ no guessing: guessing the
+ * earliest turn picked the first draft after a revision + reload).
+ *
+ * Local only: the backend form never carries user data (SSOT §5.3.6).
+ * Only the latest turn gets a value (frozen forms can't be opened anyway).
+ */
+export function revisionPrefill(
+  messages: ReadonlyArray<PrefillMessage>,
+  messageIndex: number
+): string | undefined {
+  if (!isLatestTurn(messages, messageIndex)) return undefined;
+  let graded = -1;
+  for (let i = messageIndex; i >= 0; i -= 1) {
+    const message = messages[i];
+    if (message.role !== 'assistant') continue;
+    const meta = message.assistantMeta ?? undefined;
+    if (meta?.grade_id) {
+      graded = i;
+      break;
+    }
+    if (parseEtForm(meta)?.kind !== 'writing_revision') break;
+  }
+  if (graded < 0) return undefined;
+  for (let i = graded - 1; i >= 0; i -= 1) {
+    if (messages[i].role === 'user') return messages[i].content.trim() || undefined;
+  }
+  return undefined;
 }
