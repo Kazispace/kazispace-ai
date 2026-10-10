@@ -267,6 +267,7 @@ describe('writing_revision · follow-up box (KAZI-1044 follow-up · SSOT §5.3.6
     ['foreign id', { ...FOLLOWUP, form_id: 'et:writing_revision:q1' }],
     ['wrong control', { ...FOLLOWUP, control: 'textarea' }],
     ['not an object', 'x'],
+    ['no button label', { ...FOLLOWUP, submit_label: '  ' }],
   ])('drops an off-contract follow-up (%s) but keeps the revision editor', (_name, followup) => {
     const form = parseEtForm({ form: { ...REV, followup } });
     expect(form?.kind).toBe('writing_revision');

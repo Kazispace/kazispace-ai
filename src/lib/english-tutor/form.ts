@@ -130,7 +130,9 @@ export function parseEtForm(meta?: Record<string, unknown> | null): EtForm | nul
 function parseFollowup(value: unknown): EtFormFollowup | undefined {
   const raw = asRecord(value);
   const formId = readString(raw?.form_id);
-  if (!raw || !formId || !formId.startsWith(ET_FOLLOWUP_FORM_ID_PREFIX) || raw.control !== 'text') {
+  // No button label ⇒ off-contract (a blank button is worse than no box; review #227).
+  const submitLabel = readString(raw?.submit_label);
+  if (!raw || !formId || !formId.startsWith(ET_FOLLOWUP_FORM_ID_PREFIX) || raw.control !== 'text' || !submitLabel) {
     return undefined;
   }
   const maxChars = readPositive(asRecord(raw.constraints)?.max_chars);
@@ -138,7 +140,7 @@ function parseFollowup(value: unknown): EtFormFollowup | undefined {
     form_id: formId,
     title: readString(raw.title) ?? '',
     placeholder: readString(raw.placeholder) ?? '',
-    submit_label: readString(raw.submit_label) ?? '',
+    submit_label: submitLabel,
     ...(maxChars ? { max_chars: maxChars } : {}),
   };
 }
