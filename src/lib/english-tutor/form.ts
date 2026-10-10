@@ -21,6 +21,22 @@ export interface EtFormOption {
   label: string;
 }
 
+/**
+ * KAZI-1044 follow-up (ET SSOT §5.3.6.6): the follow-up box under the
+ * revision card — "questions about the feedback?". A second entry on the
+ * same form (still one form per turn); submitted through the form channel
+ * with its own `form_id` so the backend explains instead of regrading.
+ */
+export interface EtFormFollowup {
+  form_id: string;
+  title: string;
+  placeholder: string;
+  submit_label: string;
+  max_chars?: number;
+}
+
+export const ET_FOLLOWUP_FORM_ID_PREFIX = 'et:review_followup:';
+
 export interface EtForm {
   form_id: string;
   kind: EtFormKind;
@@ -32,6 +48,8 @@ export interface EtForm {
   submit_label: string;
   constraints?: { min_words?: number; max_chars?: number };
   allow_text?: boolean;
+  /** Only on `writing_revision` (see `EtFormFollowup`). */
+  followup?: EtFormFollowup;
 }
 
 /** kind → the only (presentation, control) pair the contract allows. */
@@ -101,7 +119,41 @@ export function parseEtForm(meta?: Record<string, unknown> | null): EtForm | nul
     };
   }
   if (shape.control === 'audio') form.allow_text = raw.allow_text === true;
+  if (kind === 'writing_revision') {
+    const followup = parseFollowup(raw.followup);
+    if (followup) form.followup = followup;
+  }
   return form;
+}
+
+/** Off-contract follow-up ⇒ dropped (the revision editor still renders). */
+function parseFollowup(value: unknown): EtFormFollowup | undefined {
+  const raw = asRecord(value);
+  const formId = readString(raw?.form_id);
+  // No button label ⇒ off-contract (a blank button is worse than no box; review #227).
+  const submitLabel = readString(raw?.submit_label);
+  if (!raw || !formId || !formId.startsWith(ET_FOLLOWUP_FORM_ID_PREFIX) || raw.control !== 'text' || !submitLabel) {
+    return undefined;
+  }
+  const maxChars = readPositive(asRecord(raw.constraints)?.max_chars);
+  return {
+    form_id: formId,
+    title: readString(raw.title) ?? '',
+    placeholder: readString(raw.placeholder) ?? '',
+    submit_label: submitLabel,
+    ...(maxChars ? { max_chars: maxChars } : {}),
+  };
+}
+
+/** A follow-up question ⇒ the same form channel, with the follow-up `form_id`. */
+export function buildEtFollowupSubmit(followup: EtFormFollowup, text: string): EtFormSubmit | null {
+  const question = text.trim();
+  if (!question) return null;
+  if (followup.max_chars && question.length > followup.max_chars) return null;
+  return {
+    display: question,
+    meta: { action_type: ET_FORM_SUBMIT_ACTION_TYPE, form_id: followup.form_id },
+  };
 }
 
 export interface EtFormSubmit {
