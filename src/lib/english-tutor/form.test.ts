@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildEtFollowupSubmit,
   buildEtFormSubmit,
   ET_FORM_SUBMIT_ACTION_TYPE,
   isLatestTurn,
@@ -229,5 +230,71 @@ describe('writing_revision (KAZI-1044)', () => {
       { role: 'assistant', content: 'Hi', assistantMeta: {} },
     ];
     expect(revisionPrefill(messages, 1)).toBeUndefined();
+  });
+});
+
+describe('writing_revision · follow-up box (KAZI-1044 follow-up · SSOT §5.3.6.6)', () => {
+  const FOLLOWUP = {
+    form_id: 'et:review_followup:q1',
+    control: 'text',
+    title: '对批改有疑问？',
+    placeholder: '例如：第二条什么意思？',
+    submit_label: '提问',
+    constraints: { max_chars: 300 },
+  };
+  const REV = {
+    form_id: 'et:writing_revision:q1',
+    kind: 'writing_revision',
+    presentation: 'modal',
+    control: 'textarea',
+    title: '修改作文',
+    submit_label: '重新提交',
+    constraints: { max_chars: 4000 },
+    followup: FOLLOWUP,
+  };
+
+  it('parses the follow-up entry on the revision form', () => {
+    expect(parseEtForm({ form: REV })?.followup).toEqual({
+      form_id: 'et:review_followup:q1',
+      title: '对批改有疑问？',
+      placeholder: '例如：第二条什么意思？',
+      submit_label: '提问',
+      max_chars: 300,
+    });
+  });
+
+  it.each([
+    ['foreign id', { ...FOLLOWUP, form_id: 'et:writing_revision:q1' }],
+    ['wrong control', { ...FOLLOWUP, control: 'textarea' }],
+    ['not an object', 'x'],
+  ])('drops an off-contract follow-up (%s) but keeps the revision editor', (_name, followup) => {
+    const form = parseEtForm({ form: { ...REV, followup } });
+    expect(form?.kind).toBe('writing_revision');
+    expect(form?.followup).toBeUndefined();
+  });
+
+  it('only the revision form may carry one', () => {
+    const draft = { ...REV, form_id: 'et:writing_draft:q1', kind: 'writing_draft' };
+    expect(parseEtForm({ form: draft })?.followup).toBeUndefined();
+  });
+
+  it('a question goes through the form channel with the follow-up form_id', () => {
+    const followup = parseEtForm({ form: REV })!.followup!;
+    expect(buildEtFollowupSubmit(followup, '  第二条什么意思  ')).toEqual({
+      display: '第二条什么意思',
+      meta: { action_type: ET_FORM_SUBMIT_ACTION_TYPE, form_id: 'et:review_followup:q1' },
+    });
+    expect(buildEtFollowupSubmit(followup, '   ')).toBeNull();
+    expect(buildEtFollowupSubmit(followup, 'x'.repeat(301))).toBeNull();
+  });
+
+  it('a follow-up answer turn (revision form, no grade_id) does not move the prefill off the graded essay', () => {
+    const messages = [
+      { role: 'user', content: 'My essay.' },
+      { role: 'assistant', content: 'graded', assistantMeta: { form: REV, grade_id: 'g1' } },
+      { role: 'user', content: '第二条什么意思' },
+      { role: 'assistant', content: '第 2 条说的是……', assistantMeta: { form: REV, event: 'writing_followup_answer' } },
+    ];
+    expect(revisionPrefill(messages, 3)).toBe('My essay.');
   });
 });

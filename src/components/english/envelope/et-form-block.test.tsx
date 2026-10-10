@@ -233,3 +233,55 @@ describe('EtFormBlock · modal (writing_revision · KAZI-1044)', () => {
     expect(buttonByText('reopen', container)?.disabled).toBe(true);
   });
 });
+
+const REVISION_WITH_FOLLOWUP = parseEtForm({
+  form: {
+    form_id: 'et:writing_revision:q1',
+    kind: 'writing_revision',
+    presentation: 'modal',
+    control: 'textarea',
+    title: 'Revise',
+    submit_label: 'Resubmit essay',
+    constraints: { max_chars: 4000 },
+    followup: {
+      form_id: 'et:review_followup:q1',
+      control: 'text',
+      title: 'Questions about the feedback?',
+      placeholder: 'e.g. What does point 2 mean?',
+      submit_label: 'Ask',
+      constraints: { max_chars: 300 },
+    },
+  },
+}) as EtForm;
+
+describe('EtFormBlock · follow-up box (KAZI-1044 follow-up)', () => {
+  it('asks through the form channel with the follow-up form_id', async () => {
+    const onSubmit = vi.fn();
+    render(<EtFormBlock form={REVISION_WITH_FOLLOWUP} active onSubmit={onSubmit} />);
+    const box = container.querySelector('[data-et-followup="et:review_followup:q1"]') as HTMLFormElement;
+    expect(box).not.toBeNull();
+    const input = box.querySelector('input') as HTMLInputElement;
+    expect(input.placeholder).toBe('e.g. What does point 2 mean?');
+    typeInto(input, 'What does point 2 mean?');
+    await act(async () => {
+      buttonByText('Ask', box)?.click();
+    });
+    expect(onSubmit).toHaveBeenCalledWith({
+      display: 'What does point 2 mean?',
+      meta: { action_type: 'et_form_submit', form_id: 'et:review_followup:q1' },
+    });
+    expect(input.value).toBe('');
+  });
+
+  it('frozen: cannot ask', () => {
+    render(<EtFormBlock form={REVISION_WITH_FOLLOWUP} active={false} onSubmit={vi.fn()} />);
+    const box = container.querySelector('[data-et-followup]') as HTMLFormElement;
+    expect((box.querySelector('input') as HTMLInputElement).disabled).toBe(true);
+    expect(buttonByText('Ask', box)?.disabled).toBe(true);
+  });
+
+  it('no follow-up entry ⇒ no box', () => {
+    render(<EtFormBlock form={REVISION} active onSubmit={vi.fn()} />);
+    expect(container.querySelector('[data-et-followup]')).toBeNull();
+  });
+});

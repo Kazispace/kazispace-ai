@@ -11,9 +11,11 @@ import { useDialogFocusTrap } from '@/hooks/use-dialog-focus-trap';
 import { useVoiceToChat } from '@/hooks/use-voice-to-chat';
 import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
 import {
+  buildEtFollowupSubmit,
   buildEtFormSubmit,
   countWords,
   type EtForm,
+  type EtFormFollowup,
   type EtFormSubmit,
 } from '@/lib/english-tutor/form';
 import { cn } from '@/lib/utils';
@@ -40,11 +42,9 @@ export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProp
   const inFlightRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const submit = useCallback(
-    async (answer: { optionId: string } | { text: string }) => {
-      if (!interactive || inFlightRef.current) return false;
-      const built = buildEtFormSubmit(form, answer);
-      if (!built) return false;
+  const send = useCallback(
+    async (built: EtFormSubmit | null) => {
+      if (!interactive || inFlightRef.current || !built) return false;
       inFlightRef.current = true;
       setSubmitting(true);
       try {
@@ -55,7 +55,11 @@ export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProp
         setSubmitting(false);
       }
     },
-    [form, interactive, onSubmit]
+    [interactive, onSubmit]
+  );
+  const submit = useCallback(
+    (answer: { optionId: string } | { text: string }) => send(buildEtFormSubmit(form, answer)),
+    [form, send]
   );
 
   const disabled = !interactive || submitting;
@@ -84,12 +88,64 @@ export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProp
           onSubmit={submit}
         />
       )}
+      {form.followup ? (
+        <FollowupForm
+          followup={form.followup}
+          disabled={disabled}
+          onSubmit={(text) => send(buildEtFollowupSubmit(form.followup as EtFormFollowup, text))}
+        />
+      ) : null}
       {!active ? <p className="text-[11px] text-workspace-muted">{t('frozen')}</p> : null}
     </div>
   );
 }
 
 type SubmitFn = (answer: { optionId: string } | { text: string }) => Promise<boolean>;
+
+/**
+ * KAZI-1044 follow-up (ET SSOT §5.3.6.6): "questions about the feedback?" under
+ * the revision card. Asking here keeps the turn in English Tutor (form channel)
+ * and gets an explanation — the essay is not regraded.
+ */
+function FollowupForm({
+  followup,
+  disabled,
+  onSubmit,
+}: {
+  followup: EtFormFollowup;
+  disabled: boolean;
+  onSubmit: (text: string) => Promise<boolean>;
+}) {
+  const [text, setText] = useState('');
+  const tooLong = Boolean(followup.max_chars && text.trim().length > followup.max_chars);
+  return (
+    <form
+      className="space-y-1.5 border-t border-gray-100 pt-2"
+      data-et-followup={followup.form_id}
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (await onSubmit(text)) setText('');
+      }}
+    >
+      {followup.title ? <p className="text-xs text-workspace-muted">{followup.title}</p> : null}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          disabled={disabled}
+          maxLength={followup.max_chars}
+          placeholder={followup.placeholder}
+          aria-label={followup.title || followup.placeholder}
+          className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm"
+        />
+        <Button type="submit" size="sm" variant="secondary" disabled={disabled || !text.trim() || tooLong}>
+          {followup.submit_label}
+        </Button>
+      </div>
+    </form>
+  );
+}
 
 function RadioForm({ form, disabled, onSubmit }: { form: EtForm; disabled: boolean; onSubmit: SubmitFn }) {
   const [selected, setSelected] = useState<string | null>(null);
