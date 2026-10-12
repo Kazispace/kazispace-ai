@@ -50,7 +50,7 @@
       "type": "speaking_radar",
       "dimensions": [
         {
-          "id": "fluency",
+          "id": "fluency_coherence",
           "label": "Fluency",
           "score": 4.0,
           "max": 6.0

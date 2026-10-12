@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
+import { dimensionLabel } from '@/lib/english-tutor/dimension-label';
 import { cn } from '@/lib/utils';
 import type {
   EnglishTutorEnvelopeComponent,
@@ -231,9 +232,8 @@ function DimensionBars({
         {dimensions.map((dim) => {
           const max = dim.max && dim.max > 0 ? dim.max : 9;
           const pct = Math.max(0, Math.min(100, (dim.score / max) * 100));
-          // KAZI-1064 (ET Capability §5.5.6): localise by dimension id; BE `label`
-          // is the English fallback, then the raw key.
-          const label = t(`dimensions.${dim.key}`, { defaultValue: dim.label ?? dim.key });
+          // KAZI-1064: localise by id, fall back to BE `label` (see dimensionLabel).
+          const label = dimensionLabel(t, dim);
           return (
             <div key={dim.key}>
               <div className="mb-1 flex items-center justify-between gap-2 text-xs">
