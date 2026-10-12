@@ -1026,7 +1026,13 @@
 				"lexical": "词汇",
 				"grammar": "语法",
 				"fluency": "流利度",
-				"pronunciation": "发音"
+				"pronunciation": "发音",
+				"task_achievement": "任务回应",
+				"coherence_cohesion": "连贯性",
+				"lexical_resource": "词汇",
+				"vocabulary": "词汇",
+				"grammatical_range": "语法",
+				"fluency_coherence": "流利度"
 			}
 		},
 		"form": {

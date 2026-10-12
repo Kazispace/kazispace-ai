@@ -997,7 +997,13 @@
 				"lexical": "Лексика",
 				"grammar": "Грамматика",
 				"fluency": "Беглость",
-				"pronunciation": "Произношение"
+				"pronunciation": "Произношение",
+				"task_achievement": "Выполнение задания",
+				"coherence_cohesion": "Связность",
+				"lexical_resource": "Лексика",
+				"vocabulary": "Лексика",
+				"grammatical_range": "Грамматика",
+				"fluency_coherence": "Беглость"
 			}
 		}
 	},
