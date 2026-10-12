@@ -979,7 +979,13 @@
 				"lexical": "Лексика",
 				"grammar": "Грамматика",
 				"fluency": "Ағындылық",
-				"pronunciation": "Дыбыстау"
+				"pronunciation": "Дыбыстау",
+				"task_achievement": "Тапсырма",
+				"coherence_cohesion": "Байланыс",
+				"lexical_resource": "Лексика",
+				"vocabulary": "Лексика",
+				"grammatical_range": "Грамматика",
+				"fluency_coherence": "Ағындылық"
 			}
 		}
 	},

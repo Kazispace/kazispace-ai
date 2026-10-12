@@ -231,7 +231,9 @@ function DimensionBars({
         {dimensions.map((dim) => {
           const max = dim.max && dim.max > 0 ? dim.max : 9;
           const pct = Math.max(0, Math.min(100, (dim.score / max) * 100));
-          const label = dim.label ?? t(`dimensions.${dim.key}`, { defaultValue: dim.key });
+          // KAZI-1064 (ET Capability §5.5.6): localise by dimension id; BE `label`
+          // is the English fallback, then the raw key.
+          const label = t(`dimensions.${dim.key}`, { defaultValue: dim.label ?? dim.key });
           return (
             <div key={dim.key}>
               <div className="mb-1 flex items-center justify-between gap-2 text-xs">

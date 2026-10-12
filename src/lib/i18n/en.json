@@ -1331,7 +1331,13 @@
 				"lexical": "Vocabulary",
 				"grammar": "Grammar",
 				"fluency": "Fluency",
-				"pronunciation": "Pronunciation"
+				"pronunciation": "Pronunciation",
+				"task_achievement": "Task response",
+				"coherence_cohesion": "Coherence",
+				"lexical_resource": "Vocabulary",
+				"vocabulary": "Vocabulary",
+				"grammatical_range": "Grammar",
+				"fluency_coherence": "Fluency"
 			}
 		},
 		"form": {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import sample from './__fixtures__/kazi1064_review_components_sample.json';
+
 import {
   isEnglishTutorReviseAction,
   isLowConfidenceMeta,
@@ -129,5 +131,43 @@ describe('isEnglishTutorReviseAction', () => {
     expect(isEnglishTutorReviseAction('submit_essay_revision')).toBe(true);
     expect(isEnglishTutorReviseAction('revise_essay')).toBe(true);
     expect(isEnglishTutorReviseAction('open_interview')).toBe(false);
+  });
+});
+
+/**
+ * KAZI-1064: the fixture is the backend's real output
+ * (`kazispace-backend` `backend/tests/fixtures/kazi1064_review_components_sample.json`,
+ * produced by `agents/english_tutor/review_components.py` and pinned there by
+ * `test_kazi1064_review_components.TestTheSharedSample`). Hand-written object
+ * fixtures are how the string-vs-object mismatch stayed green — keep both copies identical.
+ */
+describe('KAZI-1064 backend sample', () => {
+  const backendComponents = (sample as { custom_components: unknown[] }).custom_components;
+
+  it('parses every backend component', () => {
+    const parsed = parseEnglishTutorCustomComponents(backendComponents);
+    expect(parsed.map((c) => c.type)).toEqual([
+      'writing_scorecard',
+      'essay_diff',
+      'speaking_radar',
+      'model_answer',
+    ]);
+  });
+
+  it('keeps the 0–6 scores and the essay offsets', () => {
+    const [card, diff] = parseEnglishTutorCustomComponents(backendComponents);
+    expect(card.type === 'writing_scorecard' && card.overall).toBe(4.33);
+    if (card.type !== 'writing_scorecard') throw new Error('scorecard first');
+    expect(card.dimensions.every((d) => d.max === 6 && d.score >= 0 && d.score <= 6)).toBe(true);
+    if (diff.type !== 'essay_diff') throw new Error('essay_diff second');
+    expect(diff.issues).toHaveLength(1);
+    const [issue] = diff.issues;
+    expect(diff.original.slice(issue.start, issue.end)).toBe('attendance should be optional');
+  });
+
+  it('drops the pre-KAZI-1064 string shape', () => {
+    expect(
+      parseEnglishTutorCustomComponents(['writing_scorecard', 'essay_diff', 'progress_summary'])
+    ).toEqual([]);
   });
 });

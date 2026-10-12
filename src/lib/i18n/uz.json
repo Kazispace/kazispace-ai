@@ -948,7 +948,13 @@
 				"lexical": "Lug'at",
 				"grammar": "Grammatika",
 				"fluency": "Oqimlilik",
-				"pronunciation": "Talaffuz"
+				"pronunciation": "Talaffuz",
+				"task_achievement": "Vazifa",
+				"coherence_cohesion": "Izchillik",
+				"lexical_resource": "Lug'at",
+				"vocabulary": "Lug'at",
+				"grammatical_range": "Grammatika",
+				"fluency_coherence": "Oqimlilik"
 			}
 		}
 	},

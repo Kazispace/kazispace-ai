@@ -1,0 +1,71 @@
+{
+  "_comment": "KAZI-1064 · BE 真实产出（agents/english_tutor/review_components.py）。FE 单测 kazispace-ai src/lib/english-tutor/custom-components.test.ts 用同一份；改一边就同批改另一边（BE 判据 test_kazi1064_review_components.TestTheSharedSample）。",
+  "custom_components": [
+    {
+      "type": "writing_scorecard",
+      "overall": 4.33,
+      "dimensions": [
+        {
+          "id": "task_response",
+          "label": "Task response",
+          "score": 4.0,
+          "max": 6.0
+        },
+        {
+          "id": "coherence_cohesion",
+          "label": "Coherence",
+          "score": 4.67,
+          "max": 6.0
+        },
+        {
+          "id": "lexical_resource",
+          "label": "Vocabulary",
+          "score": 4.33,
+          "max": 6.0
+        },
+        {
+          "id": "grammatical_range",
+          "label": "Grammar",
+          "score": 4.0,
+          "max": 6.0
+        }
+      ],
+      "confidence": "high",
+      "show_revise_cta": false
+    },
+    {
+      "type": "essay_diff",
+      "original": "Some people believe that university students should be required to attend classes, while others think attendance should be optional. In my opinion, attendance should be encouraged but not required, because adult learners need to manage their own time and different students learn in different ways. Lectures are useful, yet many courses now provide recordings and online materials that allow flexible study.",
+      "rewrite": "Attendance should be encouraged rather than mandated.",
+      "issues": [
+        {
+          "start": 102,
+          "end": 131,
+          "category": "用词",
+          "message": "Use 'voluntary'."
+        }
+      ]
+    },
+    {
+      "type": "speaking_radar",
+      "dimensions": [
+        {
+          "id": "fluency",
+          "label": "Fluency",
+          "score": 4.0,
+          "max": 6.0
+        },
+        {
+          "id": "pronunciation",
+          "label": "Pronunciation",
+          "score": 3.67,
+          "max": 6.0
+        }
+      ]
+    },
+    {
+      "type": "model_answer",
+      "text": "I usually ..."
+    }
+  ]
+}
