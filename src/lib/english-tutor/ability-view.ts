@@ -63,9 +63,16 @@ export function latestPoint(
   return null;
 }
 
-/** The window line needs two attempts; with one, `from === to` says nothing (AC-P2). */
+/**
+ * The window line starts at the same count the backend starts moving the trend
+ * (`ability.TREND_MIN_N_TO_MOVE`, Capability §5.5.4 v1.0.20). With exactly two attempts the
+ * trend is `stable` by rule, so "Stable · 2.67 → 4.00 (+1.33)" would contradict itself —
+ * Owen 2026-10-13 (#230 review): show the window from three attempts.
+ */
+export const WINDOW_MIN_N = 3;
+
 export function showsWindow(modality: EnglishAbilityModality | null | undefined): boolean {
-  return (modality?.window?.n ?? 0) >= 2;
+  return (modality?.window?.n ?? 0) >= WINDOW_MIN_N;
 }
 
 /**
