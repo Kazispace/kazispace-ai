@@ -97,10 +97,20 @@ describe('latest score comes from points, not window.to (13697 ③)', () => {
   });
 });
 
-describe('the window line needs two attempts (AC-P2)', () => {
+describe('the window line starts at three attempts (#230 review · Owen 2026-10-13)', () => {
+  const two = fixture.two as unknown as EnglishAbility;
+
   it('shows for five, hides for one', () => {
     expect(showsWindow(populated.modalities.writing)).toBe(true);
     expect(showsWindow(populated.modalities.speaking)).toBe(false);
+  });
+
+  it('hides for two — the backend calls two attempts `stable` by rule', () => {
+    const writing = two.modalities.writing!;
+    expect(writing.window.n).toBe(2);
+    expect(writing.trend).toBe('stable');
+    expect(writing.window.delta).toBeGreaterThan(1); // the contradiction this hides
+    expect(showsWindow(writing)).toBe(false);
   });
 });
 

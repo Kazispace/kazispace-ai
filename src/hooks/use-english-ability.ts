@@ -16,13 +16,18 @@ export type EnglishAbilityState =
 
 class AbilityUnavailable extends Error {}
 
+/**
+ * Gate off (`503` + `ET_ABILITY_NOT_ENABLED`) or a host without the route (`404`) ⇒ not a
+ * fault. A bare 503 (gateway / load balancer) is a transient error: it keeps the retry.
+ */
+export function isAbilityUnavailable(res: { errorCode?: string; status?: number }): boolean {
+  return res.errorCode === ABILITY_NOT_ENABLED_CODE || res.status === 404;
+}
+
 async function fetchAbility(): Promise<EnglishAbility> {
   const res = await getEnglishAbility();
   if (res.success && res.data) return res.data;
-  // 503 = gate off; 404 = a host without the route. Neither is a fault to show the user.
-  if (res.errorCode === ABILITY_NOT_ENABLED_CODE || res.status === 503 || res.status === 404) {
-    throw new AbilityUnavailable(res.error ?? 'unavailable');
-  }
+  if (isAbilityUnavailable(res)) throw new AbilityUnavailable(res.error ?? 'unavailable');
   throw new Error(res.error ?? 'Failed to load ability');
 }
 

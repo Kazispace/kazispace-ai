@@ -134,6 +134,39 @@
     "resolved_tags": [],
     "updated_at": "2026-10-05T10:00:00Z"
   },
+  "two": {
+    "scale": "0-6",
+    "scale_version": "ability_scale_v1",
+    "overall": 3.33,
+    "modalities": {
+      "writing": {
+        "current": 3.33,
+        "trend": "stable",
+        "window": {
+          "n": 2,
+          "from": 2.67,
+          "to": 4.0,
+          "delta": 1.33
+        },
+        "dimensions": [],
+        "points": [
+          {
+            "at": "2026-10-01T10:00:00Z",
+            "score": 2.67,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-02T10:00:00Z",
+            "score": 4.0,
+            "exam_type": "ielts"
+          }
+        ]
+      },
+      "speaking": null
+    },
+    "resolved_tags": [],
+    "updated_at": "2026-10-02T10:00:00Z"
+  },
   "empty": {
     "scale": "0-6",
     "scale_version": "ability_scale_v1",

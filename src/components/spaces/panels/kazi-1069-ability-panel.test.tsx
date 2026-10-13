@@ -64,7 +64,7 @@ function render(state: EnglishAbilityState) {
   return container.textContent ?? '';
 }
 
-const ready = (key: 'populated' | 'declining' | 'empty'): EnglishAbilityState => ({
+const ready = (key: 'populated' | 'declining' | 'two' | 'empty'): EnglishAbilityState => ({
   kind: 'ready',
   ability: fixture[key] as unknown as EnglishAbility,
 });
@@ -88,6 +88,14 @@ describe('KAZI-1069 ability panel (real zh messages, real BE shape)', () => {
     expect(text).toContain('下降');
     expect(text).toContain('（−0.83）');
     expect(text).not.toContain('+-');
+  });
+
+  it('two attempts: trend word only, no window line (#230 review · Owen 2026-10-13)', () => {
+    const text = render(ready('two'));
+    expect(text).toContain('稳定');
+    expect(text).not.toContain('前期均值');
+    expect(text).not.toContain('+1.33');
+    expect(text).toContain('最近一次4.00');
   });
 
   it('cold start shows the empty copy and no placement-test entry (AC-P3)', () => {
