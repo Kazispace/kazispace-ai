@@ -332,6 +332,7 @@
 		"panelCv": "简历",
 		"panelInterview": "模拟面试",
 		"panelEnglish": "英语练习",
+		"panelAbility": "能力",
 		"workspacePanels": "工作区面板",
 		"cvPanelHint": "在对话中提及简历优化，或打开完整简历工作区。",
 		"interviewPanelHint": "查看本空间关联职位的面试准备度。",
@@ -997,6 +998,23 @@
 			"sampleJobs": "示例匹配岗位",
 			"growth": "成长记录"
 		},
+		"ability": {
+			"title": "能力",
+			"hint": "0–6 分 · 每次判分后更新",
+			"overall": "总分",
+			"outOf": "/ 6",
+			"modality": {
+				"writing": "写作",
+				"speaking": "口语"
+			},
+			"modalityEmpty": "还没有判过分。",
+			"latest": "最近一次",
+			"trendLine": "{name}分数走势",
+			"empty": "还没有分数。完成一次写作或口语练习后，这里会显示你的能力分。",
+			"unavailable": "能力分暂未开放。",
+			"error": "能力分加载失败。",
+			"retry": "重试"
+		},
 		"envelope": {
 			"lowConfidenceBanner": "本次评分仅供参考",
 			"aiSyntheticDisclaimer": "本题为 AI 生成练习材料",
@@ -1013,7 +1031,7 @@
 			"progressTrend": "趋势",
 			"progressCurrentEstimate": "当前估分",
 			"progressWindow": "近 {count} 次",
-			"progressWindowRange": "{from} → {to}（+{delta}）",
+			"progressWindowRange": "前期均值 {from} → 近期均值 {to}（{delta}）",
 			"progressWindowDelta": "变化 {delta}",
 			"progressTrendValues": {
 				"improving": "上升",

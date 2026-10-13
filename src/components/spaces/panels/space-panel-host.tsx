@@ -26,6 +26,14 @@ const JobSprintInterviewPanel = dynamic(
     ),
   { ssr: false }
 );
+/** KAZI-1069 — mounted only while the panel is open, so opening it is the fetch. */
+const IeltsPrepAbilityPanel = dynamic(
+  () =>
+    import('@/components/spaces/panels/ielts-prep-ability-panel').then(
+      (m) => m.IeltsPrepAbilityPanel
+    ),
+  { ssr: false }
+);
 const IeltsPrepEppPanel = dynamic(
   () =>
     import('@/components/spaces/panels/ielts-prep-epp-panel').then(
@@ -45,9 +53,10 @@ interface SpacePanelHostProps {
 function renderSpacePanel({
   panel,
   locale,
+  spaceId,
   jobId,
   className,
-}: Omit<SpacePanelHostProps, 'spaceId'>) {
+}: SpacePanelHostProps) {
   switch (panel.surface) {
     case 'cv_workspace':
       return (
@@ -59,6 +68,8 @@ function renderSpacePanel({
       );
     case 'english_epp':
       return <IeltsPrepEppPanel locale={locale} className={className} />;
+    case 'english_ability':
+      return <IeltsPrepAbilityPanel spaceId={spaceId} className={className} />;
     default:
       return (
         <SpacePanelUnavailable panelId={panel.panel_id} className={className} />
@@ -75,7 +86,7 @@ export function SpacePanelHost({
   className,
 }: SpacePanelHostProps) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const panelBody = renderSpacePanel({ panel, locale, jobId, className });
+  const panelBody = renderSpacePanel({ panel, locale, spaceId, jobId, className });
 
   if (
     panel.surface !== 'cv_workspace' &&

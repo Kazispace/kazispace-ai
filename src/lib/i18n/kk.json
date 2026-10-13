@@ -966,7 +966,7 @@
 			"progressTrend": "Үрдіс",
 			"progressCurrentEstimate": "Ағымдағы баға",
 			"progressWindow": "Соңғы {count} сессия",
-			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowRange": "Бұрынғы орташа {from} → соңғы орташа {to} ({delta})",
 			"progressWindowDelta": "Δ {delta}",
 			"progressTrendValues": {
 				"improving": "Жақсару",

@@ -984,7 +984,7 @@
 			"progressTrend": "Тренд",
 			"progressCurrentEstimate": "Текущая оценка",
 			"progressWindow": "Последние {count} сессии",
-			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowRange": "Ранее в среднем {from} → недавно в среднем {to} ({delta})",
 			"progressWindowDelta": "Δ {delta}",
 			"progressTrendValues": {
 				"improving": "Рост",

@@ -1,0 +1,148 @@
+{
+  "_provenance": "agents.english_tutor.ability.compute_ability @ backend main a826b639 (KAZI-1067); regenerate, do not hand-edit",
+  "populated": {
+    "scale": "0-6",
+    "scale_version": "ability_scale_v1",
+    "overall": 3.94,
+    "modalities": {
+      "writing": {
+        "current": 3.89,
+        "trend": "improving",
+        "window": {
+          "n": 5,
+          "from": 3.33,
+          "to": 3.89,
+          "delta": 0.56
+        },
+        "dimensions": [
+          {
+            "id": "task_response",
+            "label": "Task response",
+            "score": 3.89
+          },
+          {
+            "id": "coherence_cohesion",
+            "label": "Coherence",
+            "score": 3.89
+          },
+          {
+            "id": "lexical_resource",
+            "label": "Vocabulary",
+            "score": 3.67
+          },
+          {
+            "id": "grammatical_range",
+            "label": "Grammar",
+            "score": 3.78
+          }
+        ],
+        "points": [
+          {
+            "at": "2026-10-01T10:00:00Z",
+            "score": 3.33,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-02T10:00:00Z",
+            "score": 3.33,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-03T10:00:00Z",
+            "score": 4.0,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-04T10:00:00Z",
+            "score": 3.33,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-05T10:00:00Z",
+            "score": 4.33,
+            "exam_type": "ielts"
+          }
+        ]
+      },
+      "speaking": {
+        "current": 4.0,
+        "trend": null,
+        "window": {
+          "n": 1,
+          "from": 4.0,
+          "to": 4.0,
+          "delta": 0.0
+        },
+        "dimensions": [],
+        "points": [
+          {
+            "at": "2026-10-06T10:00:00Z",
+            "score": 4.0,
+            "exam_type": "ielts"
+          }
+        ]
+      }
+    },
+    "resolved_tags": [],
+    "updated_at": "2026-10-06T10:00:00Z"
+  },
+  "declining": {
+    "scale": "0-6",
+    "scale_version": "ability_scale_v1",
+    "overall": 3.67,
+    "modalities": {
+      "writing": {
+        "current": 3.67,
+        "trend": "declining",
+        "window": {
+          "n": 5,
+          "from": 4.5,
+          "to": 3.67,
+          "delta": -0.83
+        },
+        "dimensions": [],
+        "points": [
+          {
+            "at": "2026-10-01T10:00:00Z",
+            "score": 4.67,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-02T10:00:00Z",
+            "score": 4.33,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-03T10:00:00Z",
+            "score": 4.0,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-04T10:00:00Z",
+            "score": 3.67,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-05T10:00:00Z",
+            "score": 3.33,
+            "exam_type": "ielts"
+          }
+        ]
+      },
+      "speaking": null
+    },
+    "resolved_tags": [],
+    "updated_at": "2026-10-05T10:00:00Z"
+  },
+  "empty": {
+    "scale": "0-6",
+    "scale_version": "ability_scale_v1",
+    "overall": null,
+    "modalities": {
+      "writing": null,
+      "speaking": null
+    },
+    "resolved_tags": [],
+    "updated_at": null
+  }
+}

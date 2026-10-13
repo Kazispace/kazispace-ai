@@ -19,6 +19,12 @@ const PANEL_AGENT_CONFIG: Record<SpacePanelSurface, SpacePanelAgentConfig> = {
     fromSurface: 'english',
     hubAgentId: ENGLISH_TUTOR_AGENT_ID,
   },
+  // KAZI-1069 — read-only; the host renders it without the transition provider, but the
+  // record stays total so a future caller gets the ET hub rather than `undefined`.
+  english_ability: {
+    fromSurface: 'english',
+    hubAgentId: ENGLISH_TUTOR_AGENT_ID,
+  },
 };
 
 export function resolveSpacePanelAgentConfig(
