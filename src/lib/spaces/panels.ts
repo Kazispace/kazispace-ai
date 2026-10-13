@@ -5,19 +5,8 @@ const JOB_SPRINT_DEFAULT_PANELS: SpacePanelConfig[] = [
   { panel_id: 'interview', surface: 'interview_irp', default_visible: false },
 ];
 
-/**
- * KAZI-1069 — ET ability panel: a tab beside EPP, collapsed by default (Capability §5.5.5:
- * passive, the user opens it). Not in `default_visible` so it never opens on its own.
- */
-const IELTS_PREP_ABILITY_PANEL: SpacePanelConfig = {
-  panel_id: 'ability',
-  surface: 'english_ability',
-  default_visible: false,
-};
-
 const IELTS_PREP_DEFAULT_PANELS: SpacePanelConfig[] = [
   { panel_id: 'epp', surface: 'english_epp', default_visible: true },
-  IELTS_PREP_ABILITY_PANEL,
 ];
 
 const SURFACE_ALIASES: Record<string, SpacePanelSurface> = {
@@ -27,23 +16,7 @@ const SURFACE_ALIASES: Record<string, SpacePanelSurface> = {
   interview: 'interview_irp',
   english_epp: 'english_epp',
   epp: 'english_epp',
-  english_ability: 'english_ability',
-  ability: 'english_ability',
 };
-
-/**
- * Spaces snapshot `rendering.panels` at creation (backend `templates_seed.py`), so every
- * IELTS Space created before KAZI-1069 lists only EPP. The ability panel is FE-owned and
- * read-only, so it is appended for `ielts_prep` when the snapshot lacks it.
- */
-function withIeltsAbilityPanel(
-  templateId: string | null | undefined,
-  panels: SpacePanelConfig[]
-): SpacePanelConfig[] {
-  if (templateId !== 'ielts_prep') return panels;
-  if (panels.some((panel) => panel.surface === 'english_ability')) return panels;
-  return [...panels, IELTS_PREP_ABILITY_PANEL];
-}
 
 function normalizePanel(raw: Record<string, unknown>): SpacePanelConfig | null {
   const panel_id = typeof raw.panel_id === 'string' ? raw.panel_id : null;
@@ -75,7 +48,7 @@ export function resolveSpacePanels(
     .filter((panel): panel is SpacePanelConfig => panel != null);
 
   if (fromConfig?.length) {
-    return withIeltsAbilityPanel(space.template_id, fromConfig);
+    return fromConfig;
   }
 
   if (space.template_id === 'job_sprint') {

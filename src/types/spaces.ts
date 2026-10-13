@@ -69,12 +69,7 @@ export interface SpaceTurnResponse {
 }
 
 /** ADR-006 rendering.panels[] — maps to template-internal surfaces. */
-export type SpacePanelSurface =
-  | 'cv_workspace'
-  | 'interview_irp'
-  | 'english_epp'
-  /** KAZI-1069 — ET 0–6 ability panel (Capability §5.5.5). */
-  | 'english_ability';
+export type SpacePanelSurface = 'cv_workspace' | 'interview_irp' | 'english_epp';
 
 export interface SpacePanelConfig {
   panel_id: string;

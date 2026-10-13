@@ -42,8 +42,6 @@ describe('resolveSpacePanels', () => {
     const panels = resolveSpacePanels(space('ielts_prep'));
     expect(panels).toEqual([
       { panel_id: 'epp', surface: 'english_epp', default_visible: true },
-      // KAZI-1069 — ET ability tab, collapsed by default (see kazi-1069-ability-panel.test.ts).
-      { panel_id: 'ability', surface: 'english_ability', default_visible: false },
     ]);
     expect(resolveDefaultPanelId(panels)).toBe('epp');
   });

@@ -144,11 +144,11 @@ describe('refresh trigger', () => {
         { id: 'u1', role: 'user' },
         graded('a2', 'writing_prompt'),
       ])
-    ).toBe('a1');
+    ).toBe('msg:a1');
     expect(
       latestGradingMessageId([graded('a1', 'writing_review'), graded('a3', 'speaking_feedback')])
-    ).toBe('a3');
-    expect(latestGradingMessageId([graded('a4', 'writing_revise_review')])).toBe('a4');
+    ).toBe('msg:a3');
+    expect(latestGradingMessageId([graded('a4', 'writing_revise_review')])).toBe('msg:a4');
     expect(latestGradingMessageId([{ id: 'u', role: 'user' }])).toBeNull();
   });
 });
@@ -163,5 +163,45 @@ describe('sparkline', () => {
       { x: 0, y: 40, score: 0 },
       { x: 100, y: 0, score: 6 },
     ]);
+  });
+});
+
+// KAZI-1069 write-back 13720 (FAIL「展开时判分刷新」): after a send the live reply is
+// replaced by its history row, whose meta keeps only `form` / `grade_id`
+// (backend `chat_persistence.PERSISTED_SURFACE_META_KEYS`) — `event` is gone.
+describe('refresh key survives the history swap (13720)', () => {
+  const before = [
+    { id: '101', role: 'assistant', assistantMeta: { grade_id: 'g1', form: { kind: 'writing_revision' } } },
+  ];
+  const live = [
+    ...before,
+    { id: 'u2', role: 'user' },
+    {
+      id: 'assistant_1760364819000',
+      role: 'assistant',
+      assistantMeta: { event: 'writing_review', grade_id: 'g2', form: { kind: 'writing_revision' } },
+    },
+  ];
+  const afterHistory = [
+    ...before,
+    { id: 'u2', role: 'user' },
+    { id: '103', role: 'assistant', assistantMeta: { grade_id: 'g2', form: { kind: 'writing_revision' } } },
+  ];
+
+  it('changes on the new grade and stays changed once history replaces the live row', () => {
+    const k0 = latestGradingMessageId(before);
+    const k1 = latestGradingMessageId(live);
+    const k2 = latestGradingMessageId(afterHistory);
+    expect(k1).not.toBe(k0);
+    expect(k2).toBe(k1);
+  });
+
+  it('a later non-graded turn that repeats the same grade_id does not refetch', () => {
+    const followUp = [
+      ...afterHistory,
+      { id: 'u3', role: 'user' },
+      { id: '105', role: 'assistant', assistantMeta: { event: 'review_followup', grade_id: 'g2' } },
+    ];
+    expect(latestGradingMessageId(followUp)).toBe(latestGradingMessageId(afterHistory));
   });
 });

@@ -332,7 +332,6 @@
 		"panelCv": "CV",
 		"panelInterview": "Mock interview",
 		"panelEnglish": "English practice",
-		"panelAbility": "Ability",
 		"workspacePanels": "Workspace panels",
 		"cvPanelHint": "Mention CV polish in chat, or open the full CV workspace.",
 		"interviewPanelHint": "Interview readiness for the job linked to this space.",
@@ -1316,7 +1315,6 @@
 			"latest": "Latest attempt",
 			"trendLine": "{name} score trend",
 			"empty": "No scores yet. Finish one writing or speaking task and your ability will show here.",
-			"unavailable": "Ability scores are not available yet.",
 			"error": "Couldn't load your ability scores.",
 			"retry": "Retry"
 		},

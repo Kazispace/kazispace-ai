@@ -76,8 +76,16 @@ export function showsWindow(modality: EnglishAbilityModality | null | undefined)
 }
 
 /**
- * Id of the newest assistant message whose `meta.event` is a grading event, or `null`.
- * The panel keys its query on this, so a new graded turn refetches while open.
+ * Refresh key: changes when a new grade lands, and **only** then.
+ *
+ * Keyed on the newest `meta.grade_id` (the grade receipt), not on the message id or
+ * `meta.event`: after a send the live reply is replaced by its history row, and history
+ * keeps only `form` / `grade_id` of the meta (backend
+ * `chat_persistence.PERSISTED_SURFACE_META_KEYS`). Keying on `event` made the key fall back
+ * to the previous grade at that swap, so the panel served its pre-grade cache
+ * (KAZI-1069 write-back 13720). The receipt value is the same on both rows.
+ *
+ * A grading turn without a receipt falls back to its message id via `meta.event`.
  */
 export function latestGradingMessageId(
   messages: ReadonlyArray<{
@@ -89,8 +97,12 @@ export function latestGradingMessageId(
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const m = messages[i];
     if (m.role !== 'assistant') continue;
+    const receipt = m.assistantMeta?.grade_id;
+    if ((typeof receipt === 'string' && receipt) || typeof receipt === 'number') {
+      return `grade:${receipt}`;
+    }
     const event = m.assistantMeta?.event;
-    if (typeof event === 'string' && ABILITY_GRADING_EVENTS.has(event)) return m.id;
+    if (typeof event === 'string' && ABILITY_GRADING_EVENTS.has(event)) return `msg:${m.id}`;
   }
   return null;
 }
