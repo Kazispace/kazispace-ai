@@ -120,14 +120,47 @@ describe('KAZI-1069 ability panel (real zh messages, real BE shape)', () => {
         { id: 'a1', role: 'assistant', content: 'review', assistantMeta: { event: 'writing_review' } },
       ]);
     });
-    expect(hookCalls.at(-1)?.refreshKey).toBe('a1');
+    expect(hookCalls.at(-1)?.refreshKey).toBe('msg:a1');
     act(() => {
       useSpaceStore.getState().setSpaceMessages(SPACE, [
         { id: 'a1', role: 'assistant', content: 'review', assistantMeta: { event: 'writing_review' } },
         { id: 'a2', role: 'assistant', content: 'prompt', assistantMeta: { event: 'writing_prompt' } },
       ]);
     });
-    expect(hookCalls.at(-1)?.refreshKey).toBe('a1'); // a prompt is not a graded turn
+    expect(hookCalls.at(-1)?.refreshKey).toBe('msg:a1'); // a prompt is not a graded turn
+  });
+
+  it('the history swap after a send keeps the new key (13720 FAIL)', () => {
+    const meta = (grade_id: string, event?: string) => ({
+      grade_id,
+      form: { kind: 'writing_revision' },
+      ...(event ? { event } : {}),
+    });
+    act(() => {
+      useSpaceStore.getState().setSpaceMessages(SPACE, [
+        { id: '101', role: 'assistant', content: 'old review', assistantMeta: meta('g1') },
+      ]);
+    });
+    render(ready('populated'));
+    const before = hookCalls.at(-1)?.refreshKey;
+    act(() => {
+      useSpaceStore.getState().setSpaceMessages(SPACE, [
+        { id: '101', role: 'assistant', content: 'old review', assistantMeta: meta('g1') },
+        { id: 'u2', role: 'user', content: 'essay' },
+        { id: 'assistant_1', role: 'assistant', content: 'review', assistantMeta: meta('g2', 'writing_review') },
+      ]);
+    });
+    const live = hookCalls.at(-1)?.refreshKey;
+    act(() => {
+      // History row: backend persists only `form` / `grade_id` of the meta.
+      useSpaceStore.getState().setSpaceMessages(SPACE, [
+        { id: '101', role: 'assistant', content: 'old review', assistantMeta: meta('g1') },
+        { id: 'u2', role: 'user', content: 'essay' },
+        { id: '103', role: 'assistant', content: 'review', assistantMeta: meta('g2') },
+      ]);
+    });
+    expect(live).not.toBe(before);
+    expect(hookCalls.at(-1)?.refreshKey).toBe(live);
   });
 
   it('does not fetch when logged out', () => {
