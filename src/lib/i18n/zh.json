@@ -332,7 +332,6 @@
 		"panelCv": "简历",
 		"panelInterview": "模拟面试",
 		"panelEnglish": "英语练习",
-		"panelAbility": "能力",
 		"workspacePanels": "工作区面板",
 		"cvPanelHint": "在对话中提及简历优化，或打开完整简历工作区。",
 		"interviewPanelHint": "查看本空间关联职位的面试准备度。",
@@ -1011,7 +1010,6 @@
 			"latest": "最近一次",
 			"trendLine": "{name}分数走势",
 			"empty": "还没有分数。完成一次写作或口语练习后，这里会显示你的能力分。",
-			"unavailable": "能力分暂未开放。",
 			"error": "能力分加载失败。",
 			"retry": "重试"
 		},

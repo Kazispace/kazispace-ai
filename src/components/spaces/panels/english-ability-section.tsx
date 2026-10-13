@@ -14,8 +14,7 @@ import {
   sparklinePath,
   trendLabel,
 } from '@/lib/english-tutor/ability-view';
-import { useAuthStore, useSpaceStore } from '@/lib/store';
-import { cn } from '@/lib/utils';
+import { useSpaceStore } from '@/lib/store';
 import type {
   EnglishAbility,
   EnglishAbilityModality,
@@ -24,27 +23,34 @@ import type {
 
 const MODALITY_ORDER: EnglishAbilityModalityId[] = ['writing', 'speaking'];
 
-interface IeltsPrepAbilityPanelProps {
+interface EnglishAbilitySectionProps {
   spaceId: string;
-  className?: string;
 }
 
 /**
- * KAZI-1069 — ET ability panel (Capability §5.5.5): passive, opened by the user,
- * never auto-opened after grading, never written into the chat.
+ * KAZI-1069 — ET ability block, the top section of the IELTS「英语练习」panel
+ * (Owen 2026-10-13: one tab with EPP, not a separate「能力」tab). Capability §5.5.5:
+ * passive — it mounts only when the user opens the panel, never auto-opens after
+ * grading, never writes into the chat. Gate off / no route ⇒ renders nothing.
  */
-export function IeltsPrepAbilityPanel({ spaceId, className }: IeltsPrepAbilityPanelProps) {
+export function EnglishAbilitySection({ spaceId }: EnglishAbilitySectionProps) {
   const t = useTranslations('english.ability');
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const refreshKey = useSpaceStore((s) =>
     latestGradingMessageId(s.getSpaceSlice(spaceId).messages)
   );
-  const { state, refetch } = useEnglishAbility({ enabled: isLoggedIn, refreshKey });
+  const { state, refetch } = useEnglishAbility({ enabled: true, refreshKey });
+
+  if (state.kind === 'unavailable') return null;
 
   return (
-    <div className={cn('flex h-full min-h-0 flex-col overflow-y-auto bg-white', className)}>
-      <div className="shrink-0 border-b border-gray-200/80 px-4 py-3">
-        <h2 className="text-sm font-semibold text-kazi-navy">{t('title')}</h2>
+    <section
+      aria-labelledby="english-ability-heading"
+      className="shrink-0 border-b border-gray-200/80"
+    >
+      <div className="px-4 pt-3">
+        <h3 id="english-ability-heading" className="text-sm font-semibold text-kazi-navy">
+          {t('title')}
+        </h3>
         <p className="text-xs text-gray-500">{t('hint')}</p>
       </div>
 
@@ -55,21 +61,17 @@ export function IeltsPrepAbilityPanel({ spaceId, className }: IeltsPrepAbilityPa
         </div>
       ) : null}
 
-      {state.kind === 'unavailable' ? (
-        <p className="p-6 text-center text-sm text-gray-500">{t('unavailable')}</p>
-      ) : null}
-
       {state.kind === 'error' ? (
-        <div className="flex flex-col items-center gap-3 p-6 text-center">
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
           <p className="text-sm text-red-600">{t('error')}</p>
-          <Button size="sm" onClick={() => void refetch()}>
+          <Button size="sm" variant="outline" onClick={() => void refetch()}>
             {t('retry')}
           </Button>
         </div>
       ) : null}
 
       {state.kind === 'ready' ? <AbilityBody ability={state.ability} /> : null}
-    </div>
+    </section>
   );
 }
 
@@ -79,7 +81,7 @@ function AbilityBody({ ability }: { ability: EnglishAbility }) {
 
   if (ability.overall == null && !hasAny) {
     // Cold start (AC-P3): copy only — ⛔ no placement-test entry.
-    return <p className="p-6 text-center text-sm text-gray-600">{t('empty')}</p>;
+    return <p className="px-4 py-4 text-sm text-gray-600">{t('empty')}</p>;
   }
 
   return (

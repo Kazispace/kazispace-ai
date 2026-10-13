@@ -10,8 +10,6 @@ export function getSpacePanelLabel(panel: SpacePanelConfig, t: SpacesTranslator)
       return t('panelInterview');
     case 'english_epp':
       return t('panelEnglish');
-    case 'english_ability':
-      return t('panelAbility');
     default:
       return panel.panel_id;
   }

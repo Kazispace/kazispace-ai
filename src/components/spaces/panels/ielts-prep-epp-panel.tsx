@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { EppPassportHome } from '@/components/english/epp-passport-home';
 import { EppPassportSkeleton } from '@/components/english/epp-passport-skeleton';
 import { EppSampleJobsPanel } from '@/components/english/epp-sample-jobs-panel';
+import { EnglishAbilitySection } from '@/components/spaces/panels/english-ability-section';
 import { Button } from '@/components/ui/button';
 import {
   useEnglishProfile,
@@ -18,11 +19,15 @@ import { useAuthStore } from '@/lib/store';
 
 interface IeltsPrepEppPanelProps {
   locale: string;
+  spaceId: string;
   className?: string;
 }
 
-/** Template-internal EPP panel (surfaces.ts → english_epp). */
-export function IeltsPrepEppPanel({ locale, className }: IeltsPrepEppPanelProps) {
+/**
+ * Template-internal EPP panel (surfaces.ts → english_epp).
+ * KAZI-1069: the ET ability section sits on top — one「英语练习」tab, not two (Owen 2026-10-13).
+ */
+export function IeltsPrepEppPanel({ locale, spaceId, className }: IeltsPrepEppPanelProps) {
   const router = useRouter();
   const t = useTranslations('spaces');
   const tEnglish = useTranslations('english');
@@ -43,19 +48,6 @@ export function IeltsPrepEppPanel({ locale, className }: IeltsPrepEppPanelProps)
   const { sampleJobs } = useEnglishSampleJobs(profile?.display_level, {
     enabled: EPP_PROFILE_ENABLED && isLoggedIn && showPassport,
   });
-
-  if (!EPP_PROFILE_ENABLED) {
-    return (
-      <div
-        className={cn(
-          'flex h-full flex-col items-center justify-center gap-3 bg-white p-6 text-center',
-          className
-        )}
-      >
-        <p className="text-sm text-gray-600">{tEnglish('featureDisabled')}</p>
-      </div>
-    );
-  }
 
   if (!isLoggedIn) {
     return (
@@ -81,40 +73,49 @@ export function IeltsPrepEppPanel({ locale, className }: IeltsPrepEppPanelProps)
         <p className="text-xs text-gray-500">{t('eppPanelHint')}</p>
       </div>
 
-      {isProfileLoading ? <EppPassportSkeleton /> : null}
+      <EnglishAbilitySection spaceId={spaceId} />
 
-      {!isProfileLoading && profileError && !profile ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-          <p className="text-sm text-red-600">{profileError}</p>
-          <Button size="sm" onClick={() => void refetchProfile()}>
-            {tEnglish('retry')}
-          </Button>
-        </div>
-      ) : null}
-
-      {!isProfileLoading && !profileError && (profileStatus === 'empty' || !profile) ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-          <p className="text-sm text-gray-700">{t('eppPanelEmpty')}</p>
-          <Button size="sm" asChild>
-            <Link href={`/${locale}/english/onboarding`}>{t('eppPanelEmptyCta')}</Link>
-          </Button>
-        </div>
-      ) : null}
-
-      {showPassport && profile ? (
+      {/* EPP is gated on its own flag; the ability section above is not. */}
+      {!EPP_PROFILE_ENABLED ? (
+        <p className="p-6 text-center text-sm text-gray-600">{tEnglish('featureDisabled')}</p>
+      ) : (
         <>
-          <EppPassportHome
-            profile={profile}
-            locale={locale}
-            showBackToClinic={false}
-          />
-          {sampleJobs ? (
-            <div id="sample-jobs" className="scroll-mt-4 px-4 pb-4">
-              <EppSampleJobsPanel sampleJobs={sampleJobs} />
+          {isProfileLoading ? <EppPassportSkeleton /> : null}
+
+          {!isProfileLoading && profileError && !profile ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+              <p className="text-sm text-red-600">{profileError}</p>
+              <Button size="sm" onClick={() => void refetchProfile()}>
+                {tEnglish('retry')}
+              </Button>
             </div>
           ) : null}
+
+          {!isProfileLoading && !profileError && (profileStatus === 'empty' || !profile) ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+              <p className="text-sm text-gray-700">{t('eppPanelEmpty')}</p>
+              <Button size="sm" asChild>
+                <Link href={`/${locale}/english/onboarding`}>{t('eppPanelEmptyCta')}</Link>
+              </Button>
+            </div>
+          ) : null}
+
+          {showPassport && profile ? (
+            <>
+              <EppPassportHome
+                profile={profile}
+                locale={locale}
+                showBackToClinic={false}
+              />
+              {sampleJobs ? (
+                <div id="sample-jobs" className="scroll-mt-4 px-4 pb-4">
+                  <EppSampleJobsPanel sampleJobs={sampleJobs} />
+                </div>
+              ) : null}
+            </>
+          ) : null}
         </>
-      ) : null}
+      )}
     </div>
   );
 }

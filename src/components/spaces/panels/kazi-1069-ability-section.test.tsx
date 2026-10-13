@@ -9,7 +9,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import en from '@/lib/i18n/en.json';
 import zh from '@/lib/i18n/zh.json';
 import { mergeMessages } from '@/lib/i18n/merge-messages';
-import { useAuthStore, useSpaceStore } from '@/lib/store';
+import { useSpaceStore } from '@/lib/store';
 import type { EnglishAbilityState } from '@/hooks/use-english-ability';
 import type { EnglishAbility } from '@/types/english-ability';
 
@@ -26,7 +26,7 @@ vi.mock('@/hooks/use-english-ability', () => ({
   },
 }));
 
-import { IeltsPrepAbilityPanel } from '@/components/spaces/panels/ielts-prep-ability-panel';
+import { EnglishAbilitySection } from '@/components/spaces/panels/english-ability-section';
 
 const SPACE = 'space-1069';
 const messages = mergeMessages(en, zh) as AbstractIntlMessages;
@@ -40,7 +40,6 @@ beforeAll(() => {
 
 beforeEach(() => {
   hookCalls.length = 0;
-  useAuthStore.setState({ isLoggedIn: true });
   useSpaceStore.getState().setSpaceMessages(SPACE, []);
   container = document.createElement('div');
   document.body.appendChild(container);
@@ -57,7 +56,7 @@ function render(state: EnglishAbilityState) {
   act(() => {
     root.render(
       <NextIntlClientProvider locale="zh" messages={messages} timeZone="UTC">
-        <IeltsPrepAbilityPanel spaceId={SPACE} />
+        <EnglishAbilitySection spaceId={SPACE} />
       </NextIntlClientProvider>
     );
   });
@@ -69,7 +68,7 @@ const ready = (key: 'populated' | 'declining' | 'two' | 'empty'): EnglishAbility
   ability: fixture[key] as unknown as EnglishAbility,
 });
 
-describe('KAZI-1069 ability panel (real zh messages, real BE shape)', () => {
+describe('KAZI-1069 ability section (real zh messages, real BE shape)', () => {
   it('shows overall, current scores, dimensions, trend and the averaged window', () => {
     const text = render(ready('populated'));
     expect(text).toContain('3.94'); // overall
@@ -105,10 +104,9 @@ describe('KAZI-1069 ability panel (real zh messages, real BE shape)', () => {
     expect(container.querySelector('button')).toBeNull();
   });
 
-  it('gate off renders no ability block', () => {
+  it('gate off (or no route) renders nothing at all — not even the heading', () => {
     const text = render({ kind: 'unavailable' });
-    expect(text).toContain('能力分暂未开放');
-    expect(text).not.toContain('总分');
+    expect(text).toBe('');
   });
 
   it('a new graded turn in this Space changes the refresh key', () => {
@@ -163,9 +161,4 @@ describe('KAZI-1069 ability panel (real zh messages, real BE shape)', () => {
     expect(hookCalls.at(-1)?.refreshKey).toBe(live);
   });
 
-  it('does not fetch when logged out', () => {
-    useAuthStore.setState({ isLoggedIn: false });
-    render({ kind: 'loading' });
-    expect(hookCalls.at(-1)?.enabled).toBe(false);
-  });
 });
