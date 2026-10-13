@@ -935,7 +935,7 @@
 			"progressTrend": "Trend",
 			"progressCurrentEstimate": "Joriy baho",
 			"progressWindow": "So'nggi {count} sessiya",
-			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowRange": "Oldingi o'rtacha {from} → so'nggi o'rtacha {to} ({delta})",
 			"progressWindowDelta": "Δ {delta}",
 			"progressTrendValues": {
 				"improving": "O'sish",

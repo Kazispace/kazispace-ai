@@ -2,6 +2,7 @@ import { getAuthToken, getDeviceId } from '@/lib/auth';
 import { getTmaClientHeaders } from '@/lib/telegram';
 import { regionAwareApiClient } from '@/lib/region';
 import { normalizeEnglishCtaHints } from '@/lib/english-epp-cta';
+import type { EnglishAbility } from '@/types/english-ability';
 import type {
   ApiResponse,
   EnglishAssessmentCompleteResult,
@@ -69,6 +70,7 @@ async function englishJsonRequest<T>(
           errorData.detail?.message ||
           `HTTP ${response.status}`,
         errorCode: errorData.error_code ?? errorData.detail?.error_code,
+        status: response.status,
       };
     }
     const data = (await response.json()) as T;
@@ -94,6 +96,11 @@ export async function getEnglishProfile(): Promise<ApiResponse<EnglishProfile>> 
     return { ...res, data: normalizeProfile(res.data) };
   }
   return res;
+}
+
+/** KAZI-1069 — ET ability read model (0–6). 503 `ET_ABILITY_NOT_ENABLED` when the BE gate is off. */
+export async function getEnglishAbility(): Promise<ApiResponse<EnglishAbility>> {
+  return englishJsonRequest<EnglishAbility>('/api/v1/english/ability');
 }
 
 export async function getEnglishProfileHistory(params?: {

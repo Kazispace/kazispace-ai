@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
+import { formatSignedDelta, trendLabel } from '@/lib/english-tutor/ability-view';
 import { dimensionLabel } from '@/lib/english-tutor/dimension-label';
 import { cn } from '@/lib/utils';
 import type {
@@ -402,9 +403,8 @@ function ProgressSummaryBlock({
             <div className="flex items-start justify-between gap-3 text-sm">
               <dt className="text-workspace-muted">{t('progressTrend')}</dt>
               <dd className="font-medium text-workspace-text">
-                {t(`progressTrendValues.${component.trend}`, {
-                  defaultValue: component.trend,
-                })}
+                {/* KAZI-1069 (13669): `t.has` first — next-intl ignores `defaultValue`. */}
+                {trendLabel(t, component.trend) ?? component.trend}
               </dd>
             </div>
           ) : null}
@@ -425,10 +425,11 @@ function ProgressSummaryBlock({
                   ? t('progressWindowRange', {
                       from: window.from,
                       to: window.to,
-                      delta: window.delta ?? 0,
+                      // KAZI-1069 (13697): sign from the value — the template used to hard-code `+`.
+                      delta: formatSignedDelta(window.delta ?? 0),
                     })
                   : window.delta != null
-                    ? t('progressWindowDelta', { delta: window.delta })
+                    ? t('progressWindowDelta', { delta: formatSignedDelta(window.delta) })
                     : '—'}
               </dd>
             </div>

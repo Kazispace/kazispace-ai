@@ -332,6 +332,7 @@
 		"panelCv": "CV",
 		"panelInterview": "Mock interview",
 		"panelEnglish": "English practice",
+		"panelAbility": "Ability",
 		"workspacePanels": "Workspace panels",
 		"cvPanelHint": "Mention CV polish in chat, or open the full CV workspace.",
 		"interviewPanelHint": "Interview readiness for the job linked to this space.",
@@ -1302,6 +1303,23 @@
 			"eventLabel": "Event {n} · {type}",
 			"maxLevelHint": "Scale up to L{max}"
 		},
+		"ability": {
+			"title": "Ability",
+			"hint": "0–6 scale · updates after each graded attempt",
+			"overall": "Overall",
+			"outOf": "/ 6",
+			"modality": {
+				"writing": "Writing",
+				"speaking": "Speaking"
+			},
+			"modalityEmpty": "No graded attempts yet.",
+			"latest": "Latest attempt",
+			"trendLine": "{name} score trend",
+			"empty": "No scores yet. Finish one writing or speaking task and your ability will show here.",
+			"unavailable": "Ability scores are not available yet.",
+			"error": "Couldn't load your ability scores.",
+			"retry": "Retry"
+		},
 		"envelope": {
 			"lowConfidenceBanner": "Scores are indicative only for this review.",
 			"aiSyntheticDisclaimer": "This prompt was AI-generated for practice.",
@@ -1318,7 +1336,7 @@
 			"progressTrend": "Trend",
 			"progressCurrentEstimate": "Current estimate",
 			"progressWindow": "Last {count} sessions",
-			"progressWindowRange": "{from} → {to} (+{delta})",
+			"progressWindowRange": "Earlier avg {from} → recent avg {to} ({delta})",
 			"progressWindowDelta": "Δ {delta}",
 			"progressTrendValues": {
 				"improving": "Improving",
