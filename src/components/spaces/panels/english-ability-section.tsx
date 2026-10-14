@@ -40,7 +40,9 @@ export function EnglishAbilitySection({ spaceId }: EnglishAbilitySectionProps) {
   );
   const { state, refetch } = useEnglishAbility({ enabled: true, refreshKey });
 
-  if (state.kind === 'unavailable') return null;
+  // Nothing until we know: where the backend gate is off the 503 would otherwise flash a
+  // skeleton and then collapse, shifting EPP up (#232 review ⚪ · Owen 2026-10-13「remove it」).
+  if (state.kind === 'unavailable' || state.kind === 'loading') return null;
 
   return (
     <section
@@ -53,13 +55,6 @@ export function EnglishAbilitySection({ spaceId }: EnglishAbilitySectionProps) {
         </h3>
         <p className="text-xs text-gray-500">{t('hint')}</p>
       </div>
-
-      {state.kind === 'loading' ? (
-        <div className="space-y-3 p-4" aria-busy="true">
-          <div className="h-10 animate-pulse rounded bg-gray-100" />
-          <div className="h-24 animate-pulse rounded bg-gray-100" />
-        </div>
-      ) : null}
 
       {state.kind === 'error' ? (
         <div className="flex items-center justify-between gap-3 px-4 py-3">

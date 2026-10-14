@@ -104,6 +104,12 @@ describe('KAZI-1069 ability section (real zh messages, real BE shape)', () => {
     expect(container.querySelector('button')).toBeNull();
   });
 
+  it('loading renders nothing — no skeleton that flashes and collapses when the gate is off', () => {
+    const text = render({ kind: 'loading' });
+    expect(text).toBe('');
+    expect(container.querySelector('[aria-busy]')).toBeNull();
+  });
+
   it('gate off (or no route) renders nothing at all — not even the heading', () => {
     const text = render({ kind: 'unavailable' });
     expect(text).toBe('');
