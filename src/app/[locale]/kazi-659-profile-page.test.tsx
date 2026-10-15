@@ -41,7 +41,7 @@ function setInputValue(input: HTMLInputElement, value: string) {
   input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-import ProfilePage from '@/app/[locale]/profile/page';
+import ProfilePage from '@/app/[locale]/(workspace)/profile/page';
 
 function sampleUser(overrides: Partial<User> = {}): User {
   return {

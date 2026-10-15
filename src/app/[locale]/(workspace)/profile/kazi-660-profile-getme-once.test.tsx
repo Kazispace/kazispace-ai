@@ -34,14 +34,6 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock('@/components/layout/header', () => ({
-  Header: () => null,
-}));
-
-vi.mock('@/components/layout/bottom-nav', () => ({
-  BottomNav: () => null,
-}));
-
 vi.mock('@/lib/api-client', () => ({
   getMe: (...args: unknown[]) => getMe(...args),
   patchMe: vi.fn(),
@@ -51,7 +43,7 @@ vi.mock('@/lib/auth', () => ({
   setUserInfo: vi.fn(),
 }));
 
-import ProfilePage from '@/app/[locale]/profile/page';
+import ProfilePage from '@/app/[locale]/(workspace)/profile/page';
 
 describe('KAZI-660 /profile getMe effect fires exactly once', () => {
   let container: HTMLDivElement;

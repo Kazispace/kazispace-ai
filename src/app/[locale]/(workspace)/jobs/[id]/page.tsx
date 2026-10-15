@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { JobDetailBody } from "@/components/jobs/job-detail-body";
 
 interface JobDetailPageProps {
@@ -16,9 +14,8 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
   const t = useTranslations("jobs");
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Header locale={locale} />
-      <main className="pt-20 px-4 max-w-lg mx-auto">
+    <div className="h-full overflow-y-auto bg-gray-50">
+      <main className="pt-2 pb-6 px-4 max-w-lg mx-auto">
         <Link
           href={`/${locale}/jobs`}
           className="text-sm text-primary font-medium mb-4 inline-block"
@@ -27,7 +24,6 @@ export default function JobDetailPage({ params }: JobDetailPageProps) {
         </Link>
         <JobDetailBody jobId={id} locale={locale} density="page" />
       </main>
-      <BottomNav locale={locale} />
     </div>
   );
 }

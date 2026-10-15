@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
+import { BackLink } from "@/components/navigation/back-link";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Mic } from "lucide-react";
 import { useBilling } from "@/hooks/use-billing";
@@ -16,6 +15,7 @@ interface LedgerPageProps {
 
 export default function LedgerPage({ params }: LedgerPageProps) {
   const t = useTranslations("ledger");
+  const tNav = useTranslations("nav");
   const { locale } = params;
   const { balance, isLoading: billingLoading } = useBilling();
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
@@ -34,9 +34,11 @@ export default function LedgerPage({ params }: LedgerPageProps) {
   const interviewBalance = balance?.interviewCredits ?? 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Header locale={locale} />
-      <main className="pt-20 px-4 max-w-lg mx-auto">
+    <div className="h-full overflow-y-auto bg-gray-50">
+      <div className="px-4 pt-2 max-w-lg mx-auto">
+        <BackLink href={`/${locale}/mine`} label={tNav("me")} />
+      </div>
+      <main className="pt-2 pb-6 px-4 max-w-lg mx-auto">
         <h1 className="text-2xl font-bold text-kazi-navy mb-6">{t("title")}</h1>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -80,7 +82,6 @@ export default function LedgerPage({ params }: LedgerPageProps) {
           </div>
         )}
       </main>
-      <BottomNav locale={locale} />
     </div>
   );
 }

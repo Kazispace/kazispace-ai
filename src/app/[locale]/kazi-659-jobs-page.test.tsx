@@ -26,7 +26,7 @@ vi.mock('@/hooks/use-jobs', () => ({
   useJobRecommendations: () => useJobRecommendationsMock(),
 }));
 
-import JobsPage from '@/app/[locale]/jobs/page';
+import JobsPage from '@/app/[locale]/(workspace)/jobs/page';
 
 function sampleJob(overrides: Partial<JobRecommendationItem> = {}): JobRecommendationItem {
   return {

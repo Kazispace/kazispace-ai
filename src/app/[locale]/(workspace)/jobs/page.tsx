@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { BackLink } from "@/components/navigation/back-link";
 import { Lock, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +28,7 @@ export default function JobsPage({ params }: JobsPageProps) {
   const { locale } = params;
   const router = useRouter();
   const t = useTranslations("jobs");
+  const tNav = useTranslations("nav");
   const { items, isProUser, upgradeHint, engineTotal, isLoading, error, needsLogin } =
     useJobRecommendations();
   const openPaywall = useUIStore((s) => s.openPaywall);
@@ -49,9 +49,11 @@ export default function JobsPage({ params }: JobsPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Header locale={locale} />
-      <main className="pt-20 px-4 max-w-lg mx-auto">
+    <div className="h-full overflow-y-auto bg-gray-50">
+      <div className="px-4 pt-2 max-w-lg mx-auto">
+        <BackLink href={`/${locale}/chat`} label={tNav("chat")} />
+      </div>
+      <main className="pt-2 pb-6 px-4 max-w-lg mx-auto">
         <h1 className="text-2xl font-bold text-kazi-navy mb-2">{t("title")}</h1>
         {engineTotal != null && (
           <p className="text-sm text-gray-500 mb-6">
@@ -186,7 +188,6 @@ export default function JobsPage({ params }: JobsPageProps) {
           <p className="text-xs text-gray-500 text-center mt-6">{upgradeHint}</p>
         )}
       </main>
-      <BottomNav locale={locale} />
     </div>
   );
 }

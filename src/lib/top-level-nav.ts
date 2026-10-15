@@ -44,3 +44,13 @@ export function resolveTopLevelDestination(
   if (segments[0] && ME_SEGMENTS.includes(segments[0])) return 'me';
   return 'chat';
 }
+
+/** Screens reached from a top-level destination; they hide the mobile tab bar. */
+const SUB_SCREEN_SEGMENTS = ['profile', 'credits', 'ledger', 'subscription', 'jobs'];
+
+/** True on a top-level screen (Chat, Assets, Me), where the mobile tab bar shows. */
+export function isTopLevelScreen(pathname: string, locale: string): boolean {
+  const rest = pathname.startsWith(`/${locale}`) ? pathname.slice(locale.length + 1) : pathname;
+  const first = rest.split('/').filter(Boolean)[0];
+  return !(first && SUB_SCREEN_SEGMENTS.includes(first));
+}

@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   TOP_LEVEL_DESTINATIONS,
+  isTopLevelScreen,
   resolveTopLevelDestination,
   topLevelHref,
 } from '@/lib/top-level-nav';
@@ -54,6 +55,23 @@ describe('resolveTopLevelDestination', () => {
   });
 });
 
+describe('isTopLevelScreen', () => {
+  it.each([
+    ['/en/chat', true],
+    ['/en/spaces/abc', true],
+    ['/en/clinic/hub', true],
+    ['/en/mine', true],
+    ['/en/profile', false],
+    ['/en/credits', false],
+    ['/en/ledger', false],
+    ['/en/subscription', false],
+    ['/en/jobs', false],
+    ['/en/jobs/42', false],
+  ])('%s → %s', (path, expected) => {
+    expect(isTopLevelScreen(path, 'en')).toBe(expected);
+  });
+});
+
 describe('BottomTabBar', () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -83,7 +101,14 @@ describe('BottomTabBar', () => {
     ]);
   });
 
+  it('is hidden on a sub-screen, which uses back navigation instead', () => {
+    pathnameRef.value = '/en/credits';
+    act(() => root.render(<BottomTabBar locale="en" />));
+    expect(container.querySelector('[data-testid="bottom-tab-bar"]')).toBeNull();
+  });
+
   it('is not shown inside the Telegram Mini App (D3)', () => {
+    pathnameRef.value = '/en/chat';
     uiRef.isTelegramMiniApp = true;
     act(() => root.render(<BottomTabBar locale="en" />));
     expect(container.querySelector('[data-testid="bottom-tab-bar"]')).toBeNull();

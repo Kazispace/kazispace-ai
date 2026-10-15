@@ -14,7 +14,7 @@ import {
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
 import { BottomTabBar } from '@/components/navigation/bottom-tab-bar';
-import { resolveTopLevelDestination } from '@/lib/top-level-nav';
+import { isTopLevelScreen, resolveTopLevelDestination } from '@/lib/top-level-nav';
 import {
   loadSessionFileLibraryPanel,
   loadSessionGlobalSearchPanel,
@@ -174,6 +174,7 @@ function SessionNavShellLayout({
   // headers (unknown paths such as /mine otherwise resolve to the clinic surface).
   const showContextHeader =
     resolveTopLevelDestination(pathname, locale) === 'chat' &&
+    isTopLevelScreen(pathname, locale) &&
     (isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId));
 
   useEffect(() => {

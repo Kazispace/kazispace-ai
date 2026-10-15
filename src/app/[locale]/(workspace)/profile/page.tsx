@@ -3,9 +3,8 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { BackLink } from "@/components/navigation/back-link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,14 +126,13 @@ function ProfilePageShell({
   locale: string;
   children: React.ReactNode;
 }) {
+  const tNav = useTranslations("nav");
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Header locale={locale} />
+    <div className="h-full overflow-y-auto bg-gray-50">
+      <div className="px-4 pt-2 max-w-lg mx-auto">
+        <BackLink href={`/${locale}/mine`} label={tNav("me")} />
+      </div>
       {children}
-      <BottomNav
-        locale={locale}
-        activeAliases={{ [`/${locale}/profile`]: `/${locale}/mine` }}
-      />
     </div>
   );
 }
@@ -250,7 +248,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
   if (!isLoggedIn) {
     return (
       <ProfilePageShell locale={locale}>
-        <main className="pt-20 px-4 max-w-lg mx-auto text-center space-y-4">
+        <main className="pt-2 pb-6 px-4 max-w-lg mx-auto text-center space-y-4">
           <Link
             href={`/${locale}/chat`}
             className="text-sm text-primary font-medium inline-block mb-4"
@@ -267,7 +265,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
   if (isLoading) {
     return (
       <ProfilePageShell locale={locale}>
-        <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
+        <main className="pt-2 pb-6 px-4 max-w-lg mx-auto flex justify-center">
           <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
         </main>
       </ProfilePageShell>
@@ -276,7 +274,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
 
   return (
     <ProfilePageShell locale={locale}>
-      <main className="pt-20 px-4 max-w-lg mx-auto">
+      <main className="pt-2 pb-6 px-4 max-w-lg mx-auto">
         <Link
           href={`/${locale}/chat`}
           className="text-sm text-primary font-medium mb-4 inline-block"
@@ -472,7 +470,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     <Suspense
       fallback={
         <ProfilePageShell locale={locale}>
-          <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
+          <main className="pt-2 pb-6 px-4 max-w-lg mx-auto flex justify-center">
             <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
           </main>
         </ProfilePageShell>
