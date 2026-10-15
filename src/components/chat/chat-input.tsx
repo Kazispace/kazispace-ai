@@ -333,7 +333,7 @@ export function ChatInput({
         "box-border w-full min-w-0 max-h-32 resize-none overflow-hidden",
         "bg-transparent text-sm leading-6 text-workspace-text",
         isCard ? "min-h-[40px] py-2" : "min-h-[36px] flex-1 py-1.5 leading-5",
-        "placeholder:text-workspace-muted focus:outline-none",
+        "placeholder:text-workspace-secondary focus:outline-none",
         "disabled:cursor-not-allowed"
       )}
     />

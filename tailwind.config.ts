@@ -1,4 +1,14 @@
 import type { Config } from 'tailwindcss';
+import tokens from './src/design-tokens/tokens.resolved.json';
+
+/**
+ * KAZI-1086: colour values come from the shared design tokens
+ * (kazispace-ui `tokens/build/tokens.resolved.json`, copied into
+ * `src/design-tokens/`), not hand-typed hex. Values are resolved hex, so
+ * Tailwind opacity modifiers (`bg-primary/10`) keep working.
+ * `src/design-tokens/tokens.test.ts` fails if a mapped token is missing.
+ */
+const t = (path: keyof typeof tokens): string => (tokens[path] as { value: string }).value;
 
 const config: Config = {
   darkMode: ['class'],
@@ -33,19 +43,19 @@ const config: Config = {
          * duplicate paths are removed.
          */
         primary: {
-          DEFAULT: '#2563EB',
-          dark: '#1D4ED8',
+          DEFAULT: t('color.action.primary'),
+          dark: t('color.action.primary-pressed'),
         },
         kazi: {
-          navy: '#0D1B2A',
-          navy2: '#132237',
-          'brand-accent': '#D96E28',
+          navy: t('color.brand.navy'),
+          navy2: t('color.navy.800'),
+          'brand-accent': t('color.brand.accent'),
         },
-        'clinic-bubble': '#F0F2F5',
-        'agent-bubble': '#F0FDF4',
+        'clinic-bubble': t('color.chat.assistant-bg'),
+        'agent-bubble': t('color.chat.specialist-bg'),
         /** User-sent message (Clinic) — cool tint, aligns with UX blue user bubble guidance */
-        'user-bubble': '#E6F0FF',
-        'user-bubble-border': '#C5DBF7',
+        'user-bubble': t('color.chat.user-bg'),
+        'user-bubble-border': t('color.chat.user-border'),
         /**
          * KAZI-662: resolved the "gray-bg vs. #F7F8FA" question left open
          * since KAZI-656/657 — they were never actually competing for the
@@ -56,15 +66,17 @@ const config: Config = {
          * role (Clinic/Space/Hub page backgrounds) — neither value needed to
          * "win," the bare #F7F8FA literal just needed to go.
          */
+        // Not in the shared tokens (tokens v0 consolidates to one page grey,
+        // color.bg.page). Kept as-is until the pages that use it are redone.
         'gray-bg': '#F5F7FA',
         text: '#1A2B3C',
         workspace: {
-          bg: '#F4F5F7',
-          sidebar: '#FFFFFF',
-          panel: '#FFFFFF',
-          header: '#FAFBFC',
-          border: '#E5E6EB',
-          text: '#1D2129',
+          bg: t('color.bg.page'),
+          sidebar: t('color.bg.surface'),
+          panel: t('color.bg.surface'),
+          header: t('color.bg.header'),
+          border: t('color.border.default'),
+          text: t('color.text.primary'),
           /**
            * Secondary body text — between `text` and `muted`. Promoted from a
            * raw `#4E5969` literal reused identically across 14 files (KAZI-656).
@@ -75,8 +87,8 @@ const config: Config = {
            * unrelated `#6B7280`/`#111827` text-color pair for that surface —
            * §12.2.1 is the SSOT for `workspace.*` chrome specifically).
            */
-          secondary: '#4E5969',
-          muted: '#86909C',
+          secondary: t('color.text.secondary'),
+          muted: t('color.text.muted'),
           /**
            * Disabled/placeholder/empty-state foreground — lighter than `muted`,
            * used for de-emphasized text and icons (form placeholders, disabled
@@ -86,11 +98,11 @@ const config: Config = {
            * to kazispace-design's SDD §12.2.1 (see `secondary` above for why
            * that's §12.2.1 and not the UX guide's §6.1).
            */
-          placeholder: '#C9CDD4',
-          hover: '#F2F3F5',
-          active: '#EFF6FF',
-          input: '#FFFFFF',
-          accent: '#2563EB',
+          placeholder: t('color.text.placeholder'),
+          hover: t('color.bg.hover'),
+          active: t('color.bg.selected'),
+          input: t('color.bg.surface'),
+          accent: t('color.action.primary'),
         },
       },
       fontFamily: {

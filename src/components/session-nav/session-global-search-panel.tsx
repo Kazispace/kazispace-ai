@@ -63,7 +63,7 @@ export function SessionGlobalSearchPanel({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-lg border border-workspace-border bg-workspace-header py-2 pl-8 pr-3 text-sm text-workspace-text placeholder:text-workspace-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-workspace-border bg-workspace-header py-2 pl-8 pr-3 text-sm text-workspace-text placeholder:text-workspace-secondary focus:border-primary focus:outline-none"
           />
         </label>
       </div>

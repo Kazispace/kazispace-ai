@@ -479,7 +479,7 @@ export function MessageActions({
             placeholder={t('messageActions.feedbackNotePlaceholder')}
             className={cn(
               'w-full resize-none rounded-md border border-workspace-border bg-white px-2 py-1.5',
-              'text-[11px] text-workspace-text placeholder:text-workspace-placeholder',
+              'text-[11px] text-workspace-text placeholder:text-workspace-secondary',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
             )}
           />

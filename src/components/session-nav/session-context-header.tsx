@@ -363,7 +363,7 @@ export function SessionContextHeader({
             value={sessionSearchQuery}
             onChange={(event) => setSessionSearchQuery(event.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full rounded-lg border border-workspace-border bg-workspace-header px-3 py-2 text-sm text-workspace-text placeholder:text-workspace-muted focus:border-primary focus:outline-none"
+            className="w-full rounded-lg border border-workspace-border bg-workspace-header px-3 py-2 text-sm text-workspace-text placeholder:text-workspace-secondary focus:border-primary focus:outline-none"
           />
         </div>
         <ul className="p-2">
