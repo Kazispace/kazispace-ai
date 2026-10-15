@@ -217,7 +217,7 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
                   setOtp("");
                   setStep("phone");
                 }}
-                className="w-full text-sm text-muted hover:text-primary"
+                className="w-full text-sm text-workspace-secondary hover:text-primary"
               >
                 {t("back")}
               </button>

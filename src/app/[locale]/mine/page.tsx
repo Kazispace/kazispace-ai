@@ -110,7 +110,7 @@ export default function MinePage({ params }: MinePageProps) {
               <div className="text-2xl font-bold text-kazi-navy">
                 {billingLoading ? "…" : (balance?.cvCredits ?? 0)}
               </div>
-              <div className="text-xs text-muted">{t("cvCreditsLabel")}</div>
+              <div className="text-xs text-workspace-secondary">{t("cvCreditsLabel")}</div>
             </CardContent>
           </Card>
           <Card>
@@ -119,14 +119,14 @@ export default function MinePage({ params }: MinePageProps) {
               <div className="text-2xl font-bold text-kazi-navy">
                 {billingLoading ? "…" : (balance?.interviewCredits ?? 0)}
               </div>
-              <div className="text-xs text-muted">{t("mockInterviewsLabel")}</div>
+              <div className="text-xs text-workspace-secondary">{t("mockInterviewsLabel")}</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
               <Zap className="w-6 h-6 text-green mx-auto mb-2" />
               <div className="text-2xl font-bold text-kazi-navy">0</div>
-              <div className="text-xs text-muted">{t("streakLabel")}</div>
+              <div className="text-xs text-workspace-secondary">{t("streakLabel")}</div>
             </CardContent>
           </Card>
         </div>
@@ -140,7 +140,7 @@ export default function MinePage({ params }: MinePageProps) {
 
         {/* Prep & Learn */}
         <div>
-          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
+          <h3 className="text-sm font-semibold text-workspace-secondary uppercase tracking-wide mb-3">
             {t("jobPrepGroupTitle")}
           </h3>
           <div className="space-y-2">
@@ -151,7 +151,7 @@ export default function MinePage({ params }: MinePageProps) {
                     <FileText className="w-5 h-5 text-primary" />
                     <span className="font-medium">{t("cvRepoLabel")}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted">
+                  <div className="flex items-center gap-2 text-sm text-workspace-secondary">
                     <span>{t("cvRepoValue")?.split(" ")[0]}</span>
                     <ChevronRight className="w-4 h-4" />
                   </div>
@@ -165,7 +165,7 @@ export default function MinePage({ params }: MinePageProps) {
                     <Mic className="w-5 h-5 text-blue" />
                     <span className="font-medium">{t("interviewRecordsLabel")}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted" />
+                  <ChevronRight className="w-4 h-4 text-workspace-secondary" />
                 </CardContent>
               </Card>
             </Link>
@@ -174,7 +174,7 @@ export default function MinePage({ params }: MinePageProps) {
 
         {/* Profile & Preferences */}
         <div>
-          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
+          <h3 className="text-sm font-semibold text-workspace-secondary uppercase tracking-wide mb-3">
             {t("profilePreferencesGroupTitle")}
           </h3>
           <div className="space-y-2">
@@ -182,10 +182,10 @@ export default function MinePage({ params }: MinePageProps) {
               <Card className="hover:border-primary cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-muted" />
+                    <User className="w-5 h-5 text-workspace-secondary" />
                     <span className="font-medium">{t("targetRoleLabel")}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted" />
+                  <ChevronRight className="w-4 h-4 text-workspace-secondary" />
                 </CardContent>
               </Card>
             </Link>
@@ -205,7 +205,7 @@ export default function MinePage({ params }: MinePageProps) {
 
         {/* Billing & Services */}
         <div>
-          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
+          <h3 className="text-sm font-semibold text-workspace-secondary uppercase tracking-wide mb-3">
             {t("billingServicesGroupTitle")}
           </h3>
           <div className="space-y-2">
@@ -213,10 +213,10 @@ export default function MinePage({ params }: MinePageProps) {
               <Card className="hover:border-primary cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-muted" />
+                    <CreditCard className="w-5 h-5 text-workspace-secondary" />
                     <span className="font-medium">{t("subscriptionPlansLabel")}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted" />
+                  <ChevronRight className="w-4 h-4 text-workspace-secondary" />
                 </CardContent>
               </Card>
             </Link>
@@ -224,10 +224,10 @@ export default function MinePage({ params }: MinePageProps) {
               <Card className="hover:border-primary cursor-pointer transition-colors">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-muted" />
+                    <CreditCard className="w-5 h-5 text-workspace-secondary" />
                     <span className="font-medium">{t("creditsLedgerLabel")}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted" />
+                  <ChevronRight className="w-4 h-4 text-workspace-secondary" />
                 </CardContent>
               </Card>
             </Link>
@@ -236,14 +236,14 @@ export default function MinePage({ params }: MinePageProps) {
 
         {/* Settings */}
         <div>
-          <h3 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">
+          <h3 className="text-sm font-semibold text-workspace-secondary uppercase tracking-wide mb-3">
             {t("systemSettingsGroupTitle")}
           </h3>
           <div className="space-y-2">
             <Card>
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-muted" />
+                  <Globe className="w-5 h-5 text-workspace-secondary" />
                   <span className="font-medium">{t("interfaceLanguageLabel")}</span>
                 </div>
                 <LocaleSwitcher locale={locale} />

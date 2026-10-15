@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import path from 'path';
+import tailwindConfigObject from '../../tailwind.config';
 
 /**
  * KAZI-662 — regression guard for the near-neighbor hex color sweep.
@@ -73,12 +74,17 @@ describe('KAZI-662 new workspace tokens are wired up', () => {
     'utf8'
   );
 
+  // KAZI-1086: values now come from the shared design tokens via `t(...)`,
+  // so check the resolved config values rather than the source text.
+  const workspace = (tailwindConfigObject.theme?.extend?.colors as Record<string, Record<string, string>>)
+    .workspace;
+
   it('defines workspace.placeholder (#C9CDD4, promoted from an 8-site literal)', () => {
-    expect(tailwindConfig).toMatch(/placeholder:\s*'#C9CDD4'/);
+    expect(workspace.placeholder).toBe('#C9CDD4');
   });
 
   it('keeps workspace.secondary formally adopted, not flagged pending sign-off', () => {
-    expect(tailwindConfig).toMatch(/secondary:\s*'#4E5969'/);
+    expect(workspace.secondary).toBe('#4E5969');
     expect(tailwindConfig).not.toMatch(/pending design sign-off/i);
   });
 

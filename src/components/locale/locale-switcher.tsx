@@ -86,7 +86,7 @@ export function LocaleSwitcher({ locale, variant = "row" }: LocaleSwitcherProps)
           type="button"
           onClick={() => setIsOpen((v) => !v)}
           disabled={isSaving}
-          className="flex items-center gap-1 text-sm text-muted hover:text-foreground"
+          className="flex items-center gap-1 text-sm text-workspace-secondary hover:text-foreground"
         >
           {LOCALE_LABELS[current]}
           <ChevronDown className="w-4 h-4" />
@@ -106,8 +106,8 @@ export function LocaleSwitcher({ locale, variant = "row" }: LocaleSwitcherProps)
         disabled={isSaving}
         className="w-full flex items-center justify-between p-0"
       >
-        <span className="text-sm text-muted">{LOCALE_LABELS[current]}</span>
-        <ChevronDown className="w-4 h-4 text-muted" />
+        <span className="text-sm text-workspace-secondary">{LOCALE_LABELS[current]}</span>
+        <ChevronDown className="w-4 h-4 text-workspace-secondary" />
       </button>
       {isOpen && (
         <LocaleMenu current={current} onSelect={(l) => void handleSelect(l)} onClose={() => setIsOpen(false)} />
