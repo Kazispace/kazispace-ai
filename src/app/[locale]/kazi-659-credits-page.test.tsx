@@ -22,7 +22,7 @@ vi.mock('@/hooks/use-billing', () => ({
   useBilling: () => useBillingMock(),
 }));
 
-import CreditsPage from '@/app/[locale]/credits/page';
+import CreditsPage from '@/app/[locale]/(workspace)/credits/page';
 
 describe('KAZI-659 /credits page', () => {
   let root: Root | null = null;

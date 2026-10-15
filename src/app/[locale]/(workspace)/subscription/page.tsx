@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
+import { BackLink } from "@/components/navigation/back-link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +16,7 @@ interface SubscriptionPageProps {
 
 export default function SubscriptionPage({ params }: SubscriptionPageProps) {
   const t = useTranslations("billing");
+  const tNav = useTranslations("nav");
   const tMine = useTranslations("mine");
   const { locale } = params;
   const [tab, setTab] = useState<"pro" | "sprint">("pro");
@@ -31,9 +31,11 @@ export default function SubscriptionPage({ params }: SubscriptionPageProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Header locale={locale} />
-      <main className="pt-20 px-4 max-w-lg mx-auto">
+    <div className="h-full overflow-y-auto bg-gray-50">
+      <div className="px-4 pt-2 max-w-lg mx-auto">
+        <BackLink href={`/${locale}/mine`} label={tNav("me")} />
+      </div>
+      <main className="pt-2 pb-6 px-4 max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-kazi-navy">{t("subscriptionTitle")}</h1>
           {!isLoading && (
@@ -110,7 +112,6 @@ export default function SubscriptionPage({ params }: SubscriptionPageProps) {
           </div>
         )}
       </main>
-      <BottomNav locale={locale} />
     </div>
   );
 }

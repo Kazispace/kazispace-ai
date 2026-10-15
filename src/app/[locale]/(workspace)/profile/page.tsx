@@ -1,11 +1,9 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { BackLink } from "@/components/navigation/back-link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,26 +120,31 @@ function missingFieldLabel(
 
 function ProfilePageShell({
   locale,
+  backToChat = false,
   children,
 }: {
   locale: string;
+  /** Reached from the CV gate in Chat (`?return=cv`): go back there, not to Me. */
+  backToChat?: boolean;
   children: React.ReactNode;
 }) {
+  const tNav = useTranslations("nav");
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Header locale={locale} />
+    <div className="h-full overflow-y-auto bg-gray-50">
+      <div className="px-4 pt-2 max-w-lg mx-auto">
+        {backToChat ? (
+          <BackLink href={`/${locale}/chat`} label={tNav("chat")} />
+        ) : (
+          <BackLink href={`/${locale}/mine`} label={tNav("me")} />
+        )}
+      </div>
       {children}
-      <BottomNav
-        locale={locale}
-        activeAliases={{ [`/${locale}/profile`]: `/${locale}/mine` }}
-      />
     </div>
   );
 }
 
 function ProfilePageContent({ locale }: { locale: string }) {
   const t = useTranslations("profile");
-  const tChat = useTranslations("chat");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -249,14 +252,8 @@ function ProfilePageContent({ locale }: { locale: string }) {
 
   if (!isLoggedIn) {
     return (
-      <ProfilePageShell locale={locale}>
-        <main className="pt-20 px-4 max-w-lg mx-auto text-center space-y-4">
-          <Link
-            href={`/${locale}/chat`}
-            className="text-sm text-primary font-medium inline-block mb-4"
-          >
-            {tChat("backToClinic")}
-          </Link>
+      <ProfilePageShell locale={locale} backToChat={returnToCv}>
+        <main className="pt-2 pb-6 px-4 max-w-lg mx-auto text-center space-y-4">
           <p className="text-sm text-gray-600">{t("loginRequired")}</p>
           <Button onClick={() => router.push(`/${locale}/login`)}>{t("signIn")}</Button>
         </main>
@@ -266,8 +263,8 @@ function ProfilePageContent({ locale }: { locale: string }) {
 
   if (isLoading) {
     return (
-      <ProfilePageShell locale={locale}>
-        <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
+      <ProfilePageShell locale={locale} backToChat={returnToCv}>
+        <main className="pt-2 pb-6 px-4 max-w-lg mx-auto flex justify-center">
           <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
         </main>
       </ProfilePageShell>
@@ -275,14 +272,8 @@ function ProfilePageContent({ locale }: { locale: string }) {
   }
 
   return (
-    <ProfilePageShell locale={locale}>
-      <main className="pt-20 px-4 max-w-lg mx-auto">
-        <Link
-          href={`/${locale}/chat`}
-          className="text-sm text-primary font-medium mb-4 inline-block"
-        >
-          {tChat("backToClinic")}
-        </Link>
+    <ProfilePageShell locale={locale} backToChat={returnToCv}>
+      <main className="pt-2 pb-6 px-4 max-w-lg mx-auto">
         <h1 className="text-2xl font-bold text-kazi-navy mb-2">{t("title")}</h1>
         {(returnToCv ||
           (profileCompletion && !profileCompletion.minimumComplete)) && (
@@ -472,7 +463,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
     <Suspense
       fallback={
         <ProfilePageShell locale={locale}>
-          <main className="pt-20 px-4 max-w-lg mx-auto flex justify-center">
+          <main className="pt-2 pb-6 px-4 max-w-lg mx-auto flex justify-center">
             <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
           </main>
         </ProfilePageShell>

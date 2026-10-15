@@ -22,7 +22,7 @@ vi.mock('@/hooks/use-billing', () => ({
   useBilling: () => useBillingMock(),
 }));
 
-import SubscriptionPage from '@/app/[locale]/subscription/page';
+import SubscriptionPage from '@/app/[locale]/(workspace)/subscription/page';
 
 describe('KAZI-659 /subscription page', () => {
   let root: Root | null = null;

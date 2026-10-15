@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
+import { BackLink } from "@/components/navigation/back-link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Mic } from "lucide-react";
@@ -16,6 +15,7 @@ interface CreditsPageProps {
 
 export default function CreditsPage({ params }: CreditsPageProps) {
   const t = useTranslations("credits");
+  const tNav = useTranslations("nav");
   const { locale } = params;
   const { balance, isLoading, error } = useBilling();
   const [mounted, setMounted] = useState(false);
@@ -25,9 +25,11 @@ export default function CreditsPage({ params }: CreditsPageProps) {
   const total = balance?.cvCredits ?? 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <Header locale={locale} />
-      <main className="pt-20 px-4 max-w-lg mx-auto">
+    <div className="h-full overflow-y-auto bg-gray-50">
+      <div className="px-4 pt-2 max-w-lg mx-auto">
+        <BackLink href={`/${locale}/mine`} label={tNav("me")} />
+      </div>
+      <main className="pt-2 pb-6 px-4 max-w-lg mx-auto">
         <h1 className="text-2xl font-bold text-kazi-navy mb-6">{t("title")}</h1>
 
         {!mounted || isLoading ? (
@@ -59,7 +61,6 @@ export default function CreditsPage({ params }: CreditsPageProps) {
           <Button className="w-full py-6">{t("buyCredits")}</Button>
         </Link>
       </main>
-      <BottomNav locale={locale} />
     </div>
   );
 }

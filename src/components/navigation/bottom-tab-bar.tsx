@@ -10,6 +10,7 @@ import { markNavIntent } from '@/lib/perf/nav-intent';
 import { useUIStore } from '@/lib/store';
 import {
   TOP_LEVEL_DESTINATIONS,
+  isTopLevelScreen,
   resolveTopLevelDestination,
   topLevelHref,
   type TopLevelDestination,
@@ -63,8 +64,9 @@ export function BottomTabBar({ locale }: { locale: string }) {
   const isTelegramMiniApp = useUIStore((s) => s.isTelegramMiniApp);
   const active = resolveTopLevelDestination(pathname, locale);
 
-  // Mini programs have no app-level navigation (kazispace-ui decisions D3).
-  if (keyboardOpen || isTelegramMiniApp) return null;
+  // Mini programs have no app-level navigation (kazispace-ui decisions D3);
+  // sub-screens (job detail, credits, …) use back navigation instead.
+  if (keyboardOpen || isTelegramMiniApp || !isTopLevelScreen(pathname, locale)) return null;
 
   return (
     <nav

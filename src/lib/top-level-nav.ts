@@ -27,8 +27,10 @@ export function topLevelHref(locale: string, destination: TopLevelDestination): 
   }
 }
 
-/** Me and its sub-pages (plan, credits, profile edit). */
-const ME_SEGMENTS = ['mine', 'profile', 'credits', 'ledger', 'subscription'];
+/** Sub-screens of Me (profile edit, plan, credits). */
+const ME_SUB_SCREENS = ['profile', 'credits', 'ledger', 'subscription'];
+/** Me and its sub-screens. */
+const ME_SEGMENTS = ['mine', ...ME_SUB_SCREENS];
 
 /**
  * Which destination a path belongs to. Everything in the workspace that is not
@@ -43,4 +45,15 @@ export function resolveTopLevelDestination(
   if (segments[0] === 'clinic' && segments[1] === 'hub') return 'assets';
   if (segments[0] && ME_SEGMENTS.includes(segments[0])) return 'me';
   return 'chat';
+}
+
+/** Screens reached from a top-level destination; they hide the mobile tab bar. */
+// Derived from ME_SUB_SCREENS so a new Me sub-page cannot be added to only one list.
+const SUB_SCREEN_SEGMENTS = [...ME_SUB_SCREENS, 'jobs'];
+
+/** True on a top-level screen (Chat, Assets, Me), where the mobile tab bar shows. */
+export function isTopLevelScreen(pathname: string, locale: string): boolean {
+  const rest = pathname.startsWith(`/${locale}`) ? pathname.slice(locale.length + 1) : pathname;
+  const first = rest.split('/').filter(Boolean)[0];
+  return !(first && SUB_SCREEN_SEGMENTS.includes(first));
 }
