@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createHash } from 'crypto';
+import { readFileSync } from 'fs';
+import path from 'path';
 import tokens from './tokens.resolved.json';
 import config from '../../tailwind.config';
 
@@ -38,5 +41,16 @@ describe('design tokens → Tailwind colours', () => {
     expect(token, `token ${tokenPath} missing from tokens.resolved.json`).toBeDefined();
     expect(token.value).toMatch(/^#[0-9A-F]{6}$/i);
     expect(lookup(twPath)).toBe(token.value);
+  });
+});
+
+// The JSON is a verbatim copy from kazispace-ui. If it is edited by hand (or
+// re-copied without updating README.md), this hash no longer matches.
+const SOURCE_SHA256 = 'b0329c2e1ea7b3eb523e70c5479e5532a8434cc255b104bbdf07f4ebe6abf949';
+
+describe('design tokens copy', () => {
+  it('is the verbatim kazispace-ui file recorded in README.md', () => {
+    const file = readFileSync(path.resolve(__dirname, 'tokens.resolved.json'));
+    expect(createHash('sha256').update(file).digest('hex')).toBe(SOURCE_SHA256);
   });
 });

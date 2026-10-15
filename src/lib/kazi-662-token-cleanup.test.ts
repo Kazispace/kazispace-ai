@@ -68,6 +68,16 @@ describe('KAZI-662 resolved near-neighbor hex literals do not reappear as bracke
   });
 });
 
+describe('KAZI-1086 invisible text does not come back', () => {
+  // Tailwind's `muted` colour is the near-white *background* hsl(var(--muted)),
+  // so the exact class `text-muted` renders invisible text on white. Use
+  // `text-workspace-secondary` (or `text-muted-foreground`) instead.
+  it('no source file uses the exact class text-muted', () => {
+    const hits = occurrencesOf('(?<![-\\w])text-muted(?![-\\w])');
+    expect(hits, JSON.stringify(hits)).toEqual([]);
+  });
+});
+
 describe('KAZI-662 new workspace tokens are wired up', () => {
   const tailwindConfig = readFileSync(
     path.resolve(SRC_DIR, '..', 'tailwind.config.ts'),
