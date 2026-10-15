@@ -1065,7 +1065,14 @@
 			"typeInstead": "改为打字作答",
 			"typePlaceholder": "输入你的回答…",
 			"essayPlaceholder": "在这里写作文…",
-			"frozen": "这张表单已关闭 —— 请在最新一条消息里作答。"
+			"frozen": "这张表单已关闭 —— 请在最新一条消息里作答。",
+			"objectiveAnswered": "已作答 {count}/{total}",
+			"clozePlaceholder": "填入空缺的词",
+			"objectiveKind": {
+				"mcq": "选择",
+				"cloze": "填空",
+				"error_correction": "改错"
+			}
 		}
 	},
 	"tma": {

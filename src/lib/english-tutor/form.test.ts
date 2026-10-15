@@ -3,12 +3,16 @@ import { describe, expect, it } from 'vitest';
 import {
   buildEtFollowupSubmit,
   buildEtFormSubmit,
+  buildEtObjectiveSubmit,
   ET_FORM_SUBMIT_ACTION_TYPE,
+  ET_OBJECTIVE_ANSWERS_KEY,
   isLatestTurn,
   parseEtForm,
   revisionPrefill,
+  splitUnderlined,
   type EtForm,
 } from '@/lib/english-tutor/form';
+import objectiveFixture from '@/lib/english-tutor/__fixtures__/kazi1075_objective_set_form.json';
 import { mapStrategySelectTurnContexts } from '@/lib/strategy-select';
 
 /** Shapes copied from the KAZI-1040 staging write-back (JIRA comment 13492). */
@@ -297,5 +301,65 @@ describe('writing_revision · follow-up box (KAZI-1044 follow-up · SSOT §5.3.6
       { role: 'assistant', content: '第 2 条说的是……', assistantMeta: { form: REV, event: 'writing_followup_answer' } },
     ];
     expect(revisionPrefill(messages, 3)).toBe('My essay.');
+  });
+});
+
+/**
+ * KAZI-1075 · `objective_set` (ET SSOT §5.3.6.7). The fixture is the backend's
+ * real `meta.form` (`form_schema.objective_set_form` at backend main `9957a9cb`).
+ */
+describe('KAZI-1075 · objective_set form', () => {
+  const zhForm = () => parseEtForm(objectiveFixture.zh) as EtForm;
+  const withItems = (items: unknown) => ({ form: { ...objectiveFixture.en.form, items } });
+
+  it('parses the real backend form: 5 questions in order, three kinds, no answers', () => {
+    const form = zhForm();
+    expect(form).toMatchObject({ kind: 'objective_set', presentation: 'inline', control: 'objective_set' });
+    expect(form.items?.map((i) => i.item_id)).toEqual(objectiveFixture.set_item_ids);
+    expect(new Set(form.items?.map((i) => i.item_kind))).toEqual(new Set(['mcq', 'cloze', 'error_correction']));
+    const cloze = form.items?.find((i) => i.item_kind === 'cloze');
+    expect(cloze?.options).toBeUndefined();
+    expect(JSON.stringify(form)).not.toMatch(/answer_key|explanation|target_tags/);
+  });
+
+  it.each([
+    ['no items', undefined],
+    ['empty items', []],
+    ['an item without a prompt', [{ item_id: 'q1', item_kind: 'mcq', options: ['a', 'b'] }]],
+    ['a duplicate item id', [
+      { item_id: 'q1', item_kind: 'cloze', prompt_text: 'x ___' },
+      { item_id: 'q1', item_kind: 'cloze', prompt_text: 'y ___' },
+    ]],
+    ['a choice item with one option', [{ item_id: 'q1', item_kind: 'mcq', prompt_text: 'x', options: ['a'] }]],
+    ['a non-string option', [{ item_id: 'q1', item_kind: 'mcq', prompt_text: 'x', options: ['a', 3] }]],
+  ])('drops the whole form on %s (⛔ no half-built set)', (_label, items) => {
+    expect(parseEtForm(withItems(items))).toBeNull();
+  });
+
+  it('builds one JSON payload of answered questions; blanks are left out', () => {
+    const form = zhForm();
+    const [mcq, cloze] = form.items ?? [];
+    const sent = buildEtObjectiveSubmit(form, { [mcq.item_id]: 'an', [cloze.item_id]: '   ' });
+    expect(sent?.meta).toEqual({
+      action_type: ET_FORM_SUBMIT_ACTION_TYPE,
+      form_id: 'et:objective_set:ielts_g_article_001',
+      action_payload: JSON.stringify({ [ET_OBJECTIVE_ANSWERS_KEY]: { [mcq.item_id]: 'an' } }),
+    });
+    expect(sent?.display.split('\n')).toEqual(['1. an', '2. —', '3. —', '4. —', '5. —']);
+  });
+
+  it('refuses an all-blank set and a plain-text submit', () => {
+    const form = zhForm();
+    expect(buildEtObjectiveSubmit(form, {})).toBeNull();
+    expect(buildEtFormSubmit(form, { text: '1. an 2. the' })).toBeNull();
+    expect(buildEtObjectiveSubmit(parseEtForm({ form: WRITING }) as EtForm, { q: 'a' })).toBeNull();
+  });
+
+  it('marks the error-correction parts in order, or not at all', () => {
+    const ec = zhForm().items?.find((i) => i.item_kind === 'error_correction');
+    const parts = splitUnderlined(ec!.prompt_text, ec!.options!);
+    expect(parts.filter((p) => p.underlined).map((p) => p.text)).toEqual(ec!.options);
+    expect(parts.map((p) => p.text).join('')).toBe(ec!.prompt_text);
+    expect(splitUnderlined('abc def', ['abc', 'xyz'])).toEqual([{ text: 'abc def', underlined: false }]);
   });
 });

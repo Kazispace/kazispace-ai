@@ -1,0 +1,124 @@
+{
+  "_source": "kazispace-backend main @ 9957a9cb · agents/english_tutor/form_schema.objective_set_form(locale, set_item_ids=[...]) · the `meta.form` the ET graph sends for a 5-question set (KAZI-1074)",
+  "set_item_ids": [
+    "ielts_g_article_001",
+    "ielts_g_article_012",
+    "ielts_g_article_016",
+    "ielts_g_article_002",
+    "ielts_g_article_013"
+  ],
+  "zh": {
+    "form": {
+      "form_id": "et:objective_set:ielts_g_article_001",
+      "kind": "objective_set",
+      "presentation": "inline",
+      "control": "objective_set",
+      "title": "练习题",
+      "prompt": "逐题作答后一次提交；没作答的题按错判。",
+      "options": [],
+      "submit_label": "提交答案",
+      "items": [
+        {
+          "item_id": "ielts_g_article_001",
+          "item_kind": "mcq",
+          "prompt_text": "She is studying to become ___ engineer.",
+          "options": [
+            "(no article)",
+            "the",
+            "an",
+            "a"
+          ]
+        },
+        {
+          "item_id": "ielts_g_article_012",
+          "item_kind": "cloze",
+          "prompt_text": "Paris is ___ (a / an / the) capital of France."
+        },
+        {
+          "item_id": "ielts_g_article_016",
+          "item_kind": "error_correction",
+          "prompt_text": "Which underlined part contains an error? My grandmother was the nurse for forty years and still remembers the names of many of her patients.",
+          "options": [
+            "was the nurse",
+            "for forty years",
+            "still remembers",
+            "many of her patients"
+          ]
+        },
+        {
+          "item_id": "ielts_g_article_002",
+          "item_kind": "mcq",
+          "prompt_text": "___ Pacific Ocean covers about a third of the Earth's surface.",
+          "options": [
+            "(no article)",
+            "An",
+            "The",
+            "A"
+          ]
+        },
+        {
+          "item_id": "ielts_g_article_013",
+          "item_kind": "cloze",
+          "prompt_text": "Could you pass me ___ (a / an / the) salt, please?"
+        }
+      ]
+    }
+  },
+  "en": {
+    "form": {
+      "form_id": "et:objective_set:ielts_g_article_001",
+      "kind": "objective_set",
+      "presentation": "inline",
+      "control": "objective_set",
+      "title": "Practice questions",
+      "prompt": "Answer each question, then submit once. Unanswered questions count as wrong.",
+      "options": [],
+      "submit_label": "Submit answers",
+      "items": [
+        {
+          "item_id": "ielts_g_article_001",
+          "item_kind": "mcq",
+          "prompt_text": "She is studying to become ___ engineer.",
+          "options": [
+            "(no article)",
+            "the",
+            "an",
+            "a"
+          ]
+        },
+        {
+          "item_id": "ielts_g_article_012",
+          "item_kind": "cloze",
+          "prompt_text": "Paris is ___ (a / an / the) capital of France."
+        },
+        {
+          "item_id": "ielts_g_article_016",
+          "item_kind": "error_correction",
+          "prompt_text": "Which underlined part contains an error? My grandmother was the nurse for forty years and still remembers the names of many of her patients.",
+          "options": [
+            "was the nurse",
+            "for forty years",
+            "still remembers",
+            "many of her patients"
+          ]
+        },
+        {
+          "item_id": "ielts_g_article_002",
+          "item_kind": "mcq",
+          "prompt_text": "___ Pacific Ocean covers about a third of the Earth's surface.",
+          "options": [
+            "(no article)",
+            "An",
+            "The",
+            "A"
+          ]
+        },
+        {
+          "item_id": "ielts_g_article_013",
+          "item_kind": "cloze",
+          "prompt_text": "Could you pass me ___ (a / an / the) salt, please?"
+        }
+      ]
+    }
+  }
+}
