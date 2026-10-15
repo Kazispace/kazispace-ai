@@ -172,9 +172,12 @@ function SessionNavShellLayout({
     spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
   // The conversation header belongs to Chat only; Assets and Me have their own page
   // headers (unknown paths such as /mine otherwise resolve to the clinic surface).
+  // Chat's top-level screens own the conversation list and its header; Assets, Me
+  // and sub-screens (credits, jobs, …) do not (kazispace-ui navigation pattern).
+  const onChatTopLevel =
+    resolveTopLevelDestination(pathname, locale) === 'chat' && isTopLevelScreen(pathname, locale);
   const showContextHeader =
-    resolveTopLevelDestination(pathname, locale) === 'chat' &&
-    isTopLevelScreen(pathname, locale) &&
+    onChatTopLevel &&
     (isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId));
 
   useEffect(() => {
@@ -444,6 +447,7 @@ function SessionNavShellLayout({
         <WorkspaceCenterColumn
           locale={locale}
           showContextHeader={showContextHeader}
+          showConversationListButton={onChatTopLevel}
           sessionsByAgent={sessionsByAgent}
           contextHeaderSpaceId={contextHeaderSpaceId}
           onOpenMobilePanel={() => openPanelMode('agents')}
@@ -478,6 +482,7 @@ function SessionNavShellLayout({
 function WorkspaceCenterColumn({
   locale,
   showContextHeader,
+  showConversationListButton,
   sessionsByAgent,
   contextHeaderSpaceId,
   onOpenMobilePanel,
@@ -486,6 +491,7 @@ function WorkspaceCenterColumn({
 }: {
   locale: string;
   showContextHeader: boolean;
+  showConversationListButton: boolean;
   sessionsByAgent: ReturnType<typeof useActiveAgentSessions>['sessionsByAgent'];
   contextHeaderSpaceId: string | null;
   onOpenMobilePanel: () => void;
@@ -513,16 +519,18 @@ function WorkspaceCenterColumn({
 
   return (
     <div className="relative flex min-w-0 flex-1 min-h-0 flex-col">
-      <div className="flex items-center border-b border-workspace-border bg-white md:hidden">
-        <button
-          type="button"
-          onClick={onOpenMobilePanel}
-          className="m-2 rounded-lg p-2 text-workspace-text hover:bg-workspace-hover"
-          aria-label={mobilePanelLabel}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      </div>
+      {showConversationListButton ? (
+        <div className="flex items-center border-b border-workspace-border bg-white md:hidden">
+          <button
+            type="button"
+            onClick={onOpenMobilePanel}
+            className="m-2 rounded-lg p-2 text-workspace-text hover:bg-workspace-hover"
+            aria-label={mobilePanelLabel}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
+      ) : null}
       <div className="flex min-h-0 min-w-0 flex-1">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {showContextHeader ? (
