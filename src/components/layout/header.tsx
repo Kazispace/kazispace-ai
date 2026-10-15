@@ -58,10 +58,15 @@ export function Header({ locale }: HeaderProps) {
           aria-disabled={isOnHub && isDeactivating}
           className="flex items-center"
         >
-          <span className="text-2xl font-bold text-white">
-            {/* Brand wordmark keeps the literal orange (UX guide Header/Hero compromise). */}
-            <span className="text-kazi-brand-accent">Kazi</span>Space
-          </span>
+          {/* Brand logo, reversed variant for the navy bar (kazispace-ui decisions D10). */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/kazispace-logo-horizontal-on-dark.png"
+            alt="KaziSpace"
+            width={117}
+            height={40}
+            className="h-10 w-auto"
+          />
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
