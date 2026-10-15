@@ -153,10 +153,15 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
     <div className="min-h-screen bg-gradient-to-br from-kazi-navy via-kazi-navy2 to-blue-950 flex items-start sm:items-center justify-center p-4 pt-12 sm:pt-4">
       <Card className="w-full max-w-md bg-white/95 backdrop-blur">
         <CardHeader className="text-center pb-2">
-          <div className="text-3xl font-bold mb-2">
-            {/* Brand wordmark keeps the literal orange (UX guide Header/Hero compromise). */}
-            <span className="text-kazi-brand-accent">Kazi</span>Space
-          </div>
+          {/* Brand logo, stacked variant for the light card (kazispace-ui decisions D10). */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/kazispace-logo-stacked.png"
+            alt="KaziSpace"
+            width={80}
+            height={96}
+            className="mx-auto mb-2 h-24 w-auto"
+          />
           <CardTitle className="text-xl">{t("title")}</CardTitle>
         </CardHeader>
         <CardContent>

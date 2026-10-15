@@ -81,10 +81,15 @@ export function ChatHeader({
         </button>
       ) : (
         <Link href={`/${locale}/chat`} className="text-white shrink-0">
-          <span className="text-lg font-bold">
-            {/* Brand wordmark keeps the literal orange (UX guide Header/Hero compromise). */}
-            <span className="text-kazi-brand-accent">Kazi</span>Space
-          </span>
+          {/* Brand logo, reversed variant for the navy bar (kazispace-ui decisions D10). */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/kazispace-logo-horizontal-on-dark.png"
+            alt="KaziSpace"
+            width={82}
+            height={28}
+            className="h-7 w-auto"
+          />
         </Link>
       )}
 

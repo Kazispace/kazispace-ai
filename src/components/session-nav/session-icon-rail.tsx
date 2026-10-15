@@ -85,10 +85,12 @@ export function SessionIconRail({
       <Link
         href={`/${locale}`}
         onClick={() => markNavIntent()}
-        className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg text-xs font-bold text-primary"
+        className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg"
         aria-label="KaziSpace"
       >
-        K
+        {/* Brand mark (kazispace-ui decisions D10); the link carries the accessible name. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/kazispace-mark.png" alt="" width={32} height={32} className="h-8 w-8" />
       </Link>
 
       <Link
