@@ -19,7 +19,10 @@
     "smoke": "bash scripts/smoke.sh",
     "smoke:health": "bash scripts/smoke-health.sh",
     "smoke:routes": "bash scripts/smoke-routes.sh",
-    "smoke:cv-upload": "bash scripts/smoke-cv-upload.sh"
+    "smoke:cv-upload": "bash scripts/smoke-cv-upload.sh",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test e2e/product-smoke.spec.ts",
+    "test:e2e:report": "playwright show-report e2e-report"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.0",
@@ -42,6 +45,7 @@
   },
   "devDependencies": {
     "@netlify/plugin-nextjs": "^5.9.0",
+    "@playwright/test": "^1.55.0",
     "@types/node": "^20.14.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.1",

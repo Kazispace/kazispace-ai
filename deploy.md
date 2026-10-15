@@ -81,6 +81,8 @@ POST https://bot.kazispace.ai/api/v1/auth/otp/verify
 
 Playwright 里还要 `addInitScript` 再写一遍 session，否则下一次导航 / 新 document 会丢。`chromium.launch({ userDataDir })` 会被拒；用 `launchPersistentContext('/tmp/…')`。
 
+**产品面自动化**：本仓 `npm run test:e2e:smoke`（见 [`e2e/README.md`](e2e/README.md)）已按 §2.2 注入会话，覆盖 Deploy Gate Tier A（SMK-AUTH / CLN / NAV / HUB）。
+
 OTP 失败时先看：号是不是 E.164、是不是 whitelist、出口 IP 是不是 `TEST_IP_WHITELIST`（不在会 `RATE_LIMIT_EXCEEDED`）、以及是不是 CORS 把 request / verify 拦了（那种会显示「网络错误」，不是验证码错）。
 
 ---
