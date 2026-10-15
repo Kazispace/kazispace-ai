@@ -13,6 +13,8 @@ import {
 } from '@/components/session-nav/session-nav-controller';
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
+import { BottomTabBar } from '@/components/navigation/bottom-tab-bar';
+import { resolveTopLevelDestination } from '@/lib/top-level-nav';
 import {
   loadSessionFileLibraryPanel,
   loadSessionGlobalSearchPanel,
@@ -168,8 +170,11 @@ function SessionNavShellLayout({
   const desktopPanelOpen = mountDesktopPanel;
   const contextHeaderSpaceId =
     spaceRouteId ?? (isClinic && spacesEnabled ? CLINIC_SPACE_ID : null);
+  // The conversation header belongs to Chat only; Assets and Me have their own page
+  // headers (unknown paths such as /mine otherwise resolve to the clinic surface).
   const showContextHeader =
-    isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId);
+    resolveTopLevelDestination(pathname, locale) === 'chat' &&
+    (isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId));
 
   useEffect(() => {
     if (!pinNavPanel) return;
@@ -541,6 +546,7 @@ function WorkspaceCenterColumn({
           aria-hidden={!showPortalColumn}
         />
       </div>
+      <BottomTabBar locale={locale} />
     </div>
   );
 }

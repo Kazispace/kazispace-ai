@@ -34,7 +34,7 @@ vi.mock('@/lib/api-client', () => ({
   getMe: () => getMeMock(),
 }));
 
-import MinePage from '@/app/[locale]/mine/page';
+import MinePage from '@/app/[locale]/(workspace)/mine/page';
 
 function sampleUser(overrides: Partial<User> = {}): User {
   return {

@@ -225,6 +225,9 @@
 	"nav": {
 		"home": "Bosh",
 		"chat": "Chat",
+		"assets": "Aktivlar",
+		"me": "Profil",
+		"primary": "Asosiy navigatsiya",
 		"jobs": "Ishlar",
 		"profile": "Profil"
 	},
