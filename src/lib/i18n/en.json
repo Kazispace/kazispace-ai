@@ -225,6 +225,9 @@
 	"nav": {
 		"home": "Home",
 		"chat": "Chat",
+		"assets": "Assets",
+		"me": "Me",
+		"primary": "Main navigation",
 		"jobs": "Jobs",
 		"profile": "Profile"
 	},

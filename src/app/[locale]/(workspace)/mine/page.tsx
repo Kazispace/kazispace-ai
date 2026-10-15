@@ -4,8 +4,6 @@ import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Header } from "@/components/layout/header";
-import { BottomNav } from "@/components/layout/bottom-nav";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +27,7 @@ interface MinePageProps {
 export default function MinePage({ params }: MinePageProps) {
   const t = useTranslations("mine");
   const tChat = useTranslations("chat");
+  const tNav = useTranslations("nav");
   const router = useRouter();
   const { locale } = params;
   const { user, logout, token, isLoggedIn } = useAuthStore();
@@ -57,10 +56,11 @@ export default function MinePage({ params }: MinePageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-bg pb-20">
-      <Header locale={locale} />
-
-      <main className="pt-20 px-4 max-w-lg mx-auto space-y-6">
+    // Me is a top-level destination inside the workspace shell (kazispace-ui D2):
+    // the icon rail / bottom tab bar replace the retired navy header + bottom nav.
+    <div className="h-full overflow-y-auto bg-gray-bg">
+      <main className="py-6 px-4 max-w-lg mx-auto space-y-6">
+        <h1 className="text-xl font-semibold text-workspace-text">{tNav("me")}</h1>
         {/* User Card — compact hero (~25% of prior stacked layout) */}
         <Card className="bg-gradient-to-br from-kazi-navy to-kazi-navy2 border-0">
           <CardContent className="px-4 py-2.5">
@@ -260,8 +260,6 @@ export default function MinePage({ params }: MinePageProps) {
           </div>
         </div>
       </main>
-
-      <BottomNav locale={locale} />
     </div>
   );
 }

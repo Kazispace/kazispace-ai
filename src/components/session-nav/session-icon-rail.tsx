@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import {
   Bot,
+  Files,
   FolderOpen,
   MessageCircle,
   PanelLeftClose,
   Search,
-  Settings,
+  User,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -15,7 +16,11 @@ import { useTranslations } from 'next-intl';
 import type { SessionNavPanelMode } from '@/lib/session-nav';
 import { cn } from '@/lib/utils';
 import { markNavIntent } from '@/lib/perf/nav-intent';
-import { getSurfacePath } from '@/lib/agent-transition/surfaces';
+import {
+  resolveTopLevelDestination,
+  topLevelHref,
+  type TopLevelDestination,
+} from '@/lib/top-level-nav';
 import { SessionIconRailCredits } from '@/components/session-nav/session-nav-primary-chrome';
 
 interface SessionIconRailProps {
@@ -42,7 +47,8 @@ export function SessionIconRail({
 }: SessionIconRailProps) {
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
-  const isClinic = pathname.includes(`/${locale}/chat`);
+  const tNav = useTranslations('nav');
+  const activeDestination = resolveTopLevelDestination(pathname ?? '', locale);
 
   const handleAgentsClick = () => {
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
@@ -73,6 +79,28 @@ export function SessionIconRail({
     </button>
   );
 
+  const destinationLink = (destination: TopLevelDestination, icon: React.ReactNode) => {
+    const active = activeDestination === destination;
+    return (
+      <Link
+        href={topLevelHref(locale, destination)}
+        prefetch={destination === 'chat' ? undefined : false}
+        onClick={() => markNavIntent()}
+        aria-current={active ? 'page' : undefined}
+        className={cn(
+          'relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
+          active
+            ? 'bg-workspace-active text-primary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary'
+            : 'text-workspace-secondary hover:bg-workspace-hover'
+        )}
+        aria-label={tNav(destination)}
+        title={tNav(destination)}
+      >
+        {icon}
+      </Link>
+    );
+  };
+
   const agentsActive = panelOpen && panelMode === 'agents';
   const filesActive = panelOpen && panelMode === 'files';
   const searchActive = panelOpen && panelMode === 'search';
@@ -93,39 +121,21 @@ export function SessionIconRail({
         <img src="/brand/kazispace-mark.png" alt="" width={32} height={32} className="h-8 w-8" />
       </Link>
 
-      <Link
-        href={getSurfacePath(locale, 'clinic')}
-        onClick={() => markNavIntent()}
-        className={cn(
-          'relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
-          isClinic
-            ? 'bg-workspace-active text-primary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary'
-            : 'text-workspace-muted hover:bg-workspace-hover'
-        )}
-        aria-label={t('clinic')}
-        title={t('clinic')}
-      >
-        <MessageCircle className="h-5 w-5" />
-      </Link>
+      {/* Top-level destinations, same order as the mobile tab bar (kazispace-ui D2). */}
+      {destinationLink('chat', <MessageCircle className="h-5 w-5" />)}
+      {destinationLink('assets', <FolderOpen className="h-5 w-5" />)}
+      {destinationLink('me', <User className="h-5 w-5" />)}
+
+      <div className="my-1 h-px w-6 bg-workspace-border" aria-hidden />
 
       {iconBtn(agentsActive, handleAgentsClick, t('agents'), <Bot className="h-5 w-5" />)}
-      {iconBtn(filesActive, onOpenFilesPanel, t('files'), <FolderOpen className="h-5 w-5" />)}
+      {iconBtn(filesActive, onOpenFilesPanel, t('files'), <Files className="h-5 w-5" />)}
       {!spacesMode
         ? iconBtn(searchActive, onOpenSearchPanel, t('search'), <Search className="h-5 w-5" />)
         : null}
 
       <div className="mt-auto flex flex-col items-center gap-1">
         <SessionIconRailCredits locale={locale} />
-        <Link
-          href={`/${locale}/mine`}
-          prefetch={false}
-          onClick={() => markNavIntent()}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-workspace-muted hover:bg-workspace-hover"
-          aria-label={t('settings')}
-          title={t('settings')}
-        >
-          <Settings className="h-5 w-5" />
-        </Link>
         {panelOpen && (
           <button
             type="button"
