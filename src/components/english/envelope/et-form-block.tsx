@@ -13,10 +13,13 @@ import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
 import {
   buildEtFollowupSubmit,
   buildEtFormSubmit,
+  buildEtObjectiveSubmit,
   countWords,
+  splitUnderlined,
   type EtForm,
   type EtFormFollowup,
   type EtFormSubmit,
+  type EtObjectiveItem,
 } from '@/lib/english-tutor/form';
 import { cn } from '@/lib/utils';
 
@@ -76,7 +79,13 @@ export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProp
       {form.title ? (
         <p className="text-[13px] font-semibold text-workspace-text">{form.title}</p>
       ) : null}
-      {form.control === 'radio' ? (
+      {form.control === 'objective_set' ? (
+        <ObjectiveSetForm
+          form={form}
+          disabled={disabled}
+          onSubmit={(answers) => send(buildEtObjectiveSubmit(form, answers))}
+        />
+      ) : form.control === 'radio' ? (
         <RadioForm form={form} disabled={disabled} onSubmit={submit} />
       ) : form.control === 'audio' ? (
         <AudioForm form={form} disabled={disabled} onSubmit={submit} />
@@ -144,6 +153,148 @@ function FollowupForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+/**
+ * KAZI-1075 · a grammar / vocabulary set (ET SSOT §5.3.6.7): every question on
+ * one card, answered in place, submitted once. Choice questions are radios;
+ * `cloze` is a short text box. Answers stay on the card after it freezes, so
+ * the learner can read them against the feedback that follows.
+ */
+function ObjectiveSetForm({
+  form,
+  disabled,
+  onSubmit,
+}: {
+  form: EtForm;
+  disabled: boolean;
+  onSubmit: (answers: Record<string, string>) => Promise<boolean>;
+}) {
+  const t = useTranslations('english.form');
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const items = form.items ?? [];
+  const answered = items.filter((item) => (answers[item.item_id] ?? '').trim()).length;
+  const setAnswer = (itemId: string, value: string) =>
+    setAnswers((prev) => ({ ...prev, [itemId]: value }));
+
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void onSubmit(answers);
+      }}
+    >
+      {form.prompt ? <p className="text-xs text-workspace-muted">{form.prompt}</p> : null}
+      <ol className="space-y-3">
+        {items.map((item, index) => (
+          <ObjectiveItem
+            key={item.item_id}
+            item={item}
+            number={index + 1}
+            formId={form.form_id}
+            value={answers[item.item_id] ?? ''}
+            disabled={disabled}
+            onChange={(value) => setAnswer(item.item_id, value)}
+          />
+        ))}
+      </ol>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-workspace-muted" data-et-objective-progress>
+          {t('objectiveAnswered', { count: answered, total: items.length })}
+        </span>
+        <Button type="submit" size="sm" disabled={disabled || answered === 0}>
+          {form.submit_label}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function ObjectiveItem({
+  item,
+  number,
+  formId,
+  value,
+  disabled,
+  onChange,
+}: {
+  item: EtObjectiveItem;
+  number: number;
+  formId: string;
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  const t = useTranslations('english.form');
+  // ⛔ Never render a raw key path for a kind this build doesn't know yet.
+  const kindKey = `objectiveKind.${item.item_kind}`;
+  const kindLabel = item.item_kind && t.has(kindKey) ? t(kindKey) : null;
+  const promptId = `et-obj-${formId}-${item.item_id}`;
+  const prompt =
+    item.item_kind === 'error_correction' && item.options
+      ? splitUnderlined(item.prompt_text, item.options)
+      : [{ text: item.prompt_text, underlined: false }];
+
+  return (
+    <li className="space-y-1.5" data-et-objective-item={item.item_id}>
+      <div className="flex items-baseline gap-2">
+        <span className="text-xs font-semibold text-workspace-muted">{number}.</span>
+        {kindLabel ? (
+          <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] text-workspace-muted">{kindLabel}</span>
+        ) : null}
+      </div>
+      <p id={promptId} className="text-sm leading-relaxed text-workspace-text">
+        {prompt.map((part, i) =>
+          part.underlined ? (
+            <u key={i} className="decoration-2 underline-offset-2">
+              {part.text}
+            </u>
+          ) : (
+            <span key={i}>{part.text}</span>
+          )
+        )}
+      </p>
+      {item.options ? (
+        <fieldset className="flex flex-wrap gap-1.5" disabled={disabled} aria-labelledby={promptId}>
+          {item.options.map((option) => (
+            <label
+              key={option}
+              className={cn(
+                'flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition-colors',
+                value === option
+                  ? 'border-primary/50 bg-workspace-active'
+                  : 'border-gray-200 bg-white hover:bg-gray-50',
+                disabled && 'cursor-not-allowed'
+              )}
+            >
+              <input
+                type="radio"
+                name={`et-obj-${formId}-${item.item_id}`}
+                value={option}
+                checked={value === option}
+                onChange={() => onChange(option)}
+              />
+              {option}
+            </label>
+          ))}
+        </fieldset>
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          placeholder={t('clozePlaceholder')}
+          aria-labelledby={promptId}
+          autoComplete="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          className="w-full max-w-xs rounded-lg border border-gray-200 px-3 py-1.5 text-sm"
+        />
+      )}
+    </li>
   );
 }
 
