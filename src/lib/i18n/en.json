@@ -227,7 +227,6 @@
 		"assets": "Assets",
 		"me": "Me",
 		"primary": "Main navigation",
-		"profile": "Profile",
 		"backTo": "Back to {destination}"
 	},
 	"sessionNav": {

@@ -64,6 +64,20 @@ describe('subscriptionHref', () => {
   });
 });
 
+describe('the Me destination has one name', () => {
+  // Owen 2026-10-16: the chat header's "Profile" link is renamed to "Me", so every
+  // entry to /mine uses the tab's own key and the old nav.profile key is gone.
+  it('has no separate nav.profile label in any locale', async () => {
+    for (const locale of ['en', 'ru', 'kk', 'uz', 'zh']) {
+      const messages = (await import(`@/lib/i18n/${locale}.json`)).default as {
+        nav: Record<string, string>;
+      };
+      expect(messages.nav).not.toHaveProperty('profile');
+      expect(messages.nav.me).toBeTruthy();
+    }
+  });
+});
+
 describe('isTopLevelScreen', () => {
   it.each([
     ['/en/chat', true],

@@ -145,7 +145,8 @@ export function ChatHeader({
 
       <Link href={`/${locale}/mine`} prefetch={false} className="shrink-0">
         <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
-          {tNav("profile")}
+          {/* The Me destination keeps one name everywhere (kazispace-ui navigation, D2). */}
+          {tNav("me")}
         </Button>
       </Link>
 

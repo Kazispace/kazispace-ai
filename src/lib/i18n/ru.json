@@ -227,7 +227,6 @@
 		"assets": "Активы",
 		"me": "Профиль",
 		"primary": "Основная навигация",
-		"profile": "Профиль",
 		"backTo": "Назад: {destination}"
 	},
 	"jobs": {
