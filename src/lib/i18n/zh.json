@@ -227,7 +227,6 @@
 		"assets": "资产",
 		"me": "我的",
 		"primary": "主导航",
-		"profile": "我的",
 		"backTo": "返回{destination}"
 	},
 	"sessionNav": {
