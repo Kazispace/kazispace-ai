@@ -11,6 +11,7 @@ import {
   TOP_LEVEL_DESTINATIONS,
   isTopLevelScreen,
   resolveTopLevelDestination,
+  subscriptionHref,
   topLevelHref,
 } from '@/lib/top-level-nav';
 
@@ -55,6 +56,14 @@ describe('resolveTopLevelDestination', () => {
   });
 });
 
+describe('subscriptionHref', () => {
+  it('marks the Chat entry path so back returns to Chat (page header spec 0.2)', () => {
+    expect(subscriptionHref('en')).toBe('/en/subscription');
+    expect(subscriptionHref('en', { fromChat: true })).toBe('/en/subscription?return=chat');
+    expect(isTopLevelScreen('/en/subscription', 'en')).toBe(false);
+  });
+});
+
 describe('isTopLevelScreen', () => {
   it.each([
     ['/en/chat', true],
@@ -87,13 +96,15 @@ describe('BottomTabBar', () => {
     container.remove();
   });
 
-  const tabs = () => Array.from(container.querySelectorAll('[role="tab"]'));
+  const tabs = () => Array.from(container.querySelectorAll('nav[data-testid="bottom-tab-bar"] a'));
 
   it('renders Chat · Assets · Me with the current destination selected', () => {
     pathnameRef.value = '/en/clinic/hub';
     act(() => root.render(<BottomTabBar locale="en" />));
     expect(tabs().map((tab) => tab.textContent)).toEqual(['nav.chat', 'nav.assets', 'nav.me']);
-    expect(tabs().map((tab) => tab.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
+    expect(tabs().map((tab) => tab.getAttribute('aria-current'))).toEqual([null, 'page', null]);
+    // Page navigation, not a tab widget (kazispace-ui tab bar spec 0.2).
+    expect(container.querySelector('[role="tab"], [role="tablist"], [aria-selected]')).toBeNull();
     expect(tabs().map((tab) => tab.getAttribute('href'))).toEqual([
       '/en/chat',
       '/en/clinic/hub',

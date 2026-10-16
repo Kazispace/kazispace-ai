@@ -223,13 +223,12 @@
 		"remaining": "Остаток: {count}"
 	},
 	"nav": {
-		"home": "Главная",
 		"chat": "Чат",
 		"assets": "Активы",
 		"me": "Профиль",
 		"primary": "Основная навигация",
-		"jobs": "Вакансии",
-		"profile": "Профиль"
+		"profile": "Профиль",
+		"backTo": "Назад: {destination}"
 	},
 	"jobs": {
 		"title": "Подбор вакансий",

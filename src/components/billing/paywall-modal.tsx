@@ -8,6 +8,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/lib/store";
 import { useDialogFocusTrap } from "@/hooks/use-dialog-focus-trap";
+import { subscriptionHref } from "@/lib/top-level-nav";
 
 interface PaywallModalProps {
   locale: string;
@@ -62,7 +63,7 @@ export function PaywallModal({ locale }: PaywallModalProps) {
         </p>
 
         <div className="mt-6 flex flex-col gap-2">
-          <Link href={`/${locale}/subscription`} onClick={closePaywall}>
+          <Link href={subscriptionHref(locale, { fromChat: true })} onClick={closePaywall}>
             <Button className="w-full">
               {isProLock ? t("upgradePro") : t("buyCredits")}
             </Button>

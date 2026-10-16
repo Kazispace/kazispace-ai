@@ -27,6 +27,15 @@ export function topLevelHref(locale: string, destination: TopLevelDestination): 
   }
 }
 
+/**
+ * Plan & credits. Opened from Chat (an upgrade prompt or the paywall) it carries
+ * `?return=chat`, so its back link returns to Chat instead of Me (kazispace-ui page
+ * header spec, "Back target": back returns to the screen that opened this one).
+ */
+export function subscriptionHref(locale: string, opts: { fromChat?: boolean } = {}): string {
+  return `/${locale}/subscription${opts.fromChat ? '?return=chat' : ''}`;
+}
+
 /** Sub-screens of Me (profile edit, plan, credits). */
 const ME_SUB_SCREENS = ['profile', 'credits', 'ledger', 'subscription'];
 /** Me and its sub-screens. */

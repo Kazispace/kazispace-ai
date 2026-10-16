@@ -11,6 +11,7 @@ import { useInterviewReadiness } from '@/hooks/use-interview-profile';
 import { isProPlan } from '@/lib/api-mappers';
 import { IRP_PROFILE_ENABLED } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { subscriptionHref } from '@/lib/top-level-nav';
 
 interface JobSprintInterviewPanelProps {
   locale: string;
@@ -79,7 +80,7 @@ export function JobSprintInterviewPanel({
               <p className="text-sm text-gray-700">{tIrp('readiness.freeLimitBlocked')}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button size="sm" asChild>
-                  <Link href={`/${locale}/subscription`}>{tIrp('readiness.upgradePro')}</Link>
+                  <Link href={subscriptionHref(locale, { fromChat: true })}>{tIrp('readiness.upgradePro')}</Link>
                 </Button>
                 <Button size="sm" variant="outline" asChild>
                   <Link href={`/${locale}/jobs`}>{tIrp('cta.viewJobs')}</Link>

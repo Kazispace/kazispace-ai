@@ -13,6 +13,7 @@ import { useJobDetail } from '@/hooks/use-jobs';
 import { isProPlan } from '@/lib/api-mappers';
 import { IRP_PROFILE_ENABLED } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { subscriptionHref } from '@/lib/top-level-nav';
 
 interface JobDetailRailReadinessViewProps {
   jobId: string;
@@ -71,7 +72,7 @@ export function JobDetailRailReadinessView({
           <CardContent className="space-y-3 p-5 text-center">
             <p className="text-sm text-gray-700">{t('readiness.freeLimitBlocked')}</p>
             <Button size="sm" asChild>
-              <Link href={`/${locale}/subscription`}>{t('readiness.upgradePro')}</Link>
+              <Link href={subscriptionHref(locale, { fromChat: true })}>{t('readiness.upgradePro')}</Link>
             </Button>
           </CardContent>
         </Card>

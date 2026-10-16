@@ -223,13 +223,12 @@
 		"remaining": "余额：{count}"
 	},
 	"nav": {
-		"home": "首页",
 		"chat": "对话",
 		"assets": "资产",
 		"me": "我的",
 		"primary": "主导航",
-		"jobs": "岗位",
-		"profile": "我的"
+		"profile": "我的",
+		"backTo": "返回{destination}"
 	},
 	"sessionNav": {
 		"iconRail": "会话导航",
@@ -238,7 +237,6 @@
 		"agents": "专家",
 		"files": "文件",
 		"search": "搜索",
-		"settings": "设置",
 		"creditsRailAria": "积分 {amount}，打开积分页",
 		"creditsLowAria": "积分偏低 {amount}，建议充值",
 		"creditsSignIn": "登录查看积分",
