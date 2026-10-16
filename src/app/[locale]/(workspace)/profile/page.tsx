@@ -124,7 +124,7 @@ function ProfilePageShell({
   children,
 }: {
   locale: string;
-  /** Reached from the CV gate in Chat (`?return=cv`): go back there, not to Me. */
+  /** Reached from Chat (`?return=cv` from the CV gate, `?return=chat` from a reply): go back there, not to Me. */
   backToChat?: boolean;
   children: React.ReactNode;
 }) {
@@ -158,6 +158,8 @@ function ProfilePageContent({ locale }: { locale: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const returnToCv = searchParams.get("return") === "cv";
+  // Opened from Chat: back goes to Chat (kazispace-ui page header spec, "Back target").
+  const backToChat = returnToCv || searchParams.get("return") === "chat";
   const routeLocale = isSupportedLocale(locale) ? locale : null;
   const preferenceMismatch =
     loadedPreference && routeLocale && loadedPreference !== routeLocale;
@@ -252,7 +254,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
 
   if (!isLoggedIn) {
     return (
-      <ProfilePageShell locale={locale} backToChat={returnToCv}>
+      <ProfilePageShell locale={locale} backToChat={backToChat}>
         <main className="pt-2 pb-6 px-4 max-w-lg mx-auto text-center space-y-4">
           <p className="text-sm text-gray-600">{t("loginRequired")}</p>
           <Button onClick={() => router.push(`/${locale}/login`)}>{t("signIn")}</Button>
@@ -263,7 +265,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
 
   if (isLoading) {
     return (
-      <ProfilePageShell locale={locale} backToChat={returnToCv}>
+      <ProfilePageShell locale={locale} backToChat={backToChat}>
         <main className="pt-2 pb-6 px-4 max-w-lg mx-auto flex justify-center">
           <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
         </main>
@@ -272,7 +274,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
   }
 
   return (
-    <ProfilePageShell locale={locale} backToChat={returnToCv}>
+    <ProfilePageShell locale={locale} backToChat={backToChat}>
       <main className="pt-2 pb-6 px-4 max-w-lg mx-auto">
         <h1 className="text-2xl font-bold text-kazi-navy mb-2">{t("title")}</h1>
         {(returnToCv ||

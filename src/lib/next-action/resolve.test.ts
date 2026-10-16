@@ -40,6 +40,24 @@ describe('next-action resolve (KAZI-321)', () => {
     ).toBe('/en/chat?open_cv=1&job_id=job-1');
   });
 
+  // Page header spec 0.2, "Back target": reply buttons open plan / profile with a
+  // Chat origin so their back link returns to Chat, not Me.
+  it('marks plan and profile opened from a reply as opened from Chat', () => {
+    expect(resolveNextActionHref('en', { type: 'upgrade_pro' })).toBe('/en/subscription?return=chat');
+    expect(resolveNextActionHref('en', { type: 'unlock_pro' })).toBe('/en/subscription?return=chat');
+    expect(resolveNextActionHref('ru', { type: 'complete_profile' })).toBe('/ru/profile?return=chat');
+    expect(resolveNextActionHref('en', { type: 'open_list', path: '/subscription' })).toBe(
+      '/en/subscription?return=chat'
+    );
+    expect(resolveNextActionHref('en', { type: 'open_list', path: '/en/profile' })).toBe(
+      '/en/profile?return=chat'
+    );
+    // An explicit query from the backend is kept as sent.
+    expect(resolveNextActionHref('en', { type: 'open_list', path: '/profile?return=cv' })).toBe(
+      '/en/profile?return=cv'
+    );
+  });
+
   it('resolves locale-specific in-chat prompts', () => {
     expect(
       resolveNextActionChatPrompt({ type: 'mock_interview' }, 'zh')

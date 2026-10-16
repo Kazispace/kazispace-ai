@@ -1,5 +1,6 @@
 import type { ChatNextAction } from '@/types/chat-envelope';
 import { getCompleteProfileHref } from '@/lib/profile-routing';
+import { subscriptionHref } from '@/lib/top-level-nav';
 import {
   isLegacyCvHubHref,
   migrateLegacyCvHubHref,
@@ -31,6 +32,17 @@ function normalizeAppPath(locale: string, rawPath: string): string | null {
 }
 
 /**
+ * Next actions are buttons under a chat reply, so the sub-screens they open must
+ * go back to Chat (kazispace-ui page header spec, "Back target"). An explicit
+ * backend `path` to plan or profile gets the same marker unless it has a query.
+ */
+function markOpenedFromChat(locale: string, href: string): string {
+  if (href === `/${locale}/subscription`) return subscriptionHref(locale, { fromChat: true });
+  if (href === `/${locale}/profile`) return getCompleteProfileHref(locale, { returnToChat: true });
+  return href;
+}
+
+/**
  * Optional deep-link for Clinic/Space next_actions (KAZI-321).
  * `mock_interview` never maps to `/interview` by type alone; `open_interview` or explicit `path` may.
  */
@@ -43,7 +55,8 @@ export function resolveNextActionHref(
     if (isLegacyCvHubHref(explicit)) {
       return migrateLegacyCvHubHref(locale, explicit);
     }
-    return normalizeAppPath(locale, explicit);
+    const href = normalizeAppPath(locale, explicit);
+    return href ? markOpenedFromChat(locale, href) : null;
   }
 
   switch (action.type) {
@@ -53,10 +66,10 @@ export function resolveNextActionHref(
     case 'view_job_recommendations':
       return `/${locale}/jobs`;
     case 'complete_profile':
-      return getCompleteProfileHref(locale);
+      return getCompleteProfileHref(locale, { returnToChat: true });
     case 'upgrade_pro':
     case 'unlock_pro':
-      return `/${locale}/subscription`;
+      return subscriptionHref(locale, { fromChat: true });
     default:
       return null;
   }
