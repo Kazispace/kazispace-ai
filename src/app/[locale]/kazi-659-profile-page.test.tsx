@@ -13,11 +13,12 @@ const patchMeMock = vi.hoisted(() => vi.fn());
 const pushMock = vi.hoisted(() => vi.fn());
 const replaceMock = vi.hoisted(() => vi.fn());
 const showToastMock = vi.hoisted(() => vi.fn());
+const searchRef = vi.hoisted(() => ({ value: '' }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
   usePathname: () => '/en/profile',
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(searchRef.value),
 }));
 
 vi.mock('next-intl', () => ({
@@ -89,6 +90,24 @@ describe('KAZI-659 /profile page', () => {
     root = null;
     host = null;
     useAuthStore.setState({ token: null, user: null, isLoggedIn: false, authReady: false });
+  });
+
+  // Page header spec 0.2, "Back target": opened from Chat (`?return=chat` from a reply
+  // button, `?return=cv` from the CV gate) the back link returns to Chat.
+  it.each([
+    ['', '/en/mine'],
+    ['?return=chat', '/en/chat'],
+    ['?return=cv', '/en/chat'],
+  ])('back link for %j goes to %s', async (search, href) => {
+    searchRef.value = search;
+    useAuthStore.setState({ token: null, user: null, isLoggedIn: false, authReady: true });
+    await act(async () => {
+      root!.render(<ProfilePage params={{ locale: 'en' }} />);
+    });
+    const backLinks = host?.querySelectorAll('a[aria-label="backTo"]') ?? [];
+    expect(backLinks).toHaveLength(1);
+    expect(backLinks[0].getAttribute('href')).toBe(href);
+    searchRef.value = '';
   });
 
   it('prompts sign-in instead of the form when logged out', async () => {

@@ -74,15 +74,17 @@ export function BottomTabBar({ locale }: { locale: string }) {
       data-testid="bottom-tab-bar"
       className="shrink-0 border-t border-workspace-border bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      <ul role="tablist" className="flex h-14">
+      {/* Page navigation, not a tab widget: links + aria-current (kazispace-ui tab bar
+          spec, "Accessibility"). Tab roles would announce "tab 1 of 3" and promise
+          arrow-key movement that links do not have. */}
+      <ul className="flex h-14">
         {TOP_LEVEL_DESTINATIONS.map((destination) => {
           const Icon = ICONS[destination];
           const selected = destination === active;
           return (
-            <li key={destination} role="presentation" className="flex flex-1">
+            <li key={destination} className="flex flex-1">
               <Link
-                role="tab"
-                aria-selected={selected}
+                aria-current={selected ? 'page' : undefined}
                 href={topLevelHref(locale, destination)}
                 onClick={() => markNavIntent()}
                 className={cn(

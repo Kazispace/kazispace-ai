@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { BackLink } from "@/components/navigation/back-link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,14 +10,34 @@ import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { useBilling } from "@/hooks/use-billing";
 import { planBadgeKey } from "@/lib/api-mappers";
+import { topLevelHref } from "@/lib/top-level-nav";
 
 interface SubscriptionPageProps {
   params: { locale: string };
 }
 
+/**
+ * Back returns to the screen that opened this one (kazispace-ui page header spec,
+ * "Back target"): Chat when an upgrade prompt there added `?return=chat`, else Me.
+ */
+function SubscriptionBackLinkFromParams({ locale }: { locale: string }) {
+  const tNav = useTranslations("nav");
+  const fromChat = useSearchParams()?.get("return") === "chat";
+  const destination = fromChat ? "chat" : "me";
+  return <BackLink href={topLevelHref(locale, destination)} label={tNav(destination)} />;
+}
+
+function SubscriptionBackLink({ locale }: { locale: string }) {
+  const tNav = useTranslations("nav");
+  return (
+    <Suspense fallback={<BackLink href={topLevelHref(locale, "me")} label={tNav("me")} />}>
+      <SubscriptionBackLinkFromParams locale={locale} />
+    </Suspense>
+  );
+}
+
 export default function SubscriptionPage({ params }: SubscriptionPageProps) {
   const t = useTranslations("billing");
-  const tNav = useTranslations("nav");
   const tMine = useTranslations("mine");
   const { locale } = params;
   const [tab, setTab] = useState<"pro" | "sprint">("pro");
@@ -33,7 +54,7 @@ export default function SubscriptionPage({ params }: SubscriptionPageProps) {
   return (
     <div className="h-full overflow-y-auto bg-gray-50">
       <div className="px-4 pt-2 max-w-lg mx-auto">
-        <BackLink href={`/${locale}/mine`} label={tNav("me")} />
+        <SubscriptionBackLink locale={locale} />
       </div>
       <main className="pt-2 pb-6 px-4 max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-6">

@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { clampPct } from '@/lib/interview-irp-utils';
 import type { InterviewReadinessResult, ReadinessTier } from '@/types';
 import type { JobPracticeContext } from '@/types/jobs';
+import { subscriptionHref } from '@/lib/top-level-nav';
 
 interface IrpReadinessPanelProps {
   result: InterviewReadinessResult;
@@ -139,7 +140,7 @@ export function IrpReadinessPanel({
           <div className="text-xs text-gray-600 bg-orange-50 border border-orange-100 rounded-lg p-3 space-y-2">
             <p>{t('readiness.freeLimit')}</p>
             <Button size="sm" variant="outline" asChild>
-              <Link href={`/${locale}/subscription`}>{t('readiness.upgradePro')}</Link>
+              <Link href={subscriptionHref(locale, { fromChat: true })}>{t('readiness.upgradePro')}</Link>
             </Button>
           </div>
         )}

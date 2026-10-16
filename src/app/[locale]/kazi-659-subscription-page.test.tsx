@@ -8,10 +8,12 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { useUIStore } from '@/lib/store';
 
 const useBillingMock = vi.hoisted(() => vi.fn());
+const searchRef = vi.hoisted(() => ({ value: '' }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
   usePathname: () => '/en/subscription',
+  useSearchParams: () => new URLSearchParams(searchRef.value),
 }));
 
 vi.mock('next-intl', () => ({
@@ -33,6 +35,7 @@ describe('KAZI-659 /subscription page', () => {
   });
 
   beforeEach(() => {
+    searchRef.value = '';
     useBillingMock.mockReset();
     useBillingMock.mockReturnValue({ plan: null, isLoading: false });
     useUIStore.setState({ isTelegramMiniApp: false });
@@ -115,5 +118,21 @@ describe('KAZI-659 /subscription page', () => {
 
     expect(host?.textContent).toContain('proBadge');
     expect(host?.textContent).not.toContain('freeTrialBadge');
+  });
+
+  // Page header spec 0.2, "Back target": back returns to the screen that opened this
+  // one, and the label names it. Upgrade prompts in Chat add `?return=chat`.
+  it.each([
+    ['', '/en/mine', 'me'],
+    ['?return=chat', '/en/chat', 'chat'],
+    ['?return=other', '/en/mine', 'me'],
+  ])('back link for %j goes to %s labelled %s', async (search, href, label) => {
+    searchRef.value = search;
+    await act(async () => {
+      root!.render(<SubscriptionPage params={{ locale: 'en' }} />);
+    });
+    const back = host?.querySelector('a[aria-label="backTo"]');
+    expect(back?.getAttribute('href')).toBe(href);
+    expect(back?.textContent).toBe(label);
   });
 });

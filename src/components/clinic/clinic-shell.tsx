@@ -119,6 +119,7 @@ import { mapStrategySelectTurnContexts } from "@/lib/strategy-select";
 import { resolveActionSelectSubmit } from "@/lib/next-action-submit";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
 import { isEnglishTutorReviseAction } from "@/lib/english-tutor/custom-components";
+import { subscriptionHref } from "@/lib/top-level-nav";
 
 interface ClinicShellProps {
   locale: string;
@@ -690,7 +691,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
         return;
       }
       if (pending?.type === 'subscription') {
-        router.push(`/${locale}/subscription`);
+        router.push(subscriptionHref(locale, { fromChat: true }));
         return;
       }
       if (

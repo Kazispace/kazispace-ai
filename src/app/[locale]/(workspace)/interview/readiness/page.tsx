@@ -13,6 +13,7 @@ import { useInterviewReadiness } from "@/hooks/use-interview-profile";
 import { useBilling } from "@/hooks/use-billing";
 import { isProPlan } from "@/lib/api-mappers";
 import { parseReadinessCheckSource } from "@/types";
+import { subscriptionHref } from "@/lib/top-level-nav";
 
 interface ReadinessPageProps {
   params: { locale: string };
@@ -77,7 +78,7 @@ function ReadinessPageContent({ locale }: { locale: string }) {
             <p className="text-sm text-gray-700">{t("readiness.freeLimitBlocked")}</p>
             <div className="flex flex-wrap gap-2 justify-center">
               <Button size="sm" asChild>
-                <Link href={`/${locale}/subscription`}>{t("readiness.upgradePro")}</Link>
+                <Link href={subscriptionHref(locale, { fromChat: true })}>{t("readiness.upgradePro")}</Link>
               </Button>
               <Button size="sm" variant="outline" asChild>
                 <Link href={`/${locale}/jobs`}>{t("cta.viewJobs")}</Link>

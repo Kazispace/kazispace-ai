@@ -223,13 +223,12 @@
 		"remaining": "Balance: {count}"
 	},
 	"nav": {
-		"home": "Home",
 		"chat": "Chat",
 		"assets": "Assets",
 		"me": "Me",
 		"primary": "Main navigation",
-		"jobs": "Jobs",
-		"profile": "Profile"
+		"profile": "Profile",
+		"backTo": "Back to {destination}"
 	},
 	"sessionNav": {
 		"iconRail": "Session navigation",
@@ -238,7 +237,6 @@
 		"agents": "Agents",
 		"files": "Files",
 		"search": "Search",
-		"settings": "Settings",
 		"creditsRailAria": "Credits: {amount}. Open credits page",
 		"creditsLowAria": "Low credits: {amount}. Top up",
 		"creditsSignIn": "Sign in to view credits",
