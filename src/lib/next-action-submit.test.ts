@@ -67,7 +67,7 @@ describe('et_next_practice (KAZI-1082)', () => {
   // The shape the BE emits (`next_practice.next_action`) inside `assistant_response`.
   const raw = {
     assistant_response: {
-      content: '…\n\n下一步：冠词误用 / 缺失（语法）还比较弱，可以专门练一组。',
+      content: '…\n\n下一步可以练：冠词误用 / 缺失（语法）—— 目前掌握得最少的一项，可以专门练一组。',
       next_actions: [
         {
           type: 'et_next_practice',
