@@ -311,12 +311,9 @@ export function useSpaceTurn(
                 : messageRow
             )
           );
-          setSpaceReplyNotice(spaceId, {
-            kind: 'error',
-            message,
-            retryable: true,
-            retryMessageId: userId,
-          });
+          // D13: the user's bubble is marked "Not sent" with "Try again", so
+          // no separate retry notice. Only "busy" adds a line of its own.
+          setSpaceReplyNotice(spaceId, busy ? { kind: 'error', message } : null);
           return {
             ok: false as const,
             error: message,

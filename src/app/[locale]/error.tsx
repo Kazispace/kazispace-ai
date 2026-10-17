@@ -12,6 +12,7 @@ export default function LocaleError({
   reset: () => void;
 }) {
   const t = useTranslations('errorBoundary');
+  const tStates = useTranslations('states');
   const locale = useLocale();
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function LocaleError({
       <h1 className="text-xl font-semibold">{t('title')}</h1>
       <p className="max-w-sm text-sm text-muted-foreground">{t('description')}</p>
       <div className="flex gap-3">
-        <Button onClick={() => reset()}>{t('tryAgain')}</Button>
+        <Button onClick={() => reset()}>{tStates('retry')}</Button>
         <Button variant="outline" asChild>
           {/* Full navigation, not next/link — the crash may have left app state
               broken, so force a fresh load rather than a client transition. */}

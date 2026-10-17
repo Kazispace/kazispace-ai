@@ -294,7 +294,6 @@
 		"input": {
 			"placeholder": "Мансап туралы жазыңыз…"
 		},
-		"retry": "Қайталау",
 		"messageActions": {
 			"quote": "Дәйексөз",
 			"thumbsUp": "Пайдалы",
@@ -438,7 +437,6 @@
 				"interviewPrepShort": "Сұхбат тізімі"
 			}
 		},
-		"sendFailed": "Хабарлама жіберілмеді",
 		"switching": "Маман ауыстырылуда…",
 		"switchExpert": "Маман таңдау",
 		"closeSwitcher": "Жабу",
@@ -453,7 +451,6 @@
 		"layerResolving": "Сессияңыз қалпына келтірілуде…",
 		"historyLoading": "Диалог жүктелуде…",
 		"historyLoadFailed": "Диалог тарихын жүктеу сәтсіз аяқталды",
-		"historyRetry": "Қайта көру",
 		"switchConfirmTitle": "Маман ауыстыру керек пе?",
 		"switchConfirmBody": "Қазір {currentName} белсенді. Шығып, {targetName} ашу керек пе?",
 		"switchConfirmAction": "{targetName} ашу",
@@ -611,7 +608,6 @@
 				"categoryInterview": "Сұхбат",
 				"olderAssets": "Ертерек ({count})",
 				"historyBadge": "Тарих",
-				"indexFailed": "Қате — қайталау",
 				"indexFailedNoRetry": "Генерация сәтсіз",
 				"previewLoading": "Жүктелуде…",
 				"previewUnavailable": "Алдын ала қарау жоқ.",
@@ -703,7 +699,6 @@
 		"sessionLoading": "Сұхбат дайындалуда…",
 		"sessionEnded": "Сұхбат сессиясы аяқталды.",
 		"startFailed": "Сұхбатты бастау сәтсіз аяқталды. Қайта көріңіз.",
-		"retryStart": "Қайта көру",
 		"languageHint": "Ағылшын, орыс немесе аралас тілде жауап беруге болады.",
 		"backToMine": "← Жеке кабинетке",
 		"loginBanner": "Сұхбат нәтижелерін сақтау үшін кіріңіз.",
@@ -717,7 +712,6 @@
 		"feedbackPending": "Жеке кері байланыс дайындалуда…",
 		"feedbackContentMissing": "Кері байланыс әлі дайын емес. Бір сәттен кейін қайталап көріңіз.",
 		"checkFeedback": "Нәтижені тексеру",
-		"tryAgain": "Қайта көру",
 		"practiceAgain": "Қайта жаттығу",
 		"buildCv": "Түйіндеме жасау",
 		"prepTitle": "Сұхбатқа дайындық",
@@ -750,7 +744,6 @@
 		"irp": {
 			"loadingProfile": "Сұхбат профилі жүктелуде…",
 			"profileLoadFailed": "Сұхбат профилін жүктеу сәтсіз.",
-			"profileRetry": "Қайталау",
 			"provisionalShort": "уақытша",
 			"provisionalBanner": "Уақытша профиль — ресми IRP үшін тағы {remaining} жаттығу аяқтаңыз.",
 			"featureDisabled": "Сұхбат профилі әлі қосылмаған.",
@@ -796,7 +789,6 @@
 				"trainingItem": "{type} · {rounds} раунд",
 				"practiceForJob": "Бұл жұмысқа жаттығу",
 				"refresh": "Жаңарту",
-				"retry": "Қайталау",
 				"back": "← Сұхбатқа оралу",
 				"backToInterview": "Сұхбатқа оралу",
 				"jobRequired": "Дайындықты тексеру үшін жұмыс орнын таңдаңыз.",
@@ -820,7 +812,6 @@
 				"subtitle": "Сұхбат деңгейінің өсуін бақылаңыз.",
 				"back": "← Сұхбатқа оралу",
 				"backToInterview": "Сұхбатқа оралу",
-				"retry": "Қайталау",
 				"empty": "Тарих жоқ — жаттығудан бастаңыз.",
 				"levelCurve": "Деңгей қисығы",
 				"levelCurveHint": "Әр жаттығудан кейінгі деңгей",
@@ -840,7 +831,6 @@
 	},
 	"english": {
 		"loading": "Жүктелуде…",
-		"retry": "Қайталау",
 		"featureDisabled": "Ағылшын паспорты әлі қосылмаған.",
 		"backToClinic": "Клиникаға",
 		"onboarding": {
@@ -900,7 +890,6 @@
 			"finish": "Тестті аяқтау",
 			"scoring": "Жауаптар талдануда…",
 			"submitFailed": "Жіберу сәтсіз. Қайталаңыз.",
-			"retry": "Қайталау",
 			"ahaTitle": "Сіздің ағылшын деңгейіңіз",
 			"quickDisclaimer": "Сөйлеу + жазу бойынша. Толық тест нақтырақ.",
 			"startTraining": "Speaking жаттығу",
@@ -921,7 +910,6 @@
 			"submit": "Жіберу",
 			"scoring": "Кері байланыс…",
 			"submitFailed": "Жіберу сәтсіз.",
-			"retry": "Қайталау",
 			"feedbackTitle": "Кері байланыс",
 			"speakingDelta": "Сөйлеу +{delta} осы сессияда",
 			"backToPassport": "Паспортқа"
@@ -943,7 +931,6 @@
 			"subtitle": "Паспорт деңгейінің өзгеруі.",
 			"back": "← Паспортқа",
 			"backToPassport": "Паспортқа",
-			"retry": "Қайталау",
 			"empty": "Тарих үшін бірінші жаттығуды аяқтаңыз.",
 			"levelCurve": "Деңгей тарихы",
 			"levelCurveHint": "Тесттер мен жаттығулардан кейін",
@@ -1002,7 +989,10 @@
 	"errorBoundary": {
 		"title": "Бір қате орын алды",
 		"description": "Күтпеген қате орын алды. Қайта көріңіз немесе клиникаға оралыңыз.",
-		"tryAgain": "Қайта көру",
 		"backToClinic": "Клиникаға оралу"
+	},
+	"states": {
+		"retry": "Қайта көру",
+		"notSent": "Жіберілмеді"
 	}
 }

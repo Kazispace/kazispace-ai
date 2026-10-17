@@ -245,7 +245,7 @@ describe('KAZI-659 /interview page', () => {
 
     expect(host?.textContent).toContain('irp.profileLoadFailed');
     const retryButton = Array.from(host?.querySelectorAll('button') ?? []).find(
-      (b) => b.textContent === 'irp.profileRetry'
+      (b) => b.textContent === 'retry' // states.retry (D14)
     );
     expect(retryButton).toBeDefined();
 

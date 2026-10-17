@@ -27,11 +27,12 @@ export type HubChatMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  /** User messages only (D13): "failed" shows "Not sent" + "Try again". */
+  status?: 'sending' | 'sent' | 'failed';
 };
 
 export type HubAgentChatLabels = {
   openFailed: string;
-  sendFailed: string;
   emptyReply: string;
 };
 
@@ -206,7 +207,7 @@ export function useHubAgentChat(options: {
   }, [ensureOpen, syncSessionId]);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, opts?: { retryMessageId?: string }) => {
       const trimmed = text.trim();
       if (!trimmed || isSending) return;
 
@@ -217,10 +218,22 @@ export function useHubAgentChat(options: {
       }
 
       const assistantId = `assistant_${Date.now()}`;
+      const userId = opts?.retryMessageId ?? `user_${Date.now()}`;
 
       setMessages((prev) => [
-        ...prev,
-        { id: `user_${Date.now()}`, role: 'user', content: trimmed },
+        ...(opts?.retryMessageId
+          ? prev.map((m) =>
+              m.id === userId ? { ...m, status: 'sending' as const } : m
+            )
+          : [
+              ...prev,
+              {
+                id: userId,
+                role: 'user' as const,
+                content: trimmed,
+                status: 'sending' as const,
+              },
+            ]),
         { id: assistantId, role: 'assistant', content: '' },
       ]);
 
@@ -229,12 +242,13 @@ export function useHubAgentChat(options: {
       setIsSending(false);
 
       if (!res.success || !res.data) {
+        // D13: keep the user's bubble, mark it "Not sent"; no warning reply.
         setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId
-              ? { ...m, content: `⚠️ ${res.error ?? labels.sendFailed}` }
-              : m
-          )
+          prev
+            .filter((m) => m.id !== assistantId)
+            .map((m) =>
+              m.id === userId ? { ...m, status: 'failed' as const } : m
+            )
         );
         return;
       }
@@ -246,7 +260,9 @@ export function useHubAgentChat(options: {
         prev.map((m) =>
           m.id === assistantId
             ? { ...m, content: assistant.content || labels.emptyReply }
-            : m
+            : m.id === userId
+              ? { ...m, status: 'sent' as const }
+              : m
         )
       );
     },
@@ -256,9 +272,20 @@ export function useHubAgentChat(options: {
       isSending,
       labels.emptyReply,
       labels.openFailed,
-      labels.sendFailed,
       onEnvelope,
     ]
+  );
+
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+
+  const retryMessage = useCallback(
+    (messageId: string) => {
+      const msg = messagesRef.current.find((m) => m.id === messageId);
+      if (!msg || msg.role !== 'user') return;
+      void sendMessage(msg.content, { retryMessageId: messageId });
+    },
+    [sendMessage]
   );
 
   return {
@@ -269,6 +296,7 @@ export function useHubAgentChat(options: {
     isSending,
     openError,
     sendMessage,
+    retryMessage,
     resyncSession,
   };
 }

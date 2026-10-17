@@ -293,7 +293,6 @@
 		"deleteConfirmCancel": "取消",
 		"deleteFailed": "删除文件失败",
 		"loadFilesFailed": "无法加载文件列表",
-		"retryLoadFiles": "重试",
 		"filesLoginRequired": "登录后查看你的文件",
 		"filesLoginCta": "去登录",
 		"noSearchResults": "无匹配结果",
@@ -321,7 +320,6 @@
 		"spaceNotReady": "空间尚未就绪，请刷新页面或稍后再试。",
 		"loading": "加载中…",
 		"historyLoadFailed": "无法加载对话历史",
-		"historyRetry": "重试",
 		"loadFailed": "无法加载空间",
 		"apiNotReadyHint": "请确认后端已开启 SPACES_ENABLED",
 		"emptyState": "发送消息开始对话",
@@ -478,7 +476,6 @@
 		"attachCamera": "拍照",
 		"attachmentPreviewRemove": "移除附件",
 		"uploading": "上传中…",
-		"uploadFailed": "上传失败——点击重试",
 		"fileTooLarge": "文件不能超过 {limit}",
 		"fileTypeNotSupported": "不支持该文件类型",
 		"holdToTalk": "按住说话",
@@ -572,7 +569,6 @@
 		"input": {
 			"placeholder": "和我聊聊你的职业问题…"
 		},
-		"retry": "重试",
 		"processing": "处理中…",
 		"processingWebSearch": "正在快速检索…",
 		"processingResearch": "正在深度研究，请稍候…",
@@ -720,7 +716,6 @@
 				"interviewPrepShort": "面试清单"
 			}
 		},
-		"sendFailed": "发送失败",
 		"switching": "正在切换专家…",
 		"switchExpert": "选择专家",
 		"closeSwitcher": "关闭",
@@ -737,7 +732,6 @@
 		"layerResolving": "正在恢复你的会话…",
 		"historyLoading": "正在加载对话…",
 		"historyLoadFailed": "无法加载对话历史",
-		"historyRetry": "重试",
 		"switchConfirmTitle": "切换专家？",
 		"switchConfirmBody": "你正在与 {currentName} 对话。要离开并打开 {targetName} 吗？",
 		"switchConfirmAction": "切换到 {targetName}",
@@ -900,7 +894,6 @@
 				"categoryInterview": "面试类",
 				"olderAssets": "更早的… · {count}",
 				"historyBadge": "历史",
-				"indexFailed": "生成失败 · 点按重试",
 				"indexFailedNoRetry": "生成失败",
 				"previewLoading": "加载预览…",
 				"previewUnavailable": "暂无法预览此文件。",
@@ -982,7 +975,6 @@
 		}
 	},
 	"english": {
-		"retry": "重试",
 		"passportPage": {
 			"back": "← 返回英语教练"
 		},
@@ -1010,8 +1002,7 @@
 			"latest": "最近一次",
 			"trendLine": "{name}分数走势",
 			"empty": "还没有分数。完成一次写作或口语练习后，这里会显示你的能力分。",
-			"error": "能力分加载失败。",
-			"retry": "重试"
+			"error": "能力分加载失败。"
 		},
 		"envelope": {
 			"lowConfidenceBanner": "本次评分仅供参考",
@@ -1087,7 +1078,10 @@
 	"errorBoundary": {
 		"title": "出现错误",
 		"description": "发生了意外错误。请重试，或返回门诊。",
-		"tryAgain": "重试",
 		"backToClinic": "返回门诊"
+	},
+	"states": {
+		"retry": "重试",
+		"notSent": "未发送"
 	}
 }

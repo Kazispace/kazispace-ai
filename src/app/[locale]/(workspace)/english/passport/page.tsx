@@ -36,6 +36,7 @@ function PassportSampleJobs({ profile }: { profile: EnglishProfile }) {
 
 function PassportPageContent({ locale }: { locale: string }) {
   const t = useTranslations("english");
+  const tStates = useTranslations("states");
   const router = useRouter();
 
   const { profile, profileStatus, isProfileLoading, profileError, refetchProfile } =
@@ -73,7 +74,7 @@ function PassportPageContent({ locale }: { locale: string }) {
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3">
         <p className="text-sm text-red-600">{profileError}</p>
         <Button size="sm" onClick={() => void refetchProfile()}>
-          {t("retry")}
+          {tStates("retry")}
         </Button>
       </div>
     );

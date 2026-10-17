@@ -172,6 +172,7 @@ function WorkspaceProfilePane({
   onOpenReadiness: () => void;
 }) {
   const t = useTranslations('interview.irp');
+  const tStates = useTranslations('states');
   const { profile, isProfileLoading, profileError, refetchProfile } =
     useInterviewProfile({ enabled: IRP_PROFILE_ENABLED });
   const { plan } = useBilling();
@@ -196,7 +197,7 @@ function WorkspaceProfilePane({
       <div className="flex flex-col items-center gap-3 p-6">
         <p className="text-sm text-red-600">{profileError}</p>
         <Button size="sm" onClick={() => void refetchProfile()}>
-          {t('profileRetry')}
+          {tStates('retry')}
         </Button>
       </div>
     );
@@ -232,6 +233,7 @@ function WorkspaceProfilePane({
 
 function WorkspaceGrowthPane() {
   const t = useTranslations('interview.irp');
+  const tStates = useTranslations('states');
   const { history, isHistoryLoading, historyError, refetchHistory } =
     useInterviewProfileHistory({ enabled: IRP_PROFILE_ENABLED });
   const { plan } = useBilling();
@@ -262,7 +264,7 @@ function WorkspaceGrowthPane() {
         <div className="space-y-3 text-center">
           <p className="text-sm text-red-600">{historyError}</p>
           <Button size="sm" onClick={() => void refetchHistory()}>
-            {t('growth.retry')}
+            {tStates('retry')}
           </Button>
         </div>
       ) : null}

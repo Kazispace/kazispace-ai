@@ -33,6 +33,7 @@ export function JobDetailRailReadinessView({
   practiceDisabled = false,
 }: JobDetailRailReadinessViewProps) {
   const t = useTranslations('interview.irp');
+  const tStates = useTranslations('states');
   const { job } = useJobDetail(jobId);
   const {
     readinessResult,
@@ -83,14 +84,14 @@ export function JobDetailRailReadinessView({
           <p className="text-sm text-red-600">
             {typeof readinessError === 'string'
               ? readinessError
-              : t('readiness.retry')}
+              : tStates('retry')}
           </p>
           <Button
             size="sm"
             onClick={() => void refetchReadiness()}
             disabled={isReadinessLoading}
           >
-            {t('readiness.retry')}
+            {tStates('retry')}
           </Button>
         </div>
       )}

@@ -25,6 +25,7 @@ function ReadinessPageContent({ locale }: { locale: string }) {
   const jobId = searchParams.get("job_id");
   const readinessSource = parseReadinessCheckSource(searchParams.get("source"));
   const t = useTranslations("interview.irp");
+  const tStates = useTranslations("states");
 
   const {
     readinessResult,
@@ -92,7 +93,7 @@ function ReadinessPageContent({ locale }: { locale: string }) {
         <div className="bg-white border border-gray-200 rounded-xl p-5 text-center space-y-3">
           <p className="text-sm text-red-600">{readinessError}</p>
           <Button size="sm" onClick={() => void refetchReadiness()} disabled={isReadinessLoading}>
-            {t("readiness.retry")}
+            {tStates("retry")}
           </Button>
         </div>
       )}

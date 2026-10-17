@@ -137,6 +137,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   const tSessions = useTranslations("agentSessions");
   const tSessionNav = useTranslations("sessionNav");
   const tSpaces = useTranslations("spaces");
+  const tStates = useTranslations("states");
   // MVP: one in-flight accept at a time (BE emits at most one live nudge per reply).
   const [spaceNudgeBusy, setSpaceNudgeBusy] = useState(false);
 
@@ -299,6 +300,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     isAgentStreaming,
     loadAgentHistory,
     sendMessage: sendAgentMessage,
+    retryMessage: retryAgentMessage,
   } = useAgentChat(activeAgentId, agentSessionId, locale);
 
   const { nba: nbaResponse, isLoading: nbaLoading } = useNbaAction();
@@ -995,9 +997,9 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
         await reloadClinicIfNeeded(exitResult);
         return;
       }
-      // Hook already handled LLM_BUSY / profile / paywall.
-      if ("toastShown" in result && result.toastShown) return;
-      showToast(result.error ?? tClinic("sendFailed"), "error");
+      // Any other failure: the hook marked the user's bubble "Not sent" with
+      // "Try again" (D13), so no toast. LLM_BUSY / profile / paywall were
+      // already surfaced by the hook.
     },
     [
       exitToClinic,
@@ -1028,37 +1030,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     }
 
     if (isAgentMode) {
-      const result = await sendAgentMessage(text);
-      if (result?.ok && result.pendingTransition) {
-        if (pendingAgentSwitch) return;
-        if (result.assistantPlaceholderId && activeAgentId) {
-          useAgentStore
-            .getState()
-            .removeAgentMessage(activeAgentId, result.assistantPlaceholderId);
-        }
-        setPendingAgentSwitch(
-          toPendingAgentSwitch(result.pendingTransition, result.triggerMessage)
-        );
-        return;
-      }
-      if (result?.ok && result.escalation) {
-        const follow = await followAgentEscalation(result.escalation, {
-          activateAgentWithoutPrecheck,
-        });
-        if (!follow.ok) {
-          showToast(follow.error ?? tClinic("activateFailed"), "error");
-        }
-        return;
-      }
-      if (result && !result.ok) {
-        if (result.error?.includes("500")) {
-          showToast(tClinic("agentErrorFallback"), "error");
-          const exitResult = await exitToClinic();
-          await reloadClinicIfNeeded(exitResult);
-          return;
-        }
-        showToast(result.error ?? tClinic("sendFailed"), "error");
-      }
+      await handleAgentSendOutcome(await sendAgentMessage(text));
       return;
     }
 
@@ -1068,6 +1040,41 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     });
 
     await handleClinicSendOutcome(text, result);
+  };
+
+  const handleAgentSendOutcome = async (
+    result: Awaited<ReturnType<typeof sendAgentMessage>>
+  ) => {
+    if (result?.ok && result.pendingTransition) {
+      if (pendingAgentSwitch) return;
+      if (result.assistantPlaceholderId && activeAgentId) {
+        useAgentStore
+          .getState()
+          .removeAgentMessage(activeAgentId, result.assistantPlaceholderId);
+      }
+      setPendingAgentSwitch(
+        toPendingAgentSwitch(result.pendingTransition, result.triggerMessage)
+      );
+      return;
+    }
+    if (result?.ok && result.escalation) {
+      const follow = await followAgentEscalation(result.escalation, {
+        activateAgentWithoutPrecheck,
+      });
+      if (!follow.ok) {
+        showToast(follow.error ?? tClinic("activateFailed"), "error");
+      }
+      return;
+    }
+    if (result && !result.ok) {
+      if (result.error?.includes("500")) {
+        showToast(tClinic("agentErrorFallback"), "error");
+        const exitResult = await exitToClinic();
+        await reloadClinicIfNeeded(exitResult);
+        return;
+      }
+      // D13: useAgentChat marked the user's bubble "Not sent"; no toast.
+    }
   };
 
   const submitClinicChatRef = useRef(submitClinicChat);
@@ -1384,12 +1391,23 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     hydrate: hydrateHistoryStubs,
   });
 
+  const handleAgentSendOutcomeRef = useRef(handleAgentSendOutcome);
+  handleAgentSendOutcomeRef.current = handleAgentSendOutcome;
+
   const handleRetryById = useCallback(
     (messageId: string) => {
       pinToLatestOnSend();
+      if (isAgentMode) {
+        void retryAgentMessage(messageId).then((result) => {
+          if ("error" in result || result.ok) {
+            void handleAgentSendOutcomeRef.current(result);
+          }
+        });
+        return;
+      }
       void retryMessage(messageId);
     },
-    [pinToLatestOnSend, retryMessage]
+    [isAgentMode, pinToLatestOnSend, retryAgentMessage, retryMessage]
   );
 
   /** Same-thread research handoff from web_search upgrade CTA (KAZI-233). */
@@ -1410,20 +1428,10 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       });
       if (result.ok) {
         dismissMessageUpgradeCta(messageId);
-        return;
       }
-      if (!("toastShown" in result && result.toastShown)) {
-        showToast(result.error ?? tClinic("sendFailed"), "error");
-      }
+      // On failure the handoff bubble is marked "Not sent" with "Try again" (D13).
     },
-    [
-      dismissMessageUpgradeCta,
-      locale,
-      pinToLatestOnSend,
-      sendClinicMessage,
-      showToast,
-      tClinic,
-    ]
+    [dismissMessageUpgradeCta, locale, pinToLatestOnSend, sendClinicMessage]
   );
 
   // Fills SessionNavShell `<main className="min-h-0 flex-1">` — not viewport `h-screen`.
@@ -1542,7 +1550,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
           clinicMessages.length === 0 ? (
           <ChatHistoryLoadError
             message={tClinic("historyLoadFailed")}
-            retryLabel={tClinic("historyRetry")}
+            retryLabel={tStates("retry")}
             onRetry={retryClinicHistoryLoad}
             disabled={isHistoryLoading}
           />

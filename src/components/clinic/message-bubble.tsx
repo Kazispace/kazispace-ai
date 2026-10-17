@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Bot, FileText, User } from "lucide-react";
+import { AlertCircle, Bot, FileText, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
 import { CitationList } from "./citation-list";
@@ -135,6 +135,7 @@ export function MessageBubble({
   actionsDisabled,
 }: MessageBubbleProps) {
   const t = useTranslations("chat");
+  const tStates = useTranslations("states");
   const isUser = role === "user";
   const isFailed = isUser && status === "failed";
   const displayName = name ?? (isUser ? undefined : AGENT_NAME);
@@ -388,15 +389,27 @@ export function MessageBubble({
               className="px-1"
             />
           ) : null}
-          {isFailed && onRetry && (
-            <button
-              type="button"
-              onClick={onRetry}
-              className="text-xs text-red-600 hover:text-red-800 self-end px-1 underline-offset-2 hover:underline"
+          {isFailed ? (
+            // D13: the bubble stays, is marked "Not sent", and offers "Try again".
+            <div
+              className="flex items-center gap-2 self-end px-1 text-xs text-red-600"
+              data-testid="message-not-sent"
             >
-              {t("retry")}
-            </button>
-          )}
+              <span className="inline-flex items-center gap-1">
+                <AlertCircle className="h-3.5 w-3.5" aria-hidden />
+                {tStates("notSent")}
+              </span>
+              {onRetry ? (
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="min-h-[44px] min-w-[44px] px-1 font-medium text-red-700 underline-offset-2 hover:text-red-800 hover:underline"
+                >
+                  {tStates("retry")}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           {showCapabilityChip && capabilityId ? (
             <SearchCapabilityChip
               capabilityId={capabilityId}
