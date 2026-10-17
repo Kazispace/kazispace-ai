@@ -24,6 +24,8 @@ export type HubMessageListBodyProps = {
    * Static fallback paints it first; Virtuoso measures it as `components.Header`.
    */
   header?: ReactNode;
+  /** Re-send a "Not sent" user message (D13). */
+  onRetryById?: (messageId: string) => void;
 };
 
 /** Shared map used by short hub threads and as the Virtuoso loading/failure fallback. */
@@ -32,6 +34,7 @@ export function StaticHubMessageRows({
   locale,
   isStreaming,
   header,
+  onRetryById,
 }: HubMessageListBodyProps) {
   const rows = messages.map((message) => (
     <HubMessageRow
@@ -39,6 +42,7 @@ export function StaticHubMessageRows({
       message={message}
       locale={locale}
       isStreamingEmpty={isStreaming && message.content === ''}
+      onRetryById={onRetryById}
     />
   ));
 

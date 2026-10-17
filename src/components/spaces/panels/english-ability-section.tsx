@@ -35,6 +35,7 @@ interface EnglishAbilitySectionProps {
  */
 export function EnglishAbilitySection({ spaceId }: EnglishAbilitySectionProps) {
   const t = useTranslations('english.ability');
+  const tStates = useTranslations('states');
   const refreshKey = useSpaceStore((s) =>
     latestGradingMessageId(s.getSpaceSlice(spaceId).messages)
   );
@@ -60,7 +61,7 @@ export function EnglishAbilitySection({ spaceId }: EnglishAbilitySectionProps) {
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <p className="text-sm text-red-600">{t('error')}</p>
           <Button size="sm" variant="outline" onClick={() => void refetch()}>
-            {t('retry')}
+            {tStates('retry')}
           </Button>
         </div>
       ) : null}

@@ -108,7 +108,7 @@ describe('KAZI-588 R3 SpaceChatPane history error UI', () => {
       root.render(<SpaceChatPane locale="en" space={blankSpace} />);
     });
     expect(container.textContent).toContain('historyLoadFailed');
-    expect(container.textContent).toContain('historyRetry');
+    expect(container.textContent).toContain('retry'); // states.retry (D14)
     expect(container.textContent).not.toContain('blankWelcome');
     act(() => {
       container.querySelector('button')?.click();

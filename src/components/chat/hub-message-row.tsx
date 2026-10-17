@@ -9,12 +9,15 @@ export type HubListMessage = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  /** User messages only: "failed" renders "Not sent" + "Try again" (D13). */
+  status?: 'sending' | 'sent' | 'failed';
 };
 
 export type HubMessageRowProps = {
   message: HubListMessage;
   locale: string;
   isStreamingEmpty: boolean;
+  onRetryById?: (messageId: string) => void;
 };
 
 function hubMessageRowEqual(
@@ -24,7 +27,8 @@ function hubMessageRowEqual(
   return (
     prev.message === next.message &&
     prev.locale === next.locale &&
-    prev.isStreamingEmpty === next.isStreamingEmpty
+    prev.isStreamingEmpty === next.isStreamingEmpty &&
+    prev.onRetryById === next.onRetryById
   );
 }
 
@@ -32,6 +36,7 @@ function HubMessageRowImpl({
   message,
   locale,
   isStreamingEmpty,
+  onRetryById,
 }: HubMessageRowProps) {
   if (message.role === 'user') {
     return (
@@ -40,6 +45,12 @@ function HubMessageRowImpl({
         content={message.content}
         variant="agent"
         locale={locale}
+        status={message.status}
+        onRetry={
+          message.status === 'failed' && onRetryById
+            ? () => onRetryById(message.id)
+            : undefined
+        }
       />
     );
   }

@@ -27,6 +27,7 @@ export function HubMessageList({
   locale,
   isStreaming,
   header,
+  onRetryById,
   scrollParentRef,
 }: HubMessageListProps) {
   const virtualize = shouldVirtualizeHubMessages(messages.length);
@@ -37,7 +38,7 @@ export function HubMessageList({
       scrollParentRef
     );
 
-  const rowProps = { messages, locale, isStreaming, header };
+  const rowProps = { messages, locale, isStreaming, header, onRetryById };
 
   if (!showVirtuoso || !VirtuosoComp) {
     return <StaticHubMessageRows {...rowProps} />;

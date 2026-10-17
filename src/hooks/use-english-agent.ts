@@ -24,7 +24,6 @@ export function useEnglishAgent(locale: string, enabled: boolean) {
     seedWelcome: () => t('chatWelcome'),
     labels: {
       openFailed: t('chatOpenFailed'),
-      sendFailed: t('chatSendFailed'),
       emptyReply: t('chatEmptyReply'),
     },
   });

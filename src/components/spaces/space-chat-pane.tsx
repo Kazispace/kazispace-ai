@@ -110,8 +110,8 @@ export function SpaceChatPane({
   composer,
 }: SpaceChatPaneProps) {
   const t = useTranslations('spaces');
-  const tChat = useTranslations('chat');
   const tPractice = useTranslations('interview.irp.practice');
+  const tStates = useTranslations('states');
   const router = useRouter();
   const searchParams = useSearchParams();
   const showToast = useUIStore((s) => s.showToast);
@@ -396,11 +396,6 @@ export function SpaceChatPane({
     [locale, messages]
   );
 
-  const handleRetryNotice = () => {
-    if (!replyNotice?.retryMessageId) return;
-    handleRetryById(replyNotice.retryMessageId);
-  };
-
   const jumpOverlay = showJumpToLatest ? (
     <button
       type="button"
@@ -453,7 +448,7 @@ export function SpaceChatPane({
           ) : firstPaintKind === 'error' ? (
             <ChatHistoryLoadError
               message={t('historyLoadFailed')}
-              retryLabel={t('historyRetry')}
+              retryLabel={tStates('retry')}
               onRetry={() => {
                 void retryHistory();
               }}
@@ -498,16 +493,6 @@ export function SpaceChatPane({
               >
                 {replyNotice.message}
               </p>
-              {replyNotice.retryable && replyNotice.retryMessageId ? (
-                <button
-                  type="button"
-                  onClick={handleRetryNotice}
-                  disabled={isSending}
-                  className="text-xs text-red-600 underline-offset-2 hover:underline disabled:opacity-50"
-                >
-                  {tChat('retry')}
-                </button>
-              ) : null}
             </div>
           ) : null}
         </div>

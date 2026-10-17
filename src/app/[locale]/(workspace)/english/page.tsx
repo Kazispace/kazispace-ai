@@ -47,6 +47,7 @@ function EnglishPageContent({ locale }: { locale: string }) {
     isSending,
     openError,
     sendMessage,
+    retryMessage,
     resyncSession,
   } = useEnglishAgent(locale, EPP_PROFILE_ENABLED);
 
@@ -118,6 +119,7 @@ function EnglishPageContent({ locale }: { locale: string }) {
             messages={messages}
             locale={locale}
             isStreaming={isSending}
+            onRetryById={retryMessage}
             scrollParentRef={scrollRef}
           />
         )}

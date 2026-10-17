@@ -362,6 +362,7 @@ function WorkspaceAssetIcon({
   onRetry: () => void;
   t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
 }) {
+  const tStates = useTranslations('states');
   const [retrying, setRetrying] = useState(false);
   const reindexEnabled = isWorkspaceAssetReindexEnabled();
   const isPending = asset.indexing_status === 'pending';
@@ -416,13 +417,13 @@ function WorkspaceAssetIcon({
         ) : null}
       </span>
       <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-workspace-secondary">
-        {isFailed
-          ? reindexEnabled
-            ? t('indexFailed')
-            : t('indexFailedNoRetry')
-          : asset.display_name}
+        {isFailed ? t('indexFailedNoRetry') : asset.display_name}
       </span>
-      {asset.subtitle ? (
+      {isFailed && reindexEnabled ? (
+        <span className="line-clamp-1 w-full text-center text-[9px] font-medium leading-tight text-primary">
+          {tStates('retry')}
+        </span>
+      ) : asset.subtitle ? (
         <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-workspace-muted">
           {asset.subtitle}
         </span>
