@@ -1,6 +1,7 @@
 'use client';
 
 import { rememberFailedSend, takeFailedSend } from '@/lib/chat/failed-send-options';
+import { isOffline, retryAtFrom } from '@/lib/chat/connectivity';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -399,6 +400,36 @@ export function useClinicChat(locale?: string) {
         actionMeta?: import('@/types/chat-envelope').UserMessageActionMeta;
       }
     ) => {
+      // D16: typed offline → queued bubble; it sends when back online. Checked
+      // before ensureMasterSession, which needs the network.
+      if (isOffline()) {
+        const queuedId = options?.retryMessageId ?? `user_${Date.now()}`;
+        const queuedContent = options?.displayContent?.trim() || text.trim();
+        patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
+          options?.retryMessageId
+            ? prev.map((message) =>
+                message.id === queuedId
+                  ? { ...message, status: 'queued' as const, retryAt: undefined }
+                  : message
+              )
+            : [
+                ...prev,
+                {
+                  id: queuedId,
+                  role: 'user' as const,
+                  content: queuedContent,
+                  status: 'queued' as const,
+                },
+              ]
+        );
+        rememberFailedSend('clinic', queuedId, {
+          text,
+          displayContent: options?.displayContent,
+          actionMeta: options?.actionMeta,
+          pendingCapability: options?.pendingCapability,
+        });
+        return { ok: false as const, error: 'offline', queued: true as const };
+      }
       // Clinic Phase 1 path is a single long HTTP POST (not mid-stream SSE).
       // LLM_BUSY surfaces on the response envelope via handleApiFailure + toastShown.
       const sessionId = await ensureMasterSession();
@@ -413,7 +444,12 @@ export function useClinicChat(locale?: string) {
         patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
           prev.map((message) =>
             message.id === userMsgId
-              ? { ...message, status: 'sending' as const, content: displayContent }
+              ? {
+                  ...message,
+                  status: 'sending' as const,
+                  retryAt: undefined,
+                  content: displayContent,
+                }
               : message
           )
         );
@@ -452,12 +488,14 @@ export function useClinicChat(locale?: string) {
         });
 
         if (!res.success || !res.data) {
+          const busy = isLlmBusy(res);
+          const retryAt = busy ? retryAtFrom(res.retryAfter) : undefined;
           patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
             prev
               .filter((message) => message.id !== assistantId)
               .map((message) =>
                 message.id === userMsgId
-                  ? { ...message, status: 'failed' as const }
+                  ? { ...message, status: 'failed' as const, retryAt }
                   : message
               )
           );
@@ -467,8 +505,8 @@ export function useClinicChat(locale?: string) {
             actionMeta: options?.actionMeta,
             pendingCapability: options?.pendingCapability,
           });
-          handleApiFailure(res);
-          const busy = isLlmBusy(res);
+          // Busy with a wait: the bubble shows the countdown, so no toast too.
+          if (!retryAt) handleApiFailure(res);
           return {
             ok: false as const,
             error: busy

@@ -120,6 +120,8 @@ import { resolveActionSelectSubmit } from "@/lib/next-action-submit";
 import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
 import { isEnglishTutorReviseAction } from "@/lib/english-tutor/custom-components";
 import { subscriptionHref } from "@/lib/top-level-nav";
+import { OfflineBar } from "@/components/chat/offline-bar";
+import { useOfflineQueueFlush } from "@/hooks/use-offline-queue-flush";
 
 interface ClinicShellProps {
   locale: string;
@@ -1410,6 +1412,41 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     [isAgentMode, pinToLatestOnSend, retryAgentMessage, retryMessage]
   );
 
+  // D16: send what was typed offline, in order, once the connection returns.
+  // Main chat first, then the open specialist; each goes through the same
+  // path as "Try again".
+  useOfflineQueueFlush(
+    () => {
+      const queued = (m: { role: string; status?: string; id: string }) =>
+        m.role === "user" && m.status === "queued";
+      const clinicIds = useSpaceStore
+        .getState()
+        .getSpaceSlice(CLINIC_SPACE_ID)
+        .messages.filter(queued)
+        .map((m) => `clinic:${m.id}`);
+      const agentIds = activeAgentId
+        ? useAgentStore
+            .getState()
+            .getAgentMessages(activeAgentId)
+            .filter(queued)
+            .map((m) => `agent:${m.id}`)
+        : [];
+      return [...clinicIds, ...agentIds];
+    },
+    async (key) => {
+      const [kind, ...rest] = key.split(":");
+      const messageId = rest.join(":");
+      if (kind === "agent") {
+        const result = await retryAgentMessage(messageId);
+        if ("error" in result || result.ok) {
+          await handleAgentSendOutcomeRef.current(result);
+        }
+        return;
+      }
+      await retryMessage(messageId);
+    }
+  );
+
   /** Same-thread research handoff from web_search upgrade CTA (KAZI-233). */
   const handleUpgradeResearch = useCallback(
     async (messageId: string) => {
@@ -1498,6 +1535,8 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
           </Link>
         </div>
       )}
+
+      <OfflineBar />
 
       {isLoggedIn ? (
         <LayerIndicator

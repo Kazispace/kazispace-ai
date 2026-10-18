@@ -73,6 +73,7 @@ function SpaceMessageRowImpl({
       messageId={message.id}
       serverMessageId={message.serverMessageId}
       status={message.status}
+      retryAt={message.retryAt}
       cards={message.cards}
       nextActions={message.nextActions}
       selectedStrategyPayload={strategy.selectedStrategyPayload}

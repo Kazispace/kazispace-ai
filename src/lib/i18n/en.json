@@ -568,7 +568,7 @@
 			"greeting": "👋 Hi! I'm {name}, your AI career partner.",
 			"prompt": "Tell me what's on your mind, or pick a specialist below:",
 			"title": "Welcome to KaziSpace",
-			"desc": "Your AI career partner for Central Asia"
+			"desc": "Your AI partner for English and a better career"
 		},
 		"input": {
 			"placeholder": "Talk to me about your career…"
@@ -1378,6 +1378,9 @@
 	},
 	"states": {
 		"retry": "Try again",
-		"notSent": "Not sent"
+		"notSent": "Not sent",
+		"slow": "This is taking longer than usual.",
+		"busy": "The AI is busy right now. Try again in {seconds}s.",
+		"offline": "You're offline. Messages will send when you're back online."
 	}
 }

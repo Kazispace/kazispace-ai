@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { isLlmBusy } from '@/lib/api-errors';
+import { isOffline, retryAtFrom } from '@/lib/chat/connectivity';
 import { sendSpaceTurn } from '@/lib/spaces-api';
 import {
   extractAssistantMessageId,
@@ -50,7 +51,7 @@ import { rememberFailedSend, takeFailedSend } from '@/lib/chat/failed-send-optio
 export type SpaceSendResult =
   | { ok: true; pending?: false }
   | { ok: true; pending: true }
-  | { ok: false; error: string; errorCode?: string; retryable?: boolean };
+  | { ok: false; error: string; errorCode?: string; retryable?: boolean; queued?: true };
 
 export type { SpaceReplyNotice };
 
@@ -263,12 +264,14 @@ export function useSpaceTurn(
       const displayContent = options?.displayContent?.trim() || trimmed;
       const userId = options?.retryMessageId ?? `user_${Date.now()}`;
       let nextMessages: SpaceChatMessage[] = [];
+      // D16: typed offline → queued bubble; it sends when back online.
+      const status = isOffline() ? ('queued' as const) : ('sending' as const);
 
       if (options?.retryMessageId) {
         patchSpaceMessages(spaceId, (prev) => {
           nextMessages = prev.map((message) =>
             message.id === userId
-              ? { ...message, content: displayContent, status: 'sending' as const }
+              ? { ...message, content: displayContent, status, retryAt: undefined }
               : message
           );
           return nextMessages;
@@ -277,10 +280,19 @@ export function useSpaceTurn(
         patchSpaceMessages(spaceId, (prev) => {
           nextMessages = [
             ...prev,
-            { id: userId, role: 'user', content: displayContent, status: 'sending' },
+            { id: userId, role: 'user', content: displayContent, status },
           ];
           return nextMessages;
         });
+      }
+      if (status === 'queued') {
+        rememberFailedSend(`space:${spaceId}`, userId, {
+          text: trimmed,
+          displayContent: options?.displayContent,
+          actionMeta: options?.actionMeta,
+        });
+        sendInFlightRef.current = false;
+        return { ok: false as const, error: 'offline', queued: true as const };
       }
       setSpaceSending(spaceId, true);
       setSpaceReplyNotice(spaceId, null);
@@ -305,10 +317,11 @@ export function useSpaceTurn(
               : tErrors('llmBusy')
             : (res.error ?? 'Send failed');
 
+          const retryAt = busy ? retryAtFrom(res.retryAfter) : undefined;
           patchSpaceMessages(spaceId, (prev) =>
             prev.map((messageRow) =>
               messageRow.id === userId
-                ? { ...messageRow, status: 'failed' as const }
+                ? { ...messageRow, status: 'failed' as const, retryAt }
                 : messageRow
             )
           );
@@ -318,8 +331,12 @@ export function useSpaceTurn(
             actionMeta: options?.actionMeta,
           });
           // D13: the user's bubble is marked "Not sent" with "Try again", so
-          // no separate retry notice. Only "busy" adds a line of its own.
-          setSpaceReplyNotice(spaceId, busy ? { kind: 'error', message } : null);
+          // no separate retry notice. Busy with a wait shows its countdown on
+          // the bubble; busy without one keeps its own line.
+          setSpaceReplyNotice(
+            spaceId,
+            busy && !retryAt ? { kind: 'error', message } : null
+          );
           return {
             ok: false as const,
             error: message,

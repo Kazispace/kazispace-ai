@@ -289,7 +289,7 @@
 			"greeting": "👋 Salom! Men {name}, sizning AI karyera hamkoringiz.",
 			"prompt": "Savolingizni yozing yoki mutaxassis tanlang:",
 			"title": "Xush kelibsiz",
-			"desc": "Markaziy Osiyo uchun AI karyera hamkori"
+			"desc": "Ingliz tili va yaxshiroq karyera uchun AI hamkor"
 		},
 		"input": {
 			"placeholder": "Karyera haqida yozing…"
@@ -962,6 +962,9 @@
 	},
 	"states": {
 		"retry": "Qayta urinish",
-		"notSent": "Yuborilmadi"
+		"notSent": "Yuborilmadi",
+		"slow": "Bu odatdagidan ko'proq vaqt olmoqda.",
+		"busy": "AI hozir band. {seconds} soniyadan so'ng qayta urinib ko'ring.",
+		"offline": "Internetga ulanish yo'q. Xabarlar aloqa tiklanganda yuboriladi."
 	}
 }

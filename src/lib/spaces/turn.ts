@@ -347,7 +347,9 @@ export type SpaceChatMessage = {
   /** See `pendingCapability` above — same Clinic-only scope. */
   streamComplete?: boolean;
   /** Present on optimistic local turns (KAZI-186 retry). */
-  status?: 'sending' | 'sent' | 'failed';
+  status?: 'sending' | 'sent' | 'failed' | 'queued';
+  /** Busy (LLM_BUSY): epoch ms when "Try again" becomes active. */
+  retryAt?: number;
   /** Persisted chat_messages.id for feedback (KAZI-254). */
   serverMessageId?: string;
 };

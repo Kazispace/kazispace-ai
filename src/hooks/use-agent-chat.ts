@@ -9,6 +9,8 @@ import { mapAgentHistoryToChatMessages } from '@/lib/agent-sessions';
 import type { RawAgentHistoryMessage } from '@/lib/agent-sessions';
 import type { ChatMessage } from '@/types';
 import { rememberFailedSend, takeFailedSend } from '@/lib/chat/failed-send-options';
+import { isOffline, retryAtFrom } from '@/lib/chat/connectivity';
+import { isLlmBusy } from '@/lib/api-errors';
 
 export function useAgentChat(
   agentId: string | null,
@@ -70,8 +72,10 @@ export function useAgentChat(
 
       const displayContent = opts?.displayContent?.trim() || text.trim();
       const userMsgId = opts?.retryMessageId ?? `user_${Date.now()}`;
+      // D16: typed offline → queued bubble; it sends when back online.
+      const status = isOffline() ? ('queued' as const) : ('sending' as const);
       if (opts?.retryMessageId) {
-        updateAgentMessage(agentId, userMsgId, { status: 'sending' });
+        updateAgentMessage(agentId, userMsgId, { status, retryAt: undefined });
       } else {
         const userMsg: ChatMessage = {
           id: userMsgId,
@@ -79,9 +83,17 @@ export function useAgentChat(
           content: displayContent,
           timestamp: new Date().toISOString(),
           sessionId,
-          status: 'sending',
+          status,
         };
         addAgentMessage(agentId, userMsg);
+      }
+      if (status === 'queued') {
+        rememberFailedSend(`agent:${agentId}`, userMsgId, {
+          text,
+          displayContent: opts?.displayContent,
+          actionMeta: opts?.actionMeta,
+        });
+        return { ok: false as const, error: 'offline', queued: true as const };
       }
       setAgentSending(agentId, true);
 
@@ -107,7 +119,10 @@ export function useAgentChat(
       if (!res.success || !res.data) {
         // D13: keep the user's bubble, mark it "Not sent"; no warning reply.
         removeAgentMessage(agentId, assistantId);
-        updateAgentMessage(agentId, userMsgId, { status: 'failed' });
+        updateAgentMessage(agentId, userMsgId, {
+          status: 'failed',
+          retryAt: isLlmBusy(res) ? retryAtFrom(res.retryAfter) : undefined,
+        });
         rememberFailedSend(`agent:${agentId}`, userMsgId, {
           text,
           displayContent: opts?.displayContent,

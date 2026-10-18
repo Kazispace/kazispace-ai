@@ -564,7 +564,7 @@
 			"greeting": "👋 你好！我是 {name}，你的 AI 职业伙伴。",
 			"prompt": "说说你的职业问题，或选择一位专家：",
 			"title": "欢迎使用 KaziSpace",
-			"desc": "中亚地区的 AI 职业伙伴"
+			"desc": "助你提升英语、找到更好工作的 AI 伙伴"
 		},
 		"input": {
 			"placeholder": "和我聊聊你的职业问题…"
@@ -1082,6 +1082,9 @@
 	},
 	"states": {
 		"retry": "重试",
-		"notSent": "未发送"
+		"notSent": "未发送",
+		"slow": "这比平时要久一些。",
+		"busy": "AI 当前繁忙，请 {seconds} 秒后重试。",
+		"offline": "你已离线。恢复联网后，消息会自动发送。"
 	}
 }

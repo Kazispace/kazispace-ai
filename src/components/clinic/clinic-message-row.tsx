@@ -155,6 +155,7 @@ function ClinicMessageRowImpl({
       feedbackEnabled={!isAgentMode}
       intent={message.intent}
       status={message.status}
+      retryAt={message.retryAt}
       referral={message.referral}
       spaceNudge={!isAgentMode ? message.spaceNudge : undefined}
       nextActions={message.nextActions}
