@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KaziSpace</title>
+  <style>
+    :root {
+      --bg0: #0b1220;
+      --bg1: #132033;
+      --text: #e8eef7;
+      --muted: #9fb0c7;
+      --accent: #3d8bfd;
+      --line: rgba(232, 238, 247, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(61, 139, 253, 0.28), transparent 55%),
+        radial-gradient(900px 500px at 90% 10%, rgba(56, 189, 168, 0.18), transparent 50%),
+        linear-gradient(165deg, var(--bg0), var(--bg1) 55%, #0a101a);
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+    }
+    main {
+      width: min(40rem, 100%);
+      border-top: 1px solid var(--line);
+      padding-top: 1.75rem;
+    }
+    .brand {
+      font-size: clamp(2.4rem, 6vw, 3.4rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 0.85rem;
+    }
+    p {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 1.05rem;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .meta {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      font-size: 0.95rem;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1 class="brand">KaziSpace</h1>
+    <p>国内入口（OSS + CDN）已接通。本页托管于阿里云 OSS，经 CDN 域名 <code>www.kazispace.cn</code> 提供访问。</p>
+    <p>后端 API：<a href="https://api-cn.kazispace.ai"><code>https://api-cn.kazispace.ai</code></a></p>
+    <p class="meta">健康检查：<a href="https://api-cn.kazispace.ai/health">https://api-cn.kazispace.ai/health</a></p>
+  </main>
+</body>
+</html>
