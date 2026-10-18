@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build && node scripts/check-clinic-js-budget.mjs && node scripts/check-route-js-budgets.mjs",
+    "build:docker": "DOCKER_BUILD=1 npm run build",
     "test:perf-budget": "node scripts/check-clinic-js-budget.mjs --optional && node scripts/check-route-js-budgets.mjs --optional",
     "start": "next start",
     "lint": "next lint",
