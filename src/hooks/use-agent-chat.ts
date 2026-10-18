@@ -8,6 +8,7 @@ import { useAgentStore } from '@/lib/store';
 import { mapAgentHistoryToChatMessages } from '@/lib/agent-sessions';
 import type { RawAgentHistoryMessage } from '@/lib/agent-sessions';
 import type { ChatMessage } from '@/types';
+import { rememberFailedSend, takeFailedSend } from '@/lib/chat/failed-send-options';
 
 export function useAgentChat(
   agentId: string | null,
@@ -107,6 +108,11 @@ export function useAgentChat(
         // D13: keep the user's bubble, mark it "Not sent"; no warning reply.
         removeAgentMessage(agentId, assistantId);
         updateAgentMessage(agentId, userMsgId, { status: 'failed' });
+        rememberFailedSend(`agent:${agentId}`, userMsgId, {
+          text,
+          displayContent: opts?.displayContent,
+          actionMeta: opts?.actionMeta,
+        });
         return { ok: false as const, error: res.error };
       }
 
@@ -159,7 +165,15 @@ export function useAgentChat(
         .getAgentMessages(agentId)
         .find((m) => m.id === messageId);
       if (!msg || msg.role !== 'user') return { ok: false as const };
-      return sendMessage(msg.content, { retryMessageId: messageId });
+      const scope = `agent:${agentId}`;
+      const original = takeFailedSend(scope, messageId);
+      const res = await sendMessage(original?.text ?? msg.content, {
+        displayContent: original?.displayContent,
+        actionMeta: original?.actionMeta,
+        retryMessageId: messageId,
+      });
+      if (!res.ok && original) rememberFailedSend(scope, messageId, original);
+      return res;
     },
     [agentId, sendMessage]
   );

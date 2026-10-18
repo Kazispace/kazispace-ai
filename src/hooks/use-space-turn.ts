@@ -45,6 +45,7 @@ import {
 } from '@/lib/spaces/space-history-ready';
 import { useFetchSpaceHistory, useHydrateSpaceHistory, useSpaceHistoryQuery } from '@/hooks/use-space-history';
 import { useSpaceStore, type SpaceReplyNotice } from '@/lib/store';
+import { rememberFailedSend, takeFailedSend } from '@/lib/chat/failed-send-options';
 
 export type SpaceSendResult =
   | { ok: true; pending?: false }
@@ -311,6 +312,11 @@ export function useSpaceTurn(
                 : messageRow
             )
           );
+          rememberFailedSend(`space:${spaceId}`, userId, {
+            text: trimmed,
+            displayContent: options?.displayContent,
+            actionMeta: options?.actionMeta,
+          });
           // D13: the user's bubble is marked "Not sent" with "Try again", so
           // no separate retry notice. Only "busy" adds a line of its own.
           setSpaceReplyNotice(spaceId, busy ? { kind: 'error', message } : null);
@@ -476,9 +482,17 @@ export function useSpaceTurn(
       if (!msg || msg.role !== 'user') {
         return { ok: false as const, error: 'Nothing to retry' };
       }
-      return sendMessage(msg.content, { retryMessageId: messageId });
+      const scope = `space:${spaceId}`;
+      const original = spaceId ? takeFailedSend(scope, messageId) : undefined;
+      const res = await sendMessage(original?.text ?? msg.content, {
+        displayContent: original?.displayContent,
+        actionMeta: original?.actionMeta,
+        retryMessageId: messageId,
+      });
+      if (!res.ok && original) rememberFailedSend(scope, messageId, original);
+      return res;
     },
-    [messages, sendMessage]
+    [messages, sendMessage, spaceId]
   );
 
   const hydrateHistoryStubs = useCallback(

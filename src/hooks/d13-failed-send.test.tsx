@@ -98,6 +98,39 @@ describe('D13 specialist send failure', () => {
       undefined
     );
   });
+
+  it('re-sends a form answer with its action meta, not as free text', async () => {
+    act(() => root!.render(<Probe />));
+
+    const actionMeta = { action_type: 'form_submit', form_id: 'et_intake' };
+    sendAgentChat.mockResolvedValueOnce({ success: false, error: 'Failed to fetch' });
+    await act(async () => {
+      await api!.sendMessage('Level: B1', { displayContent: 'Level: B1', actionMeta });
+    });
+    const failedId = useAgentStore.getState().getAgentMessages(AGENT)[0].id;
+
+    // A retry that fails again keeps the meta for the next one.
+    sendAgentChat.mockResolvedValueOnce({ success: false, error: 'Failed to fetch' });
+    await act(async () => {
+      await api!.retryMessage(failedId);
+    });
+    expect(sendAgentChat).toHaveBeenLastCalledWith(AGENT, 'Level: B1', 'sess_1', {
+      actionMeta,
+    });
+
+    sendAgentChat.mockResolvedValueOnce({ success: true, data: {} });
+    await act(async () => {
+      await api!.retryMessage(failedId);
+    });
+    expect(sendAgentChat).toHaveBeenCalledTimes(3);
+    expect(sendAgentChat).toHaveBeenLastCalledWith(AGENT, 'Level: B1', 'sess_1', {
+      actionMeta,
+    });
+    expect(useAgentStore.getState().getAgentMessages(AGENT)[0]).toMatchObject({
+      id: failedId,
+      status: 'sent',
+    });
+  });
 });
 
 describe('D13 bubble', () => {
