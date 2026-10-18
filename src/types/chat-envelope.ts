@@ -27,6 +27,11 @@ export interface StrategySelectActionMeta {
   confirm_skipped?: boolean;
 }
 
+/** Per-action meta on `et_next_practice` (KAZI-1082): the PRD §4 tag the next set focuses on. */
+export interface NextPracticeActionMeta {
+  focus_tag?: string;
+}
+
 /**
  * User message meta when submitting a payload-based next_action (KAZI-469),
  * or an english_tutor form answer (KAZI-1041: `form_id`, payload only for radio).
@@ -37,6 +42,8 @@ export interface UserMessageActionMeta {
   strategy_id?: string;
   task_id?: string;
   form_id?: string;
+  /** KAZI-1082: forwarded only from an `et_next_practice` click; BE re-checks it against the enum. */
+  focus_tag?: string;
 }
 
 export interface ChatNextAction {
@@ -48,7 +55,7 @@ export interface ChatNextAction {
   job_id?: string;
   session_id?: string;
   /** Action-level meta; `strategy_select` carries rationale / recommended (#309). */
-  meta?: StrategySelectActionMeta;
+  meta?: StrategySelectActionMeta & NextPracticeActionMeta;
 }
 
 export interface ChatJobCard {

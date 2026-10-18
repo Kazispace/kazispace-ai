@@ -67,6 +67,9 @@ function normalizeNextActions(raw: unknown): ChatNextAction[] {
       if (metaRaw.confirm_skipped === true) {
         meta.confirm_skipped = true;
       }
+      if (typeof metaRaw.focus_tag === 'string' && metaRaw.focus_tag.trim()) {
+        meta.focus_tag = metaRaw.focus_tag.trim();
+      }
       if (Object.keys(meta).length > 0) {
         entry.meta = meta;
       }
