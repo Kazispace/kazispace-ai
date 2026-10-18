@@ -27,6 +27,7 @@ export function JobSprintInterviewPanel({
 }: JobSprintInterviewPanelProps) {
   const t = useTranslations('spaces');
   const tIrp = useTranslations('interview.irp');
+  const tStates = useTranslations('states');
   const resolvedJobId = jobId?.trim() || null;
 
   const {
@@ -102,7 +103,7 @@ export function JobSprintInterviewPanel({
               onClick={() => void refetchReadiness()}
               disabled={isReadinessLoading}
             >
-              {tIrp('readiness.retry')}
+              {tStates('retry')}
             </Button>
           </div>
         ) : null}

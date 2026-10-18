@@ -176,6 +176,7 @@ export function SessionFileLibraryPanel({
   onClose,
 }: SessionFileLibraryPanelProps) {
   const t = useTranslations('sessionNav');
+  const tStates = useTranslations('states');
   const locale = useLocale() || localeProp;
   const router = useRouter();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -270,7 +271,7 @@ export function SessionFileLibraryPanel({
               className="inline-flex items-center gap-1.5 rounded-lg border border-workspace-border px-3 py-1.5 text-xs font-medium text-workspace-text hover:bg-workspace-hover"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              {t('retryLoadFiles')}
+              {tStates('retry')}
             </button>
           </div>
         ) : files.length === 0 ? (

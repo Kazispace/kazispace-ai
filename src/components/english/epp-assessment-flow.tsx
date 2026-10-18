@@ -22,6 +22,7 @@ type Step = 'items' | 'scoring' | 'aha' | 'error';
 
 export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps) {
   const t = useTranslations('english.assessment');
+  const tStates = useTranslations('states');
   const router = useRouter();
   const queryClient = useQueryClient();
   const recorder = useAudioRecorder();
@@ -150,7 +151,7 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center">
         <p className="text-sm text-red-600">{error ?? submitError ?? t('submitFailed')}</p>
         <Button size="sm" onClick={handleRetryStart}>
-          {t('retry')}
+          {tStates('retry')}
         </Button>
       </div>
     );
@@ -170,7 +171,7 @@ export function EppAssessmentFlow({ locale, onboarding }: EppAssessmentFlowProps
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center">
         <p className="text-sm text-red-600">{submitError ?? error ?? t('submitFailed')}</p>
         <Button size="sm" onClick={handleRetry}>
-          {t('retry')}
+          {tStates('retry')}
         </Button>
       </div>
     );

@@ -1,5 +1,6 @@
 'use client';
 
+import { rememberFailedSend, takeFailedSend } from '@/lib/chat/failed-send-options';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
@@ -460,6 +461,12 @@ export function useClinicChat(locale?: string) {
                   : message
               )
           );
+          rememberFailedSend('clinic', userMsgId, {
+            text,
+            displayContent: options?.displayContent,
+            actionMeta: options?.actionMeta,
+            pendingCapability: options?.pendingCapability,
+          });
           handleApiFailure(res);
           const busy = isLlmBusy(res);
           return {
@@ -511,6 +518,12 @@ export function useClinicChat(locale?: string) {
                   : message
               )
           );
+          rememberFailedSend('clinic', userMsgId, {
+            text,
+            displayContent: options?.displayContent,
+            actionMeta: options?.actionMeta,
+            pendingCapability: options?.pendingCapability,
+          });
           return { ok: false as const, error: 'Assistant did not return a reply' };
         }
 
@@ -644,7 +657,15 @@ export function useClinicChat(locale?: string) {
         .getSpaceSlice(CLINIC_SPACE_ID)
         .messages.find((m) => m.id === messageId);
       if (!msg || msg.role !== 'user') return { ok: false as const };
-      return sendMessage(msg.content, { retryMessageId: messageId });
+      const original = takeFailedSend('clinic', messageId);
+      const res = await sendMessage(original?.text ?? msg.content, {
+        displayContent: original?.displayContent,
+        actionMeta: original?.actionMeta,
+        pendingCapability: original?.pendingCapability,
+        retryMessageId: messageId,
+      });
+      if (!res.ok && original) rememberFailedSend('clinic', messageId, original);
+      return res;
     },
     [sendMessage]
   );

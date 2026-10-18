@@ -18,6 +18,7 @@ interface EppTrainingFlowProps {
 
 export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
   const t = useTranslations('english.training');
+  const tStates = useTranslations('states');
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -106,7 +107,7 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center">
         <p className="text-sm text-red-600">{error ?? submitError ?? t('submitFailed')}</p>
         <Button size="sm" onClick={handleRetryStart}>
-          {t('retry')}
+          {tStates('retry')}
         </Button>
       </div>
     );
@@ -159,7 +160,7 @@ export function EppTrainingFlow({ locale }: EppTrainingFlowProps) {
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3 text-center">
         <p className="text-sm text-red-600">{submitError ?? error ?? t('submitFailed')}</p>
         <Button size="sm" onClick={() => void handleRetry()}>
-          {t('retry')}
+          {tStates('retry')}
         </Button>
       </div>
     );

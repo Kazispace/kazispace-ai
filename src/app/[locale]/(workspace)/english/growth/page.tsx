@@ -15,6 +15,7 @@ interface GrowthPageProps {
 
 function GrowthPageContent({ locale }: { locale: string }) {
   const t = useTranslations("english.growth");
+  const tStates = useTranslations("states");
   const { history, isHistoryLoading, historyError, refetchHistory } =
     useEnglishProfileHistory({ enabled: EPP_PROFILE_ENABLED });
 
@@ -49,7 +50,7 @@ function GrowthPageContent({ locale }: { locale: string }) {
         <div className="bg-white border border-gray-200 rounded-xl p-5 text-center space-y-3">
           <p className="text-sm text-red-600">{historyError}</p>
           <Button size="sm" onClick={() => void refetchHistory()}>
-            {t("retry")}
+            {tStates("retry")}
           </Button>
         </div>
       )}

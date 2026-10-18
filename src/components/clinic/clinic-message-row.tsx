@@ -179,7 +179,7 @@ function ClinicMessageRowImpl({
           : undefined
       }
       onRetry={
-        !isAgentMode && message.role === 'user' && message.status === 'failed'
+        message.role === 'user' && message.status === 'failed'
           ? handleRetry
           : undefined
       }

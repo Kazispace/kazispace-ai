@@ -55,6 +55,7 @@ export function HubMessageVirtuoso({
   locale,
   isStreaming,
   header,
+  onRetryById,
   scrollParentRef,
   initialScrollTop = 0,
 }: HubMessageVirtuosoProps) {
@@ -64,7 +65,7 @@ export function HubMessageVirtuoso({
     messagesLength: messages.length,
   });
 
-  const rowProps = { messages, locale, isStreaming, header };
+  const rowProps = { messages, locale, isStreaming, header, onRetryById };
   const constrainToColumn = header != null;
   const lastIndex = messages.length - 1;
 
@@ -91,6 +92,7 @@ export function HubMessageVirtuoso({
             message={message}
             locale={locale}
             isStreamingEmpty={isStreaming && message.content === ''}
+            onRetryById={onRetryById}
           />
         </div>
       )}

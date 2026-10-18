@@ -8,6 +8,7 @@ import { useAgentStore } from '@/lib/store';
 import { mapAgentHistoryToChatMessages } from '@/lib/agent-sessions';
 import type { RawAgentHistoryMessage } from '@/lib/agent-sessions';
 import type { ChatMessage } from '@/types';
+import { rememberFailedSend, takeFailedSend } from '@/lib/chat/failed-send-options';
 
 export function useAgentChat(
   agentId: string | null,
@@ -18,6 +19,7 @@ export function useAgentChat(
     setAgentMessages,
     addAgentMessage,
     updateAgentMessage,
+    removeAgentMessage,
     setAgentSending,
     setAgentStreaming,
   } = useAgentStore();
@@ -58,6 +60,8 @@ export function useAgentChat(
       opts?: {
         displayContent?: string;
         actionMeta?: import('@/types/chat-envelope').UserMessageActionMeta;
+        /** Re-send an existing "Not sent" bubble in place (D13). */
+        retryMessageId?: string;
       }
     ) => {
       if (!agentId || !sessionId) {
@@ -65,14 +69,20 @@ export function useAgentChat(
       }
 
       const displayContent = opts?.displayContent?.trim() || text.trim();
-      const userMsg: ChatMessage = {
-        id: `user_${Date.now()}`,
-        role: 'user',
-        content: displayContent,
-        timestamp: new Date().toISOString(),
-        sessionId,
-      };
-      addAgentMessage(agentId, userMsg);
+      const userMsgId = opts?.retryMessageId ?? `user_${Date.now()}`;
+      if (opts?.retryMessageId) {
+        updateAgentMessage(agentId, userMsgId, { status: 'sending' });
+      } else {
+        const userMsg: ChatMessage = {
+          id: userMsgId,
+          role: 'user',
+          content: displayContent,
+          timestamp: new Date().toISOString(),
+          sessionId,
+          status: 'sending',
+        };
+        addAgentMessage(agentId, userMsg);
+      }
       setAgentSending(agentId, true);
 
       const assistantId = `assistant_${Date.now()}`;
@@ -95,11 +105,18 @@ export function useAgentChat(
       setAgentStreaming(agentId, false);
 
       if (!res.success || !res.data) {
-        updateAgentMessage(agentId, assistantId, {
-          content: `⚠️ ${res.error ?? 'Something went wrong.'}`,
+        // D13: keep the user's bubble, mark it "Not sent"; no warning reply.
+        removeAgentMessage(agentId, assistantId);
+        updateAgentMessage(agentId, userMsgId, { status: 'failed' });
+        rememberFailedSend(`agent:${agentId}`, userMsgId, {
+          text,
+          displayContent: opts?.displayContent,
+          actionMeta: opts?.actionMeta,
         });
         return { ok: false as const, error: res.error };
       }
+
+      updateAgentMessage(agentId, userMsgId, { status: 'sent' });
 
       const { assistant, escalation } = handleAgentEnvelope(res.data);
       const pendingTransition = parsePendingTransition(res.data);
@@ -134,9 +151,31 @@ export function useAgentChat(
       sessionId,
       addAgentMessage,
       updateAgentMessage,
+      removeAgentMessage,
       setAgentSending,
       setAgentStreaming,
     ]
+  );
+
+  const retryMessage = useCallback(
+    async (messageId: string) => {
+      if (!agentId) return { ok: false as const };
+      const msg = useAgentStore
+        .getState()
+        .getAgentMessages(agentId)
+        .find((m) => m.id === messageId);
+      if (!msg || msg.role !== 'user') return { ok: false as const };
+      const scope = `agent:${agentId}`;
+      const original = takeFailedSend(scope, messageId);
+      const res = await sendMessage(original?.text ?? msg.content, {
+        displayContent: original?.displayContent,
+        actionMeta: original?.actionMeta,
+        retryMessageId: messageId,
+      });
+      if (!res.ok && original) rememberFailedSend(scope, messageId, original);
+      return res;
+    },
+    [agentId, sendMessage]
   );
 
   return {
@@ -145,5 +184,6 @@ export function useAgentChat(
     isAgentStreaming,
     loadAgentHistory,
     sendMessage,
+    retryMessage,
   };
 }

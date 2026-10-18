@@ -18,6 +18,7 @@ interface ProfilePageProps {
 
 function ProfilePageContent({ locale }: { locale: string }) {
   const t = useTranslations("interview.irp");
+  const tStates = useTranslations("states");
   const router = useRouter();
   const { profile, isProfileLoading, profileError, refetchProfile } =
     useInterviewProfile({ enabled: IRP_PROFILE_ENABLED });
@@ -45,7 +46,7 @@ function ProfilePageContent({ locale }: { locale: string }) {
       <div className="flex-1 flex flex-col items-center justify-center p-6 gap-3">
         <p className="text-sm text-red-600">{profileError}</p>
         <Button size="sm" onClick={() => void refetchProfile()}>
-          {t("profileRetry")}
+          {tStates("retry")}
         </Button>
       </div>
     );

@@ -37,6 +37,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
   const searchParams = useSearchParams();
   const jobId = searchParams.get("job_id");
   const t = useTranslations("interview");
+  const tStates = useTranslations("states");
   const showToast = useUIStore((s) => s.showToast);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const { openSwitcher } = useAgentTransition();
@@ -231,7 +232,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
         <div className="mx-4 mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-center space-y-2">
           <p className="text-xs text-red-700">{t("irp.profileLoadFailed")}</p>
           <Button size="sm" variant="outline" onClick={() => void refetchProfile()}>
-            {t("irp.profileRetry")}
+            {tStates("retry")}
           </Button>
         </div>
       )}
@@ -289,7 +290,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
         {phase === "feedback_failed" && (
           <div className={HUB_CHAT_TRAILING_COLUMN_CLASS}>
             <Button size="sm" onClick={handleReset} className="self-start">
-              {t("tryAgain")}
+              {tStates("retry")}
             </Button>
           </div>
         )}
@@ -299,7 +300,7 @@ function InterviewPageContent({ locale }: { locale: string }) {
             <div className="self-start space-y-2">
               <p className="text-sm text-gray-700">{t("startFailed")}</p>
               <Button size="sm" onClick={() => void startJobSession()}>
-                {t("retryStart")}
+                {tStates("retry")}
               </Button>
             </div>
           </div>

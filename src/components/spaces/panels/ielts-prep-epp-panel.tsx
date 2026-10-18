@@ -31,6 +31,7 @@ export function IeltsPrepEppPanel({ locale, spaceId, className }: IeltsPrepEppPa
   const router = useRouter();
   const t = useTranslations('spaces');
   const tEnglish = useTranslations('english');
+  const tStates = useTranslations('states');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
   const {
@@ -86,7 +87,7 @@ export function IeltsPrepEppPanel({ locale, spaceId, className }: IeltsPrepEppPa
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
               <p className="text-sm text-red-600">{profileError}</p>
               <Button size="sm" onClick={() => void refetchProfile()}>
-                {tEnglish('retry')}
+                {tStates('retry')}
               </Button>
             </div>
           ) : null}

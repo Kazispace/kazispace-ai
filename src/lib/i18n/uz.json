@@ -294,7 +294,6 @@
 		"input": {
 			"placeholder": "Karyera haqida yozing…"
 		},
-		"retry": "Qayta urinish",
 		"actions": {
 			"open_list": "Ish tavsiyalarini ko'rish",
 			"view_job_recommendations": "Ish tavsiyalarini ko'rish",
@@ -407,7 +406,6 @@
 				"interviewPrepShort": "Suhbat ro'yxati"
 			}
 		},
-		"sendFailed": "Xabar yuborilmadi",
 		"switching": "Mutaxassis almashtirilmoqda…",
 		"switchExpert": "Mutaxassis tanlang",
 		"closeSwitcher": "Yopish",
@@ -422,7 +420,6 @@
 		"layerResolving": "Sessiyangiz tiklanmoqda…",
 		"historyLoading": "Suhbat yuklanmoqda…",
 		"historyLoadFailed": "Suhbat tarixini yuklab bo‘lmadi",
-		"historyRetry": "Qayta urinish",
 		"switchConfirmTitle": "Mutaxassisni almashtirasizmi?",
 		"switchConfirmBody": "Hozir {currentName} faol. Chiqib, {targetName} ochilsinmi?",
 		"switchConfirmAction": "{targetName} ga o'tish",
@@ -580,7 +577,6 @@
 				"categoryInterview": "Suhbat",
 				"olderAssets": "Avvalgilar ({count})",
 				"historyBadge": "Tarix",
-				"indexFailed": "Xato — qayta urinish",
 				"indexFailedNoRetry": "Yaratish muvaffaqiyatsiz",
 				"previewLoading": "Yuklanmoqda…",
 				"previewUnavailable": "Ko‘rib bo‘lmaydi.",
@@ -672,7 +668,6 @@
 		"sessionLoading": "Suhbat tayyorlanmoqda…",
 		"sessionEnded": "Suhbat sessiyasi yakunlandi.",
 		"startFailed": "Suhbatni boshlab bo'lmadi. Qayta urinib ko'ring.",
-		"retryStart": "Qayta urinish",
 		"languageHint": "Ingliz, rus yoki aralash tilda javob berishingiz mumkin.",
 		"backToMine": "← Profilga",
 		"loginBanner": "Suhbat natijalarini saqlash uchun tizimga kiring.",
@@ -686,7 +681,6 @@
 		"feedbackPending": "Shaxsiy fikr-mulohaza tayyorlanmoqda…",
 		"feedbackContentMissing": "Fikr-mulohaza hali tayyor emas. Birozdan keyin qayta urinib ko'ring.",
 		"checkFeedback": "Natijani tekshirish",
-		"tryAgain": "Qayta urinish",
 		"practiceAgain": "Yana mashq qilish",
 		"buildCv": "Rezyume yaratish",
 		"prepTitle": "Suhbatga tayyorgarlik",
@@ -719,7 +713,6 @@
 		"irp": {
 			"loadingProfile": "Suhbat profili yuklanmoqda…",
 			"profileLoadFailed": "Suhbat profilini yuklab bo'lmadi.",
-			"profileRetry": "Qayta urinish",
 			"provisionalShort": "vaqtinchalik",
 			"provisionalBanner": "Vaqtinchalik profil — rasmiy IRP uchun yana {remaining} mashq tugating.",
 			"featureDisabled": "Suhbat profili hali yoqilmagan.",
@@ -765,7 +758,6 @@
 				"trainingItem": "{type} · {rounds} raund",
 				"practiceForJob": "Bu ish uchun mashq",
 				"refresh": "Yangilash",
-				"retry": "Qayta urinish",
 				"back": "← Suhbatga qaytish",
 				"backToInterview": "Suhbatga qaytish",
 				"jobRequired": "Tayyorgarlikni tekshirish uchun ish tanlang.",
@@ -789,7 +781,6 @@
 				"subtitle": "Suhbat darajangiz o'sishini kuzating.",
 				"back": "← Suhbatga qaytish",
 				"backToInterview": "Suhbatga qaytish",
-				"retry": "Qayta urinish",
 				"empty": "Tarix yo'q — mashqdan boshlang.",
 				"levelCurve": "Daraja egri chizig'i",
 				"levelCurveHint": "Har mashqdan keyingi daraja",
@@ -809,7 +800,6 @@
 	},
 	"english": {
 		"loading": "Yuklanmoqda…",
-		"retry": "Qayta urinish",
 		"featureDisabled": "Ingliz pasporti hali yoqilmagan.",
 		"backToClinic": "Klinikaga",
 		"onboarding": {
@@ -869,7 +859,6 @@
 			"finish": "Testni tugatish",
 			"scoring": "Javoblar tahlil qilinmoqda…",
 			"submitFailed": "Yuborish muvaffaqiyatsiz.",
-			"retry": "Qayta urinish",
 			"ahaTitle": "Ingliz darajangiz",
 			"quickDisclaimer": "Gapirish + yozish bo'yicha. To'liq test aniqroq.",
 			"startTraining": "Speaking mashqi",
@@ -890,7 +879,6 @@
 			"submit": "Yuborish",
 			"scoring": "Fikr-mulohaza…",
 			"submitFailed": "Yuborish muvaffaqiyatsiz.",
-			"retry": "Qayta urinish",
 			"feedbackTitle": "Sessiya fikri",
 			"speakingDelta": "Gapirish +{delta} bu sessiyada",
 			"backToPassport": "Pasportga"
@@ -912,7 +900,6 @@
 			"subtitle": "Pasport darajasining o'zgarishi.",
 			"back": "← Pasportga",
 			"backToPassport": "Pasportga",
-			"retry": "Qayta urinish",
 			"empty": "Tarix uchun birinchi mashqni tugating.",
 			"levelCurve": "Daraja tarixi",
 			"levelCurveHint": "Testlar va mashqlardan keyin",
@@ -971,7 +958,10 @@
 	"errorBoundary": {
 		"title": "Nimadir noto'g'ri ketdi",
 		"description": "Kutilmagan xatolik yuz berdi. Qayta urinib ko'ring yoki klinikaga qayting.",
-		"tryAgain": "Qayta urinish",
 		"backToClinic": "Klinikaga qaytish"
+	},
+	"states": {
+		"retry": "Qayta urinish",
+		"notSent": "Yuborilmadi"
 	}
 }
