@@ -963,6 +963,7 @@
 	"states": {
 		"retry": "Qayta urinish",
 		"notSent": "Yuborilmadi",
+		"queued": "Yuborilishi kutilmoqda",
 		"slow": "Bu odatdagidan ko'proq vaqt olmoqda.",
 		"busy": "AI hozir band. {seconds} soniyadan so'ng qayta urinib ko'ring.",
 		"offline": "Internetga ulanish yo'q. Xabarlar aloqa tiklanganda yuboriladi."

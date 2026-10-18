@@ -9,34 +9,50 @@ import { useEffect, useRef } from 'react';
  *
  * `getQueuedIds` reads the current queued user message ids in order;
  * `send` re-sends one of them (the same path as "Try again").
+ *
+ * The flush runs on mount, on the `online` event, and whenever `deps` change
+ * (for example the open specialist), so a message queued in a conversation
+ * that was not open when the connection returned is sent when it is opened.
  */
 export function useOfflineQueueFlush(
   getQueuedIds: () => string[],
-  send: (messageId: string) => Promise<unknown>
+  send: (messageId: string) => Promise<unknown>,
+  deps: readonly unknown[] = []
 ) {
   const getRef = useRef(getQueuedIds);
   const sendRef = useRef(send);
   getRef.current = getQueuedIds;
   sendRef.current = send;
   const flushingRef = useRef(false);
+  const flushRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     const offline = () => navigator.onLine === false;
-    const flush = async () => {
+    flushRef.current = async () => {
       if (flushingRef.current || offline()) return;
       flushingRef.current = true;
+      const attempted = new Set<string>();
       try {
-        for (const id of getRef.current()) {
+        // Re-read the queue before each send: the user may have sent one
+        // already with "Try again", and it must not go out twice.
+        for (;;) {
           if (offline()) break;
-          await sendRef.current(id);
+          const next = getRef.current().find((id) => !attempted.has(id));
+          if (!next) break;
+          attempted.add(next);
+          await sendRef.current(next);
         }
       } finally {
         flushingRef.current = false;
       }
     };
-    window.addEventListener('online', flush);
-    // Messages left queued from before this view mounted.
-    void flush();
-    return () => window.removeEventListener('online', flush);
+    const onOnline = () => void flushRef.current();
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
   }, []);
+
+  useEffect(() => {
+    void flushRef.current();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
 }

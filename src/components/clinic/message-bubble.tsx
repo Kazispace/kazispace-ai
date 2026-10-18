@@ -1,8 +1,9 @@
 "use client";
 
+import { useOnlineStatus } from "@/hooks/use-online-status";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertCircle, Bot, FileText, User } from "lucide-react";
+import { AlertCircle, Bot, FileText, User, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
 import { CitationList } from "./citation-list";
@@ -141,6 +142,7 @@ export function MessageBubble({
   const t = useTranslations("chat");
   const isUser = role === "user";
   const isFailed = isUser && status === "failed";
+  const isQueued = isUser && status === "queued";
   const displayName = name ?? (isUser ? undefined : AGENT_NAME);
   const showReferral =
     !isUser &&
@@ -386,6 +388,7 @@ export function MessageBubble({
           {isFailed ? (
             <NotSentMarker retryAt={retryAt} onRetry={onRetry} />
           ) : null}
+          {isQueued ? <QueuedMarker onRetry={onRetry} /> : null}
           {showCapabilityChip && capabilityId ? (
             <SearchCapabilityChip
               capabilityId={capabilityId}
@@ -454,6 +457,36 @@ function WaitingIndicator({ label }: { label: string }) {
  * While the server asks the client to wait (`retryAt`), the line says the AI
  * is busy with a countdown, and "Try again" stays disabled until it ends.
  */
+/**
+ * D16: a message typed offline waits to be sent. Once the device is back
+ * online it is sent automatically; "Try again" is offered too, so a queued
+ * message can never be left with no way to send it.
+ */
+function QueuedMarker({ onRetry }: { onRetry?: () => void }) {
+  const tStates = useTranslations("states");
+  const online = useOnlineStatus();
+  return (
+    <div
+      className="flex items-center gap-2 self-end px-1 text-xs text-gray-600"
+      data-testid="message-queued"
+    >
+      <span className="inline-flex items-center gap-1">
+        <Clock className="h-3.5 w-3.5" aria-hidden />
+        {tStates("queued")}
+      </span>
+      {online && onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="min-h-[44px] min-w-[44px] px-1 font-medium text-gray-700 underline-offset-2 hover:text-gray-900 hover:underline"
+        >
+          {tStates("retry")}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function NotSentMarker({
   retryAt,
   onRetry,

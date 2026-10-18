@@ -1083,6 +1083,7 @@
 	"states": {
 		"retry": "重试",
 		"notSent": "未发送",
+		"queued": "等待发送",
 		"slow": "这比平时要久一些。",
 		"busy": "AI 当前繁忙，请 {seconds} 秒后重试。",
 		"offline": "你已离线。恢复联网后，消息会自动发送。"

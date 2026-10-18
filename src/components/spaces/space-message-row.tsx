@@ -94,7 +94,8 @@ function SpaceMessageRowImpl({
       etFormPrefill={strategy.etFormPrefill}
       actionsDisabled={actionsDisabled}
       onRetry={
-        message.role === 'user' && message.status === 'failed'
+        message.role === 'user' &&
+        (message.status === 'failed' || message.status === 'queued')
           ? handleRetry
           : undefined
       }

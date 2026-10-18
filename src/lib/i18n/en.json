@@ -1379,6 +1379,7 @@
 	"states": {
 		"retry": "Try again",
 		"notSent": "Not sent",
+		"queued": "Waiting to send",
 		"slow": "This is taking longer than usual.",
 		"busy": "The AI is busy right now. Try again in {seconds}s.",
 		"offline": "You're offline. Messages will send when you're back online."

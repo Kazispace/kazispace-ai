@@ -200,3 +200,89 @@ describe('D16 offline queue', () => {
     expect(users.map((m) => m.status)).toEqual(['sent', 'sent']);
   });
 });
+
+describe('D16 queue flush follows the open conversation (#246 review)', () => {
+  function FlushProbe({
+    active,
+    queues,
+    send,
+  }: {
+    active: string;
+    queues: Record<string, string[]>;
+    send: (id: string) => Promise<unknown>;
+  }) {
+    useOfflineQueueFlush(() => [...(queues.main ?? []), ...(queues[active] ?? [])], send, [active]);
+    return null;
+  }
+
+  it('sends a message queued in a specialist that was closed when the connection returned, once it is opened', async () => {
+    setOnline(false);
+    const queues: Record<string, string[]> = { main: [], a: ['a1'] };
+    const sent: string[] = [];
+    const send = async (id: string) => {
+      sent.push(id);
+      for (const key of Object.keys(queues)) queues[key] = queues[key].filter((x) => x !== id);
+    };
+
+    // The user is in the main chat (not specialist A) when the connection returns.
+    await act(async () => root!.render(<FlushProbe active="main" queues={queues} send={send} />));
+    setOnline(true);
+    await act(async () => {
+      window.dispatchEvent(new Event('online'));
+    });
+    expect(sent).toEqual([]);
+
+    // Opening specialist A sends what was queued there.
+    await act(async () => root!.render(<FlushProbe active="a" queues={queues} send={send} />));
+    expect(sent).toEqual(['a1']);
+  });
+
+  it('does not send a message twice when the user already sent it with "Try again" during a flush', async () => {
+    const queues: Record<string, string[]> = { main: ['m1', 'm2'] };
+    const sent: string[] = [];
+    let release: () => void = () => {};
+    const send = async (id: string) => {
+      sent.push(id);
+      queues.main = queues.main.filter((x) => x !== id);
+      if (id === 'm1') {
+        // While m1 is in flight, the user taps "Try again" on m2.
+        queues.main = queues.main.filter((x) => x !== 'm2');
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+      }
+    };
+
+    await act(async () => root!.render(<FlushProbe active="main" queues={queues} send={send} />));
+    await act(async () => release());
+    expect(sent).toEqual(['m1']);
+  });
+});
+
+describe('D16 queued bubble', () => {
+  it('says "Waiting to send" and offers "Try again" only while online', async () => {
+    const onRetry = vi.fn();
+    setOnline(true);
+    await act(async () =>
+      root!.render(
+        <MessageBubble role="user" content="Hi" locale="en" status="queued" onRetry={onRetry} />
+      )
+    );
+    const marker = host!.querySelector('[data-testid="message-queued"]');
+    expect(marker?.textContent).toContain('states.queued');
+    const button = Array.from(host!.querySelectorAll('button')).find(
+      (b) => b.textContent === 'states.retry'
+    );
+    expect(button).toBeDefined();
+    act(() => button!.click());
+    expect(onRetry).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      setOnline(false);
+      window.dispatchEvent(new Event('offline'));
+    });
+    expect(
+      Array.from(host!.querySelectorAll('button')).some((b) => b.textContent === 'states.retry')
+    ).toBe(false);
+  });
+});

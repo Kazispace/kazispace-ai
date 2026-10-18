@@ -1444,7 +1444,9 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
         return;
       }
       await retryMessage(messageId);
-    }
+    },
+    // Opening a specialist sends what was queued in it while it was closed.
+    [activeAgentId]
   );
 
   /** Same-thread research handoff from web_search upgrade CTA (KAZI-233). */
