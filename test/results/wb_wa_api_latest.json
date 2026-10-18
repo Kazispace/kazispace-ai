@@ -1,0 +1,111 @@
+{
+  "phone": "+77015557030",
+  "results": [
+    {
+      "id": "WB-WA-AUTH-01",
+      "status": "PASS",
+      "note": "HTTP 200"
+    },
+    {
+      "id": "WB-WA-AUTH-01b",
+      "status": "PASS",
+      "note": "contact field \u2192 HTTP 422 (expect 422)"
+    },
+    {
+      "id": "WB-WA-AUTH-02",
+      "status": "CODE_ONLY",
+      "note": "verify 200 + access_token (dual-write \u2192 CODE review)"
+    },
+    {
+      "id": "WB-WA-AUTH-04",
+      "status": "PASS",
+      "note": "invalid JWT \u2192 HTTP 401"
+    },
+    {
+      "id": "WB-WA-AUTH-04b",
+      "status": "PASS",
+      "note": "valid JWT /me \u2192 HTTP 200"
+    },
+    {
+      "id": "WB-WA-AUTH-05",
+      "status": "BLOCKED",
+      "note": "endpoint 404 \u2014 BLOCKED until E2"
+    },
+    {
+      "id": "WB-WA-CLINIC-01",
+      "status": "PASS",
+      "note": "POST chat/messages HTTP 200"
+    },
+    {
+      "id": "WB-WA-CLINIC-01b",
+      "status": "PASS",
+      "note": "response has assistant text: True"
+    },
+    {
+      "id": "WB-WA-AUTH-06",
+      "status": "PASS",
+      "note": "incomplete profile chat still 200"
+    },
+    {
+      "id": "WB-WA-CLINIC-02",
+      "status": "PASS",
+      "note": "history HTTP 200, msgs=2"
+    },
+    {
+      "id": "WB-WA-CLINIC-03",
+      "status": "PASS",
+      "note": "chat not 402 (HTTP 200)"
+    },
+    {
+      "id": "WB-WA-AGENT-03-pref",
+      "status": "FAIL",
+      "note": "GET agents/active HTTP 404"
+    },
+    {
+      "id": "WB-WA-AGENT-01",
+      "status": "BLOCKED",
+      "note": "\u00a713 404 \u2014 use mock fallback in frontend"
+    },
+    {
+      "id": "WB-WA-AGENT-04",
+      "status": "BLOCKED",
+      "note": "\u00a713 404 \u2014 mock path"
+    },
+    {
+      "id": "WB-WA-AGENT-03",
+      "status": "BLOCKED",
+      "note": "backend \u00a713 not deployed"
+    },
+    {
+      "id": "WB-WA-AGENT-01b",
+      "status": "FAIL",
+      "note": "coming_soon activate HTTP 404"
+    },
+    {
+      "id": "WB-WA-BILL-01",
+      "status": "PASS",
+      "note": "billing/summary HTTP 200"
+    },
+    {
+      "id": "WB-WA-BILL-02",
+      "status": "PASS",
+      "note": "plans/current HTTP 200"
+    },
+    {
+      "id": "WB-WA-BILL-04",
+      "status": "PASS",
+      "note": "ledger HTTP 404 (404 \u2192 frontend empty state)"
+    },
+    {
+      "id": "WB-WA-AUTH-06b",
+      "status": "PASS",
+      "note": "job-rec HTTP 200 (profile may be complete)"
+    }
+  ],
+  "counts": {
+    "PASS": 13,
+    "FAIL": 2,
+    "BLOCKED": 4,
+    "CODE_ONLY": 1
+  }
+}
