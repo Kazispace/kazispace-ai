@@ -179,6 +179,16 @@ export function SpacePanelsWorkspace({
     [desktopPanelId, desktopPanelOpen, handleMobileViewChange, panels, syncPanelQuery]
   );
 
+  // KAZI-1083: 「练这个」 in the panel sends into the chat — on a phone the chat is a
+  // separate view, so bring it forward. On desktop both columns are visible; no change.
+  const pendingSpaceActionNonce = useSpaceStore((s) =>
+    s.pendingSpaceAction?.spaceId === space.id ? s.pendingSpaceAction.nonce : null
+  );
+  useEffect(() => {
+    if (!active || pendingSpaceActionNonce == null || isDesktopRef.current) return;
+    setMobileView('chat');
+  }, [active, pendingSpaceActionNonce]);
+
   /** Envelope `meta.active_panel` / `ui_hints.panel_id` → switch + clear hint. */
   useEffect(() => {
     if (!active || !activePanelHint) return;

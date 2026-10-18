@@ -1,0 +1,260 @@
+{
+  "_provenance": "agents.english_tutor.ability.compute_ability + weak_tags_of @ backend KAZI-1083 branch 9192096f; regenerate, do not hand-edit",
+  "weak": {
+    "scale": "0-6",
+    "scale_version": "ability_scale_v1",
+    "overall": 3.89,
+    "modalities": {
+      "writing": {
+        "current": 3.89,
+        "trend": "improving",
+        "window": {
+          "n": 3,
+          "from": 3.33,
+          "to": 4.17,
+          "delta": 0.84
+        },
+        "dimensions": [],
+        "points": [
+          {
+            "at": "2026-10-01T10:00:00Z",
+            "score": 3.33,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-02T10:00:00Z",
+            "score": 4.0,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-03T10:00:00Z",
+            "score": 4.33,
+            "exam_type": "ielts"
+          }
+        ]
+      },
+      "speaking": null
+    },
+    "resolved_tags": [],
+    "weak_tags": [
+      {
+        "tag": "grammar.article",
+        "skill_area": "grammar",
+        "p_mastery": 0.22,
+        "obs_count": 8,
+        "label": {
+          "zh": "冠词误用 / 缺失",
+          "en": "articles"
+        },
+        "action": {
+          "type": "et_next_practice",
+          "label": {
+            "zh": "练语法 · 冠词误用 / 缺失",
+            "en": "Practise grammar · articles"
+          },
+          "payload": "练语法",
+          "meta": {
+            "focus_tag": "grammar.article"
+          }
+        }
+      },
+      {
+        "tag": "writing.coherence",
+        "skill_area": "writing",
+        "p_mastery": 0.38,
+        "obs_count": 4,
+        "label": {
+          "zh": "逻辑断层",
+          "en": "coherence"
+        },
+        "action": {
+          "type": "et_next_practice",
+          "label": {
+            "zh": "练写作 · 逻辑断层",
+            "en": "Practise writing · coherence"
+          },
+          "payload": "练写作",
+          "meta": {
+            "focus_tag": "writing.coherence"
+          }
+        }
+      },
+      {
+        "tag": "vocabulary.collocation",
+        "skill_area": "vocabulary",
+        "p_mastery": 0.41,
+        "obs_count": 3,
+        "label": {
+          "zh": "搭配错误",
+          "en": "collocations"
+        },
+        "action": {
+          "type": "et_next_practice",
+          "label": {
+            "zh": "练词汇 · 搭配错误",
+            "en": "Practise vocabulary · collocations"
+          },
+          "payload": "练词汇",
+          "meta": {
+            "focus_tag": "vocabulary.collocation"
+          }
+        }
+      }
+    ],
+    "updated_at": "2026-10-03T10:00:00Z"
+  },
+  "weakEmpty": {
+    "scale": "0-6",
+    "scale_version": "ability_scale_v1",
+    "overall": 3.89,
+    "modalities": {
+      "writing": {
+        "current": 3.89,
+        "trend": "improving",
+        "window": {
+          "n": 3,
+          "from": 3.33,
+          "to": 4.17,
+          "delta": 0.84
+        },
+        "dimensions": [],
+        "points": [
+          {
+            "at": "2026-10-01T10:00:00Z",
+            "score": 3.33,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-02T10:00:00Z",
+            "score": 4.0,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-03T10:00:00Z",
+            "score": 4.33,
+            "exam_type": "ielts"
+          }
+        ]
+      },
+      "speaking": null
+    },
+    "resolved_tags": [],
+    "weak_tags": [],
+    "updated_at": "2026-10-03T10:00:00Z"
+  },
+  "weakNull": {
+    "scale": "0-6",
+    "scale_version": "ability_scale_v1",
+    "overall": 3.89,
+    "modalities": {
+      "writing": {
+        "current": 3.89,
+        "trend": "improving",
+        "window": {
+          "n": 3,
+          "from": 3.33,
+          "to": 4.17,
+          "delta": 0.84
+        },
+        "dimensions": [],
+        "points": [
+          {
+            "at": "2026-10-01T10:00:00Z",
+            "score": 3.33,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-02T10:00:00Z",
+            "score": 4.0,
+            "exam_type": "ielts"
+          },
+          {
+            "at": "2026-10-03T10:00:00Z",
+            "score": 4.33,
+            "exam_type": "ielts"
+          }
+        ]
+      },
+      "speaking": null
+    },
+    "resolved_tags": [],
+    "weak_tags": null,
+    "updated_at": "2026-10-03T10:00:00Z"
+  },
+  "coldStartWeak": {
+    "scale": "0-6",
+    "scale_version": "ability_scale_v1",
+    "overall": null,
+    "modalities": {
+      "writing": null,
+      "speaking": null
+    },
+    "resolved_tags": [],
+    "weak_tags": [
+      {
+        "tag": "grammar.article",
+        "skill_area": "grammar",
+        "p_mastery": 0.22,
+        "obs_count": 8,
+        "label": {
+          "zh": "冠词误用 / 缺失",
+          "en": "articles"
+        },
+        "action": {
+          "type": "et_next_practice",
+          "label": {
+            "zh": "练语法 · 冠词误用 / 缺失",
+            "en": "Practise grammar · articles"
+          },
+          "payload": "练语法",
+          "meta": {
+            "focus_tag": "grammar.article"
+          }
+        }
+      },
+      {
+        "tag": "writing.coherence",
+        "skill_area": "writing",
+        "p_mastery": 0.38,
+        "obs_count": 4,
+        "label": {
+          "zh": "逻辑断层",
+          "en": "coherence"
+        },
+        "action": {
+          "type": "et_next_practice",
+          "label": {
+            "zh": "练写作 · 逻辑断层",
+            "en": "Practise writing · coherence"
+          },
+          "payload": "练写作",
+          "meta": {
+            "focus_tag": "writing.coherence"
+          }
+        }
+      },
+      {
+        "tag": "vocabulary.collocation",
+        "skill_area": "vocabulary",
+        "p_mastery": 0.41,
+        "obs_count": 3,
+        "label": {
+          "zh": "搭配错误",
+          "en": "collocations"
+        },
+        "action": {
+          "type": "et_next_practice",
+          "label": {
+            "zh": "练词汇 · 搭配错误",
+            "en": "Practise vocabulary · collocations"
+          },
+          "payload": "练词汇",
+          "meta": {
+            "focus_tag": "vocabulary.collocation"
+          }
+        }
+      }
+    ],
+    "updated_at": null
+  }
+}

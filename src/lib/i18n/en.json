@@ -1298,7 +1298,22 @@
 			"latest": "Latest attempt",
 			"trendLine": "{name} score trend",
 			"empty": "No scores yet. Finish one writing or speaking task and your ability will show here.",
-			"error": "Couldn't load your ability scores."
+			"error": "Couldn't load your ability scores.",
+			"area": {
+				"grammar": "Grammar",
+				"vocabulary": "Vocabulary",
+				"writing": "Writing",
+				"speaking": "Speaking"
+			},
+			"weak": {
+				"title": "Practise next",
+				"hint": "Lowest mastery first · counts after 3 attempts",
+				"mastery": "Mastery {percent}%",
+				"evidence": "{count, plural, one {# attempt} other {# attempts}}",
+				"practice": "Practise this",
+				"practiceAria": "Practise this: {name}",
+				"empty": "Once a skill has 3 attempts, the ones to work on most will show here."
+			}
 		},
 		"envelope": {
 			"lowConfidenceBanner": "Scores are indicative only for this review.",
