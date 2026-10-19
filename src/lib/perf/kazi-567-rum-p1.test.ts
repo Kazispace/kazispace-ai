@@ -154,7 +154,7 @@ describe('KAZI-567 P1 rum ingest + region contract', () => {
     expect(
       resolveRumClientPolicy({
         token: 't',
-        home_api_base: 'https://api-cn.kazispace.ai',
+        home_api_base: 'https://api.kazispace.cn',  // pragma: allowlist secret
         data_region: 'cn-mainland',
         directory_version: 4,
       })
@@ -235,7 +235,7 @@ describe('KAZI-567 P1 rum ingest + region contract', () => {
     expect(
       resolveRumClientPolicy({
         token: 't',
-        home_api_base: 'https://api-cn.kazispace.ai',
+        home_api_base: 'https://api.kazispace.cn',  // pragma: allowlist secret
         data_region: 'cn-mainland',
         directory_version: 4,
       }).enabled

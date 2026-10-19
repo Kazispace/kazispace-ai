@@ -16,7 +16,7 @@ import {
   setSession,
 } from '@/lib/region';
 
-const CN = 'https://api-cn.kazispace.ai';
+const CN = 'https://api.kazispace.cn';  // pragma: allowlist secret
 const INTL = 'https://bot.kazispace.ai';
 
 function installMemoryLocalStorage() {
@@ -40,7 +40,7 @@ function installMemoryLocalStorage() {
 }
 
 describe('resolveHome (T1–T3)', () => {
-  it('T1: +86 → cn-mainland / api-cn', () => {
+  it('T1: +86 → cn-mainland / api.cn', () => {
     const home = resolveHome('+8613262788342');
     expect(home.data_region).toBe('cn-mainland');
     expect(home.api_base).toBe(CN);
@@ -87,12 +87,12 @@ describe('selectLiveApiBase (T4–T7)', () => {
     expect(selectLiveApiBase('+8613262788342')).toBe(INTL);
   });
 
-  it('T5: mock public includes CN advertised → +86 OTP to api-cn', () => {
+  it('T5: mock public includes CN advertised → +86 OTP to api.cn', () => {
     setAdvertisedApiBasesForTests([INTL, CN]);
     expect(selectLiveApiBase('+8613262788342')).toBe(CN);
   });
 
-  it('T6: CN not_ready but flag=1 → +86 OTP to api-cn', () => {
+  it('T6: CN not_ready but flag=1 → +86 OTP to api.cn', () => {
     process.env.NEXT_PUBLIC_REGION_ALLOW_NOT_READY = '1';
     setAdvertisedApiBasesForTests([INTL]);
     expect(selectLiveApiBase('+8613262788342')).toBe(CN);
