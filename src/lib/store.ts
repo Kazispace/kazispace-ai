@@ -23,6 +23,7 @@ import {
   type SpaceSlice,
 } from './space-slice';
 import type { SpaceChatMessage } from './spaces/turn';
+import type { ChatNextAction } from '@/types/chat-envelope';
 import { CLINIC_SPACE_ID } from './spaces/constants';
 
 // ---- Auth Store ----
@@ -294,6 +295,14 @@ interface SpaceStore {
   setSpaceReplyNotice: (spaceId: string, notice: SpaceReplyNotice | null) => void;
   setSpaceActiveCapability: (spaceId: string, activeCapability: string | null) => void;
   setSpaceActivePanelHint: (spaceId: string, activePanelHint: string | null) => void;
+  /**
+   * KAZI-1083 — a `next_action` raised outside the chat column (the ability panel's
+   * 「练这个」) for that space's chat to send through its own `handleNextAction`.
+   * One slot; `nonce` lets the consumer clear exactly what it handled.
+   */
+  pendingSpaceAction: PendingSpaceAction | null;
+  requestSpaceAction: (spaceId: string, action: ChatNextAction) => void;
+  clearSpaceAction: (nonce: number) => void;
   clearSpaceSlice: (spaceId: string) => void;
   reset: () => void;
 }
@@ -323,8 +332,27 @@ function applySpacePatch(
   return { spaces: result.spaces, spaceLruOrder: result.lruOrder };
 }
 
+export interface PendingSpaceAction {
+  spaceId: string;
+  action: ChatNextAction;
+  nonce: number;
+}
+
 export const useSpaceStore = create<SpaceStore>()((set, get) => ({
   activeSpaceId: null,
+  pendingSpaceAction: null,
+  requestSpaceAction: (spaceId, action) =>
+    set((state) => ({
+      pendingSpaceAction: {
+        spaceId,
+        action,
+        nonce: (state.pendingSpaceAction?.nonce ?? 0) + 1,
+      },
+    })),
+  clearSpaceAction: (nonce) =>
+    set((state) =>
+      state.pendingSpaceAction?.nonce === nonce ? { pendingSpaceAction: null } : {}
+    ),
   spaces: {},
   spaceLruOrder: [],
   setActiveSpaceId: (spaceId) =>
@@ -412,6 +440,7 @@ export const useSpaceStore = create<SpaceStore>()((set, get) => ({
         activeSpaceId: null,
         spaces,
         spaceLruOrder: clinicSlice ? [CLINIC_SPACE_ID] : [],
+        pendingSpaceAction: null,
       };
     }),
 }));

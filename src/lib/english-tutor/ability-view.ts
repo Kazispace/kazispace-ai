@@ -20,6 +20,9 @@ export const ABILITY_GRADING_EVENTS: ReadonlySet<string> = new Set([
   'writing_review',
   'writing_revise_review',
   'speaking_feedback',
+  // KAZI-1083 (Capability §5.5.5 v1.0.24): an objective-set grade changes no score but does
+  // change the mastery readings behind 「最弱的 3 个点」.
+  'objective_review',
 ]);
 
 /** Scores arrive rounded; still format so `4` shows as `4.00` (AC-P1: two decimals). */
@@ -105,6 +108,22 @@ export function latestGradingMessageId(
     if (typeof event === 'string' && ABILITY_GRADING_EVENTS.has(event)) return `msg:${m.id}`;
   }
   return null;
+}
+
+/** `{zh, en}` from the backend (ET tag names have one source: `next_practice.TAG_NAME`). */
+export function localizedText(
+  label: { zh?: string; en?: string } | null | undefined,
+  locale: string
+): string {
+  if (!label) return '';
+  const zh = locale.toLowerCase().startsWith('zh');
+  return (zh ? label.zh || label.en : label.en || label.zh) ?? '';
+}
+
+/** Mastery bar width, 0–100 (`p_mastery` is a 0–1 probability). */
+export function masteryPercent(p: number | null | undefined): number {
+  if (typeof p !== 'number' || !Number.isFinite(p)) return 0;
+  return Math.round(Math.min(Math.max(p, 0), 1) * 100);
 }
 
 /** SVG polyline points for a 0–6 sparkline; `null` scores are skipped. */

@@ -1002,7 +1002,22 @@
 			"latest": "最近一次",
 			"trendLine": "{name}分数走势",
 			"empty": "还没有分数。完成一次写作或口语练习后，这里会显示你的能力分。",
-			"error": "能力分加载失败。"
+			"error": "能力分加载失败。",
+			"area": {
+				"grammar": "语法",
+				"vocabulary": "词汇",
+				"writing": "写作",
+				"speaking": "口语"
+			},
+			"weak": {
+				"title": "最需要练的点",
+				"hint": "按掌握度从低到高 · 练够 3 次才计入",
+				"mastery": "掌握度 {percent}%",
+				"evidence": "{count} 次练习",
+				"practice": "练这个",
+				"practiceAria": "练这个：{name}",
+				"empty": "某个点练够 3 次后，这里会列出最需要练的点。"
+			}
 		},
 		"envelope": {
 			"lowConfidenceBanner": "本次评分仅供参考",

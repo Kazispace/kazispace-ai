@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { useEnglishAbility } from '@/hooks/use-english-ability';
@@ -10,6 +10,8 @@ import {
   formatSignedDelta,
   latestGradingMessageId,
   latestPoint,
+  localizedText,
+  masteryPercent,
   showsWindow,
   sparklinePath,
   trendLabel,
@@ -19,6 +21,7 @@ import type {
   EnglishAbility,
   EnglishAbilityModality,
   EnglishAbilityModalityId,
+  EnglishAbilityWeakTag,
 } from '@/types/english-ability';
 
 const MODALITY_ORDER: EnglishAbilityModalityId[] = ['writing', 'speaking'];
@@ -66,18 +69,26 @@ export function EnglishAbilitySection({ spaceId }: EnglishAbilitySectionProps) {
         </div>
       ) : null}
 
-      {state.kind === 'ready' ? <AbilityBody ability={state.ability} /> : null}
+      {state.kind === 'ready' ? <AbilityBody ability={state.ability} spaceId={spaceId} /> : null}
     </section>
   );
 }
 
-function AbilityBody({ ability }: { ability: EnglishAbility }) {
+function AbilityBody({ ability, spaceId }: { ability: EnglishAbility; spaceId: string }) {
   const t = useTranslations('english.ability');
   const hasAny = MODALITY_ORDER.some((m) => ability.modalities[m]);
+  // KAZI-1083: mastery comes from practice evidence, not scores — a grammar-only learner has
+  // weak tags and no score yet, so the block shows in the score cold start too.
+  const weak = <WeakTags weak={ability.weak_tags} spaceId={spaceId} />;
 
   if (ability.overall == null && !hasAny) {
     // Cold start (AC-P3): copy only — ⛔ no placement-test entry.
-    return <p className="px-4 py-4 text-sm text-gray-600">{t('empty')}</p>;
+    return (
+      <>
+        <p className="px-4 py-4 text-sm text-gray-600">{t('empty')}</p>
+        {ability.weak_tags ? <div className="px-4 pb-4">{weak}</div> : null}
+      </>
+    );
   }
 
   return (
@@ -92,7 +103,86 @@ function AbilityBody({ ability }: { ability: EnglishAbility }) {
       {MODALITY_ORDER.map((m) => (
         <ModalityCard key={m} id={m} modality={ability.modalities[m] ?? null} />
       ))}
+      {weak}
     </div>
+  );
+}
+
+/**
+ * KAZI-1083 — the weakest three (Capability §5.5.5 / §5.5.6 v1.0.24). `null` ⇒ nothing (switch
+ * off / readings incomplete); `[]` ⇒ one hint line. 「练这个」 hands the backend's own
+ * `et_next_practice` action to this space's chat — the same send as the graded-turn button
+ * (ET SSOT v1.98 ①); the panel never sends on its own.
+ */
+function WeakTags({
+  weak,
+  spaceId,
+}: {
+  weak: EnglishAbilityWeakTag[] | null | undefined;
+  spaceId: string;
+}) {
+  const t = useTranslations('english.ability.weak');
+  const locale = useLocale();
+  const tArea = useTranslations('english.ability.area');
+  const isSending = useSpaceStore((s) => s.getSpaceSlice(spaceId).isSending);
+  const requestSpaceAction = useSpaceStore((s) => s.requestSpaceAction);
+
+  if (!weak) return null;
+
+  return (
+    <section aria-labelledby="english-weak-heading" className="space-y-2">
+      <div>
+        <h3 id="english-weak-heading" className="text-sm font-medium text-gray-800">
+          {t('title')}
+        </h3>
+        <p className="text-xs text-gray-500">{t('hint')}</p>
+      </div>
+      {weak.length === 0 ? (
+        <p className="text-xs text-gray-500">{t('empty')}</p>
+      ) : (
+        <ul className="space-y-2">
+          {weak.map((w) => {
+            const name = localizedText(w.label, locale) || w.tag;
+            const percent = masteryPercent(w.p_mastery);
+            const area = tArea.has(w.skill_area) ? tArea(w.skill_area) : null;
+            return (
+              <li key={w.tag} className="rounded-lg border border-gray-200 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800">{name}</p>
+                    <p className="text-xs text-gray-500">
+                      {area ? `${area} · ` : ''}
+                      {t('evidence', { count: w.obs_count })}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    disabled={isSending}
+                    aria-label={t('practiceAria', { name })}
+                    onClick={() => requestSpaceAction(spaceId, w.action)}
+                  >
+                    {t('practice')}
+                  </Button>
+                </div>
+                <div
+                  role="meter"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={percent}
+                  aria-label={t('mastery', { percent })}
+                  className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-gray-100"
+                >
+                  <div className="h-full rounded-full bg-kazi-navy" style={{ width: `${percent}%` }} />
+                </div>
+                <p className="mt-1 text-xs tabular-nums text-gray-500">{t('mastery', { percent })}</p>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
 

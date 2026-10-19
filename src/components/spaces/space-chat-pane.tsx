@@ -11,6 +11,7 @@ import { ChatSideRailsHost } from '@/components/chat/chat-side-rails-host';
 import { useOfflineQueueFlush } from '@/hooks/use-offline-queue-flush';
 import { SpaceShell } from '@/components/spaces/space-shell';
 import { useChatScroll } from '@/hooks/use-chat-scroll';
+import { usePendingSpaceAction } from '@/hooks/use-pending-space-action';
 import { useHistoryStubHydrate } from '@/hooks/use-history-stub-hydrate';
 import {
   useSpaceTurn,
@@ -373,6 +374,10 @@ export function SpaceChatPane({
     },
     [hasCvPanel, locale, openCvRail, requestComposerInsert, router, sendAndPin, space]
   );
+
+  // KAZI-1083: the ability panel's 「练这个」 hands its `et_next_practice` action to this
+  // space's chat — the same send path as the button on a graded turn (ET SSOT v1.98 ①).
+  usePendingSpaceAction(space.id, isSending, handleNextAction);
 
   const composerNode =
     typeof composer === 'function'
