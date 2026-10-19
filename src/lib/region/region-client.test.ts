@@ -277,7 +277,8 @@ describe('login 404 region isolation (T12)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const calledUrl = String((fetchMock.mock.calls as unknown as Array<[unknown]>)[0]?.[0] ?? '');
     expect(calledUrl).toContain(INTL);
-    expect(calledUrl).not.toContain('api-cn');
+    // Must stay on intl — not the CN api_base (directory v5: api.<brand>.cn).
+    expect(calledUrl).not.toContain(CN);
 
     vi.unstubAllGlobals();
     setAdvertisedApiBasesForTests(null);
@@ -335,7 +336,8 @@ describe('OtpAttempt host pin (P1-3)', () => {
     const otpUrls = urls.filter((u) => u.includes('/auth/otp/'));
     expect(otpUrls).toHaveLength(2);
     expect(otpUrls.every((u) => u.startsWith(INTL))).toBe(true);
-    expect(otpUrls.some((u) => u.includes('api-cn'))).toBe(false);
+    // Pinned intl OTP must not jump to CN api_base mid-flight.
+    expect(otpUrls.some((u) => u.includes(CN))).toBe(false);
 
     // Session stays on pinned intl (CN home from BE rejected while we used intl OTP)
     // BE returned CN but we authenticated on intl — chosenBase prefers pinned when
