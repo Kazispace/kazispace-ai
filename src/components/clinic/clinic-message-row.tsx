@@ -155,6 +155,7 @@ function ClinicMessageRowImpl({
       feedbackEnabled={!isAgentMode}
       intent={message.intent}
       status={message.status}
+      retryAt={message.retryAt}
       referral={message.referral}
       spaceNudge={!isAgentMode ? message.spaceNudge : undefined}
       nextActions={message.nextActions}
@@ -179,7 +180,8 @@ function ClinicMessageRowImpl({
           : undefined
       }
       onRetry={
-        message.role === 'user' && message.status === 'failed'
+        message.role === 'user' &&
+        (message.status === 'failed' || message.status === 'queued')
           ? handleRetry
           : undefined
       }

@@ -73,6 +73,7 @@ function SpaceMessageRowImpl({
       messageId={message.id}
       serverMessageId={message.serverMessageId}
       status={message.status}
+      retryAt={message.retryAt}
       cards={message.cards}
       nextActions={message.nextActions}
       selectedStrategyPayload={strategy.selectedStrategyPayload}
@@ -93,7 +94,8 @@ function SpaceMessageRowImpl({
       etFormPrefill={strategy.etFormPrefill}
       actionsDisabled={actionsDisabled}
       onRetry={
-        message.role === 'user' && message.status === 'failed'
+        message.role === 'user' &&
+        (message.status === 'failed' || message.status === 'queued')
           ? handleRetry
           : undefined
       }

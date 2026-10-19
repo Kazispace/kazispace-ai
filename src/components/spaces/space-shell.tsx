@@ -5,6 +5,7 @@ import { type ReactNode, type Ref } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { ChatHeader } from '@/components/clinic/chat-header';
+import { OfflineBar } from '@/components/chat/offline-bar';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
 import { useEmbeddedInWorkspaceShell } from '@/lib/workspace-shell-context';
@@ -60,6 +61,8 @@ export function SpaceShell({
           </Link>
         </div>
       ) : null}
+
+      <OfflineBar />
 
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div

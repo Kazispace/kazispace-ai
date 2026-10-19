@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertCircle, Bot, FileText, User } from "lucide-react";
+import { AlertCircle, Bot, FileText, User, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AGENT_NAME } from "@/lib/constants";
 import { CitationList } from "./citation-list";
@@ -30,6 +31,7 @@ import {
 import type { ComposerInsertTarget } from "@/lib/store";
 import { hasStrategySelectActions } from "@/lib/strategy-select";
 import { isPlaceholderReply } from "@/lib/spaces/turn";
+import { secondsUntil } from "@/lib/chat/connectivity";
 import type { SpaceNudgePayload } from "@/lib/spaces/space-nudge";
 import type { ChatJobCard, ChatNextAction, ReferralPayload } from "@/types";
 import type { EnglishTutorEnvelopeComponent, ExamPickerOption } from "@/types/english-tutor-envelope";
@@ -48,7 +50,9 @@ interface MessageBubbleProps {
   isStreaming?: boolean;
   variant?: "clinic" | "agent";
   surface?: "default" | "workspace";
-  status?: "sending" | "sent" | "failed";
+  status?: "sending" | "sent" | "failed" | "queued";
+  /** Busy (LLM_BUSY): epoch ms when "Try again" becomes active. */
+  retryAt?: number;
   referral?: ReferralPayload;
   spaceNudge?: SpaceNudgePayload;
   nextActions?: ChatNextAction[];
@@ -101,6 +105,7 @@ export function MessageBubble({
   variant = "clinic",
   surface = "default",
   status,
+  retryAt,
   referral,
   spaceNudge,
   nextActions,
@@ -135,9 +140,9 @@ export function MessageBubble({
   actionsDisabled,
 }: MessageBubbleProps) {
   const t = useTranslations("chat");
-  const tStates = useTranslations("states");
   const isUser = role === "user";
   const isFailed = isUser && status === "failed";
+  const isQueued = isUser && status === "queued";
   const displayName = name ?? (isUser ? undefined : AGENT_NAME);
   const showReferral =
     !isUser &&
@@ -219,16 +224,7 @@ export function MessageBubble({
       (isStreaming || !streamComplete) &&
       isPlaceholderReply(content ?? "")
     ) {
-      return (
-        <span className="inline-flex items-center gap-2 text-muted-foreground">
-          <span className="inline-flex gap-1 align-middle" aria-hidden>
-            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot" />
-            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.15s]" />
-            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.3s]" />
-          </span>
-          <span>{processingLabel}</span>
-        </span>
-      );
+      return <WaitingIndicator label={processingLabel} />;
     }
 
     if (!isUser && content) {
@@ -390,26 +386,9 @@ export function MessageBubble({
             />
           ) : null}
           {isFailed ? (
-            // D13: the bubble stays, is marked "Not sent", and offers "Try again".
-            <div
-              className="flex items-center gap-2 self-end px-1 text-xs text-red-600"
-              data-testid="message-not-sent"
-            >
-              <span className="inline-flex items-center gap-1">
-                <AlertCircle className="h-3.5 w-3.5" aria-hidden />
-                {tStates("notSent")}
-              </span>
-              {onRetry ? (
-                <button
-                  type="button"
-                  onClick={onRetry}
-                  className="min-h-[44px] min-w-[44px] px-1 font-medium text-red-700 underline-offset-2 hover:text-red-800 hover:underline"
-                >
-                  {tStates("retry")}
-                </button>
-              ) : null}
-            </div>
+            <NotSentMarker retryAt={retryAt} onRetry={onRetry} />
           ) : null}
+          {isQueued ? <QueuedMarker onRetry={onRetry} /> : null}
           {showCapabilityChip && capabilityId ? (
             <SearchCapabilityChip
               capabilityId={capabilityId}
@@ -439,6 +418,113 @@ export function MessageBubble({
             onCardClick={onJobCardClick}
           />
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** D15: after 10 seconds of waiting, add a line saying so and keep waiting. */
+export const SLOW_WAIT_MS = 10_000;
+
+function WaitingIndicator({ label }: { label: string }) {
+  const tStates = useTranslations("states");
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setSlow(true), SLOW_WAIT_MS);
+    return () => window.clearTimeout(id);
+  }, []);
+  return (
+    <span className="inline-flex flex-col gap-1 text-muted-foreground">
+      <span className="inline-flex items-center gap-2">
+        <span className="inline-flex gap-1 align-middle" aria-hidden>
+          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot" />
+          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.15s]" />
+          <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce-dot [animation-delay:0.3s]" />
+        </span>
+        <span>{label}</span>
+      </span>
+      {slow ? (
+        <span className="text-xs" role="status" data-testid="reply-slow">
+          {tStates("slow")}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/**
+ * D13 / Busy: the bubble stays, is marked "Not sent", and offers "Try again".
+ * While the server asks the client to wait (`retryAt`), the line says the AI
+ * is busy with a countdown, and "Try again" stays disabled until it ends.
+ */
+/**
+ * D16: a message typed offline waits to be sent. Once the device is back
+ * online it is sent automatically; "Try again" is offered too, so a queued
+ * message can never be left with no way to send it.
+ */
+function QueuedMarker({ onRetry }: { onRetry?: () => void }) {
+  const tStates = useTranslations("states");
+  const online = useOnlineStatus();
+  return (
+    <div
+      className="flex items-center gap-2 self-end px-1 text-xs text-gray-600"
+      data-testid="message-queued"
+    >
+      <span className="inline-flex items-center gap-1">
+        <Clock className="h-3.5 w-3.5" aria-hidden />
+        {tStates("queued")}
+      </span>
+      {online && onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="min-h-[44px] min-w-[44px] px-1 font-medium text-gray-700 underline-offset-2 hover:text-gray-900 hover:underline"
+        >
+          {tStates("retry")}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function NotSentMarker({
+  retryAt,
+  onRetry,
+}: {
+  retryAt?: number;
+  onRetry?: () => void;
+}) {
+  const tStates = useTranslations("states");
+  const [seconds, setSeconds] = useState(() => secondsUntil(retryAt));
+  useEffect(() => {
+    setSeconds(secondsUntil(retryAt));
+    if (!retryAt) return;
+    const id = window.setInterval(() => {
+      const left = secondsUntil(retryAt);
+      setSeconds(left);
+      if (left <= 0) window.clearInterval(id);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [retryAt]);
+  const waiting = seconds > 0;
+  return (
+    <div
+      className="flex items-center gap-2 self-end px-1 text-xs text-red-600"
+      data-testid="message-not-sent"
+    >
+      <span className="inline-flex items-center gap-1">
+        <AlertCircle className="h-3.5 w-3.5" aria-hidden />
+        {waiting ? tStates("busy", { seconds }) : tStates("notSent")}
+      </span>
+      {onRetry ? (
+        <button
+          type="button"
+          onClick={onRetry}
+          disabled={waiting}
+          className="min-h-[44px] min-w-[44px] px-1 font-medium text-red-700 underline-offset-2 hover:text-red-800 hover:underline disabled:cursor-not-allowed disabled:text-gray-400 disabled:no-underline"
+        >
+          {tStates("retry")}
+        </button>
       ) : null}
     </div>
   );

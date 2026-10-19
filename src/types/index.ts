@@ -57,7 +57,10 @@ export interface ChatMessage {
   timestamp: string;
   sessionId: string;
   intent?: string;
-  status?: 'sending' | 'sent' | 'failed';
+  /** `queued`: typed while offline, sends when back online (D16). */
+  status?: 'sending' | 'sent' | 'failed' | 'queued';
+  /** Busy (LLM_BUSY): epoch ms when "Try again" becomes active. */
+  retryAt?: number;
   referral?: ReferralPayload;
   spaceNudge?: import('@/lib/spaces/space-nudge').SpaceNudgePayload;
   nextActions?: ChatNextAction[];

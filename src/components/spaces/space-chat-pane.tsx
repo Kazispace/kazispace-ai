@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { MessageBubble } from '@/components/clinic/message-bubble';
 import { ChatHistoryLoadError } from '@/components/chat/chat-history-load-error';
 import { ChatSideRailsHost } from '@/components/chat/chat-side-rails-host';
+import { useOfflineQueueFlush } from '@/hooks/use-offline-queue-flush';
 import { SpaceShell } from '@/components/spaces/space-shell';
 import { useChatScroll } from '@/hooks/use-chat-scroll';
 import { useHistoryStubHydrate } from '@/hooks/use-history-stub-hydrate';
@@ -389,6 +390,15 @@ export function SpaceChatPane({
       void retryMessage(messageId);
     },
     [pinToLatestOnSend, retryMessage]
+  );
+
+  // D16: send what was typed offline, in order, once the connection returns.
+  useOfflineQueueFlush(
+    () =>
+      messages
+        .filter((m) => m.role === 'user' && m.status === 'queued')
+        .map((m) => m.id),
+    (messageId) => retryMessage(messageId)
   );
 
   const strategyContexts = useMemo(
