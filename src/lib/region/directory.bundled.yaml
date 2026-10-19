@@ -3,7 +3,7 @@
 # Regenerate: npm run sync:region-directory
 # CI gate: node scripts/sync-region-directory.mjs --check
 schema_version: "1.0"
-directory_version: 5
+directory_version: 6
 default_data_region: global
 regions:
   - data_region: cn-mainland
@@ -11,7 +11,7 @@ regions:
     api_base: https://api.kazispace.cn  # pragma: allowlist secret
     currency: CNY
     phone_prefixes: ["+86"]
-    public_status: not_ready
+    public_status: advertised
   - data_region: global
     region_id: us-west
     api_base: https://bot.kazispace.ai

@@ -82,7 +82,7 @@ describe('selectLiveApiBase (T4–T7)', () => {
     }
   });
 
-  it('T4: public advertised only intl + flag off → +86 OTP to bootstrap intl', () => {
+  it('T4: when public set is intl-only + flag off → +86 OTP to bootstrap intl', () => {
     expect(selectLiveApiBase('+8613262788342')).toBe(bootstrapBase());
     expect(selectLiveApiBase('+8613262788342')).toBe(INTL);
   });
