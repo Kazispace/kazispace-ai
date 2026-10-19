@@ -1,0 +1,18 @@
+# Keep docker context small for KAZI-1120 CN image builds.
+.git
+.github
+.next
+node_modules
+out
+coverage
+playwright-report
+test-results
+**/*.md
+!deploy/cn/README.md
+_reference
+.netlify
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
