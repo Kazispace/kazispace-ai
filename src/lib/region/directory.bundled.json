@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "directory_version": 5,
+  "directory_version": 6,
   "default_data_region": "global",
   "regions": [
     {
@@ -11,7 +11,7 @@
       "phone_prefixes": [
         "+86"
       ],
-      "public_status": "not_ready"
+      "public_status": "advertised"
     },
     {
       "data_region": "global",

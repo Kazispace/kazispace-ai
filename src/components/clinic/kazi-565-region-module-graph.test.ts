@@ -52,7 +52,7 @@ describe('KAZI-565 region directory module graph', () => {
     const json = JSON.parse(
       readSrc('lib/region/directory.bundled.json')
     ) as { directory_version: number; regions: unknown[] };
-    expect(json.directory_version).toBe(5);
+    expect(json.directory_version).toBe(6);
     expect(json.regions.length).toBeGreaterThan(0);
   });
 

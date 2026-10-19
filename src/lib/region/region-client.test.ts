@@ -82,9 +82,15 @@ describe('selectLiveApiBase (T4–T7)', () => {
     }
   });
 
-  it('T4: public advertised only intl + flag off → +86 OTP to bootstrap intl', () => {
+  it('T4: when public set is intl-only + flag off → +86 OTP to bootstrap intl', () => {
     expect(selectLiveApiBase('+8613262788342')).toBe(bootstrapBase());
     expect(selectLiveApiBase('+8613262788342')).toBe(INTL);
+  });
+
+  it('T4b: bundled advertised (no stub) → +86 OTP to api.cn', () => {
+    // Clear inject so getAdvertisedApiBases falls back to bundled advertised rows.
+    setAdvertisedApiBasesForTests(null);
+    expect(selectLiveApiBase('+8613262788342')).toBe(CN);
   });
 
   it('T5: mock public includes CN advertised → +86 OTP to api.cn', () => {
@@ -92,7 +98,7 @@ describe('selectLiveApiBase (T4–T7)', () => {
     expect(selectLiveApiBase('+8613262788342')).toBe(CN);
   });
 
-  it('T6: CN not_ready but flag=1 → +86 OTP to api.cn', () => {
+  it('T6: CN omitted from public set but flag=1 → +86 OTP to api.cn', () => {
     process.env.NEXT_PUBLIC_REGION_ALLOW_NOT_READY = '1';
     setAdvertisedApiBasesForTests([INTL]);
     expect(selectLiveApiBase('+8613262788342')).toBe(CN);
