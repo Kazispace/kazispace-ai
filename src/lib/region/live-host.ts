@@ -9,7 +9,7 @@ import {
  * Host used for OTP request/verify (pre-login).
  *
  * Production +86 while CN is not advertised → bootstrap intl (login stays up).
- * After ops advertises CN → api-cn with zero FE code change.
+ * After ops advertises CN → the filed CN API host with zero FE code change.
  * Staging may set NEXT_PUBLIC_REGION_ALLOW_NOT_READY=1 to hit not_ready CN.
  */
 export function selectLiveApiBase(phone: string): string {
