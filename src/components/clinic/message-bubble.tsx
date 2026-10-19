@@ -453,11 +453,6 @@ function WaitingIndicator({ label }: { label: string }) {
 }
 
 /**
- * D13 / Busy: the bubble stays, is marked "Not sent", and offers "Try again".
- * While the server asks the client to wait (`retryAt`), the line says the AI
- * is busy with a countdown, and "Try again" stays disabled until it ends.
- */
-/**
  * D16: a message typed offline waits to be sent. Once the device is back
  * online it is sent automatically; "Try again" is offered too, so a queued
  * message can never be left with no way to send it.
@@ -487,6 +482,11 @@ function QueuedMarker({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
+/**
+ * D13 / Busy: the bubble stays, is marked "Not sent", and offers "Try again".
+ * While the server asks the client to wait (`retryAt`), the line says the AI
+ * is busy with a countdown, and "Try again" stays disabled until it ends.
+ */
 function NotSentMarker({
   retryAt,
   onRetry,
