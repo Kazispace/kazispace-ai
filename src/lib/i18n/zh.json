@@ -558,7 +558,6 @@
 		}
 	},
 	"chat": {
-		"title": "{name} · AI 职业伙伴",
 		"backToClinic": "← 返回门诊",
 		"welcome": {
 			"greeting": "👋 你好！我是 {name}，你的 AI 职业伙伴。",
@@ -1087,8 +1086,7 @@
 		"useOtpLogin": "使用手机号登录",
 		"openInTelegramTitle": "在 Telegram 中打开",
 		"openInTelegramDesc": "此功能在 KaziSpace Telegram 机器人内体验最佳。请打开机器人并点击菜单按钮。",
-		"continueInBrowser": "在浏览器中继续",
-		"backToBot": "← 返回机器人"
+		"continueInBrowser": "在浏览器中继续"
 	},
 	"errorBoundary": {
 		"title": "出现错误",

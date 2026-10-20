@@ -279,12 +279,7 @@
 		}
 	},
 	"chat": {
-		"title": "{name} · AI-карьерный партнёр",
 		"backToClinic": "← Назад в клинику",
-		"status": {
-			"online": "В сети",
-			"offline": "Не в сети"
-		},
 		"welcome": {
 			"greeting": "👋 Здравствуйте! Я {name}, ваш AI-карьерный партнёр.",
 			"prompt": "Расскажите, что вас волнует, или выберите специалиста:",
@@ -1034,8 +1029,7 @@
 		"useOtpLogin": "Войти по телефону",
 		"openInTelegramTitle": "Откройте в Telegram",
 		"openInTelegramDesc": "Это приложение работает внутри бота KaziSpace. Откройте бота и нажмите кнопку меню.",
-		"continueInBrowser": "Продолжить в браузере",
-		"backToBot": "← Назад в бот"
+		"continueInBrowser": "Продолжить в браузере"
 	},
 	"errorBoundary": {
 		"title": "Что-то пошло не так",

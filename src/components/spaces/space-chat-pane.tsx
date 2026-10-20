@@ -446,7 +446,6 @@ export function SpaceChatPane({
     >
       <SpaceShell
         locale={locale}
-        space={space}
         footer={composerNode ?? null}
         scrollRef={scrollRef}
         onScroll={handleScroll}

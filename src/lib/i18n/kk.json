@@ -279,12 +279,7 @@
 		}
 	},
 	"chat": {
-		"title": "{name} · AI мансап серіктесі",
 		"backToClinic": "← Кеңеске оралу",
-		"status": {
-			"online": "Желіде",
-			"offline": "Желіде емес"
-		},
 		"welcome": {
 			"greeting": "👋 Сәлеметсіз бе! Мен {name}, сіздің AI мансап серіктесіңіз.",
 			"prompt": "Мәселеңізді айтыңыз немесе маман таңдаңыз:",
@@ -983,8 +978,7 @@
 		"useOtpLogin": "Телефонмен кіру",
 		"openInTelegramTitle": "Telegram-да ашыңыз",
 		"openInTelegramDesc": "Бұл қолданба KaziSpace ботының ішінде жұмыс істейді. Ботты ашып, мәзір түймесін басыңыз.",
-		"continueInBrowser": "Браузерде жалғастыру",
-		"backToBot": "← Ботқа оралу"
+		"continueInBrowser": "Браузерде жалғастыру"
 	},
 	"errorBoundary": {
 		"title": "Бір қате орын алды",

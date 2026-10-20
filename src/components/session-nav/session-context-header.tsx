@@ -177,8 +177,8 @@ export function SessionContextHeader({
   ]);
 
   const showSessionActions = Boolean(agentId && currentSession?.session_id);
-  // Dedicated hub routes — plain Link back to /chat. Inline clinic agent mode keeps
-  // ChatHeader for deactivate (SessionContextHeader cannot call exitToClinic).
+  // Dedicated hub routes — plain Link back to /chat. Inline clinic agent mode is
+  // suppressed inside the workspace when spaces are on, so there is nothing to exit here.
   const showBackToClinic = Boolean(hubAgentId);
   const showSpaceLifecycle = Boolean(
     spaceId &&

@@ -4,17 +4,13 @@ import Link from 'next/link';
 import { type ReactNode, type Ref } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { ChatHeader } from '@/components/clinic/chat-header';
 import { OfflineBar } from '@/components/chat/offline-bar';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
-import { useEmbeddedInWorkspaceShell } from '@/lib/workspace-shell-context';
 import { cn } from '@/lib/utils';
-import type { SpaceDetail } from '@/types/spaces';
 
 interface SpaceShellProps {
   locale: string;
-  space: SpaceDetail;
   children: React.ReactNode;
   footer?: React.ReactNode;
   /** Scrollable message column (overflow-y-auto). */
@@ -27,7 +23,6 @@ interface SpaceShellProps {
 /** Clinic-aligned shell: full-width column inside SessionNav main (h-full chain). */
 export function SpaceShell({
   locale,
-  space,
   children,
   footer,
   scrollRef,
@@ -36,19 +31,9 @@ export function SpaceShell({
 }: SpaceShellProps) {
   const tClinic = useTranslations('clinic');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const embeddedInWorkspace = useEmbeddedInWorkspaceShell();
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
-      {!embeddedInWorkspace ? (
-        <ChatHeader
-          locale={locale}
-          mode="space"
-          spaceName={space.name}
-          spaceTemplateId={space.template_id}
-        />
-      ) : null}
-
       {!isLoggedIn ? (
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-orange-100 bg-orange-50 px-4 py-2">
           <span className="text-xs text-gray-600">

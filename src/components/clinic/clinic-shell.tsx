@@ -5,7 +5,6 @@ import { ChevronDown, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ChatHeader } from "./chat-header";
 import { WelcomeView } from "./welcome-view";
 import { MessageBubble } from "./message-bubble";
 import { ClinicMessageList } from "./clinic-message-list";
@@ -108,7 +107,6 @@ import type { SupportedLocale } from "@/lib/constants";
 import type { ChatJobCard, ChatNextAction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { getCompleteProfileHref } from "@/lib/profile-routing";
-import { bootstrapBase } from "@/lib/region";
 import { clinicHistoryBootstrapOutcome } from "@/lib/clinic/history-bootstrap";
 import { shouldClinicReplyRouteToInterviewHub } from "@/lib/clinic-interview-routing";
 import {
@@ -393,7 +391,6 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   );
 
   /** KAZI-321: mock_interview stays in Clinic thread; optional deep-link only via open_interview / explicit path. */
-  const [isOnline, setIsOnline] = useState(false);
   const [englishLevel, setEnglishLevelState] = useState<string | null>(null);
   const [pendingReferral, setPendingReferral] = useState<{
     agentId: string;
@@ -603,9 +600,6 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     setEnglishLevelState(getEnglishLevel());
     clearExpiredReferralDismissals();
     clearExpiredSpaceNudgeDismissals();
-    fetch(`${bootstrapBase()}/health`, { signal: AbortSignal.timeout(5000) })
-      .then((r) => setIsOnline(r.ok))
-      .catch(() => setIsOnline(false));
   }, []);
 
   useEffect(() => {
@@ -1478,31 +1472,6 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
       {isSwitching && <SwitchingOverlay />}
 
-      {/* Agent mode keeps ChatHeader for deactivate + session history; ContextHeader alone cannot exit. */}
-      {(!embeddedInWorkspace || isAgentMode) && (
-      <ChatHeader
-        locale={locale}
-        mode={isAgentMode ? "agent" : "clinic"}
-        agentName={activeEntry ? getAgentLabel(activeEntry, locale, "name") : undefined}
-        agentId={activeEntry?.agentId}
-        isOnline={isOnline}
-        onBackToClinic={isAgentMode ? handleBackToClinic : undefined}
-        onOpenSessionHistory={
-          isAgentMode && isLoggedIn
-            ? () => {
-                sessionHistoryTriggerRef.current =
-                  document.activeElement as HTMLElement | null;
-                setSessionPanelOpen(true);
-              }
-            : undefined
-        }
-        onOpenWorkspaceHub={
-          !isAgentMode && isLoggedIn
-            ? () => openCvRail(undefined, { drillDown: false })
-            : undefined
-        }
-      />
-      )}
 
       {isAgentMode && isLoggedIn ? (
         <AgentSessionPanel

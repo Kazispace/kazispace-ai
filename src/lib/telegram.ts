@@ -51,10 +51,6 @@ export function expandTelegramWebApp(): void {
   getTelegramWebApp()?.expand();
 }
 
-export function closeTelegramWebApp(): void {
-  getTelegramWebApp()?.close();
-}
-
 export function openTelegramLink(url: string): void {
   const tg = getTelegramWebApp();
   if (tg) {

@@ -279,12 +279,7 @@
 		}
 	},
 	"chat": {
-		"title": "{name} · AI karyera hamkori",
 		"backToClinic": "← Klinikaga qaytish",
-		"status": {
-			"online": "Onlayn",
-			"offline": "Oflayn"
-		},
 		"welcome": {
 			"greeting": "👋 Salom! Men {name}, sizning AI karyera hamkoringiz.",
 			"prompt": "Savolingizni yozing yoki mutaxassis tanlang:",
@@ -952,8 +947,7 @@
 		"useOtpLogin": "Telefon bilan kirish",
 		"openInTelegramTitle": "Telegramda oching",
 		"openInTelegramDesc": "Bu ilova KaziSpace boti ichida ishlaydi. Botni oching va menyu tugmasini bosing.",
-		"continueInBrowser": "Brauzerda davom etish",
-		"backToBot": "← Botga qaytish"
+		"continueInBrowser": "Brauzerda davom etish"
 	},
 	"errorBoundary": {
 		"title": "Nimadir noto'g'ri ketdi",

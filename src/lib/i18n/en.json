@@ -558,12 +558,7 @@
 		}
 	},
 	"chat": {
-		"title": "{name} · AI Career Partner",
 		"backToClinic": "← Back to clinic",
-		"status": {
-			"online": "Online",
-			"offline": "Offline"
-		},
 		"welcome": {
 			"greeting": "👋 Hi! I'm {name}, your AI career partner.",
 			"prompt": "Tell me what's on your mind, or pick a specialist below:",
@@ -1383,8 +1378,7 @@
 		"useOtpLogin": "Sign in with phone",
 		"openInTelegramTitle": "Open in Telegram",
 		"openInTelegramDesc": "This experience works best inside the KaziSpace Telegram bot. Open the bot and tap the menu button.",
-		"continueInBrowser": "Continue in browser",
-		"backToBot": "← Back to bot"
+		"continueInBrowser": "Continue in browser"
 	},
 	"errorBoundary": {
 		"title": "Something went wrong",
