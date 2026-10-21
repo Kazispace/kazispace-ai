@@ -16,7 +16,7 @@ import { mergeClinicMessagesAfterHistoryLoad } from '@/lib/clinic-chat-merge';
 import { getAuthToken } from '@/lib/auth';
 import { ensureMasterSession, syncMasterSession } from '@/lib/master-session';
 import { publishSessionNavInvalidate } from '@/lib/session-nav-invalidate';
-import { looksLikeResearchRequest } from '@/lib/clinic/upgrade-cta';
+import { looksLikeResearchRequest } from '@/lib/clinic/search-capability';
 import {
   isPlaceholderReply,
   resolveSpaceTurnReply,
@@ -161,7 +161,6 @@ function normalizeHistoryMessage(
     ...(envelope?.citations && envelope.citations.length > 0
       ? { citations: envelope.citations }
       : {}),
-    ...(envelope?.upgradeCta ? { upgradeCta: envelope.upgradeCta } : {}),
     ...(envelope?.capabilityId ? { capabilityId: envelope.capabilityId } : {}),
     ...(envelope?.playbookId !== undefined ? { playbookId: envelope.playbookId } : {}),
     ...(envelope?.meta && Object.keys(envelope.meta).length > 0
@@ -393,7 +392,7 @@ export function useClinicChat(locale?: string) {
       text: string,
       options?: {
         retryMessageId?: string;
-        /** Prefer research waiting copy (CTA handoff / explicit research). */
+        /** Show the search waiting copy (explicit research request). */
         pendingCapability?: 'web_search' | 'research';
         /** Bubble copy when transport uses action meta (KAZI-469). */
         displayContent?: string;
@@ -529,7 +528,6 @@ export function useClinicChat(locale?: string) {
           nextActions,
           cards,
           citations,
-          upgradeCta,
           capabilityId,
           playbookId,
           assistantMeta,
@@ -580,7 +578,6 @@ export function useClinicChat(locale?: string) {
                 ...(nextActions.length > 0 ? { nextActions } : {}),
                 ...(cards.length > 0 ? { cards } : {}),
                 ...(citations && citations.length > 0 ? { citations } : {}),
-                ...(upgradeCta ? { upgradeCta } : {}),
                 ...(capabilityId ? { capabilityId } : {}),
                 ...(playbookId !== undefined ? { playbookId } : {}),
                 ...(assistantMeta ? { assistantMeta } : {}),
@@ -670,24 +667,6 @@ export function useClinicChat(locale?: string) {
     [patchSpaceMessages]
   );
 
-  const dismissMessageUpgradeCta = useCallback(
-    (messageId: string) => {
-      const msg = useSpaceStore
-        .getState()
-        .getSpaceSlice(CLINIC_SPACE_ID)
-        .messages.find((m) => m.id === messageId);
-      if (!msg?.upgradeCta) return;
-      patchSpaceMessages(CLINIC_SPACE_ID, (prev) =>
-        prev.map((message) =>
-          message.id === messageId
-            ? { ...message, upgradeCta: { ...msg.upgradeCta!, dismissed: true } }
-            : message
-        )
-      );
-    },
-    [patchSpaceMessages]
-  );
-
   const retryMessage = useCallback(
     async (messageId: string) => {
       const msg = useSpaceStore
@@ -721,6 +700,5 @@ export function useClinicChat(locale?: string) {
     markStreamComplete,
     dismissMessageReferral,
     dismissMessageSpaceNudge,
-    dismissMessageUpgradeCta,
   };
 }

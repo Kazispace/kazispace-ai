@@ -12,7 +12,7 @@ const base: SpaceChatMessage = {
   content: '这个问题更适合简历专家',
 };
 
-describe('KAZI-651 Phase A review: spaceMessageRowFingerprint covers referral/upgradeCta', () => {
+describe('KAZI-651 Phase A review: spaceMessageRowFingerprint covers referral', () => {
   it('differs when a row gains a referral', () => {
     const withReferral: SpaceChatMessage = {
       ...base,
@@ -20,19 +20,6 @@ describe('KAZI-651 Phase A review: spaceMessageRowFingerprint covers referral/up
     };
     expect(spaceMessageRowFingerprint(base)).not.toBe(
       spaceMessageRowFingerprint(withReferral)
-    );
-  });
-
-  it('differs when a row gains an upgradeCta', () => {
-    const withUpgradeCta: SpaceChatMessage = {
-      ...base,
-      upgradeCta: {
-        upgrade_to: 'research',
-        seed: { question: '深入研究竞品', citations: [] },
-      },
-    };
-    expect(spaceMessageRowFingerprint(base)).not.toBe(
-      spaceMessageRowFingerprint(withUpgradeCta)
     );
   });
 

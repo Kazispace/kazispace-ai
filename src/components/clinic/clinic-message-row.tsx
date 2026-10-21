@@ -39,7 +39,6 @@ export type ClinicMessageRowProps = {
   onReferralDismiss: (agentId: string, messageId: string) => void;
   onSpaceNudgeAccept: (nudge: SpaceNudgePayload, messageId: string) => void;
   onSpaceNudgeDismiss: (nudge: SpaceNudgePayload, messageId: string) => void;
-  onUpgradeResearch: (messageId: string) => void;
   onNextAction: (action: ChatNextAction) => void;
   onFocusComposer: () => void;
   onExamSelect: (option: ExamPickerOption) => void;
@@ -66,7 +65,6 @@ function clinicMessageRowEqual(
     prev.onReferralDismiss === next.onReferralDismiss &&
     prev.onSpaceNudgeAccept === next.onSpaceNudgeAccept &&
     prev.onSpaceNudgeDismiss === next.onSpaceNudgeDismiss &&
-    prev.onUpgradeResearch === next.onUpgradeResearch &&
     prev.onNextAction === next.onNextAction &&
     prev.onFocusComposer === next.onFocusComposer &&
     prev.onExamSelect === next.onExamSelect &&
@@ -90,7 +88,6 @@ function ClinicMessageRowImpl({
   onReferralDismiss,
   onSpaceNudgeAccept,
   onSpaceNudgeDismiss,
-  onUpgradeResearch,
   onNextAction,
   onFocusComposer,
   onExamSelect,
@@ -133,10 +130,6 @@ function ClinicMessageRowImpl({
     }
   }, [message.id, message.spaceNudge, onSpaceNudgeDismiss]);
 
-  const handleUpgradeResearch = useCallback(() => {
-    onUpgradeResearch(message.id);
-  }, [message.id, onUpgradeResearch]);
-
   if (isHistoryStub(message)) {
     return (
       <HistoryStubPlaceholder
@@ -164,7 +157,6 @@ function ClinicMessageRowImpl({
       cards={message.cards}
       citations={message.citations}
       customComponents={message.customComponents}
-      upgradeCta={!isAgentMode ? message.upgradeCta : undefined}
       capabilityId={!isAgentMode ? message.capabilityId : undefined}
       playbookId={!isAgentMode ? message.playbookId : undefined}
       pendingCapability={!isAgentMode ? message.pendingCapability : undefined}
@@ -203,11 +195,6 @@ function ClinicMessageRowImpl({
       onSpaceNudgeDismiss={
         !isAgentMode && message.spaceNudge && !message.spaceNudge.dismissed
           ? handleSpaceNudgeDismiss
-          : undefined
-      }
-      onUpgradeResearch={
-        !isAgentMode && message.upgradeCta && !message.upgradeCta.dismissed
-          ? handleUpgradeResearch
           : undefined
       }
       referralDisabled={referralDisabled}

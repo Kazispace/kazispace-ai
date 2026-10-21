@@ -117,7 +117,6 @@ import {
 } from "@/lib/next-action/resolve";
 import { mapStrategySelectTurnContexts } from "@/lib/strategy-select";
 import { resolveActionSelectSubmit } from "@/lib/next-action-submit";
-import { buildResearchHandoffMessage } from "@/lib/clinic/upgrade-cta";
 import { isEnglishTutorReviseAction } from "@/lib/english-tutor/custom-components";
 import { subscriptionHref } from "@/lib/top-level-nav";
 import { OfflineBar } from "@/components/chat/offline-bar";
@@ -247,7 +246,6 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     markStreamComplete,
     dismissMessageReferral,
     dismissMessageSpaceNudge,
-    dismissMessageUpgradeCta,
     hydrateHistoryStubs,
   } = useClinicChat(locale);
 
@@ -1449,30 +1447,6 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     [activeAgentId]
   );
 
-  /** Same-thread research handoff from web_search upgrade CTA (KAZI-233). */
-  const handleUpgradeResearch = useCallback(
-    async (messageId: string) => {
-      const msg = useSpaceStore
-        .getState()
-        .getSpaceSlice(CLINIC_SPACE_ID)
-        .messages.find((m) => m.id === messageId);
-      const cta = msg?.upgradeCta;
-      if (!cta || cta.dismissed) return;
-
-      const handoffText = buildResearchHandoffMessage(cta.seed, locale);
-      pinToLatestOnSend();
-      // Dismiss only after success so paywall / network failures keep the CTA for retry.
-      const result = await sendClinicMessage(handoffText, {
-        pendingCapability: "research",
-      });
-      if (result.ok) {
-        dismissMessageUpgradeCta(messageId);
-      }
-      // On failure the handoff bubble is marked "Not sent" with "Try again" (D13).
-    },
-    [dismissMessageUpgradeCta, locale, pinToLatestOnSend, sendClinicMessage]
-  );
-
   // Fills SessionNavShell `<main className="min-h-0 flex-1">` — not viewport `h-screen`.
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col bg-white">
@@ -1633,7 +1607,6 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
             onReferralDismiss={handleReferralDismiss}
             onSpaceNudgeAccept={handleSpaceNudgeAccept}
             onSpaceNudgeDismiss={handleSpaceNudgeDismiss}
-            onUpgradeResearch={handleUpgradeResearch}
             onNextAction={handleNextAction}
             onFocusComposer={handleFocusComposer}
             onExamSelect={handleExamSelect}

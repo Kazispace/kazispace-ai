@@ -570,16 +570,10 @@
 			"placeholder": "和我聊聊你的职业问题…"
 		},
 		"processing": "处理中…",
-		"processingWebSearch": "正在快速检索…",
-		"processingResearch": "正在深度研究，请稍候…",
+		"processingSearch": "正在查询资料…",
 		"sources": "来源",
-		"upgradeResearch": {
-			"hint": "可升级为多源深度研究报告",
-			"cta": "深入研究"
-		},
 		"capability": {
-			"web_search": "快速检索",
-			"research": "深度研究",
+			"search": "查询资料",
 			"playbookHint": "策略：{id}",
 			"playbookUnbound": "通用检索（未绑定垂直策略）"
 		},

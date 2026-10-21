@@ -29,7 +29,6 @@ export function StaticClinicMessageRows({
   onReferralDismiss,
   onSpaceNudgeAccept,
   onSpaceNudgeDismiss,
-  onUpgradeResearch,
   onNextAction,
   onFocusComposer,
   onExamSelect,
@@ -53,7 +52,6 @@ export function StaticClinicMessageRows({
           onReferralDismiss={onReferralDismiss}
           onSpaceNudgeAccept={onSpaceNudgeAccept}
           onSpaceNudgeDismiss={onSpaceNudgeDismiss}
-          onUpgradeResearch={onUpgradeResearch}
           onNextAction={onNextAction}
           onFocusComposer={onFocusComposer}
           onExamSelect={onExamSelect}

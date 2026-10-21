@@ -114,7 +114,6 @@ function Harness({
         onReferralDismiss={noop}
         onSpaceNudgeAccept={noop}
         onSpaceNudgeDismiss={noop}
-        onUpgradeResearch={noop}
         onNextAction={noop}
         onFocusComposer={noop}
         onExamSelect={noop}

@@ -43,7 +43,6 @@ export function ClinicMessageVirtuoso({
   onReferralDismiss,
   onSpaceNudgeAccept,
   onSpaceNudgeDismiss,
-  onUpgradeResearch,
   onNextAction,
   onFocusComposer,
   onExamSelect,
@@ -74,7 +73,6 @@ export function ClinicMessageVirtuoso({
     onReferralDismiss,
     onSpaceNudgeAccept,
     onSpaceNudgeDismiss,
-    onUpgradeResearch,
     onNextAction,
     onFocusComposer,
     onExamSelect,
@@ -113,7 +111,6 @@ export function ClinicMessageVirtuoso({
             onReferralDismiss={onReferralDismiss}
             onSpaceNudgeAccept={onSpaceNudgeAccept}
             onSpaceNudgeDismiss={onSpaceNudgeDismiss}
-            onUpgradeResearch={onUpgradeResearch}
             onNextAction={onNextAction}
             onFocusComposer={onFocusComposer}
             onExamSelect={onExamSelect}

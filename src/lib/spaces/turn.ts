@@ -3,7 +3,6 @@ import { hydrateStrategyPayloadUserLabels } from '@/lib/strategy-select';
 import { isServerAssistantMessageId } from '@/lib/clinic/message-feedback';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import type { ReferralPayload } from '@/types';
-import type { UpgradeCtaPayload } from '@/lib/clinic/upgrade-cta';
 import type { CitationItem } from '@/lib/clinic/citation-list';
 import type { SearchCapabilityId } from '@/lib/clinic/search-capability';
 
@@ -197,36 +196,6 @@ export function resolveSpaceTurnReferral(data: unknown): ReferralPayload | undef
 }
 
 /**
- * KAZI-651 Phase A — carry the web_search -> research upgrade CTA (KAZI-233)
- * on a Space turn. `parseAssistantEnvelope` already extracts this generically
- * from `meta.upgrade_cta`/`meta.cta`, scanning `[data, raw.envelope]` exactly
- * like `resolveSpaceTurnAssistantMeta` above — Space's sendMessage flow just
- * never read it back out. Unlike referral (see resolveSpaceTurnReferral),
- * `meta.upgrade_cta` under `assistant_response`/`envelope` is a passthrough
- * path Space turns already use for cards/next_actions/assistantMeta, so this
- * one plausibly *can* fire against a real Space turn today if the BE ever
- * populates it — it isn't purely aspirational the way the referral path is.
- *
- * Same caveat as cards (space-job-cards-cache.ts): whether `GET
- * .../messages` echoes `meta.upgrade_cta` back on history rows is
- * unverified — this phase doesn't add cache/rehydration for it the way
- * cards has, so a value present on a live send may not survive a cold
- * history reload. Same class of gap, not fixed here.
- */
-export function resolveSpaceTurnUpgradeCta(data: unknown): UpgradeCtaPayload | undefined {
-  if (!data || typeof data !== 'object') return undefined;
-  const raw = data as Record<string, unknown>;
-
-  for (const candidate of [data, raw.envelope]) {
-    if (!candidate) continue;
-    const upgradeCta = parseAssistantEnvelope(candidate).upgradeCta;
-    if (upgradeCta) return upgradeCta;
-  }
-
-  return undefined;
-}
-
-/**
  * KAZI-651 Phase C.1a — read-path parity with Clinic's own history parser
  * (`normalizeHistoryMessage` in use-clinic-chat.ts), which extracts these
  * four fields from a single `parseAssistantEnvelope(raw)` call on every
@@ -310,11 +279,6 @@ export type SpaceChatMessage = {
    * rendered by any Space UI (see resolveSpaceTurnReferral).
    */
   referral?: ReferralPayload;
-  /**
-   * KAZI-651 Phase A — web_search -> research upgrade CTA, carried but not
-   * yet rendered by any Space UI (see resolveSpaceTurnUpgradeCta).
-   */
-  upgradeCta?: UpgradeCtaPayload;
   /**
    * KAZI-651 Phase C.1a — read-path parity fields. Clinic's own
    * `ChatMessage` has carried these since before this migration; Space
@@ -412,8 +376,6 @@ export function normalizeSpaceHistoryMessage(
     role === 'assistant' ? resolveSpaceTurnCustomComponents(raw) : [];
   const referral =
     role === 'assistant' ? resolveSpaceTurnReferral(raw) : undefined;
-  const upgradeCta =
-    role === 'assistant' ? resolveSpaceTurnUpgradeCta(raw) : undefined;
   const intent =
     role === 'assistant' ? resolveSpaceTurnIntent(raw) : undefined;
   const citations =
@@ -432,7 +394,6 @@ export function normalizeSpaceHistoryMessage(
     ...(assistantMeta ? { assistantMeta } : {}),
     ...(customComponents.length > 0 ? { customComponents } : {}),
     ...(referral ? { referral } : {}),
-    ...(upgradeCta ? { upgradeCta } : {}),
     ...(intent ? { intent } : {}),
     ...(citations && citations.length > 0 ? { citations } : {}),
     ...(capabilityId ? { capabilityId } : {}),
@@ -510,7 +471,6 @@ export function mergeSpaceMessagesAfterSend(
     assistantMeta?: Record<string, unknown>;
     customComponents?: import('@/types/english-tutor-envelope').EnglishTutorEnvelopeComponent[];
     referral?: ReferralPayload;
-    upgradeCta?: UpgradeCtaPayload;
     intent?: string;
     citations?: CitationItem[];
     capabilityId?: SearchCapabilityId;
@@ -530,7 +490,6 @@ export function mergeSpaceMessagesAfterSend(
         ? { customComponents: message.customComponents }
         : {}),
       ...(message.referral ? { referral: message.referral } : {}),
-      ...(message.upgradeCta ? { upgradeCta: message.upgradeCta } : {}),
       ...(message.intent ? { intent: message.intent } : {}),
       ...(message.citations && message.citations.length > 0
         ? { citations: message.citations }
@@ -568,9 +527,6 @@ export function mergeSpaceMessagesAfterSend(
     }
     if (!message.referral && localExtras.referral) {
       next = { ...next, referral: localExtras.referral };
-    }
-    if (!message.upgradeCta && localExtras.upgradeCta) {
-      next = { ...next, upgradeCta: localExtras.upgradeCta };
     }
     if (!message.intent && localExtras.intent) {
       next = { ...next, intent: localExtras.intent };

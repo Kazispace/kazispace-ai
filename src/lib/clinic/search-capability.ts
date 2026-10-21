@@ -79,3 +79,30 @@ export function playbookChipTitle(
   if (playbookId === null) return labels.unbound;
   return labels.bound(playbookId);
 }
+
+/**
+ * Phrases that ask for research (mirror of the backend's explicit research
+ * markers). Only picks the waiting copy while a reply is pending; it never
+ * changes the request, and depth is decided by the backend (KAZI-1137).
+ */
+const EXPLICIT_RESEARCH_MARKERS = [
+  '深入研究',
+  '深度研究',
+  '深度调研',
+  '出报告',
+  '写一份报告',
+  '多源对比',
+  'deep research',
+  'in-depth research',
+  'thorough research',
+  'full report',
+  '需要更深入研究',
+  '帮我深入研究',
+] as const;
+
+/** True when the user text explicitly asks for research (waiting copy only). */
+export function looksLikeResearchRequest(text: string): boolean {
+  const lower = (text || '').toLowerCase();
+  if (!lower.trim()) return false;
+  return EXPLICIT_RESEARCH_MARKERS.some((m) => lower.includes(m.toLowerCase()));
+}

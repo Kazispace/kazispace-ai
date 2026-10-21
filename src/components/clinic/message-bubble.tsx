@@ -13,7 +13,6 @@ import { MarkdownContent } from "./markdown-content";
 import { MessageActions } from "./message-actions";
 import { ReferralPrompt } from "./referral-prompt";
 import { SpaceNudgePrompt } from "./space-nudge-prompt";
-import { UpgradeResearchCta } from "./upgrade-research-cta";
 import { SearchCapabilityChip } from "./search-capability-chip";
 import { EnglishTutorEnvelopeBlocks } from "@/components/english/envelope/english-tutor-envelope-blocks";
 import { EtFormBlock } from "@/components/english/envelope/et-form-block";
@@ -23,7 +22,6 @@ import {
 } from "@/lib/clinic/citation-list";
 import { isLowConfidenceMeta } from "@/lib/english-tutor/custom-components";
 import { parseEtForm, type EtFormSubmit } from "@/lib/english-tutor/form";
-import type { UpgradeCtaPayload } from "@/lib/clinic/upgrade-cta";
 import {
   isSearchCapability,
   type SearchCapabilityId,
@@ -62,7 +60,6 @@ interface MessageBubbleProps {
   cards?: ChatJobCard[];
   citations?: CitationItem[];
   customComponents?: EnglishTutorEnvelopeComponent[];
-  upgradeCta?: UpgradeCtaPayload;
   capabilityId?: SearchCapabilityId;
   playbookId?: string | null;
   /** Waiting-copy hint while placeholder is empty (KAZI-233). */
@@ -78,7 +75,6 @@ interface MessageBubbleProps {
   onReferralDismiss?: () => void;
   onSpaceNudgeAccept?: () => void;
   onSpaceNudgeDismiss?: () => void;
-  onUpgradeResearch?: () => void;
   onNextAction?: (action: ChatNextAction) => void;
   onFocusComposer?: () => void;
   onExamSelect?: (option: ExamPickerOption) => void;
@@ -114,7 +110,6 @@ export function MessageBubble({
   cards,
   citations,
   customComponents,
-  upgradeCta,
   capabilityId,
   playbookId,
   pendingCapability,
@@ -128,7 +123,6 @@ export function MessageBubble({
   onReferralDismiss,
   onSpaceNudgeAccept,
   onSpaceNudgeDismiss,
-  onUpgradeResearch,
   onNextAction,
   onFocusComposer,
   onExamSelect,
@@ -174,11 +168,6 @@ export function MessageBubble({
     [isUser, assistantMeta]
   );
   const showEtForm = showEnrichment && etForm !== null;
-  const showUpgradeCta =
-    showEnrichment &&
-    upgradeCta &&
-    !upgradeCta.dismissed &&
-    onUpgradeResearch;
   const showMessageActions =
     showEnrichment &&
     Boolean(content?.trim()) &&
@@ -208,12 +197,10 @@ export function MessageBubble({
       ? stripMarkdownSourcesSection(content)
       : content;
 
-  const processingLabel =
-    pendingCapability === "research"
-      ? t("processingResearch")
-      : pendingCapability === "web_search"
-        ? t("processingWebSearch")
-        : t("processing");
+  // KAZI-1137: one search class, so one waiting line; depth is not shown.
+  const processingLabel = pendingCapability
+    ? t("processingSearch")
+    : t("processing");
 
   const renderAssistantContent = () => {
     // Empty or BE placeholder ("…") while waiting — show Processing… (KAZI-186).
@@ -348,13 +335,6 @@ export function MessageBubble({
                 placement="inline"
               />
             ) : null}
-            {showUpgradeCta && (
-              <UpgradeResearchCta
-                cta={upgradeCta!}
-                onUpgrade={onUpgradeResearch!}
-                disabled={actionsDisabled}
-              />
-            )}
             {showReferral && agentEmoji && agentName && (
               <ReferralPrompt
                 agentEmoji={agentEmoji}
@@ -390,10 +370,7 @@ export function MessageBubble({
           ) : null}
           {isQueued ? <QueuedMarker onRetry={onRetry} /> : null}
           {showCapabilityChip && capabilityId ? (
-            <SearchCapabilityChip
-              capabilityId={capabilityId}
-              playbookId={playbookId}
-            />
+            <SearchCapabilityChip playbookId={playbookId} />
           ) : null}
           {showIntentBadge && (
             <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full self-start bg-blue-100 text-primary">

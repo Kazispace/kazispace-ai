@@ -2,7 +2,6 @@ import type { SupportedLocale } from '@/lib/constants';
 import { parseCitationList } from '@/lib/clinic/citation-list';
 import { parseEnglishTutorCustomComponents } from '@/lib/english-tutor/custom-components';
 import { resolveSearchCapability } from '@/lib/clinic/search-capability';
-import { parseUpgradeCta } from '@/lib/clinic/upgrade-cta';
 import type {
   AssistantWorkflow,
   ChatJobCard,
@@ -246,8 +245,6 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
   const citationList = parseCitationList(customComponentsRaw);
   const customComponents = parseEnglishTutorCustomComponents(customComponentsRaw);
 
-  const upgradeCta = parseUpgradeCta(meta);
-
   const intent =
     typeof raw.intent === 'string'
       ? raw.intent
@@ -268,7 +265,6 @@ export function parseAssistantEnvelope(data: unknown): ParsedAssistantEnvelope {
     cards: cards.filter((card) => card.type === 'job'),
     ...(citationList ? { citations: citationList.items } : {}),
     ...(customComponents.length > 0 ? { customComponents } : {}),
-    ...(upgradeCta ? { upgradeCta } : {}),
     ...(capabilityId ? { capabilityId } : {}),
     ...(playbookId !== undefined ? { playbookId } : {}),
     workflow,

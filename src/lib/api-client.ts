@@ -533,7 +533,6 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
   nextActions: ChatNextAction[];
   cards: ChatJobCard[];
   citations?: import('@/lib/clinic/citation-list').CitationItem[];
-  upgradeCta?: import('@/lib/clinic/upgrade-cta').UpgradeCtaPayload;
   capabilityId?: import('@/lib/clinic/search-capability').SearchCapabilityId;
   playbookId?: string | null;
   assistantMeta?: Record<string, unknown>;
@@ -592,7 +591,6 @@ export function parseClinicReply(data: ClinicChatResponse | undefined): {
     nextActions: envelope.nextActions,
     cards: envelope.cards,
     ...(envelope.citations?.length ? { citations: envelope.citations } : {}),
-    ...(envelope.upgradeCta ? { upgradeCta: envelope.upgradeCta } : {}),
     ...(envelope.capabilityId ? { capabilityId: envelope.capabilityId } : {}),
     ...(envelope.playbookId !== undefined
       ? { playbookId: envelope.playbookId }
