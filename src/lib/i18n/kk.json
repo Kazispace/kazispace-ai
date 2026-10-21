@@ -51,17 +51,12 @@
 		"interviewRecordsValue": "3 аяқталды",
 		"dailyTasksLabel": "Күнделікті тапсырмалар",
 		"dailyTasksValue": "1 орындау қажет",
-		"profilePreferencesGroupTitle": "Жеке деректер және баптаулар",
 		"targetRoleLabel": "Мақсатты рөл мен деңгей",
 		"sprintPlanLabel": "Мансап спринт жоспары",
 		"sprintPlanValue": "30 мин/күн",
 		"bindTelegramLabel": "Telegram аккаунтын байланыстыру",
 		"tgUnlinked": "Байланыспаған",
 		"tgLinked": "Байланысқан",
-		"billingServicesGroupTitle": "Биллинг және қызметтер",
-		"subscriptionPlansLabel": "Тарифтік жоспарлар",
-		"creditsLedgerLabel": "Кредиттерді есепке алу тарихы",
-		"systemSettingsGroupTitle": "Жүйелік параметрлер",
 		"interfaceLanguageLabel": "Интерфейс тілі",
 		"hapticFeedbackLabel": "Дірілмен кері байланыс",
 		"logoutLabel": "Шығу",
@@ -71,7 +66,13 @@
 		"profileRoleLoading": "Рөл параметрлерін жүктеу...",
 		"profileGoalsLoading": "Дайындық мақсаттарын жүктеу...",
 		"billingLoading": "Тарифті таңдауға өту...",
-		"ledgerLoading": "Кредиттер аудитін жүктеу..."
+		"ledgerLoading": "Кредиттер аудитін жүктеу...",
+		"profilePreferencesGroupTitle": "Профиль",
+		"systemSettingsGroupTitle": "Баптаулар",
+		"billingServicesGroupTitle": "Төлемдер",
+		"subscriptionPlansLabel": "Жазылым",
+		"creditsLedgerLabel": "Баланс және тарих",
+		"linkedAccountsGroupTitle": "Байланыстырылған аккаунттар"
 	},
 	"profile": {
 		"title": "Мансап профилін өңдеу",
@@ -224,7 +225,7 @@
 	},
 	"nav": {
 		"chat": "Сөйлесу",
-		"assets": "Активтер",
+		"studio": "Студия",
 		"me": "Профиль",
 		"primary": "Негізгі навигация",
 		"backTo": "Артқа: {destination}"
@@ -574,8 +575,7 @@
 			"done": "Дайын"
 		},
 		"railHub": {
-			"title": "Активтер",
-			"subtitle": "Мансап активтері — белгішені басыңыз",
+			"title": "Студия",
 			"zonesLabel": "Аймақтар",
 			"zoneCareer": "Мансап",
 			"zoneWork": "Жұмыс",
@@ -602,7 +602,7 @@
 			"openWorkspaceRail": "Актив панелін ашу",
 			"workspaceRailUseCvPanel": "Бұл кеңістікте CV панелі оң жақта — оны онда ашыңыз.",
 			"zoneComingSoon": "Жақында",
-			"backToHub": "Активтерге",
+			"backToHub": "Студияға оралу",
 			"assetV2": {
 				"categoryResume": "Түйіндеме",
 				"categoryInterview": "Сұхбат",
@@ -998,5 +998,8 @@
 		"slow": "Бұл әдеттегіден ұзағырақ уақыт алып жатыр.",
 		"busy": "AI қазір бос емес. {seconds} с кейін қайталап көріңіз.",
 		"offline": "Интернетке қосылым жоқ. Хабарламалар байланыс қалпына келгенде жіберіледі."
+	},
+	"studio": {
+		"resumes": "Түйіндеме"
 	}
 }

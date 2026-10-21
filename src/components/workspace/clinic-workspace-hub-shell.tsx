@@ -32,6 +32,7 @@ function detailToAsset(detail: WorkspaceAssetDetail): WorkspaceAsset {
 
 function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
   const t = useTranslations('cv.railHub');
+  const tNav = useTranslations('nav');
   const tV2 = useTranslations('cv.railHub.assetV2');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -114,7 +115,7 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
           <Link
             href={chatHref}
             className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            aria-label={t('backToHub')}
+            aria-label={tNav('backTo', { destination: tNav('chat') })}
           >
             <ArrowLeft className="h-5 w-5" aria-hidden />
           </Link>

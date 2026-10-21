@@ -51,17 +51,12 @@
 		"interviewRecordsValue": "3 ta yakunlandi",
 		"dailyTasksLabel": "Kundalik vazifalar",
 		"dailyTasksValue": "1 ta bajarish kerak",
-		"profilePreferencesGroupTitle": "Profil va sozlamalar",
 		"targetRoleLabel": "Maqsadli rol va daraja",
 		"sprintPlanLabel": "Karyera sprint rejasi",
 		"sprintPlanValue": "30 daqiqa/kun",
 		"bindTelegramLabel": "Telegram akkauntini ulash",
 		"tgUnlinked": "Ulanmagan",
 		"tgLinked": "Ulangan",
-		"billingServicesGroupTitle": "Billing va xizmatlar",
-		"subscriptionPlansLabel": "Tarif rejalari",
-		"creditsLedgerLabel": "Kreditlarni hisobga olish tarixi",
-		"systemSettingsGroupTitle": "Tizim sozlamalari",
 		"interfaceLanguageLabel": "Interfeys tili",
 		"hapticFeedbackLabel": "Vibratsiyali teskari aloqa",
 		"logoutLabel": "Chiqish",
@@ -71,7 +66,13 @@
 		"profileRoleLoading": "Rol sozlamalarini yuklash...",
 		"profileGoalsLoading": "Tayyorgarlik maqsadlarini yuklash...",
 		"billingLoading": "Tarifni tanlashga o'tish...",
-		"ledgerLoading": "Kreditlar auditini yuklash..."
+		"ledgerLoading": "Kreditlar auditini yuklash...",
+		"profilePreferencesGroupTitle": "Profil",
+		"systemSettingsGroupTitle": "Sozlamalar",
+		"billingServicesGroupTitle": "To'lovlar",
+		"subscriptionPlansLabel": "Obuna",
+		"creditsLedgerLabel": "Balans va tarix",
+		"linkedAccountsGroupTitle": "Bog'langan akkauntlar"
 	},
 	"profile": {
 		"title": "Profilni tahrirlash",
@@ -224,7 +225,7 @@
 	},
 	"nav": {
 		"chat": "Chat",
-		"assets": "Aktivlar",
+		"studio": "Studiya",
 		"me": "Profil",
 		"primary": "Asosiy navigatsiya",
 		"backTo": "Orqaga: {destination}"
@@ -543,8 +544,7 @@
 			"done": "Tayyor"
 		},
 		"railHub": {
-			"title": "Aktivlar",
-			"subtitle": "Martaba aktivlari — belgini bosing",
+			"title": "Studiya",
 			"zonesLabel": "Zonalar",
 			"zoneCareer": "Martaba",
 			"zoneWork": "Ish",
@@ -571,7 +571,7 @@
 			"openWorkspaceRail": "Aktiv paneli",
 			"workspaceRailUseCvPanel": "Bu makonda CV paneli o‘ngda — u yerdan oching.",
 			"zoneComingSoon": "Tez orada",
-			"backToHub": "Aktivlarga",
+			"backToHub": "Studiyaga qaytish",
 			"assetV2": {
 				"categoryResume": "Rezyume",
 				"categoryInterview": "Suhbat",
@@ -967,5 +967,8 @@
 		"slow": "Bu odatdagidan ko'proq vaqt olmoqda.",
 		"busy": "AI hozir band. {seconds} soniyadan so'ng qayta urinib ko'ring.",
 		"offline": "Internetga ulanish yo'q. Xabarlar aloqa tiklanganda yuboriladi."
+	},
+	"studio": {
+		"resumes": "Rezyume"
 	}
 }

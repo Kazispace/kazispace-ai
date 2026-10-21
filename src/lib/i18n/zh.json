@@ -51,17 +51,17 @@
 		"interviewRecordsValue": "已完成 3 次",
 		"dailyTasksLabel": "每日职业任务",
 		"dailyTasksValue": "1 项待办",
-		"profilePreferencesGroupTitle": "资料与偏好",
+		"profilePreferencesGroupTitle": "个人资料",
 		"targetRoleLabel": "目标岗位与级别",
 		"sprintPlanLabel": "职业冲刺计划",
 		"sprintPlanValue": "每天 30 分钟",
 		"bindTelegramLabel": "绑定 Telegram",
 		"tgUnlinked": "未绑定",
 		"tgLinked": "已绑定",
-		"billingServicesGroupTitle": "账单与服务",
-		"subscriptionPlansLabel": "订阅套餐",
-		"creditsLedgerLabel": "积分明细",
-		"systemSettingsGroupTitle": "系统设置",
+		"billingServicesGroupTitle": "支付",
+		"subscriptionPlansLabel": "订阅",
+		"creditsLedgerLabel": "余额与明细",
+		"systemSettingsGroupTitle": "设置",
 		"interfaceLanguageLabel": "界面语言",
 		"hapticFeedbackLabel": "触觉反馈",
 		"logoutLabel": "退出登录",
@@ -71,7 +71,8 @@
 		"profileRoleLoading": "正在加载目标岗位…",
 		"profileGoalsLoading": "正在加载求职目标…",
 		"billingLoading": "正在打开订阅…",
-		"ledgerLoading": "正在加载积分记录…"
+		"ledgerLoading": "正在加载积分记录…",
+		"linkedAccountsGroupTitle": "关联账号"
 	},
 	"profile": {
 		"title": "编辑资料",
@@ -224,7 +225,7 @@
 	},
 	"nav": {
 		"chat": "对话",
-		"assets": "资产",
+		"studio": "工作室",
 		"me": "我的",
 		"primary": "主导航",
 		"backTo": "返回{destination}"
@@ -854,8 +855,8 @@
 			"done": "完成"
 		},
 		"railHub": {
-			"title": "资产",
-			"subtitle": "职业资产一览，点图标进入",
+			"title": "工作室",
+			"subtitle": "在对话里做出的内容，随时接着做",
 			"zonesLabel": "分区",
 			"zoneCareer": "职业区",
 			"zoneWork": "工作区",
@@ -882,7 +883,7 @@
 			"openWorkspaceRail": "打开资产面板",
 			"workspaceRailUseCvPanel": "本空间已在右侧提供简历面板，请使用面板内的入口。",
 			"zoneComingSoon": "即将上线",
-			"backToHub": "返回资产",
+			"backToHub": "返回工作室",
 			"assetV2": {
 				"categoryResume": "简历类",
 				"categoryInterview": "面试类",
@@ -1096,5 +1097,14 @@
 		"slow": "这比平时要久一些。",
 		"busy": "AI 当前繁忙，请 {seconds} 秒后重试。",
 		"offline": "你已离线。恢复联网后，消息会自动发送。"
+	},
+	"studio": {
+		"resumes": "简历",
+		"assessments": "能力评价",
+		"empty": {
+			"title": "工作室里还没有内容",
+			"body": "在对话里让我帮你写简历、做能力评价或查资料，做出来的内容会出现在这里，随时接着做。",
+			"action": "去对话开始"
+		}
 	}
 }

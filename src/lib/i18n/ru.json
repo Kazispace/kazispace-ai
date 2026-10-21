@@ -51,17 +51,17 @@
 		"interviewRecordsValue": "3 завершено",
 		"dailyTasksLabel": "Ежедневные карьерные задачи",
 		"dailyTasksValue": "1 к исполнению",
-		"profilePreferencesGroupTitle": "Профиль и предпочтения",
+		"profilePreferencesGroupTitle": "Профиль",
 		"targetRoleLabel": "Целевая роль и уровень",
 		"sprintPlanLabel": "План карьерного спринта",
 		"sprintPlanValue": "30 мин/день",
 		"bindTelegramLabel": "Привязать аккаунт Telegram",
 		"tgUnlinked": "Не привязан",
 		"tgLinked": "Привязан",
-		"billingServicesGroupTitle": "Биллинг и сервисы",
-		"subscriptionPlansLabel": "Тарифные планы",
-		"creditsLedgerLabel": "История начисления кредитов",
-		"systemSettingsGroupTitle": "Системные настройки",
+		"billingServicesGroupTitle": "Платежи",
+		"subscriptionPlansLabel": "Подписка",
+		"creditsLedgerLabel": "Баланс и история",
+		"systemSettingsGroupTitle": "Настройки",
 		"interfaceLanguageLabel": "Язык интерфейса",
 		"hapticFeedbackLabel": "Тактильная отдача",
 		"logoutLabel": "Выйти",
@@ -71,7 +71,8 @@
 		"profileRoleLoading": "Загрузка предпочтений роли...",
 		"profileGoalsLoading": "Загрузка целей подготовки...",
 		"billingLoading": "Переход к выбору тарифа...",
-		"ledgerLoading": "Загрузка аудита кредитов..."
+		"ledgerLoading": "Загрузка аудита кредитов...",
+		"linkedAccountsGroupTitle": "Связанные аккаунты"
 	},
 	"profile": {
 		"title": "Редактировать профиль",
@@ -224,7 +225,7 @@
 	},
 	"nav": {
 		"chat": "Чат",
-		"assets": "Активы",
+		"studio": "Студия",
 		"me": "Профиль",
 		"primary": "Основная навигация",
 		"backTo": "Назад: {destination}"
@@ -586,8 +587,8 @@
 			"done": "Готово"
 		},
 		"railHub": {
-			"title": "Активы",
-			"subtitle": "Карьерные материалы — нажмите на иконку",
+			"title": "Студия",
+			"subtitle": "То, что вы создали в чате, — готово к работе",
 			"zonesLabel": "Зоны",
 			"zoneCareer": "Карьера",
 			"zoneWork": "Работа",
@@ -614,7 +615,7 @@
 			"openWorkspaceRail": "Открыть панель активов",
 			"workspaceRailUseCvPanel": "В этом пространстве резюме уже в панели справа — откройте её там.",
 			"zoneComingSoon": "Скоро",
-			"backToHub": "К активам",
+			"backToHub": "К студии",
 			"assetV2": {
 				"categoryResume": "Резюме",
 				"categoryInterview": "Интервью",
@@ -1043,5 +1044,8 @@
 		"slow": "Это занимает больше времени, чем обычно.",
 		"busy": "ИИ сейчас занят. Попробуйте снова через {seconds} с.",
 		"offline": "Нет подключения к интернету. Сообщения отправятся, когда связь восстановится."
+	},
+	"studio": {
+		"resumes": "Резюме"
 	}
 }
