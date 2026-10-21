@@ -574,16 +574,10 @@
 			"placeholder": "Talk to me about your career…"
 		},
 		"processing": "Processing…",
-		"processingWebSearch": "Quick lookup…",
-		"processingResearch": "Deep research in progress — this may take a minute…",
+		"processingSearch": "Looking it up…",
 		"sources": "Sources",
-		"upgradeResearch": {
-			"hint": "Upgrade to a multi-source research report",
-			"cta": "Deep research"
-		},
 		"capability": {
-			"web_search": "Quick search",
-			"research": "Deep research",
+			"search": "Look-up",
 			"playbookHint": "Playbook: {id}",
 			"playbookUnbound": "General search (no vertical playbook)"
 		},

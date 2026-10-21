@@ -295,16 +295,10 @@
 			"placeholder": "Напишите мне о карьере…"
 		},
 		"processing": "Обработка…",
-		"processingWebSearch": "Быстрый поиск…",
-		"processingResearch": "Глубокое исследование — это может занять минуту…",
+		"processingSearch": "Ищу информацию…",
 		"sources": "Источники",
-		"upgradeResearch": {
-			"hint": "Можно перейти к многоисточниковому исследованию",
-			"cta": "Глубокое исследование"
-		},
 		"capability": {
-			"web_search": "Быстрый поиск",
-			"research": "Глубокое исследование",
+			"search": "Поиск информации",
 			"playbookHint": "Плейбук: {id}",
 			"playbookUnbound": "Общий поиск (без вертикального плейбука)"
 		},

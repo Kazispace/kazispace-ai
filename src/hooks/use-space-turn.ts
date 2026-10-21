@@ -36,7 +36,6 @@ import {
   resolveSpaceTurnPlaybookId,
   resolveSpaceTurnReferral,
   resolveSpaceTurnReply,
-  resolveSpaceTurnUpgradeCta,
   type SpaceChatMessage,
 } from '@/lib/spaces/turn';
 import { resolveSpaceSendHistory } from '@/lib/spaces/space-send-history';
@@ -351,7 +350,6 @@ export function useSpaceTurn(
         const turnAssistantMeta = resolveSpaceTurnAssistantMeta(res.data);
         const turnCustomComponents = resolveSpaceTurnCustomComponents(res.data);
         const turnReferral = resolveSpaceTurnReferral(res.data);
-        const turnUpgradeCta = resolveSpaceTurnUpgradeCta(res.data);
         const turnIntent = resolveSpaceTurnIntent(res.data);
         const turnCitations = resolveSpaceTurnCitations(res.data);
         const turnCapabilityId = resolveSpaceTurnCapabilityId(res.data);
@@ -428,7 +426,6 @@ export function useSpaceTurn(
               ? { customComponents: turnCustomComponents }
               : {}),
             ...(turnReferral ? { referral: turnReferral } : {}),
-            ...(turnUpgradeCta ? { upgradeCta: turnUpgradeCta } : {}),
             ...(turnIntent ? { intent: turnIntent } : {}),
             ...(turnCitations && turnCitations.length > 0
               ? { citations: turnCitations }

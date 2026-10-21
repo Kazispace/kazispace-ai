@@ -14,7 +14,6 @@ import {
   resolveSpaceTurnPlaybookId,
   resolveSpaceTurnReferral,
   resolveSpaceTurnReply,
-  resolveSpaceTurnUpgradeCta,
 } from '@/lib/spaces/turn';
 
 describe('isPlaceholderReply', () => {
@@ -233,35 +232,6 @@ describe('resolveSpaceTurnReferral', () => {
         envelope: { referral_agent_id: 'cv' },
       })
     ).toEqual({ agentId: 'interview', reason: '' });
-  });
-});
-
-describe('resolveSpaceTurnUpgradeCta', () => {
-  const upgradeCta = {
-    upgrade_to: 'research' as const,
-    seed: { question: '深入研究一下这家公司', citations: [] },
-  };
-
-  it('reads meta.upgrade_cta on the turn root', () => {
-    expect(
-      resolveSpaceTurnUpgradeCta({
-        assistant_response: { content: 'ok', meta: { upgrade_cta: upgradeCta } },
-      })
-    ).toEqual(upgradeCta);
-  });
-
-  it('reads meta.upgrade_cta nested under envelope', () => {
-    expect(
-      resolveSpaceTurnUpgradeCta({
-        envelope: {
-          assistant_response: { content: 'ok', meta: { upgrade_cta: upgradeCta } },
-        },
-      })
-    ).toEqual(upgradeCta);
-  });
-
-  it('returns undefined when there is no upgrade_cta', () => {
-    expect(resolveSpaceTurnUpgradeCta({ reply_text: 'no cta here' })).toBeUndefined();
   });
 });
 
@@ -540,35 +510,6 @@ describe('mergeSpaceMessagesAfterSend', () => {
     ]);
   });
 
-  it('preserves local upgradeCta when server history omits it', () => {
-    const upgradeCta = {
-      upgrade_to: 'research' as const,
-      seed: { question: '深入研究竞品', citations: [] },
-    };
-    const local = [
-      { id: 'u1', role: 'user' as const, content: '帮我查一下竞品' },
-      {
-        id: 'local_a1',
-        role: 'assistant' as const,
-        content: '要不要我深入研究一下？',
-        upgradeCta,
-      },
-    ];
-    const server = [
-      { id: 'u1', role: 'user' as const, content: '帮我查一下竞品' },
-      { id: 'srv_a1', role: 'assistant' as const, content: '要不要我深入研究一下？' },
-    ];
-    expect(mergeSpaceMessagesAfterSend(local, server)).toEqual([
-      { id: 'u1', role: 'user', content: '帮我查一下竞品' },
-      {
-        id: 'srv_a1',
-        role: 'assistant',
-        content: '要不要我深入研究一下？',
-        upgradeCta,
-      },
-    ]);
-  });
-
   it('preserves local intent/citations/capabilityId/playbookId when server history omits them', () => {
     const citations = [{ url: 'https://example.com/a', title: 'Example A' }];
     const local = [
@@ -677,7 +618,7 @@ describe('mapSpaceHistoryMessages', () => {
     });
   });
 
-  it('carries upgradeCta from a history row (KAZI-651 Phase A)', () => {
+  it('drops a deep-research upgrade offer from a history row (KAZI-1137)', () => {
     const rows = mapSpaceHistoryMessages([
       {
         id: 'a1',
@@ -694,10 +635,7 @@ describe('mapSpaceHistoryMessages', () => {
         },
       },
     ]);
-    expect(rows[0]?.upgradeCta).toEqual({
-      upgrade_to: 'research',
-      seed: { question: '深入研究竞品', citations: [] },
-    });
+    expect(rows[0]).not.toHaveProperty('upgradeCta');
   });
 
   it('uses stable fallback ids when server omits message ids', () => {

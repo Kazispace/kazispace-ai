@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { playbookChipTitle, resolveSearchCapability } from '@/lib/clinic/search-capability';
+import {
+  looksLikeResearchRequest,
+  playbookChipTitle,
+  resolveSearchCapability,
+} from '@/lib/clinic/search-capability';
 import { parseAssistantEnvelope } from '@/lib/chat-envelope';
+import zh from '@/lib/i18n/zh.json';
+import en from '@/lib/i18n/en.json';
+import ru from '@/lib/i18n/ru.json';
+import kk from '@/lib/i18n/kk.json';
+import uz from '@/lib/i18n/uz.json';
 
 describe('resolveSearchCapability (KAZI-234)', () => {
   it('reads meta.capability_id and playbook_id', () => {
@@ -106,5 +115,52 @@ describe('parseAssistantEnvelope search capability', () => {
     expect(parsed.playbookId).toBeNull();
     expect(parsed.reply).toBe(body);
     expect(parsed.citations?.[0]?.url).toBe('https://x.example');
+  });
+});
+
+describe('looksLikeResearchRequest (waiting copy only)', () => {
+  it('matches explicit research phrasings', () => {
+    expect(looksLikeResearchRequest('帮我深入研究入驻')).toBe(true);
+    expect(looksLikeResearchRequest('Please do in-depth research')).toBe(true);
+    expect(looksLikeResearchRequest('查一下天气')).toBe(false);
+  });
+});
+
+describe('deep-research upgrade offer (KAZI-1137)', () => {
+  it('is not read from assistant_response.meta any more', () => {
+    const envelope = parseAssistantEnvelope({
+      assistant_response: {
+        content: '短答',
+        meta: {
+          capability_id: 'web_search',
+          upgrade_cta: {
+            upgrade_to: 'research',
+            seed: { question: '入驻政策', citations: [] },
+          },
+        },
+      },
+    });
+    expect(envelope).not.toHaveProperty('upgradeCta');
+    expect(envelope?.capabilityId).toBe('web_search');
+  });
+});
+
+describe('one search label in every locale file (KAZI-1137)', () => {
+  const files = { zh, en, ru, kk, uz } as Record<string, Record<string, unknown>>;
+
+  it('has chat.capability.search and no separate quick/deep labels or upgrade copy', () => {
+    for (const [locale, messages] of Object.entries(files)) {
+      const chat = (messages.chat ?? {}) as Record<string, unknown>;
+      const capability = (chat.capability ?? {}) as Record<string, unknown>;
+      if (Object.keys(capability).length > 0) {
+        expect(typeof capability.search, locale).toBe('string');
+      }
+      expect(capability, locale).not.toHaveProperty('web_search');
+      expect(capability, locale).not.toHaveProperty('research');
+      expect(chat, locale).not.toHaveProperty('upgradeResearch');
+      expect(chat, locale).not.toHaveProperty('processingResearch');
+      expect(chat, locale).not.toHaveProperty('processingWebSearch');
+    }
+    expect((zh.chat as { capability: { search: string } }).capability.search).toBe('查询资料');
   });
 });
