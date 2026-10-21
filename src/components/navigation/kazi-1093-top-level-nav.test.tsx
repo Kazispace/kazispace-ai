@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  *
- * KAZI-1093 — top-level navigation Chat · Assets · Me (kazispace-ui decisions D2).
+ * KAZI-1093 — top-level navigation Chat · Studio · Me (kazispace-ui decisions D2, D20).
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -37,7 +37,7 @@ describe('resolveTopLevelDestination', () => {
     ['/en/spaces/abc', 'chat'],
     ['/en/interview', 'chat'],
     ['/en/english/passport', 'chat'],
-    ['/en/clinic/hub', 'assets'],
+    ['/en/clinic/hub', 'studio'],
     ['/en/mine', 'me'],
     ['/en/profile', 'me'],
     ['/en/credits', 'me'],
@@ -47,7 +47,7 @@ describe('resolveTopLevelDestination', () => {
   });
 
   it('keeps the D2 order and targets', () => {
-    expect(TOP_LEVEL_DESTINATIONS).toEqual(['chat', 'assets', 'me']);
+    expect(TOP_LEVEL_DESTINATIONS).toEqual(['chat', 'studio', 'me']);
     expect(TOP_LEVEL_DESTINATIONS.map((d) => topLevelHref('ru', d))).toEqual([
       '/ru/chat',
       '/ru/clinic/hub',
@@ -74,6 +74,20 @@ describe('the Me destination has one name', () => {
       };
       expect(messages.nav).not.toHaveProperty('profile');
       expect(messages.nav.me).toBeTruthy();
+    }
+  });
+});
+
+describe('the middle tab is Studio (D20)', () => {
+  it('has nav.studio and no nav.assets in every locale', async () => {
+    const expected: Record<string, string> = { en: 'Studio', zh: '工作室' };
+    for (const locale of ['en', 'ru', 'kk', 'uz', 'zh']) {
+      const messages = (await import(`@/lib/i18n/${locale}.json`)).default as {
+        nav: Record<string, string>;
+      };
+      expect(messages.nav).not.toHaveProperty('assets');
+      expect(messages.nav.studio).toBeTruthy();
+      if (expected[locale]) expect(messages.nav.studio).toBe(expected[locale]);
     }
   });
 });
@@ -112,10 +126,10 @@ describe('BottomTabBar', () => {
 
   const tabs = () => Array.from(container.querySelectorAll('nav[data-testid="bottom-tab-bar"] a'));
 
-  it('renders Chat · Assets · Me with the current destination selected', () => {
+  it('renders Chat · Studio · Me with the current destination selected', () => {
     pathnameRef.value = '/en/clinic/hub';
     act(() => root.render(<BottomTabBar locale="en" />));
-    expect(tabs().map((tab) => tab.textContent)).toEqual(['nav.chat', 'nav.assets', 'nav.me']);
+    expect(tabs().map((tab) => tab.textContent)).toEqual(['nav.chat', 'nav.studio', 'nav.me']);
     expect(tabs().map((tab) => tab.getAttribute('aria-current'))).toEqual([null, 'page', null]);
     // Page navigation, not a tab widget (kazispace-ui tab bar spec 0.2).
     expect(container.querySelector('[role="tab"], [role="tablist"], [aria-selected]')).toBeNull();

@@ -123,7 +123,7 @@ export function SessionIconRail({
 
       {/* Top-level destinations, same order as the mobile tab bar (kazispace-ui D2). */}
       {destinationLink('chat', <MessageCircle className="h-5 w-5" />)}
-      {destinationLink('assets', <FolderOpen className="h-5 w-5" />)}
+      {destinationLink('studio', <FolderOpen className="h-5 w-5" />)}
       {destinationLink('me', <User className="h-5 w-5" />)}
 
       <div className="my-1 h-px w-6 bg-workspace-border" aria-hidden />

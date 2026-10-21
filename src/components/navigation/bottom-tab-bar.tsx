@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 const ICONS: Record<TopLevelDestination, typeof MessageCircle> = {
   chat: MessageCircle,
-  assets: FolderOpen,
+  studio: FolderOpen,
   me: User,
 };
 
@@ -54,7 +54,7 @@ function useTextEntryFocused(): boolean {
 }
 
 /**
- * Mobile top-level navigation: Chat · Assets · Me (kazispace-ui decisions D2,
+ * Mobile top-level navigation: Chat · Studio · Me (kazispace-ui decisions D2, D20,
  * component spec "Tab bar"). Below 768px only; desktop uses the icon rail.
  */
 export function BottomTabBar({ locale }: { locale: string }) {

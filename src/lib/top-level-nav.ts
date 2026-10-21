@@ -1,6 +1,7 @@
 /**
- * Top-level destinations: Chat · Assets · Me (kazispace-ui decisions D2,
- * navigation pattern "Information architecture").
+ * Top-level destinations: Chat · Studio · Me (kazispace-ui decisions D2, D20;
+ * navigation pattern "Information architecture"). Studio keeps the old Assets
+ * address, /clinic/hub, so existing links keep working.
  *
  * Desktop draws them in the icon rail, mobile in the bottom tab bar; both read
  * the destination list and the active one from here so they cannot drift.
@@ -8,11 +9,11 @@
 import { getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { buildClinicHubHref } from '@/lib/hub-entry';
 
-export type TopLevelDestination = 'chat' | 'assets' | 'me';
+export type TopLevelDestination = 'chat' | 'studio' | 'me';
 
 export const TOP_LEVEL_DESTINATIONS: readonly TopLevelDestination[] = [
   'chat',
-  'assets',
+  'studio',
   'me',
 ] as const;
 
@@ -20,7 +21,7 @@ export function topLevelHref(locale: string, destination: TopLevelDestination): 
   switch (destination) {
     case 'chat':
       return getSurfacePath(locale, 'clinic');
-    case 'assets':
+    case 'studio':
       return buildClinicHubHref(locale);
     case 'me':
       return `/${locale}/mine`;
@@ -43,7 +44,7 @@ const ME_SEGMENTS = ['mine', ...ME_SUB_SCREENS];
 
 /**
  * Which destination a path belongs to. Everything in the workspace that is not
- * Assets or Me is a conversation (main chat, specialists, spaces) and so is Chat.
+ * Studio or Me is a conversation (main chat, specialists, spaces) and so is Chat.
  */
 export function resolveTopLevelDestination(
   pathname: string,
@@ -51,7 +52,7 @@ export function resolveTopLevelDestination(
 ): TopLevelDestination {
   const rest = pathname.startsWith(`/${locale}`) ? pathname.slice(locale.length + 1) : pathname;
   const segments = rest.split('/').filter(Boolean);
-  if (segments[0] === 'clinic' && segments[1] === 'hub') return 'assets';
+  if (segments[0] === 'clinic' && segments[1] === 'hub') return 'studio';
   if (segments[0] && ME_SEGMENTS.includes(segments[0])) return 'me';
   return 'chat';
 }
@@ -60,7 +61,7 @@ export function resolveTopLevelDestination(
 // Derived from ME_SUB_SCREENS so a new Me sub-page cannot be added to only one list.
 const SUB_SCREEN_SEGMENTS = [...ME_SUB_SCREENS, 'jobs'];
 
-/** True on a top-level screen (Chat, Assets, Me), where the mobile tab bar shows. */
+/** True on a top-level screen (Chat, Studio, Me), where the mobile tab bar shows. */
 export function isTopLevelScreen(pathname: string, locale: string): boolean {
   const rest = pathname.startsWith(`/${locale}`) ? pathname.slice(locale.length + 1) : pathname;
   const first = rest.split('/').filter(Boolean)[0];

@@ -224,7 +224,7 @@
 	},
 	"nav": {
 		"chat": "Chat",
-		"assets": "Assets",
+		"studio": "Studio",
 		"me": "Me",
 		"primary": "Main navigation",
 		"backTo": "Back to {destination}"
@@ -868,8 +868,8 @@
 			"done": "Done"
 		},
 		"railHub": {
-			"title": "Assets",
-			"subtitle": "Career assets at a glance — tap an icon to open",
+			"title": "Studio",
+			"subtitle": "What you made in chat, ready to work on",
 			"zonesLabel": "Zones",
 			"zoneCareer": "Career",
 			"zoneWork": "Work",
@@ -896,7 +896,7 @@
 			"openWorkspaceRail": "Open workspace panel",
 			"workspaceRailUseCvPanel": "This space already has a CV panel on the right — use it from there.",
 			"zoneComingSoon": "Coming soon",
-			"backToHub": "Back to assets",
+			"backToHub": "Back to Studio",
 			"assetV2": {
 				"categoryResume": "Resumes",
 				"categoryInterview": "Interview",
@@ -1392,5 +1392,14 @@
 		"slow": "This is taking longer than usual.",
 		"busy": "The AI is busy right now. Try again in {seconds}s.",
 		"offline": "You're offline. Messages will send when you're back online."
+	},
+	"studio": {
+		"resumes": "Resumes",
+		"assessments": "Assessments",
+		"empty": {
+			"title": "Nothing in Studio yet",
+			"body": "Ask in Chat for a resume, an assessment or research. What it makes appears here, ready to work on.",
+			"action": "Start in Chat"
+		}
 	}
 }

@@ -224,7 +224,7 @@
 	},
 	"nav": {
 		"chat": "Chat",
-		"assets": "Aktivlar",
+		"studio": "Studiya",
 		"me": "Profil",
 		"primary": "Asosiy navigatsiya",
 		"backTo": "Orqaga: {destination}"
@@ -543,8 +543,7 @@
 			"done": "Tayyor"
 		},
 		"railHub": {
-			"title": "Aktivlar",
-			"subtitle": "Martaba aktivlari — belgini bosing",
+			"title": "Studiya",
 			"zonesLabel": "Zonalar",
 			"zoneCareer": "Martaba",
 			"zoneWork": "Ish",
@@ -571,7 +570,7 @@
 			"openWorkspaceRail": "Aktiv paneli",
 			"workspaceRailUseCvPanel": "Bu makonda CV paneli o‘ngda — u yerdan oching.",
 			"zoneComingSoon": "Tez orada",
-			"backToHub": "Aktivlarga",
+			"backToHub": "Studiyaga qaytish",
 			"assetV2": {
 				"categoryResume": "Rezyume",
 				"categoryInterview": "Suhbat",
@@ -967,5 +966,8 @@
 		"slow": "Bu odatdagidan ko'proq vaqt olmoqda.",
 		"busy": "AI hozir band. {seconds} soniyadan so'ng qayta urinib ko'ring.",
 		"offline": "Internetga ulanish yo'q. Xabarlar aloqa tiklanganda yuboriladi."
+	},
+	"studio": {
+		"resumes": "Rezyume"
 	}
 }

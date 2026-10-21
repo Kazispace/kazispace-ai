@@ -1,20 +1,12 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import {
-  Briefcase,
-  ChevronDown,
-  FileText,
-  LayoutGrid,
-  Loader2,
-  RefreshCw,
-  X,
-  type LucideIcon,
-} from 'lucide-react';
+import { ChevronDown, FileText, FolderOpen, Loader2, RefreshCw, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { HUB_ASSET_GRID_CLASS } from '@/components/workspace/workspace-side-rail-hub';
 import { useAuthReady } from '@/hooks/use-auth-ready';
+import { buildClinicChatHref } from '@/lib/cv-entry';
 import {
   retryWorkspaceAssetIndexing,
   useWorkspaceAssetCategoryHistory,
@@ -36,23 +28,28 @@ interface WorkspaceAssetRailHubProps {
   onNavigate?: (path: string) => void;
 }
 
-type AssetTone = 'resume' | 'interview' | 'work' | 'spaces' | 'muted';
+type AssetTone = 'resume' | 'assessment' | 'muted';
 
 const TONE_ICON_CLASS: Record<AssetTone, string> = {
   resume: 'bg-sky-50 text-sky-900 ring-sky-200/90',
-  interview: 'bg-violet-50 text-violet-900 ring-violet-200/90',
-  work: 'bg-workspace-active text-kazi-navy ring-primary/25',
-  spaces: 'bg-workspace-hover text-kazi-navy ring-gray-200/90',
+  assessment: 'bg-violet-50 text-violet-900 ring-violet-200/90',
   muted: 'bg-gray-50 text-workspace-muted ring-gray-200/80',
 };
 
 const CATEGORY_TONE: Record<WorkspaceAssetCategory, AssetTone> = {
   resume: 'resume',
-  english: 'resume',
-  interview: 'interview',
+  english: 'assessment',
+  interview: 'assessment',
 };
 
-/** v2 hub — file-centric career assets (KAZI-404 resume, KAZI-409 interview). */
+/**
+ * Studio (kazispace-ui D20, D21; pattern "Studio"): objects a conversation made,
+ * one list per kind. Resumes, then assessments (the English passport and mock
+ * interview results). Job listings and spaces are not objects, so they are not
+ * here. A kind the user has none of is left out; with nothing at all, the
+ * empty state points back to Chat. Research documents, question sets, archived
+ * objects and view counts need backend support first.
+ */
 export function WorkspaceAssetRailHub({
   locale,
   className,
@@ -69,15 +66,33 @@ export function WorkspaceAssetRailHub({
     { scope: WORKSPACE_ASSET_HUB_SCOPE, category: 'resume', includeHistory: false },
     true
   );
+  const englishQuery = useWorkspaceAssets(
+    { scope: WORKSPACE_ASSET_HUB_SCOPE, category: 'english', includeHistory: false },
+    true
+  );
   const interviewQuery = useWorkspaceAssets(
     { scope: WORKSPACE_ASSET_HUB_SCOPE, category: 'interview', includeHistory: false },
     true
   );
+  const tStudio = useTranslations('studio');
 
   // Auth gate is independent of asset queries (PR #183 review P1).
   const { ready: authReady, authenticated } = useAuthReady();
 
   const push = (path: string) => onNavigate?.(path);
+
+  const queries = [resumeQuery, englishQuery, interviewQuery];
+  const settled =
+    authReady && authenticated && queries.every((q) => !q.isLoading && !q.error);
+  const hasAny = (
+    q: typeof resumeQuery,
+    category: WorkspaceAssetCategory
+  ) => (q.categories[category] ?? 0) > 0 || (q.historyCounts[category] ?? 0) > 0;
+  // While loading, on error or signed out, keep every list so its own state shows.
+  const showResumes = !settled || hasAny(resumeQuery, 'resume');
+  const showEnglish = !settled || hasAny(englishQuery, 'english');
+  const showInterview = !settled || hasAny(interviewQuery, 'interview');
+  const isEmpty = settled && !showResumes && !showEnglish && !showInterview;
 
   return (
     <div
@@ -97,64 +112,114 @@ export function WorkspaceAssetRailHub({
         </button>
       ) : null}
 
-      <ZoneBlock title={t('zoneCareer')} className="pt-2 pr-10">
-        <CareerAssetSubcategory
-          category="resume"
-          label={tV2('categoryResume')}
-          count={resumeQuery.categories.resume}
-          historyCount={resumeQuery.historyCounts.resume}
-          items={resumeQuery.items.filter((item) => item.is_current)}
-          authReady={authReady}
-          authenticated={authenticated}
-          isLoading={resumeQuery.isLoading}
-          error={resumeQuery.error}
-          loginRequiredLabel={tV2('loginRequired')}
-          olderAssetsLabel={tV2('olderAssets', { count: resumeQuery.historyCounts.resume })}
-          onOpenAsset={onOpenAsset}
-          onRetry={resumeQuery.refresh}
-          t={tV2}
+      {isEmpty ? (
+        <StudioEmptyState
+          title={tStudio('empty.title')}
+          body={tStudio('empty.body')}
+          action={tStudio('empty.action')}
+          onStart={() => push(buildClinicChatHref(locale))}
         />
-        <CareerAssetSubcategory
-          category="interview"
-          label={tV2('categoryInterview')}
-          count={interviewQuery.categories.interview}
-          historyCount={interviewQuery.historyCounts.interview}
-          items={interviewQuery.items.filter((item) => item.is_current)}
-          authReady={authReady}
-          authenticated={authenticated}
-          isLoading={interviewQuery.isLoading}
-          error={interviewQuery.error}
-          loginRequiredLabel={tV2('loginRequired')}
-          olderAssetsLabel={tV2('olderAssets', {
-            count: interviewQuery.historyCounts.interview,
-          })}
-          onOpenAsset={onOpenAsset}
-          onRetry={interviewQuery.refresh}
-          t={tV2}
-        />
-      </ZoneBlock>
+      ) : null}
 
-      <ZoneBlock title={t('zoneWork')}>
-        <RouteAssetIcon
-          icon={Briefcase}
-          tone="work"
-          label={t('tileJobs')}
-          onClick={() => push(`/${locale}/jobs`)}
-        />
-      </ZoneBlock>
+      {showResumes ? (
+        <ZoneBlock title={tStudio('resumes')} className="pt-2 pr-10">
+          <CareerAssetSubcategory
+            category="resume"
+            label={tV2('categoryResume')}
+            count={resumeQuery.categories.resume}
+            historyCount={resumeQuery.historyCounts.resume}
+            items={resumeQuery.items.filter((item) => item.is_current)}
+            authReady={authReady}
+            authenticated={authenticated}
+            isLoading={resumeQuery.isLoading}
+            error={resumeQuery.error}
+            loginRequiredLabel={tV2('loginRequired')}
+            olderAssetsLabel={tV2('olderAssets', { count: resumeQuery.historyCounts.resume })}
+            onOpenAsset={onOpenAsset}
+            onRetry={resumeQuery.refresh}
+            t={tV2}
+          />
+        </ZoneBlock>
+      ) : null}
 
-      <ZoneBlock title={t('zoneBusiness')}>
-        <RouteAssetIcon
-          icon={LayoutGrid}
-          tone="spaces"
-          label={t('tileSpaces')}
-          onClick={() => push(`/${locale}/spaces`)}
-        />
-        <p className="col-span-full px-1 text-[10px] leading-snug text-workspace-muted">
-          {t('zoneBusinessHint')}
-        </p>
-      </ZoneBlock>
+      {showEnglish || showInterview ? (
+        <ZoneBlock title={tStudio('assessments')}>
+          {showEnglish ? (
+            <CareerAssetSubcategory
+              category="english"
+              label={t('tileEnglish')}
+              count={englishQuery.categories.english}
+              historyCount={englishQuery.historyCounts.english}
+              items={englishQuery.items.filter((item) => item.is_current)}
+              authReady={authReady}
+              authenticated={authenticated}
+              isLoading={englishQuery.isLoading}
+              error={englishQuery.error}
+              loginRequiredLabel={tV2('loginRequired')}
+              olderAssetsLabel={tV2('olderAssets', {
+                count: englishQuery.historyCounts.english,
+              })}
+              onOpenAsset={onOpenAsset}
+              onRetry={englishQuery.refresh}
+              t={tV2}
+            />
+          ) : null}
+          {showInterview ? (
+            <CareerAssetSubcategory
+              category="interview"
+              label={tV2('categoryInterview')}
+              count={interviewQuery.categories.interview}
+              historyCount={interviewQuery.historyCounts.interview}
+              items={interviewQuery.items.filter((item) => item.is_current)}
+              authReady={authReady}
+              authenticated={authenticated}
+              isLoading={interviewQuery.isLoading}
+              error={interviewQuery.error}
+              loginRequiredLabel={tV2('loginRequired')}
+              olderAssetsLabel={tV2('olderAssets', {
+                count: interviewQuery.historyCounts.interview,
+              })}
+              onOpenAsset={onOpenAsset}
+              onRetry={interviewQuery.refresh}
+              t={tV2}
+            />
+          ) : null}
+        </ZoneBlock>
+      ) : null}
     </div>
+  );
+}
+
+/** Empty Studio: what it is for and one way to fill it (pattern "Studio", States). */
+function StudioEmptyState({
+  title,
+  body,
+  action,
+  onStart,
+}: {
+  title: string;
+  body: string;
+  action: string;
+  onStart: () => void;
+}) {
+  return (
+    <section
+      data-testid="studio-empty"
+      className="flex flex-col items-center gap-3 px-6 py-12 text-center"
+    >
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 text-primary">
+        <FolderOpen className="h-6 w-6" aria-hidden />
+      </span>
+      <h2 className="text-sm font-semibold text-workspace-text">{title}</h2>
+      <p className="max-w-xs text-xs leading-relaxed text-workspace-secondary">{body}</p>
+      <button
+        type="button"
+        onClick={onStart}
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      >
+        {action}
+      </button>
+    </section>
   );
 }
 
@@ -428,42 +493,6 @@ function WorkspaceAssetIcon({
           {asset.subtitle}
         </span>
       ) : null}
-    </button>
-  );
-}
-
-function RouteAssetIcon({
-  icon: Icon,
-  tone,
-  label,
-  onClick,
-}: {
-  icon: LucideIcon;
-  tone: AssetTone;
-  label: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      className={cn(
-        'flex min-w-0 flex-col items-center gap-0.5 rounded-lg p-1',
-        'hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40'
-      )}
-    >
-      <span
-        className={cn(
-          'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1',
-          TONE_ICON_CLASS[tone]
-        )}
-      >
-        <Icon className="h-4 w-4" aria-hidden />
-      </span>
-      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-workspace-secondary">
-        {label}
-      </span>
     </button>
   );
 }
