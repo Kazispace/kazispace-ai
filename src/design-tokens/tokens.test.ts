@@ -12,9 +12,11 @@ const MAPPED: Record<string, string> = {
   'kazi.navy': 'color.brand.navy',
   'kazi.navy2': 'color.navy.800',
   'kazi.brand-accent': 'color.brand.accent',
-  'tab-bar.bg': 'color.bg.inverse',
-  'tab-bar.item': 'color.text.inverse-secondary',
-  'tab-bar.item-active': 'color.text.inverse',
+  'tab-bar.bg': 'color.tab-bar.bg',
+  'tab-bar.border': 'color.tab-bar.border',
+  'tab-bar.item': 'color.text.secondary',
+  'tab-bar.item-active': 'color.text.primary',
+  'tab-bar.icon-active': 'color.action.on-primary',
   'clinic-bubble': 'color.chat.assistant-bg',
   'agent-bubble': 'color.chat.specialist-bg',
   'user-bubble': 'color.chat.user-bg',
@@ -49,7 +51,7 @@ describe('design tokens → Tailwind colours', () => {
 
 // The JSON is a verbatim copy from kazispace-ui. If it is edited by hand (or
 // re-copied without updating README.md), this hash no longer matches.
-const SOURCE_SHA256 = '3cf70dc32f72b2a06828b8caf5f93c135137ae4a68538843f21ca57bbebce614';
+const SOURCE_SHA256 = 'e0d768a39eae4fc4dbc8d666bbe0273f4f2e84950420cb2a12cd364d44462595';
 
 describe('design tokens copy', () => {
   it('is the verbatim kazispace-ui file recorded in README.md', () => {

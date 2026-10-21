@@ -169,14 +169,16 @@ describe('BottomTabBar', () => {
     textarea.remove();
   });
 
-  it('has its own navy background and marks the current destination with a pill (D24)', () => {
+  it('has its own warm background and marks the current destination with a pill (D24)', () => {
     pathnameRef.value = '/en/clinic/hub';
     act(() => root.render(<BottomTabBar locale="en" />));
     const nav = container.querySelector('[data-testid="bottom-tab-bar"]')!;
     expect(nav.className).toContain('bg-tab-bar-bg');
+    expect(nav.className).toContain('border-tab-bar-border');
     expect(nav.className).not.toContain('bg-white');
     const pills = container.querySelectorAll('[data-testid="tab-bar-pill"]');
     expect(pills.length).toBe(1);
+    expect(pills[0].className).toContain('text-tab-bar-icon-active');
     expect(pills[0].closest('a')!.getAttribute('aria-current')).toBe('page');
     expect(pills[0].closest('a')!.textContent).toBe('nav.studio');
   });

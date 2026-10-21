@@ -72,7 +72,7 @@ export function BottomTabBar({ locale }: { locale: string }) {
     <nav
       aria-label={t('primary')}
       data-testid="bottom-tab-bar"
-      className="shrink-0 bg-tab-bar-bg pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="shrink-0 border-t border-tab-bar-border bg-tab-bar-bg pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {/* Page navigation, not a tab widget: links + aria-current (kazispace-ui tab bar
           spec, "Accessibility"). Tab roles would announce "tab 1 of 3" and promise
@@ -98,7 +98,7 @@ export function BottomTabBar({ locale }: { locale: string }) {
                   data-testid={selected ? 'tab-bar-pill' : undefined}
                   className={cn(
                     'flex h-7 w-12 items-center justify-center rounded-full',
-                    selected && 'bg-primary'
+                    selected && 'bg-primary text-tab-bar-icon-active'
                   )}
                 >
                   <Icon className="h-6 w-6" aria-hidden />

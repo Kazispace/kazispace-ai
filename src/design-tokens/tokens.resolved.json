@@ -71,6 +71,14 @@
     "type": "color",
     "value": "#D96E28"
   },
+  "color.sand.100": {
+    "type": "color",
+    "value": "#F7EDE2"
+  },
+  "color.sand.200": {
+    "type": "color",
+    "value": "#E8D8C4"
+  },
   "color.green.50": {
     "type": "color",
     "value": "#F0FDF4"
@@ -294,15 +302,20 @@
     "value": "#FFFFFF",
     "ref": "{color.white}"
   },
-  "color.text.inverse-secondary": {
-    "type": "color",
-    "value": "#C9CDD4",
-    "ref": "{color.gray.300}"
-  },
   "color.text.link": {
     "type": "color",
     "value": "#2563EB",
     "ref": "{color.blue.600}"
+  },
+  "color.tab-bar.bg": {
+    "type": "color",
+    "value": "#F7EDE2",
+    "ref": "{color.sand.100}"
+  },
+  "color.tab-bar.border": {
+    "type": "color",
+    "value": "#E8D8C4",
+    "ref": "{color.sand.200}"
   },
   "color.action.primary": {
     "type": "color",
