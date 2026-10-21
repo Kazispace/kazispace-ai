@@ -72,7 +72,7 @@ export function BottomTabBar({ locale }: { locale: string }) {
     <nav
       aria-label={t('primary')}
       data-testid="bottom-tab-bar"
-      className="shrink-0 border-t border-workspace-border bg-white pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="shrink-0 border-t border-tab-bar-border bg-tab-bar-bg pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {/* Page navigation, not a tab widget: links + aria-current (kazispace-ui tab bar
           spec, "Accessibility"). Tab roles would announce "tab 1 of 3" and promise
@@ -89,10 +89,20 @@ export function BottomTabBar({ locale }: { locale: string }) {
                 onClick={() => markNavIntent()}
                 className={cn(
                   'flex flex-1 flex-col items-center justify-center gap-1 text-xs font-medium',
-                  selected ? 'text-primary' : 'text-workspace-secondary'
+                  selected ? 'text-tab-bar-item-active' : 'text-tab-bar-item'
                 )}
               >
-                <Icon className="h-6 w-6" aria-hidden />
+                {/* Active icon sits on a pill (tab bar spec, "Anatomy"), so the
+                    current destination is not marked by colour alone. */}
+                <span
+                  data-testid={selected ? 'tab-bar-pill' : undefined}
+                  className={cn(
+                    'flex h-7 w-12 items-center justify-center rounded-full',
+                    selected && 'bg-primary text-tab-bar-icon-active'
+                  )}
+                >
+                  <Icon className="h-6 w-6" aria-hidden />
+                </span>
                 {t(destination)}
               </Link>
             </li>

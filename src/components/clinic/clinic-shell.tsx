@@ -1514,7 +1514,9 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
 
       <OfflineBar />
 
-      {isLoggedIn ? (
+      {/* In the workspace the context header already names the main chat and
+          describes it, so the strip only shows inside a specialist (D24). */}
+      {isLoggedIn && (isAgentMode || !embeddedInWorkspace) ? (
         <LayerIndicator
           locale={locale}
           activeAgentId={isAgentMode ? activeAgentId : null}
