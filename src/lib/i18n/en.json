@@ -577,7 +577,7 @@
 		"processingSearch": "Looking it up…",
 		"sources": "Sources",
 		"capability": {
-			"search": "Look-up",
+			"search": "Look up",
 			"playbookHint": "Playbook: {id}",
 			"playbookUnbound": "General search (no vertical playbook)"
 		},
