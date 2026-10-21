@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,11 +14,10 @@ import { planBadgeKey } from "@/lib/api-mappers";
 import { getMe } from "@/lib/api-client";
 import { syncUserLanguageCookies } from "@/lib/locale";
 import { resolveMineNbaAction } from "@/lib/nba-display";
-import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, User } from "lucide-react";
+import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, Languages, User, Wallet } from "lucide-react";
 import { NbaActionCard } from "@/components/nba/nba-action-card";
 import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
 import { LocaleSwitcher } from "@/components/locale/locale-switcher";
-import { buildClinicChatHref } from "@/lib/cv-entry";
 
 interface MinePageProps {
   params: { locale: string };
@@ -28,6 +27,7 @@ export default function MinePage({ params }: MinePageProps) {
   const t = useTranslations("mine");
   const tChat = useTranslations("chat");
   const tNav = useTranslations("nav");
+  const tProfile = useTranslations("profile");
   const router = useRouter();
   const { locale } = params;
   const { user, logout, token, isLoggedIn } = useAuthStore();
@@ -37,6 +37,11 @@ export default function MinePage({ params }: MinePageProps) {
   const displayName = user?.displayName || "Guest User";
   const displayInitial = displayName[0]?.toUpperCase() || "?";
   const badgeKey = planBadgeKey(plan);
+  const ENGLISH_LEVELS = ["beginner", "intermediate", "advanced", "fluent"];
+  const englishLevelValue =
+    user?.englishLevel && ENGLISH_LEVELS.includes(user.englishLevel)
+      ? tProfile(`englishLevels.${user.englishLevel}`)
+      : undefined;
 
   useEffect(() => {
     if (!isLoggedIn || !token) return;
@@ -138,128 +143,112 @@ export default function MinePage({ params }: MinePageProps) {
           </Button>
         </Link>
 
-        {/* Prep & Learn */}
-        <div>
-          <h3 className="text-sm font-semibold text-workspace-secondary uppercase tracking-wide mb-3">
-            {t("jobPrepGroupTitle")}
-          </h3>
-          <div className="space-y-2">
-            <Link href={buildClinicChatHref(locale)}>
-              <Card className="hover:border-primary cursor-pointer transition-colors">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-primary" />
-                    <span className="font-medium">{t("cvRepoLabel")}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-workspace-secondary">
-                    <span>{t("cvRepoValue")?.split(" ")[0]}</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href={`/${locale}/interview`}>
-              <Card className="hover:border-primary cursor-pointer transition-colors">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Mic className="w-5 h-5 text-blue" />
-                    <span className="font-medium">{t("interviewRecordsLabel")}</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-workspace-secondary" />
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-        </div>
+        {/* Me, grouped as kazispace-ui D23 sets out: profile, settings, payments,
+            linked accounts, then sign out. Resumes and interview records are in Studio. */}
+        <MeGroup title={t("profilePreferencesGroupTitle")}>
+          <MeLinkRow
+            href={`/${locale}/profile`}
+            icon={<User className="w-5 h-5 text-workspace-secondary" />}
+            label={t("targetRoleLabel")}
+            value={user?.targetRole}
+          />
+          <MeLinkRow
+            href={`/${locale}/profile`}
+            icon={<Languages className="w-5 h-5 text-workspace-secondary" />}
+            label={tProfile("englishLevelLabel")}
+            value={englishLevelValue}
+          />
+        </MeGroup>
 
-        {/* Profile & Preferences */}
-        <div>
-          <h3 className="text-sm font-semibold text-workspace-secondary uppercase tracking-wide mb-3">
-            {t("profilePreferencesGroupTitle")}
-          </h3>
-          <div className="space-y-2">
-            <Link href={`/${locale}/profile`}>
-              <Card className="hover:border-primary cursor-pointer transition-colors">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-workspace-secondary" />
-                    <span className="font-medium">{t("targetRoleLabel")}</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-workspace-secondary" />
-                </CardContent>
-              </Card>
-            </Link>
-            <Card>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 text-teal flex items-center justify-center font-bold text-sm">&#x2708;</div>
-                  <span className="font-medium">{t("bindTelegramLabel")}</span>
-                </div>
-                <Badge variant="secondary">
-                  {t("tgUnlinked")}
-                </Badge>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <MeGroup title={t("systemSettingsGroupTitle")}>
+          <Card>
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Globe className="w-5 h-5 text-workspace-secondary" />
+                <span className="font-medium">{t("interfaceLanguageLabel")}</span>
+              </div>
+              <LocaleSwitcher locale={locale} />
+            </CardContent>
+          </Card>
+        </MeGroup>
 
-        {/* Billing & Services */}
-        <div>
-          <h3 className="text-sm font-semibold text-workspace-secondary uppercase tracking-wide mb-3">
-            {t("billingServicesGroupTitle")}
-          </h3>
-          <div className="space-y-2">
-            <Link href={`/${locale}/subscription`}>
-              <Card className="hover:border-primary cursor-pointer transition-colors">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-workspace-secondary" />
-                    <span className="font-medium">{t("subscriptionPlansLabel")}</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-workspace-secondary" />
-                </CardContent>
-              </Card>
-            </Link>
-            <Link href={`/${locale}/ledger`}>
-              <Card className="hover:border-primary cursor-pointer transition-colors">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="w-5 h-5 text-workspace-secondary" />
-                    <span className="font-medium">{t("creditsLedgerLabel")}</span>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-workspace-secondary" />
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-        </div>
+        <MeGroup title={t("billingServicesGroupTitle")}>
+          <MeLinkRow
+            href={`/${locale}/ledger`}
+            icon={<Wallet className="w-5 h-5 text-workspace-secondary" />}
+            label={t("creditsLedgerLabel")}
+          />
+          <MeLinkRow
+            href={`/${locale}/subscription`}
+            icon={<CreditCard className="w-5 h-5 text-workspace-secondary" />}
+            label={t("subscriptionPlansLabel")}
+          />
+        </MeGroup>
 
-        {/* Settings */}
-        <div>
-          <h3 className="text-sm font-semibold text-workspace-secondary uppercase tracking-wide mb-3">
-            {t("systemSettingsGroupTitle")}
-          </h3>
-          <div className="space-y-2">
-            <Card>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-workspace-secondary" />
-                  <span className="font-medium">{t("interfaceLanguageLabel")}</span>
-                </div>
-                <LocaleSwitcher locale={locale} />
-              </CardContent>
-            </Card>
-            <button onClick={handleLogout} className="w-full">
-              <Card className="hover:border-red-300 cursor-pointer transition-colors">
-                <CardContent className="p-4 flex items-center gap-3 text-red-500">
-                  <LogOut className="w-5 h-5" />
-                  <span className="font-medium">{t("logoutLabel")}</span>
-                </CardContent>
-              </Card>
-            </button>
-          </div>
-        </div>
+        <MeGroup title={t("linkedAccountsGroupTitle")}>
+          <Card>
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-5 h-5 text-teal flex items-center justify-center font-bold text-sm">&#x2708;</div>
+                <span className="font-medium">{t("bindTelegramLabel")}</span>
+              </div>
+              <Badge variant="secondary">
+                {t("tgUnlinked")}
+              </Badge>
+            </CardContent>
+          </Card>
+        </MeGroup>
+
+        <button onClick={handleLogout} className="w-full">
+          <Card className="hover:border-red-300 cursor-pointer transition-colors">
+            <CardContent className="p-4 flex items-center gap-3 text-red-500">
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">{t("logoutLabel")}</span>
+            </CardContent>
+          </Card>
+        </button>
       </main>
     </div>
+  );
+}
+
+function MeGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section>
+      <h3 className="text-sm font-semibold text-workspace-secondary uppercase tracking-wide mb-3">
+        {title}
+      </h3>
+      <div className="space-y-2">{children}</div>
+    </section>
+  );
+}
+
+/** A settings row: label on the left, current value on the right (pattern "Me"). */
+function MeLinkRow({
+  href,
+  icon,
+  label,
+  value,
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+  value?: string;
+}) {
+  return (
+    <Link href={href} className="block">
+      <Card className="hover:border-primary cursor-pointer transition-colors">
+        <CardContent className="p-4 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            {icon}
+            <span className="font-medium">{label}</span>
+          </div>
+          <div className="flex min-w-0 items-center gap-2 text-sm text-workspace-secondary">
+            {value ? <span className="truncate">{value}</span> : null}
+            <ChevronRight className="w-4 h-4 shrink-0" />
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

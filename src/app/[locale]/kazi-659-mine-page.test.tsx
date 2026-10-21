@@ -108,6 +108,36 @@ describe('KAZI-659 /mine page', () => {
     expect(values).toEqual(['2', '1', '0']);
   });
 
+  it('groups Me as D23 sets out: profile, settings, payments, linked accounts, then sign out', async () => {
+    useAuthStore.setState({
+      user: sampleUser({ targetRole: 'Data analyst', englishLevel: 'intermediate' }),
+    });
+    await act(async () => {
+      root!.render(<MinePage params={{ locale: 'en' }} />);
+    });
+
+    const groups = Array.from(host?.querySelectorAll('section > h3') ?? []).map(
+      (h) => h.textContent
+    );
+    expect(groups).toEqual([
+      'profilePreferencesGroupTitle',
+      'systemSettingsGroupTitle',
+      'billingServicesGroupTitle',
+      'linkedAccountsGroupTitle',
+    ]);
+    // Profile rows show their current value.
+    expect(host?.textContent).toContain('Data analyst');
+    expect(host?.textContent).toContain('englishLevels.intermediate');
+    // Payments: balance and history, then subscription.
+    const hrefs = Array.from(host?.querySelectorAll('a') ?? []).map((a) => a.getAttribute('href'));
+    // (The Upgrade button above also links to /subscription; compare with the row.)
+    expect(hrefs.indexOf('/en/ledger')).toBeLessThan(hrefs.lastIndexOf('/en/subscription'));
+    // Resumes and interview records live in Studio now, not on Me.
+    expect(host?.textContent).not.toContain('cvRepoLabel');
+    expect(host?.textContent).not.toContain('interviewRecordsLabel');
+    expect(hrefs).not.toContain('/en/interview');
+  });
+
   it('falls back to a guest label when there is no user', async () => {
     useAuthStore.setState({ token: null, user: null, isLoggedIn: false, authReady: true });
 
