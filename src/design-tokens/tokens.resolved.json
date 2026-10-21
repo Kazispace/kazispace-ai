@@ -294,6 +294,11 @@
     "value": "#FFFFFF",
     "ref": "{color.white}"
   },
+  "color.text.inverse-secondary": {
+    "type": "color",
+    "value": "#C9CDD4",
+    "ref": "{color.gray.300}"
+  },
   "color.text.link": {
     "type": "color",
     "value": "#2563EB",

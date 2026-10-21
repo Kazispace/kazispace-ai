@@ -519,7 +519,9 @@ function WorkspaceCenterColumn({
 
   return (
     <div className="relative flex min-w-0 flex-1 min-h-0 flex-col">
-      {showConversationListButton ? (
+      {/* With the context header, the menu button sits inside it: one bar above
+          the conversation, not two (kazispace-ui decisions D24). */}
+      {showConversationListButton && !showContextHeader ? (
         <div className="flex items-center border-b border-workspace-border bg-white md:hidden">
           <button
             type="button"
@@ -539,6 +541,8 @@ function WorkspaceCenterColumn({
               sessionsByAgent={sessionsByAgent}
               spaceId={contextHeaderSpaceId}
               workspaceRailOpen={chatSideRailOpen}
+              onOpenMobilePanel={showConversationListButton ? onOpenMobilePanel : undefined}
+              mobilePanelLabel={mobilePanelLabel}
             />
           ) : null}
           <main className="min-h-0 flex-1 overflow-hidden">{children}</main>

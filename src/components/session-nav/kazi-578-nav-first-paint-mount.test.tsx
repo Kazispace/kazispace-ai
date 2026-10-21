@@ -122,7 +122,13 @@ vi.mock('@/components/session-nav/session-icon-rail', () => ({
 }));
 
 vi.mock('@/components/session-nav/session-context-header', () => ({
-  SessionContextHeader: () => <div data-testid="context-header" />,
+  SessionContextHeader: (props: { onOpenMobilePanel?: () => void; mobilePanelLabel?: string }) => (
+    <div data-testid="context-header">
+      {props.onOpenMobilePanel ? (
+        <button type="button" aria-label={props.mobilePanelLabel} onClick={props.onOpenMobilePanel} />
+      ) : null}
+    </div>
+  ),
 }));
 
 vi.mock('@/components/session-nav/confirm-abandon-session-dialog', () => ({
@@ -289,5 +295,24 @@ describe('KAZI-578 SessionNav first-paint mount timing', () => {
     if (panel) {
       expect(panel.getAttribute('data-mobile')).toBe('1');
     }
+  });
+
+  it('on Chat the menu button sits inside the context header: one bar, not two (D24)', async () => {
+    installViewport({ desktop: false, innerWidth: 375 });
+    pathnameRef.value = '/en/chat';
+
+    await act(async () => {
+      root!.render(
+        <SessionNavShell locale="en">
+          <main data-testid="main-col">chat</main>
+        </SessionNavShell>
+      );
+    });
+
+    const header = host!.querySelector('[data-testid="context-header"]');
+    expect(header).not.toBeNull();
+    const menus = host!.querySelectorAll('[aria-label="openPanel"]');
+    expect(menus.length).toBe(1);
+    expect(header!.contains(menus[0])).toBe(true);
   });
 });

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { FileText, FolderOpen, LayoutGrid, MoreHorizontal, Search } from 'lucide-react';
+import { FileText, FolderOpen, LayoutGrid, Menu, MoreHorizontal, Search } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -47,6 +47,12 @@ interface SessionContextHeaderProps {
   spaceId?: string | null;
   /** Whether the workspace chat side rail is open (CV hub / job detail). */
   workspaceRailOpen?: boolean;
+  /**
+   * Mobile only: opens the conversation list. The button sits in this bar, not in a
+   * row of its own — the chat has one bar above it (kazispace-ui decisions D24).
+   */
+  onOpenMobilePanel?: () => void;
+  mobilePanelLabel?: string;
 }
 
 type HeaderDrawer = 'files' | 'search' | 'more' | null;
@@ -56,11 +62,14 @@ export function SessionContextHeader({
   sessionsByAgent,
   spaceId = null,
   workspaceRailOpen = false,
+  onOpenMobilePanel,
+  mobilePanelLabel,
 }: SessionContextHeaderProps) {
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
   const tSpaces = useTranslations('spaces');
   const tRailHub = useTranslations('cv.railHub');
+  const tClinic = useTranslations('clinic');
   const showToast = useUIStore((s) => s.showToast);
   const clinicActiveAgentId = useAgentStore((s) => s.activeAgentId);
   const hubAgentId = getDedicatedHubAgentFromPathname(pathname);
@@ -176,6 +185,11 @@ export function SessionContextHeader({
     t,
   ]);
 
+  // The main chat's one-line description lives under the title, so the clinic
+  // view needs no second strip repeating the chat's name (D24).
+  const subtitle =
+    !agentId && isClinicChatPathname(pathname) ? tClinic('layerClinicActive') : null;
+
   const showSessionActions = Boolean(agentId && currentSession?.session_id);
   // Dedicated hub routes — plain Link back to /chat. Inline clinic agent mode keeps
   // ChatHeader for deactivate (SessionContextHeader cannot call exitToClinic).
@@ -230,14 +244,39 @@ export function SessionContextHeader({
 
   return (
     <div className="relative shrink-0">
-      <header className="flex h-12 items-center justify-between gap-3 border-b border-workspace-border bg-white px-4">
+      <header
+        className={cn(
+          'flex h-12 items-center justify-between gap-3 border-b border-workspace-border bg-white px-4',
+          onOpenMobilePanel && 'pl-1 md:pl-4'
+        )}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <h1 className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold text-workspace-text">
-            {titleAgentId ? (
-              <AgentNavIcon agentId={titleAgentId} className="text-primary" />
+          {onOpenMobilePanel ? (
+            <button
+              type="button"
+              onClick={onOpenMobilePanel}
+              className="shrink-0 rounded-lg p-2 text-workspace-text hover:bg-workspace-hover md:hidden"
+              aria-label={mobilePanelLabel}
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          ) : null}
+          <div className="min-w-0">
+            <h1 className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold text-workspace-text">
+              {titleAgentId ? (
+                <AgentNavIcon agentId={titleAgentId} className="text-primary" />
+              ) : null}
+              <span className="truncate">{title}</span>
+            </h1>
+            {subtitle ? (
+              <p
+                data-testid="context-header-subtitle"
+                className="truncate text-[11px] leading-4 text-workspace-secondary"
+              >
+                {subtitle}
+              </p>
             ) : null}
-            <span className="truncate">{title}</span>
-          </h1>
+          </div>
           {statusLabel && statusKind && (
             <span
               className={cn(

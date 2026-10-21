@@ -51,6 +51,12 @@ const config: Config = {
           navy2: t('color.navy.800'),
           'brand-accent': t('color.brand.accent'),
         },
+        /** Mobile tab bar (kazispace-ui decisions D24): navy, so it never reads as the screen above. */
+        'tab-bar': {
+          bg: t('color.bg.inverse'),
+          item: t('color.text.inverse-secondary'),
+          'item-active': t('color.text.inverse'),
+        },
         'clinic-bubble': t('color.chat.assistant-bg'),
         'agent-bubble': t('color.chat.specialist-bg'),
         /** User-sent message (Clinic) — cool tint, aligns with UX blue user bubble guidance */
