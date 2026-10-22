@@ -211,3 +211,60 @@ export async function switchCvDocumentTemplate(
     clearTimeout(timeout);
   }
 }
+
+export interface CvDocumentResume {
+  /**
+   * The structured resume, or `null` when the CV's text was changed outside
+   * the form (the wizard then can't edit it — the user says what to change in
+   * the chat instead).
+   */
+  resume: Record<string, unknown> | null;
+  /** Document version: an edit-mode draft is only reused while it matches. */
+  version: number | string | null;
+}
+
+/**
+ * GET /api/v1/cv/documents/{doc_id} → the structured `resume` (KAZI-1144 added
+ * the field) and the document `version`. KAZI-1145 reads them to prefill the
+ * edit-mode `cv_wizard`.
+ */
+export async function fetchCvDocumentResume(
+  docId: number,
+  locale?: string
+): Promise<ApiResponse<CvDocumentResume>> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+
+  try {
+    const response = await regionAwareApiClient.fetch(`/api/v1/cv/documents/${docId}`, {
+      method: 'GET',
+      headers: buildExportHeaders(locale),
+      signal: controller.signal,
+      requireSession: Boolean(getAuthToken()),
+    });
+
+    if (!response.ok) {
+      const errorData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+      const { error, errorCode } = parseExportError(errorData, response.status);
+      return { success: false, error, errorCode };
+    }
+
+    const data = (await response.json()) as { resume?: unknown; version?: unknown };
+    const resume =
+      data.resume && typeof data.resume === 'object' && !Array.isArray(data.resume)
+        ? (data.resume as Record<string, unknown>)
+        : null;
+    const version =
+      typeof data.version === 'number' || typeof data.version === 'string' ? data.version : null;
+    return { success: true, data: { resume, version } };
+  } catch (err) {
+    const aborted = err instanceof Error && err.name === 'AbortError';
+    return {
+      success: false,
+      error: aborted ? 'Load resume timed out' : err instanceof Error ? err.message : 'Network error',
+      errorCode: aborted ? 'TIMEOUT' : 'NETWORK_ERROR',
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}

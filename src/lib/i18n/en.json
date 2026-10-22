@@ -909,6 +909,25 @@
 				"deepLinkFailed": "Could not open this file. Try again from the asset list.",
 				"loginRequired": "Sign in to view your career files."
 			}
+		},
+		"form": {
+			"open": "Open form",
+			"reopen": "Continue filling in",
+			"back": "Back",
+			"next": "Next",
+			"stepOf": "Step {current} of {total}",
+			"addItem": "Add another",
+			"removeItem": "Remove",
+			"required": "Required",
+			"loadingResume": "Loading your resume…",
+			"loadFailed": "Couldn't load your resume.",
+			"wizardSent": "Submitted my resume details",
+			"archiveSent": "{count, plural, one {Archive # resume} other {Archive # resumes}}",
+			"selectAtLeastOne": "Select at least one resume.",
+			"chooseFile": "Choose file",
+			"uploaded": "Uploaded {name}",
+			"pastePlaceholder": "Paste your resume here…",
+			"editElsewhere": "This resume was changed outside the form. Tell me in the chat what to change."
 		}
 	},
 	"nba": {

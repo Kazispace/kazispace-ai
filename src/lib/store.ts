@@ -8,6 +8,7 @@ import { clearBillingCache } from './billing-cache';
 import { clearMockAgentSessions } from './agent-api';
 import { clearLocaleCookies } from './locale';
 import { clearMasterSession } from './master-session';
+import { clearAllCvWizardDrafts } from './cv-wizard-drafts';
 import {
   getAgentSliceFromRecord,
   patchAgentSlice,
@@ -67,6 +68,8 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     clearMasterSession();
     clearLocaleCookies();
     clearBillingCache();
+    // KAZI-1145: CV form drafts hold this user's resume — drop them all.
+    clearAllCvWizardDrafts();
     useAgentStore.getState().reset();
     useSpaceStore.getState().reset();
     publishAuthSessionCleared();

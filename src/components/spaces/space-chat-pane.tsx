@@ -48,6 +48,7 @@ import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/lib/store';
+import { isAnsweredTurn, type ReplyFormSubmit } from '@/lib/reply-form';
 import { publishSessionNavChatSideRailOpen } from '@/lib/session-nav-events';
 import { useActiveWorkspaceRailEvents } from '@/hooks/use-active-workspace-chrome';
 
@@ -302,15 +303,22 @@ export function SpaceChatPane({
     [isSending, sendAndPin]
   );
 
-  // KAZI-1041: english_tutor `meta.form` answer — same send path as next_action
-  // payloads; returning the promise keeps the form busy until the turn lands.
+  // KAZI-1041 / KAZI-1145: a `meta.form` answer (english_tutor or cv_builder) —
+  // same send path as next_action payloads; returning the promise keeps the
+  // form busy until the turn lands, and `false` (skipped while busy, or the
+  // send failed) keeps the form's draft. ⛔ No CV upload here: `/api/v1/inputs`
+  // only reaches the Clinic CV session and writes no message to this space,
+  // so space rows don't render `cv_upload` (`cvUploadEnabled={false}`) and an
+  // answered turn is refused.
   const handleEtFormSubmit = useCallback(
-    async (submit: import('@/lib/english-tutor/form').EtFormSubmit) => {
-      if (isSending) return;
-      await sendAndPin(submit.display, {
+    async (submit: ReplyFormSubmit): Promise<boolean> => {
+      if (isAnsweredTurn(submit)) return false;
+      if (isSending) return false;
+      const result = await sendAndPin(submit.display, {
         displayContent: submit.display,
         actionMeta: submit.meta,
       });
+      return result.ok;
     },
     [isSending, sendAndPin]
   );
