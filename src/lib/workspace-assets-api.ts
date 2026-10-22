@@ -13,6 +13,7 @@ function buildWorkspaceAssetsQuery(params?: FetchWorkspaceAssetsParams): string 
   if (params?.spaceId) search.set('space_id', params.spaceId);
   if (params?.category) search.set('category', params.category);
   if (params?.includeHistory) search.set('include_history', 'true');
+  if (params?.includeArchived) search.set('include_archived', 'true');
   const qs = search.toString();
   return qs ? `?${qs}` : '';
 }

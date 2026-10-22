@@ -39,6 +39,10 @@ export interface WorkspaceAsset {
   is_current: boolean;
   logical_key: string;
   provenance?: WorkspaceAssetProvenance;
+  /** Studio object status (Core Assets §6.4): archived objects are left out unless asked for. */
+  object_status?: 'active' | 'archived' | null;
+  /** Times the object was opened; counts every open for now (Studio pattern). */
+  view_count?: number | null;
 }
 
 export interface WorkspaceAssetCategoryCounts {
@@ -63,4 +67,6 @@ export interface FetchWorkspaceAssetsParams {
   spaceId?: string;
   category?: WorkspaceAssetCategory;
   includeHistory?: boolean;
+  /** Also list archived objects (marked `object_status: 'archived'`). */
+  includeArchived?: boolean;
 }

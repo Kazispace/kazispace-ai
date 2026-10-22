@@ -1401,6 +1401,11 @@
 			"title": "Nothing in Studio yet",
 			"body": "Ask in Chat for a resume, an assessment or research. What it makes appears here, ready to work on.",
 			"action": "Start in Chat"
-		}
+		},
+		"archived": "Archived",
+		"views": "{count, plural, one {# view} other {# views}}",
+		"archive": "Archive",
+		"restoreHint": "Tap to restore",
+		"actionFailed": "Couldn't save that change. Try again."
 	}
 }

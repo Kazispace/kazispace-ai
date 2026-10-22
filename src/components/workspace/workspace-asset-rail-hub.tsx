@@ -1,12 +1,18 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { ChevronDown, FileText, FolderOpen, Loader2, RefreshCw, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronDown, FileText, FolderOpen, Loader2, RefreshCw, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { HUB_ASSET_GRID_CLASS } from '@/components/workspace/workspace-side-rail-hub';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { buildClinicChatHref } from '@/lib/cv-entry';
+import {
+  archiveAssetObject,
+  recordAssetObjectView,
+  restoreAssetObject,
+} from '@/lib/asset-objects-api';
+import { useUIStore } from '@/lib/store';
 import {
   retryWorkspaceAssetIndexing,
   useWorkspaceAssetCategoryHistory,
@@ -47,8 +53,10 @@ const CATEGORY_TONE: Record<WorkspaceAssetCategory, AssetTone> = {
  * one list per kind. Resumes, then assessments (the English passport and mock
  * interview results). Job listings and spaces are not objects, so they are not
  * here. A kind the user has none of is left out; with nothing at all, the
- * empty state points back to Chat. Research documents, question sets, archived
- * objects and view counts need backend support first.
+ * empty state points back to Chat. A resume shows how often it was opened and
+ * can be archived; archived resumes sit in their own list and restore on tap
+ * (Core Assets §6.4). Research documents and question sets need backend
+ * support first.
  */
 export function WorkspaceAssetRailHub({
   locale,
@@ -75,6 +83,50 @@ export function WorkspaceAssetRailHub({
     true
   );
   const tStudio = useTranslations('studio');
+  const showToast = useUIStore((s) => s.showToast);
+  const archivedQuery = useWorkspaceAssets(
+    {
+      scope: WORKSPACE_ASSET_HUB_SCOPE,
+      category: 'resume',
+      includeHistory: false,
+      includeArchived: true,
+    },
+    true
+  );
+  const archivedResumes = archivedQuery.items.filter(
+    (item) => item.is_current && item.object_status === 'archived'
+  );
+  const [busyObjectId, setBusyObjectId] = useState<string | null>(null);
+
+  const refreshResumes = () => {
+    void resumeQuery.refresh();
+    void archivedQuery.refresh();
+  };
+
+  // Every open counts, the user's own included (Studio pattern, "Resume view
+  // count"). Recorded only here, when the user opens it, never on list.
+  const openAsset = (asset: WorkspaceAsset) => {
+    onOpenAsset?.(asset);
+    const objectId = asset.provenance?.core_asset_id;
+    if (asset.category === 'resume' && objectId) {
+      void recordAssetObjectView(objectId).then((res) => {
+        if (res.success) void resumeQuery.refresh();
+      });
+    }
+  };
+
+  const changeStatus = async (asset: WorkspaceAsset, to: 'archived' | 'active') => {
+    const objectId = asset.provenance?.core_asset_id;
+    if (!objectId || busyObjectId) return;
+    setBusyObjectId(objectId);
+    const res = to === 'archived' ? await archiveAssetObject(objectId) : await restoreAssetObject(objectId);
+    setBusyObjectId(null);
+    if (!res.success) {
+      showToast(tStudio('actionFailed'), 'error');
+      return;
+    }
+    refreshResumes();
+  };
 
   // Auth gate is independent of asset queries (PR #183 review P1).
   const { ready: authReady, authenticated } = useAuthReady();
@@ -135,7 +187,9 @@ export function WorkspaceAssetRailHub({
             error={resumeQuery.error}
             loginRequiredLabel={tV2('loginRequired')}
             olderAssetsLabel={tV2('olderAssets', { count: resumeQuery.historyCounts.resume })}
-            onOpenAsset={onOpenAsset}
+            onOpenAsset={openAsset}
+            onArchive={(asset) => void changeStatus(asset, 'archived')}
+            busyObjectId={busyObjectId}
             onRetry={resumeQuery.refresh}
             t={tV2}
           />
@@ -186,7 +240,53 @@ export function WorkspaceAssetRailHub({
           ) : null}
         </ZoneBlock>
       ) : null}
+
+      {archivedResumes.length > 0 ? (
+        <ZoneBlock title={tStudio('archived')}>
+          {archivedResumes.map((asset) => (
+            <ArchivedObjectTile
+              key={asset.asset_id}
+              asset={asset}
+              hint={tStudio('restoreHint')}
+              busy={busyObjectId === asset.provenance?.core_asset_id}
+              onRestore={() => void changeStatus(asset, 'active')}
+            />
+          ))}
+        </ZoneBlock>
+      ) : null}
     </div>
+  );
+}
+
+/** An archived object: tap restores it to the in-use list (Studio pattern). */
+function ArchivedObjectTile({
+  asset,
+  hint,
+  busy,
+  onRestore,
+}: {
+  asset: WorkspaceAsset;
+  hint: string;
+  busy: boolean;
+  onRestore: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onRestore}
+      disabled={busy}
+      aria-label={`${asset.display_name}. ${hint}`}
+      data-testid="studio-archived-object"
+      className="relative flex min-w-0 flex-col items-center gap-0.5 rounded-lg p-1 hover:bg-gray-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-60"
+    >
+      <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1', TONE_ICON_CLASS.muted)}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <ArchiveRestore className="h-4 w-4" aria-hidden />}
+      </span>
+      <span className="line-clamp-2 w-full text-center text-[10px] leading-tight text-workspace-secondary">
+        {asset.display_name}
+      </span>
+      <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-workspace-muted">{hint}</span>
+    </button>
   );
 }
 
@@ -277,6 +377,8 @@ function CareerAssetSubcategory({
   loginRequiredLabel,
   olderAssetsLabel,
   onOpenAsset,
+  onArchive,
+  busyObjectId,
   onRetry,
   t,
 }: {
@@ -292,6 +394,8 @@ function CareerAssetSubcategory({
   loginRequiredLabel: string;
   olderAssetsLabel: string;
   onOpenAsset?: (asset: WorkspaceAsset) => void;
+  onArchive?: (asset: WorkspaceAsset) => void;
+  busyObjectId?: string | null;
   onRetry: () => void;
   t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
 }) {
@@ -316,6 +420,8 @@ function CareerAssetSubcategory({
               asset={asset}
               tone={tone}
               onOpen={() => onOpenAsset?.(asset)}
+              onArchive={onArchive && asset.provenance?.core_asset_id ? () => onArchive(asset) : undefined}
+              archiving={Boolean(busyObjectId) && busyObjectId === asset.provenance?.core_asset_id}
               onRetry={onRetry}
               t={t}
             />
@@ -417,6 +523,8 @@ function WorkspaceAssetIcon({
   tone,
   historical,
   onOpen,
+  onArchive,
+  archiving,
   onRetry,
   t,
 }: {
@@ -424,10 +532,14 @@ function WorkspaceAssetIcon({
   tone: AssetTone;
   historical?: boolean;
   onOpen: () => void;
+  onArchive?: () => void;
+  archiving?: boolean;
   onRetry: () => void;
   t: ReturnType<typeof useTranslations<'cv.railHub.assetV2'>>;
 }) {
   const tStates = useTranslations('states');
+  const tStudio = useTranslations('studio');
+  const views = typeof asset.view_count === 'number' ? asset.view_count : null;
   const [retrying, setRetrying] = useState(false);
   const reindexEnabled = isWorkspaceAssetReindexEnabled();
   const isPending = asset.indexing_status === 'pending';
@@ -448,10 +560,11 @@ function WorkspaceAssetIcon({
   };
 
   return (
+    <div className="relative min-w-0">
     <button
       type="button"
       onClick={() => void handleClick()}
-      disabled={isPending || retrying || (isFailed && !reindexEnabled)}
+      disabled={isPending || retrying || archiving || (isFailed && !reindexEnabled)}
       title={asset.display_name}
       className={cn(
         'relative flex min-w-0 flex-col items-center gap-0.5 rounded-lg p-1',
@@ -493,7 +606,29 @@ function WorkspaceAssetIcon({
           {asset.subtitle}
         </span>
       ) : null}
+      {views !== null && !isFailed ? (
+        <span
+          data-testid="studio-view-count"
+          className="line-clamp-1 w-full text-center text-[9px] leading-tight text-workspace-muted"
+        >
+          {tStudio('views', { count: views })}
+        </span>
+      ) : null}
     </button>
+    {onArchive && !isPending && !isFailed ? (
+      <button
+        type="button"
+        onClick={onArchive}
+        disabled={archiving}
+        aria-label={`${tStudio('archive')}: ${asset.display_name}`}
+        title={tStudio('archive')}
+        data-testid="studio-archive"
+        className="absolute right-0 top-0 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-workspace-muted shadow-sm ring-1 ring-gray-200 hover:text-workspace-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-60"
+      >
+        {archiving ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden /> : <Archive className="h-3 w-3" aria-hidden />}
+      </button>
+    ) : null}
+    </div>
   );
 }
 

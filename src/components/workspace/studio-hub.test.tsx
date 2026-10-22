@@ -27,9 +27,30 @@ vi.mock('next-intl', () => ({
 vi.mock('@/hooks/use-auth-ready', () => ({
   useAuthReady: () => ({ ready: state.ready, authenticated: state.authenticated }),
 }));
+const api = vi.hoisted(() => ({
+  archive: vi.fn(async () => ({ success: true, data: { id: 'ca', status: 'archived' } })),
+  restore: vi.fn(async () => ({ success: true, data: { id: 'ca', status: 'active' } })),
+  views: vi.fn(async () => ({ success: true, data: { view_count: 1 } })),
+  toast: vi.fn(),
+}));
+vi.mock('@/lib/asset-objects-api', () => ({
+  archiveAssetObject: api.archive,
+  restoreAssetObject: api.restore,
+  recordAssetObjectView: api.views,
+}));
+vi.mock('@/lib/store', () => ({
+  useUIStore: (select: (s: { showToast: typeof api.toast }) => unknown) => select({ showToast: api.toast }),
+}));
 vi.mock('@/hooks/use-workspace-assets', () => ({
-  useWorkspaceAssets: ({ category }: { category: WorkspaceAssetCategory }) => {
-    const d = state.data[category] ?? { items: [], count: 0, history: 0 };
+  useWorkspaceAssets: ({
+    category,
+    includeArchived,
+  }: {
+    category: WorkspaceAssetCategory;
+    includeArchived?: boolean;
+  }) => {
+    const key = includeArchived ? `${category}:withArchived` : category;
+    const d = state.data[key] ?? { items: [], count: 0, history: 0 };
     return {
       items: d.items,
       categories: { ...zero, [category]: d.count },
@@ -45,7 +66,11 @@ vi.mock('@/hooks/use-workspace-assets', () => ({
 
 import { WorkspaceAssetRailHub } from '@/components/workspace/workspace-asset-rail-hub';
 
-function asset(category: WorkspaceAssetCategory, name: string): WorkspaceAsset {
+function asset(
+  category: WorkspaceAssetCategory,
+  name: string,
+  extra: Partial<WorkspaceAsset> = {}
+): WorkspaceAsset {
   return {
     asset_id: `${category}-${name}`,
     category,
@@ -53,6 +78,7 @@ function asset(category: WorkspaceAssetCategory, name: string): WorkspaceAsset {
     is_current: true,
     indexing_status: 'ready',
     mime_type: 'text/markdown',
+    ...extra,
   } as WorkspaceAsset;
 }
 
@@ -80,6 +106,10 @@ beforeEach(() => {
   state.loading = false;
   state.data = {};
   onNavigate.mockReset();
+  api.archive.mockClear();
+  api.restore.mockClear();
+  api.views.mockClear();
+  api.toast.mockClear();
 });
 afterEach(() => {
   act(() => root.unmount());
@@ -142,5 +172,81 @@ describe('Studio', () => {
     render();
     expect(container.textContent).not.toContain('tileJobs');
     expect(container.textContent).not.toContain('tileSpaces');
+  });
+
+  describe('archive, restore and view counts (Core Assets §6.4)', () => {
+    const resume = asset('resume', 'Data analyst', {
+      view_count: 14,
+      object_status: 'active',
+      provenance: { core_asset_id: 'ca_1' },
+    });
+
+    it('shows each resume\'s view count', () => {
+      state.data = { resume: { items: [resume], count: 1, history: 0 } };
+      render();
+      expect(container.querySelector('[data-testid="studio-view-count"]')?.textContent).toBe('studio.views');
+    });
+
+    it('records one view when a resume is opened, and only then', async () => {
+      const onOpenAsset = vi.fn();
+      state.data = { resume: { items: [resume], count: 1, history: 0 } };
+      act(() => {
+        root.render(<WorkspaceAssetRailHub locale="en" showCloseButton={false} onOpenAsset={onOpenAsset} />);
+      });
+      expect(api.views).not.toHaveBeenCalled();
+      const open = container.querySelector('button[title="Data analyst"]') as HTMLButtonElement;
+      await act(async () => {
+        open.click();
+      });
+      expect(onOpenAsset).toHaveBeenCalledWith(resume);
+      expect(api.views).toHaveBeenCalledWith('ca_1');
+    });
+
+    it('archives a resume from its tile', async () => {
+      state.data = { resume: { items: [resume], count: 1, history: 0 } };
+      render();
+      const archive = container.querySelector('[data-testid="studio-archive"]') as HTMLButtonElement;
+      await act(async () => {
+        archive.click();
+      });
+      expect(api.archive).toHaveBeenCalledWith('ca_1');
+      expect(api.views).not.toHaveBeenCalled();
+    });
+
+    it('lists archived resumes under Archived and restores one on tap', async () => {
+      const old = asset('resume', 'First draft', {
+        object_status: 'archived',
+        provenance: { core_asset_id: 'ca_0' },
+      });
+      state.data = {
+        resume: { items: [resume], count: 1, history: 0 },
+        'resume:withArchived': { items: [resume, old], count: 2, history: 0 },
+      };
+      render();
+      expect(headings()).toEqual(['studio.resumes', 'studio.archived']);
+      const archived = container.querySelectorAll('[data-testid="studio-archived-object"]');
+      expect(archived).toHaveLength(1);
+      expect(archived[0].textContent).toContain('First draft');
+      await act(async () => {
+        (archived[0] as HTMLButtonElement).click();
+      });
+      expect(api.restore).toHaveBeenCalledWith('ca_0');
+    });
+
+    it('says so when the change fails', async () => {
+      api.archive.mockResolvedValueOnce({ success: false, error: 'boom' } as never);
+      state.data = { resume: { items: [resume], count: 1, history: 0 } };
+      render();
+      await act(async () => {
+        (container.querySelector('[data-testid="studio-archive"]') as HTMLButtonElement).click();
+      });
+      expect(api.toast).toHaveBeenCalledWith('studio.actionFailed', 'error');
+    });
+
+    it('offers no archive button on an item without an object id', () => {
+      state.data = { resume: { items: [asset('resume', 'Legacy')], count: 1, history: 0 } };
+      render();
+      expect(container.querySelector('[data-testid="studio-archive"]')).toBeNull();
+    });
   });
 });

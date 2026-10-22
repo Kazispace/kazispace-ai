@@ -1105,6 +1105,11 @@
 			"title": "工作室里还没有内容",
 			"body": "去对话里写简历、做能力评价或查资料，做出来的内容会出现在这里，随时接着做。",
 			"action": "去对话开始"
-		}
+		},
+		"archived": "已归档",
+		"views": "{count, plural, other {# 次浏览}}",
+		"archive": "归档",
+		"restoreHint": "点按即可恢复",
+		"actionFailed": "没能保存这次修改，请再试一次。"
 	}
 }
