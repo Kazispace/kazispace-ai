@@ -112,6 +112,7 @@ vi.mock('@/components/hub/hub-session-stale-banner', () => ({
 }));
 
 import InterviewPage from '@/app/[locale]/(workspace)/interview/page';
+import { useChatHeaderSlotStore } from '@/lib/chat-header-slot';
 
 function baseInterviewState(overrides: Partial<Record<string, unknown>> = {}) {
   return {
@@ -254,5 +255,37 @@ describe('KAZI-659 /interview page', () => {
     });
 
     expect(refetchProfileMock).toHaveBeenCalled();
+  });
+
+  it('draws no second header: role, progress and "New interview" go into the one bar (D24)', async () => {
+    const reset = vi.fn();
+    useInterviewMock.mockReturnValue(
+      baseInterviewState({
+        needsLogin: false,
+        phase: 'interview',
+        displayRole: 'Data analyst',
+        questionIndex: 2,
+        questionCount: 5,
+        reset,
+      })
+    );
+
+    await act(async () => {
+      root!.render(<InterviewPage params={{ locale: 'en' }} />);
+    });
+
+    expect(host?.querySelector('[data-testid="shell-header"]')?.textContent).toBe('');
+    const slot = useChatHeaderSlotStore.getState();
+    expect(slot.subtitle).toContain('Data analyst');
+    expect(slot.subtitle).toContain('questionOf');
+    expect(slot.action?.label).toBe('newInterview');
+    slot.action!.onClick();
+    expect(reset).toHaveBeenCalled();
+
+    await act(async () => {
+      root!.unmount();
+    });
+    root = null;
+    expect(useChatHeaderSlotStore.getState().subtitle).toBeNull();
   });
 });

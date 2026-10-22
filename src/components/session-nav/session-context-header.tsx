@@ -38,6 +38,7 @@ import {
   sessionNavBadgePillClass,
 } from '@/lib/session-nav-badges';
 import { useAgentStore, useSpaceStore, useUIStore } from '@/lib/store';
+import { useChatHeaderSlotStore } from '@/lib/chat-header-slot';
 import { cn } from '@/lib/utils';
 import type { SessionLibraryFile } from '@/types/session-library';
 
@@ -187,8 +188,13 @@ export function SessionContextHeader({
 
   // The main chat's one-line description lives under the title, so the clinic
   // view needs no second strip repeating the chat's name (D24).
+  // A specialist page puts its own line here (`useChatHeaderSlot`), so it
+  // needs no second header under this one (D24).
+  const slotSubtitle = useChatHeaderSlotStore((s) => s.subtitle);
+  const slotAction = useChatHeaderSlotStore((s) => s.action);
   const subtitle =
-    !agentId && isClinicChatPathname(pathname) ? tClinic('layerClinicActive') : null;
+    slotSubtitle ??
+    (!agentId && isClinicChatPathname(pathname) ? tClinic('layerClinicActive') : null);
 
   const showSessionActions = Boolean(agentId && currentSession?.session_id);
   // Dedicated hub routes — plain Link back to /chat. Inline clinic agent mode keeps
@@ -290,6 +296,17 @@ export function SessionContextHeader({
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
+          {slotAction ? (
+            <button
+              type="button"
+              onClick={slotAction.onClick}
+              disabled={slotAction.disabled}
+              data-testid="context-header-action"
+              className="mr-1 rounded-lg border border-workspace-border px-2.5 py-1.5 text-xs font-medium text-workspace-text hover:bg-workspace-hover disabled:opacity-50"
+            >
+              {slotAction.label}
+            </button>
+          ) : null}
           {showClinicWorkspaceRail ? (
             <button
               type="button"

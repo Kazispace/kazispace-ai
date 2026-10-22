@@ -26,8 +26,8 @@ import {
   type EnglishHubQuickAction,
 } from "@/lib/english-hub-quick-actions";
 import { EPP_PROFILE_ENABLED } from "@/lib/constants";
-import { getAgentLabel, AGENT_REGISTRY } from "@/lib/agents/registry";
 import { useAuthStore, useUIStore } from "@/lib/store";
+import { useChatHeaderSlot } from "@/lib/chat-header-slot";
 
 interface EnglishPageProps {
   params: { locale: string };
@@ -90,18 +90,9 @@ function EnglishPageContent({ locale }: { locale: string }) {
 
   const inputDisabled = isOpening || isSending || Boolean(openError);
 
-  const englishAgent = AGENT_REGISTRY.find((a) => a.agentId === ENGLISH_TUTOR_AGENT_ID);
-
-  const shellHeader = (
-    <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between shrink-0">
-      <div>
-        <h1 className="text-lg font-bold text-kazi-navy">
-          🗣️ {englishAgent ? getAgentLabel(englishAgent, locale, "name") : t("chatSubtitle")}
-        </h1>
-        <p className="text-xs text-gray-500 mt-0.5">{t("chatSubtitle")}</p>
-      </div>
-    </div>
-  );
+  // One bar above the conversation (kazispace-ui D24): the description goes
+  // into the context header's subtitle; the title there already names the tutor.
+  useChatHeaderSlot("english", { subtitle: t("chatSubtitle"), action: null });
 
   const chatBody = (
     <div
@@ -161,7 +152,6 @@ function EnglishPageContent({ locale }: { locale: string }) {
           </div>
         ) : (
           <HubAgentShell
-            header={shellHeader}
             workspace={<EnglishWorkspace locale={locale} />}
             composerPrefix={
               quickReplies.length > 0 ? (
