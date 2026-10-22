@@ -32,6 +32,7 @@ export function workspaceAssetsQueryKey(params?: FetchWorkspaceAssetsParams) {
       spaceId: params?.spaceId ?? null,
       category: params?.category ?? null,
       includeHistory: params?.includeHistory ?? false,
+      includeArchived: params?.includeArchived ?? false,
     },
   ] as const;
 }

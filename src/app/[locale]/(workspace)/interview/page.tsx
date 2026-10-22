@@ -27,6 +27,7 @@ import { useInterviewProfile } from "@/hooks/use-interview-profile";
 import { INTAKE_SUGGESTION_KEYS } from "@/lib/interview-intake";
 import type { InterviewCta } from "@/types";
 import { useUIStore, useAuthStore } from "@/lib/store";
+import { useChatHeaderSlot } from "@/lib/chat-header-slot";
 
 interface InterviewPageProps {
   params: { locale: string };
@@ -192,32 +193,21 @@ function InterviewPageContent({ locale }: { locale: string }) {
     (phase === "role_select" || (phase === "prep_review" && !prepCard)) &&
     isStarting;
 
-  const shellHeader = (
-    <div className="px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between shrink-0">
-      <div>
-        <h1 className="text-lg font-bold text-kazi-navy">
-          {displayRole ? `🎤 ${displayRole}` : t("title")}
-        </h1>
-        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
-        {phase === "interview" && (
-          <p className="text-xs text-gray-500">
-            {t("questionOf", { current: questionIndex, total: questionCount })}
-          </p>
-        )}
-        {phase === "feedback_pending" && (
-          <div className="flex items-center gap-1.5 text-xs text-primary mt-0.5">
-            <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin shrink-0" />
-            <span>{t("feedbackPending")}</span>
-          </div>
-        )}
-      </div>
-      {phase !== "role_select" ? (
-        <Button size="sm" variant="outline" onClick={handleReset}>
-          {t("newInterview")}
-        </Button>
-      ) : null}
-    </div>
-  );
+  // One bar above the conversation (kazispace-ui D24): the role, job and
+  // progress go into the context header's subtitle, "New interview" into its
+  // action, instead of a second header under it.
+  const headerSubtitle = [
+    displayRole ? `🎤 ${displayRole}` : null,
+    subtitle,
+    phase === "interview" ? t("questionOf", { current: questionIndex, total: questionCount }) : null,
+    phase === "feedback_pending" ? t("feedbackPending") : null,
+  ]
+    .filter(Boolean)
+    .join(" · ") || null;
+  useChatHeaderSlot("interview", {
+    subtitle: headerSubtitle,
+    action: phase !== "role_select" ? { label: t("newInterview"), onClick: handleReset } : null,
+  });
 
   const chatBody = (
     <>
@@ -358,7 +348,6 @@ function InterviewPageContent({ locale }: { locale: string }) {
           </div>
         ) : (
           <HubAgentShell
-            header={shellHeader}
             workspace={
               !needsLogin ? (
                 <InterviewWorkspace

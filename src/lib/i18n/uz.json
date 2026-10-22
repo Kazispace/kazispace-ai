@@ -969,6 +969,7 @@
 		"offline": "Internetga ulanish yo'q. Xabarlar aloqa tiklanganda yuboriladi."
 	},
 	"studio": {
-		"resumes": "Rezyume"
+		"resumes": "Rezyume",
+		"archived": "Arxiv"
 	}
 }
