@@ -905,21 +905,15 @@
 			"addItem": "再加一条",
 			"removeItem": "删除",
 			"required": "必填",
-			"close": "关闭",
 			"loadingResume": "正在读取简历…",
 			"loadFailed": "读取简历失败。",
 			"wizardSent": "已提交简历信息",
-			"archiveSent": "归档 {count} 份简历",
+			"archiveSent": "{count, plural, other {归档 # 份简历}}",
 			"selectAtLeastOne": "请至少选一份简历。",
 			"chooseFile": "选择文件",
-			"uploading": "正在上传简历…",
 			"uploaded": "已上传 {name}",
-			"wrongType": "请使用 PDF 或 DOCX 文件。",
-			"tooLarge": "文件不能超过 10MB。",
-			"uploadFailed": "简历上传失败。",
 			"pastePlaceholder": "在这里粘贴简历…",
-			"chars": "{count}/{max} 字",
-			"frozen": "这张表单已关闭 —— 请在最新一条消息里作答。"
+			"editElsewhere": "这份简历在表单之外改过。请在对话里告诉我要改什么。"
 		}
 	},
 	"nba": {

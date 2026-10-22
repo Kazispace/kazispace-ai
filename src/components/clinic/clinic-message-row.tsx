@@ -13,7 +13,7 @@ import type { StrategySelectTurnContext } from '@/lib/strategy-select';
 import type { SpaceNudgePayload } from '@/lib/spaces/space-nudge';
 import type { SpaceChatMessage } from '@/lib/spaces/turn';
 import type { ChatJobCard, ChatMessage, ChatNextAction } from '@/types';
-import type { ReplyFormSubmit } from '@/lib/reply-form';
+import type { ReplyFormSubmitHandler } from '@/lib/reply-form';
 import type { ExamPickerOption } from '@/types/english-tutor-envelope';
 
 export type ClinicMessageRowProps = {
@@ -43,7 +43,7 @@ export type ClinicMessageRowProps = {
   onFocusComposer: () => void;
   onExamSelect: (option: ExamPickerOption) => void;
   /** ET and CV `meta.form` answers (KAZI-1041 / KAZI-1145). */
-  onEtFormSubmit: (submit: ReplyFormSubmit) => void | Promise<void>;
+  onEtFormSubmit: ReplyFormSubmitHandler;
   onJobCardClick: (card: ChatJobCard) => void;
 };
 

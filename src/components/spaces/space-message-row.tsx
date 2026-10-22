@@ -8,7 +8,7 @@ import { isHistoryStub } from '@/lib/chat/history-window';
 import type { StrategySelectTurnContext } from '@/lib/strategy-select';
 import type { SpaceChatMessage } from '@/lib/spaces/turn';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
-import type { ReplyFormSubmit } from '@/lib/reply-form';
+import type { ReplyFormSubmitHandler } from '@/lib/reply-form';
 import type { ExamPickerOption } from '@/types/english-tutor-envelope';
 
 export type SpaceMessageRowProps = {
@@ -21,7 +21,7 @@ export type SpaceMessageRowProps = {
   onFocusComposer: () => void;
   onExamSelect: (option: ExamPickerOption) => void;
   /** ET and CV `meta.form` answers (KAZI-1041 / KAZI-1145). */
-  onEtFormSubmit: (submit: ReplyFormSubmit) => void | Promise<void>;
+  onEtFormSubmit: ReplyFormSubmitHandler;
   onJobCardClick: (card: ChatJobCard) => void;
 };
 
@@ -91,6 +91,7 @@ function SpaceMessageRowImpl({
       onFocusComposer={onFocusComposer}
       onExamSelect={onExamSelect}
       onEtFormSubmit={onEtFormSubmit}
+      cvUploadEnabled={false}
       etFormActive={strategy.latestTurn === true}
       etFormPrefill={strategy.etFormPrefill}
       actionsDisabled={actionsDisabled}

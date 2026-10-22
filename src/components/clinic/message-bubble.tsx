@@ -24,7 +24,7 @@ import {
 import { isLowConfidenceMeta } from "@/lib/english-tutor/custom-components";
 import { parseEtForm } from "@/lib/english-tutor/form";
 import { parseCvForm } from "@/lib/cv-form";
-import type { ReplyFormSubmit } from "@/lib/reply-form";
+import type { ReplyFormSubmitHandler } from "@/lib/reply-form";
 import {
   isSearchCapability,
   type SearchCapabilityId,
@@ -86,7 +86,12 @@ interface MessageBubbleProps {
    * → chat send with form meta, or an already-answered turn (CV upload) to append.
    * The `Et` in the name is historical.
    */
-  onEtFormSubmit?: (submit: ReplyFormSubmit) => void | Promise<void>;
+  onEtFormSubmit?: ReplyFormSubmitHandler;
+  /**
+   * KAZI-1145: false on user-created spaces — `/api/v1/inputs` only reaches
+   * the Clinic CV session, so a `cv_upload` form renders nothing there.
+   */
+  cvUploadEnabled?: boolean;
   /** KAZI-1041 freeze rule (ET and CV forms): true only on the latest message. */
   etFormActive?: boolean;
   /** KAZI-1044: local prefill for the revision editor (previous user message). */
@@ -136,6 +141,7 @@ export function MessageBubble({
   onEtFormSubmit,
   etFormActive = false,
   etFormPrefill,
+  cvUploadEnabled = true,
   onJobCardClick,
   referralDisabled,
   actionsDisabled,
@@ -342,6 +348,7 @@ export function MessageBubble({
               <CvFormBlock
                 form={cvForm}
                 active={etFormActive}
+                uploadEnabled={cvUploadEnabled}
                 onSubmit={actionsDisabled ? undefined : onEtFormSubmit}
               />
             ) : null}

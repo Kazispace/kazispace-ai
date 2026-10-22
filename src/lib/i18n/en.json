@@ -919,21 +919,15 @@
 			"addItem": "Add another",
 			"removeItem": "Remove",
 			"required": "Required",
-			"close": "Close",
 			"loadingResume": "Loading your resume…",
 			"loadFailed": "Couldn't load your resume.",
 			"wizardSent": "Submitted my resume details",
 			"archiveSent": "{count, plural, one {Archive # resume} other {Archive # resumes}}",
 			"selectAtLeastOne": "Select at least one resume.",
 			"chooseFile": "Choose file",
-			"uploading": "Uploading resume…",
 			"uploaded": "Uploaded {name}",
-			"wrongType": "Use a PDF or DOCX file.",
-			"tooLarge": "File must be 10MB or smaller.",
-			"uploadFailed": "Couldn't upload the resume.",
 			"pastePlaceholder": "Paste your resume here…",
-			"chars": "{count}/{max} characters",
-			"frozen": "This form is closed — answer the latest message."
+			"editElsewhere": "This resume was changed outside the form. Tell me in the chat what to change."
 		}
 	},
 	"nba": {

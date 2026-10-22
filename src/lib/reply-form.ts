@@ -32,6 +32,17 @@ export interface ReplyFormAnsweredTurn {
 
 export type ReplyFormSubmit = ReplyFormChatSubmit | ReplyFormAnsweredTurn;
 
+/**
+ * What a surface's submit handler reports back: `false` ⇒ nothing was sent
+ * (skipped while busy, or the send failed) and the form keeps what the user
+ * entered; anything else ⇒ sent. A thrown error counts as not sent.
+ */
+export type ReplyFormSubmitResult = boolean | void;
+
+export type ReplyFormSubmitHandler = (
+  submit: ReplyFormSubmit
+) => ReplyFormSubmitResult | Promise<ReplyFormSubmitResult>;
+
 export function isAnsweredTurn(submit: ReplyFormSubmit): submit is ReplyFormAnsweredTurn {
   return (submit as ReplyFormAnsweredTurn).kind === 'answered';
 }

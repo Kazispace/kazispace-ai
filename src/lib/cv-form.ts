@@ -271,6 +271,11 @@ export type CvWizardItem = Record<string, string>;
 /**
  * In-progress wizard input. Lives outside the dialog (see `cv-wizard-drafts`)
  * so closing and reopening keeps both the step and what was typed.
+ *
+ * Edit mode stores a draft only once the user has edited a field (`dirty`),
+ * and keeps the `version` of the `GET /cv/documents/{id}` it was prefilled
+ * from: every open refetches, and a different version drops the draft so a
+ * save never reverts newer content.
  */
 export interface CvWizardDraft {
   step: number;
@@ -284,6 +289,10 @@ export interface CvWizardDraft {
    * never silently drops them.
    */
   base?: Record<string, unknown>;
+  /** True once the user changed a field (navigation alone does not count). */
+  dirty?: boolean;
+  /** Edit mode: the document `version` the prefill came from. */
+  version?: number | string | null;
 }
 
 export function emptyCvWizardDraft(): CvWizardDraft {
@@ -350,11 +359,14 @@ export function splitCvSkills(text: string): string[] {
     .filter(Boolean);
 }
 
-/** `highlights`: one per line. */
+/** A typed list bullet at the start of a line: "- ", "* " or "•". */
+const LEADING_BULLET = /^(?:[-*](?:\s+|$)|•\s*)/;
+
+/** `highlights`: one per line, typed bullets ("- ", "• ", "* ") stripped. */
 export function splitCvLines(text: string): string[] {
   return text
     .split('\n')
-    .map((s) => s.trim())
+    .map((s) => s.trim().replace(LEADING_BULLET, '').trim())
     .filter(Boolean);
 }
 
@@ -490,23 +502,13 @@ export function checkCvFormUpload(form: CvForm, file: Pick<File, 'name' | 'size'
 
 // ---------------------------------------------------------------------------
 // Wizard drafts — kept outside the dialog, keyed by `form_id`
+// (`@/lib/cv-wizard-drafts`, a tiny module so logout can clear them without
+// pulling this file into the auth store).
 // ---------------------------------------------------------------------------
 
-/**
- * In-memory only (⛔ no backend draft, design §2.4.3): closing the dialog —
- * or the backend re-offering the same wizard on the next collecting turn —
- * reopens it at the same step with what was typed. Cleared on submit.
- */
-const wizardDrafts = new Map<string, CvWizardDraft>();
-
-export function readCvWizardDraft(formId: string): CvWizardDraft | undefined {
-  return wizardDrafts.get(formId);
-}
-
-export function writeCvWizardDraft(formId: string, draft: CvWizardDraft): void {
-  wizardDrafts.set(formId, draft);
-}
-
-export function clearCvWizardDraft(formId: string): void {
-  wizardDrafts.delete(formId);
-}
+export {
+  clearAllCvWizardDrafts,
+  clearCvWizardDraft,
+  readCvWizardDraft,
+  writeCvWizardDraft,
+} from '@/lib/cv-wizard-drafts';

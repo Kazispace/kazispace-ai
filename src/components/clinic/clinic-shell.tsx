@@ -1027,17 +1027,18 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       displayContent?: string;
       actionMeta?: import("@/types/chat-envelope").UserMessageActionMeta;
     }
-  ) => {
+  ): Promise<boolean> => {
     pinToLatestOnSend();
     if (!isLoggedIn) {
       showToast(tClinic("loginToChat"), "info");
       router.push(`/${locale}/login`);
-      return;
+      return false;
     }
 
     if (isAgentMode) {
-      await handleAgentSendOutcome(await sendAgentMessage(text));
-      return;
+      const agentResult = await sendAgentMessage(text);
+      await handleAgentSendOutcome(agentResult);
+      return Boolean(agentResult?.ok);
     }
 
     const result = await sendClinicMessage(text, {
@@ -1046,6 +1047,8 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     });
 
     await handleClinicSendOutcome(text, result);
+    // KAZI-1145: a form keeps its draft unless the turn really went out.
+    return result.ok;
   };
 
   const handleAgentSendOutcome = async (
@@ -1115,13 +1118,17 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
   // Agent mode goes straight to sendAgentMessage (as handleNextAction does) —
   // submitClinicChat drops actionMeta on that branch. A CV upload arrives
   // already answered (/inputs returned the reply): append it, don't send.
+  // Returns false when nothing went out, so the form keeps its draft.
   const handleEtFormSubmit = useCallback(
-    async (submit: ReplyFormSubmit) => {
-      // The upload already happened server-side: never drop its reply.
+    async (submit: ReplyFormSubmit): Promise<boolean> => {
+      // The upload already happened server-side: never drop its reply. It goes
+      // into the list on screen — the agent's when in agent mode (with or
+      // without a session yet), else the Clinic thread.
       if (isAnsweredTurn(submit)) {
-        if (isAgentMode && activeAgentId && agentSessionId) {
+        if (isAgentMode) {
+          if (!activeAgentId) return false;
           const store = useAgentStore.getState();
-          for (const message of answeredTurnAgentMessages(submit, agentSessionId)) {
+          for (const message of answeredTurnAgentMessages(submit, agentSessionId ?? "")) {
             store.addAgentMessage(activeAgentId, message);
           }
         } else {
@@ -1130,17 +1137,24 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
             .getState()
             .patchSpaceMessages(CLINIC_SPACE_ID, (prev) => [...prev, user, assistant]);
         }
-        return;
+        return true;
       }
-      if (isSending || isSwitching) return;
+      if (isSending || isSwitching) return false;
       const opts = { displayContent: submit.display, actionMeta: submit.meta };
       if (isAgentMode) {
-        await sendAgentMessage(submit.display, opts);
-        return;
+        const result = await sendAgentMessage(submit.display, opts);
+        return Boolean(result?.ok);
       }
-      await submitClinicChatRef.current(submit.display, opts);
+      return submitClinicChatRef.current(submit.display, opts);
     },
-    [activeAgentId, agentSessionId, isAgentMode, isSending, isSwitching, sendAgentMessage]
+    [
+      activeAgentId,
+      agentSessionId,
+      isAgentMode,
+      isSending,
+      isSwitching,
+      sendAgentMessage,
+    ]
   );
 
   const handleAgentSelect = useCallback(

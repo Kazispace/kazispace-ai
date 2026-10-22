@@ -16,6 +16,7 @@ import {
   emptyCvWizardDraft,
   firstInvalidCvWizardStep,
   parseCvForm,
+  splitCvLines,
   splitCvSkills,
   validateCvWizardStep,
   type CvForm,
@@ -203,6 +204,25 @@ describe('wizard', () => {
 
   it('splits skills on commas and newlines', () => {
     expect(splitCvSkills(' a, b\n c ,\n')).toEqual(['a', 'b', 'c']);
+  });
+
+  it('highlights: typed bullets ("- ", "• ", "* ") are stripped per line before sending', () => {
+    expect(splitCvLines('- Built dashboards\n•Cut report time\n  * Led 3 people\n• \n-\nPlain line')).toEqual([
+      'Built dashboards',
+      'Cut report time',
+      'Led 3 people',
+      'Plain line',
+    ]);
+    // A hyphen inside the text (or a negative number) is not a bullet.
+    expect(splitCvLines('Cut costs -20%\n-5% churn')).toEqual(['Cut costs -20%', '-5% churn']);
+    const built = buildCvResume(
+      [{ step_id: 'work_experience', title: 'Work', repeatable: true, fields: [
+        { field_id: 'company', label: 'Company', type: 'input', required: true },
+        { field_id: 'highlights', label: 'What you did', type: 'textarea', required: false },
+      ] }],
+      { step: 0, values: {}, items: { work_experience: [{ company: 'Kaspi', highlights: '- A\n• B\n* C' }] } }
+    );
+    expect(built.work_experience).toEqual([{ company: 'Kaspi', highlights: ['A', 'B', 'C'] }]);
   });
 
   it('submit: action_payload = JSON {"resume": R}, content = the summary line', () => {

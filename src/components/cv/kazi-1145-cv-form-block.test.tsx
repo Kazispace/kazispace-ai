@@ -14,7 +14,8 @@ vi.mock('next-intl', () => ({
   useLocale: () => 'en',
 }));
 const uploadCvResumeFile = vi.fn();
-vi.mock('@/lib/cv-input-api', () => ({
+vi.mock('@/lib/cv-input-api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/cv-input-api')>()),
   uploadCvResumeFile: (...args: unknown[]) => uploadCvResumeFile(...args),
 }));
 const fetchCvDocumentResume = vi.fn();
@@ -23,7 +24,15 @@ vi.mock('@/lib/cv-export-api', () => ({
 }));
 
 import { CvFormBlock } from '@/components/cv/cv-form-block';
-import { clearCvWizardDraft, parseCvForm, type CvForm } from '@/lib/cv-form';
+import {
+  clearCvWizardDraft,
+  emptyCvWizardDraft,
+  parseCvForm,
+  readCvWizardDraft,
+  writeCvWizardDraft,
+  type CvForm,
+} from '@/lib/cv-form';
+import { useAuthStore } from '@/lib/store';
 import {
   CV_PASTE_META,
   CV_START_META,
@@ -139,7 +148,7 @@ describe('radio (cv_start / cv_pick)', () => {
     const onSubmit = vi.fn();
     render(<CvFormBlock form={START} active={false} onSubmit={onSubmit} />);
     expect(container.querySelector('fieldset')?.disabled).toBe(true);
-    expect(container.textContent).toContain('cv.form.frozen');
+    expect(container.textContent).toContain('english.form.frozen');
     expect(container.querySelector('[data-cv-form-active="false"]')?.className).toContain('opacity-60');
     expect(buttonByText('Continue', container)?.disabled).toBe(true);
   });
@@ -188,7 +197,7 @@ describe('checkbox (cv_archive)', () => {
     expect(container.contains(dialog())).toBe(false);
     expect(dialog().getAttribute('aria-labelledby')).toBeTruthy();
     click(dialog().querySelector('input[value="9"]'));
-    click(buttonByText('cv.form.close', dialog()));
+    click(buttonByText('english.form.close', dialog()));
     expect(document.querySelector('[role="dialog"]')).toBeNull();
 
     click(buttonByText('cv.form.reopen', container));
@@ -205,7 +214,7 @@ describe('textarea (cv_paste)', () => {
     render(<CvFormBlock form={PASTE} active onSubmit={onSubmit} />);
     typeInto(container.querySelector('textarea'), 'Jane Doe — barista');
     expect(container.querySelector('[data-cv-paste-count]')?.textContent).toBe(
-      'cv.form.chars{"count":18,"max":20000}'
+      'english.form.chars{"count":18,"max":20000}'
     );
     await clickAsync(buttonByText('Send', container));
     expect(onSubmit).toHaveBeenCalledWith({
@@ -226,9 +235,11 @@ describe('upload (cv_upload)', () => {
     render(<CvFormBlock form={UPLOAD} active onSubmit={vi.fn()} />);
     expect(container.querySelector('input[type="file"]')?.getAttribute('accept')).toBe('.pdf,.docx');
     pickFile(fileOf('cv.png', 100));
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe('cv.form.wrongType');
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe('cv.uploadErrorFormat');
     pickFile(fileOf('cv.pdf', 10485761));
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe('cv.form.tooLarge');
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe('cv.uploadErrorSize');
+    // A device-side rejection is not a failed request: nothing to retry.
+    expect(buttonByText('states.retry', container)).toBeNull();
     expect(buttonByText('Upload', container)?.disabled).toBe(true);
     expect(uploadCvResumeFile).not.toHaveBeenCalled();
   });
@@ -242,7 +253,7 @@ describe('upload (cv_upload)', () => {
     pickFile(fileOf('cv.pdf', 2048));
     expect(container.textContent).toContain('cv.pdf');
     click(buttonByText('Upload', container));
-    expect(container.textContent).toContain('cv.form.uploading');
+    expect(container.textContent).toContain('cv.uploading');
     expect(uploadCvResumeFile).toHaveBeenCalledWith(expect.any(File), 'en');
 
     await act(async () => resolve({ success: true, data: { response } }));
@@ -251,17 +262,45 @@ describe('upload (cv_upload)', () => {
       display: 'cv.form.uploaded{"name":"cv.pdf"}',
       response,
     });
-    expect(container.textContent).not.toContain('cv.form.uploading');
+    expect(container.textContent).not.toContain('cv.uploading');
   });
 
-  it('a failed upload shows an inline error and sends nothing', async () => {
-    uploadCvResumeFile.mockResolvedValue({ success: false, errorCode: 'SERVER_ERROR' });
+  it('a failed upload shows the shared upload error inline with "Try again", and sends nothing', async () => {
+    uploadCvResumeFile.mockResolvedValueOnce({ success: false, errorCode: 'SERVER_ERROR' });
     const onSubmit = vi.fn();
     render(<CvFormBlock form={UPLOAD} active onSubmit={onSubmit} />);
     pickFile(fileOf('cv.docx', 2048));
     await clickAsync(buttonByText('Upload', container));
-    expect(container.querySelector('[role="alert"]')?.textContent).toBe('cv.form.uploadFailed');
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe('cv.uploadErrorServer');
     expect(onSubmit).not.toHaveBeenCalled();
+
+    uploadCvResumeFile.mockResolvedValueOnce({ success: false, error: 'Failed to fetch', errorCode: 'NETWORK_ERROR' });
+    await clickAsync(buttonByText('states.retry', container));
+    expect(uploadCvResumeFile).toHaveBeenCalledTimes(2);
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe('cv.uploadErrorNetwork');
+
+    const response = { text: 'Read it.', next_actions: [] };
+    uploadCvResumeFile.mockResolvedValueOnce({ success: true, data: { response } });
+    await clickAsync(buttonByText('states.retry', container));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ kind: 'answered', response }));
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('the surface has nowhere to show the reply (returns false): an inline error, no retry', async () => {
+    uploadCvResumeFile.mockResolvedValue({ success: true, data: { response: { text: 'Read it.' } } });
+    render(<CvFormBlock form={UPLOAD} active onSubmit={vi.fn(() => false)} />);
+    pickFile(fileOf('cv.pdf', 2048));
+    await clickAsync(buttonByText('Upload', container));
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe('cv.uploadErrorGeneric');
+    expect(buttonByText('states.retry', container)).toBeNull();
+  });
+
+  it('user-created spaces (uploadEnabled=false): the upload form renders nothing', () => {
+    render(<CvFormBlock form={UPLOAD} active onSubmit={vi.fn()} uploadEnabled={false} />);
+    expect(container.innerHTML).toBe('');
+    // Other CV forms still render there.
+    render(<CvFormBlock form={PASTE} active onSubmit={vi.fn()} uploadEnabled={false} />);
+    expect(container.querySelector('textarea')).not.toBeNull();
   });
 
   it('frozen: no picking, no upload', () => {
@@ -345,7 +384,7 @@ describe('wizard (cv_wizard)', () => {
     click(buttonByText('cv.form.open', container));
     typeInto(fieldByLabel('Full name'), 'Jane');
     click(buttonByText('cv.form.next', dialog()));
-    click(dialog().querySelector('button[aria-label="cv.form.close"]'));
+    click(dialog().querySelector('button[aria-label="english.form.close"]'));
     expect(document.querySelector('[role="dialog"]')).toBeNull();
 
     click(buttonByText('cv.form.reopen', container));
@@ -358,7 +397,7 @@ describe('wizard (cv_wizard)', () => {
     render(<CvFormBlock form={WIZARD} active onSubmit={vi.fn()} />);
     click(buttonByText('cv.form.open', container));
     typeInto(fieldByLabel('Full name'), 'Jane');
-    click(dialog().querySelector('button[aria-label="cv.form.close"]'));
+    click(dialog().querySelector('button[aria-label="english.form.close"]'));
     act(() => root.unmount());
     root = createRoot(container);
     render(<CvFormBlock form={WIZARD} active onSubmit={vi.fn()} />);
@@ -383,10 +422,174 @@ describe('wizard (cv_wizard)', () => {
 
     fetchCvDocumentResume.mockResolvedValueOnce({
       success: true,
-      data: { resume: { contact: { full_name: 'Jane Doe' }, target_role: 'Data Analyst', skills: ['SQL'] } },
+      data: {
+        resume: { contact: { full_name: 'Jane Doe' }, target_role: 'Data Analyst', skills: ['SQL'] },
+        version: 3,
+      },
     });
     await clickAsync(buttonByText('states.retry', dialog()));
     expect(fetchCvDocumentResume).toHaveBeenCalledTimes(2);
     expect((fieldByLabel('Full name') as HTMLInputElement).value).toBe('Jane Doe');
+  });
+});
+
+describe('review #259 — a send that did not go out keeps what the user entered', () => {
+  it('paste: a skipped send (false) and a rejected send keep the text; a real one clears it', async () => {
+    const onSubmit = vi
+      .fn()
+      .mockReturnValueOnce(false)
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce(undefined);
+    render(<CvFormBlock form={PASTE} active onSubmit={onSubmit} />);
+    const textarea = () => container.querySelector('textarea') as HTMLTextAreaElement;
+    typeInto(textarea(), 'Jane Doe');
+    await clickAsync(buttonByText('Send', container));
+    expect(textarea().value).toBe('Jane Doe');
+    await clickAsync(buttonByText('Send', container));
+    expect(textarea().value).toBe('Jane Doe');
+    await clickAsync(buttonByText('Send', container));
+    expect(onSubmit).toHaveBeenCalledTimes(3);
+    expect(textarea().value).toBe('');
+  });
+
+  it('radio: a rejected send is caught (no unhandled rejection) and the form stays usable', async () => {
+    const onSubmit = vi.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce(true);
+    render(<CvFormBlock form={START} active onSubmit={onSubmit} />);
+    click(container.querySelector('input[value="paste"]'));
+    await clickAsync(buttonByText('Continue', container));
+    expect(buttonByText('Continue', container)?.disabled).toBe(false);
+    await clickAsync(buttonByText('Continue', container));
+    expect(onSubmit).toHaveBeenCalledTimes(2);
+  });
+
+  it('wizard: Save stays in the open dialog, disabled with progress, until the send resolves; a failed send keeps dialog + draft', async () => {
+    let resolveSend: (v: boolean) => void = () => undefined;
+    const onSubmit = vi.fn(() => new Promise<boolean>((r) => (resolveSend = r)));
+    const single = { ...WIZARD, steps: WIZARD.steps!.slice(0, 1) };
+    render(<CvFormBlock form={single} active onSubmit={onSubmit} />);
+    click(buttonByText('cv.form.open', container));
+    typeInto(fieldByLabel('Full name'), 'Jane');
+    await clickAsync(buttonByText('Save', dialog()));
+
+    // In flight: still open, Save disabled and busy, fields locked.
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+    const save = buttonByText('Save', dialog()) as HTMLButtonElement;
+    expect(save.disabled).toBe(true);
+    expect(save.getAttribute('aria-busy')).toBe('true');
+    expect(save.querySelector('.animate-spin')).not.toBeNull();
+    expect(fieldByLabel('Full name').disabled).toBe(true);
+
+    // Failed / skipped: the dialog and the draft stay.
+    await act(async () => resolveSend(false));
+    expect(buttonByText('Save', dialog())?.disabled).toBe(false);
+    expect(fieldByLabel('Full name').value).toBe('Jane');
+    expect(readCvWizardDraft(single.form_id)?.values.contact?.full_name).toBe('Jane');
+
+    // Sent: closes and clears the draft.
+    await clickAsync(buttonByText('Save', dialog()));
+    await act(async () => resolveSend(true));
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(readCvWizardDraft(single.form_id)).toBeUndefined();
+    expect(buttonByText('cv.form.open', container)).not.toBeNull();
+  });
+
+  it('wizard: a send that throws keeps the dialog and the draft', async () => {
+    const single = { ...WIZARD, steps: WIZARD.steps!.slice(0, 1) };
+    render(<CvFormBlock form={single} active onSubmit={vi.fn().mockRejectedValue(new Error('x'))} />);
+    click(buttonByText('cv.form.open', container));
+    typeInto(fieldByLabel('Full name'), 'Jane');
+    await clickAsync(buttonByText('Save', dialog()));
+    expect(fieldByLabel('Full name').value).toBe('Jane');
+    expect(readCvWizardDraft(single.form_id)).toBeDefined();
+  });
+});
+
+describe('review #259 — wizard accessibility', () => {
+  it('a blocked Next focuses the first missing required field and announces it by label', () => {
+    render(<CvFormBlock form={WIZARD} active onSubmit={vi.fn()} />);
+    click(buttonByText('cv.form.open', container));
+    click(buttonByText('cv.form.next', dialog()));
+    expect(document.activeElement).toBe(fieldByLabel('Full name'));
+    expect(dialog().querySelector('[data-cv-wizard-announce]')?.textContent).toBe('Full name: cv.form.required');
+    expect(dialog().querySelector('[data-cv-wizard-announce]')?.getAttribute('aria-live')).toBe('assertive');
+  });
+
+  it('the paste counter is a polite live region', () => {
+    render(<CvFormBlock form={PASTE} active onSubmit={vi.fn()} />);
+    expect(container.querySelector('[data-cv-paste-count]')?.getAttribute('aria-live')).toBe('polite');
+  });
+});
+
+describe('review #259 — edit mode', () => {
+  const doc = (name: string, version: number) => ({
+    success: true,
+    data: { resume: { contact: { full_name: name }, target_role: 'Analyst' }, version },
+  });
+
+  it('opening without typing stores no draft; every open refetches and shows the fresh data', async () => {
+    fetchCvDocumentResume.mockResolvedValueOnce(doc('Old Name', 1));
+    render(<CvFormBlock form={WIZARD_EDIT} active onSubmit={vi.fn()} />);
+    await clickAsync(buttonByText('cv.form.open', container));
+    expect(fieldByLabel('Full name').value).toBe('Old Name');
+    click(dialog().querySelector('button[aria-label="english.form.close"]'));
+    expect(readCvWizardDraft(WIZARD_EDIT.form_id)).toBeUndefined();
+    // Nothing typed ⇒ "Open form", not "Continue filling in".
+    expect(buttonByText('cv.form.open', container)).not.toBeNull();
+
+    // The next bubble (same form_id) reopens: refetch, newer content shown.
+    act(() => root.unmount());
+    root = createRoot(container);
+    fetchCvDocumentResume.mockResolvedValueOnce(doc('New Name', 2));
+    render(<CvFormBlock form={WIZARD_EDIT} active onSubmit={vi.fn()} />);
+    await clickAsync(buttonByText('cv.form.open', container));
+    expect(fetchCvDocumentResume).toHaveBeenCalledTimes(2);
+    expect(fieldByLabel('Full name').value).toBe('New Name');
+  });
+
+  it('a typed draft is kept while the version matches, and dropped when it changed', async () => {
+    fetchCvDocumentResume.mockResolvedValueOnce(doc('Jane', 1));
+    const onSubmit = vi.fn();
+    render(<CvFormBlock form={WIZARD_EDIT} active onSubmit={onSubmit} />);
+    await clickAsync(buttonByText('cv.form.open', container));
+    typeInto(fieldByLabel('Full name'), 'Jane Typed');
+    expect(readCvWizardDraft(WIZARD_EDIT.form_id)).toMatchObject({ dirty: true, version: 1 });
+    click(dialog().querySelector('button[aria-label="english.form.close"]'));
+    expect(buttonByText('cv.form.reopen', container)).not.toBeNull();
+
+    // Same version: the typed draft wins.
+    fetchCvDocumentResume.mockResolvedValueOnce(doc('Jane', 1));
+    await clickAsync(buttonByText('cv.form.reopen', container));
+    expect(fetchCvDocumentResume).toHaveBeenCalledTimes(2);
+    expect(fieldByLabel('Full name').value).toBe('Jane Typed');
+    click(dialog().querySelector('button[aria-label="english.form.close"]'));
+
+    // Changed elsewhere since: the draft is dropped, the fresh data shown.
+    fetchCvDocumentResume.mockResolvedValueOnce(doc('Jane Newer', 2));
+    await clickAsync(buttonByText('cv.form.reopen', container));
+    expect(fieldByLabel('Full name').value).toBe('Jane Newer');
+    expect(readCvWizardDraft(WIZARD_EDIT.form_id)).toBeUndefined();
+  });
+
+  it('resume: null ⇒ one line, no Save, no draft stored', async () => {
+    writeCvWizardDraft(WIZARD_EDIT.form_id, { ...emptyCvWizardDraft(), dirty: true, version: 1 });
+    fetchCvDocumentResume.mockResolvedValueOnce({ success: true, data: { resume: null, version: 2 } });
+    render(<CvFormBlock form={WIZARD_EDIT} active onSubmit={vi.fn()} />);
+    await clickAsync(buttonByText('cv.form.reopen', container));
+    expect(dialog().querySelector('[data-cv-wizard-elsewhere]')?.textContent).toBe('cv.form.editElsewhere');
+    expect(buttonByText('Save', dialog())).toBeNull();
+    expect(buttonByText('cv.form.next', dialog())).toBeNull();
+    expect(dialog().querySelector('input, textarea')).toBeNull();
+    expect(readCvWizardDraft(WIZARD_EDIT.form_id)).toBeUndefined();
+    expect(buttonByText('cv.form.open', container)).not.toBeNull();
+  });
+});
+
+describe('review #259 — logout', () => {
+  it('clears every CV form draft', () => {
+    writeCvWizardDraft(WIZARD.form_id, { ...emptyCvWizardDraft(), dirty: true });
+    writeCvWizardDraft(WIZARD_EDIT.form_id, { ...emptyCvWizardDraft(), dirty: true, version: 1 });
+    act(() => useAuthStore.getState().logout());
+    expect(readCvWizardDraft(WIZARD.form_id)).toBeUndefined();
+    expect(readCvWizardDraft(WIZARD_EDIT.form_id)).toBeUndefined();
   });
 });

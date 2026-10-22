@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocale, useTranslations } from 'next-intl';
 import { FileUp, Loader2, PenLine, X } from 'lucide-react';
@@ -16,7 +16,6 @@ import {
   checkCvFormUpload,
   clearCvWizardDraft,
   cvWizardDraftFromResume,
-  cvWizardDraftHasData,
   emptyCvWizardDraft,
   firstInvalidCvWizardStep,
   readCvWizardDraft,
@@ -28,19 +27,28 @@ import {
   type CvWizardItem,
   type CvWizardStep,
 } from '@/lib/cv-form';
-import { uploadCvResumeFile } from '@/lib/cv-input-api';
-import type { ReplyFormSubmit } from '@/lib/reply-form';
+import { resolveCvUploadErrorMessage, uploadCvResumeFile } from '@/lib/cv-input-api';
+import type { ReplyFormSubmit, ReplyFormSubmitHandler } from '@/lib/reply-form';
 import { cn } from '@/lib/utils';
 
 export interface CvFormBlockProps {
   form: CvForm;
   /** Freeze rule (design §1, same as ET): only the latest message's form is interactive. */
   active: boolean;
-  onSubmit?: (submit: ReplyFormSubmit) => void | Promise<void>;
+  /** Reports back: `false` (or a throw) ⇒ not sent, the form keeps its input. */
+  onSubmit?: ReplyFormSubmitHandler;
+  /**
+   * False on user-created spaces: `/api/v1/inputs` only reaches the Clinic CV
+   * session and writes no message there, so `cv_upload` renders nothing (the
+   * reply text still reads).
+   */
+  uploadEnabled?: boolean;
 }
 
-/** Runs one submit at a time; resolves true when the form was sent. */
+/** Runs one submit at a time; resolves true when the form was sent. Never rejects. */
 type RunExclusive = (task: () => Promise<boolean>) => Promise<boolean>;
+/** Hands a built answer to the surface; resolves true only when it went out. Never rejects. */
+type Deliver = (submit: ReplyFormSubmit) => Promise<boolean>;
 
 /**
  * KAZI-1145 · renders a cv_builder `meta.form` (design `kazi-cv-form-contract`
@@ -48,8 +56,9 @@ type RunExclusive = (task: () => Promise<boolean>) => Promise<boolean>;
  * the archive list when it has more than 8 resumes). Frozen forms stay
  * visible with whatever the user filled in, but disabled.
  */
-export function CvFormBlock({ form, active, onSubmit }: CvFormBlockProps) {
+export function CvFormBlock({ form, active, onSubmit, uploadEnabled = true }: CvFormBlockProps) {
   const t = useTranslations('cv.form');
+  const tEt = useTranslations('english.form');
   const interactive = active && Boolean(onSubmit);
   const inFlightRef = useRef(false);
   const [submitting, setSubmitting] = useState(false);
@@ -61,6 +70,8 @@ export function CvFormBlock({ form, active, onSubmit }: CvFormBlockProps) {
       setSubmitting(true);
       try {
         return await task();
+      } catch {
+        return false;
       } finally {
         inFlightRef.current = false;
         setSubmitting(false);
@@ -69,18 +80,30 @@ export function CvFormBlock({ form, active, onSubmit }: CvFormBlockProps) {
     [interactive]
   );
 
+  const deliver = useCallback<Deliver>(
+    async (built) => {
+      if (!onSubmit) return false;
+      try {
+        return (await onSubmit(built)) !== false;
+      } catch {
+        return false;
+      }
+    },
+    [onSubmit]
+  );
+
   const send = useCallback(
     (built: ReplyFormSubmit | null) => {
       if (!built) return Promise.resolve(false);
-      return runExclusive(async () => {
-        await onSubmit?.(built);
-        return true;
-      });
+      return runExclusive(() => deliver(built));
     },
-    [onSubmit, runExclusive]
+    [deliver, runExclusive]
   );
 
-  const disabled = !interactive || submitting;
+  if (form.control === 'upload' && !uploadEnabled) return null;
+
+  const frozen = !interactive;
+  const disabled = frozen || submitting;
 
   let body: ReactNode;
   switch (form.control) {
@@ -91,6 +114,7 @@ export function CvFormBlock({ form, active, onSubmit }: CvFormBlockProps) {
       body = (
         <ArchiveForm
           form={form}
+          frozen={frozen}
           disabled={disabled}
           onSubmit={(ids) => send(buildCvArchiveSubmit(form, ids, t('archiveSent', { count: ids.length })))}
         />
@@ -100,13 +124,14 @@ export function CvFormBlock({ form, active, onSubmit }: CvFormBlockProps) {
       body = <PasteForm form={form} disabled={disabled} onSubmit={(text) => send(buildCvPasteSubmit(form, text))} />;
       break;
     case 'upload':
-      body = <UploadForm form={form} disabled={disabled} runExclusive={runExclusive} onAnswered={onSubmit} />;
+      body = <UploadForm form={form} disabled={disabled} runExclusive={runExclusive} deliver={deliver} />;
       break;
     case 'wizard':
       body = (
         <WizardForm
           form={form}
-          disabled={disabled}
+          frozen={frozen}
+          submitting={submitting}
           onSubmit={(draft) => send(buildCvWizardSubmit(form, draft, t('wizardSent')))}
         />
       );
@@ -122,7 +147,7 @@ export function CvFormBlock({ form, active, onSubmit }: CvFormBlockProps) {
       data-cv-form-active={active ? 'true' : 'false'}
     >
       {body}
-      {!active ? <p className="text-[11px] text-workspace-muted">{t('frozen')}</p> : null}
+      {!active ? <p className="text-[11px] text-workspace-muted">{tEt('frozen')}</p> : null}
     </div>
   );
 }
@@ -155,7 +180,7 @@ function ChoiceForm({
       className="space-y-2"
       onSubmit={(e) => {
         e.preventDefault();
-        if (selected) void onSubmit(selected);
+        if (selected) void onSubmit(selected).catch(() => false);
       }}
     >
       <fieldset className="flex flex-col gap-1.5" disabled={disabled}>
@@ -194,14 +219,19 @@ function ChoiceForm({
 
 function ArchiveForm({
   form,
+  frozen,
   disabled,
   onSubmit,
 }: {
   form: CvForm;
+  /** Not the latest message (or no handler): the dialog can't be open. */
+  frozen: boolean;
+  /** Frozen, or a submit in flight. */
   disabled: boolean;
   onSubmit: (ids: string[]) => Promise<boolean>;
 }) {
   const t = useTranslations('cv.form');
+  const tEt = useTranslations('english.form');
   // Selection lives here, not in the dialog: closing it keeps the ticks.
   const [selected, setSelected] = useState<string[]>([]);
   const [showError, setShowError] = useState(false);
@@ -246,13 +276,13 @@ function ArchiveForm({
         {selected.length > 0 ? t('reopen') : t('open')}
       </Button>
       <CvFormDialog
-        open={open && !disabled}
+        open={open && !frozen}
         title={form.title}
         onClose={() => setOpen(false)}
         footer={
           <>
             <Button type="button" variant="ghost" className="flex-1" onClick={() => setOpen(false)}>
-              {t('close')}
+              {tEt('close')}
             </Button>
             {submitButton}
           </>
@@ -328,6 +358,7 @@ function PasteForm({
   onSubmit: (text: string) => Promise<boolean>;
 }) {
   const t = useTranslations('cv.form');
+  const tEt = useTranslations('english.form');
   const [text, setText] = useState('');
   const max = form.constraints?.max_chars;
   const count = text.trim().length;
@@ -337,7 +368,8 @@ function PasteForm({
       className="space-y-2"
       onSubmit={async (e) => {
         e.preventDefault();
-        if (await onSubmit(text)) setText('');
+        // Only a real send clears the box; a skipped / failed one keeps it.
+        if (await onSubmit(text).catch(() => false)) setText('');
       }}
     >
       <FormTitle form={form} />
@@ -352,8 +384,12 @@ function PasteForm({
       />
       <div className="flex items-center justify-between gap-3">
         {max ? (
-          <span className={cn('text-xs', tooLong ? 'text-red-600' : 'text-workspace-muted')} data-cv-paste-count>
-            {t('chars', { count, max })}
+          <span
+            className={cn('text-xs', tooLong ? 'text-red-600' : 'text-workspace-muted')}
+            aria-live="polite"
+            data-cv-paste-count
+          >
+            {tEt('chars', { count, max })}
           </span>
         ) : (
           <span />
@@ -374,26 +410,31 @@ function UploadForm({
   form,
   disabled,
   runExclusive,
-  onAnswered,
+  deliver,
 }: {
   form: CvForm;
   disabled: boolean;
   runExclusive: RunExclusive;
-  onAnswered?: (submit: ReplyFormSubmit) => void | Promise<void>;
+  deliver: Deliver;
 }) {
   const t = useTranslations('cv.form');
+  const tCv = useTranslations('cv');
+  const tStates = useTranslations('states');
   const locale = useLocale();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** The upload request failed (not the device check): offer "Try again". */
+  const [canRetry, setCanRetry] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const pick = (picked: File | undefined) => {
     if (!picked) return;
+    setCanRetry(false);
     const problem = checkCvFormUpload(form, picked);
     if (problem) {
       setFile(null);
-      setError(t(problem));
+      setError(tCv(problem === 'wrongType' ? 'uploadErrorFormat' : 'uploadErrorSize'));
       return;
     }
     setError(null);
@@ -405,24 +446,27 @@ function UploadForm({
     void runExclusive(async () => {
       setUploading(true);
       setError(null);
+      setCanRetry(false);
       try {
-        const res = await uploadCvResumeFile(file, locale);
+        const res = await uploadCvResumeFile(file, locale).catch((err: unknown) => ({
+          success: false as const,
+          data: undefined,
+          error: err instanceof Error ? err.message : undefined,
+          errorCode: 'NETWORK_ERROR',
+        }));
         if (!res.success || !res.data) {
-          setError(
-            res.errorCode === 'UNSUPPORTED_FORMAT'
-              ? t('wrongType')
-              : res.errorCode === 'FILE_TOO_LARGE'
-                ? t('tooLarge')
-                : t('uploadFailed')
-          );
+          setError(resolveCvUploadErrorMessage(res.error, res.errorCode, (key) => tCv(key)));
+          setCanRetry(true);
           return false;
         }
-        await onAnswered?.({
+        const shown = await deliver({
           kind: 'answered',
           display: t('uploaded', { name: file.name }),
           response: res.data.response,
         });
-        return true;
+        // The upload landed, but the surface had nowhere to show the reply.
+        if (!shown) setError(tCv('uploadErrorGeneric'));
+        return shown;
       } finally {
         setUploading(false);
       }
@@ -467,13 +511,20 @@ function UploadForm({
       {uploading ? (
         <p className="inline-flex items-center gap-2 text-sm text-workspace-muted" role="status">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          {t('uploading')}
+          {tCv('uploading')}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-xs text-red-600">
-          {error}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p role="alert" className="text-xs text-red-600">
+            {error}
+          </p>
+          {canRetry && file ? (
+            <Button type="button" size="sm" variant="outline" disabled={disabled} onClick={upload}>
+              {tStates('retry')}
+            </Button>
+          ) : null}
+        </div>
       ) : null}
       <Button type="button" size="sm" className="w-full" disabled={disabled || !file} onClick={upload}>
         {form.submit_label}
@@ -486,77 +537,111 @@ function UploadForm({
 // wizard — cv_wizard (modal)
 // ---------------------------------------------------------------------------
 
-type LoadState = 'idle' | 'loading' | 'error';
+/** `elsewhere`: edit mode, `resume: null` — the CV was changed outside the form. */
+type LoadState = 'idle' | 'loading' | 'error' | 'elsewhere';
+
+/** DOM id of a wizard field (shared by the field and the blocked-Next focus move). */
+function wizardFieldId(idBase: string, fieldId: string): string {
+  return `cvw-${idBase}-${fieldId}`.replace(/[^A-Za-z0-9_-]/g, '-');
+}
+
+function wizardIdBase(form: CvForm, step: CvWizardStep, item?: number): string {
+  return item === undefined ? `${form.form_id}-${step.step_id}` : `${form.form_id}-${step.step_id}-${item}`;
+}
 
 function WizardForm({
   form,
-  disabled,
+  frozen,
+  submitting,
   onSubmit,
 }: {
   form: CvForm;
-  disabled: boolean;
+  /** Not the latest message (or no handler): the dialog can't be opened. */
+  frozen: boolean;
+  /** A submit is in flight: the dialog stays open, Save shows progress. */
+  submitting: boolean;
   onSubmit: (draft: CvWizardDraft) => Promise<boolean>;
 }) {
   const t = useTranslations('cv.form');
   const locale = useLocale();
   const steps = useMemo(() => form.steps ?? [], [form.steps]);
+  const editMode = Boolean(form.document_id);
   const [open, setOpen] = useState(false);
-  // Draft lives outside the dialog (and outside this bubble, keyed by
+  // The draft lives outside the dialog (and outside this bubble, keyed by
   // form_id): closing — or the next turn re-offering the same wizard — keeps
-  // both the step and what was typed.
+  // both the step and what was typed. Edit mode stores it only once the user
+  // edited a field, and only reuses it while the document version matches.
   const [draft, setDraftState] = useState<CvWizardDraft | undefined>(() => readCvWizardDraft(form.form_id));
   const [loadState, setLoadState] = useState<LoadState>('idle');
+  const requestRef = useRef(0);
 
   const setDraft = useCallback(
     (next: CvWizardDraft) => {
-      writeCvWizardDraft(form.form_id, next);
       setDraftState(next);
+      if (!editMode || next.dirty) writeCvWizardDraft(form.form_id, next);
     },
-    [form.form_id]
+    [editMode, form.form_id]
   );
 
+  // Every open refetches (a draft from an older version would revert newer content).
   const loadResume = useCallback(async () => {
     if (!form.document_id) return;
+    const request = ++requestRef.current;
     setLoadState('loading');
-    const res = await fetchCvDocumentResume(form.document_id, locale);
-    if (!res.success || !res.data) {
+    const res = await fetchCvDocumentResume(form.document_id, locale).catch(() => null);
+    if (request !== requestRef.current) return;
+    if (!res || !res.success || !res.data) {
       setLoadState('error');
       return;
     }
-    setDraft(readCvWizardDraft(form.form_id) ?? cvWizardDraftFromResume(steps, res.data.resume));
+    const { resume, version } = res.data;
+    if (!resume) {
+      // Changed outside the form: nothing here may replace it.
+      clearCvWizardDraft(form.form_id);
+      setDraftState(undefined);
+      setLoadState('elsewhere');
+      return;
+    }
+    const stored = readCvWizardDraft(form.form_id);
+    if (stored && (stored.version ?? null) === version) {
+      setDraftState(stored);
+    } else {
+      if (stored) clearCvWizardDraft(form.form_id);
+      setDraftState({ ...cvWizardDraftFromResume(steps, resume), version });
+    }
     setLoadState('idle');
-  }, [form.document_id, form.form_id, locale, setDraft, steps]);
+  }, [form.document_id, form.form_id, locale, steps]);
 
   const openDialog = () => {
     setOpen(true);
-    const existing = readCvWizardDraft(form.form_id);
-    if (existing) {
-      setDraftState(existing);
-    } else if (form.document_id) {
-      if (loadState !== 'loading') void loadResume();
-    } else {
-      setDraft(emptyCvWizardDraft());
+    if (editMode) {
+      void loadResume();
+      return;
     }
+    setDraftState(readCvWizardDraft(form.form_id) ?? emptyCvWizardDraft());
   };
 
   return (
     <div className="space-y-2">
       <FormTitle form={form} />
       <FormPrompt form={form} />
-      <Button type="button" size="sm" variant="secondary" className="w-full" disabled={disabled} onClick={openDialog}>
+      <Button type="button" size="sm" variant="secondary" className="w-full" disabled={frozen} onClick={openDialog}>
         <PenLine className="mr-1.5 h-4 w-4" aria-hidden />
-        {cvWizardDraftHasData(draft) ? t('reopen') : t('open')}
+        {draft?.dirty ? t('reopen') : t('open')}
       </Button>
       <WizardDialog
-        open={open && !disabled}
+        open={open && !frozen}
         form={form}
         steps={steps}
-        draft={draft}
+        draft={editMode && loadState !== 'idle' ? undefined : draft}
         loadState={loadState}
+        submitting={submitting}
         onRetry={() => void loadResume()}
         onDraftChange={setDraft}
         onClose={() => setOpen(false)}
         onSubmit={async (final) => {
+          // Close only on a real send; a skipped / failed one keeps the
+          // dialog and the draft.
           if (await onSubmit(final)) {
             clearCvWizardDraft(form.form_id);
             setDraftState(undefined);
@@ -574,6 +659,7 @@ function WizardDialog({
   steps,
   draft,
   loadState,
+  submitting,
   onRetry,
   onDraftChange,
   onClose,
@@ -584,6 +670,7 @@ function WizardDialog({
   steps: CvWizardStep[];
   draft: CvWizardDraft | undefined;
   loadState: LoadState;
+  submitting: boolean;
   onRetry: () => void;
   onDraftChange: (draft: CvWizardDraft) => void;
   onClose: () => void;
@@ -592,10 +679,24 @@ function WizardDialog({
   const t = useTranslations('cv.form');
   const tStates = useTranslations('states');
   const [showErrors, setShowErrors] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  /** Field to focus after the next render (a blocked Next). */
+  const [focusTarget, setFocusTarget] = useState<{ id: string; nonce: number } | null>(null);
+
+  useEffect(() => {
+    if (!focusTarget || !open) return;
+    document.getElementById(focusTarget.id)?.focus();
+  }, [focusTarget, open]);
 
   let content: ReactNode;
   let footer: ReactNode = null;
-  if (!draft) {
+  if (loadState === 'elsewhere') {
+    content = (
+      <p className="text-sm text-workspace-text" role="status" data-cv-wizard-elsewhere>
+        {t('editElsewhere')}
+      </p>
+    );
+  } else if (!draft) {
     content =
       loadState === 'error' ? (
         <div className="space-y-2" role="alert">
@@ -617,11 +718,26 @@ function WizardDialog({
     const last = index === steps.length - 1;
     const goTo = (target: number) => {
       setShowErrors(false);
+      setAnnouncement('');
       onDraftChange({ ...draft, step: target });
     };
+    // Blocked Next: show the errors, move focus to the first missing field
+    // and say which one it is.
+    const block = (target: CvWizardStep, gaps: ReturnType<typeof validateCvWizardStep>) => {
+      setShowErrors(true);
+      const first = gaps[0];
+      const field = target.fields.find((f) => f.field_id === first?.field_id);
+      if (!first || !field) return;
+      setAnnouncement(`${field.label}: ${t('required')}`);
+      setFocusTarget({
+        id: wizardFieldId(wizardIdBase(form, target, first.item), field.field_id),
+        nonce: Date.now(),
+      });
+    };
     const next = () => {
+      if (submitting) return;
       if (missing.length > 0) {
-        setShowErrors(true);
+        block(step, missing);
         return;
       }
       if (!last) {
@@ -631,9 +747,10 @@ function WizardDialog({
       const invalid = firstInvalidCvWizardStep(steps, draft);
       if (invalid >= 0) {
         onDraftChange({ ...draft, step: invalid });
-        setShowErrors(true);
+        block(steps[invalid], validateCvWizardStep(steps[invalid], draft));
         return;
       }
+      setAnnouncement('');
       void onSubmit(draft);
     };
 
@@ -648,17 +765,36 @@ function WizardDialog({
           form={form}
           step={step}
           draft={draft}
+          disabled={submitting}
           missing={showErrors ? missing : []}
-          onDraftChange={onDraftChange}
+          // A field edit (unlike Back / Next) makes the draft worth keeping.
+          onDraftChange={(edited) => onDraftChange({ ...edited, dirty: true })}
         />
+        <p className="sr-only" aria-live="assertive" data-cv-wizard-announce>
+          {announcement}
+        </p>
       </div>
     );
     footer = (
       <>
-        <Button type="button" variant="ghost" className="flex-1" disabled={index === 0} onClick={() => goTo(index - 1)}>
+        <Button
+          type="button"
+          variant="ghost"
+          className="flex-1"
+          disabled={index === 0 || submitting}
+          onClick={() => goTo(index - 1)}
+        >
           {t('back')}
         </Button>
-        <Button type="button" className="flex-1" onClick={next}>
+        <Button
+          type="button"
+          className="flex-1"
+          disabled={submitting}
+          aria-busy={submitting || undefined}
+          data-cv-wizard-submit={last ? '' : undefined}
+          onClick={next}
+        >
+          {submitting ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden /> : null}
           {last ? form.submit_label : t('next')}
         </Button>
       </>
@@ -705,12 +841,14 @@ function WizardStepFields({
   form,
   step,
   draft,
+  disabled,
   missing,
   onDraftChange,
 }: {
   form: CvForm;
   step: CvWizardStep;
   draft: CvWizardDraft;
+  disabled: boolean;
   missing: ReturnType<typeof validateCvWizardStep>;
   onDraftChange: (draft: CvWizardDraft) => void;
 }) {
@@ -730,7 +868,8 @@ function WizardStepFields({
         {step.fields.map((field) => (
           <WizardField
             key={field.field_id}
-            idBase={`${form.form_id}-${step.step_id}`}
+            idBase={wizardIdBase(form, step)}
+            disabled={disabled}
             field={field}
             value={values[field.field_id] ?? ''}
             invalid={isMissing(field.field_id)}
@@ -756,7 +895,8 @@ function WizardStepFields({
           {step.fields.map((field) => (
             <WizardField
               key={field.field_id}
-              idBase={`${form.form_id}-${step.step_id}-${index}`}
+              idBase={wizardIdBase(form, step, index)}
+              disabled={disabled}
               field={field}
               value={item[field.field_id] ?? ''}
               invalid={isMissing(field.field_id, index)}
@@ -768,13 +908,14 @@ function WizardStepFields({
           <button
             type="button"
             className="text-xs text-red-600 underline-offset-2 hover:underline"
+            disabled={disabled}
             onClick={() => setItems(items.filter((_, i) => i !== index))}
           >
             {t('removeItem')}
           </button>
         </div>
       ))}
-      <Button type="button" size="sm" variant="outline" onClick={() => setItems([...items, {}])}>
+      <Button type="button" size="sm" variant="outline" disabled={disabled} onClick={() => setItems([...items, {}])}>
         {t('addItem')}
       </Button>
     </div>
@@ -786,20 +927,23 @@ function WizardField({
   field,
   value,
   invalid,
+  disabled,
   onChange,
 }: {
   idBase: string;
   field: CvWizardField;
+  disabled: boolean;
   value: string;
   invalid: boolean;
   onChange: (value: string) => void;
 }) {
   const t = useTranslations('cv.form');
-  const id = `cvw-${idBase}-${field.field_id}`.replace(/[^A-Za-z0-9_-]/g, '-');
+  const id = wizardFieldId(idBase, field.field_id);
   const errorId = `${id}-error`;
   const common = {
     id,
     value,
+    disabled,
     placeholder: field.placeholder,
     'aria-required': field.required || undefined,
     'aria-invalid': invalid || undefined,
@@ -850,7 +994,7 @@ function CvFormDialog({
   footer: ReactNode;
   children: ReactNode;
 }) {
-  const t = useTranslations('cv.form');
+  const t = useTranslations('english.form');
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();

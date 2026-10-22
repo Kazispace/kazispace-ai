@@ -32,7 +32,8 @@ export interface EtFormBlockProps {
    * just graded). Local only — the form itself never carries user data.
    */
   prefill?: string;
-  onSubmit?: (submit: EtFormSubmit) => void | Promise<void>;
+  /** The shared reply-form handler (KAZI-1145 made it report `false` when nothing was sent; ET ignores it). */
+  onSubmit?: (submit: EtFormSubmit) => boolean | void | Promise<boolean | void>;
 }
 
 /**
