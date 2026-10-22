@@ -47,7 +47,8 @@ import { spaceChatFirstPaintKind } from '@/lib/spaces/space-history-ready';
 import type { SpaceDetail } from '@/types/spaces';
 import type { ChatJobCard, ChatNextAction } from '@/types/chat-envelope';
 import { cn } from '@/lib/utils';
-import { useUIStore } from '@/lib/store';
+import { useSpaceStore, useUIStore } from '@/lib/store';
+import { answeredTurnSpaceMessages, isAnsweredTurn, type ReplyFormSubmit } from '@/lib/reply-form';
 import { publishSessionNavChatSideRailOpen } from '@/lib/session-nav-events';
 import { useActiveWorkspaceRailEvents } from '@/hooks/use-active-workspace-chrome';
 
@@ -302,17 +303,28 @@ export function SpaceChatPane({
     [isSending, sendAndPin]
   );
 
-  // KAZI-1041: english_tutor `meta.form` answer — same send path as next_action
-  // payloads; returning the promise keeps the form busy until the turn lands.
+  // KAZI-1041 / KAZI-1145: a `meta.form` answer (english_tutor or cv_builder) —
+  // same send path as next_action payloads; returning the promise keeps the
+  // form busy until the turn lands. A CV upload arrives already answered
+  // (/inputs returned the reply): append it to this space's thread.
   const handleEtFormSubmit = useCallback(
-    async (submit: import('@/lib/english-tutor/form').EtFormSubmit) => {
+    async (submit: ReplyFormSubmit) => {
+      // The upload already happened server-side: never drop its reply.
+      if (isAnsweredTurn(submit)) {
+        pinToLatestOnSend();
+        const [user, assistant] = answeredTurnSpaceMessages(submit);
+        useSpaceStore
+          .getState()
+          .patchSpaceMessages(space.id, (prev) => [...prev, user, assistant]);
+        return;
+      }
       if (isSending) return;
       await sendAndPin(submit.display, {
         displayContent: submit.display,
         actionMeta: submit.meta,
       });
     },
-    [isSending, sendAndPin]
+    [isSending, pinToLatestOnSend, sendAndPin, space.id]
   );
 
   const handlePracticeForJob = useCallback(

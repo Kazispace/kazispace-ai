@@ -582,6 +582,31 @@
 				"previewUnavailable": "Ko‘rib bo‘lmaydi.",
 				"deepLinkFailed": "Faylni ochib bo‘lmadi. Ro‘yxatdan qayta urinib ko‘ring."
 			}
+		},
+		"form": {
+			"open": "Formani ochish",
+			"reopen": "To'ldirishni davom ettirish",
+			"back": "Orqaga",
+			"next": "Keyingi",
+			"stepOf": "{total} bosqichdan {current}-bosqich",
+			"addItem": "Yana qo'shish",
+			"removeItem": "O'chirish",
+			"required": "Majburiy",
+			"close": "Yopish",
+			"loadingResume": "Rezyumengiz yuklanmoqda…",
+			"loadFailed": "Rezyumengizni yuklab bo'lmadi.",
+			"wizardSent": "Rezyume ma'lumotlari yuborildi",
+			"archiveSent": "{count, plural, one {# ta rezyumeni arxivlash} other {# ta rezyumeni arxivlash}}",
+			"selectAtLeastOne": "Kamida bitta rezyumeni tanlang.",
+			"chooseFile": "Faylni tanlash",
+			"uploading": "Rezyume yuklanmoqda…",
+			"uploaded": "{name} yuklandi",
+			"wrongType": "PDF yoki DOCX faylidan foydalaning.",
+			"tooLarge": "Fayl hajmi 10 MB dan oshmasligi kerak.",
+			"uploadFailed": "Rezyumeni yuklab bo'lmadi.",
+			"pastePlaceholder": "Rezyumeni shu yerga joylang…",
+			"chars": "{count}/{max} belgi",
+			"frozen": "Bu forma yopilgan — oxirgi xabarga javob bering."
 		}
 	},
 	"nba": {

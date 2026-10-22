@@ -56,6 +56,12 @@ import { useAuthStore, useAgentStore, useSpaceStore, useUIStore } from "@/lib/st
 import { useEmbeddedInWorkspaceShell } from "@/lib/workspace-shell-context";
 import { CLINIC_SPACE_ID, isSpacesEnabled } from "@/lib/spaces/constants";
 import {
+  answeredTurnAgentMessages,
+  answeredTurnSpaceMessages,
+  isAnsweredTurn,
+  type ReplyFormSubmit,
+} from "@/lib/reply-form";
+import {
   AGENT_REGISTRY,
   AGENT_QUICK_REPLIES,
   getAgentLabel,
@@ -1105,11 +1111,27 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     [isAgentMode, isSending, isSwitching, sendAgentMessage]
   );
 
-  // KAZI-1041: english_tutor `meta.form` answer. Agent mode goes straight to
-  // sendAgentMessage (as handleNextAction does) — submitClinicChat drops
-  // actionMeta on that branch.
+  // KAZI-1041 / KAZI-1145: a `meta.form` answer (english_tutor or cv_builder).
+  // Agent mode goes straight to sendAgentMessage (as handleNextAction does) —
+  // submitClinicChat drops actionMeta on that branch. A CV upload arrives
+  // already answered (/inputs returned the reply): append it, don't send.
   const handleEtFormSubmit = useCallback(
-    async (submit: import('@/lib/english-tutor/form').EtFormSubmit) => {
+    async (submit: ReplyFormSubmit) => {
+      // The upload already happened server-side: never drop its reply.
+      if (isAnsweredTurn(submit)) {
+        if (isAgentMode && activeAgentId && agentSessionId) {
+          const store = useAgentStore.getState();
+          for (const message of answeredTurnAgentMessages(submit, agentSessionId)) {
+            store.addAgentMessage(activeAgentId, message);
+          }
+        } else {
+          const [user, assistant] = answeredTurnSpaceMessages(submit);
+          useSpaceStore
+            .getState()
+            .patchSpaceMessages(CLINIC_SPACE_ID, (prev) => [...prev, user, assistant]);
+        }
+        return;
+      }
       if (isSending || isSwitching) return;
       const opts = { displayContent: submit.display, actionMeta: submit.meta };
       if (isAgentMode) {
@@ -1118,7 +1140,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
       }
       await submitClinicChatRef.current(submit.display, opts);
     },
-    [isAgentMode, isSending, isSwitching, sendAgentMessage]
+    [activeAgentId, agentSessionId, isAgentMode, isSending, isSwitching, sendAgentMessage]
   );
 
   const handleAgentSelect = useCallback(

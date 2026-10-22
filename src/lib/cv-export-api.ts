@@ -211,3 +211,47 @@ export async function switchCvDocumentTemplate(
     clearTimeout(timeout);
   }
 }
+
+/**
+ * GET /api/v1/cv/documents/{doc_id} → the structured `resume` (KAZI-1144 added
+ * the field; `null` for documents without a structure). KAZI-1145 reads it to
+ * prefill the edit-mode `cv_wizard`.
+ */
+export async function fetchCvDocumentResume(
+  docId: number,
+  locale?: string
+): Promise<ApiResponse<{ resume: Record<string, unknown> | null }>> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+
+  try {
+    const response = await regionAwareApiClient.fetch(`/api/v1/cv/documents/${docId}`, {
+      method: 'GET',
+      headers: buildExportHeaders(locale),
+      signal: controller.signal,
+      requireSession: Boolean(getAuthToken()),
+    });
+
+    if (!response.ok) {
+      const errorData = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+      const { error, errorCode } = parseExportError(errorData, response.status);
+      return { success: false, error, errorCode };
+    }
+
+    const data = (await response.json()) as { resume?: unknown };
+    const resume =
+      data.resume && typeof data.resume === 'object' && !Array.isArray(data.resume)
+        ? (data.resume as Record<string, unknown>)
+        : null;
+    return { success: true, data: { resume } };
+  } catch (err) {
+    const aborted = err instanceof Error && err.name === 'AbortError';
+    return {
+      success: false,
+      error: aborted ? 'Load resume timed out' : err instanceof Error ? err.message : 'Network error',
+      errorCode: aborted ? 'TIMEOUT' : 'NETWORK_ERROR',
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}

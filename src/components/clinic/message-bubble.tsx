@@ -16,12 +16,15 @@ import { SpaceNudgePrompt } from "./space-nudge-prompt";
 import { SearchCapabilityChip } from "./search-capability-chip";
 import { EnglishTutorEnvelopeBlocks } from "@/components/english/envelope/english-tutor-envelope-blocks";
 import { EtFormBlock } from "@/components/english/envelope/et-form-block";
+import { CvFormBlock } from "@/components/cv/cv-form-block";
 import {
   stripMarkdownSourcesSection,
   type CitationItem,
 } from "@/lib/clinic/citation-list";
 import { isLowConfidenceMeta } from "@/lib/english-tutor/custom-components";
-import { parseEtForm, type EtFormSubmit } from "@/lib/english-tutor/form";
+import { parseEtForm } from "@/lib/english-tutor/form";
+import { parseCvForm } from "@/lib/cv-form";
+import type { ReplyFormSubmit } from "@/lib/reply-form";
 import {
   isSearchCapability,
   type SearchCapabilityId,
@@ -78,9 +81,13 @@ interface MessageBubbleProps {
   onNextAction?: (action: ChatNextAction) => void;
   onFocusComposer?: () => void;
   onExamSelect?: (option: ExamPickerOption) => void;
-  /** KAZI-1041: english_tutor `meta.form` answer → chat send with form meta. */
-  onEtFormSubmit?: (submit: EtFormSubmit) => void | Promise<void>;
-  /** KAZI-1041 freeze rule: true only on the latest message. */
+  /**
+   * KAZI-1041 / KAZI-1145: a `meta.form` answer (english_tutor or cv_builder)
+   * → chat send with form meta, or an already-answered turn (CV upload) to append.
+   * The `Et` in the name is historical.
+   */
+  onEtFormSubmit?: (submit: ReplyFormSubmit) => void | Promise<void>;
+  /** KAZI-1041 freeze rule (ET and CV forms): true only on the latest message. */
   etFormActive?: boolean;
   /** KAZI-1044: local prefill for the revision editor (previous user message). */
   etFormPrefill?: string;
@@ -168,6 +175,12 @@ export function MessageBubble({
     [isUser, assistantMeta]
   );
   const showEtForm = showEnrichment && etForm !== null;
+  // KAZI-1145: cv_builder forms share the key; `cv:` form ids never parse as ET.
+  const cvForm = useMemo(
+    () => (isUser || etForm ? null : parseCvForm(assistantMeta)),
+    [isUser, etForm, assistantMeta]
+  );
+  const showCvForm = showEnrichment && cvForm !== null;
   const showMessageActions =
     showEnrichment &&
     Boolean(content?.trim()) &&
@@ -322,6 +335,13 @@ export function MessageBubble({
                 form={etForm}
                 active={etFormActive}
                 prefill={etFormPrefill}
+                onSubmit={actionsDisabled ? undefined : onEtFormSubmit}
+              />
+            ) : null}
+            {showCvForm && cvForm ? (
+              <CvFormBlock
+                form={cvForm}
+                active={etFormActive}
                 onSubmit={actionsDisabled ? undefined : onEtFormSubmit}
               />
             ) : null}
