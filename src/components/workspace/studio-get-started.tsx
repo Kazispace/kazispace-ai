@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { buildClinicChatHref } from '@/lib/cv-entry';
+import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { GetStartedGuide } from '@/lib/studio-get-started-api';
@@ -11,7 +12,10 @@ import type { GetStartedGuide } from '@/lib/studio-get-started-api';
 /**
  * Studio's Get started row (kazispace-ui Studio pattern, Get started; D25).
  * A tap opens the main chat with the guide's text in the composer; the user
- * confirms, can edit, and sends it. Nothing is sent from here.
+ * confirms, can edit, and sends it. Nothing is sent from here. If a specialist
+ * is the current conversation, the tap leaves it first, as "Back to Clinic"
+ * does, so the text always lands in the main chat (Owen, 2026-10-23, an option
+ * chosen in a question).
  */
 export function StudioGetStarted({
   locale,
@@ -42,9 +46,11 @@ export function StudioGetStarted({
   }
   if (guides.length === 0) return null;
 
-  const open = (guide: GetStartedGuide) => {
+  const open = async (guide: GetStartedGuide) => {
     if (tapped) return;
     setTapped(true);
+    // Best effort, as the hub's other exits: a failed exit still opens Chat.
+    await deactivateToClinic(locale, { bestEffort: true });
     requestComposerInsert(guide.text, 'clinic', 'replace', t('start.draftReplaced'));
     onNavigate?.(buildClinicChatHref(locale));
   };
@@ -64,7 +70,7 @@ export function StudioGetStarted({
             disabled={tapped}
             aria-disabled={tapped}
             title={guide.text}
-            onClick={() => open(guide)}
+            onClick={() => void open(guide)}
             className={cn(
               'shrink-0 rounded-lg border border-workspace-border bg-white px-3 py-1.5 text-sm text-workspace-text',
               'hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',

@@ -34,7 +34,9 @@ const api = vi.hoisted(() => ({
   views: vi.fn(async () => ({ success: true, data: { view_count: 1 } })),
   toast: vi.fn(),
   insert: vi.fn(),
+  deactivate: vi.fn(async () => ({ ok: true, agentId: 'english_tutor' })),
 }));
+vi.mock('@/lib/deactivate-to-clinic', () => ({ deactivateToClinic: api.deactivate }));
 vi.mock('@/lib/asset-objects-api', () => ({
   archiveAssetObject: api.archive,
   restoreAssetObject: api.restore,
@@ -114,6 +116,7 @@ beforeEach(() => {
   state.start = { guides: [], isLoading: false, error: false };
   onNavigate.mockReset();
   api.insert.mockClear();
+  api.deactivate.mockClear();
   api.archive.mockClear();
   api.restore.mockClear();
   api.views.mockClear();
@@ -195,11 +198,15 @@ describe('Studio', () => {
       expect(row()!.querySelector('button .sr-only')?.textContent).toBe(': 我想练习四级英语考试');
     });
 
-    it('a tap fills the main chat\'s composer and opens Chat; nothing is sent', () => {
+    it('a tap leaves a current specialist, fills the main chat\'s composer and opens Chat; nothing is sent', async () => {
       state.start = { guides, isLoading: false, error: false };
       render();
       const button = row()!.querySelectorAll('button')[1] as HTMLButtonElement;
-      act(() => button.click());
+      await act(async () => {
+        button.click();
+      });
+      expect(api.deactivate).toHaveBeenCalledWith('en', { bestEffort: true });
+      expect(api.deactivate.mock.invocationCallOrder[0]).toBeLessThan(api.insert.mock.invocationCallOrder[0]);
       expect(api.insert).toHaveBeenCalledWith(
         '帮我快速搜索：今年哪些技术岗位需求最大',
         'clinic',
@@ -208,8 +215,11 @@ describe('Studio', () => {
       );
       expect(onNavigate).toHaveBeenCalledWith('/en/chat');
       // A second tap does nothing more.
-      act(() => button.click());
+      await act(async () => {
+        button.click();
+      });
       expect(api.insert).toHaveBeenCalledTimes(1);
+      expect(api.deactivate).toHaveBeenCalledTimes(1);
     });
 
     it('in an empty Studio the row replaces "Start in Chat"', () => {
