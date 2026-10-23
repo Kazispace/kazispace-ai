@@ -19,6 +19,7 @@ const state = vi.hoisted(() => ({
   authenticated: true,
   data: {} as Record<string, { items: WorkspaceAsset[]; count: number; history: number }>,
   loading: false,
+  start: { guides: [] as { id: string; label: string; text: string }[], isLoading: false, error: false },
 }));
 
 vi.mock('next-intl', () => ({
@@ -32,14 +33,21 @@ const api = vi.hoisted(() => ({
   restore: vi.fn(async () => ({ success: true, data: { id: 'ca', status: 'active' } })),
   views: vi.fn(async () => ({ success: true, data: { view_count: 1 } })),
   toast: vi.fn(),
+  insert: vi.fn(),
+  deactivate: vi.fn(async () => ({ ok: true, agentId: 'english_tutor' })),
 }));
+vi.mock('@/lib/deactivate-to-clinic', () => ({ deactivateToClinic: api.deactivate }));
 vi.mock('@/lib/asset-objects-api', () => ({
   archiveAssetObject: api.archive,
   restoreAssetObject: api.restore,
   recordAssetObjectView: api.views,
 }));
 vi.mock('@/lib/store', () => ({
-  useUIStore: (select: (s: { showToast: typeof api.toast }) => unknown) => select({ showToast: api.toast }),
+  useUIStore: (select: (s: { showToast: typeof api.toast; requestComposerInsert: typeof api.insert }) => unknown) =>
+    select({ showToast: api.toast, requestComposerInsert: api.insert }),
+}));
+vi.mock('@/hooks/use-studio-get-started', () => ({
+  useStudioGetStarted: () => state.start,
 }));
 vi.mock('@/hooks/use-workspace-assets', () => ({
   useWorkspaceAssets: ({
@@ -105,7 +113,10 @@ beforeEach(() => {
   state.authenticated = true;
   state.loading = false;
   state.data = {};
+  state.start = { guides: [], isLoading: false, error: false };
   onNavigate.mockReset();
+  api.insert.mockClear();
+  api.deactivate.mockClear();
   api.archive.mockClear();
   api.restore.mockClear();
   api.views.mockClear();
@@ -165,6 +176,84 @@ describe('Studio', () => {
     render();
     expect(container.querySelector('[data-testid="studio-empty"]')).toBeNull();
     expect(container.textContent).toContain('cv.railHub.assetV2.loginRequired');
+  });
+
+  describe('Get started (D25)', () => {
+    const guides = [
+      { id: 'cet4', label: '练习四级英语', text: '我想练习四级英语考试' },
+      { id: 'search', label: '快速搜索', text: '帮我快速搜索：今年哪些技术岗位需求最大' },
+    ];
+    const row = () => container.querySelector('[data-testid="studio-get-started"]');
+
+    it('shows the server\'s buttons, in order, above the lists', () => {
+      state.start = { guides, isLoading: false, error: false };
+      state.data = { resume: { items: [asset('resume', 'CV')], count: 1, history: 0 } };
+      render();
+      expect(headings()).toEqual(['studio.start.title', 'studio.resumes']);
+      expect(Array.from(row()!.querySelectorAll('button')).map((b) => b.firstChild?.textContent)).toEqual([
+        '练习四级英语',
+        '快速搜索',
+      ]);
+      // The text a tap puts in the composer is there for screen readers too.
+      expect(row()!.querySelector('button .sr-only')?.textContent).toBe(': 我想练习四级英语考试');
+    });
+
+    it('a tap leaves a current specialist, fills the main chat\'s composer and opens Chat; nothing is sent', async () => {
+      state.start = { guides, isLoading: false, error: false };
+      render();
+      const button = row()!.querySelectorAll('button')[1] as HTMLButtonElement;
+      await act(async () => {
+        button.click();
+      });
+      expect(api.deactivate).toHaveBeenCalledWith('en', { bestEffort: true });
+      expect(api.deactivate.mock.invocationCallOrder[0]).toBeLessThan(api.insert.mock.invocationCallOrder[0]);
+      expect(api.insert).toHaveBeenCalledWith(
+        '帮我快速搜索：今年哪些技术岗位需求最大',
+        'clinic',
+        'replace',
+        'studio.start.draftReplaced'
+      );
+      expect(onNavigate).toHaveBeenCalledWith('/en/chat');
+      // A second tap does nothing more.
+      await act(async () => {
+        button.click();
+      });
+      expect(api.insert).toHaveBeenCalledTimes(1);
+      expect(api.deactivate).toHaveBeenCalledTimes(1);
+    });
+
+    it('in an empty Studio the row replaces "Start in Chat"', () => {
+      state.start = { guides, isLoading: false, error: false };
+      render();
+      const empty = container.querySelector('[data-testid="studio-empty"]');
+      expect(empty?.textContent).toContain('studio.empty.title');
+      expect(empty?.querySelector('button')).toBeNull();
+    });
+
+    it('is hidden when it fails or is empty, and "Start in Chat" comes back', () => {
+      for (const start of [
+        { guides, isLoading: false, error: true },
+        { guides: [], isLoading: false, error: false },
+      ]) {
+        state.start = start;
+        render();
+        expect(row()).toBeNull();
+        expect(container.querySelector('[data-testid="studio-empty"] button')?.textContent).toBe('studio.empty.action');
+      }
+    });
+
+    it('shows a skeleton while loading', () => {
+      state.start = { guides: [], isLoading: true, error: false };
+      render();
+      expect(container.querySelector('[data-testid="studio-get-started-loading"]')).not.toBeNull();
+    });
+
+    it('is not shown signed out', () => {
+      state.start = { guides, isLoading: false, error: false };
+      state.authenticated = false;
+      render();
+      expect(row()).toBeNull();
+    });
   });
 
   it('has no job listings or spaces tiles (D21)', () => {

@@ -1129,6 +1129,10 @@
 		"views": "{count, plural, other {# 次浏览}}",
 		"archive": "归档",
 		"restoreHint": "点按即可恢复",
-		"actionFailed": "没能保存这次修改，请再试一次。"
+		"actionFailed": "没能保存这次修改，请再试一次。",
+		"start": {
+			"title": "快速开始",
+			"draftReplaced": "已替换你之前输入的内容"
+		}
 	}
 }

@@ -1425,6 +1425,10 @@
 		"views": "{count, plural, one {# view} other {# views}}",
 		"archive": "Archive",
 		"restoreHint": "Tap to restore",
-		"actionFailed": "Couldn't save that change. Try again."
+		"actionFailed": "Couldn't save that change. Try again.",
+		"start": {
+			"title": "Get started",
+			"draftReplaced": "Your draft was replaced"
+		}
 	}
 }

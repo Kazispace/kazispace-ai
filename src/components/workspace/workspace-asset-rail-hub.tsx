@@ -4,7 +4,9 @@ import { useState, type ReactNode } from 'react';
 import { Archive, ArchiveRestore, ChevronDown, FileText, FolderOpen, Loader2, RefreshCw, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { StudioGetStarted } from '@/components/workspace/studio-get-started';
 import { HUB_ASSET_GRID_CLASS } from '@/components/workspace/workspace-side-rail-hub';
+import { useStudioGetStarted } from '@/hooks/use-studio-get-started';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { buildClinicChatHref } from '@/lib/cv-entry';
 import {
@@ -55,7 +57,8 @@ const CATEGORY_TONE: Record<WorkspaceAssetCategory, AssetTone> = {
  * here. A kind the user has none of is left out; with nothing at all, the
  * empty state points back to Chat. A resume shows how often it was opened and
  * can be archived; archived resumes sit in their own list and restore on tap
- * (Core Assets §6.4). Research documents and question sets need backend
+ * (Core Assets §6.4). At the top, the Get started row (D25) starts a request
+ * in the main chat. Research documents and question sets need backend
  * support first.
  */
 export function WorkspaceAssetRailHub({
@@ -132,6 +135,12 @@ export function WorkspaceAssetRailHub({
   const { ready: authReady, authenticated } = useAuthReady();
 
   const push = (path: string) => onNavigate?.(path);
+  // Get started (Studio pattern; D25): a row of buttons from the server that
+  // open the main chat with a request in the composer. Hidden when it fails to
+  // load or is empty; an empty Studio then offers "Start in Chat" instead.
+  const getStarted = useStudioGetStarted(locale);
+  const showGetStarted = authReady && authenticated && !getStarted.error &&
+    (getStarted.isLoading || getStarted.guides.length > 0);
 
   const queries = [resumeQuery, englishQuery, interviewQuery];
   const settled =
@@ -164,11 +173,20 @@ export function WorkspaceAssetRailHub({
         </button>
       ) : null}
 
+      {showGetStarted ? (
+        <StudioGetStarted
+          locale={locale}
+          guides={getStarted.guides}
+          isLoading={getStarted.isLoading}
+          onNavigate={onNavigate}
+        />
+      ) : null}
+
       {isEmpty ? (
         <StudioEmptyState
           title={tStudio('empty.title')}
           body={tStudio('empty.body')}
-          action={tStudio('empty.action')}
+          action={showGetStarted ? null : tStudio('empty.action')}
           onStart={() => push(buildClinicChatHref(locale))}
         />
       ) : null}
@@ -299,7 +317,8 @@ function StudioEmptyState({
 }: {
   title: string;
   body: string;
-  action: string;
+  /** Null when the Get started row is shown: it replaces this action. */
+  action: string | null;
   onStart: () => void;
 }) {
   return (
@@ -312,13 +331,15 @@ function StudioEmptyState({
       </span>
       <h2 className="text-sm font-semibold text-workspace-text">{title}</h2>
       <p className="max-w-xs text-xs leading-relaxed text-workspace-secondary">{body}</p>
-      <button
-        type="button"
-        onClick={onStart}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-      >
-        {action}
-      </button>
+      {action ? (
+        <button
+          type="button"
+          onClick={onStart}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
+          {action}
+        </button>
+      ) : null}
     </section>
   );
 }

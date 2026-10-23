@@ -160,7 +160,7 @@ export function ChatInput({
       return needsGap ? `${prev}\n\n${chunk}` : `${prev}${chunk}`;
     });
     if (replacedDraft) {
-      showToast(t('starter.draftReplaced'), 'info');
+      showToast(composerInsert.replacedNotice ?? t('starter.draftReplaced'), 'info');
     }
     clearComposerInsert();
     window.requestAnimationFrame(() => {

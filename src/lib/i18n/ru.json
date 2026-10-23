@@ -1066,6 +1066,10 @@
 	},
 	"studio": {
 		"resumes": "Резюме",
-		"archived": "Архив"
+		"archived": "Архив",
+		"start": {
+			"title": "С чего начать",
+			"draftReplaced": "Ваш черновик заменён"
+		}
 	}
 }

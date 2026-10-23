@@ -99,6 +99,8 @@ interface UIStore {
     nonce: number;
     target: ComposerInsertTarget;
     mode: ComposerInsertMode;
+    /** Shown when `replace` overwrites a draft; defaults to the starter-prompt notice. */
+    replacedNotice?: string;
   } | null;
   paywallModalOpen: boolean;
   paywallTrigger: PaywallTrigger | null;
@@ -111,7 +113,8 @@ interface UIStore {
   requestComposerInsert: (
     text: string,
     target: ComposerInsertTarget,
-    mode?: ComposerInsertMode
+    mode?: ComposerInsertMode,
+    replacedNotice?: string
   ) => void;
   clearComposerInsert: () => void;
   openPaywall: (trigger: PaywallTrigger) => void;
@@ -133,12 +136,13 @@ export const useUIStore = create<UIStore>()((set) => ({
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   showToast: (message, type = 'info') => set({ toast: { message, type } }),
   clearToast: () => set({ toast: null }),
-  requestComposerInsert: (text, target, mode = 'append') =>
+  requestComposerInsert: (text, target, mode = 'append', replacedNotice) =>
     set((state) => ({
       composerInsert: {
         text,
         target,
         mode,
+        replacedNotice,
         nonce: (state.composerInsert?.nonce ?? 0) + 1,
       },
     })),
