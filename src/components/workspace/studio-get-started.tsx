@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { buildClinicChatHref } from '@/lib/cv-entry';
-import { deactivateToClinic } from '@/lib/deactivate-to-clinic';
+import { leaveToMainChat } from '@/lib/leave-to-main-chat';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { GetStartedGuide } from '@/lib/studio-get-started-api';
@@ -15,7 +15,8 @@ import type { GetStartedGuide } from '@/lib/studio-get-started-api';
  * confirms, can edit, and sends it. Nothing is sent from here. If a specialist
  * is the current conversation, the tap leaves it first, as "Back to Clinic"
  * does, so the text always lands in the main chat (Owen, 2026-10-23, an option
- * chosen in a question).
+ * chosen in a question). A dedicated hub or the CV builder is left by
+ * navigation only, so its session stays open (see `leaveToMainChat`).
  */
 export function StudioGetStarted({
   locale,
@@ -49,8 +50,7 @@ export function StudioGetStarted({
   const open = async (guide: GetStartedGuide) => {
     if (tapped) return;
     setTapped(true);
-    // Best effort, as the hub's other exits: a failed exit still opens Chat.
-    await deactivateToClinic(locale, { bestEffort: true });
+    await leaveToMainChat(locale);
     requestComposerInsert(guide.text, 'clinic', 'replace', t('start.draftReplaced'));
     onNavigate?.(buildClinicChatHref(locale));
   };
