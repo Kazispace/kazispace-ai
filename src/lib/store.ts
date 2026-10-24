@@ -70,6 +70,8 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     clearBillingCache();
     // KAZI-1145: CV form drafts hold this user's resume — drop them all.
     clearAllCvWizardDrafts();
+    // KAZI-1155: an unsent chat draft is this user's text too.
+    useUIStore.getState().clearComposerDrafts();
     useAgentStore.getState().reset();
     useSpaceStore.getState().reset();
     publishAuthSessionCleared();
@@ -102,6 +104,12 @@ interface UIStore {
     /** Shown when `replace` overwrites a draft; defaults to the starter-prompt notice. */
     replacedNotice?: string;
   } | null;
+  /**
+   * KAZI-1155: unsent text of a composer that keeps its draft (`keepDraft`),
+   * so leaving the chat and coming back does not lose it. In memory only:
+   * a reload or sign-out clears it.
+   */
+  composerDrafts: Partial<Record<ComposerInsertTarget, string>>;
   paywallModalOpen: boolean;
   paywallTrigger: PaywallTrigger | null;
   isTelegramMiniApp: boolean;
@@ -117,6 +125,8 @@ interface UIStore {
     replacedNotice?: string
   ) => void;
   clearComposerInsert: () => void;
+  setComposerDraft: (target: ComposerInsertTarget, text: string) => void;
+  clearComposerDrafts: () => void;
   openPaywall: (trigger: PaywallTrigger) => void;
   closePaywall: () => void;
   setTelegramMiniApp: (value: boolean) => void;
@@ -128,6 +138,7 @@ export const useUIStore = create<UIStore>()((set) => ({
   sidebarOpen: false,
   toast: null,
   composerInsert: null,
+  composerDrafts: {},
   paywallModalOpen: false,
   paywallTrigger: null,
   isTelegramMiniApp: false,
@@ -147,6 +158,13 @@ export const useUIStore = create<UIStore>()((set) => ({
       },
     })),
   clearComposerInsert: () => set({ composerInsert: null }),
+  setComposerDraft: (target, text) =>
+    set((state) =>
+      (state.composerDrafts[target] ?? '') === text
+        ? state
+        : { composerDrafts: { ...state.composerDrafts, [target]: text } }
+    ),
+  clearComposerDrafts: () => set({ composerDrafts: {} }),
   openPaywall: (trigger) => set({ paywallModalOpen: true, paywallTrigger: trigger }),
   closePaywall: () => set({ paywallModalOpen: false, paywallTrigger: null }),
   setTelegramMiniApp: (value) => set({ isTelegramMiniApp: value }),

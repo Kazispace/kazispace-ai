@@ -1746,6 +1746,7 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
               beforeTranscribe={beforeVoiceTranscribe}
               contextModule="clinic"
               composerTarget="clinic"
+              keepDraft
               disabled={clinicInputDisabled}
               placeholder={inputPlaceholder}
               showAttachButton
