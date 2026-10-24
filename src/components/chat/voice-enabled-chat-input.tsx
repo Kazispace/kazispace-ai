@@ -23,6 +23,8 @@ interface VoiceEnabledChatInputProps {
   contextModule?: string;
   /** Quote insert routing — clinic vs space (PR #126 P2). */
   composerTarget?: ComposerInsertTarget;
+  /** Keep the unsent text when the composer unmounts (main chat only). */
+  keepDraft?: boolean;
   variant?: 'bar' | 'card';
   toolbar?: ReactNode;
 }

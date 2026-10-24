@@ -34,9 +34,9 @@ const api = vi.hoisted(() => ({
   views: vi.fn(async () => ({ success: true, data: { view_count: 1 } })),
   toast: vi.fn(),
   insert: vi.fn(),
-  deactivate: vi.fn(async () => ({ ok: true, agentId: 'english_tutor' })),
+  deactivate: vi.fn(async () => undefined),
 }));
-vi.mock('@/lib/deactivate-to-clinic', () => ({ deactivateToClinic: api.deactivate }));
+vi.mock('@/lib/leave-to-main-chat', () => ({ leaveToMainChat: api.deactivate }));
 vi.mock('@/lib/asset-objects-api', () => ({
   archiveAssetObject: api.archive,
   restoreAssetObject: api.restore,
@@ -205,7 +205,7 @@ describe('Studio', () => {
       await act(async () => {
         button.click();
       });
-      expect(api.deactivate).toHaveBeenCalledWith('en', { bestEffort: true });
+      expect(api.deactivate).toHaveBeenCalledWith('en');
       expect(api.deactivate.mock.invocationCallOrder[0]).toBeLessThan(api.insert.mock.invocationCallOrder[0]);
       expect(api.insert).toHaveBeenCalledWith(
         '帮我快速搜索：今年哪些技术岗位需求最大',

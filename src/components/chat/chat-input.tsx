@@ -52,6 +52,13 @@ interface ChatInputProps {
    */
   composerTarget?: ComposerInsertTarget;
   /**
+   * KAZI-1155: keep the unsent text in the UI store under `composerTarget`,
+   * so it is still here when the user leaves this chat and comes back.
+   * Set on the main chat only; a specialist shares the `clinic` target and
+   * must not write over the main chat's draft.
+   */
+  keepDraft?: boolean;
+  /**
    * `bar` — full-bleed clinic/space footer (default).
    * `card` — Doubao-style framed card; pair with outer max-w column.
    */
@@ -76,11 +83,18 @@ export function ChatInput({
   isUploading,
   isTranscribing,
   composerTarget,
+  keepDraft = false,
   variant = "bar",
   toolbar,
 }: ChatInputProps) {
   const t = useTranslations("spaces");
-  const [message, setMessage] = useState("");
+  const draftKey = keepDraft ? composerTarget : undefined;
+  const [message, setMessage] = useState(() =>
+    draftKey ? useUIStore.getState().composerDrafts[draftKey] ?? "" : ""
+  );
+  /** Latest text, read when an insert arrives (not inside a state updater). */
+  const messageRef = useRef(message);
+  messageRef.current = message;
   const [attachment, setAttachment] = useState<AttachmentPreview | null>(null);
   const [attachMenuOpen, setAttachMenuOpen] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -90,6 +104,11 @@ export function ChatInput({
   const composerInsert = useUIStore((s) => s.composerInsert);
   const clearComposerInsert = useUIStore((s) => s.clearComposerInsert);
   const showToast = useUIStore((s) => s.showToast);
+  const setComposerDraft = useUIStore((s) => s.setComposerDraft);
+
+  useEffect(() => {
+    if (draftKey) setComposerDraft(draftKey, message);
+  }, [draftKey, message, setComposerDraft]);
 
   /**
    * KAZI-675: the `toolbar` chip row (capability quick-actions) scrolls
@@ -146,19 +165,24 @@ export function ChatInput({
     if (!composerTarget || composerInsert.target !== composerTarget) return;
     const chunk = composerInsert.text;
     const mode = composerInsert.mode ?? 'append';
-    let replacedDraft = false;
-    setMessage((prev) => {
-      if (mode === 'replace') {
-        // TODO(KAZI-238): replace silently drops in-progress drafts (PRD replace-fill).
-        // Follow-up: confirm / undo stack when prev.trim() is non-empty.
-        replacedDraft = Boolean(prev.trim());
-        return chunk;
-      }
-      if (!prev.trim()) return chunk;
+    const prev = messageRef.current;
+    let next: string;
+    if (mode === 'replace') {
+      next = chunk;
+    } else if (!prev.trim()) {
+      next = chunk;
+    } else {
       // Quote blocks already end with blank lines; emoji is a short prefix.
       const needsGap = !prev.endsWith("\n") && !chunk.startsWith("\n");
-      return needsGap ? `${prev}\n\n${chunk}` : `${prev}${chunk}`;
-    });
+      next = needsGap ? `${prev}\n\n${chunk}` : `${prev}${chunk}`;
+    }
+    // TODO(KAZI-238): replace still drops the draft (PRD replace-fill);
+    // follow-up: confirm / undo when prev.trim() is non-empty.
+    // KAZI-1155: a draft (kept across pages, see `keepDraft`) that `replace`
+    // overwrites gets a notice. The same text again is not a replacement.
+    const replacedDraft = mode === 'replace' && Boolean(prev.trim()) && prev !== chunk;
+    messageRef.current = next;
+    setMessage(next);
     if (replacedDraft) {
       showToast(composerInsert.replacedNotice ?? t('starter.draftReplaced'), 'info');
     }
