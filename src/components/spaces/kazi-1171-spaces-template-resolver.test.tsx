@@ -204,6 +204,22 @@ describe('/spaces?template=', () => {
     expect(state.replace).toHaveBeenCalledWith('/zh/chat');
   });
 
+  // UAT 14213: the Space tab landed on a Space archived minutes earlier.
+  it('Space tab skips a just-archived Space and opens the latest in-progress one', async () => {
+    state.spaces = [
+      space('sp_archived', 'ielts_prep', { status: 'archived', last_active_at: '2026-10-26T12:00:00Z' }),
+      space('sp_active', 'blank_conversation', { last_active_at: '2026-10-18T09:09:00Z' }),
+    ];
+    await render();
+    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_active');
+  });
+
+  it('Space tab goes to the main chat when every Space is archived', async () => {
+    state.spaces = [space('sp_archived', 'ielts_prep', { status: 'archived' })];
+    await render();
+    expect(state.replace).toHaveBeenCalledWith('/zh/chat');
+  });
+
   it('ignores an unknown template and behaves as before', async () => {
     state.query = 'template=nope';
     state.spaces = [space('sp_job', 'job_sprint')];
