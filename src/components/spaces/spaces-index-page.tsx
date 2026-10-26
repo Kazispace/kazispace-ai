@@ -69,7 +69,8 @@ export function SpacesIndexPage({ locale }: SpacesIndexPageProps) {
         return;
       }
       void createSpace({ template_id: template }).then((res) => {
-        if (res.success && res.data) {
+        // No id ⇒ never `/spaces/`: it lands back on this page with no template and spins.
+        if (res.success && res.data?.id) {
           open(res.data.id);
           return;
         }
