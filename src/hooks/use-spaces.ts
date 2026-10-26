@@ -33,6 +33,12 @@ export function useSpaces(options?: {
   const [spaces, setSpaces] = useState<SpaceSummary[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * True once the first `listSpaces` call has settled (success or error). Before that,
+   * `spaces` is `[]` because nothing was asked yet — not because the user has none.
+   * Anything that acts on "the user has no Space" must wait for it (KAZI-1171 UAT 14205).
+   */
+  const [hasLoaded, setHasLoaded] = useState(false);
   const lastFetchedAt = useRef(0);
 
   const refresh = useCallback(
@@ -53,11 +59,14 @@ export function useSpaces(options?: {
 
       if (!res.success || !res.data) {
         setError(res.error ?? 'Failed to load spaces');
+        setHasLoaded(true);
         return;
       }
 
       lastFetchedAt.current = now;
       setSpaces(res.data.spaces);
+      // After the list is set: `hasLoaded` must never be seen with the placeholder `[]`.
+      setHasLoaded(true);
       seedSpaceDetailPlaceholders(queryClient, res.data.spaces);
       prefetchRecentSpaceSwitches(queryClient, res.data.spaces, locale);
     },
@@ -83,5 +92,5 @@ export function useSpaces(options?: {
     return () => window.removeEventListener('focus', onFocus);
   }, [enabled, isLoggedIn, refresh]);
 
-  return { spaces, isLoading, error, refresh, enabled };
+  return { spaces, isLoading, hasLoaded, error, refresh, enabled };
 }

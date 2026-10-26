@@ -13,7 +13,10 @@ import type { SpaceSummary } from '@/types/spaces';
 const state = vi.hoisted(() => ({
   query: '' as string,
   spaces: [] as SpaceSummary[],
-  isLoading: false,
+  hasLoaded: true,
+  error: null as string | null,
+  authReady: true,
+  authenticated: true,
   replace: vi.fn(),
   create: vi.fn(),
 }));
@@ -23,7 +26,15 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(state.query),
 }));
 vi.mock('@/hooks/use-spaces', () => ({
-  useSpaces: () => ({ spaces: state.spaces, isLoading: state.isLoading }),
+  useSpaces: () => ({
+    spaces: state.spaces,
+    hasLoaded: state.hasLoaded,
+    error: state.error,
+    enabled: true,
+  }),
+}));
+vi.mock('@/hooks/use-auth-ready', () => ({
+  useAuthReady: () => ({ ready: state.authReady, authenticated: state.authenticated }),
 }));
 vi.mock('@/lib/spaces-api', () => ({ createSpace: state.create }));
 vi.mock('@/components/spaces/space-workspace-states', () => ({
@@ -55,7 +66,10 @@ beforeEach(() => {
   root = createRoot(container);
   state.query = '';
   state.spaces = [];
-  state.isLoading = false;
+  state.hasLoaded = true;
+  state.error = null;
+  state.authReady = true;
+  state.authenticated = true;
   state.replace.mockReset();
   state.create.mockReset();
 });
@@ -121,12 +135,73 @@ describe('/spaces?template=', () => {
     expect(state.replace).toHaveBeenCalledWith('/zh/chat');
   });
 
-  it('waits for the list before deciding', async () => {
+  // UAT 14205: before the first load `spaces` is [] — acting on it created a new English
+  // Space on every visit and sent the Space tab to /chat.
+  it.each(['template=ielts_prep', ''])(
+    'does nothing before the first list load settles (%s)',
+    async (query) => {
+      state.query = query;
+      state.hasLoaded = false;
+      await render();
+      expect(state.create).not.toHaveBeenCalled();
+      expect(state.replace).not.toHaveBeenCalled();
+    }
+  );
+
+  it('does nothing before auth is ready', async () => {
+    state.authReady = false;
+    state.hasLoaded = false;
+    await render();
+    expect(state.replace).not.toHaveBeenCalled();
+  });
+
+  it('reuses the existing English Space once the list arrives, never creates', async () => {
     state.query = 'template=ielts_prep';
-    state.isLoading = true;
+    state.hasLoaded = false;
+    await render();
+    state.hasLoaded = true;
+    state.spaces = [space('sp_en', 'ielts_prep')];
     await render();
     expect(state.create).not.toHaveBeenCalled();
-    expect(state.replace).not.toHaveBeenCalled();
+    expect(state.replace).toHaveBeenCalledTimes(1);
+    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_en');
+  });
+
+  it('Space tab opens the latest Space once the list arrives, not /chat', async () => {
+    state.hasLoaded = false;
+    await render();
+    state.hasLoaded = true;
+    state.spaces = [space('sp_job', 'job_sprint')];
+    await render();
+    expect(state.replace).toHaveBeenCalledTimes(1);
+    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_job');
+  });
+
+  it('decides once: a later list refresh does not route again', async () => {
+    state.query = 'template=ielts_prep';
+    state.spaces = [space('sp_en', 'ielts_prep')];
+    await render();
+    state.spaces = [
+      space('sp_en', 'ielts_prep'),
+      space('sp_en2', 'ielts_prep', { last_active_at: '2026-10-30T00:00:00Z' }),
+    ];
+    await render();
+    expect(state.replace).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not create when the list failed to load; goes to the main chat', async () => {
+    state.query = 'template=ielts_prep';
+    state.error = 'boom';
+    await render();
+    expect(state.create).not.toHaveBeenCalled();
+    expect(state.replace).toHaveBeenCalledWith('/zh/chat');
+  });
+
+  it('signed out goes to the main chat without waiting for a list', async () => {
+    state.authenticated = false;
+    state.hasLoaded = false;
+    await render();
+    expect(state.replace).toHaveBeenCalledWith('/zh/chat');
   });
 
   it('ignores an unknown template and behaves as before', async () => {

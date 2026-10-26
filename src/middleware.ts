@@ -18,6 +18,18 @@ const intlMiddleware = createMiddleware({
 const APEX_HOST = "kazispace.cn"; // pragma: allowlist secret
 const CANONICAL_HOST = "www.kazispace.cn"; // pragma: allowlist secret
 
+/**
+ * KAZI-1171: `/english` and its sub-pages are gone; old links land in Studio.
+ * next.config.js has the same redirect, but on the deployed host this middleware runs first
+ * and sent signed-out visitors to the login page instead (UAT 14205). Redirecting here makes
+ * it the same for everyone, on every host.
+ */
+export function removedEnglishRedirectPath(locale: string, path: string): string | null {
+  return path === "/english" || path.startsWith("/english/")
+    ? `/${locale}/clinic/hub`
+    : null;
+}
+
 const PUBLIC_PATH_SEGMENTS = new Set(["login", "chat", "tma"]);
 
 function stripLocale(pathname: string): { locale: string; path: string } {
@@ -68,6 +80,11 @@ export default function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const { locale, path } = stripLocale(pathname);
+
+  const englishRedirect = removedEnglishRedirectPath(locale, path);
+  if (englishRedirect) {
+    return NextResponse.redirect(new URL(englishRedirect, request.url), 307);
+  }
 
   const targetLocale = resolveMiddlewareRouteLocale(request);
   if (targetLocale && targetLocale !== locale) {

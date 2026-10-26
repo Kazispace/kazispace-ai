@@ -4,7 +4,10 @@
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
+import { NextRequest } from 'next/server';
 import { describe, expect, it } from 'vitest';
+
+import middleware, { removedEnglishRedirectPath } from '@/middleware';
 
 const SRC = path.resolve(__dirname, '..');
 const ROOT = path.resolve(SRC, '..');
@@ -40,5 +43,25 @@ describe('KAZI-1171 — no /english', () => {
         { source: '/:locale/english/:path*', destination: '/:locale/clinic/hub', permanent: false },
       ])
     );
+  });
+
+  // UAT 14205: on the deployed host the auth gate ran before the next.config redirect, so a
+  // signed-out visitor got the login page. The middleware now redirects first.
+  it.each([
+    ['/zh/english', '/zh/clinic/hub'],
+    ['/en/english/passport', '/en/clinic/hub'],
+    ['/zh/english/training/x', '/zh/clinic/hub'],
+  ])('middleware redirects %s to Studio before the login gate (signed out)', (from, to) => {
+    const res = middleware(new NextRequest(`https://kazispace.ai${from}`));
+    expect(res.status).toBe(307);
+    expect(new URL(res.headers.get('location') ?? '').pathname).toBe(to);
+  });
+
+  it('leaves look-alike paths alone', () => {
+    expect(removedEnglishRedirectPath('zh', '/englishx')).toBeNull();
+    expect(removedEnglishRedirectPath('zh', '/spaces')).toBeNull();
+    const res = middleware(new NextRequest('https://kazispace.ai/zh/spaces'));
+    // Signed out, a normal protected path still goes to login.
+    expect(new URL(res.headers.get('location') ?? '').pathname).toBe('/zh/login');
   });
 });
