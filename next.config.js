@@ -9,6 +9,14 @@ const nextConfig = {
   ...(process.env.DOCKER_BUILD === '1' || process.env.NEXT_OUTPUT === 'standalone'
     ? { output: 'standalone' }
     : {}),
+  // KAZI-1171 (Owen 2026-10-26): `/english` and its sub-pages are gone. Old links and
+  // bookmarks land in Studio, where the English passport now lives, ⛔ a 404.
+  async redirects() {
+    return [
+      { source: '/:locale/english', destination: '/:locale/clinic/hub', permanent: false },
+      { source: '/:locale/english/:path*', destination: '/:locale/clinic/hub', permanent: false },
+    ];
+  },
   webpack: (config) => {
     // KAZI-533: import bundled region directory YAML as raw source string.
     config.module.rules.push({

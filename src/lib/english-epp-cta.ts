@@ -11,36 +11,6 @@ export function isEnglishCtaType(value: string): value is EnglishCtaType {
   return ENGLISH_CTA_TYPES.includes(value as EnglishCtaType);
 }
 
-export function sortEnglishCtas(ctas: EnglishCtaHint[]): EnglishCtaHint[] {
-  return [...ctas].sort((a, b) => {
-    if (a.primary && !b.primary) return -1;
-    if (!a.primary && b.primary) return 1;
-    return 0;
-  });
-}
-
-export function getEnglishCtaHref(
-  cta: EnglishCtaHint,
-  locale: string
-): string | null {
-  const base = `/${locale}/english`;
-  switch (cta.cta_type) {
-    case 'start_training':
-      return `${base}/training?scenario=${encodeURIComponent(
-        cta.scenario_id ?? 'workplace_oral_interview_intro_v1'
-      )}`;
-    case 'retake_assessment':
-      return `${base}/assessment`;
-    case 'view_history':
-      return `${base}/growth`;
-    case 'view_sample_jobs':
-      // Sample jobs panel lives on the passport secondary page (#sample-jobs).
-      return `${base}/passport#sample-jobs`;
-    default:
-      return null;
-  }
-}
-
 function upsertEnglishCtaHint(out: EnglishCtaHint[], hint: EnglishCtaHint): void {
   const idx = out.findIndex((h) => h.cta_type === hint.cta_type);
   if (idx < 0) {

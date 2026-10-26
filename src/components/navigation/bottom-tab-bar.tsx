@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FolderOpen, MessageCircle, User } from 'lucide-react';
+import { FolderOpen, LayoutGrid, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -17,8 +17,8 @@ import {
 } from '@/lib/top-level-nav';
 import { cn } from '@/lib/utils';
 
-const ICONS: Record<TopLevelDestination, typeof MessageCircle> = {
-  chat: MessageCircle,
+const ICONS: Record<TopLevelDestination, typeof LayoutGrid> = {
+  space: LayoutGrid,
   studio: FolderOpen,
   me: User,
 };
@@ -54,7 +54,7 @@ function useTextEntryFocused(): boolean {
 }
 
 /**
- * Mobile top-level navigation: Chat · Studio · Me (kazispace-ui decisions D2, D20,
+ * Mobile top-level navigation: Space · Studio · Me (KAZI-1171; kazispace-ui decisions D2, D20,
  * component spec "Tab bar"). Below 768px only; desktop uses the icon rail.
  */
 export function BottomTabBar({ locale }: { locale: string }) {

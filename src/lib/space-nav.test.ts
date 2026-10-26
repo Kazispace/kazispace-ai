@@ -84,7 +84,6 @@ describe('space-nav', () => {
     expect(shouldPinWorkspaceNavPanel('/zh/spaces/sp_abc123')).toBe(true);
     expect(shouldPinWorkspaceNavPanel('/zh/interview')).toBe(true);
     expect(shouldPinWorkspaceNavPanel('/zh/cv')).toBe(true);
-    expect(shouldPinWorkspaceNavPanel('/en/english')).toBe(true);
     expect(shouldPinWorkspaceNavPanel('/zh/profile')).toBe(false);
     expect(shouldPinWorkspaceNavPanel('/zh/mine')).toBe(false);
   });

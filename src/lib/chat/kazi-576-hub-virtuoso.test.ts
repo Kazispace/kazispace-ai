@@ -16,20 +16,15 @@ describe('KAZI-576 hub chat virtualize after threshold', () => {
     expect(shouldVirtualizeHubMessages(60)).toBe(true);
   });
 
-  it('interview and english pages do not statically import react-virtuoso', () => {
+  // KAZI-1171: the `/english` page is gone; only the interview hub page remains.
+  it('the interview page does not statically import react-virtuoso', () => {
     const interview = readSrc(
       '../../app/[locale]/(workspace)/interview/page.tsx'
     );
-    const english = readSrc('../../app/[locale]/(workspace)/english/page.tsx');
     expect(interview).toMatch(/HubMessageList/);
-    expect(english).toMatch(/HubMessageList/);
     expect(interview).not.toMatch(/react-virtuoso/);
-    expect(english).not.toMatch(/react-virtuoso/);
     expect(interview).not.toMatch(/hub-message-virtuoso/);
-    expect(english).not.toMatch(/hub-message-virtuoso/);
     expect(interview).toMatch(/header=\{[\s\S]*HubWorkflowStrip/);
-    const englishList = english.match(/<HubMessageList[\s\S]*?\/>/);
-    expect(englishList?.[0]).not.toMatch(/header=/);
   });
 
   it('keeps static rows until the virtuoso chunk resolves', () => {

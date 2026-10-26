@@ -21,13 +21,13 @@ export function resolveSpaceIdFromPathname(pathname: string): string | null {
   }
 }
 
-/** True only for `/{locale}/chat` — not dedicated hub routes (`/cv`, `/interview`, `/english`). */
+/** True only for `/{locale}/chat` — not dedicated hub routes (`/cv`, `/interview`). */
 export function isClinicChatPathname(pathname: string): boolean {
   const segments = pathname.split('/').filter(Boolean);
   return segments.length >= 2 && segments[1] === 'chat';
 }
 
-const DEDICATED_HUB_SEGMENTS = new Set(['cv', 'interview', 'english']);
+const DEDICATED_HUB_SEGMENTS = new Set(['cv', 'interview']);
 
 /** Workspace routes that keep the nav list pinned on desktop (ADR-006).
  * Deliberately independent of NEXT_PUBLIC_SPACES_ENABLED — pin is about chrome

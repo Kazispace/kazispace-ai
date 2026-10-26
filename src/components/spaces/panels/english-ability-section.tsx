@@ -27,7 +27,11 @@ import type {
 const MODALITY_ORDER: EnglishAbilityModalityId[] = ['writing', 'speaking'];
 
 interface EnglishAbilitySectionProps {
-  spaceId: string;
+  /**
+   * The English Space whose chat 「练这个」 sends into. Absent in Studio (KAZI-1171): the
+   * section is read-only there — no practice buttons, no refresh on a Space's grading.
+   */
+  spaceId?: string;
 }
 
 /**
@@ -40,7 +44,7 @@ export function EnglishAbilitySection({ spaceId }: EnglishAbilitySectionProps) {
   const t = useTranslations('english.ability');
   const tStates = useTranslations('states');
   const refreshKey = useSpaceStore((s) =>
-    latestGradingMessageId(s.getSpaceSlice(spaceId).messages)
+    spaceId ? latestGradingMessageId(s.getSpaceSlice(spaceId).messages) : null
   );
   const { state, refetch } = useEnglishAbility({ enabled: true, refreshKey });
 
@@ -74,7 +78,7 @@ export function EnglishAbilitySection({ spaceId }: EnglishAbilitySectionProps) {
   );
 }
 
-function AbilityBody({ ability, spaceId }: { ability: EnglishAbility; spaceId: string }) {
+function AbilityBody({ ability, spaceId }: { ability: EnglishAbility; spaceId?: string }) {
   const t = useTranslations('english.ability');
   const hasAny = MODALITY_ORDER.some((m) => ability.modalities[m]);
   // KAZI-1083: mastery comes from practice evidence, not scores — a grammar-only learner has
@@ -119,12 +123,12 @@ function WeakTags({
   spaceId,
 }: {
   weak: EnglishAbilityWeakTag[] | null | undefined;
-  spaceId: string;
+  spaceId?: string;
 }) {
   const t = useTranslations('english.ability.weak');
   const locale = useLocale();
   const tArea = useTranslations('english.ability.area');
-  const isSending = useSpaceStore((s) => s.getSpaceSlice(spaceId).isSending);
+  const isSending = useSpaceStore((s) => (spaceId ? s.getSpaceSlice(spaceId).isSending : false));
   const requestSpaceAction = useSpaceStore((s) => s.requestSpaceAction);
 
   if (!weak) return null;
@@ -155,16 +159,18 @@ function WeakTags({
                       {t('evidence', { count: w.obs_count })}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0"
-                    disabled={isSending}
-                    aria-label={t('practiceAria', { name })}
-                    onClick={() => requestSpaceAction(spaceId, w.action)}
-                  >
-                    {t('practice')}
-                  </Button>
+                  {spaceId ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="shrink-0"
+                      disabled={isSending}
+                      aria-label={t('practiceAria', { name })}
+                      onClick={() => requestSpaceAction(spaceId, w.action)}
+                    >
+                      {t('practice')}
+                    </Button>
+                  ) : null}
                 </div>
                 <div
                   role="meter"

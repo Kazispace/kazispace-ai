@@ -225,6 +225,7 @@
 	},
 	"nav": {
 		"chat": "Chat",
+		"space": "Spaces",
 		"studio": "Studio",
 		"me": "Me",
 		"primary": "Main navigation",
@@ -335,8 +336,7 @@
 		"cvPanelHint": "Mention CV polish in chat, or open the full CV workspace.",
 		"interviewPanelHint": "Interview readiness for the job linked to this space.",
 		"eppPanelHint": "English passport level, dimensions, and sample jobs for this space.",
-		"eppPanelEmpty": "Set up your English passport to see level and practice CTAs here.",
-		"eppPanelEmptyCta": "Set up passport",
+		"eppPanelEmpty": "No English passport level yet.",
 		"unsupportedTemplate": "This space template is not supported yet",
 		"unsupportedTemplateHint": "Create a different space type from the sidebar.",
 		"panelUnavailable": "Panel not available",
@@ -1415,12 +1415,6 @@
 	},
 	"studio": {
 		"resumes": "Resumes",
-		"assessments": "Assessments",
-		"empty": {
-			"title": "Nothing in Studio yet",
-			"body": "Ask in Chat for a resume, an assessment or research. What it makes appears here, ready to work on.",
-			"action": "Start in Chat"
-		},
 		"archived": "Archived",
 		"views": "{count, plural, one {# view} other {# views}}",
 		"archive": "Archive",
@@ -1429,6 +1423,21 @@
 		"start": {
 			"title": "Get started",
 			"draftReplaced": "Your draft was replaced"
+		},
+		"sections": {
+			"passport": "English passport",
+			"radio": "Personal radio",
+			"classroom": "Personal classroom",
+			"jobHistory": "Job history",
+			"resumes": "Resumes"
+		},
+		"comingSoon": "Coming soon",
+		"jobHistoryEmpty": "No mock interviews yet.",
+		"viewJobs": "See recommended jobs",
+		"resumesEmpty": "No resumes yet. Ask in a Space and Kazi will write one with you.",
+		"passport": {
+			"empty": "No English passport level yet. Practise in your English Space and your ability is recorded here.",
+			"openSpace": "Practise in my English Space"
 		}
 	}
 }

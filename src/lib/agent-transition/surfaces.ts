@@ -4,11 +4,16 @@
  * `cv_builder` is **not** a dedicated Hub route — CV workspace opens in the
  * Clinic/Space chat column + right rail (`lib/cv-entry.ts`).
  *
- * `/interview`, `/english` remain dedicated Hub chat-first routes for now.
+ * `/interview` remains a dedicated Hub chat-first route for now.
+ *
+ * The English tutor has no page of its own (KAZI-1171, Owen 2026-10-26: `/english`
+ * is gone). Its surface is the user's English Space: `/spaces?template=ielts_prep`
+ * opens the latest one or creates it.
  */
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
 import { buildClinicChatHref, buildClinicCvRailOpenHref } from '@/lib/cv-entry';
 import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
+import { englishSpaceHref } from '@/lib/spaces/routes';
 import { MOCK_INTERVIEW_AGENT_ID } from '@/lib/mock-interview-config';
 import type { AgentSurfaceId } from '@/lib/agent-transition/types';
 
@@ -32,14 +37,13 @@ const SURFACE_PATH: Record<AgentSurfaceId, (locale: string) => string> = {
   clinic: (locale) => buildClinicChatHref(locale),
   cv: (locale) => buildClinicCvRailOpenHref(locale),
   interview: (locale) => `/${locale}/interview`,
-  english: (locale) => `/${locale}/english`,
+  english: (locale) => englishSpaceHref(locale),
 };
 
 const PATH_SEGMENT_TO_SURFACE: Record<string, AgentSurfaceId> = {
   chat: 'clinic',
   cv: 'cv',
   interview: 'interview',
-  english: 'english',
 };
 
 export function isDedicatedHubAgent(agentId: string): boolean {

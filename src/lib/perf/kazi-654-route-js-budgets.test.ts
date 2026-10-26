@@ -58,9 +58,11 @@ function measurePageKey(pageKey: string): number {
 }
 
 describe('KAZI-654 per-route JS budget gate', () => {
-  it('defines a budget for each of the four target routes', () => {
+  // ❌ Former: four routes (cv, english, interview, space). ✅ KAZI-1171: `/english` is gone,
+  // so its budget went with it — three remain.
+  it('defines a budget for each target route', () => {
     expect(Object.keys(routeJsBudgets.routes).sort()).toEqual(
-      ['cv', 'english', 'interview', 'space'].sort()
+      ['cv', 'interview', 'space'].sort()
     );
     for (const [name, budget] of Object.entries(routeJsBudgets.routes)) {
       // Each route measures either a page's first-load JS (page_key) or a

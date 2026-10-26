@@ -61,7 +61,7 @@ describe('planNavigation', () => {
       {
         from: 'clinic',
         agentId: ENGLISH_TUTOR_AGENT_ID,
-        href: '/en/english',
+        href: '/en/spaces?template=ielts_prep', // KAZI-1171: English Space, not /english
         surface: 'english',
       },
       {

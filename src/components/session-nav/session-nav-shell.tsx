@@ -175,7 +175,7 @@ function SessionNavShellLayout({
   // Chat's top-level screens own the conversation list and its header; Assets, Me
   // and sub-screens (credits, jobs, …) do not (kazispace-ui navigation pattern).
   const onChatTopLevel =
-    resolveTopLevelDestination(pathname, locale) === 'chat' && isTopLevelScreen(pathname, locale);
+    resolveTopLevelDestination(pathname, locale) === 'space' && isTopLevelScreen(pathname, locale);
   const showContextHeader =
     onChatTopLevel &&
     (isClinic || Boolean(contextHeaderSpaceId) || Boolean(activeHubAgentId));

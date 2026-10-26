@@ -1,14 +1,14 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState, type ReactNode } from 'react';
-import { Archive, ArchiveRestore, ChevronDown, FileText, FolderOpen, Loader2, RefreshCw, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ChevronDown, FileText, Loader2, RefreshCw, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { StudioGetStarted } from '@/components/workspace/studio-get-started';
 import { HUB_ASSET_GRID_CLASS } from '@/components/workspace/workspace-side-rail-hub';
 import { useStudioGetStarted } from '@/hooks/use-studio-get-started';
 import { useAuthReady } from '@/hooks/use-auth-ready';
-import { buildClinicChatHref } from '@/lib/cv-entry';
 import {
   archiveAssetObject,
   recordAssetObjectView,
@@ -26,6 +26,13 @@ import {
 } from '@/lib/workspace-assets-constants';
 import { cn } from '@/lib/utils';
 import type { WorkspaceAsset, WorkspaceAssetCategory } from '@/types/workspace-asset';
+
+// KAZI-1171: the passport section pulls in the English profile and ability code. Studio also
+// renders inside the CV rail (a budgeted chunk), so the section loads as its own chunk.
+const StudioPassport = dynamic(
+  () => import('@/components/workspace/studio-passport').then((m) => m.StudioPassport),
+  { ssr: false, loading: () => null }
+);
 
 interface WorkspaceAssetRailHubProps {
   locale: string;
@@ -51,15 +58,17 @@ const CATEGORY_TONE: Record<WorkspaceAssetCategory, AssetTone> = {
 };
 
 /**
- * Studio (kazispace-ui D20, D21; pattern "Studio"): objects a conversation made,
- * one list per kind. Resumes, then assessments (the English passport and mock
- * interview results). Job listings and spaces are not objects, so they are not
- * here. A kind the user has none of is left out; with nothing at all, the
- * empty state points back to Chat. A resume shows how often it was opened and
- * can be archived; archived resumes sit in their own list and restore on tap
- * (Core Assets §6.4). At the top, the Get started row (D25) starts a request
- * in the main chat. Research documents and question sets need backend
- * support first.
+ * Studio (KAZI-1171, Owen 2026-10-26; kazispace-ui D20). Five sections, always shown, in
+ * this order: 英语护照 · 个人电台 · 个人教室 · 求职历史 · 个人简历.
+ *
+ * ❌ Former (D21): one list per kind, a kind with no items left out, an empty Studio
+ * pointing back to Chat, and job listings not in Studio.
+ * ✅ Now: the five sections are the layout, so an empty one says so in its own line.
+ * 个人电台 and 个人教室 are placeholders. 求职历史 holds mock interview results plus
+ * a link to job recommendations; the backend keeps no job-search history yet.
+ *
+ * Unchanged: a resume shows how often it was opened and can be archived; archived
+ * resumes restore on tap (Core Assets §6.4). The Get started row (D25) sits on top.
  */
 export function WorkspaceAssetRailHub({
   locale,
@@ -142,9 +151,10 @@ export function WorkspaceAssetRailHub({
   const showGetStarted = authReady && authenticated && !getStarted.error &&
     (getStarted.isLoading || getStarted.guides.length > 0);
 
-  const queries = [resumeQuery, englishQuery, interviewQuery];
   const settled =
-    authReady && authenticated && queries.every((q) => !q.isLoading && !q.error);
+    authReady &&
+    authenticated &&
+    [resumeQuery, englishQuery, interviewQuery].every((q) => !q.isLoading && !q.error);
   const hasAny = (
     q: typeof resumeQuery,
     category: WorkspaceAssetCategory
@@ -153,7 +163,6 @@ export function WorkspaceAssetRailHub({
   const showResumes = !settled || hasAny(resumeQuery, 'resume');
   const showEnglish = !settled || hasAny(englishQuery, 'english');
   const showInterview = !settled || hasAny(interviewQuery, 'interview');
-  const isEmpty = settled && !showResumes && !showEnglish && !showInterview;
 
   return (
     <div
@@ -182,41 +191,11 @@ export function WorkspaceAssetRailHub({
         />
       ) : null}
 
-      {isEmpty ? (
-        <StudioEmptyState
-          title={tStudio('empty.title')}
-          body={tStudio('empty.body')}
-          action={showGetStarted ? null : tStudio('empty.action')}
-          onStart={() => push(buildClinicChatHref(locale))}
-        />
-      ) : null}
-
-      {showResumes ? (
-        <ZoneBlock title={tStudio('resumes')} className="pt-2 pr-10">
-          <CareerAssetSubcategory
-            category="resume"
-            label={tV2('categoryResume')}
-            count={resumeQuery.categories.resume}
-            historyCount={resumeQuery.historyCounts.resume}
-            items={resumeQuery.items.filter((item) => item.is_current)}
-            authReady={authReady}
-            authenticated={authenticated}
-            isLoading={resumeQuery.isLoading}
-            error={resumeQuery.error}
-            loginRequiredLabel={tV2('loginRequired')}
-            olderAssetsLabel={tV2('olderAssets', { count: resumeQuery.historyCounts.resume })}
-            onOpenAsset={openAsset}
-            onArchive={(asset) => void changeStatus(asset, 'archived')}
-            busyObjectId={busyObjectId}
-            onRetry={resumeQuery.refresh}
-            t={tV2}
-          />
-        </ZoneBlock>
-      ) : null}
-
-      {showEnglish || showInterview ? (
-        <ZoneBlock title={tStudio('assessments')}>
-          {showEnglish ? (
+      {/* KAZI-1171 (Owen 2026-10-26): five sections, always in this order. */}
+      <StudioSection title={tStudio('sections.passport')} className="pt-2 pr-10">
+        <StudioPassport locale={locale} authenticated={authReady && authenticated} />
+        {showEnglish ? (
+          <div className={HUB_ASSET_GRID_CLASS}>
             <CareerAssetSubcategory
               category="english"
               label={t('tileEnglish')}
@@ -235,8 +214,21 @@ export function WorkspaceAssetRailHub({
               onRetry={englishQuery.refresh}
               t={tV2}
             />
-          ) : null}
-          {showInterview ? (
+          </div>
+        ) : null}
+      </StudioSection>
+
+      <StudioSection title={tStudio('sections.radio')}>
+        <StudioComingSoon label={tStudio('comingSoon')} testId="studio-radio" />
+      </StudioSection>
+
+      <StudioSection title={tStudio('sections.classroom')}>
+        <StudioComingSoon label={tStudio('comingSoon')} testId="studio-classroom" />
+      </StudioSection>
+
+      <StudioSection title={tStudio('sections.jobHistory')}>
+        {showInterview ? (
+          <div className={HUB_ASSET_GRID_CLASS}>
             <CareerAssetSubcategory
               category="interview"
               label={tV2('categoryInterview')}
@@ -255,24 +247,91 @@ export function WorkspaceAssetRailHub({
               onRetry={interviewQuery.refresh}
               t={tV2}
             />
-          ) : null}
-        </ZoneBlock>
-      ) : null}
+          </div>
+        ) : (
+          <p className="text-xs text-workspace-secondary">{tStudio('jobHistoryEmpty')}</p>
+        )}
+        {/* No stored job-search history in the backend yet (KAZI-1171 BE gap): link the live list. */}
+        <button
+          type="button"
+          data-testid="studio-job-recommendations"
+          onClick={() => push(`/${locale}/jobs`)}
+          className="self-start text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
+          {tStudio('viewJobs')}
+        </button>
+      </StudioSection>
 
-      {archivedResumes.length > 0 ? (
-        <ZoneBlock title={tStudio('archived')}>
-          {archivedResumes.map((asset) => (
-            <ArchivedObjectTile
-              key={asset.asset_id}
-              asset={asset}
-              hint={tStudio('restoreHint')}
-              busy={busyObjectId === asset.provenance?.core_asset_id}
-              onRestore={() => void changeStatus(asset, 'active')}
+      <StudioSection title={tStudio('sections.resumes')}>
+        {showResumes ? (
+          <div className={HUB_ASSET_GRID_CLASS}>
+            <CareerAssetSubcategory
+              category="resume"
+              label={tV2('categoryResume')}
+              count={resumeQuery.categories.resume}
+              historyCount={resumeQuery.historyCounts.resume}
+              items={resumeQuery.items.filter((item) => item.is_current)}
+              authReady={authReady}
+              authenticated={authenticated}
+              isLoading={resumeQuery.isLoading}
+              error={resumeQuery.error}
+              loginRequiredLabel={tV2('loginRequired')}
+              olderAssetsLabel={tV2('olderAssets', { count: resumeQuery.historyCounts.resume })}
+              onOpenAsset={openAsset}
+              onArchive={(asset) => void changeStatus(asset, 'archived')}
+              busyObjectId={busyObjectId}
+              onRetry={resumeQuery.refresh}
+              t={tV2}
             />
-          ))}
-        </ZoneBlock>
-      ) : null}
+          </div>
+        ) : (
+          <p className="text-xs text-workspace-secondary">{tStudio('resumesEmpty')}</p>
+        )}
+        {archivedResumes.length > 0 ? (
+          <>
+            <h3 className="text-[10px] font-medium text-workspace-secondary">{tStudio('archived')}</h3>
+            <div className={HUB_ASSET_GRID_CLASS}>
+              {archivedResumes.map((asset) => (
+                <ArchivedObjectTile
+                  key={asset.asset_id}
+                  asset={asset}
+                  hint={tStudio('restoreHint')}
+                  busy={busyObjectId === asset.provenance?.core_asset_id}
+                  onRestore={() => void changeStatus(asset, 'active')}
+                />
+              ))}
+            </div>
+          </>
+        ) : null}
+      </StudioSection>
     </div>
+  );
+}
+
+/** One Studio section: a heading over free-form content (KAZI-1171). */
+function StudioSection({
+  title,
+  children,
+  className,
+}: {
+  title: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={cn('flex flex-col gap-2 border-b border-gray-100 px-3 py-3', className)}>
+      <h2 className="text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+/** A section that exists in the layout but has nothing behind it yet (个人电台 · 个人教室). */
+function StudioComingSoon({ label, testId }: { label: string; testId: string }) {
+  return (
+    <p data-testid={testId} className="text-xs text-workspace-muted">
+      {label}
+    </p>
   );
 }
 
@@ -305,61 +364,6 @@ function ArchivedObjectTile({
       </span>
       <span className="line-clamp-1 w-full text-center text-[9px] leading-tight text-workspace-muted">{hint}</span>
     </button>
-  );
-}
-
-/** Empty Studio: what it is for and one way to fill it (pattern "Studio", States). */
-function StudioEmptyState({
-  title,
-  body,
-  action,
-  onStart,
-}: {
-  title: string;
-  body: string;
-  /** Null when the Get started row is shown: it replaces this action. */
-  action: string | null;
-  onStart: () => void;
-}) {
-  return (
-    <section
-      data-testid="studio-empty"
-      className="flex flex-col items-center gap-3 px-6 py-12 text-center"
-    >
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-sky-50 text-primary">
-        <FolderOpen className="h-6 w-6" aria-hidden />
-      </span>
-      <h2 className="text-sm font-semibold text-workspace-text">{title}</h2>
-      <p className="max-w-xs text-xs leading-relaxed text-workspace-secondary">{body}</p>
-      {action ? (
-        <button
-          type="button"
-          onClick={onStart}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-        >
-          {action}
-        </button>
-      ) : null}
-    </section>
-  );
-}
-
-function ZoneBlock({
-  title,
-  children,
-  className,
-}: {
-  title: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={cn('border-b border-gray-100 px-3 py-3', className)}>
-      <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-workspace-muted">
-        {title}
-      </h2>
-      <div className={HUB_ASSET_GRID_CLASS}>{children}</div>
-    </section>
   );
 }
 

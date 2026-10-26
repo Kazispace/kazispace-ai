@@ -68,7 +68,8 @@ describe('clinic-active-sessions', () => {
     const entries = buildClinicActiveSessionEntries('en', sessions);
     expect(entries).toHaveLength(1);
     expect(entries[0]?.badge).toBe('resumable');
-    expect(entries[0]?.href).toBe('/en/english');
+    // KAZI-1171: no `/english` page — an English session reopens in the English Space.
+    expect(entries[0]?.href).toBe('/en/spaces?template=ielts_prep');
   });
 
   it('skips archived and notStarted sessions', () => {

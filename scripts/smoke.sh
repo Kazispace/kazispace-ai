@@ -44,6 +44,10 @@ echo ">> FE routes"
 bash "$ROOT/scripts/smoke-routes.sh"
 
 echo ""
+echo ">> KAZI-1171 /english redirects to Studio"
+bash "$ROOT/scripts/smoke-kazi1171-studio-ia.sh"
+
+echo ""
 echo ">> AUTO-02 CV upload proxy"
 bash "$ROOT/scripts/smoke-cv-upload.sh"
 

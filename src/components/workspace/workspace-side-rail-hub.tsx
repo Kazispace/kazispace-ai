@@ -7,7 +7,6 @@ import {
   ChevronDown,
   FileText,
   Gauge,
-  GraduationCap,
   Headphones,
   Languages,
   LayoutGrid,
@@ -139,12 +138,6 @@ export function WorkspaceSideRailHub({
           tone="interview"
           label={t('tileInterview')}
           onClick={() => push(`/${locale}/interview`)}
-        />
-        <AssetIcon
-          icon={GraduationCap}
-          tone="english"
-          label={t('tileEnglish')}
-          onClick={() => push(`/${locale}/english`)}
         />
 
         {cvLoading ? (

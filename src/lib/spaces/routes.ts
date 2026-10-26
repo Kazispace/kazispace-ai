@@ -18,3 +18,23 @@ export function pickLatestUserSpace(spaces: SpaceSummary[]): SpaceSummary | null
     return bTime.localeCompare(aTime);
   })[0] ?? null;
 }
+
+/**
+ * Latest **active** user space of one template (KAZI-1171): where `/spaces?template=`
+ * sends the user, so a second visit reuses it ⛔ creates another one.
+ */
+export function pickLatestUserSpaceOfTemplate(
+  spaces: SpaceSummary[],
+  templateId: string
+): SpaceSummary | null {
+  return pickLatestUserSpace(
+    spaces.filter((space) => space.template_id === templateId && space.status === 'active')
+  );
+}
+
+/** Where the English tutor opens now that `/english` is gone (KAZI-1171). */
+export const ENGLISH_SPACE_TEMPLATE_ID = 'ielts_prep';
+
+export function englishSpaceHref(locale: string): string {
+  return `/${locale}/spaces?template=${ENGLISH_SPACE_TEMPLATE_ID}`;
+}

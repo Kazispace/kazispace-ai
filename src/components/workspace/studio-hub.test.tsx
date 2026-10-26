@@ -1,9 +1,12 @@
 /**
  * @vitest-environment jsdom
  *
- * Studio (kazispace-ui D20, D21): one list per kind of object, a kind with no
- * items is left out, an empty Studio points back to Chat, and job listings and
- * spaces are not in Studio.
+ * Studio (KAZI-1171, Owen 2026-10-26; kazispace-ui D20).
+ *
+ * ❌ Former (D21): one list per kind, a kind with no items left out, an empty Studio
+ * pointing back to Chat, and job listings not in Studio.
+ * ✅ Now: five sections, always, in this order — 英语护照 · 个人电台 · 个人教室 · 求职历史 ·
+ * 个人简历. An empty one says so in its own line; 求职历史 links job recommendations.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -45,6 +48,13 @@ vi.mock('@/lib/asset-objects-api', () => ({
 vi.mock('@/lib/store', () => ({
   useUIStore: (select: (s: { showToast: typeof api.toast; requestComposerInsert: typeof api.insert }) => unknown) =>
     select({ showToast: api.toast, requestComposerInsert: api.insert }),
+}));
+// The passport section is loaded with next/dynamic (its own chunk); here it renders at once.
+vi.mock('next/dynamic', () => ({
+  default: () =>
+    function StudioPassportStub({ authenticated }: { authenticated: boolean }) {
+      return <div data-testid="studio-passport">{authenticated ? 'passport:in' : 'passport:out'}</div>;
+    },
 }));
 vi.mock('@/hooks/use-studio-get-started', () => ({
   useStudioGetStarted: () => state.start,
@@ -127,55 +137,67 @@ afterEach(() => {
   container.remove();
 });
 
+const SECTIONS = [
+  'studio.sections.passport',
+  'studio.sections.radio',
+  'studio.sections.classroom',
+  'studio.sections.jobHistory',
+  'studio.sections.resumes',
+];
+const section = (key: string) =>
+  Array.from(container.querySelectorAll('section')).find(
+    (el) => el.querySelector(':scope > h2')?.textContent === key
+  );
+
 describe('Studio', () => {
-  it('lists resumes, then assessments (English and mock interview)', () => {
+  it('shows the five sections in order, each with its own content', () => {
     state.data = {
       resume: { items: [asset('resume', 'Data analyst — English')], count: 1, history: 0 },
-      english: { items: [asset('english', 'English passport')], count: 1, history: 0 },
+      english: { items: [asset('english', 'English report')], count: 1, history: 0 },
       interview: { items: [asset('interview', 'Mock interview')], count: 1, history: 0 },
     };
     render();
-    expect(headings()).toEqual(['studio.resumes', 'studio.assessments']);
-    expect(container.textContent).toContain('English passport');
-    expect(container.textContent).toContain('Mock interview');
+    expect(headings()).toEqual(SECTIONS);
+    expect(section('studio.sections.passport')?.textContent).toContain('passport:in');
+    expect(section('studio.sections.passport')?.textContent).toContain('English report');
+    expect(section('studio.sections.jobHistory')?.textContent).toContain('Mock interview');
+    expect(section('studio.sections.resumes')?.textContent).toContain('Data analyst — English');
   });
 
-  it('leaves out a kind the user has none of', () => {
-    state.data = {
-      interview: { items: [asset('interview', 'Mock interview')], count: 1, history: 0 },
-    };
+  it('keeps every section when the user has nothing, each saying so', () => {
     render();
-    expect(headings()).toEqual(['studio.assessments']);
-    expect(container.textContent).not.toContain('cv.railHub.tileEnglish');
+    expect(headings()).toEqual(SECTIONS);
+    expect(container.querySelector('[data-testid="studio-empty"]')).toBeNull();
+    expect(container.querySelector('[data-testid="studio-radio"]')?.textContent).toBe('studio.comingSoon');
+    expect(container.querySelector('[data-testid="studio-classroom"]')?.textContent).toBe('studio.comingSoon');
+    expect(section('studio.sections.jobHistory')?.textContent).toContain('studio.jobHistoryEmpty');
+    expect(section('studio.sections.resumes')?.textContent).toContain('studio.resumesEmpty');
   });
 
   it('keeps a kind that only has older versions', () => {
     state.data = { resume: { items: [], count: 0, history: 2 } };
     render();
-    expect(headings()).toEqual(['studio.resumes']);
+    expect(section('studio.sections.resumes')?.textContent).not.toContain('studio.resumesEmpty');
   });
 
-  it('shows the empty state with one action that opens Chat', () => {
-    render();
-    const empty = container.querySelector('[data-testid="studio-empty"]');
-    expect(empty?.textContent).toContain('studio.empty.title');
-    expect(headings()).toEqual(['studio.empty.title']);
-    const button = empty?.querySelector('button');
-    act(() => button?.click());
-    expect(onNavigate).toHaveBeenCalledWith('/en/chat');
-  });
-
-  it('does not show the empty state while loading or signed out', () => {
+  it('keeps the lists while loading or signed out, so their own state shows', () => {
     state.loading = true;
     render();
-    expect(container.querySelector('[data-testid="studio-empty"]')).toBeNull();
-    expect(headings()).toEqual(['studio.resumes', 'studio.assessments']);
+    expect(section('studio.sections.resumes')?.textContent).not.toContain('studio.resumesEmpty');
 
     state.loading = false;
     state.authenticated = false;
     render();
-    expect(container.querySelector('[data-testid="studio-empty"]')).toBeNull();
     expect(container.textContent).toContain('cv.railHub.assetV2.loginRequired');
+    expect(section('studio.sections.passport')?.textContent).toContain('passport:out');
+  });
+
+  it('job history links the job recommendations (no stored search history yet)', () => {
+    render();
+    const link = container.querySelector('[data-testid="studio-job-recommendations"]') as HTMLButtonElement;
+    expect(link.textContent).toBe('studio.viewJobs');
+    act(() => link.click());
+    expect(onNavigate).toHaveBeenCalledWith('/en/jobs');
   });
 
   describe('Get started (D25)', () => {
@@ -189,7 +211,7 @@ describe('Studio', () => {
       state.start = { guides, isLoading: false, error: false };
       state.data = { resume: { items: [asset('resume', 'CV')], count: 1, history: 0 } };
       render();
-      expect(headings()).toEqual(['studio.start.title', 'studio.resumes']);
+      expect(headings()).toEqual(['studio.start.title', ...SECTIONS]);
       expect(Array.from(row()!.querySelectorAll('button')).map((b) => b.firstChild?.textContent)).toEqual([
         '练习四级英语',
         '快速搜索',
@@ -222,15 +244,7 @@ describe('Studio', () => {
       expect(api.deactivate).toHaveBeenCalledTimes(1);
     });
 
-    it('in an empty Studio the row replaces "Start in Chat"', () => {
-      state.start = { guides, isLoading: false, error: false };
-      render();
-      const empty = container.querySelector('[data-testid="studio-empty"]');
-      expect(empty?.textContent).toContain('studio.empty.title');
-      expect(empty?.querySelector('button')).toBeNull();
-    });
-
-    it('is hidden when it fails or is empty, and "Start in Chat" comes back', () => {
+    it('is hidden when it fails or is empty; the sections stay', () => {
       for (const start of [
         { guides, isLoading: false, error: true },
         { guides: [], isLoading: false, error: false },
@@ -238,7 +252,7 @@ describe('Studio', () => {
         state.start = start;
         render();
         expect(row()).toBeNull();
-        expect(container.querySelector('[data-testid="studio-empty"] button')?.textContent).toBe('studio.empty.action');
+        expect(headings()).toEqual(SECTIONS);
       }
     });
 
@@ -256,11 +270,12 @@ describe('Studio', () => {
     });
   });
 
-  it('has no job listings or spaces tiles (D21)', () => {
+  it('has no spaces tile; jobs are reached from Job history (❌ D21 → ✅ KAZI-1171)', () => {
     state.data = { resume: { items: [asset('resume', 'CV')], count: 1, history: 0 } };
     render();
-    expect(container.textContent).not.toContain('tileJobs');
     expect(container.textContent).not.toContain('tileSpaces');
+    expect(container.textContent).not.toContain('tileJobs');
+    expect(section('studio.sections.jobHistory')?.querySelector('[data-testid="studio-job-recommendations"]')).not.toBeNull();
   });
 
   describe('archive, restore and view counts (Core Assets §6.4)', () => {
@@ -312,7 +327,8 @@ describe('Studio', () => {
         'resume:withArchived': { items: [resume, old], count: 2, history: 0 },
       };
       render();
-      expect(headings()).toEqual(['studio.resumes', 'studio.archived']);
+      expect(headings()).toEqual(SECTIONS);
+      expect(section('studio.sections.resumes')?.querySelector('h3')?.textContent).toBe('studio.archived');
       const archived = container.querySelectorAll('[data-testid="studio-archived-object"]');
       expect(archived).toHaveLength(1);
       expect(archived[0].textContent).toContain('First draft');
