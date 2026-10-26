@@ -128,6 +128,15 @@ describe('/spaces?template=', () => {
     expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_created');
   });
 
+  // UAT 14221: a created Space without an id sent the page to `/spaces/` → `/spaces`, stuck loading.
+  it('never navigates to /spaces/ when the created Space has no id; goes to the main chat', async () => {
+    state.query = 'template=ielts_prep';
+    state.create.mockResolvedValue({ success: true, data: { ...space('', 'ielts_prep') } });
+    await render();
+    expect(state.replace).not.toHaveBeenCalledWith('/zh/spaces/');
+    expect(state.replace).toHaveBeenCalledWith('/zh/chat');
+  });
+
   it('falls back to the main chat when it cannot create one', async () => {
     state.query = 'template=ielts_prep';
     state.create.mockResolvedValue({ success: false, error: 'boom' });

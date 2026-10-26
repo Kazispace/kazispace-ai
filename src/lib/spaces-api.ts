@@ -88,6 +88,12 @@ export async function getSpace(
   return detailFromResponse(res);
 }
 
+/**
+ * POST /spaces. The BE answers `CreateSpaceResponse` = `{ space: SpaceDetail, master_session_id }`
+ * — the Space is **wrapped**, unlike GET / PATCH / lifecycle which return `SpaceDetail` itself.
+ * Reading the wrapper as the Space gave `id: ''`, so callers navigated to `/spaces/` (KAZI-1171
+ * UAT 14221: the English Space was created but the page never opened it).
+ */
 export async function createSpace(
   body: CreateSpaceRequest
 ): Promise<ApiResponse<SpaceDetail>> {
@@ -95,6 +101,10 @@ export async function createSpace(
     method: 'POST',
     body: JSON.stringify(body),
   });
+  const wrapped = res.success ? res.data?.space : undefined;
+  if (wrapped && typeof wrapped === 'object') {
+    return detailFromResponse({ ...res, data: wrapped as Record<string, unknown> });
+  }
   return detailFromResponse(res);
 }
 
