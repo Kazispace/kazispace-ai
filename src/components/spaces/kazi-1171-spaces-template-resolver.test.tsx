@@ -83,7 +83,15 @@ describe('pickLatestUserSpaceOfTemplate', () => {
   });
 
   it('englishSpaceHref is the resolver with the English template', () => {
+    vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'true');
     expect(englishSpaceHref('en')).toBe('/en/spaces?template=ielts_prep');
+    vi.unstubAllEnvs();
+  });
+
+  it('englishSpaceHref falls back to the main chat with Spaces off, like the Space tab', () => {
+    vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'false');
+    expect(englishSpaceHref('en')).toBe('/en/chat');
+    vi.unstubAllEnvs();
   });
 });
 

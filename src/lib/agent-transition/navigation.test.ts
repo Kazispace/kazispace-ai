@@ -84,6 +84,7 @@ describe('planNavigation', () => {
       },
     ];
 
+    vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'true'); // KAZI-1171: English Space needs Spaces on
     for (const { from, agentId, href, surface } of cases) {
       const plan = planNavigation(LOCALE, from, agentId);
       expect(plan, `${from} → ${agentId}`).toEqual({
@@ -92,6 +93,7 @@ describe('planNavigation', () => {
         targetSurface: surface,
       });
     }
+    vi.unstubAllEnvs();
   });
 
   it('routes in-clinic agents to clinic chat surface', () => {

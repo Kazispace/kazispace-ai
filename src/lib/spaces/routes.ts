@@ -1,3 +1,4 @@
+import { isSpacesEnabled } from '@/lib/spaces/constants';
 import type { SpaceSummary } from '@/types/spaces';
 
 /** `/spaces` with no spaceId — not a workspace route; needs index resolver. */
@@ -35,6 +36,11 @@ export function pickLatestUserSpaceOfTemplate(
 /** Where the English tutor opens now that `/english` is gone (KAZI-1171). */
 export const ENGLISH_SPACE_TEMPLATE_ID = 'ielts_prep';
 
+/**
+ * The user's English Space, or — with Spaces off — the main chat, the same fallback the
+ * Space tab uses (`topLevelHref('space')`), since there is no Space to open (#262 review 🟡1).
+ */
 export function englishSpaceHref(locale: string): string {
+  if (!isSpacesEnabled()) return `/${locale}/chat`;
   return `/${locale}/spaces?template=${ENGLISH_SPACE_TEMPLATE_ID}`;
 }

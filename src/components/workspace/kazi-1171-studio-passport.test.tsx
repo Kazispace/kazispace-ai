@@ -84,7 +84,9 @@ describe('Studio passport', () => {
   });
 
   it('links the English Space, never /english', () => {
+    vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'true');
     render();
+    vi.unstubAllEnvs();
     const link = container.querySelector('[data-testid="studio-passport-open-space"]');
     expect(link?.getAttribute('href')).toBe('/zh/spaces?template=ielts_prep');
     expect(container.innerHTML).not.toMatch(/\/english\b/);

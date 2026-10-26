@@ -1434,10 +1434,10 @@
 		"comingSoon": "Coming soon",
 		"jobHistoryEmpty": "No mock interviews yet.",
 		"viewJobs": "See recommended jobs",
-		"resumesEmpty": "No resumes yet. Ask in a Space and Kazi will write one with you.",
+		"resumesEmpty": "No resumes yet. Ask in a space and Kazi will write one with you.",
 		"passport": {
-			"empty": "No English passport level yet. Practise in your English Space and your ability is recorded here.",
-			"openSpace": "Practise in my English Space"
+			"empty": "No English passport level yet. Practise in your English space and your ability is recorded here.",
+			"openSpace": "Practise in my English space"
 		}
 	}
 }

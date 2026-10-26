@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { buildClinicActiveSessionEntries } from '@/lib/clinic-active-sessions';
 import type { AgentSessionSummary } from '@/types';
@@ -65,7 +65,9 @@ describe('clinic-active-sessions', () => {
       ],
     ]);
 
+    vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'true');
     const entries = buildClinicActiveSessionEntries('en', sessions);
+    vi.unstubAllEnvs();
     expect(entries).toHaveLength(1);
     expect(entries[0]?.badge).toBe('resumable');
     // KAZI-1171: no `/english` page — an English session reopens in the English Space.
