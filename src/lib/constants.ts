@@ -19,7 +19,6 @@ export const ROUTES = {
   LEDGER: '/ledger',
   CV: '/cv',
   INTERVIEW: '/interview',
-  ENGLISH: '/english',
   TMA_LAUNCH: '/tma/launch',
 } as const;
 

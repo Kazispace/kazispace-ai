@@ -123,6 +123,7 @@ import {
 } from "@/lib/next-action/resolve";
 import { mapStrategySelectTurnContexts } from "@/lib/strategy-select";
 import { resolveActionSelectSubmit } from "@/lib/next-action-submit";
+import { englishSpaceHref } from "@/lib/spaces/routes";
 import { isEnglishTutorReviseAction } from "@/lib/english-tutor/custom-components";
 import { subscriptionHref } from "@/lib/top-level-nav";
 import { OfflineBar } from "@/components/chat/offline-bar";
@@ -228,8 +229,9 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
     [locale, router]
   );
 
+  // KAZI-1171: no `/english` page any more — the English tutor lives in the user's English Space.
   const routeEnglishPage = useCallback(() => {
-    router.push(`/${locale}/english`);
+    router.push(englishSpaceHref(locale));
   }, [locale, router]);
 
   const switchContext = useMemo(

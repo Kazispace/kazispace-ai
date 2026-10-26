@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -93,21 +92,15 @@ export function IeltsPrepEppPanel({ locale, spaceId, className }: IeltsPrepEppPa
           ) : null}
 
           {!isProfileLoading && !profileError && (profileStatus === 'empty' || !profile) ? (
+            // KAZI-1171: no setup link — the onboarding page is gone (Owen 2026-10-26).
             <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
               <p className="text-sm text-gray-700">{t('eppPanelEmpty')}</p>
-              <Button size="sm" asChild>
-                <Link href={`/${locale}/english/onboarding`}>{t('eppPanelEmptyCta')}</Link>
-              </Button>
             </div>
           ) : null}
 
           {showPassport && profile ? (
             <>
-              <EppPassportHome
-                profile={profile}
-                locale={locale}
-                showBackToClinic={false}
-              />
+              <EppPassportHome profile={profile} />
               {sampleJobs ? (
                 <div id="sample-jobs" className="scroll-mt-4 px-4 pb-4">
                   <EppSampleJobsPanel sampleJobs={sampleJobs} />

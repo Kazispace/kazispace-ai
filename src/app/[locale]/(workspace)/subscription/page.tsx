@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { useBilling } from "@/hooks/use-billing";
 import { planBadgeKey } from "@/lib/api-mappers";
+import { getSurfacePath } from "@/lib/agent-transition/surfaces";
 import { topLevelHref } from "@/lib/top-level-nav";
 
 interface SubscriptionPageProps {
@@ -23,8 +24,12 @@ interface SubscriptionPageProps {
 function SubscriptionBackLinkFromParams({ locale }: { locale: string }) {
   const tNav = useTranslations("nav");
   const fromChat = useSearchParams()?.get("return") === "chat";
-  const destination = fromChat ? "chat" : "me";
-  return <BackLink href={topLevelHref(locale, destination)} label={tNav(destination)} />;
+  // Chat here is the conversation that raised the prompt: the main chat, ⛔ the Space tab
+  // (which opens the latest Space, not the conversation the user came from).
+  if (fromChat) {
+    return <BackLink href={getSurfacePath(locale, "clinic")} label={tNav("chat")} />;
+  }
+  return <BackLink href={topLevelHref(locale, "me")} label={tNav("me")} />;
 }
 
 function SubscriptionBackLink({ locale }: { locale: string }) {

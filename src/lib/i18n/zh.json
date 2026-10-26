@@ -225,6 +225,7 @@
 	},
 	"nav": {
 		"chat": "对话",
+		"space": "空间",
 		"studio": "工作室",
 		"me": "我的",
 		"primary": "主导航",
@@ -335,8 +336,7 @@
 		"cvPanelHint": "在对话中提及简历优化，或打开完整简历工作区。",
 		"interviewPanelHint": "查看本空间关联职位的面试准备度。",
 		"eppPanelHint": "查看本空间英语护照等级、维度与样例岗位。",
-		"eppPanelEmpty": "先完成英语护照设置，即可在此查看等级与练习入口。",
-		"eppPanelEmptyCta": "开始设置",
+		"eppPanelEmpty": "还没有英语护照等级。",
 		"unsupportedTemplate": "该空间模板暂不支持",
 		"unsupportedTemplateHint": "请从侧栏新建其他类型的空间。",
 		"panelUnavailable": "面板暂不可用",
@@ -1119,12 +1119,6 @@
 	},
 	"studio": {
 		"resumes": "简历",
-		"assessments": "能力评价",
-		"empty": {
-			"title": "工作室里还没有内容",
-			"body": "去对话里写简历、做能力评价或查资料，做出来的内容会出现在这里，随时接着做。",
-			"action": "去对话开始"
-		},
 		"archived": "已归档",
 		"views": "{count, plural, other {# 次浏览}}",
 		"archive": "归档",
@@ -1133,6 +1127,21 @@
 		"start": {
 			"title": "快速开始",
 			"draftReplaced": "已替换你之前输入的内容"
+		},
+		"sections": {
+			"passport": "英语护照",
+			"radio": "个人电台",
+			"classroom": "个人教室",
+			"jobHistory": "求职历史",
+			"resumes": "个人简历"
+		},
+		"comingSoon": "即将上线",
+		"jobHistoryEmpty": "还没有模拟面试记录。",
+		"viewJobs": "查看岗位推荐",
+		"resumesEmpty": "还没有简历。在空间里让 Kazi 帮你写一份。",
+		"passport": {
+			"empty": "还没有英语护照等级。去英语空间练习，你的英语能力会记录在这里。",
+			"openSpace": "去英语空间练习"
 		}
 	}
 }

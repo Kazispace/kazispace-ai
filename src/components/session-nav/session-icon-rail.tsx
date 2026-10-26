@@ -5,7 +5,7 @@ import {
   Bot,
   Files,
   FolderOpen,
-  MessageCircle,
+  LayoutGrid,
   PanelLeftClose,
   Search,
   User,
@@ -84,7 +84,7 @@ export function SessionIconRail({
     return (
       <Link
         href={topLevelHref(locale, destination)}
-        prefetch={destination === 'chat' ? undefined : false}
+        prefetch={destination === 'space' ? undefined : false}
         onClick={() => markNavIntent()}
         aria-current={active ? 'page' : undefined}
         className={cn(
@@ -122,7 +122,7 @@ export function SessionIconRail({
       </Link>
 
       {/* Top-level destinations, same order as the mobile tab bar (kazispace-ui D2). */}
-      {destinationLink('chat', <MessageCircle className="h-5 w-5" />)}
+      {destinationLink('space', <LayoutGrid className="h-5 w-5" />)}
       {destinationLink('studio', <FolderOpen className="h-5 w-5" />)}
       {destinationLink('me', <User className="h-5 w-5" />)}
 

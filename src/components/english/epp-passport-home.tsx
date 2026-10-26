@@ -1,84 +1,41 @@
 /**
- * English proficiency passport dashboard at `/english/passport` (secondary route).
- * Cold-open `/english` uses chat intake (KAZI-162).
+ * English proficiency passport card: level, progress and dimensions.
+ * Shown in the English Space panel and in Studio (KAZI-1171).
+ *
+ * ❌ Former: the `/english/passport` page, with CTAs into `/english/training`,
+ * `/assessment`, `/growth` and the sample-jobs anchor.
+ * ✅ Now: those pages are gone (Owen 2026-10-26), so the backend's `cta_hints` are not
+ * rendered. The only action is the optional `action` link a host passes (Studio: open
+ * the English Space).
  */
 'use client';
 
-import { BackToClinicButton } from '@/components/clinic/back-to-clinic-button';
-import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { TrendingUp } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EppDimensionBars } from '@/components/english/epp-dimension-bars';
-import { getEnglishCtaHref, sortEnglishCtas } from '@/lib/english-epp-cta';
 import { clampPct } from '@/lib/interview-irp-utils';
 import { cn } from '@/lib/utils';
-import type { EnglishCtaHint, EnglishProfile } from '@/types';
+import type { EnglishProfile } from '@/types';
 
 interface EppPassportHomeProps {
   profile: EnglishProfile;
-  locale: string;
-  /** Hub passport page keeps Back to Clinic; space panel hides it (KAZI-183). */
-  showBackToClinic?: boolean;
+  /** One link under the card; absent ⇒ no button. */
+  action?: { label: string; href: string };
   className?: string;
 }
 
-function defaultCtaLabel(
-  t: ReturnType<typeof useTranslations<'english.passport'>>,
-  cta: EnglishCtaHint
-): string {
-  switch (cta.cta_type) {
-    case 'start_training':
-      return t('cta.startTraining');
-    case 'retake_assessment':
-      return t('cta.retakeAssessment');
-    case 'view_history':
-      return t('cta.viewHistory');
-    case 'view_sample_jobs':
-      return t('cta.viewSampleJobs');
-    default:
-      return t('cta.continue');
-  }
-}
-
-export function EppPassportHome({
-  profile,
-  locale,
-  showBackToClinic = true,
-  className,
-}: EppPassportHomeProps) {
+export function EppPassportHome({ profile, action, className }: EppPassportHomeProps) {
   const t = useTranslations('english.passport');
-  const router = useRouter();
-
-  const ctas =
-    profile.cta_hints && profile.cta_hints.length > 0
-      ? sortEnglishCtas(profile.cta_hints)
-      : [
-          {
-            cta_type: 'start_training' as const,
-            label: t('cta.startTraining'),
-            primary: true,
-            scenario_id: 'workplace_oral_interview_intro_v1',
-          },
-        ];
 
   const progressPct = clampPct(profile.level_progress_pct);
 
-  const handleCta = (cta: EnglishCtaHint) => {
-    const href = getEnglishCtaHref(cta, locale);
-    if (href) router.push(href);
-  };
-
   return (
     <div
-      className={cn(
-        'flex w-full flex-1 flex-col gap-4 p-4',
-        showBackToClinic && 'mx-auto max-w-lg',
-        className
-      )}
+      className={cn('flex w-full flex-1 flex-col gap-4 p-4', className)}
     >
       {profile.level_locked && (
         <div className="text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-3 py-2">
@@ -129,32 +86,13 @@ export function EppPassportHome({
             <EppDimensionBars dimensions={profile.dimensions} />
           </div>
 
-          <div className="flex flex-col gap-2">
-            {ctas.map((cta) => (
-              <Button
-                key={`${cta.cta_type}-${cta.scenario_id ?? ''}-${cta.label}`}
-                variant={cta.primary ? 'default' : 'secondary'}
-                className="w-full"
-                onClick={() => handleCta(cta)}
-              >
-                {cta.label?.trim() || defaultCtaLabel(t, cta)}
-              </Button>
-            ))}
-          </div>
+          {action ? (
+            <Button asChild className="w-full">
+              <Link href={action.href}>{action.label}</Link>
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
-
-      {showBackToClinic ? (
-        <BackToClinicButton
-          size="sm"
-          variant="outline"
-          className="self-start"
-          locale={locale}
-          agentId={ENGLISH_TUTOR_AGENT_ID}
-        >
-          {t('backToClinic')}
-        </BackToClinicButton>
-      ) : null}
     </div>
   );
 }

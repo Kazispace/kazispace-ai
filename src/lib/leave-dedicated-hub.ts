@@ -1,7 +1,7 @@
 import { useAgentStore } from '@/lib/store';
 
 /**
- * User leaves a dedicated hub (/cv, /interview, /english) for Clinic (ADR-005 INV-6).
+ * User leaves a dedicated hub (/cv, /interview) for Clinic (ADR-005 INV-6).
  * Navigate-only: clear local UI focus so Clinic cold-opens; server session stays active.
  */
 export function leaveDedicatedHubForClinic(): void {

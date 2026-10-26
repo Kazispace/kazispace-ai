@@ -30,7 +30,9 @@ describe('session-nav', () => {
     expect(resolveActiveNavRowId('/en/spaces/sp_abc')).toBe('sp_abc');
     expect(resolveActiveNavRowId('/en/cv')).toBe('cv_builder');
     expect(resolveActiveNavRowId('/en/interview')).toBe('mock_interview');
-    expect(resolveActiveNavRowId('/zh/english')).toBe('english_tutor');
+    // ❌ Former: `/zh/english` lit the english_tutor row. ✅ KAZI-1171: that page is gone (the
+    // URL redirects to Studio); the English tutor lives in an English Space, lit as a Space row.
+    expect(resolveActiveNavRowId('/zh/english')).toBe('clinic');
   });
 
   it('maps session status to panel badges', () => {
