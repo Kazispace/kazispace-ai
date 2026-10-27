@@ -124,6 +124,7 @@ import {
 import { mapStrategySelectTurnContexts } from "@/lib/strategy-select";
 import { resolveActionSelectSubmit } from "@/lib/next-action-submit";
 import { englishSpaceHref } from "@/lib/spaces/routes";
+import { primeEnglishHandoff } from "@/lib/spaces/english-handoff";
 import { isEnglishTutorReviseAction } from "@/lib/english-tutor/custom-components";
 import { subscriptionHref } from "@/lib/top-level-nav";
 import { OfflineBar } from "@/components/chat/offline-bar";
@@ -959,6 +960,8 @@ export function ClinicShell({ locale, active = true }: ClinicShellProps) {
           })
         ) {
           markStreamComplete(result.assistantId);
+          // KAZI-1190: the English Space sends this same message as its first turn.
+          primeEnglishHandoff(text);
           routeEnglishPage();
           return;
         }

@@ -12,6 +12,7 @@ import { useOfflineQueueFlush } from '@/hooks/use-offline-queue-flush';
 import { SpaceShell } from '@/components/spaces/space-shell';
 import { useChatScroll } from '@/hooks/use-chat-scroll';
 import { usePendingSpaceAction } from '@/hooks/use-pending-space-action';
+import { useEnglishHandoffSend } from '@/hooks/use-english-handoff-send';
 import { useHistoryStubHydrate } from '@/hooks/use-history-stub-hydrate';
 import {
   useSpaceTurn,
@@ -290,6 +291,15 @@ export function SpaceChatPane({
     },
     [pinToLatestOnSend, sendMessage],
   );
+
+  // KAZI-1190: the clinic's message that handed off to the English tutor is sent here once.
+  useEnglishHandoffSend({
+    templateId: space.template_id,
+    active,
+    ready: scrollReady,
+    isSending,
+    send: sendAndPin,
+  });
 
   const handleFocusComposer = useCallback(() => {
     requestComposerInsert('', 'space', 'append');
