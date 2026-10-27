@@ -5,9 +5,12 @@ import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
 import type { SpaceDetail, SpaceSummary } from '@/types/spaces';
 
 /**
- * Sidebar `SpaceSummary` already has id / name / template / master_session_id.
- * Seed the detail query so SpaceWorkspace can mount chat without waiting on
- * GET /spaces/{id} (KAZI-566). Empty snapshots are filled when the real GET lands.
+ * Seed the detail query from a sidebar `SpaceSummary` (KAZI-566) so the header and
+ * workspace frame have id / name / template before GET /spaces/{id} lands.
+ *
+ * ⚠ The BE list row (`SpaceSummary`) has **no** `master_session_id`, so the placeholder's is
+ * `''`. `SpaceWorkspace` waits for the real detail before mounting chat (KAZI-1189). Empty
+ * snapshots are filled when the real GET lands.
  */
 export function spaceDetailFromSummary(space: SpaceSummary): SpaceDetail {
   return {

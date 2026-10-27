@@ -55,6 +55,12 @@ export function useSpaceDetail(spaceId: string | null) {
 
   return {
     space: query.data ?? null,
+    /**
+     * True while `space` is still the sidebar-list placeholder (`seedSpaceDetailPlaceholders`
+     * writes it with `updatedAt: 0`) and the real GET has not landed. The list row has no
+     * `master_session_id`, so a placeholder is not a usable Space yet (KAZI-1189).
+     */
+    isPlaceholder: Boolean(query.data) && query.dataUpdatedAt === 0,
     isLoading: queryEnabled && query.isLoading,
     error: query.error
       ? query.error instanceof Error
