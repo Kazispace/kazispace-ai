@@ -37,9 +37,14 @@ function renderTemplateWorkspace(space: SpaceDetail, active: boolean) {
 }
 
 export function SpaceWorkspace({ spaceId, active = true }: SpaceWorkspaceProps) {
-  const { space, isLoading, error } = useSpaceDetail(spaceId);
+  const { space, isLoading, isPlaceholder, error } = useSpaceDetail(spaceId);
 
-  if (isLoading && !space) {
+  // KAZI-1189: a list-row placeholder has no master session yet — show loading until the real
+  // detail lands, ⛔ the chat pane's 「空间尚未就绪」 (that stays for a fetched Space without one).
+  const waitingForDetail =
+    !error && Boolean(space) && isPlaceholder && !space?.master_session_id?.trim();
+
+  if ((isLoading && !space) || waitingForDetail) {
     return (
       <SpaceWorkspaceFrame>
         <SpaceWorkspaceLoading />
