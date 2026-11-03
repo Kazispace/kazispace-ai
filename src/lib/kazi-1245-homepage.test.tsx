@@ -25,7 +25,7 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/en',
 }));
 
-import middleware from '@/middleware';
+import middleware, { PAGE_CACHE_CONTROL } from '@/middleware';
 import { Homepage } from '@/components/home/homepage';
 import { HomeCtas } from '@/components/home/home-ctas';
 import {
@@ -108,6 +108,15 @@ describe('KAZI-1245 middleware', () => {
       expect(location(middleware(request(`https://${host}/en/chat`, host)))).toBe('/en/login?redirect=%2Fen%2Fchat');
     }
   );
+
+  // Owen, 2026-11-03: the sign-in page "keep circling" on www.kazispace.cn. The CDN kept a
+  // page from an older deploy, whose script files the new image no longer has.
+  it.each(['/zh/login', '/en/login', '/zh', '/en'])('%s is never kept by a CDN', (path) => {
+    const res = middleware(request(`https://www.kazispace.cn${path}`, 'www.kazispace.cn'));
+    expect(location(res)).toBeNull();
+    expect(res.headers.get('cache-control')).toBe(PAGE_CACHE_CONTROL);
+    expect(PAGE_CACHE_CONTROL).toContain('no-store');
+  });
 
   it('the homepage itself is public', () => {
     for (const host of [PREVIEW, 'kazispace.ai', 'www.kazispace.cn']) {
