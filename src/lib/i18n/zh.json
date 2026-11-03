@@ -1208,5 +1208,158 @@
 			"language": "语言",
 			"copyright": "© {year} {company} 版权所有"
 		}
+	},
+	"radio": {
+		"studio": {
+			"title": "你的私人英语电台",
+			"subtitle": "听故事、选剧情，用声音推进",
+			"open": "打开电台",
+			"continueTitle": "上次听到这里",
+			"continue": "继续",
+			"progress": "第 {n} 个选择",
+			"lastListened": "上次收听：{date}"
+		},
+		"home": {
+			"greeting": "欢迎回到你的私人电台",
+			"continueSection": "继续听",
+			"stories": "故事",
+			"programs": "节目",
+			"history": "听过的",
+			"overwritten": "已被新故事替换",
+			"newStory": "开新故事",
+			"newStoryCost": "开新故事 · {n, plural, other {# 积分}}",
+			"minutes": "{n} 分钟",
+			"more": "更多操作",
+			"replay": "回放",
+			"delete": "删除",
+			"deleteConfirm": "删除《{title}》？它的进度和回放都会被删掉。",
+			"storiesEmpty": "还没有故事，新故事正在路上。",
+			"programsEmpty": "还没有节目。",
+			"storyUnavailable": "这个故事暂时下架了",
+			"refreshed": "电台记忆已清除，已为你刷新首页"
+		},
+		"level": {
+			"question": "你觉得自己英语大概什么水平？",
+			"A2": "刚入门：能听懂简单的日常句子",
+			"B1": "能应付日常交流",
+			"B2": "英文剧大部分能听懂",
+			"C1": "工作中能流利使用英语"
+		},
+		"settings": {
+			"title": "电台设置",
+			"band": "难度",
+			"enRatio": "英文占比",
+			"voice": {
+				"title": "主播音色",
+				"usF": "美式女声",
+				"usM": "美式男声",
+				"gbF": "英式女声",
+				"gbM": "英式男声",
+				"preview": "试听"
+			},
+			"speed": "默认语速",
+			"speedNormal": "正常",
+			"speedSlow": "慢",
+			"bgm": "背景音乐",
+			"bgmLevel": "音乐音量",
+			"listenWindow": "在选项处自动听我说",
+			"clearMemory": "清除电台记忆",
+			"clearMemoryConfirm": "会删除进行中的故事、收听记录和电台设置。今天已用的次数不会因此恢复。",
+			"clearMemoryAction": "清除",
+			"cleared": "电台记忆已清除",
+			"clearFailed": "没能清除电台数据，请重试。",
+			"saveFailed": "没能保存这项修改，请重试。"
+		},
+		"cancel": "取消",
+		"player": {
+			"title": "播放页",
+			"more": "更多操作",
+			"repeat": "重听这句",
+			"speed": "倍速 {rate}",
+			"play": "播放",
+			"pause": "暂停",
+			"continue": "继续",
+			"save": "保存",
+			"saved": "已保存",
+			"captions": "字幕",
+			"choice": "选项 {key}：{label}",
+			"explain": "解释这句",
+			"explainCost": "解释这句 · {n, plural, other {# 积分}}"
+		},
+		"mic": {
+			"speak": "说话",
+			"listening": "{count, plural, =2 {在听…可以说 A 或 B} other {在听…可以说 A、B 或 C}}",
+			"recording": "正在收音",
+			"done": "说完了",
+			"cancel": "取消",
+			"denied": "好的，那你点一下屏幕上的选项就行。",
+			"regionDisabled": "这里暂时不能用语音，点选项就行",
+			"noDevice": "没有找到麦克风，点选项就行",
+			"blockedHelp": {
+				"title": "麦克风被系统关掉了",
+				"body": "想用语音选择的话，去设置里给这个应用打开麦克风；不打开也可以直接点选项。",
+				"ios": "在 Safari 地址栏点「aA」→ 网站设置 → 麦克风 → 允许；或打开 设置 → Safari → 麦克风。",
+				"android": "点地址栏左侧的图标 → 权限 → 麦克风 → 允许。",
+				"desktop": "点地址栏左侧的图标 → 网站设置 → 允许使用麦克风。",
+				"telegram": "打开手机的 设置 → Telegram → 麦克风，把它打开。"
+			}
+		},
+		"consent": {
+			"title": "用声音选择剧情",
+			"body": "接下来你可以直接说出你的选择，比如「B」或「第二个」。只在选项处收音，录音不会保存。",
+			"allow": "打开麦克风",
+			"deny": "只用点的"
+		},
+		"notice": {
+			"paused": "已暂停 · 进度已保存",
+			"youSaid": "你说的是",
+			"handoffAction": "去聊天里继续说",
+			"stay": "留在电台",
+			"gotIt": "知道了",
+			"subscribe": "看看订阅",
+			"keepListening": "继续听",
+			"close": "关闭",
+			"synced": "已同步到最新进度",
+			"moreEnglish": "英文多一点了，下一段开始",
+			"moreNative": "中文多一点了，下一段开始"
+		},
+		"handoff": {
+			"draftReplaced": "已用你在电台说的话替换了输入框里的草稿"
+		},
+		"offer": {
+			"upgrade": "升一档",
+			"downgrade": "换简单一档",
+			"decline": "不用了"
+		},
+		"saveLimit": {
+			"title": "最多同时保留 3 个故事进度",
+			"choose": "选一个替换",
+			"confirm": "《{title}》的进度会被新故事替换。",
+			"overwrite": "覆盖并开始"
+		},
+		"summary": {
+			"ending": "你走到了结局：{name}",
+			"phrases": "这次听到的短语",
+			"asked": "你问过的",
+			"next": "听下一条",
+			"replay": "回放这一条",
+			"home": "电台首页"
+		},
+		"replay": {
+			"title": "回放",
+			"play": "播放这句",
+			"youChose": "你选了 {key}：{label}",
+			"viaVoice": "语音",
+			"viaTap": "点按",
+			"undone": "已撤回"
+		},
+		"tts": {
+			"failed": "这一段暂时只能看文字，选项照样可以点"
+		},
+		"region": {
+			"ttsDisabled": "这个地区暂时不能开新故事，已有的故事和节目都还能听"
+		},
+		"offline": "网络断开了，联网后点播放继续",
+		"contentMissing": "这一段暂时找不到了。先回到电台首页，你的进度还在。"
 	}
 }

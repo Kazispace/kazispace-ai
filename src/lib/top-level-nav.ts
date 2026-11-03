@@ -11,6 +11,7 @@
 import { getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { buildClinicHubHref } from '@/lib/hub-entry';
 import { isSpacesEnabled } from '@/lib/spaces/constants';
+import { RADIO_SEGMENT } from '@/lib/radio/routes';
 
 export type TopLevelDestination = 'space' | 'studio' | 'me';
 
@@ -57,13 +58,17 @@ export function resolveTopLevelDestination(
   const rest = pathname.startsWith(`/${locale}`) ? pathname.slice(locale.length + 1) : pathname;
   const segments = rest.split('/').filter(Boolean);
   if (segments[0] === 'clinic' && segments[1] === 'hub') return 'studio';
+  // KAZI-1209: the radio's screens are reached from Studio (kazispace-ui personal-radio, Platform notes:
+  // on desktop the rail highlights Studio).
+  if (segments[0] === RADIO_SEGMENT) return 'studio';
   if (segments[0] && ME_SEGMENTS.includes(segments[0])) return 'me';
   return 'space';
 }
 
 /** Screens reached from a top-level destination; they hide the mobile tab bar. */
 // Derived from ME_SUB_SCREENS so a new Me sub-page cannot be added to only one list.
-const SUB_SCREEN_SEGMENTS = [...ME_SUB_SCREENS, 'jobs'];
+// The radio's screens hide the tab bar too (kazispace-ui D28: the radio is a sub-screen).
+const SUB_SCREEN_SEGMENTS = [...ME_SUB_SCREENS, 'jobs', RADIO_SEGMENT];
 
 /** True on a top-level screen (Space, Studio, Me), where the mobile tab bar shows. */
 export function isTopLevelScreen(pathname: string, locale: string): boolean {

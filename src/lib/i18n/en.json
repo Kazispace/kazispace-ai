@@ -1504,5 +1504,158 @@
 			"language": "Language",
 			"copyright": "© {year} {company}. All rights reserved."
 		}
+	},
+	"radio": {
+		"studio": {
+			"title": "Your private English radio",
+			"subtitle": "Listen, choose, and steer the story with your voice",
+			"open": "Open radio",
+			"continueTitle": "Pick up where you left off",
+			"continue": "Continue",
+			"progress": "Choice {n}",
+			"lastListened": "Last listened {date}"
+		},
+		"home": {
+			"greeting": "Welcome back to your private station",
+			"continueSection": "Continue listening",
+			"stories": "Stories",
+			"programs": "Programs",
+			"history": "Listened",
+			"overwritten": "Replaced by a new story",
+			"newStory": "New story",
+			"newStoryCost": "New story · {n, plural, one {# credit} other {# credits}}",
+			"minutes": "{n} min",
+			"more": "More options",
+			"replay": "Replay",
+			"delete": "Delete",
+			"deleteConfirm": "Delete \"{title}\"? Its progress and replay will be gone.",
+			"storiesEmpty": "No stories yet. New ones are on the way.",
+			"programsEmpty": "No programs yet.",
+			"storyUnavailable": "This story is unavailable for now",
+			"refreshed": "Your radio memory was cleared — home refreshed"
+		},
+		"level": {
+			"question": "Roughly what's your English level?",
+			"A2": "Beginner: simple everyday sentences",
+			"B1": "I can handle everyday conversations",
+			"B2": "I follow most English shows",
+			"C1": "I use English fluently at work"
+		},
+		"settings": {
+			"title": "Radio settings",
+			"band": "Difficulty",
+			"enRatio": "English share",
+			"voice": {
+				"title": "Host voice",
+				"usF": "US female",
+				"usM": "US male",
+				"gbF": "UK female",
+				"gbM": "UK male",
+				"preview": "Play sample"
+			},
+			"speed": "Default speed",
+			"speedNormal": "Normal",
+			"speedSlow": "Slow",
+			"bgm": "Background music",
+			"bgmLevel": "Music volume",
+			"listenWindow": "Listen for my answer at choices",
+			"clearMemory": "Clear radio memory",
+			"clearMemoryConfirm": "This deletes your stories in progress, your listening history and your radio settings. Today's used limits won't reset.",
+			"clearMemoryAction": "Clear",
+			"cleared": "Radio memory cleared",
+			"clearFailed": "Couldn't clear your radio data. Try again.",
+			"saveFailed": "Couldn't save that change. Try again."
+		},
+		"cancel": "Cancel",
+		"player": {
+			"title": "Player",
+			"more": "More options",
+			"repeat": "Replay sentence",
+			"speed": "Speed {rate}",
+			"play": "Play",
+			"pause": "Pause",
+			"continue": "Continue",
+			"save": "Save",
+			"saved": "Saved",
+			"captions": "Captions",
+			"choice": "Choice {key}: {label}",
+			"explain": "Explain this sentence",
+			"explainCost": "Explain this sentence · {n, plural, one {# credit} other {# credits}}"
+		},
+		"mic": {
+			"speak": "Speak",
+			"listening": "{count, plural, =2 {Listening… say A or B} other {Listening… say A, B or C}}",
+			"recording": "Recording",
+			"done": "Done",
+			"cancel": "Cancel",
+			"denied": "OK — just tap a choice on the screen.",
+			"regionDisabled": "Voice isn't available here — tap a choice",
+			"noDevice": "No microphone found — tap a choice",
+			"blockedHelp": {
+				"title": "Microphone is blocked",
+				"body": "To answer by voice, allow the microphone in your settings. You can always tap a choice instead.",
+				"ios": "In Safari, tap \"aA\" in the address bar, then Website Settings → Microphone → Allow. Or open Settings → Safari → Microphone.",
+				"android": "Tap the icon to the left of the address bar, then Permissions → Microphone → Allow.",
+				"desktop": "Click the icon to the left of the address bar, open Site settings and allow the microphone.",
+				"telegram": "Open your phone's Settings → Telegram → Microphone and turn it on."
+			}
+		},
+		"consent": {
+			"title": "Choose with your voice",
+			"body": "You can just say your choice, like \"B\" or \"the second one\". We only listen at choices and never keep the recording.",
+			"allow": "Turn on microphone",
+			"deny": "I'll tap instead"
+		},
+		"notice": {
+			"paused": "Paused · progress saved",
+			"youSaid": "You said",
+			"handoffAction": "Continue in chat",
+			"stay": "Stay here",
+			"gotIt": "Got it",
+			"subscribe": "See plans",
+			"keepListening": "Keep listening",
+			"close": "Close",
+			"synced": "Synced to your latest progress",
+			"moreEnglish": "More English from the next part",
+			"moreNative": "Less English from the next part"
+		},
+		"handoff": {
+			"draftReplaced": "Your draft was replaced with what you said on the radio"
+		},
+		"offer": {
+			"upgrade": "Level up",
+			"downgrade": "Make it easier",
+			"decline": "No thanks"
+		},
+		"saveLimit": {
+			"title": "You can keep up to 3 stories in progress",
+			"choose": "Choose one to replace",
+			"confirm": "Progress in \"{title}\" will be replaced.",
+			"overwrite": "Replace and start"
+		},
+		"summary": {
+			"ending": "You reached an ending: {name}",
+			"phrases": "Phrases you heard",
+			"asked": "You asked",
+			"next": "Next story",
+			"replay": "Replay this story",
+			"home": "Radio home"
+		},
+		"replay": {
+			"title": "Replay",
+			"play": "Play sentence",
+			"youChose": "You chose {key}: {label}",
+			"viaVoice": "By voice",
+			"viaTap": "By tap",
+			"undone": "Undone"
+		},
+		"tts": {
+			"failed": "Text only for this part — you can still tap a choice"
+		},
+		"region": {
+			"ttsDisabled": "New stories aren't available in your region yet; saved stories and programs still play"
+		},
+		"offline": "You're offline — press play once you're back",
+		"contentMissing": "This part can't be found right now. Back to the radio home — your progress is kept."
 	}
 }
