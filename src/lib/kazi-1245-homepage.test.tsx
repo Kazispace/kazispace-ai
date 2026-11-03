@@ -66,6 +66,7 @@ const FULL: Record<HomepageSite, SiteFacts> = {
     icpNumber: 'ICP1',
     psbNumber: 'PSB1',
     psbUrl: 'https://psb',
+    psbIcon: null,
     aiFilingNumber: 'AI1',
     miniProgramQr: '/qr.png',
   },
@@ -202,6 +203,14 @@ describe('KAZI-1245 the page', () => {
     expect(out.match(/src="\/brand\/kazispace-logo-horizontal\.png"/g)).toHaveLength(2);
     expect(out).not.toContain('kazispace-mark.png');
     expect(out).toMatch(/<img alt="KaziSpace" src="\/brand\/kazispace-logo-horizontal\.png"/);
+  });
+
+  it('kazispace.cn shows its public security filing number, linked to its record', async () => {
+    const out = await html('cn', true);
+    expect(out).toMatch(
+      /href="https:\/\/beian\.mps\.gov\.cn\/#\/query\/webSearch\?code=51019002010756"[^>]*data-testid="home-psb"[^>]*>川公网安备51019002010756号</
+    );
+    expect(await html('intl', true)).not.toContain('川公网安备');
   });
 
   it('production with facts still missing: no placeholder, no empty column, link or filing line', async () => {

@@ -33,6 +33,7 @@ export async function Homepage({
   const privacy = fact('privacyUrl');
   const icp = fact('icpNumber');
   const psb = fact('psbNumber');
+  const psbIcon = fact('psbIcon');
   const aiFiling = fact('aiFilingNumber');
   const qr = fact('miniProgramQr');
 
@@ -221,7 +222,14 @@ export async function Homepage({
               </a>
             )}
             {site === 'cn' && psb && (
-              <a href={fact('psbUrl') ?? 'https://beian.mps.gov.cn/'} target="_blank" rel="noreferrer" data-testid="home-psb">
+              <a
+                href={fact('psbUrl') ?? 'https://beian.mps.gov.cn/'}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1"
+                data-testid="home-psb"
+              >
+                {psbIcon && <Image src={psbIcon} alt="" width={16} height={16} />}
                 {psb}
               </a>
             )}
