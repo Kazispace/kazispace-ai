@@ -39,13 +39,13 @@ export function RouteLocaleSync() {
     if (!routeLocale || routeLocale === preference) return;
 
     // Public homepage only: `/{locale}` with no further path.
+    // Pass ?site= so Netlify previews of the China homepage are treated as cn too.
     const onHomepage = segments.length === 1;
-    if (
-      onHomepage &&
-      typeof window !== "undefined" &&
-      siteForRequest(window.location.hostname).site === "cn"
-    ) {
-      return;
+    if (onHomepage && typeof window !== "undefined") {
+      const siteParam = new URLSearchParams(window.location.search).get("site");
+      if (siteForRequest(window.location.hostname, siteParam).site === "cn") {
+        return;
+      }
     }
 
     const key = `${pathname}:${preference}`;

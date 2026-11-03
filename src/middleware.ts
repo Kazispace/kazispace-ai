@@ -100,10 +100,13 @@ export default function middleware(request: NextRequest) {
   const { locale, path } = stripLocale(pathname);
   const siteParam = request.nextUrl.searchParams.get("site");
 
-  // KAZI-1245: kazispace.cn `/` opens in Chinese. Only an explicit language pick // pragma: allowlist secret
+  const isCnSite = siteForRequest(host, siteParam).site === "cn";
+  // Locale-root homepage after stripLocale (e.g. /zh, /en) — not /zh/login.
+  const onCnHomepage = isCnSite && path === "/";
+
+  // KAZI-1245: bare / on the China site opens in Chinese. Only an explicit language pick // pragma: allowlist secret
   // (kazi_locale_manual) may divert it — not profile language, Accept-Language, or NEXT_LOCALE.
-  // Profile auto-sync was sending logged-in English profiles to /en on every visit.
-  if (pathname === "/" && siteForRequest(host, siteParam).site === "cn") {
+  if (pathname === "/" && isCnSite) {
     const manual = resolveManualRouteLocale(request);
     const dest = manual ?? "zh";
     const url = new URL(`/${dest}`, request.url);
@@ -116,14 +119,20 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(englishRedirect, request.url), 307);
   }
 
-  const targetLocale = resolveMiddlewareRouteLocale(request);
+  // On the China homepage, ignore kazi_profile_language so / → /zh is not undone on the
+  // follow-up /zh request. Non-home paths (e.g. /zh/login) still follow profile language.
+  const targetLocale = onCnHomepage
+    ? resolveManualRouteLocale(request)
+    : resolveMiddlewareRouteLocale(request);
   if (targetLocale && targetLocale !== locale) {
     const redirectUrl = new URL(
       `/${targetLocale}${path === "/" ? "" : path}`,
       request.url
     );
     redirectUrl.search = request.nextUrl.search;
-    return NextResponse.redirect(redirectUrl);
+    return onCnHomepage
+      ? noStoreRedirect(redirectUrl)
+      : NextResponse.redirect(redirectUrl);
   }
 
   if (!isPublicPath(path)) {
