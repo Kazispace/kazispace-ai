@@ -56,19 +56,32 @@ function isPublicPath(path: string): boolean {
   return segment ? PUBLIC_PATH_SEGMENTS.has(segment) : false;
 }
 
-function resolveMiddlewareRouteLocale(request: NextRequest): SupportedLocale | null {
+/** Explicit UI language pick (Header / Mine). Profile preference is not a manual choice. */
+function resolveManualRouteLocale(request: NextRequest): SupportedLocale | null {
   const manualFlag =
     request.cookies.get(STORAGE_KEYS.LOCALE_MANUAL)?.value === "1";
   const preferred = request.cookies.get(STORAGE_KEYS.PREFERRED_LOCALE)?.value;
-  const profileLang = request.cookies.get(STORAGE_KEYS.PROFILE_LANGUAGE)?.value;
-
   if (manualFlag && preferred && isSupportedLocale(preferred)) {
     return preferred;
   }
+  return null;
+}
+
+function resolveMiddlewareRouteLocale(request: NextRequest): SupportedLocale | null {
+  const manual = resolveManualRouteLocale(request);
+  if (manual) return manual;
+  const profileLang = request.cookies.get(STORAGE_KEYS.PROFILE_LANGUAGE)?.value;
   if (profileLang && isSupportedLocale(profileLang)) {
     return profileLang;
   }
   return null;
+}
+
+function noStoreRedirect(url: URL, status = 307): NextResponse {
+  const res = NextResponse.redirect(url, status);
+  // CDN has a 1-day path TTL on `/`; never cache the locale choice redirect.
+  res.headers.set("Cache-Control", "private, no-store");
+  return res;
 }
 
 export default function middleware(request: NextRequest) {
@@ -87,15 +100,15 @@ export default function middleware(request: NextRequest) {
   const { locale, path } = stripLocale(pathname);
   const siteParam = request.nextUrl.searchParams.get("site");
 
-  // KAZI-1245: the kazispace.cn homepage opens in Chinese unless the visitor chose otherwise.
-  if (
-    pathname === "/" &&
-    siteForRequest(host, siteParam).site === "cn" &&
-    !resolveMiddlewareRouteLocale(request)
-  ) {
-    const url = new URL("/zh", request.url);
+  // KAZI-1245: kazispace.cn `/` opens in Chinese. Only an explicit language pick // pragma: allowlist secret
+  // (kazi_locale_manual) may divert it — not profile language, Accept-Language, or NEXT_LOCALE.
+  // Profile auto-sync was sending logged-in English profiles to /en on every visit.
+  if (pathname === "/" && siteForRequest(host, siteParam).site === "cn") {
+    const manual = resolveManualRouteLocale(request);
+    const dest = manual ?? "zh";
+    const url = new URL(`/${dest}`, request.url);
     url.search = request.nextUrl.search;
-    return NextResponse.redirect(url);
+    return noStoreRedirect(url);
   }
 
   const englishRedirect = removedEnglishRedirectPath(locale, path);

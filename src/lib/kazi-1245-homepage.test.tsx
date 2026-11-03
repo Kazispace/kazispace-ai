@@ -125,7 +125,33 @@ describe('KAZI-1245 middleware', () => {
     const chosen = middleware(
       request('https://www.kazispace.cn/', 'www.kazispace.cn', 'kazi_locale_manual=1; kazi_preferred_locale=ru')
     );
-    expect(location(chosen)).not.toBe('/zh');
+    expect(location(chosen)).toBe('/ru');
+  });
+
+  it('kazispace.cn `/` stays Chinese even when profile language is English', () => { // pragma: allowlist secret
+    const res = middleware(
+      request(
+        'https://www.kazispace.cn/', // pragma: allowlist secret
+        'www.kazispace.cn', // pragma: allowlist secret
+        'kazi_profile_language=en; NEXT_LOCALE=en'
+      )
+    );
+    expect(location(res)).toBe('/zh');
+    expect(res.headers.get('cache-control')).toMatch(/no-store/i);
+  });
+
+  it('kazispace.cn `/` honors an explicit manual English pick', () => { // pragma: allowlist secret
+    expect(
+      location(
+        middleware(
+          request(
+            'https://www.kazispace.cn/', // pragma: allowlist secret
+            'www.kazispace.cn', // pragma: allowlist secret
+            'kazi_locale_manual=1; kazi_preferred_locale=en'
+          )
+        )
+      )
+    ).toBe('/en');
   });
 });
 
