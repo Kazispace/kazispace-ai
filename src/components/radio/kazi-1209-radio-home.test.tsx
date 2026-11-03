@@ -156,7 +156,22 @@ describe('Radio home', () => {
     await act(async () => second.click());
     await act(async () => (q('radio-save-limit-replace') as HTMLButtonElement).click());
     expect(m.start.mock.calls[1][2]).toBe('sv2');
+    // Save limit step 3: the replace uses the same request id as the first attempt.
+    expect(m.start.mock.calls[1][1]).toBe(m.start.mock.calls[0][1]);
     expect(m.push).toHaveBeenCalledWith('/zh/radio/story/sv9');
+  });
+
+  it('save-limit sheet cancelled: a later start is a new attempt with a new request id', async () => {
+    const three = [SAVE, { ...SAVE, save_id: 'sv2', title: 'Second' }, { ...SAVE, save_id: 'sv3', title: 'Third' }];
+    m.home.mockResolvedValue({ success: true, data: { ...HOME, continue_listening: three } });
+    m.start.mockResolvedValue({ success: false, status: 409, errorCode: 'save_limit' });
+    await home();
+    await act(async () => (q('radio-story-start') as HTMLButtonElement).click());
+    const cancel = Array.from(q('radio-save-limit')!.querySelectorAll('button')).find((b) => b.textContent === 'radio.cancel') as HTMLButtonElement;
+    await act(async () => cancel.click());
+    expect(q('radio-save-limit')).toBeNull();
+    await act(async () => (q('radio-story-start') as HTMLButtonElement).click());
+    expect(m.start.mock.calls[1][1]).not.toBe(m.start.mock.calls[0][1]);
   });
 
   it('a story just taken down: toast, and the home reloads', async () => {
