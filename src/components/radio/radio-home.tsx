@@ -43,7 +43,8 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
   const [notice, setNotice] = useState<RadioNotice | null>(null);
   const [limitFor, setLimitFor] = useState<RadioStorySummary | null>(null);
   const [savingBand, setSavingBand] = useState(false);
-  // A retry after a network error reuses the request id, so it is never counted twice.
+  // A retry after a network error, and the save-limit replace, reuse the first attempt's request id
+  // (personal-radio.md, Save limit step 3), so a start is never counted twice.
   const pendingRequest = useRef<{ storyId: string; requestId: string } | null>(null);
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
 
   async function start(story: RadioStorySummary, overwriteSaveId?: string) {
     if (starting) return;
-    const reuse = pendingRequest.current?.storyId === story.story_id && !overwriteSaveId;
+    const reuse = pendingRequest.current?.storyId === story.story_id;
     const requestId = reuse && pendingRequest.current ? pendingRequest.current.requestId : newRadioRequestId('start');
     pendingRequest.current = { storyId: story.story_id, requestId };
     setStarting(story.story_id);
@@ -73,11 +74,12 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
       showToast(tStates('retry'), 'error');
       return;
     }
-    pendingRequest.current = null;
     if (res.status === 409 && res.errorCode === 'save_limit') {
+      // Kept for the replace, which must use the same request id as this first attempt.
       setLimitFor(story);
       return;
     }
+    pendingRequest.current = null;
     if (res.status === 409 && res.errorCode === 'story_unavailable') {
       showToast(t('home.storyUnavailable'));
       void refresh();
@@ -243,7 +245,11 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
       {limitFor ? (
         <SaveLimitSheet
           saves={home.continue_listening}
-          onCancel={() => setLimitFor(null)}
+          onCancel={() => {
+            // Cancel: nothing changes and nothing is charged; a later start is a new attempt.
+            pendingRequest.current = null;
+            setLimitFor(null);
+          }}
           onReplace={(saveId) => {
             const story = limitFor;
             setLimitFor(null);
