@@ -6,6 +6,7 @@ import { Archive, ArchiveRestore, ChevronDown, FileText, Loader2, RefreshCw, X }
 import { useTranslations } from 'next-intl';
 
 import { StudioGetStarted } from '@/components/workspace/studio-get-started';
+import { StudioRadio } from '@/components/workspace/studio-radio';
 import { HUB_ASSET_GRID_CLASS } from '@/components/workspace/workspace-side-rail-hub';
 import { useStudioGetStarted } from '@/hooks/use-studio-get-started';
 import { useAuthReady } from '@/hooks/use-auth-ready';
@@ -64,7 +65,9 @@ const CATEGORY_TONE: Record<WorkspaceAssetCategory, AssetTone> = {
  * ❌ Former (D21): one list per kind, a kind with no items left out, an empty Studio
  * pointing back to Chat, and job listings not in Studio.
  * ✅ Now: the five sections are the layout, so an empty one says so in its own line.
- * 个人电台 and 个人教室 are placeholders. 求职历史 holds mock interview results plus
+ * 个人教室 is a placeholder. 个人电台 is the way into the radio for a Chinese interface while the
+ * radio is on and open to the user (KAZI-1209, D28: `StudioRadio`); ❌ former: it was a placeholder
+ * for everyone (KAZIOP-2). 求职历史 holds mock interview results plus
  * a link to job recommendations; the backend keeps no job-search history yet.
  *
  * Unchanged: a resume shows how often it was opened and can be archived; archived
@@ -219,7 +222,7 @@ export function WorkspaceAssetRailHub({
       </StudioSection>
 
       <StudioSection title={tStudio('sections.radio')}>
-        <StudioComingSoon label={tStudio('comingSoon')} testId="studio-radio" />
+        <StudioRadio locale={locale} authenticated={authReady && authenticated} />
       </StudioSection>
 
       <StudioSection title={tStudio('sections.classroom')}>
@@ -326,7 +329,7 @@ function StudioSection({
   );
 }
 
-/** A section that exists in the layout but has nothing behind it yet (个人电台 · 个人教室). */
+/** A section that exists in the layout but has nothing behind it yet (个人教室). */
 function StudioComingSoon({ label, testId }: { label: string; testId: string }) {
   return (
     <p data-testid={testId} className="text-xs text-workspace-muted">

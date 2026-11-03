@@ -10,6 +10,7 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { WorkspaceAsset, WorkspaceAssetCategory } from '@/types/workspace-asset';
@@ -105,9 +106,14 @@ let root: Root;
 const onNavigate = vi.fn();
 
 function render() {
+  // The app renders Studio inside QueryClientProvider (components/providers.tsx); the radio section
+  // (KAZI-1209) reads its status through react-query.
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   act(() => {
     root.render(
-      <WorkspaceAssetRailHub locale="en" showCloseButton={false} onNavigate={onNavigate} />
+      <QueryClientProvider client={client}>
+        <WorkspaceAssetRailHub locale="en" showCloseButton={false} onNavigate={onNavigate} />
+      </QueryClientProvider>
     );
   });
 }
@@ -295,7 +301,11 @@ describe('Studio', () => {
       const onOpenAsset = vi.fn();
       state.data = { resume: { items: [resume], count: 1, history: 0 } };
       act(() => {
-        root.render(<WorkspaceAssetRailHub locale="en" showCloseButton={false} onOpenAsset={onOpenAsset} />);
+        root.render(
+          <QueryClientProvider client={new QueryClient()}>
+            <WorkspaceAssetRailHub locale="en" showCloseButton={false} onOpenAsset={onOpenAsset} />
+          </QueryClientProvider>
+        );
       });
       expect(api.views).not.toHaveBeenCalled();
       const open = container.querySelector('button[title="Data analyst"]') as HTMLButtonElement;
