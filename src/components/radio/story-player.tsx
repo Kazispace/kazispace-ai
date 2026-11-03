@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
+import { AnswerCaptions, CareCard, NoticeCard, VoiceLine, explainQuestion } from '@/components/radio/ask-parts';
 import { Captions, PlayerControls, PlayerShell } from '@/components/radio/player-parts';
 import {
   BlockedHelpDialog,
@@ -25,9 +26,9 @@ import {
   newRadioRequestId,
   patchRadioPrefs,
   postRadioTurn,
-  postRadioTurnAudio,
   radioAccessOf,
 } from '@/lib/radio/api';
+import { postRadioTurnAudio } from '@/lib/radio/player-api';
 import { isRadioLocale, radioHomeHref } from '@/lib/radio/routes';
 import {
   DEFAULT_LISTEN_WINDOW_MS,
@@ -383,6 +384,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
         return;
       }
       if (movedOn) return; // the new part plays from its first sentence
+      // Limit: the card waits for the user; closing it carries the story on (onNoticeClose).
+      if (n?.kind === 'quota') return;
       if (n?.kind === 'retry') {
         if (n.code === 'input_blocked') {
           // Can't take that: no strike; at a choice point the window reopens without reading again.
@@ -627,6 +630,28 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     else player.play();
   };
 
+  /**
+   * Asking a question (Player · Asking a question): a long press on a sentence asks the host to
+   * explain it. The voice pauses; the answer plays; then the story carries on from where it stopped.
+   */
+  const onExplain = (i: number) => {
+    tappedHere.current = true;
+    if (inFlight || !segments[i]) return;
+    mic.cancel();
+    wasPlaying.current = true;
+    player.pause();
+    answerPlayer.pause();
+    setVoiceLine(null);
+    void sendTurn({ kind: 'text', text: explainQuestion(t('player.explain'), segments[i].text), position: { seq: segments[i].seq } });
+  };
+
+  /** Closing a notice card goes back to where the user was; after a question, the story carries on. */
+  const onNoticeClose = () => {
+    const wasQuestion = notice?.kind === 'quota';
+    setNotice(null);
+    if (wasQuestion) carryOn();
+  };
+
   const onPlay = () => {
     tappedHere.current = true;
     mic.cancel();
@@ -730,52 +755,21 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
             ) : null}
           </div>
         ) : null}
-        <Captions sentences={captions} activeIndex={Math.min(player.index, Math.max(0, segLen - 1))} playing={player.playing && player.index < segLen} />
+        <Captions
+          sentences={captions}
+          activeIndex={Math.min(player.index, Math.max(0, segLen - 1))}
+          playing={player.playing && player.index < segLen}
+          onExplain={ended ? undefined : onExplain}
+          explainDisabled={inFlight}
+        />
 
-        {answer ? (
-          <ol className="mt-3 flex flex-col gap-2" data-testid="radio-answer">
-            {answerSentences.map((s, i) => (
-              <li
-                key={`${s.seq}-${i}`}
-                className={cn(
-                  'rounded-lg border-l-4 border-primary/40 px-3 py-2 text-base leading-relaxed',
-                  i === answerPlayer.index ? 'bg-primary/10 text-workspace-text' : 'text-workspace-secondary'
-                )}
-              >
-                {s.text}
-              </li>
-            ))}
-          </ol>
-        ) : null}
+        {answer ? <AnswerCaptions sentences={answerSentences} activeIndex={answerPlayer.index} /> : null}
 
-        {care ? (
-          <div role="alertdialog" aria-live="assertive" data-testid="radio-care" className="mt-4 rounded-xl border border-gray-300 bg-white p-4 text-sm text-workspace-text shadow-sm">
-            <p className="whitespace-pre-line">{care.text}</p>
-            <div className="mt-3 flex gap-2">
-              <button type="button" onClick={onContinue} className="flex-1 rounded-lg border border-gray-300 px-3 py-2">
-                {t('notice.keepListening')}
-              </button>
-              <button type="button" onClick={() => setCare(null)} className="flex-1 rounded-lg border border-gray-300 px-3 py-2">
-                {t('notice.close')}
-              </button>
-            </div>
-          </div>
-        ) : null}
+        {care ? <CareCard notice={care} onKeepListening={onContinue} onClose={() => setCare(null)} /> : null}
 
-        {notice?.text ? (
-          <div role="status" data-testid="radio-notice" className="mt-4 flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            <p>{notice.text}</p>
-            <button type="button" onClick={() => setNotice(null)} className="shrink-0 text-xs underline">
-              {t('notice.close')}
-            </button>
-          </div>
-        ) : null}
+        {notice ? <NoticeCard notice={notice} onClose={onNoticeClose} /> : null}
 
-        {voiceLine?.text ? (
-          <p role="status" data-testid="radio-voice-line" className="mt-4 text-sm text-workspace-secondary">
-            {voiceLine.text}
-          </p>
-        ) : null}
+        <VoiceLine text={voiceLine?.text ?? null} />
 
         {consentOpen ? <ConsentCard onAllow={() => void onConsentAllow()} onDeny={onConsentDeny} /> : null}
 

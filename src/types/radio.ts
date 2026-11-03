@@ -198,3 +198,13 @@ export interface RadioProgramDetail {
   duration_ms: number;
   segments: RadioProgramSegment[];
 }
+
+/** `POST programs/{program_id}/ask` and `/ask/audio` (personal-radio.md, Data · A program). */
+export interface RadioProgramAskResponse {
+  request_id: string;
+  answer?: { segments: RadioAnswerSegment[] } | null;
+  parsed?: RadioParsed | null;
+  notice?: RadioNotice | null;
+  degraded?: { node: string; reason: string }[];
+  ai_calls_used: number;
+}
