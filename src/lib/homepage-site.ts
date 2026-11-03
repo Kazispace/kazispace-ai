@@ -5,9 +5,13 @@
  * The facts below are still to come from Owen. Until every required fact of a
  * production site is filled in, that site keeps today's behaviour: no homepage,
  * and the main chat stays open to signed-out visitors. A placeholder is never shown
- * on kazispace.ai or www.kazispace.cn. Preview hosts (Netlify previews, localhost)
- * show the homepage with its placeholders so it can be reviewed; `?site=cn` there
- * previews the kazispace.cn version.
+ * on kazispace.ai or www.kazispace.cn. Preview hosts (Netlify deploy previews and branch
+ * deploys, localhost) show the homepage with its placeholders so it can be reviewed;
+ * `?site=cn` there previews the kazispace.cn version.
+ *
+ * The gate fails closed: only a host that is positively a preview counts as one. Any
+ * other host (a CDN or load balancer forwarding its own name, the Netlify site's own
+ * address, a future domain) behaves as production for the site its domain names.
  *
  * When a fact arrives, fill it in here. When every required fact of a site is in,
  * that site's homepage goes live and its guest chat goes, in the same deploy.
@@ -112,12 +116,15 @@ const REQUIRED: Record<HomepageSite, (keyof SiteFacts)[]> = {
   ],
 };
 
-const PRODUCTION_HOSTS: Record<string, HomepageSite> = {
-  'kazispace.ai': 'intl',
-  'www.kazispace.ai': 'intl',
-  'kazispace.cn': 'cn', // pragma: allowlist secret
-  'www.kazispace.cn': 'cn', // pragma: allowlist secret
-};
+/** Hosts that show the homepage with placeholders. Everything else is production. */
+const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+/** Netlify deploy previews and branch deploys: `deploy-preview-268--kazispace.netlify.app`, `owen--kazispace.netlify.app`. */
+const NETLIFY_PREVIEW = /^[a-z0-9-]+--[a-z0-9-]+\.netlify\.app$/;
+
+export function isPreviewHost(host: string | null | undefined): boolean {
+  const h = normalizeHost(host);
+  return LOCAL_HOSTS.has(h) || NETLIFY_PREVIEW.test(h);
+}
 
 export interface HomepageRequestSite {
   site: HomepageSite;
@@ -126,17 +133,22 @@ export interface HomepageRequestSite {
 }
 
 export function normalizeHost(host: string | null | undefined): string {
-  return (host ?? '').split(':')[0].trim().toLowerCase();
+  const h = (host ?? '').trim().toLowerCase();
+  if (h.startsWith('[')) return h.slice(0, h.indexOf(']') + 1);
+  return h.split(':')[0];
 }
 
 export function siteForRequest(
   host: string | null | undefined,
   siteParam?: string | string[] | null
 ): HomepageRequestSite {
-  const known = PRODUCTION_HOSTS[normalizeHost(host)];
-  if (known) return { site: known, production: true };
-  const param = Array.isArray(siteParam) ? siteParam[0] : siteParam;
-  return { site: param === 'cn' ? 'cn' : 'intl', production: false };
+  const h = normalizeHost(host);
+  if (isPreviewHost(h)) {
+    const param = Array.isArray(siteParam) ? siteParam[0] : siteParam;
+    return { site: param === 'cn' ? 'cn' : 'intl', production: false };
+  }
+  // Production, including any host not recognised as a preview: the site its domain names.
+  return { site: h === 'kazispace.cn' || h.endsWith('.kazispace.cn') || h.endsWith('.cn') ? 'cn' : 'intl', production: true };
 }
 
 export function missingFacts(site: HomepageSite, facts: Record<HomepageSite, SiteFacts> = SITE_FACTS): (keyof SiteFacts)[] {

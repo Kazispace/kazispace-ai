@@ -80,6 +80,21 @@ describe('KAZI-1245 which site, and is the homepage live', () => {
     expect(siteForRequest(PREVIEW, 'cn')).toEqual({ site: 'cn', production: false });
     // ?site= is ignored on production hosts.
     expect(siteForRequest('kazispace.ai', 'cn').site).toBe('intl');
+    expect(siteForRequest('deploy-preview-268--kazispace.netlify.app')).toEqual({ site: 'intl', production: false });
+    expect(siteForRequest('localhost:3000', 'cn')).toEqual({ site: 'cn', production: false });
+  });
+
+  // Review of #268: the gate fails closed. A host not positively a preview behaves as production.
+  it.each([
+    ['origin-sae.internal.example', 'intl'],
+    ['kazispace.netlify.app', 'intl'],
+    ['cdn.kazispace.cn', 'cn'],
+    ['slb.example.cn', 'cn'],
+    ['', 'intl'],
+  ])('unknown host %s is production (%s): no placeholders, guest chat kept', (host, site) => {
+    expect(siteForRequest(host, 'cn')).toEqual({ site, production: true });
+    expect(homepageLive(host, 'cn')).toBe(false);
+    expect(location(middleware(request('https://x.test/en/chat', host)))).toBeNull();
   });
 
   it('a production site stays off until every required fact is in; previews are always on', () => {
@@ -136,7 +151,8 @@ describe('KAZI-1245 the page', () => {
     const out = await html('intl');
     expect(out).toContain('home.signUp');
     expect(out).toContain('home.logIn');
-    expect(out).toContain('href="/en/login"');
+    // Sign-in from the homepage lands in Space.
+    expect(out).toMatch(/href="\/en\/login\?redirect=%2Fen%2F(spaces|chat)"/);
     expect(out).not.toContain('home.openApp');
   });
 
@@ -147,9 +163,13 @@ describe('KAZI-1245 the page', () => {
     const root = createRoot(host);
     for (const placement of ['bar', 'hero', 'closing'] as const) {
       act(() => root.render(<HomeCtas locale="en" placement={placement} />));
-      const links = Array.from(host.querySelectorAll('a'));
-      expect(links.map((a) => a.textContent)).toEqual(['home.openApp']);
-      expect(links[0].getAttribute('href')).toMatch(/^\/en\/(spaces|chat)/);
+      // The signed-out pair stays laid out, hidden and out of the tab order, so the slot keeps its width.
+      const visible = Array.from(host.querySelectorAll('a')).filter((a) => !a.closest('[aria-hidden="true"]'));
+      expect(visible.map((a) => a.textContent)).toEqual(['home.openApp']);
+      expect(visible[0].getAttribute('href')).toMatch(/^\/en\/(spaces|chat)$/);
+      const hidden = Array.from(host.querySelectorAll('[aria-hidden="true"] a'));
+      expect(hidden.length).toBeGreaterThan(0);
+      expect(hidden.every((a) => a.getAttribute('tabindex') === '-1')).toBe(true);
     }
     act(() => root.unmount());
   });

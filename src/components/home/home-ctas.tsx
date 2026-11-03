@@ -30,29 +30,27 @@ export function HomeCtas({
   const authReady = useAuthStore((s) => s.authReady);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const signedIn = authReady && isLoggedIn;
-  const login = `/${locale}/login`;
+  const space = topLevelHref(locale, 'space');
+  // After sign-in the visitor lands in Space (Homepage 0.1, "Calls to action").
+  const login = `/${locale}/login?redirect=${encodeURIComponent(space)}`;
+  // Hidden but laid out: keeps the slot's width so nothing moves when the session is known.
+  const hiddenProps = { 'aria-hidden': true, tabIndex: -1 } as const;
 
-  if (signedIn) {
-    return (
-      <div className="flex items-center gap-2" data-testid={`home-cta-${placement}`}>
-        <Link href={topLevelHref(locale, 'space')} className={PRIMARY}>
-          {t('openApp')}
-        </Link>
-      </div>
-    );
-  }
-
-  return (
+  const signedOut = (
     <div
-      className={cn('flex items-center', placement === 'bar' ? 'gap-2' : 'gap-3')}
-      data-testid={`home-cta-${placement}`}
+      className={cn(
+        'col-start-1 row-start-1 flex items-center',
+        placement === 'bar' ? 'gap-2' : 'gap-3',
+        signedIn && 'invisible'
+      )}
+      aria-hidden={signedIn || undefined}
     >
       {placement === 'hero' && (
         <>
-          <Link href={login} className={PRIMARY}>
+          <Link href={login} className={PRIMARY} {...(signedIn ? hiddenProps : {})}>
             {t('signUp')}
           </Link>
-          <Link href={login} className={SECONDARY}>
+          <Link href={login} className={SECONDARY} {...(signedIn ? hiddenProps : {})}>
             {t('logIn')}
           </Link>
         </>
@@ -61,22 +59,36 @@ export function HomeCtas({
         <>
           <Link
             href={login}
-            className={cn(
-              SECONDARY,
-              'max-md:border-transparent max-md:bg-transparent max-md:px-3'
-            )}
+            className={cn(SECONDARY, 'max-md:border-transparent max-md:bg-transparent max-md:px-3')}
+            {...(signedIn ? hiddenProps : {})}
           >
             {t('logIn')}
           </Link>
-          <Link href={login} className={PRIMARY}>
+          <Link href={login} className={PRIMARY} {...(signedIn ? hiddenProps : {})}>
             {t('signUp')}
           </Link>
         </>
       )}
       {placement === 'closing' && (
-        <Link href={login} className={PRIMARY}>
+        <Link href={login} className={PRIMARY} {...(signedIn ? hiddenProps : {})}>
           {t('signUp')}
         </Link>
+      )}
+    </div>
+  );
+
+  return (
+    <div
+      className={cn('grid', placement === 'bar' ? 'justify-items-end' : placement === 'closing' ? 'justify-items-center' : 'justify-items-start')}
+      data-testid={`home-cta-${placement}`}
+    >
+      {signedOut}
+      {signedIn && (
+        <div className="col-start-1 row-start-1 flex items-center">
+          <Link href={space} className={PRIMARY}>
+            {t('openApp')}
+          </Link>
+        </div>
       )}
     </div>
   );

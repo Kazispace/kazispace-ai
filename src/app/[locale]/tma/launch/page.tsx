@@ -99,7 +99,7 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
         <p className="text-sm text-gray-600">{error}</p>
         <div className="flex flex-col gap-2 w-full max-w-xs">
           <Button onClick={() => router.push(`/${locale}/login`)}>{t('useOtpLogin')}</Button>
-          <Button onClick={() => router.push(`/${locale}/chat`)} variant="secondary">
+          <Button onClick={() => router.push(`/${locale}`)} variant="secondary">
             {t('continueInBrowser')}
           </Button>
         </div>
@@ -112,7 +112,7 @@ export default function TmaLaunchPage({ params }: TmaLaunchPageProps) {
       <span className="text-5xl">✈️</span>
       <h1 className="text-xl font-bold text-kazi-navy">{t('openInTelegramTitle')}</h1>
       <p className="text-sm text-gray-600 leading-relaxed">{t('openInTelegramDesc')}</p>
-      <Button onClick={() => router.push(`/${locale}/chat`)} variant="secondary">
+      <Button onClick={() => router.push(`/${locale}`)} variant="secondary">
         {t('continueInBrowser')}
       </Button>
     </div>
