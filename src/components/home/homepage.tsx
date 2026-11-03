@@ -12,11 +12,28 @@ import { factFor, miniProgramFor, type HomepageSite } from '@/lib/homepage-site'
  * Not a chat and no product functions: what KaziSpace is, the way in, and the company,
  * contact and legal facts for the site it is served on.
  */
-export async function Homepage({ locale, site }: { locale: string; site: HomepageSite }) {
+export async function Homepage({
+  locale,
+  site,
+  production,
+}: {
+  locale: string;
+  site: HomepageSite;
+  /** Production leaves a missing fact out; a preview shows its placeholder (Homepage 0.2). */
+  production: boolean;
+}) {
   const t = await getTranslations({ locale, namespace: 'home' });
   const mini = miniProgramFor(site);
-  const fact = (key: Parameters<typeof factFor>[1]) => factFor(site, key);
-  const company = fact('companyName') ?? '';
+  const fact = (key: Parameters<typeof factFor>[1]) => factFor(site, key, production);
+  const company = fact('companyName');
+  const address = fact('address');
+  const email = fact('email');
+  const phone = fact('phone');
+  const terms = fact('termsUrl');
+  const privacy = fact('privacyUrl');
+  const icp = fact('icpNumber');
+  const psb = fact('psbNumber');
+  const aiFiling = fact('aiFilingNumber');
   const qr = fact('miniProgramQr');
 
   // Owen, 2026-11-03: "only mention ET, Private audio station for now" (both sites).
@@ -161,32 +178,41 @@ export async function Homepage({ locale, site }: { locale: string; site: Homepag
                 <LocaleSwitcher locale={locale} variant="compact" />
               </div>
             </div>
-            <FooterColumn title={t('footer.company')}>
-              <span>{company}</span>
-              <span>{fact('address')}</span>
-            </FooterColumn>
-            <FooterColumn title={t('footer.contact')}>
-              {fact('email') && <a href={`mailto:${fact('email')}`}>{fact('email')}</a>}
-              {fact('phone') && <span>{fact('phone')}</span>}
-            </FooterColumn>
-            <FooterColumn title={t('footer.legal')}>
-              <a href={fact('termsUrl') ?? '#'}>{t('footer.terms')}</a>
-              <a href={fact('privacyUrl') ?? '#'}>{t('footer.privacy')}</a>
-            </FooterColumn>
+            {/* A column, link or line whose fact is still missing is left out (Homepage 0.2). */}
+            {(company || address) && (
+              <FooterColumn title={t('footer.company')}>
+                {company && <span>{company}</span>}
+                {address && <span>{address}</span>}
+              </FooterColumn>
+            )}
+            {(email || phone) && (
+              <FooterColumn title={t('footer.contact')}>
+                {email && <a href={`mailto:${email}`}>{email}</a>}
+                {phone && <span>{phone}</span>}
+              </FooterColumn>
+            )}
+            {(terms || privacy) && (
+              <FooterColumn title={t('footer.legal')}>
+                {terms && <a href={terms}>{t('footer.terms')}</a>}
+                {privacy && <a href={privacy}>{t('footer.privacy')}</a>}
+              </FooterColumn>
+            )}
           </div>
           <div className="flex flex-col gap-1 text-xs text-workspace-secondary">
-            <span>{t('footer.copyright', { year: new Date().getFullYear(), company })}</span>
-            {site === 'cn' && (
-              <>
-                <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer" data-testid="home-icp">
-                  {fact('icpNumber')}
-                </a>
-                <a href={fact('psbUrl') ?? '#'} target="_blank" rel="noreferrer" data-testid="home-psb">
-                  {fact('psbNumber')}
-                </a>
-                <span data-testid="home-ai-filing">{fact('aiFilingNumber')}</span>
-              </>
+            <span>
+              {t('footer.copyright', { year: new Date().getFullYear(), company: company ?? 'KaziSpace' })}
+            </span>
+            {site === 'cn' && icp && (
+              <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer" data-testid="home-icp">
+                {icp}
+              </a>
             )}
+            {site === 'cn' && psb && (
+              <a href={fact('psbUrl') ?? 'https://beian.mps.gov.cn/'} target="_blank" rel="noreferrer" data-testid="home-psb">
+                {psb}
+              </a>
+            )}
+            {site === 'cn' && aiFiling && <span data-testid="home-ai-filing">{aiFiling}</span>}
           </div>
         </div>
       </footer>

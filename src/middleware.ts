@@ -7,7 +7,7 @@ import {
   isSupportedLocale,
   type SupportedLocale,
 } from "./lib/constants";
-import { homepageLive, siteForRequest } from "./lib/homepage-site";
+import { siteForRequest } from "./lib/homepage-site";
 
 const intlMiddleware = createMiddleware({
   locales: [...SUPPORTED_LOCALES],
@@ -31,16 +31,11 @@ export function removedEnglishRedirectPath(locale: string, path: string): string
     : null;
 }
 
-const PUBLIC_PATH_SEGMENTS = new Set(["login", "tma"]);
-
 /**
- * KAZI-1245 (kazispace-ui D30): where the public homepage is live, it is the only
- * signed-out page and there is no guest chat. Until a production site's homepage
- * facts are in (`lib/homepage-site.ts`), that site keeps its guest chat.
+ * KAZI-1245 (kazispace-ui D30): the public homepage at the locale root is the only
+ * signed-out page; there is no guest chat, so `chat` is not public.
  */
-export function guestChatOpen(host: string, siteParam: string | null): boolean {
-  return !homepageLive(host, siteParam);
-}
+const PUBLIC_PATH_SEGMENTS = new Set(["login", "tma"]);
 
 function stripLocale(pathname: string): { locale: string; path: string } {
   const segments = pathname.split("/").filter(Boolean);
@@ -55,11 +50,10 @@ function stripLocale(pathname: string): { locale: string; path: string } {
   return { locale: DEFAULT_LOCALE, path: pathname };
 }
 
-function isPublicPath(path: string, guestChat: boolean): boolean {
+function isPublicPath(path: string): boolean {
   if (path === "/") return true;
   const segment = path.split("/").filter(Boolean)[0];
-  if (!segment) return false;
-  return PUBLIC_PATH_SEGMENTS.has(segment) || (guestChat && segment === "chat");
+  return segment ? PUBLIC_PATH_SEGMENTS.has(segment) : false;
 }
 
 function resolveMiddlewareRouteLocale(request: NextRequest): SupportedLocale | null {
@@ -97,7 +91,6 @@ export default function middleware(request: NextRequest) {
   if (
     pathname === "/" &&
     siteForRequest(host, siteParam).site === "cn" &&
-    homepageLive(host, siteParam) &&
     !resolveMiddlewareRouteLocale(request)
   ) {
     const url = new URL("/zh", request.url);
@@ -120,7 +113,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (!isPublicPath(path, guestChatOpen(host, siteParam))) {
+  if (!isPublicPath(path)) {
     const token = request.cookies.get(STORAGE_KEYS.AUTH_COOKIE)?.value;
     if (!token) {
       const loginUrl = new URL(`/${locale}/login`, request.url);

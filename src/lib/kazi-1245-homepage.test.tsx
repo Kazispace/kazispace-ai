@@ -2,10 +2,10 @@
  * @vitest-environment jsdom
  */
 /**
- * KAZI-1245 (kazispace-ui Homepage 0.1, D30): a public homepage at the locale root for
- * everyone; where it is live there is no guest chat. Production sites go live only once
- * their company facts are in, so a placeholder never reaches kazispace.ai or
- * www.kazispace.cn; preview hosts show the homepage with its placeholders.
+ * KAZI-1245 (kazispace-ui Homepage 0.2, D30): a public homepage at the locale root for
+ * everyone, on every host, and no guest chat. It is live before the company facts are in
+ * (Owen, 2026-11-03); on production hosts a missing fact is left out, and only preview
+ * hosts show placeholders.
  */
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -34,8 +34,7 @@ import { Homepage } from '@/components/home/homepage';
 import { HomeCtas } from '@/components/home/home-ctas';
 import {
   SITE_FACTS,
-  homepageLive,
-  missingFacts,
+  factFor,
   siteForRequest,
   type HomepageSite,
   type SiteFacts,
@@ -84,57 +83,47 @@ describe('KAZI-1245 which site, and is the homepage live', () => {
     expect(siteForRequest('localhost:3000', 'cn')).toEqual({ site: 'cn', production: false });
   });
 
-  // Review of #268: the gate fails closed. A host not positively a preview behaves as production.
+  // Review of #268: placeholders fail closed. A host not positively a preview is production.
   it.each([
     ['origin-sae.internal.example', 'intl'],
     ['kazispace.netlify.app', 'intl'],
     ['cdn.kazispace.cn', 'cn'],
     ['slb.example.cn', 'cn'],
     ['', 'intl'],
-  ])('unknown host %s is production (%s): no placeholders, guest chat kept', (host, site) => {
+  ])('unknown host %s is production (%s)', (host, site) => {
     expect(siteForRequest(host, 'cn')).toEqual({ site, production: true });
-    expect(homepageLive(host, 'cn')).toBe(false);
-    expect(location(middleware(request('https://x.test/en/chat', host)))).toBeNull();
   });
 
-  it('a production site stays off until every required fact is in; previews are always on', () => {
-    expect(missingFacts('intl').length).toBeGreaterThan(0);
-    expect(homepageLive('kazispace.ai')).toBe(false);
-    expect(homepageLive('www.kazispace.cn')).toBe(false);
-    expect(homepageLive(PREVIEW)).toBe(true);
-    expect(homepageLive('kazispace.ai', null, FULL)).toBe(true);
-    expect(homepageLive('www.kazispace.cn', null, FULL)).toBe(true);
-    // The .cn site also needs its generative AI service filing number.
-    expect(homepageLive('www.kazispace.cn', null, { ...FULL, cn: { ...FULL.cn, aiFilingNumber: null } })).toBe(false);
-    // The phone number is optional.
-    expect(missingFacts('intl', FULL)).toEqual([]);
+  it('a missing fact: placeholder on a preview, nothing in production; a filled fact everywhere', () => {
+    expect(factFor('cn', 'icpNumber', false)).toBe('[ICP备案号]');
+    expect(factFor('cn', 'icpNumber', true)).toBeNull();
+    expect(factFor('intl', 'companyName', true)).toBeNull();
+    expect(factFor('cn', 'icpNumber', true, FULL)).toBe('ICP1');
+    expect(factFor('intl', 'companyName', false, FULL)).toBe('Co');
   });
 });
 
 describe('KAZI-1245 middleware', () => {
-  it('where the homepage is live, guest chat goes: /chat signed out → sign-in, back to /chat after', () => {
-    const res = middleware(request(`https://${PREVIEW}/en/chat`, PREVIEW));
-    expect(location(res)).toBe('/en/login?redirect=%2Fen%2Fchat');
-  });
-
-  it('a production site without its facts keeps its guest chat', () => {
-    const res = middleware(request('https://kazispace.ai/en/chat', 'kazispace.ai'));
-    expect(location(res)).toBeNull();
-  });
+  it.each([PREVIEW, 'kazispace.ai', 'www.kazispace.cn', 'origin-sae.internal.example'])(
+    'no guest chat on %s: /chat signed out → sign-in, back to /chat after',
+    (host) => {
+      expect(location(middleware(request(`https://${host}/en/chat`, host)))).toBe('/en/login?redirect=%2Fen%2Fchat');
+    }
+  );
 
   it('the homepage itself is public', () => {
-    const res = middleware(request(`https://${PREVIEW}/en`, PREVIEW));
-    expect(location(res)).toBeNull();
+    for (const host of [PREVIEW, 'kazispace.ai', 'www.kazispace.cn']) {
+      expect(location(middleware(request(`https://${host}/en`, host)))).toBeNull();
+    }
   });
 
   it('the kazispace.cn homepage opens in Chinese unless the visitor chose a language', () => {
+    expect(location(middleware(request('https://www.kazispace.cn/', 'www.kazispace.cn')))).toBe('/zh');
     expect(location(middleware(request(`https://${PREVIEW}/?site=cn`, PREVIEW)))).toBe('/zh?site=cn');
     const chosen = middleware(
-      request(`https://${PREVIEW}/?site=cn`, PREVIEW, 'kazi_locale_manual=1; kazi_preferred_locale=ru')
+      request('https://www.kazispace.cn/', 'www.kazispace.cn', 'kazi_locale_manual=1; kazi_preferred_locale=ru')
     );
-    expect(location(chosen)).not.toBe('/zh?site=cn');
-    // Not live on the production .cn host yet: today's behaviour.
-    expect(location(middleware(request('https://www.kazispace.cn/', 'www.kazispace.cn')))).not.toBe('/zh');
+    expect(location(chosen)).not.toBe('/zh');
   });
 });
 
@@ -143,8 +132,8 @@ describe('KAZI-1245 the page', () => {
     useAuthStore.setState({ authReady: true, isLoggedIn: false, user: null, token: null });
   });
 
-  async function html(site: HomepageSite) {
-    return renderToStaticMarkup(await Homepage({ locale: 'en', site }));
+  async function html(site: HomepageSite, production = false) {
+    return renderToStaticMarkup(await Homepage({ locale: 'en', site, production }));
   }
 
   it('signed out: Sign up and Log in to the sign-in screen, no Open KaziSpace', async () => {
@@ -206,5 +195,22 @@ describe('KAZI-1245 the page', () => {
     expect(out).toMatch(/href="https:\/\/beian\.miit\.gov\.cn\/"[^>]*data-testid="home-icp"/);
     expect(out).toContain('[ICP备案号]');
     expect(out).toContain('[生成式AI服务备案号]');
+  });
+
+  it('production with facts still missing: no placeholder, no empty column, link or filing line', async () => {
+    for (const site of ['intl', 'cn'] as const) {
+      const out = await html(site, true);
+      expect(out).not.toMatch(/\[[^\]]*(·|备案|公司|联系|QR)[^\]]*\]/);
+      expect(out).not.toContain('home.footer.company');
+      expect(out).not.toContain('home.footer.contact');
+      expect(out).not.toContain('home.footer.legal');
+      expect(out).not.toContain('data-testid="home-icp"');
+      expect(out).not.toContain('data-testid="home-ai-filing"');
+      expect(out).not.toContain('home.platforms.scan');
+      expect(out).toContain('home.footer.copyright(2026|KaziSpace)'.replace('2026', String(new Date().getFullYear())));
+      // The page itself is all there.
+      expect(out).toContain('home.features.radio.title');
+      expect(out).toContain('home.signUp');
+    }
   });
 });
