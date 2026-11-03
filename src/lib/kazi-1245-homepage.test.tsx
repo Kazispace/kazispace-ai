@@ -197,6 +197,13 @@ describe('KAZI-1245 the page', () => {
     expect(out).toContain('[生成式AI服务备案号]');
   });
 
+  it('the top bar and the footer use the horizontal logo (D10), not the mark with typed text', async () => {
+    const out = await html('intl');
+    expect(out.match(/src="\/brand\/kazispace-logo-horizontal\.png"/g)).toHaveLength(2);
+    expect(out).not.toContain('kazispace-mark.png');
+    expect(out).toMatch(/<img alt="KaziSpace" src="\/brand\/kazispace-logo-horizontal\.png"/);
+  });
+
   it('production with facts still missing: no placeholder, no empty column, link or filing line', async () => {
     for (const site of ['intl', 'cn'] as const) {
       const out = await html(site, true);
