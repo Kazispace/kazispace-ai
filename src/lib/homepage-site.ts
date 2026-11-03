@@ -64,7 +64,8 @@ export const SITE_FACTS: Record<HomepageSite, SiteFacts> = {
     phone: null,
     termsUrl: null,
     privacyUrl: null,
-    icpNumber: null,
+    // Owen, 2026-11-03 (工信备案号，ICP主体备案号).
+    icpNumber: '蜀ICP备2026061977号',
     // Owen, 2026-11-03.
     psbNumber: '川公网安备51019002010756号',
     psbUrl: 'https://beian.mps.gov.cn/#/query/webSearch?code=51019002010756',
