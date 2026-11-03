@@ -66,6 +66,7 @@ const FULL: Record<HomepageSite, SiteFacts> = {
     icpNumber: 'ICP1',
     psbNumber: 'PSB1',
     psbUrl: 'https://psb',
+    psbIcon: null,
     aiFilingNumber: 'AI1',
     miniProgramQr: '/qr.png',
   },
@@ -95,10 +96,11 @@ describe('KAZI-1245 which site, and is the homepage live', () => {
   });
 
   it('a missing fact: placeholder on a preview, nothing in production; a filled fact everywhere', () => {
-    expect(factFor('cn', 'icpNumber', false)).toBe('[ICP备案号]');
-    expect(factFor('cn', 'icpNumber', true)).toBeNull();
+    expect(factFor('cn', 'aiFilingNumber', false)).toBe('[生成式AI服务备案号]');
+    expect(factFor('cn', 'aiFilingNumber', true)).toBeNull();
     expect(factFor('intl', 'companyName', true)).toBeNull();
     expect(factFor('cn', 'icpNumber', true, FULL)).toBe('ICP1');
+    expect(factFor('cn', 'icpNumber', true)).toBe('蜀ICP备2026061977号');
     expect(factFor('intl', 'companyName', false, FULL)).toBe('Co');
   });
 });
@@ -193,8 +195,26 @@ describe('KAZI-1245 the page', () => {
     expect(out).toContain('home.platforms.wechat');
     expect(out).not.toContain('home.platforms.telegram');
     expect(out).toMatch(/href="https:\/\/beian\.miit\.gov\.cn\/"[^>]*data-testid="home-icp"/);
-    expect(out).toContain('[ICP备案号]');
+    expect(out).toContain('蜀ICP备2026061977号');
     expect(out).toContain('[生成式AI服务备案号]');
+  });
+
+  it('the top bar and the footer use the horizontal logo (D10), not the mark with typed text', async () => {
+    const out = await html('intl');
+    expect(out.match(/src="\/brand\/kazispace-logo-horizontal\.png"/g)).toHaveLength(2);
+    expect(out).not.toContain('kazispace-mark.png');
+    expect(out).toMatch(/<img alt="KaziSpace" src="\/brand\/kazispace-logo-horizontal\.png"/);
+  });
+
+  it('kazispace.cn shows its public security filing number, linked to its record', async () => {
+    const out = await html('cn', true);
+    expect(out).toMatch(
+      /href="https:\/\/beian\.mps\.gov\.cn\/#\/query\/webSearch\?code=51019002010756"[^>]*data-testid="home-psb"[^>]*>川公网安备51019002010756号</
+    );
+    expect(await html('intl', true)).not.toContain('川公网安备');
+    // And its ICP filing number, linked to the MIIT filing site.
+    expect(await html('cn', true)).toMatch(/href="https:\/\/beian\.miit\.gov\.cn\/"[^>]*data-testid="home-icp"[^>]*>蜀ICP备2026061977号</);
+    expect(await html('intl', true)).not.toContain('ICP备');
   });
 
   it('production with facts still missing: no placeholder, no empty column, link or filing line', async () => {
@@ -204,7 +224,8 @@ describe('KAZI-1245 the page', () => {
       expect(out).not.toContain('home.footer.company');
       expect(out).not.toContain('home.footer.contact');
       expect(out).not.toContain('home.footer.legal');
-      expect(out).not.toContain('data-testid="home-icp"');
+      // The ICP and public security numbers are in for .cn (tested above); the rest is not yet.
+      if (site === 'intl') expect(out).not.toContain('data-testid="home-icp"');
       expect(out).not.toContain('data-testid="home-ai-filing"');
       expect(out).not.toContain('home.platforms.scan');
       expect(out).toContain('home.footer.copyright(2026|KaziSpace)'.replace('2026', String(new Date().getFullYear())));

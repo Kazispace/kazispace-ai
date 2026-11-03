@@ -28,6 +28,12 @@ export interface SiteFacts {
   psbNumber: string | null;
   psbUrl: string | null;
   /**
+   * kazispace.cn only: the filing's badge ("备案编号图标"), under /public, shown before the
+   * number. It is downloaded from the public security filing platform (My websites →
+   * Details → download the badge).
+   */
+  psbIcon: string | null;
+  /**
    * kazispace.cn only: generative AI service filing number. Required until legal says it
    * is not (Owen, 2026-11-03, an option he picked in review of kazispace-ui #54).
    */
@@ -47,6 +53,7 @@ export const SITE_FACTS: Record<HomepageSite, SiteFacts> = {
     icpNumber: null,
     psbNumber: null,
     psbUrl: null,
+    psbIcon: null,
     aiFilingNumber: null,
     miniProgramQr: null,
   },
@@ -57,9 +64,12 @@ export const SITE_FACTS: Record<HomepageSite, SiteFacts> = {
     phone: null,
     termsUrl: null,
     privacyUrl: null,
-    icpNumber: null,
-    psbNumber: null,
-    psbUrl: null,
+    // Owen, 2026-11-03 (工信备案号，ICP主体备案号).
+    icpNumber: '蜀ICP备2026061977号',
+    // Owen, 2026-11-03.
+    psbNumber: '川公网安备51019002010756号',
+    psbUrl: 'https://beian.mps.gov.cn/#/query/webSearch?code=51019002010756',
+    psbIcon: null,
     aiFilingNumber: null,
     miniProgramQr: null,
   },
@@ -77,6 +87,7 @@ export const FACT_PLACEHOLDERS: Record<HomepageSite, Record<keyof SiteFacts, str
     icpNumber: '',
     psbNumber: '',
     psbUrl: '#',
+    psbIcon: '',
     aiFilingNumber: '',
     miniProgramQr: '[QR · telegram]',
   },
@@ -90,6 +101,7 @@ export const FACT_PLACEHOLDERS: Record<HomepageSite, Record<keyof SiteFacts, str
     icpNumber: '[ICP备案号]',
     psbNumber: '[公安备案号]',
     psbUrl: '#',
+    psbIcon: '',
     aiFilingNumber: '[生成式AI服务备案号]',
     miniProgramQr: '[QR · wechat]',
   },

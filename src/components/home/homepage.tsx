@@ -33,6 +33,7 @@ export async function Homepage({
   const privacy = fact('privacyUrl');
   const icp = fact('icpNumber');
   const psb = fact('psbNumber');
+  const psbIcon = fact('psbIcon');
   const aiFiling = fact('aiFilingNumber');
   const qr = fact('miniProgramQr');
 
@@ -47,9 +48,16 @@ export async function Homepage({
     <div className="min-h-screen bg-white text-workspace-text" data-testid="homepage" data-site={site}>
       <header className="sticky top-0 z-30 border-b border-workspace-border bg-white">
         <div className="mx-auto flex max-w-[1120px] items-center gap-6 px-4 py-2 md:py-3">
-          <Link href={`/${locale}`} className="flex items-center gap-2 text-lg font-semibold text-kazi-navy md:text-xl">
-            <Image src="/brand/kazispace-mark.png" alt="" width={28} height={28} />
-            KaziSpace
+          {/* The horizontal logo, light-background variant (kazispace-ui D10, Assets — Logo). */}
+          <Link href={`/${locale}`} className="shrink-0" data-testid="home-logo">
+            <Image
+              src="/brand/kazispace-logo-horizontal.png"
+              alt="KaziSpace"
+              width={958}
+              height={327}
+              priority
+              className="h-9 w-auto md:h-10"
+            />
           </Link>
           <nav aria-label="KaziSpace" className="ml-auto hidden items-center gap-6 text-sm font-medium text-workspace-secondary md:flex">
             <a href="#features" className="hover:text-workspace-text">
@@ -171,7 +179,13 @@ export async function Homepage({
         <div className="mx-auto flex max-w-[1120px] flex-col gap-8 px-4 py-10 md:py-12">
           <div className="flex flex-col gap-6 md:flex-row md:gap-12">
             <div className="flex flex-1 flex-col gap-3">
-              <span className="text-lg font-semibold text-kazi-navy md:text-xl">KaziSpace</span>
+              <Image
+                src="/brand/kazispace-logo-horizontal.png"
+                alt="KaziSpace"
+                width={958}
+                height={327}
+                className="h-10 w-auto self-start"
+              />
               <div className="flex items-center gap-1 text-sm text-workspace-secondary">
                 <Globe className="h-4 w-4" aria-hidden />
                 <span className="sr-only">{t('footer.language')}</span>
@@ -208,7 +222,14 @@ export async function Homepage({
               </a>
             )}
             {site === 'cn' && psb && (
-              <a href={fact('psbUrl') ?? 'https://beian.mps.gov.cn/'} target="_blank" rel="noreferrer" data-testid="home-psb">
+              <a
+                href={fact('psbUrl') ?? 'https://beian.mps.gov.cn/'}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1"
+                data-testid="home-psb"
+              >
+                {psbIcon && <Image src={psbIcon} alt="" width={16} height={16} />}
                 {psb}
               </a>
             )}
