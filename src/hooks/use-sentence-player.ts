@@ -25,6 +25,7 @@ export function readingPauseMs(text: string): number {
  *   (or still `pending` when narration reaches it) is highlighted for a reading pause instead.
  * - `speed` switches between 1× and 0.75× keeping the pitch.
  * - Pause stops at once; play carries on from the same sentence. `repeat` replays the current one.
+ * - `playFrom(i)` plays from sentence `i`.
  * - `onDone` fires once when the last sentence has been played.
  * - Unmounting stops everything (leaving the player stops it).
  *
@@ -163,5 +164,8 @@ export function useSentencePlayer({
 
   const repeat = useCallback(() => playAt(Math.min(index, Math.max(0, sentencesRef.current.length - 1))), [index, playAt]);
 
-  return { index, playing, done, play, pause, repeat };
+  /** Plays from sentence `i` (the choice point reads its choices again from the first choice). */
+  const playFrom = useCallback((i: number) => playAt(Math.max(0, i)), [playAt]);
+
+  return { index, playing, done, play, pause, repeat, playFrom };
 }

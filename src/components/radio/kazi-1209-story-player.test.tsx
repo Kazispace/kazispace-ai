@@ -33,6 +33,14 @@ vi.mock('@/hooks/use-auth-ready', () => ({ useAuthReady: () => ({ ready: true, a
 vi.mock('@/lib/store', () => ({
   useUIStore: (select: (s: { showToast: typeof m.toast }) => unknown) => select({ showToast: m.toast }),
 }));
+// The player reads "Listen at choices" and voice availability from the radio home (part 2).
+vi.mock('@/hooks/use-radio-home', () => ({
+  useRadioHome: () => ({
+    access: 'open',
+    home: { prefs: { listen_window_on: false }, availability: { tts: true, asr: true, new_render: true } },
+    isLoading: false,
+  }),
+}));
 vi.mock('@/lib/radio/api', async (orig) => ({
   ...(await orig<typeof import('@/lib/radio/api')>()),
   getRadioSave: m.save,
