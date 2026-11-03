@@ -67,6 +67,7 @@ const FULL: Record<HomepageSite, SiteFacts> = {
     icpNumber: 'ICP1',
     psbNumber: 'PSB1',
     psbUrl: 'https://psb',
+    aiFilingNumber: 'AI1',
     miniProgramQr: '/qr.png',
   },
 };
@@ -88,6 +89,8 @@ describe('KAZI-1245 which site, and is the homepage live', () => {
     expect(homepageLive(PREVIEW)).toBe(true);
     expect(homepageLive('kazispace.ai', null, FULL)).toBe(true);
     expect(homepageLive('www.kazispace.cn', null, FULL)).toBe(true);
+    // The .cn site also needs its generative AI service filing number.
+    expect(homepageLive('www.kazispace.cn', null, { ...FULL, cn: { ...FULL.cn, aiFilingNumber: null } })).toBe(false);
     // The phone number is optional.
     expect(missingFacts('intl', FULL)).toEqual([]);
   });
@@ -161,10 +164,10 @@ describe('KAZI-1245 the page', () => {
     expect(await html('intl')).toContain('home.signUp');
   });
 
-  it('one h1, the four features and three steps, no chat on the page', async () => {
+  it('one h1, the two features (English practice, Personal radio) and three steps, no chat on the page', async () => {
     const out = await html('intl');
     expect(out.match(/<h1/g)).toHaveLength(1);
-    for (const id of ['english', 'cv', 'interview', 'jobs']) expect(out).toContain(`home.features.${id}.title`);
+    expect(out.match(/home\.features\.[a-z]+\.title/g)).toEqual(['home.features.english.title', 'home.features.radio.title']);
     for (const id of ['ask', 'specialist', 'keep']) expect(out).toContain(`home.steps.${id}.title`);
     expect(out).not.toMatch(/<textarea|composer/i);
   });
@@ -182,5 +185,6 @@ describe('KAZI-1245 the page', () => {
     expect(out).not.toContain('home.platforms.telegram');
     expect(out).toMatch(/href="https:\/\/beian\.miit\.gov\.cn\/"[^>]*data-testid="home-icp"/);
     expect(out).toContain('[ICP备案号]');
+    expect(out).toContain('[生成式AI服务备案号]');
   });
 });

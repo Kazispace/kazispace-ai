@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
-import { Briefcase, FileText, Globe, MessageCircle, Mic } from 'lucide-react';
+import { Globe, MessageCircle, Radio } from 'lucide-react';
 
 import { HomeCtas } from '@/components/home/home-ctas';
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
@@ -19,11 +19,10 @@ export async function Homepage({ locale, site }: { locale: string; site: Homepag
   const company = fact('companyName') ?? '';
   const qr = fact('miniProgramQr');
 
+  // Owen, 2026-11-03: "only mention ET, Private audio station for now" (both sites).
   const features = [
     { id: 'english', Icon: Globe },
-    { id: 'cv', Icon: FileText },
-    { id: 'interview', Icon: Mic },
-    { id: 'jobs', Icon: Briefcase },
+    { id: 'radio', Icon: Radio },
   ] as const;
   const steps = ['ask', 'specialist', 'keep'] as const;
 
@@ -72,7 +71,7 @@ export async function Homepage({ locale, site }: { locale: string; site: Homepag
         <section id="features" className="scroll-mt-20 bg-workspace-bg">
           <div className="mx-auto flex max-w-[1120px] flex-col gap-6 px-4 py-12 md:gap-8 md:py-24">
             <h2 className="text-2xl font-semibold">{t('features.title')}</h2>
-            <ul className="grid gap-4 md:grid-cols-4 md:gap-6">
+            <ul className="grid gap-4 md:grid-cols-2 md:gap-6">
               {features.map(({ id, Icon }) => (
                 <li
                   key={id}
@@ -185,6 +184,7 @@ export async function Homepage({ locale, site }: { locale: string; site: Homepag
                 <a href={fact('psbUrl') ?? '#'} target="_blank" rel="noreferrer" data-testid="home-psb">
                   {fact('psbNumber')}
                 </a>
+                <span data-testid="home-ai-filing">{fact('aiFilingNumber')}</span>
               </>
             )}
           </div>

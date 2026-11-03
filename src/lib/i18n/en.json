@@ -1443,7 +1443,7 @@
 	"home": {
 		"meta": {
 			"title": "KaziSpace — AI English for a better career",
-			"description": "Practise English, build your CV, prepare for interviews and find jobs with an AI partner."
+			"description": "Practise English with an AI tutor and listen to interactive English stories at your level."
 		},
 		"nav": {
 			"features": "Features",
@@ -1454,7 +1454,7 @@
 		"openApp": "Open KaziSpace",
 		"hero": {
 			"title": "AI English for a better career, globally",
-			"body": "Practise English, build your CV, prepare for interviews and find jobs, all in one conversation with your AI partner.",
+			"body": "Practise English with an AI tutor, and listen to interactive English stories made for your level.",
 			"imageAlt": "The KaziSpace chat on a phone"
 		},
 		"features": {
@@ -1463,17 +1463,9 @@
 				"title": "English practice",
 				"body": "Speak and write with an AI tutor, and get an English passport that shows your level."
 			},
-			"cv": {
-				"title": "CV builder",
-				"body": "Turn what you tell it into a clear CV, and tailor it to each job."
-			},
-			"interview": {
-				"title": "Mock interviews",
-				"body": "Rehearse real interview questions and get a score with advice."
-			},
-			"jobs": {
-				"title": "Job search",
-				"body": "Find openings that match your skills and the places you want to work."
+			"radio": {
+				"title": "Personal radio",
+				"body": "Interactive English stories you steer with your voice, told at your level."
 			}
 		},
 		"steps": {
@@ -1487,8 +1479,8 @@
 				"body": "The right specialist joins with what you already said."
 			},
 			"keep": {
-				"title": "Keep the result",
-				"body": "Your CV, scores and English level are saved in Studio for next time."
+				"title": "Keep your progress",
+				"body": "Your English level and progress are saved in Studio for next time."
 			}
 		},
 		"platforms": {

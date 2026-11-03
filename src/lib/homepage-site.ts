@@ -28,6 +28,11 @@ export interface SiteFacts {
   /** kazispace.cn only: public security filing number, and its record link. */
   psbNumber: string | null;
   psbUrl: string | null;
+  /**
+   * kazispace.cn only: generative AI service filing number. Required until legal says it
+   * is not (Owen, 2026-11-03, an option he picked in review of kazispace-ui #54).
+   */
+  aiFilingNumber: string | null;
   /** The site's mini program QR code, under /public. */
   miniProgramQr: string | null;
 }
@@ -43,6 +48,7 @@ export const SITE_FACTS: Record<HomepageSite, SiteFacts> = {
     icpNumber: null,
     psbNumber: null,
     psbUrl: null,
+    aiFilingNumber: null,
     miniProgramQr: null,
   },
   cn: {
@@ -55,6 +61,7 @@ export const SITE_FACTS: Record<HomepageSite, SiteFacts> = {
     icpNumber: null,
     psbNumber: null,
     psbUrl: null,
+    aiFilingNumber: null,
     miniProgramQr: null,
   },
 };
@@ -71,6 +78,7 @@ export const FACT_PLACEHOLDERS: Record<HomepageSite, Record<keyof SiteFacts, str
     icpNumber: '',
     psbNumber: '',
     psbUrl: '#',
+    aiFilingNumber: '',
     miniProgramQr: '[QR · telegram]',
   },
   cn: {
@@ -83,6 +91,7 @@ export const FACT_PLACEHOLDERS: Record<HomepageSite, Record<keyof SiteFacts, str
     icpNumber: '[ICP备案号]',
     psbNumber: '[公安备案号]',
     psbUrl: '#',
+    aiFilingNumber: '[生成式AI服务备案号]',
     miniProgramQr: '[QR · wechat]',
   },
 };
@@ -98,6 +107,7 @@ const REQUIRED: Record<HomepageSite, (keyof SiteFacts)[]> = {
     'icpNumber',
     'psbNumber',
     'psbUrl',
+    'aiFilingNumber',
     'miniProgramQr',
   ],
 };
