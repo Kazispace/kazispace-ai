@@ -56,19 +56,32 @@ function isPublicPath(path: string): boolean {
   return segment ? PUBLIC_PATH_SEGMENTS.has(segment) : false;
 }
 
-function resolveMiddlewareRouteLocale(request: NextRequest): SupportedLocale | null {
+/** Explicit UI language pick (Header / Mine). Profile preference is not a manual choice. */
+function resolveManualRouteLocale(request: NextRequest): SupportedLocale | null {
   const manualFlag =
     request.cookies.get(STORAGE_KEYS.LOCALE_MANUAL)?.value === "1";
   const preferred = request.cookies.get(STORAGE_KEYS.PREFERRED_LOCALE)?.value;
-  const profileLang = request.cookies.get(STORAGE_KEYS.PROFILE_LANGUAGE)?.value;
-
   if (manualFlag && preferred && isSupportedLocale(preferred)) {
     return preferred;
   }
+  return null;
+}
+
+function resolveMiddlewareRouteLocale(request: NextRequest): SupportedLocale | null {
+  const manual = resolveManualRouteLocale(request);
+  if (manual) return manual;
+  const profileLang = request.cookies.get(STORAGE_KEYS.PROFILE_LANGUAGE)?.value;
   if (profileLang && isSupportedLocale(profileLang)) {
     return profileLang;
   }
   return null;
+}
+
+function noStoreRedirect(url: URL, status = 307): NextResponse {
+  const res = NextResponse.redirect(url, status);
+  // CDN has a 1-day path TTL on `/`; never cache the locale choice redirect.
+  res.headers.set("Cache-Control", "private, no-store");
+  return res;
 }
 
 export default function middleware(request: NextRequest) {
@@ -87,15 +100,18 @@ export default function middleware(request: NextRequest) {
   const { locale, path } = stripLocale(pathname);
   const siteParam = request.nextUrl.searchParams.get("site");
 
-  // KAZI-1245: the kazispace.cn homepage opens in Chinese unless the visitor chose otherwise.
-  if (
-    pathname === "/" &&
-    siteForRequest(host, siteParam).site === "cn" &&
-    !resolveMiddlewareRouteLocale(request)
-  ) {
-    const url = new URL("/zh", request.url);
+  const isCnSite = siteForRequest(host, siteParam).site === "cn";
+  // Locale-root homepage after stripLocale (e.g. /zh, /en) — not /zh/login.
+  const onCnHomepage = isCnSite && path === "/";
+
+  // KAZI-1245: bare / on the China site opens in Chinese. Only an explicit language pick // pragma: allowlist secret
+  // (kazi_locale_manual) may divert it — not profile language, Accept-Language, or NEXT_LOCALE.
+  if (pathname === "/" && isCnSite) {
+    const manual = resolveManualRouteLocale(request);
+    const dest = manual ?? "zh";
+    const url = new URL(`/${dest}`, request.url);
     url.search = request.nextUrl.search;
-    return NextResponse.redirect(url);
+    return noStoreRedirect(url);
   }
 
   const englishRedirect = removedEnglishRedirectPath(locale, path);
@@ -103,14 +119,20 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(englishRedirect, request.url), 307);
   }
 
-  const targetLocale = resolveMiddlewareRouteLocale(request);
+  // On the China homepage, ignore kazi_profile_language so / → /zh is not undone on the
+  // follow-up /zh request. Non-home paths (e.g. /zh/login) still follow profile language.
+  const targetLocale = onCnHomepage
+    ? resolveManualRouteLocale(request)
+    : resolveMiddlewareRouteLocale(request);
   if (targetLocale && targetLocale !== locale) {
     const redirectUrl = new URL(
       `/${targetLocale}${path === "/" ? "" : path}`,
       request.url
     );
     redirectUrl.search = request.nextUrl.search;
-    return NextResponse.redirect(redirectUrl);
+    return onCnHomepage
+      ? noStoreRedirect(redirectUrl)
+      : NextResponse.redirect(redirectUrl);
   }
 
   if (!isPublicPath(path)) {

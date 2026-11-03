@@ -121,7 +121,85 @@ describe('KAZI-1245 middleware', () => {
     const chosen = middleware(
       request('https://www.kazispace.cn/', 'www.kazispace.cn', 'kazi_locale_manual=1; kazi_preferred_locale=ru')
     );
-    expect(location(chosen)).not.toBe('/zh');
+    expect(location(chosen)).toBe('/ru');
+  });
+
+  it('kazispace.cn `/` stays Chinese even when profile language is English', () => { // pragma: allowlist secret
+    const res = middleware(
+      request(
+        'https://www.kazispace.cn/', // pragma: allowlist secret
+        'www.kazispace.cn', // pragma: allowlist secret
+        'kazi_profile_language=en; NEXT_LOCALE=en'
+      )
+    );
+    expect(location(res)).toBe('/zh');
+    expect(res.headers.get('cache-control')).toMatch(/no-store/i);
+  });
+
+  it('kazispace.cn `/` honors an explicit manual English pick', () => { // pragma: allowlist secret
+    expect(
+      location(
+        middleware(
+          request(
+            'https://www.kazispace.cn/', // pragma: allowlist secret
+            'www.kazispace.cn', // pragma: allowlist secret
+            'kazi_locale_manual=1; kazi_preferred_locale=en'
+          )
+        )
+      )
+    ).toBe('/en');
+  });
+
+  it('kazispace.cn /zh stays when profile language is English (second hop)', () => { // pragma: allowlist secret
+    const res = middleware(
+      request(
+        'https://www.kazispace.cn/zh', // pragma: allowlist secret
+        'www.kazispace.cn', // pragma: allowlist secret
+        'kazi_profile_language=en; NEXT_LOCALE=en'
+      )
+    );
+    expect(location(res)).toBeNull();
+  });
+
+  it('kazispace.cn /en stays when profile language is Chinese', () => { // pragma: allowlist secret
+    expect(
+      location(
+        middleware(
+          request(
+            'https://www.kazispace.cn/en', // pragma: allowlist secret
+            'www.kazispace.cn', // pragma: allowlist secret
+            'kazi_profile_language=zh'
+          )
+        )
+      )
+    ).toBeNull();
+  });
+
+  it('kazispace.cn /zh/login still follows profile language', () => { // pragma: allowlist secret
+    // Signed-out /login is public, so this is a locale rewrite rather than the auth gate.
+    expect(
+      location(
+        middleware(
+          request(
+            'https://www.kazispace.cn/zh/login', // pragma: allowlist secret
+            'www.kazispace.cn', // pragma: allowlist secret
+            'kazi_profile_language=en'
+          )
+        )
+      )
+    ).toBe('/en/login');
+  });
+
+  it('manual mismatch on the China homepage is no-store', () => {
+    const res = middleware(
+      request(
+        'https://www.kazispace.cn/zh', // pragma: allowlist secret
+        'www.kazispace.cn', // pragma: allowlist secret
+        'kazi_locale_manual=1; kazi_preferred_locale=en'
+      )
+    );
+    expect(location(res)).toBe('/en');
+    expect(res.headers.get('cache-control')).toMatch(/no-store/i);
   });
 });
 
