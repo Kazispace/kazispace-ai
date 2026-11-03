@@ -24,10 +24,6 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/en',
 }));
-vi.mock('next/image', () => ({
-  // eslint-disable-next-line @next/next/no-img-element -- test stand-in for next/image
-  default: (props: { alt: string; src: string }) => <img alt={props.alt} src={props.src} />,
-}));
 
 import middleware from '@/middleware';
 import { Homepage } from '@/components/home/homepage';

@@ -50,7 +50,9 @@ export async function Homepage({
           {/* The horizontal logo, light-background variant (kazispace-ui D10, Assets — Logo). */}
           <Link href={`/${locale}`} className="shrink-0" data-testid="home-logo">
             {/* A plain <img>, as the app's other brand images: served straight from /public, so it
-                never depends on the Next.js image optimizer, which the China image (SAE) lacks. */}
+                never depends on the Next.js image optimizer, which the China image (SAE) lacks.
+                The file is the kazispace-ui master resized to 120px tall (3× the 40px slot), as
+                the on-dark logo in the chat header is. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/kazispace-logo-horizontal.png"
