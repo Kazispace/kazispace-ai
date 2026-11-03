@@ -1,22 +1,17 @@
 /**
  * KAZI-1245: which site the public homepage is serving, and its company facts
- * (kazispace-ui Homepage pattern, "Per site" and "Facts needed before launch"; D30).
+ * (kazispace-ui Homepage pattern 0.2, "Per site" and "Facts still to come"; D30).
  *
- * The facts below are still to come from Owen. Until every required fact of a
- * production site is filled in, that site keeps today's behaviour: no homepage,
- * and the main chat stays open to signed-out visitors. A placeholder is never shown
- * on kazispace.ai or www.kazispace.cn. Preview hosts (Netlify deploy previews and branch
- * deploys, localhost) show the homepage with its placeholders so it can be reviewed;
- * `?site=cn` there previews the kazispace.cn version.
+ * The homepage is live on every host (Owen, 2026-11-03: "Make the homepage live now.
+ * Details will be filled later."). The facts below arrive later; fill each one in here.
+ * Until it does, a production host leaves out what depends on it, and a preview host
+ * (Netlify deploy previews and branch deploys, localhost) shows its placeholder so
+ * reviewers can see what is missing; `?site=cn` there previews the kazispace.cn version.
  *
- * The gate fails closed: only a host that is positively a preview counts as one. Any
- * other host (a CDN or load balancer forwarding its own name, the Netlify site's own
- * address, a future domain) behaves as production for the site its domain names.
- *
- * When a fact arrives, fill it in here. When every required fact of a site is in,
- * that site's homepage goes live and its guest chat goes, in the same deploy.
+ * Placeholders fail closed: only a host that is positively a preview shows them. Any other
+ * host (a CDN or load balancer forwarding its own name, the Netlify site's own address, a
+ * future domain) is production for the site its domain names.
  */
-
 export type HomepageSite = 'intl' | 'cn';
 
 export interface SiteFacts {
@@ -100,22 +95,6 @@ export const FACT_PLACEHOLDERS: Record<HomepageSite, Record<keyof SiteFacts, str
   },
 };
 
-const REQUIRED: Record<HomepageSite, (keyof SiteFacts)[]> = {
-  intl: ['companyName', 'address', 'email', 'termsUrl', 'privacyUrl', 'miniProgramQr'],
-  cn: [
-    'companyName',
-    'address',
-    'email',
-    'termsUrl',
-    'privacyUrl',
-    'icpNumber',
-    'psbNumber',
-    'psbUrl',
-    'aiFilingNumber',
-    'miniProgramQr',
-  ],
-};
-
 /** Hosts that show the homepage with placeholders. Everything else is production. */
 const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
 /** Netlify deploy previews and branch deploys: `deploy-preview-268--kazispace.netlify.app`, `owen--kazispace.netlify.app`. */
@@ -128,7 +107,7 @@ export function isPreviewHost(host: string | null | undefined): boolean {
 
 export interface HomepageRequestSite {
   site: HomepageSite;
-  /** True on kazispace.ai / www.kazispace.cn, where placeholders must never show. */
+  /** True on every host that is not a preview: placeholders never show there. */
   production: boolean;
 }
 
@@ -151,30 +130,19 @@ export function siteForRequest(
   return { site: h === 'kazispace.cn' || h.endsWith('.kazispace.cn') || h.endsWith('.cn') ? 'cn' : 'intl', production: true };
 }
 
-export function missingFacts(site: HomepageSite, facts: Record<HomepageSite, SiteFacts> = SITE_FACTS): (keyof SiteFacts)[] {
-  return REQUIRED[site].filter((key) => !facts[site][key]);
-}
-
 /**
- * Whether this request gets the homepage (and, with it, no guest chat).
- * Preview hosts always do; a production site only once its facts are complete.
+ * A fact; while it is missing, its placeholder on a preview host and nothing (null) in
+ * production, so the page leaves out what depends on it.
  */
-export function homepageLive(
-  host: string | null | undefined,
-  siteParam?: string | string[] | null,
-  facts: Record<HomepageSite, SiteFacts> = SITE_FACTS
-): boolean {
-  const { site, production } = siteForRequest(host, siteParam);
-  return !production || missingFacts(site, facts).length === 0;
-}
-
-/** A fact, or its placeholder on a preview host. */
 export function factFor(
   site: HomepageSite,
   key: keyof SiteFacts,
+  production: boolean,
   facts: Record<HomepageSite, SiteFacts> = SITE_FACTS
 ): string | null {
-  return facts[site][key] ?? (FACT_PLACEHOLDERS[site][key] || null);
+  const value = facts[site][key];
+  if (value) return value;
+  return production ? null : FACT_PLACEHOLDERS[site][key] || null;
 }
 
 /** The mini program each site offers next to the web (Homepage pattern, "Per site"). */

@@ -1,11 +1,10 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Homepage } from '@/components/home/homepage';
 import { SUPPORTED_LOCALES } from '@/lib/constants';
-import { homepageLive, normalizeHost, siteForRequest } from '@/lib/homepage-site';
+import { normalizeHost, siteForRequest } from '@/lib/homepage-site';
 
 /**
  * Rendered per request: which site this is (and whether its homepage is live) comes from
@@ -37,16 +36,11 @@ export async function generateMetadata({ params }: LocaleHomeProps): Promise<Met
 }
 
 /**
- * KAZI-1245 (kazispace-ui D30): the locale root is the public homepage, for everyone,
- * where it is live. Elsewhere (a production site whose company facts are not in yet,
- * see `lib/homepage-site.ts`) it keeps today's entry, the main chat.
+ * KAZI-1245 (kazispace-ui D30, Homepage 0.2): the locale root is the public homepage, for
+ * everyone, on every host.
  */
 export default function LocaleHome({ params, searchParams }: LocaleHomeProps) {
-  const host = headers().get('host');
-  if (!homepageLive(host, searchParams?.site)) {
-    redirect(`/${params.locale}/chat`);
-  }
   setRequestLocale(params.locale);
-  const { site } = siteForRequest(host, searchParams?.site);
-  return <Homepage locale={params.locale} site={site} />;
+  const { site, production } = siteForRequest(headers().get('host'), searchParams?.site);
+  return <Homepage locale={params.locale} site={site} production={production} />;
 }
