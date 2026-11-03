@@ -1439,5 +1439,78 @@
 			"empty": "No English passport level yet. Practise in your English space and your ability is recorded here.",
 			"openSpace": "Practise in my English space"
 		}
+	},
+	"home": {
+		"meta": {
+			"title": "KaziSpace — AI English for a better career",
+			"description": "Practise English, build your CV, prepare for interviews and find jobs with an AI partner."
+		},
+		"nav": {
+			"features": "Features",
+			"howItWorks": "How it works"
+		},
+		"signUp": "Sign up",
+		"logIn": "Log in",
+		"openApp": "Open KaziSpace",
+		"hero": {
+			"title": "AI English for a better career, globally",
+			"body": "Practise English, build your CV, prepare for interviews and find jobs, all in one conversation with your AI partner.",
+			"imageAlt": "The KaziSpace chat on a phone"
+		},
+		"features": {
+			"title": "What KaziSpace does",
+			"english": {
+				"title": "English practice",
+				"body": "Speak and write with an AI tutor, and get an English passport that shows your level."
+			},
+			"cv": {
+				"title": "CV builder",
+				"body": "Turn what you tell it into a clear CV, and tailor it to each job."
+			},
+			"interview": {
+				"title": "Mock interviews",
+				"body": "Rehearse real interview questions and get a score with advice."
+			},
+			"jobs": {
+				"title": "Job search",
+				"body": "Find openings that match your skills and the places you want to work."
+			}
+		},
+		"steps": {
+			"title": "How it works",
+			"ask": {
+				"title": "Say what you need",
+				"body": "Tell your AI partner in your own words."
+			},
+			"specialist": {
+				"title": "A specialist takes over",
+				"body": "The right specialist joins with what you already said."
+			},
+			"keep": {
+				"title": "Keep the result",
+				"body": "Your CV, scores and English level are saved in Studio for next time."
+			}
+		},
+		"platforms": {
+			"title": "Use it where you are",
+			"web": "Web",
+			"webBody": "In any browser, on your computer or phone.",
+			"telegram": "Telegram mini app",
+			"wechat": "WeChat mini program",
+			"miniBody": "Open it inside the app you already use.",
+			"scan": "Scan to open"
+		},
+		"closing": {
+			"title": "Start with one conversation"
+		},
+		"footer": {
+			"company": "Company",
+			"contact": "Contact",
+			"legal": "Legal",
+			"terms": "Terms of service",
+			"privacy": "Privacy policy",
+			"language": "Language",
+			"copyright": "© {year} {company}. All rights reserved."
+		}
 	}
 }

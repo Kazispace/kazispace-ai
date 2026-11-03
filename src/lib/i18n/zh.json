@@ -1143,5 +1143,78 @@
 			"empty": "还没有英语护照等级。去英语空间练习，你的英语能力会记录在这里。",
 			"openSpace": "去英语空间练习"
 		}
+	},
+	"home": {
+		"meta": {
+			"title": "KaziSpace — 用 AI 学英语，找更好的工作",
+			"description": "和 AI 伙伴一起练英语、写简历、准备面试、找工作。"
+		},
+		"nav": {
+			"features": "功能",
+			"howItWorks": "怎么用"
+		},
+		"signUp": "注册",
+		"logIn": "登录",
+		"openApp": "打开 KaziSpace",
+		"hero": {
+			"title": "AI 英语，助你走向更好的职业",
+			"body": "练英语、写简历、准备面试、找工作，都在和 AI 伙伴的一场对话里完成。",
+			"imageAlt": "手机上的 KaziSpace 对话"
+		},
+		"features": {
+			"title": "KaziSpace 能做什么",
+			"english": {
+				"title": "英语练习",
+				"body": "和 AI 老师练口语和写作，拿到一本标明你水平的英语护照。"
+			},
+			"cv": {
+				"title": "简历",
+				"body": "把你说的经历整理成清晰的简历，并按每个岗位调整。"
+			},
+			"interview": {
+				"title": "模拟面试",
+				"body": "演练真实的面试问题，拿到评分和建议。"
+			},
+			"jobs": {
+				"title": "找工作",
+				"body": "找到和你的技能、想去的城市相匹配的岗位。"
+			}
+		},
+		"steps": {
+			"title": "怎么用",
+			"ask": {
+				"title": "说出你的需要",
+				"body": "用你自己的话告诉 AI 伙伴。"
+			},
+			"specialist": {
+				"title": "专家接手",
+				"body": "合适的专家带着你已经说过的内容加入。"
+			},
+			"keep": {
+				"title": "结果留着用",
+				"body": "简历、评分和英语水平都保存在工作室，下次接着用。"
+			}
+		},
+		"platforms": {
+			"title": "在你常用的地方使用",
+			"web": "网页",
+			"webBody": "电脑或手机的浏览器都能用。",
+			"telegram": "Telegram 小程序",
+			"wechat": "微信小程序",
+			"miniBody": "在你常用的 App 里直接打开。",
+			"scan": "扫码打开"
+		},
+		"closing": {
+			"title": "从一场对话开始"
+		},
+		"footer": {
+			"company": "公司",
+			"contact": "联系我们",
+			"legal": "法律信息",
+			"terms": "用户协议",
+			"privacy": "隐私政策",
+			"language": "语言",
+			"copyright": "© {year} {company} 版权所有"
+		}
 	}
 }

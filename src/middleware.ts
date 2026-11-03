@@ -7,6 +7,7 @@ import {
   isSupportedLocale,
   type SupportedLocale,
 } from "./lib/constants";
+import { homepageLive, siteForRequest } from "./lib/homepage-site";
 
 const intlMiddleware = createMiddleware({
   locales: [...SUPPORTED_LOCALES],
@@ -30,7 +31,16 @@ export function removedEnglishRedirectPath(locale: string, path: string): string
     : null;
 }
 
-const PUBLIC_PATH_SEGMENTS = new Set(["login", "chat", "tma"]);
+const PUBLIC_PATH_SEGMENTS = new Set(["login", "tma"]);
+
+/**
+ * KAZI-1245 (kazispace-ui D30): where the public homepage is live, it is the only
+ * signed-out page and there is no guest chat. Until a production site's homepage
+ * facts are in (`lib/homepage-site.ts`), that site keeps its guest chat.
+ */
+export function guestChatOpen(host: string, siteParam: string | null): boolean {
+  return !homepageLive(host, siteParam);
+}
 
 function stripLocale(pathname: string): { locale: string; path: string } {
   const segments = pathname.split("/").filter(Boolean);
@@ -45,10 +55,11 @@ function stripLocale(pathname: string): { locale: string; path: string } {
   return { locale: DEFAULT_LOCALE, path: pathname };
 }
 
-function isPublicPath(path: string): boolean {
+function isPublicPath(path: string, guestChat: boolean): boolean {
   if (path === "/") return true;
   const segment = path.split("/").filter(Boolean)[0];
-  return segment ? PUBLIC_PATH_SEGMENTS.has(segment) : false;
+  if (!segment) return false;
+  return PUBLIC_PATH_SEGMENTS.has(segment) || (guestChat && segment === "chat");
 }
 
 function resolveMiddlewareRouteLocale(request: NextRequest): SupportedLocale | null {
@@ -80,6 +91,19 @@ export default function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const { locale, path } = stripLocale(pathname);
+  const siteParam = request.nextUrl.searchParams.get("site");
+
+  // KAZI-1245: the kazispace.cn homepage opens in Chinese unless the visitor chose otherwise.
+  if (
+    pathname === "/" &&
+    siteForRequest(host, siteParam).site === "cn" &&
+    homepageLive(host, siteParam) &&
+    !resolveMiddlewareRouteLocale(request)
+  ) {
+    const url = new URL("/zh", request.url);
+    url.search = request.nextUrl.search;
+    return NextResponse.redirect(url);
+  }
 
   const englishRedirect = removedEnglishRedirectPath(locale, path);
   if (englishRedirect) {
@@ -96,7 +120,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (!isPublicPath(path)) {
+  if (!isPublicPath(path, guestChatOpen(host, siteParam))) {
     const token = request.cookies.get(STORAGE_KEYS.AUTH_COOKIE)?.value;
     if (!token) {
       const loginUrl = new URL(`/${locale}/login`, request.url);
