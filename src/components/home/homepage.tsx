@@ -53,8 +53,10 @@ export async function Homepage({
             <Image
               src="/brand/kazispace-logo-horizontal.png"
               alt="KaziSpace"
-              width={958}
-              height={327}
+              // Display size (40 px tall); the 958×327 file is scaled down, so next/image
+              // serves a logo-sized image instead of a full-width one.
+              width={117}
+              height={40}
               priority
               className="h-9 w-auto md:h-10"
             />
@@ -182,8 +184,8 @@ export async function Homepage({
               <Image
                 src="/brand/kazispace-logo-horizontal.png"
                 alt="KaziSpace"
-                width={958}
-                height={327}
+                width={117}
+                height={40}
                 className="h-10 w-auto self-start"
               />
               <div className="flex items-center gap-1 text-sm text-workspace-secondary">
