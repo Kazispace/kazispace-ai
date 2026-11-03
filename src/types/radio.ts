@@ -160,7 +160,15 @@ export interface RadioTurnInput {
   choice_id?: string | null;
   text?: string | null;
   command?: string | null;
-  position?: { seq: number; offset_ms?: number } | null;
+  /** `no_response` with `command: 'pause'`: the second silence at a choice point (two-strike rule). */
+  reason?: string | null;
+  position?: RadioPosition | null;
+}
+
+/** The sentence that was playing when the user spoke: `{seq, offset_ms?}`. */
+export interface RadioPosition {
+  seq: number;
+  offset_ms?: number;
 }
 
 export interface RadioRenderAudio {

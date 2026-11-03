@@ -11,6 +11,7 @@ import type {
   RadioBand,
   RadioHome,
   RadioPlayerResponse,
+  RadioPosition,
   RadioPrefs,
   RadioPrefsResponse,
   RadioProgramDetail,
@@ -98,6 +99,30 @@ export function postRadioTurn(
   return apiRequest<RadioPlayerResponse>(`${BASE}/saves/${encodeURIComponent(saveId)}/turn`, {
     method: 'POST',
     body: JSON.stringify({ turn_id: turnId, save_version: saveVersion, input }),
+  });
+}
+
+/**
+ * A spoken turn (personal-radio.md, Data · A spoken turn): multipart `meta` (`turn_id`,
+ * `save_version`, `input.position`), `duration_ms` and the `audio` file, named with its real
+ * extension because the server reads the format from it. The answer is the same as a tapped turn's.
+ */
+export function postRadioTurnAudio(
+  saveId: string,
+  turn: { turnId: string; saveVersion: number; position?: RadioPosition | null },
+  audio: Blob,
+  durationMs: number,
+  fileName: string
+): Promise<ApiResponse<RadioPlayerResponse>> {
+  const meta: Record<string, unknown> = { turn_id: turn.turnId, save_version: turn.saveVersion };
+  if (turn.position) meta.input = { position: turn.position };
+  const form = new FormData();
+  form.append('meta', JSON.stringify(meta));
+  form.append('duration_ms', String(Math.max(1, Math.min(20000, Math.round(durationMs)))));
+  form.append('audio', audio, fileName);
+  return apiRequest<RadioPlayerResponse>(`${BASE}/saves/${encodeURIComponent(saveId)}/turn/audio`, {
+    method: 'POST',
+    body: form,
   });
 }
 
