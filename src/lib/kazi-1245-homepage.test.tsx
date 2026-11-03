@@ -29,8 +29,10 @@ import middleware, { PAGE_CACHE_CONTROL } from '@/middleware';
 import { Homepage } from '@/components/home/homepage';
 import { HomeCtas } from '@/components/home/home-ctas';
 import {
+  HOME_COVERS,
   SITE_FACTS,
   factFor,
+  pickHomeCover,
   siteForRequest,
   type HomepageSite,
   type SiteFacts,
@@ -290,7 +292,7 @@ describe('KAZI-1245 the page', () => {
     // Served straight from /public, never through the Next.js image optimizer: the China
     // image (SAE) has none, and the logo did not show on www.kazispace.cn (Owen, 2026-11-03).
     expect(out).not.toContain('/_next/image');
-    expect(out).toContain('src="/home/chat-phone.png"');
+    expect(out).toMatch(/<img src="\/home\/cover-consultant-(easy|fun|24h)\.jpg"/);
   });
 
   it('kazispace.cn shows its public security filing number, linked to its record', async () => {
@@ -320,5 +322,25 @@ describe('KAZI-1245 the page', () => {
       expect(out).toContain('home.features.radio.title');
       expect(out).toContain('home.signUp');
     }
+  });
+});
+
+// KAZI-1250 (kazispace-ui Homepage 0.3): the hero shows one of three covers at random.
+describe('KAZI-1250 homepage cover', () => {
+  it('picks each of the three covers, and never anything else', () => {
+    expect(HOME_COVERS).toHaveLength(3);
+    expect(pickHomeCover(() => 0)).toBe('/home/cover-consultant-easy.jpg');
+    expect(pickHomeCover(() => 0.5)).toBe('/home/cover-consultant-fun.jpg');
+    expect(pickHomeCover(() => 0.999)).toBe('/home/cover-consultant-24h.jpg');
+    // Defensive bounds: a random() of exactly 1 still lands on the last cover.
+    expect(pickHomeCover(() => 1)).toBe('/home/cover-consultant-24h.jpg');
+  });
+
+  it('the hero shows a cover, not the old chat screenshot', async () => {
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const out = renderToStaticMarkup(await Homepage({ locale: 'en', site: 'cn', production: true }));
+    spy.mockRestore();
+    expect(out).toMatch(/<img src="\/home\/cover-consultant-fun\.jpg" alt="home\.hero\.imageAlt"[^>]*data-testid="home-cover"/);
+    expect(out).not.toContain('chat-phone');
   });
 });

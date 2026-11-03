@@ -4,7 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Homepage } from '@/components/home/homepage';
 import { SUPPORTED_LOCALES } from '@/lib/constants';
-import { normalizeHost, siteForRequest } from '@/lib/homepage-site';
+import { HOME_COVERS, normalizeHost, siteForRequest } from '@/lib/homepage-site';
 
 /**
  * Rendered per request: which site this is (and whether its homepage is live) comes from
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: LocaleHomeProps): Promise<Met
           languages: Object.fromEntries(SUPPORTED_LOCALES.map((l) => [l, `${base}/${l}`])),
         }
       : undefined,
-    openGraph: { title: t('meta.title'), description: t('meta.description'), images: ['/home/chat-phone.png'] },
+    openGraph: { title: t('meta.title'), description: t('meta.description'), images: [HOME_COVERS[0]] },
   };
 }
 

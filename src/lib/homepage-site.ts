@@ -161,3 +161,18 @@ export function factFor(
 export function miniProgramFor(site: HomepageSite): 'telegram' | 'wechat' {
   return site === 'cn' ? 'wechat' : 'telegram';
 }
+
+/**
+ * KAZI-1250 (kazispace-ui Homepage 0.3, "Cover images"): the hero shows one of these at
+ * random on each visit. Each shows KaziSpace as a virtual personal consultant.
+ */
+export const HOME_COVERS = [
+  '/home/cover-consultant-easy.jpg',
+  '/home/cover-consultant-fun.jpg',
+  '/home/cover-consultant-24h.jpg',
+] as const;
+
+export function pickHomeCover(random: () => number = Math.random): (typeof HOME_COVERS)[number] {
+  const i = Math.min(HOME_COVERS.length - 1, Math.floor(random() * HOME_COVERS.length));
+  return HOME_COVERS[Math.max(0, i)];
+}
