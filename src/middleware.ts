@@ -77,6 +77,9 @@ function resolveMiddlewareRouteLocale(request: NextRequest): SupportedLocale | n
   return null;
 }
 
+/** What every page response carries (see the end of `middleware`). */
+export const PAGE_CACHE_CONTROL = "private, no-cache, no-store, max-age=0, must-revalidate";
+
 function noStoreRedirect(url: URL, status = 307): NextResponse {
   const res = NextResponse.redirect(url, status);
   // CDN has a 1-day path TTL on `/`; never cache the locale choice redirect.
@@ -144,7 +147,13 @@ export default function middleware(request: NextRequest) {
     }
   }
 
-  return intlMiddleware(request);
+  const res = intlMiddleware(request);
+  // Pages must never be kept by a CDN. Next marks prerendered pages `s-maxage=31536000`,
+  // and the China CDN keeps them across deploys: an old page then asks for script files the
+  // new image no longer has, never starts, and its sign-in spinner turns for ever (Owen,
+  // 2026-11-03, www.kazispace.cn). Script and style files keep their own long cache.
+  res.headers.set("Cache-Control", PAGE_CACHE_CONTROL);
+  return res;
 }
 
 export const config = {
