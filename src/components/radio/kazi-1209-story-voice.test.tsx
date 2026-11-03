@@ -82,10 +82,11 @@ vi.mock('@/lib/radio/api', async (orig) => ({
   ...(await orig<typeof import('@/lib/radio/api')>()),
   getRadioSave: m.save,
   postRadioTurn: m.turn,
-  postRadioTurnAudio: m.turnAudio,
   patchRadioPrefs: m.prefs,
   getRadioRender: m.render,
 }));
+
+vi.mock('@/lib/radio/player-api', () => ({ postRadioTurnAudio: m.turnAudio }));
 
 import { StoryPlayerScreen } from '@/components/radio/story-player';
 
