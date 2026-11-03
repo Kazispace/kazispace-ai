@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { Globe, MessageCircle, Radio } from 'lucide-react';
@@ -50,14 +49,15 @@ export async function Homepage({
         <div className="mx-auto flex max-w-[1120px] items-center gap-6 px-4 py-2 md:py-3">
           {/* The horizontal logo, light-background variant (kazispace-ui D10, Assets — Logo). */}
           <Link href={`/${locale}`} className="shrink-0" data-testid="home-logo">
-            <Image
+            {/* A plain <img>, as the app's other brand images: served straight from /public, so it
+                never depends on the Next.js image optimizer, which the China image (SAE) lacks. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/brand/kazispace-logo-horizontal.png"
               alt="KaziSpace"
-              // Display size (40 px tall); the 958×327 file is scaled down, so next/image
-              // serves a logo-sized image instead of a full-width one.
               width={117}
               height={40}
-              priority
+              fetchPriority="high"
               className="h-9 w-auto md:h-10"
             />
           </Link>
@@ -84,12 +84,12 @@ export async function Homepage({
             <HomeCtas locale={locale} placement="hero" />
           </div>
           <div className="flex justify-center rounded-xl bg-workspace-bg p-6 md:w-[480px] md:p-12">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/home/chat-phone.png"
               alt={t('hero.imageAlt')}
               width={390}
               height={844}
-              priority
               className="h-auto w-[234px] rounded-3xl border border-workspace-border md:w-[260px]"
             />
           </div>
@@ -155,7 +155,8 @@ export async function Homepage({
                 {qr && (
                   <span className="hidden flex-col items-center gap-2 md:flex">
                     {qr.startsWith('/') ? (
-                      <Image src={qr} alt="" width={96} height={96} className="rounded-md" />
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={qr} alt="" width={96} height={96} className="rounded-md" />
                     ) : (
                       <span className="flex h-24 w-24 items-center justify-center rounded-md bg-gray-100 px-1 text-center text-xs text-workspace-secondary">
                         {qr}
@@ -181,11 +182,13 @@ export async function Homepage({
         <div className="mx-auto flex max-w-[1120px] flex-col gap-8 px-4 py-10 md:py-12">
           <div className="flex flex-col gap-6 md:flex-row md:gap-12">
             <div className="flex flex-1 flex-col gap-3">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src="/brand/kazispace-logo-horizontal.png"
                 alt="KaziSpace"
                 width={117}
                 height={40}
+                loading="lazy"
                 className="h-10 w-auto self-start"
               />
               <div className="flex items-center gap-1 text-sm text-workspace-secondary">
@@ -231,7 +234,8 @@ export async function Homepage({
                 className="inline-flex items-center gap-1"
                 data-testid="home-psb"
               >
-                {psbIcon && <Image src={psbIcon} alt="" width={16} height={16} />}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {psbIcon && <img src={psbIcon} alt="" width={16} height={16} />}
                 {psb}
               </a>
             )}

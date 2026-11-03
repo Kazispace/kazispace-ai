@@ -203,7 +203,11 @@ describe('KAZI-1245 the page', () => {
     const out = await html('intl');
     expect(out.match(/src="\/brand\/kazispace-logo-horizontal\.png"/g)).toHaveLength(2);
     expect(out).not.toContain('kazispace-mark.png');
-    expect(out).toMatch(/<img alt="KaziSpace" src="\/brand\/kazispace-logo-horizontal\.png"/);
+    expect(out).toMatch(/<img src="\/brand\/kazispace-logo-horizontal\.png" alt="KaziSpace"/);
+    // Served straight from /public, never through the Next.js image optimizer: the China
+    // image (SAE) has none, and the logo did not show on www.kazispace.cn (Owen, 2026-11-03).
+    expect(out).not.toContain('/_next/image');
+    expect(out).toContain('src="/home/chat-phone.png"');
   });
 
   it('kazispace.cn shows its public security filing number, linked to its record', async () => {
