@@ -267,6 +267,24 @@ describe('the host reads the choices, then the listen window', () => {
     expect(m.mic.opens).toEqual([]);
   });
 
+  it('the voice failed for the part (captions only): the window does not open by itself; a tap still records', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const silent = resp();
+    silent.node!.segments = silent.node!.segments.map((x) => ({ ...x, audio_url: null, pending: false }));
+    silent.node!.choices = silent.node!.choices!.map((c) => ({ ...c, audio_url: null }));
+    m.save.mockResolvedValue({ success: true, data: silent });
+    await mount();
+    await tapScreen();
+    expect(q('radio-tts-failed')).not.toBeNull();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20_000); // every reading pause, to the end of the choices
+    });
+    expect(m.mic.opens).toEqual([]);
+    expect(q('radio-listening-indicator')).toBeNull();
+    await click(q('radio-mic-button'));
+    expect(m.mic.opens).toEqual([undefined]);
+  });
+
   it('voice off in the region: no consent card, no window; the crossed-out microphone says so when tapped', async () => {
     setHome({ listen: null, asr: false });
     m.save.mockResolvedValue({ success: true, data: resp() });

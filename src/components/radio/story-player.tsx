@@ -283,8 +283,11 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
         : listenOn === false
           ? 'tap_only'
           : null;
-  const voiceRef = useRef({ listenOn, micUnavailable, inFlight, paused, care });
-  voiceRef.current = { listenOn, micUnavailable, inFlight, paused, care };
+  // The voice failed for the whole part (When something does not work): no choices were read aloud,
+  // so the listen window does not open by itself; the microphone still works when tapped.
+  const partSilent = segments.length > 0 && segments.every((s) => !s.audio_url && !s.pending);
+  const voiceRef = useRef({ listenOn, micUnavailable, inFlight, paused, care, partSilent });
+  voiceRef.current = { listenOn, micUnavailable, inFlight, paused, care, partSilent };
 
   const onRecordedRef = useRef<(audio: Blob, durationMs: number, mime: string) => void>(() => undefined);
   const onSilenceRef = useRef<() => void>(() => undefined);
@@ -311,7 +314,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const openWindow = useCallback(async () => {
     const v = voiceRef.current;
     const r = respRef.current;
-    if (v.listenOn !== true || v.micUnavailable || v.inFlight || v.paused || v.care) return;
+    if (v.listenOn !== true || v.micUnavailable || v.inFlight || v.paused || v.care || v.partSilent) return;
     if (!tappedHere.current || tapOnlyHere.current) return;
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
     if (!r?.listen_window_ms) return; // "Listen at choices" off on the server, or no window offered
@@ -562,7 +565,9 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     setListenOn(true);
     voiceRef.current = { ...voiceRef.current, listenOn: true };
     void saveListen(true, previous);
-    // Only now is the system asked, in the same tap, so the listen window can hear.
+    // Only now is the system asked, in the same tap, so the listen window can hear. A part whose
+    // voice failed opens no window: the choice is saved, and the microphone works when tapped.
+    if (partSilent) return;
     const windowMs = respRef.current?.listen_window_ms ?? DEFAULT_LISTEN_WINDOW_MS;
     spokenAt.current = null;
     noteOpen(await mic.open({ windowMs }), false);
