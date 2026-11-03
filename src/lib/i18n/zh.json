@@ -1143,5 +1143,70 @@
 			"empty": "还没有英语护照等级。去英语空间练习，你的英语能力会记录在这里。",
 			"openSpace": "去英语空间练习"
 		}
+	},
+	"home": {
+		"meta": {
+			"title": "KaziSpace — 用 AI 学英语，找更好的工作",
+			"description": "和 AI 老师练英语，收听按你的水平讲述的互动英语故事。"
+		},
+		"nav": {
+			"features": "功能",
+			"howItWorks": "怎么用"
+		},
+		"signUp": "注册",
+		"logIn": "登录",
+		"openApp": "打开 KaziSpace",
+		"hero": {
+			"title": "AI 英语，助你走向更好的职业",
+			"body": "和 AI 老师练英语，听按你的水平讲的互动英语故事。",
+			"imageAlt": "手机上的 KaziSpace 对话"
+		},
+		"features": {
+			"title": "KaziSpace 能做什么",
+			"english": {
+				"title": "英语练习",
+				"body": "和 AI 老师练口语和写作，拿到一本标明你水平的英语护照。"
+			},
+			"radio": {
+				"title": "个人电台",
+				"body": "用声音决定剧情走向的互动英语故事，按你的水平来讲。"
+			}
+		},
+		"steps": {
+			"title": "怎么用",
+			"ask": {
+				"title": "说出你的需要",
+				"body": "用你自己的话告诉 AI 伙伴。"
+			},
+			"specialist": {
+				"title": "专家接手",
+				"body": "合适的专家带着你已经说过的内容加入。"
+			},
+			"keep": {
+				"title": "进度留着用",
+				"body": "你的英语水平和进度保存在工作室，下次接着用。"
+			}
+		},
+		"platforms": {
+			"title": "在你常用的地方使用",
+			"web": "网页",
+			"webBody": "电脑或手机的浏览器都能用。",
+			"telegram": "Telegram 小程序",
+			"wechat": "微信小程序",
+			"miniBody": "在你常用的 App 里直接打开。",
+			"scan": "扫码打开"
+		},
+		"closing": {
+			"title": "从一场对话开始"
+		},
+		"footer": {
+			"company": "公司",
+			"contact": "联系我们",
+			"legal": "法律信息",
+			"terms": "用户协议",
+			"privacy": "隐私政策",
+			"language": "语言",
+			"copyright": "© {year} {company} 版权所有"
+		}
 	}
 }

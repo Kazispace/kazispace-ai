@@ -1022,5 +1022,70 @@
 	"studio": {
 		"resumes": "Түйіндеме",
 		"archived": "Мұрағат"
+	},
+	"home": {
+		"meta": {
+			"title": "KaziSpace — AI English for a better career",
+			"description": "Practise English with an AI tutor and listen to interactive English stories at your level."
+		},
+		"nav": {
+			"features": "Features",
+			"howItWorks": "How it works"
+		},
+		"signUp": "Sign up",
+		"logIn": "Log in",
+		"openApp": "Open KaziSpace",
+		"hero": {
+			"title": "AI English for a better career, globally",
+			"body": "Practise English with an AI tutor, and listen to interactive English stories made for your level.",
+			"imageAlt": "The KaziSpace chat on a phone"
+		},
+		"features": {
+			"title": "What KaziSpace does",
+			"english": {
+				"title": "English practice",
+				"body": "Speak and write with an AI tutor, and get an English passport that shows your level."
+			},
+			"radio": {
+				"title": "Personal radio",
+				"body": "Interactive English stories you steer with your voice, told at your level."
+			}
+		},
+		"steps": {
+			"title": "How it works",
+			"ask": {
+				"title": "Say what you need",
+				"body": "Tell your AI partner in your own words."
+			},
+			"specialist": {
+				"title": "A specialist takes over",
+				"body": "The right specialist joins with what you already said."
+			},
+			"keep": {
+				"title": "Keep your progress",
+				"body": "Your English level and progress are saved in Studio for next time."
+			}
+		},
+		"platforms": {
+			"title": "Use it where you are",
+			"web": "Web",
+			"webBody": "In any browser, on your computer or phone.",
+			"telegram": "Telegram mini app",
+			"wechat": "WeChat mini program",
+			"miniBody": "Open it inside the app you already use.",
+			"scan": "Scan to open"
+		},
+		"closing": {
+			"title": "Start with one conversation"
+		},
+		"footer": {
+			"company": "Company",
+			"contact": "Contact",
+			"legal": "Legal",
+			"terms": "Terms of service",
+			"privacy": "Privacy policy",
+			"language": "Language",
+			"copyright": "© {year} {company}. All rights reserved."
+		}
 	}
 }
