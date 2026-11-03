@@ -4,7 +4,7 @@ import { Globe, MessageCircle, Radio } from 'lucide-react';
 
 import { HomeCtas } from '@/components/home/home-ctas';
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
-import { factFor, miniProgramFor, type HomepageSite } from '@/lib/homepage-site';
+import { factFor, miniProgramFor, pickHomeCover, type HomepageSite } from '@/lib/homepage-site';
 
 /**
  * KAZI-1245: the public homepage (kazispace-ui Homepage pattern 0.1, decision D30).
@@ -42,6 +42,7 @@ export async function Homepage({
     { id: 'radio', Icon: Radio },
   ] as const;
   const steps = ['ask', 'specialist', 'keep'] as const;
+  const cover = pickHomeCover();
 
   return (
     <div className="min-h-screen bg-white text-workspace-text" data-testid="homepage" data-site={site}>
@@ -85,14 +86,17 @@ export async function Homepage({
             <p className="max-w-[480px] text-base text-workspace-secondary">{t('hero.body')}</p>
             <HomeCtas locale={locale} placement="hero" />
           </div>
-          <div className="flex justify-center rounded-xl bg-workspace-bg p-6 md:w-[480px] md:p-12">
+          <div className="flex justify-center md:w-[480px]">
+            {/* KAZI-1250: one of three covers, chosen per request (the page renders per request). */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/home/chat-phone.png"
+              src={cover}
               alt={t('hero.imageAlt')}
-              width={390}
-              height={844}
-              className="h-auto w-[234px] rounded-3xl border border-workspace-border md:w-[260px]"
+              width={640}
+              height={640}
+              fetchPriority="high"
+              data-testid="home-cover"
+              className="aspect-square h-auto w-full max-w-[400px] rounded-xl"
             />
           </div>
         </section>
