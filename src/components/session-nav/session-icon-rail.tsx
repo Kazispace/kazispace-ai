@@ -109,7 +109,7 @@ export function SessionIconRail({
 
   return (
     <nav
-      aria-label={t('iconRail')}
+      aria-label={tNav('primary')}
       className="hidden md:flex w-[72px] shrink-0 flex-col items-center gap-1 border-r border-workspace-border bg-workspace-bg py-3"
     >
       <Link

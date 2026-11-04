@@ -50,6 +50,11 @@ describe('KAZIOP-3 navigation rail', () => {
     );
   };
 
+  it('is the main navigation landmark, named like the tab bar', () => {
+    render('/zh/clinic/hub');
+    expect(host.querySelector('nav')?.getAttribute('aria-label')).toBe('nav.primary');
+  });
+
   it('shows a label under each destination, in D2 order', () => {
     render('/zh/clinic/hub');
     const items = ['space', 'studio', 'me'].map((d) => host.querySelector(`[data-testid="rail-${d}"]`)!);
