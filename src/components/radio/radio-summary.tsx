@@ -8,9 +8,10 @@ import { Loader2 } from 'lucide-react';
 
 import { newRadioRequestId, startRadioStory } from '@/lib/radio/api';
 import { trackRadioEvent } from '@/lib/radio/events';
+import { RadioRating } from '@/components/radio/radio-rating';
 import { getRadioReplay, getRadioSaves } from '@/lib/radio/player-api';
 import { radioHomeHref, radioReplayHref, radioStoryHref } from '@/lib/radio/routes';
-import type { RadioGlossaryItem, RadioHome, RadioReplay, RadioStorySummary } from '@/types/radio';
+import type { RadioGlossaryItem, RadioHome, RadioMyRating, RadioReplay, RadioStorySummary } from '@/types/radio';
 
 /** Ending summary · Phrases: up to 8. */
 export const SUMMARY_PHRASES_MAX = 8;
@@ -50,6 +51,7 @@ export function nextStory(home: RadioHome | null, heard: Set<string>): RadioStor
  * - No quiz, no score, no stars: the radio cannot measure understanding, so it does not report it.
  * - Reports `radio_summary_shown` once (`glossary_count`, `recommended_story_id`).
  * - Questions: not shown; the radio does not keep the user's questions (personal-radio.md 0.14).
+ * - Rating: thumbs-up / thumbs-down on the whole story, once the replay names it (personal-radio.md 0.15).
  */
 export function EndingSummary({
   locale,
@@ -72,12 +74,16 @@ export function EndingSummary({
   const reported = useRef(false);
   // null while the replay has not answered; [] or a list once it has (a failure counts as answered).
   const [fromReplay, setFromReplay] = useState<RadioGlossaryItem[] | null>(null);
+  // The story and the listener's own rating of it, from the same replay answer (personal-radio.md 0.15).
+  const [rateable, setRateable] = useState<{ storyId: string; mine: RadioMyRating | null } | null>(null);
   const phrases = (fromReplay && fromReplay.length ? fromReplay : glossary).slice(0, SUMMARY_PHRASES_MAX);
 
   useEffect(() => {
     let live = true;
     void getRadioReplay(saveId).then((res) => {
-      if (live) setFromReplay(res.success ? replayPhrases(res.data) : []);
+      if (!live) return;
+      setFromReplay(res.success ? replayPhrases(res.data) : []);
+      if (res.success && res.data?.story_id) setRateable({ storyId: res.data.story_id, mine: res.data.my_rating ?? null });
     });
     return () => {
       live = false;
@@ -150,6 +156,7 @@ export function EndingSummary({
           ) : null}
         </div>
       ) : null}
+      {rateable ? <RadioRating kind="story" targetId={rateable.storyId} initial={rateable.mine} /> : null}
       <div className="mt-4 flex flex-wrap gap-2">
         <Link href={radioReplayHref(locale, saveId)} className={btn} data-testid="radio-summary-replay">
           {t('replay')}

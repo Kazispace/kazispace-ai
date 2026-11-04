@@ -36,7 +36,7 @@ const PAYLOAD_KEYS: Record<RadioEventKind, readonly string[]> = {
   speed_changed: ['from', 'to'],
   ttfa: ['target', 'cached', 'ms', 'render_id'],
   program_finished: ['variant_band', 'position_ms'],
-  player_left: ['node_id', 'seq', 'offset_ms', 'position_ms'],
+  player_left: ['node_id', 'seq', 'offset_ms', 'position_ms', 'listened_ms'],
 };
 
 let queue: RadioClientEvent[] = [];

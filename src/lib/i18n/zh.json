@@ -1366,6 +1366,21 @@
 			"ttsDisabled": "这个地区暂时不能开新故事，已有的故事和节目都还能听"
 		},
 		"offline": "网络断开了，联网后点播放继续",
-		"contentMissing": "这一段暂时找不到了。先回到电台首页，你的进度还在。"
+		"contentMissing": "这一段暂时找不到了。先回到电台首页，你的进度还在。",
+		"rating": {
+			"question": "觉得怎么样？",
+			"up": "喜欢",
+			"down": "不太喜欢",
+			"reasonsTitle": "哪里不好？（可选）",
+			"reason": {
+				"tooHard": "太难",
+				"tooEasy": "太简单",
+				"boring": "内容无聊",
+				"voice": "主播声音不好听",
+				"enRatio": "中英比例不合适"
+			},
+			"thanks": "谢谢，这能帮我们挑更好的内容",
+			"failed": "评价没保存上，请再试一次。"
+		}
 	}
 }

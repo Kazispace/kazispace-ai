@@ -126,6 +126,23 @@ export interface RadioNode {
   ending?: RadioEnding | null;
 }
 
+/** A thumbs-down reason (closed set; personal-radio.md 0.15, Rating). */
+export type RadioRatingReason = 'too_hard' | 'too_easy' | 'boring' | 'voice' | 'en_ratio';
+export const RADIO_RATING_REASONS: RadioRatingReason[] = ['too_hard', 'too_easy', 'boring', 'voice', 'en_ratio'];
+
+/** The listener's own rating of a whole story or program; reasons only with `down`. */
+export interface RadioMyRating {
+  rating: 'up' | 'down';
+  reasons: RadioRatingReason[];
+}
+
+export interface RadioRatingResponse {
+  target_kind: 'story' | 'program';
+  target_id: string;
+  rating: 'up' | 'down' | null;
+  reasons: RadioRatingReason[];
+}
+
 /** The ending reached; `title` is null when the story gives no name. */
 export interface RadioEnding {
   ending_key?: string | null;
@@ -217,6 +234,7 @@ export interface RadioProgramDetail {
   voice_id: string;
   duration_ms: number;
   segments: RadioProgramSegment[];
+  my_rating?: RadioMyRating | null;
 }
 
 /** `POST programs/{program_id}/ask` and `/ask/audio` (personal-radio.md, Data · A program). */
@@ -265,6 +283,7 @@ export interface RadioReplay {
   title?: string | null;
   status: string;
   steps: RadioReplayStep[];
+  my_rating?: RadioMyRating | null;
 }
 
 /** `POST events` (Data · Playback events). Payload keys are fixed per kind; never free text. */
