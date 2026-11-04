@@ -1,11 +1,11 @@
 /**
- * Personal radio API calls used only inside the players (KAZI-1209 parts 2 and 3): spoken turns and
- * questions in a program. Kept apart from `api.ts` so Studio's radio section, which loads with the
- * CV rail chunk (KAZI-654 budget), does not carry them.
+ * Personal radio API calls used only on the radio's own screens (KAZI-1209 parts 2–4): spoken turns,
+ * questions in a program, background music and clearing radio memory. Kept apart from `api.ts` so
+ * Studio's radio section, which loads with the CV rail chunk (KAZI-654 budget), does not carry them.
  */
 import { apiRequest } from '@/lib/api-client';
 import type { ApiResponse } from '@/types';
-import type { RadioPlayerResponse, RadioPosition, RadioProgramAskResponse } from '@/types/radio';
+import type { RadioBgmTrack, RadioPlayerResponse, RadioPosition, RadioProgramAskResponse } from '@/types/radio';
 
 const BASE = '/api/v1/radio';
 
@@ -65,4 +65,14 @@ export function askRadioProgramAudio(
     method: 'POST',
     body: form,
   });
+}
+
+/** `GET bgm`: the background music tracks. None ⇒ the settings' music group is hidden. */
+export function getRadioBgm(): Promise<ApiResponse<{ tracks: RadioBgmTrack[] }>> {
+  return apiRequest<{ tracks: RadioBgmTrack[] }>(`${BASE}/bgm`);
+}
+
+/** `DELETE memory`: `204` with no body; a resend after a lost answer is safe. */
+export function deleteRadioMemory(): Promise<ApiResponse<unknown>> {
+  return apiRequest<unknown>(`${BASE}/memory`, { method: 'DELETE' });
 }

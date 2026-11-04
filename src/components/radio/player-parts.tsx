@@ -178,18 +178,26 @@ export function PlayerControls({
 export function PlayerShell({
   back,
   title,
+  action,
   children,
   footer,
 }: {
   back: React.ReactNode;
   title: string;
+  /** A control on the title row: the radio home's settings gear, the player's "more" menu. */
+  action?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
   return (
     <div className="flex h-full flex-col bg-white" data-testid="radio-player">
       <div className="mx-auto w-full max-w-2xl px-4 pt-2">{back}</div>
-      <h1 className="mx-auto w-full max-w-2xl px-4 pb-2 text-lg font-semibold text-kazi-navy">{title}</h1>
+      <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 pb-2">
+        <h1 className="text-lg font-semibold text-kazi-navy" data-testid="radio-title">
+          {title}
+        </h1>
+        {action}
+      </div>
       <main className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-4 pb-4">{children}</main>
       {footer ? <div className="mx-auto w-full max-w-2xl border-t border-gray-100 px-4 py-3">{footer}</div> : null}
     </div>

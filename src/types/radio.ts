@@ -208,3 +208,11 @@ export interface RadioProgramAskResponse {
   degraded?: { node: string; reason: string }[];
   ai_calls_used: number;
 }
+
+/** `GET bgm` (Data): a background music track; `audio_url` is signed for 15 minutes. */
+export interface RadioBgmTrack {
+  track_id: string;
+  title: string;
+  mood?: string | null;
+  audio_url?: string | null;
+}
