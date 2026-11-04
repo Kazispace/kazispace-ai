@@ -23,6 +23,7 @@ import {
   bootstrapBase,
   ensureDirectoryLoaded,
   findRowByApiBase,
+  resolveHome,
 } from './region/directory';
 import { buildSessionFromVerify } from './region/session';
 import {
@@ -55,7 +56,24 @@ export type ApiRequestOptions = RequestInit & {
   bootstrap?: boolean;
   /** Require region session (account-scoped). */
   requireSession?: boolean;
+  /**
+   * Give up after this long (KAZI-1245 login speed-up). Reads default to
+   * GET_TIMEOUT_MS; writes have none unless set, since some (AI replies) are slow.
+   */
+  timeoutMs?: number;
 };
+
+/** A read that has not answered in this long is treated as a network error. */
+export const GET_TIMEOUT_MS = 20_000;
+/** Reads are tried once more after a network error or timeout, after this pause. */
+export const GET_RETRY_DELAY_MS = 1_000;
+
+function timeoutSignal(ms: number | undefined): AbortSignal | undefined {
+  if (!ms || typeof AbortSignal === 'undefined' || typeof AbortSignal.timeout !== 'function') {
+    return undefined;
+  }
+  return AbortSignal.timeout(ms);
+}
 
 export type OtpRequestResult = ApiResponse<OtpRequestResponse> & {
   attempt?: OtpAttempt;
@@ -71,9 +89,12 @@ export async function apiRequest<T>(
     apiBase,
     bootstrap,
     requireSession,
+    timeoutMs,
     ...fetchOptions
   } = options;
   const deviceId = getDeviceId();
+  const method = (fetchOptions.method ?? 'GET').toUpperCase();
+  const isRead = method === 'GET';
 
   const isFormData =
     typeof FormData !== 'undefined' && fetchOptions.body instanceof FormData;
@@ -99,16 +120,31 @@ export async function apiRequest<T>(
   headers['X-Locale'] = languagePreference;
 
   try {
-    const response = await regionAwareApiClient.fetch(endpoint, {
-      ...fetchOptions,
-      headers,
-      phone,
-      apiBase,
-      bootstrap,
-      requireSession:
-        requireSession ??
-        (!phone && !apiBase && !bootstrap && Boolean(getAuthToken())),
-    });
+    // A stalled request must not keep a spinner going for minutes: reads time out and
+    // get one more try; writes are never retried (an OTP request must not send twice).
+    const attempts = isRead ? 2 : 1;
+    let response: Response | undefined;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        response = await regionAwareApiClient.fetch(endpoint, {
+          ...fetchOptions,
+          signal: fetchOptions.signal ?? timeoutSignal(timeoutMs ?? (isRead ? GET_TIMEOUT_MS : undefined)),
+          headers,
+          phone,
+          apiBase,
+          bootstrap,
+          requireSession:
+            requireSession ??
+            (!phone && !apiBase && !bootstrap && Boolean(getAuthToken())),
+        });
+        break;
+      } catch (err) {
+        if (err instanceof RegionAccountFetchError || fetchOptions.signal?.aborted || attempt >= attempts) {
+          throw err;
+        }
+        await new Promise((resolve) => setTimeout(resolve, GET_RETRY_DELAY_MS));
+      }
+    }
 
     if (response.status === 401) {
       clearAuthToken();
@@ -195,12 +231,31 @@ export async function apiRequest<T>(
   }
 }
 
+/** Sending or checking a code: give up after this long instead of spinning on. */
+export const AUTH_TIMEOUT_MS = 20_000;
+
+/** True when the bundled directory alone already routes this number to an advertised host. */
+export function bundledDirectoryAdvertisesHome(phone: string): boolean {
+  const home = resolveHome(phone);
+  return BUNDLED_DIRECTORY.regions.some(
+    (r) => r.api_base === home.api_base && r.public_status === 'advertised' && r.phone_prefixes.some((p) => phone.startsWith(p))
+  );
+}
+
 export async function requestOtp(phone: string): Promise<OtpRequestResult> {
-  // Bounded wait for public directory refresh so first-click OTP is deterministic.
-  await Promise.race([
-    ensureDirectoryLoaded(),
-    new Promise<void>((resolve) => setTimeout(resolve, 1500)),
-  ]);
+  // The public directory (on the US bootstrap host) can only change which hosts are
+  // advertised. When the bundled directory already advertises this number's home
+  // (+86 → China, +7 / +998 → international), waiting for it costs up to 1.5 s and,
+  // from China, usually the full 1.5 s, for nothing (KAZI-1245 login speed-up).
+  // Otherwise keep the bounded wait so first-click OTP is deterministic.
+  if (!bundledDirectoryAdvertisesHome(phone)) {
+    await Promise.race([
+      ensureDirectoryLoaded(),
+      new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+    ]);
+  } else {
+    void ensureDirectoryLoaded();
+  }
 
   const apiBase = regionAwareApiClient.selectLiveApiBase(phone);
   const attempt = createOtpAttempt({
@@ -220,6 +275,7 @@ export async function requestOtp(phone: string): Promise<OtpRequestResult> {
     method: 'POST',
     body: JSON.stringify({ phone }),
     apiBase: attempt.api_base,
+    timeoutMs: AUTH_TIMEOUT_MS,
   });
 
   return { ...res, attempt: res.success ? attempt : undefined };
@@ -247,6 +303,7 @@ export async function verifyOtp(
       method: 'POST',
       body: JSON.stringify({ phone, code }),
       apiBase: pinned.api_base,
+      timeoutMs: AUTH_TIMEOUT_MS,
     }
   );
 

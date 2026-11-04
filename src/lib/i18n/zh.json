@@ -25,7 +25,8 @@
 		"haveAccount": "已有账号？",
 		"switchToLogIn": "登录",
 		"noAccount": "还没有账号？",
-		"switchToSignUp": "注册"
+		"switchToSignUp": "注册",
+		"entering": "正在进入…"
 	},
 	"mine": {
 		"title": "个人中心",

@@ -16,9 +16,10 @@ const verifyOtpMock = vi.hoisted(() => vi.fn());
 const getMeMock = vi.hoisted(() => vi.fn());
 const replaceMock = vi.hoisted(() => vi.fn());
 const pushMock = vi.hoisted(() => vi.fn());
+const prefetchMock = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: replaceMock, push: pushMock }),
+  useRouter: () => ({ replace: replaceMock, push: pushMock, prefetch: prefetchMock }),
 }));
 
 vi.mock('next-intl', () => ({
@@ -32,8 +33,9 @@ vi.mock('@/lib/api-client', () => ({
   getMe: () => getMeMock(),
 }));
 
+const syncMasterSessionMock = vi.hoisted(() => vi.fn(async () => undefined as string | undefined));
 vi.mock('@/lib/master-session', () => ({
-  syncMasterSession: async () => undefined,
+  syncMasterSession: () => syncMasterSessionMock(),
 }));
 
 import LoginPage from '@/app/[locale]/login/page';
@@ -83,6 +85,9 @@ describe('KAZI-659 /login page', () => {
     getMeMock.mockReset();
     replaceMock.mockReset();
     pushMock.mockReset();
+    prefetchMock.mockReset();
+    syncMasterSessionMock.mockReset();
+    syncMasterSessionMock.mockImplementation(async () => undefined);
     sessionStorage.clear();
     localStorage.clear();
     window.history.replaceState(null, '', '/en/login');
@@ -394,6 +399,32 @@ describe('KAZI-659 /login page', () => {
       // +7 numbers infer `ru` as the Language Preference with no manual/profile
       // override (SDD §11.2-A) -- this is not the default `/en/chat`.
       expect(pushMock).toHaveBeenCalledWith('/ru/chat');
+    });
+
+    // KAZI-1245 login speed-up: the next page starts loading as soon as the code is accepted,
+    // and the sign-in screen does not wait for the default chat session.
+    it('starts loading the next page before /me answers, and does not wait for the chat session', async () => {
+      await advanceToOtpStep();
+      verifyOtpMock.mockResolvedValue({
+        success: true,
+        data: { token: 'otp-session-token', user: sampleUser({ id: 'otp-user' }) },
+      });
+      let resolveMe!: (v: unknown) => void;
+      getMeMock.mockReturnValue(new Promise((r) => (resolveMe = r)));
+      syncMasterSessionMock.mockReturnValue(new Promise(() => {})); // never answers
+
+      await act(async () => setInputValue(otpInput(), '123456'));
+      await act(async () => {
+        currentForm().dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+      expect(prefetchMock).toHaveBeenCalledWith('/en/chat');
+      expect(pushMock).not.toHaveBeenCalled();
+
+      await act(async () => resolveMe({ success: true, data: sampleUser({ id: 'me-user' }) }));
+      expect(syncMasterSessionMock).toHaveBeenCalled();
+      expect(pushMock).toHaveBeenCalledWith('/ru/chat');
+      // Signed in and opening: the card says so instead of a bare spinner.
+      expect(host!.querySelector('[data-testid="login-entering"]')?.textContent).toBe('entering');
     });
 
     it('falls back to the OTP-issued user when getMe fails after a successful verify', async () => {
