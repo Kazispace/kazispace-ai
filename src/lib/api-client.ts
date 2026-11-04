@@ -322,7 +322,8 @@ export async function verifyOtp(
 export async function getMe(): Promise<ApiResponse<User>> {
   const res = await apiRequest<Record<string, unknown>>('/api/v1/me');
   if (!res.success || !res.data) {
-    return { success: false, error: res.error };
+    // Keep why it failed: a network error must not be read as an invalid session.
+    return { success: false, error: res.error, errorCode: res.errorCode, status: res.status };
   }
   return { success: true, data: mapUserFromApi(res.data) };
 }

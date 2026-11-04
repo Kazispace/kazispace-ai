@@ -142,24 +142,57 @@ export function isPersistedUser(value: unknown): value is User {
 export type AuthHydrateResult =
   | { status: 'authenticated'; token: string; user: User }
   | { status: 'anonymous' }
-  | { status: 'invalid' };
+  | { status: 'invalid' }
+  /** /me could not be reached (network, 5xx, 408, 429): the session is kept, not ended. */
+  | { status: 'unreachable' };
+
+interface MeResult {
+  success: boolean;
+  data?: User;
+  errorCode?: string;
+  status?: number;
+}
+
+/**
+ * A failure that says nothing about the session itself: no response at all, or the server
+ * busy or down. Only a definite rejection (401, or another 4xx) may end a session; a
+ * dropped request on a weak connection must not sign the user out.
+ */
+export function isTransientMeFailure(me: MeResult): boolean {
+  if (me.success) return false;
+  if (me.errorCode === 'NETWORK_ERROR') return true;
+  const s = me.status;
+  return typeof s === 'number' && (s >= 500 || s === 408 || s === 429);
+}
+
+/** Waits between /me attempts when it cannot be reached. */
+export const ME_RETRY_DELAYS_MS = [1500, 4000] as const;
 
 /**
  * Resume a still-valid region session via GET /me. Never sets isLoggedIn —
  * caller must `login(token, user)` only after `authenticated` (KAZI-577 R1).
  * Cached USER_INFO is not enough: token-without-validated-user is invalid.
  */
-export async function hydrateAuthFromSession(fetchMe: () => Promise<{
-  success: boolean;
-  data?: User;
-}>): Promise<AuthHydrateResult> {
+export async function hydrateAuthFromSession(
+  fetchMe: () => Promise<MeResult>,
+  {
+    retryDelaysMs = ME_RETRY_DELAYS_MS,
+    sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+  }: { retryDelaysMs?: readonly number[]; sleep?: (ms: number) => Promise<void> } = {}
+): Promise<AuthHydrateResult> {
   if (!syncAuthCookieFromSession()) return { status: 'anonymous' };
   const token = getAuthToken();
   if (!token) return { status: 'anonymous' };
 
-  const me = await fetchMe();
-  if (me.success && isPersistedUser(me.data)) {
-    return { status: 'authenticated', token, user: me.data };
+  for (let attempt = 0; ; attempt++) {
+    const me = await fetchMe();
+    if (me.success && isPersistedUser(me.data)) {
+      return { status: 'authenticated', token, user: me.data };
+    }
+    if (!isTransientMeFailure(me)) break;
+    // Not reachable: keep the session and try again; give up quietly after the last wait.
+    if (attempt >= retryDelaysMs.length) return { status: 'unreachable' };
+    await sleep(retryDelaysMs[attempt]);
   }
 
   clearAuthToken();
