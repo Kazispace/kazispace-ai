@@ -17,13 +17,16 @@ import {
   readLanguagePreference,
 } from "@/lib/locale";
 import { syncMasterSession } from "@/lib/master-session";
+import { loginModeFromSearchParams } from "@/lib/login-mode";
 import { useAuthStore } from "@/lib/store";
 
 interface LoginPageProps {
   params: { locale: string };
+  /** Read on the server so the first paint already has the right title (mode=signup → 注册). */
+  searchParams?: { mode?: string | string[] };
 }
 
-export default function LoginPage({ params: _params }: LoginPageProps) {
+export default function LoginPage({ params: _params, searchParams }: LoginPageProps) {
   const t = useTranslations("login");
   const router = useRouter();
 
@@ -36,7 +39,7 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
   const [sessionExpired, setSessionExpired] = useState(false);
   // Which button opened the screen (kazispace-ui Homepage 0.4): "Sign up" passes mode=signup.
   // Same steps either way; only the title and the switch line differ.
-  const [mode, setMode] = useState<"signup" | "login">("login");
+  const [mode, setMode] = useState(() => loginModeFromSearchParams(searchParams));
   const authReady = useAuthStore((s) => s.authReady);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const user = useAuthStore((s) => s.user);
@@ -47,7 +50,6 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
     if (search.get("expired") === "1") {
       setSessionExpired(true);
     }
-    if (search.get("mode") === "signup") setMode("signup");
     const pendingPhone = getPendingOtpPhone();
     if (pendingPhone) setPhone(pendingPhone);
   }, []);

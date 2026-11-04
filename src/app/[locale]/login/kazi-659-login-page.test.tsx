@@ -3,6 +3,7 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getPendingOtpPhone } from '@/lib/auth';
@@ -106,7 +107,7 @@ describe('KAZI-659 /login page', () => {
   it('opened from Sign up (mode=signup): titled signUpTitle, with a switch to log in', async () => {
     window.history.replaceState(null, '', '/zh/login?redirect=%2Fzh%2Fspaces&mode=signup');
     await act(async () => {
-      root!.render(<LoginPage params={{ locale: 'zh' }} />);
+      root!.render(<LoginPage params={{ locale: 'zh' }} searchParams={{ mode: 'signup' }} />);
     });
     expect(host!.querySelector('[data-testid="login-title"]')?.textContent).toBe('signUpTitle');
     const sw = host!.querySelector('[data-testid="login-switch"]')!;
@@ -122,6 +123,18 @@ describe('KAZI-659 /login page', () => {
     await act(async () => (host!.querySelector('[data-testid="login-switch"] button') as HTMLButtonElement).click());
     expect(host!.querySelector('[data-testid="login-title"]')?.textContent).toBe('signUpTitle');
     expect(window.location.search).toBe('?redirect=%2Fzh%2Fspaces&mode=signup');
+  });
+
+  // Review of #282: the title must be right on first paint (server HTML), not after an effect.
+  it('server HTML is already titled signUpTitle when opened with mode=signup', () => {
+    const html = renderToStaticMarkup(<LoginPage params={{ locale: 'zh' }} searchParams={{ mode: 'signup' }} />);
+    expect(html).toMatch(/data-testid="login-title"[^>]*>signUpTitle</);
+    expect(renderToStaticMarkup(<LoginPage params={{ locale: 'zh' }} searchParams={{}} />)).toMatch(
+      /data-testid="login-title"[^>]*>title</
+    );
+    expect(renderToStaticMarkup(<LoginPage params={{ locale: 'zh' }} searchParams={{ mode: ['signup', 'x'] }} />)).toMatch(
+      /data-testid="login-title"[^>]*>signUpTitle</
+    );
   });
 
   it('opened any other way: titled title, with a switch to sign up', async () => {
