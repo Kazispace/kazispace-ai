@@ -229,6 +229,16 @@ describe('KAZI-1245 the page', () => {
     expect(out).toContain('home.logIn');
     // Sign-in from the homepage lands in Space.
     expect(out).toMatch(/href="\/en\/login\?redirect=%2Fen%2F(spaces|chat)"/);
+    // Sign up opens the screen titled for signing up (Homepage 0.4); Log in does not.
+    const links = Array.from(new DOMParser().parseFromString(out, 'text/html').querySelectorAll('a'))
+      .filter((a) => a.textContent === 'home.signUp' || a.textContent === 'home.logIn')
+      .map((a) => [a.textContent, a.getAttribute('href') ?? ''] as const);
+    expect(links.filter(([label]) => label === 'home.signUp')).toHaveLength(3);
+    expect(links.filter(([label]) => label === 'home.logIn')).toHaveLength(2);
+    for (const [label, href] of links) {
+      if (label === 'home.signUp') expect(href).toMatch(/&mode=signup$/);
+      else expect(href).not.toContain('mode=');
+    }
     expect(out).not.toContain('home.openApp');
   });
 

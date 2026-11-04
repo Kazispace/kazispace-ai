@@ -33,6 +33,8 @@ export function HomeCtas({
   const space = topLevelHref(locale, 'space');
   // After sign-in the visitor lands in Space (Homepage 0.1, "Calls to action").
   const login = `/${locale}/login?redirect=${encodeURIComponent(space)}`;
+  // "Sign up" opens the same screen titled for signing up (Homepage 0.4).
+  const signUp = `${login}&mode=signup`;
   // Hidden but laid out: keeps the slot's width so nothing moves when the session is known.
   const hiddenProps = { 'aria-hidden': true, tabIndex: -1 } as const;
 
@@ -47,7 +49,7 @@ export function HomeCtas({
     >
       {placement === 'hero' && (
         <>
-          <Link href={login} className={PRIMARY} {...(signedIn ? hiddenProps : {})}>
+          <Link href={signUp} className={PRIMARY} {...(signedIn ? hiddenProps : {})}>
             {t('signUp')}
           </Link>
           <Link href={login} className={SECONDARY} {...(signedIn ? hiddenProps : {})}>
@@ -64,13 +66,13 @@ export function HomeCtas({
           >
             {t('logIn')}
           </Link>
-          <Link href={login} className={PRIMARY} {...(signedIn ? hiddenProps : {})}>
+          <Link href={signUp} className={PRIMARY} {...(signedIn ? hiddenProps : {})}>
             {t('signUp')}
           </Link>
         </>
       )}
       {placement === 'closing' && (
-        <Link href={login} className={PRIMARY} {...(signedIn ? hiddenProps : {})}>
+        <Link href={signUp} className={PRIMARY} {...(signedIn ? hiddenProps : {})}>
           {t('signUp')}
         </Link>
       )}

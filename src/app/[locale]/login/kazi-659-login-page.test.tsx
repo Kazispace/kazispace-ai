@@ -3,6 +3,7 @@
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getPendingOtpPhone } from '@/lib/auth';
@@ -100,6 +101,50 @@ describe('KAZI-659 /login page', () => {
     host = null;
     sessionStorage.clear();
     localStorage.clear();
+  });
+
+  // KAZI-1245 (kazispace-ui Homepage 0.4; Owen, 2026-11-04: "Make 注册 open a screen titled 注册").
+  it('opened from Sign up (mode=signup): titled signUpTitle, with a switch to log in', async () => {
+    window.history.replaceState(null, '', '/zh/login?redirect=%2Fzh%2Fspaces&mode=signup');
+    await act(async () => {
+      root!.render(<LoginPage params={{ locale: 'zh' }} searchParams={{ mode: 'signup' }} />);
+    });
+    expect(host!.querySelector('[data-testid="login-title"]')?.textContent).toBe('signUpTitle');
+    const sw = host!.querySelector('[data-testid="login-switch"]')!;
+    expect(sw.textContent).toContain('haveAccount');
+    const input = host!.querySelector('input[type="tel"]') as HTMLInputElement;
+    await act(async () => setInputValue(input, '+8613262788342'));
+    // Switching keeps the number typed so far, and the URL (redirect stays, mode goes).
+    await act(async () => (sw.querySelector('button') as HTMLButtonElement).click());
+    expect(host!.querySelector('[data-testid="login-title"]')?.textContent).toBe('title');
+    expect(host!.querySelector('[data-testid="login-switch"]')?.textContent).toContain('noAccount');
+    expect((host!.querySelector('input[type="tel"]') as HTMLInputElement).value).toBe('+8613262788342');
+    expect(window.location.search).toBe('?redirect=%2Fzh%2Fspaces');
+    await act(async () => (host!.querySelector('[data-testid="login-switch"] button') as HTMLButtonElement).click());
+    expect(host!.querySelector('[data-testid="login-title"]')?.textContent).toBe('signUpTitle');
+    expect(window.location.search).toBe('?redirect=%2Fzh%2Fspaces&mode=signup');
+  });
+
+  // Review of #282: the title must be right on first paint (server HTML), not after an effect.
+  it('server HTML is already titled signUpTitle when opened with mode=signup', () => {
+    const html = renderToStaticMarkup(<LoginPage params={{ locale: 'zh' }} searchParams={{ mode: 'signup' }} />);
+    expect(html).toMatch(/data-testid="login-title"[^>]*>signUpTitle</);
+    expect(renderToStaticMarkup(<LoginPage params={{ locale: 'zh' }} searchParams={{}} />)).toMatch(
+      /data-testid="login-title"[^>]*>title</
+    );
+    expect(renderToStaticMarkup(<LoginPage params={{ locale: 'zh' }} searchParams={{ mode: ['signup', 'x'] }} />)).toMatch(
+      /data-testid="login-title"[^>]*>signUpTitle</
+    );
+  });
+
+  it('opened any other way: titled title, with a switch to sign up', async () => {
+    window.history.replaceState(null, '', '/zh/login?redirect=%2Fzh%2Fchat');
+    await act(async () => {
+      root!.render(<LoginPage params={{ locale: 'zh' }} />);
+    });
+    expect(host!.querySelector('[data-testid="login-title"]')?.textContent).toBe('title');
+    expect(host!.querySelector('[data-testid="login-switch"]')?.textContent).toContain('noAccount');
+    expect(host!.querySelector('[data-testid="login-switch"] button')?.textContent).toBe('switchToSignUp');
   });
 
   it('renders the phone entry form when logged out and session is ready', async () => {
