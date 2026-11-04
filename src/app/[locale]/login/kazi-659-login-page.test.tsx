@@ -417,8 +417,11 @@ describe('KAZI-659 /login page', () => {
       await act(async () => {
         currentForm().dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
       });
-      expect(prefetchMock).toHaveBeenCalledWith('/en/chat');
+      // Same language rule as the navigation (+7 → ru), so the prefetched page is the one opened.
+      expect(prefetchMock).toHaveBeenCalledWith('/ru/chat');
       expect(pushMock).not.toHaveBeenCalled();
+      // The code is accepted: the card already says the app is opening, before /me answers.
+      expect(host!.querySelector('[data-testid="login-entering"]')?.textContent).toBe('entering');
 
       await act(async () => resolveMe({ success: true, data: sampleUser({ id: 'me-user' }) }));
       expect(syncMasterSessionMock).toHaveBeenCalled();
