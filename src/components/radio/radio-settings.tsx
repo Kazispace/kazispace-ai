@@ -53,6 +53,7 @@ type Stored = { prefs: RadioPrefs; profile: RadioListenerProfile };
 export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; saveId?: string | null; from?: RadioFrom }) {
   const t = useTranslations('radio');
   const tStudio = useTranslations('studio');
+  const tStates = useTranslations('states');
   const router = useRouter();
   const showToast = useUIStore((s) => s.showToast);
   const { ready, authenticated } = useAuthReady();
@@ -127,6 +128,25 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   ) : (
     <BackLink href={radioHomeHref(locale)} label={tStudio('sections.radio')} />
   );
+
+  // The radio's status could not be read (network or server error): say so with a retry, as the radio
+  // home does, rather than a skeleton that never ends (a deep link straight to settings).
+  if (offered && access === 'unknown' && !home) {
+    return (
+      <PlayerShell back={back} title={t('settings.title')}>
+        <div data-testid="radio-settings-error" className="flex flex-col items-start gap-2 py-6">
+          <p className="text-sm text-workspace-secondary">{t('offline')}</p>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+          >
+            {tStates('retry')}
+          </button>
+        </div>
+      </PlayerShell>
+    );
+  }
 
   if (!offered || access === 'closed' || isLoading || !stored || !home) {
     return (

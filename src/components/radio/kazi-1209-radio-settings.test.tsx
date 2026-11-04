@@ -306,6 +306,16 @@ describe('RadioSettingsScreen', () => {
     expect(container.querySelector('a[href="/zh/radio"]')).not.toBeNull();
   });
 
+  it('the status cannot be read (deep link, network error): offline with retry, not an endless skeleton', async () => {
+    m.access = 'unknown';
+    m.home = null;
+    await settings();
+    expect(q('radio-settings-loading')).toBeNull();
+    expect(q('radio-settings-error')?.textContent).toContain('radio.offline');
+    await click(q('radio-settings-error')!.querySelector('button'));
+    expect(m.refresh).toHaveBeenCalled();
+  });
+
   it('not open to this user: goes to Studio', async () => {
     m.access = 'closed';
     m.home = null;
