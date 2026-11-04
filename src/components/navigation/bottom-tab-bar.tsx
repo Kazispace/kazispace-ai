@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { FolderOpen, LayoutGrid, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -13,15 +12,10 @@ import {
   isTopLevelScreen,
   resolveTopLevelDestination,
   topLevelHref,
-  type TopLevelDestination,
 } from '@/lib/top-level-nav';
 import { cn } from '@/lib/utils';
+import { TOP_LEVEL_ICONS } from '@/components/navigation/top-level-icons';
 
-const ICONS: Record<TopLevelDestination, typeof LayoutGrid> = {
-  space: LayoutGrid,
-  studio: FolderOpen,
-  me: User,
-};
 
 function isTextEntry(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -79,7 +73,7 @@ export function BottomTabBar({ locale }: { locale: string }) {
           arrow-key movement that links do not have. */}
       <ul className="flex h-14">
         {TOP_LEVEL_DESTINATIONS.map((destination) => {
-          const Icon = ICONS[destination];
+          const Icon = TOP_LEVEL_ICONS[destination];
           const selected = destination === active;
           return (
             <li key={destination} className="flex flex-1">
