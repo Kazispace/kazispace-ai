@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { reloadForChunkError, shouldReloadForChunkError } from '@/lib/chunk-reload';
 
 export default function LocaleError({
   error,
@@ -15,10 +16,19 @@ export default function LocaleError({
   const tStates = useTranslations('states');
   const locale = useLocale();
 
+  // A script file that failed to download: reload once instead of showing this screen.
+  const [reloading] = useState(() => shouldReloadForChunkError(error));
+
   useEffect(() => {
+    if (reloading) {
+      reloadForChunkError();
+      return;
+    }
     // eslint-disable-next-line no-console
     console.error(error);
-  }, [error]);
+  }, [error, reloading]);
+
+  if (reloading) return <div className="min-h-screen" aria-busy="true" />;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">

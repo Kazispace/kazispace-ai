@@ -17,6 +17,10 @@ import {
   DIRECTORY_IDLE_TIMEOUT_MS,
 } from "@/lib/spaces/perf-policy";
 
+/** When /me cannot be reached, how often and how many more times to check the session. */
+const SESSION_RECHECK_MS = 15_000;
+const SESSION_RECHECKS = 4;
+
 function localeFromPathname(pathname: string): string {
   const segment = pathname.split("/")[1];
   return segment || DEFAULT_LOCALE;
@@ -85,10 +89,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     const pathAtBoot = pathname;
+    let recheckTimer: ReturnType<typeof setTimeout> | undefined;
+    let rechecksLeft = SESSION_RECHECKS;
+    // /me could not be reached: the session is kept (token, cookie), not ended. Check
+    // again when the browser is back online, or after a pause, a few times.
+    const recheck = () => {
+      if (cancelled || rechecksLeft <= 0) return;
+      rechecksLeft -= 1;
+      if (recheckTimer) clearTimeout(recheckTimer);
+      void boot();
+    };
     async function boot() {
       const result = await hydrateAuthFromSession(() => getMe());
       if (cancelled) return;
       if (result.status === "authenticated") {
+        window.removeEventListener("online", recheck);
         useAuthStore.getState().login(result.token, result.user);
         return;
       }
@@ -98,13 +113,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
         isLoggedIn: false,
         authReady: true,
       });
+      if (result.status === "unreachable") {
+        recheckTimer = setTimeout(recheck, SESSION_RECHECK_MS);
+        return;
+      }
+      window.removeEventListener("online", recheck);
       if (result.status === "invalid" && !isLoginPath(pathAtBoot)) {
         router.replace(`/${localeFromPathname(pathAtBoot)}/login`);
       }
     }
+    window.addEventListener("online", recheck);
     void boot();
     return () => {
       cancelled = true;
+      window.removeEventListener("online", recheck);
+      if (recheckTimer) clearTimeout(recheckTimer);
     };
     // Session resume is once per mount. Pathname is only used for the
     // invalid-token redirect, not as a re-fetch trigger.

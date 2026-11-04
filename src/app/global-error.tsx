@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+import { reloadForChunkError, shouldReloadForChunkError } from '@/lib/chunk-reload';
 
 // Root-level error boundary — catches crashes in the root layout itself
 // (e.g. NextIntlClientProvider setup), where locale/translations aren't
@@ -12,10 +14,25 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // A script file that failed to download: reload once instead of showing this screen.
+  const [reloading] = useState(() => shouldReloadForChunkError(error));
+
   useEffect(() => {
+    if (reloading) {
+      reloadForChunkError();
+      return;
+    }
     // eslint-disable-next-line no-console
     console.error(error);
-  }, [error]);
+  }, [error, reloading]);
+
+  if (reloading) {
+    return (
+      <html lang="en">
+        <body />
+      </html>
+    );
+  }
 
   return (
     <html lang="en">

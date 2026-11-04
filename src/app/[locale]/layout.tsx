@@ -6,6 +6,7 @@ import { SUPPORTED_LOCALES } from "@/lib/constants";
 import { Providers } from "@/components/providers";
 import { AppChrome } from "@/components/app-chrome";
 import { TmaScript } from "@/components/tma/tma-script";
+import { CHUNK_RELOAD_INLINE_SCRIPT } from "@/lib/chunk-reload";
 import { WebVitalsReporter } from "@/components/perf/web-vitals-reporter";
 
 const inter = Inter({
@@ -37,6 +38,8 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className={inter.variable}>
       <head>
+        {/* Reload once if a startup script fails to download (see lib/chunk-reload). */}
+        <script dangerouslySetInnerHTML={{ __html: CHUNK_RELOAD_INLINE_SCRIPT }} />
         <TmaScript />
       </head>
       <body>
