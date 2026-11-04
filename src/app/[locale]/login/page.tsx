@@ -40,10 +40,12 @@ export default function LoginPage({ params: _params, searchParams }: LoginPagePr
   // Which button opened the screen (kazispace-ui Homepage 0.4): "Sign up" passes mode=signup.
   // Same steps either way; only the title and the switch line differ.
   const [mode, setMode] = useState(() => loginModeFromSearchParams(searchParams));
+  // True from the moment the code is accepted until this page is left (Homepage 0.4.1).
+  const [entering, setEntering] = useState(false);
   const authReady = useAuthStore((s) => s.authReady);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const user = useAuthStore((s) => s.user);
-  const resuming = !authReady || Boolean(isLoggedIn && user);
+  const resuming = !authReady || Boolean(isLoggedIn && user) || entering;
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
@@ -127,14 +129,31 @@ export default function LoginPage({ params: _params, searchParams }: LoginPagePr
       const result = await verifyOtp(normalizedPhone, otp, otpAttempt);
       if (result.success && result.data) {
         const { token, user: otpUser } = result.data;
+        const search = new URLSearchParams(window.location.search);
+        const redirect = search.get("redirect");
+        // The session cookie is set inside verifyOtp, so the next page can start loading
+        // (server render and scripts) while /me is still out (KAZI-1245 login speed-up).
+        // Same rule as the navigation below, from the user verify returned: /me can only
+        // refine the language, so the prefetched page is almost always the one opened.
+        const likelyLocale = resolvePostLoginLocale({
+          languagePreference: otpUser?.primaryLocale,
+          phone: normalizedPhone,
+        });
+        router.prefetch(
+          redirect && redirect.startsWith("/")
+            ? switchLocalePath(redirect, likelyLocale)
+            : `/${likelyLocale}/chat`
+        );
+        // The code is accepted: from here the card says the app is opening (Homepage 0.4.1).
+        setEntering(true);
         // Region session already persisted inside verifyOtp (KAZI-533).
         const me = await getMe();
         const user = me.success && me.data ? me.data : otpUser;
         useAuthStore.getState().login(token, user);
-        await syncMasterSession();
+        // The default chat session is needed only once a chat opens, which fetches it
+        // itself if missing (ensureMasterSession): do not hold the sign-in screen for it.
+        void syncMasterSession();
 
-        const search = new URLSearchParams(window.location.search);
-        const redirect = search.get("redirect");
         const targetLocale = resolvePostLoginLocale({
           languagePreference: user.primaryLocale,
           phone: normalizedPhone,
@@ -155,6 +174,8 @@ export default function LoginPage({ params: _params, searchParams }: LoginPagePr
         );
       }
     } catch {
+      // Never leave the card on "opening" after a failure: show the form and the error.
+      setEntering(false);
       setError(t("networkError"));
     } finally {
       setIsLoading(false);
@@ -189,8 +210,14 @@ export default function LoginPage({ params: _params, searchParams }: LoginPagePr
             </p>
           )}
           {resuming ? (
-            <div className="flex justify-center py-8">
+            <div className="flex flex-col items-center gap-3 py-8" aria-live="polite">
               <div className="w-8 h-8 border-2 border-gray-200 border-t-primary rounded-full animate-spin" />
+              {/* Signed in, the app is opening: say so instead of a bare spinner. */}
+              {entering || (isLoggedIn && user) ? (
+                <p className="text-sm text-workspace-secondary" data-testid="login-entering">
+                  {t("entering")}
+                </p>
+              ) : null}
             </div>
           ) : step === "phone" ? (
             <form onSubmit={handleSendOtp} className="space-y-4">

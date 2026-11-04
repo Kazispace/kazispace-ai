@@ -25,7 +25,8 @@
 		"haveAccount": "Already have an account?",
 		"switchToLogIn": "Log in",
 		"noAccount": "New to KaziSpace?",
-		"switchToSignUp": "Sign up"
+		"switchToSignUp": "Sign up",
+		"entering": "Opening KaziSpace…"
 	},
 	"mine": {
 		"title": "Profil",
