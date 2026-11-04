@@ -413,7 +413,10 @@ function VoiceSamples({
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
-  const offered = samples.filter((s) => voices.includes(s.voice_id) && s.audio_url);
+  // Walk `voices` and look each one up, so the buttons follow the picker's order whatever order the samples come in.
+  const offered = voices
+    .map((v) => samples.find((s) => s.voice_id === v && s.audio_url))
+    .filter((s): s is RadioVoiceSample => !!s);
 
   useEffect(
     () => () => {

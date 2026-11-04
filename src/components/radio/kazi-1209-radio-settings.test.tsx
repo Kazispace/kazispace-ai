@@ -401,8 +401,9 @@ describe('voice samples (personal-radio.md 0.13, Radio settings)', () => {
     m.home = { ...HOME, voice_samples: [sample('en_gb_f1'), sample('en_us_f1'), sample('en_gb_m1')] };
     await settings();
     const buttons = Array.from(container.querySelectorAll('[data-testid="radio-settings-voice-samples"] button'));
+    // samples arrive as gb_f1, us_f1, gb_m1; the buttons follow voices (us_f1, us_m1, gb_f1):
     // en_us_m1 has no sample ⇒ no button; en_gb_m1 is not offered here ⇒ no button
-    expect(buttons.map((b) => b.getAttribute('data-voice'))).toEqual(['en_gb_f1', 'en_us_f1']);
+    expect(buttons.map((b) => b.getAttribute('data-voice'))).toEqual(['en_us_f1', 'en_gb_f1']);
     expect(buttons[0].textContent).toContain('radio.settings.voice.preview');
     act(() => root.unmount());
     root = createRoot(container);
