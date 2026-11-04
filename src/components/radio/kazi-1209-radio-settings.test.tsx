@@ -59,6 +59,8 @@ vi.mock('@/lib/radio/api', async (orig) => ({
   getRadioRender: vi.fn(),
 }));
 vi.mock('@/lib/radio/player-api', () => ({
+  postRadioEvents: vi.fn(async () => ({ success: true, data: { accepted: 0, duplicates: 0, rejected: [] } })),
+  getRadioSaves: vi.fn(async () => ({ success: true, data: { saves: [] } })),
   getRadioBgm: m.bgm,
   deleteRadioMemory: m.memory,
   postRadioTurnAudio: vi.fn(),

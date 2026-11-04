@@ -72,7 +72,8 @@
 		"profileGoalsLoading": "正在加载求职目标…",
 		"billingLoading": "正在打开订阅…",
 		"ledgerLoading": "正在加载积分记录…",
-		"linkedAccountsGroupTitle": "关联账号"
+		"linkedAccountsGroupTitle": "关联账号",
+		"clearRadioData": "清除个人电台数据"
 	},
 	"profile": {
 		"title": "编辑资料",

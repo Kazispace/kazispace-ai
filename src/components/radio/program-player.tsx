@@ -10,10 +10,12 @@ import { AnswerCaptions, CareCard, NoticeCard, VoiceLine, explainQuestion } from
 import { Captions, PlayerControls, PlayerShell } from '@/components/radio/player-parts';
 import { BlockedHelpDialog, ListeningIndicator, MicButton, micButtonState } from '@/components/radio/voice-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
+import { useRadioEvents } from '@/hooks/use-radio-events';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { useRadioMic, type RadioMicOpen } from '@/hooks/use-radio-mic';
 import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/hooks/use-sentence-player';
 import { getRadioProgram, newRadioRequestId, radioAccessOf } from '@/lib/radio/api';
+import { sendPlayerLeft, trackRadioEvent } from '@/lib/radio/events';
 import { askRadioProgram, askRadioProgramAudio } from '@/lib/radio/player-api';
 import { isRadioLocale, radioHomeHref } from '@/lib/radio/routes';
 import { SLOW_AFTER_MS, VOICE_LINE_MS, blockedHelpPlatform, recordingFileName } from '@/lib/radio/voice';
@@ -99,7 +101,32 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
     () => segments.map((s) => ({ seq: s.seq, text: s.text, audioUrl: s.audio_url ?? null })),
     [segments]
   );
-  const player = useSentencePlayer({ sentences, speed, autoplay: true });
+  const variantBand = load.state === 'ready' ? load.program.band : null;
+  const durationMs = load.state === 'ready' ? load.program.duration_ms : null;
+  const player = useSentencePlayer({
+    sentences,
+    speed,
+    autoplay: true,
+    // `program_finished`: the programme played to its end.
+    onDone: () => trackRadioEvent('program_finished', { programId }, { variant_band: variantBand, position_ms: durationMs }),
+  });
+
+  // Playback events: sent while here, and `player_left` with where the programme was as the user leaves.
+  useRadioEvents(ready && authenticated);
+  const posRef = useRef<number | null>(null);
+  const at = segments[Math.min(player.index, Math.max(0, segments.length - 1))];
+  if (at) posRef.current = (at.start_ms ?? 0) + player.offsetMs();
+  useEffect(
+    () => () => {
+      // Only when a programme was loaded: leaving a "content missing" screen played nothing.
+      if (posRef.current !== null) sendPlayerLeft({ programId }, { position_ms: posRef.current });
+    },
+    [programId]
+  );
+  const changeSpeed = (to: PlayerSpeed) => {
+    if (to !== speed) trackRadioEvent('speed_changed', { programId }, { from: speed, to });
+    setSpeed(to);
+  };
   const playerRef = useRef(player);
   playerRef.current = player;
 
@@ -349,8 +376,11 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
                 player.play();
               }}
               onPause={pauseAll}
-              onRepeat={player.repeat}
-              onSpeed={setSpeed}
+              onRepeat={() => {
+                if (at) trackRadioEvent('replay', { programId }, { seq: at.seq });
+                player.repeat();
+              }}
+              onSpeed={changeSpeed}
             />
           </div>
         }

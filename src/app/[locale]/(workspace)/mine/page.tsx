@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
+import { ClearRadioDataRow } from "@/components/radio/clear-radio-data-row";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/lib/store";
@@ -170,6 +171,8 @@ export default function MinePage({ params }: MinePageProps) {
               <LocaleSwitcher locale={locale} />
             </CardContent>
           </Card>
+          {/* Last in Settings (D29): shows while the radio is switched on, whoever the user is. */}
+          <ClearRadioDataRow authenticated={isLoggedIn} />
         </MeGroup>
 
         <MeGroup title={t("billingServicesGroupTitle")}>

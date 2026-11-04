@@ -15,7 +15,6 @@ import type {
   RadioPrefsResponse,
   RadioProgramDetail,
   RadioRenderAudio,
-  RadioSaveSummary,
   RadioTurnInput,
 } from '@/types/radio';
 
@@ -57,10 +56,6 @@ export function newRadioRequestId(prefix: string): string {
 
 export function getRadioHome(): Promise<ApiResponse<RadioHome>> {
   return apiRequest<RadioHome>(`${BASE}/home`);
-}
-
-export function getRadioSaves(): Promise<ApiResponse<{ saves: RadioSaveSummary[] }>> {
-  return apiRequest<{ saves: RadioSaveSummary[] }>(`${BASE}/saves`);
 }
 
 export function patchRadioPrefs(patch: RadioPrefs): Promise<ApiResponse<RadioPrefsResponse>> {

@@ -72,7 +72,8 @@
 		"billingServicesGroupTitle": "Төлемдер",
 		"subscriptionPlansLabel": "Жазылым",
 		"creditsLedgerLabel": "Баланс және тарих",
-		"linkedAccountsGroupTitle": "Байланыстырылған аккаунттар"
+		"linkedAccountsGroupTitle": "Байланыстырылған аккаунттар",
+		"clearRadioData": "Clear personal radio data"
 	},
 	"profile": {
 		"title": "Мансап профилін өңдеу",

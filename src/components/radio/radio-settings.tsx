@@ -10,6 +10,7 @@ import { PlayerShell } from '@/components/radio/player-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { patchRadioPrefs } from '@/lib/radio/api';
+import { dropRadioEvents } from '@/lib/radio/events';
 import { deleteRadioMemory, getRadioBgm } from '@/lib/radio/player-api';
 import { isRadioLocale, radioHomeHref, radioStoryHref, type RadioFrom } from '@/lib/radio/routes';
 import {
@@ -225,6 +226,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     for (let busy = 0; busy <= SETTINGS_BUSY_LIMIT; busy += 1) {
       const res = await deleteRadioMemory();
       if (res.success) {
+        dropRadioEvents(); // the server cannot tell an old batch sent after clearing from a new one
         setClearing(false);
         setConfirming(false);
         showToast(t('settings.cleared'));

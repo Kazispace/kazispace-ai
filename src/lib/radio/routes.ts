@@ -31,6 +31,11 @@ export function radioSettingsHref(locale: string, from?: { saveId: string; from:
   return `${base}?${qs.toString()}`;
 }
 
+/** Replay of a story (Replay); Back returns to the radio home. */
+export function radioReplayHref(locale: string, saveId: string): string {
+  return `${radioHomeHref(locale)}/replay/${encodeURIComponent(saveId)}`;
+}
+
 export function radioProgramHref(locale: string, programId: string): string {
   return `/${locale}/${RADIO_SEGMENT}/program/${encodeURIComponent(programId)}`;
 }

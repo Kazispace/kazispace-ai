@@ -9,6 +9,7 @@ import { Loader2, MoreHorizontal } from 'lucide-react';
 import { BackLink } from '@/components/navigation/back-link';
 import { AnswerCaptions, CareCard, NoticeCard, VoiceLine, explainQuestion } from '@/components/radio/ask-parts';
 import { Captions, PlayerControls, PlayerShell } from '@/components/radio/player-parts';
+import { EndingSummary } from '@/components/radio/radio-summary';
 import {
   BlockedHelpDialog,
   ConsentCard,
@@ -17,6 +18,7 @@ import {
   micButtonState,
 } from '@/components/radio/voice-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
+import { useRadioEvents } from '@/hooks/use-radio-events';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { useRadioMic, type RadioMicOpen } from '@/hooks/use-radio-mic';
 import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/hooks/use-sentence-player';
@@ -28,6 +30,7 @@ import {
   postRadioTurn,
   radioAccessOf,
 } from '@/lib/radio/api';
+import { sendPlayerLeft, trackRadioEvent } from '@/lib/radio/events';
 import { postRadioTurnAudio } from '@/lib/radio/player-api';
 import { isRadioLocale, radioHomeHref, radioSettingsHref } from '@/lib/radio/routes';
 import { readDefaultSpeed, rememberPlace, takePlace } from '@/lib/radio/settings';
@@ -47,6 +50,7 @@ import type { ApiResponse } from '@/types';
 import type {
   RadioAnswerSegment,
   RadioChoice,
+  RadioGlossaryItem,
   RadioNotice,
   RadioPlayerResponse,
   RadioPosition,
@@ -109,6 +113,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const [answerCount, setAnswerCount] = useState(0);
   const [notice, setNotice] = useState<RadioNotice | null>(null);
   const [speed, setSpeed] = useState<PlayerSpeed>(1);
+  // Key phrases heard in this story so far (the ending summary lists up to 8).
+  const [heardGlossary, setHeardGlossary] = useState<RadioGlossaryItem[]>([]);
   const [moreOpen, setMoreOpen] = useState(false);
   const resumeAt = useRef<number | null>(null);
   const [inFlight, setInFlight] = useState(false);
@@ -180,6 +186,13 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       setSegments(next.node.segments ?? []);
       setChoices(next.node.node_type === 'choice' ? next.node.choices ?? [] : []);
       setAnswerCount((n) => n + 1);
+      const fresh = next.node.glossary ?? [];
+      if (fresh.length) {
+        setHeardGlossary((prev) => {
+          const have = new Set(prev.map((g) => g.term.toLowerCase()));
+          return [...prev, ...fresh.filter((g) => g.term && !have.has(g.term.toLowerCase()))];
+        });
+      }
       // The story moved on: voice works again at the new point.
       strikes.current = 0;
       tapOnlyHere.current = false;
@@ -330,6 +343,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
 
   const onNodeDone = useCallback(() => {
     const n = respRef.current?.node;
+    if (n) trackRadioEvent('node_finished', { saveId }, { node_id: n.node_id, render_id: n.render_id ?? null });
     if (n?.node_type === 'narration') {
       void sendTurnRef.current({ kind: 'command', command: 'advance' });
       return;
@@ -343,11 +357,36 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       return;
     }
     void openWindow();
-  }, [openWindow]);
+  }, [openWindow, saveId]);
 
   const player = useSentencePlayer({ sentences, speed, autoplay: true, onDone: onNodeDone, partKey: answerCount });
   const playerRef = useRef(player);
   playerRef.current = player;
+
+  // Speed changes (control, "slower" / "faster") are reported as `speed_changed`.
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
+  const changeSpeed = useCallback(
+    (to: PlayerSpeed) => {
+      if (to !== speedRef.current) trackRadioEvent('speed_changed', { saveId }, { from: speedRef.current, to });
+      setSpeed(to);
+    },
+    [saveId]
+  );
+
+  // Playback events (Data · Playback events): sent while here, and `player_left` as the user leaves.
+  useRadioEvents(ready && authenticated);
+  const leftAt = useRef<{ node_id: string; seq: number } | null>(null);
+  const nowAt = respRef.current?.node && segments[Math.min(player.index, Math.max(0, segments.length - 1))];
+  leftAt.current = respRef.current?.node && nowAt ? { node_id: respRef.current.node.node_id, seq: nowAt.seq } : leftAt.current;
+  useEffect(
+    () => () => {
+      if (leftAt.current) {
+        sendPlayerLeft({ saveId }, { ...leftAt.current, offset_ms: playerRef.current.offsetMs() });
+      }
+    },
+    [saveId]
+  );
   // Declared after the player, so it runs after the player's own "start the part" effect.
   useEffect(() => {
     if (resumeAt.current == null) return;
@@ -443,11 +482,11 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
           else playerRef.current.repeat();
           return;
         case 'slower':
-          setSpeed(0.75);
+          changeSpeed(0.75);
           carryOn();
           return;
         case 'faster':
-          setSpeed(1);
+          changeSpeed(1);
           carryOn();
           return;
         case 'pause':
@@ -474,7 +513,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       }
       if (spoken && !next.node) carryOn();
     },
-    [openWindow, readChoicesAgain, carryOn, backHref]
+    [openWindow, readChoicesAgain, carryOn, backHref, changeSpeed]
   );
 
   /** One turn: busy answers resend the same turn (same `turn_id` and version), at most 5 times. */
@@ -630,6 +669,11 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     }
     // Ready, tap-only (asks: the user's own action) or blocked (tries again; the help if still blocked).
     wasPlaying.current = player.playing || answerPlayer.playing;
+    if (player.playing && node) {
+      // `radio_interrupted`: the user tapped the microphone while the host was talking.
+      const before = segments.slice(0, Math.min(player.index, segLen)).reduce((ms, x) => ms + (x.duration_ms ?? 0), 0);
+      trackRadioEvent('radio_interrupted', { saveId }, { node_id: node.node_id, position_ms: before + player.offsetMs() });
+    }
     const idx = player.index;
     spokenAt.current = !player.done && idx < segLen && segments[idx] ? { seq: segments[idx].seq } : null;
     player.pause();
@@ -815,8 +859,12 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
                 player.pause();
                 answerPlayer.pause();
               }}
-              onRepeat={player.repeat}
-              onSpeed={setSpeed}
+              onRepeat={() => {
+                const seg = segments[Math.min(player.index, Math.max(0, segLen - 1))];
+                if (node && seg) trackRadioEvent('replay', { saveId }, { node_id: node.node_id, seq: seg.seq });
+                player.repeat();
+              }}
+              onSpeed={changeSpeed}
             />
           </div>
         }
@@ -838,6 +886,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
           playing={player.playing && player.index < segLen}
           onExplain={ended ? undefined : onExplain}
           explainDisabled={inFlight}
+          glossary={node.glossary ?? []}
         />
 
         {answer ? <AnswerCaptions sentences={answerSentences} activeIndex={answerPlayer.index} /> : null}
@@ -892,13 +941,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
           </div>
         ) : null}
 
-        {ended ? (
-          <div className="mt-6 rounded-xl border border-gray-200 p-4" data-testid="radio-ending">
-            <Link href={radioHomeHref(locale)} className="mt-3 inline-block rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">
-              {t('summary.home')}
-            </Link>
-          </div>
-        ) : null}
+        {ended ? <EndingSummary locale={locale} saveId={saveId} glossary={heardGlossary} home={home} /> : null}
       </PlayerShell>
       {helpOpen ? <BlockedHelpDialog platform={platform} onClose={() => setHelpOpen(false)} /> : null}
     </div>

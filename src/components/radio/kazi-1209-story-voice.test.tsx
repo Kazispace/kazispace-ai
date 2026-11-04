@@ -86,7 +86,7 @@ vi.mock('@/lib/radio/api', async (orig) => ({
   getRadioRender: m.render,
 }));
 
-vi.mock('@/lib/radio/player-api', () => ({ postRadioTurnAudio: m.turnAudio }));
+vi.mock('@/lib/radio/player-api', () => ({ postRadioEvents: vi.fn(async () => ({ success: true, data: { accepted: 0, duplicates: 0, rejected: [] } })), getRadioSaves: vi.fn(async () => ({ success: true, data: { saves: [] } })), getRadioReplay: vi.fn(), deleteRadioSave: vi.fn(), postRadioTurnAudio: m.turnAudio }));
 
 import { StoryPlayerScreen } from '@/components/radio/story-player';
 

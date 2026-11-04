@@ -5,7 +5,37 @@ import { useEffect, useRef, useState } from 'react';
 import { Pause, Play, RotateCcw } from 'lucide-react';
 
 import type { PlayableSentence, PlayerSpeed } from '@/hooks/use-sentence-player';
+import type { RadioGlossaryItem } from '@/types/radio';
 import { cn } from '@/lib/utils';
+
+type Piece = { text: string; term?: RadioGlossaryItem };
+
+/**
+ * Phrases (Player · Layout): each key phrase is marked the first time it appears in a sentence. Matching
+ * ignores case; a longer phrase wins over a shorter one inside it; pieces never overlap.
+ */
+export function splitPhrases(text: string, glossary: RadioGlossaryItem[]): Piece[] {
+  const lower = text.toLowerCase();
+  const hits: { start: number; end: number; term: RadioGlossaryItem }[] = [];
+  const terms = [...glossary].filter((g) => g.term && g.term.trim()).sort((a, b) => b.term.length - a.term.length);
+  for (const g of terms) {
+    const at = lower.indexOf(g.term.toLowerCase());
+    if (at < 0) continue;
+    const end = at + g.term.length;
+    if (hits.some((h) => at < h.end && end > h.start)) continue;
+    hits.push({ start: at, end, term: g });
+  }
+  hits.sort((a, b) => a.start - b.start);
+  const out: Piece[] = [];
+  let pos = 0;
+  for (const h of hits) {
+    if (h.start > pos) out.push({ text: text.slice(pos, h.start) });
+    out.push({ text: text.slice(h.start, h.end), term: h.term });
+    pos = h.end;
+  }
+  if (pos < text.length) out.push({ text: text.slice(pos) });
+  return out;
+}
 
 /** How long a press on a sentence must last to open its menu. */
 export const LONG_PRESS_MS = 500;
@@ -24,25 +54,32 @@ export function Captions({
   playing,
   onExplain,
   explainDisabled,
+  glossary,
 }: {
   sentences: PlayableSentence[];
   activeIndex: number;
   playing: boolean;
   onExplain?: (index: number) => void;
   explainDisabled?: boolean;
+  /** The part's key phrases; tapping one opens its bubble (meaning, level, "explain this sentence"). */
+  glossary?: RadioGlossaryItem[];
 }) {
   const t = useTranslations('radio.player');
   const tRadio = useTranslations('radio');
   const listRef = useRef<HTMLOListElement | null>(null);
   const userScrolledAt = useRef(0);
   const [menuAt, setMenuAt] = useState<number | null>(null);
+  const [bubble, setBubble] = useState<{ index: number; term: RadioGlossaryItem } | null>(null);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelPress = () => {
     if (pressTimer.current) clearTimeout(pressTimer.current);
     pressTimer.current = null;
   };
   useEffect(() => cancelPress, []);
-  useEffect(() => setMenuAt(null), [sentences]);
+  useEffect(() => {
+    setMenuAt(null);
+    setBubble(null);
+  }, [sentences]);
 
   useEffect(() => {
     if (Date.now() - userScrolledAt.current < 5000) return;
@@ -92,8 +129,57 @@ export function Captions({
             i === activeIndex ? 'bg-primary/10 text-workspace-text' : i < activeIndex ? 'text-workspace-secondary' : 'text-workspace-muted'
           )}
         >
-          {s.text}
+          {glossary?.length
+            ? splitPhrases(s.text, glossary).map((piece, k) =>
+                piece.term ? (
+                  <button
+                    key={k}
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuAt(null);
+                      setBubble(bubble?.index === i && bubble.term.term === piece.term!.term ? null : { index: i, term: piece.term! });
+                    }}
+                    data-testid="radio-phrase"
+                    className="underline decoration-primary/60 decoration-2 underline-offset-4 hover:decoration-primary"
+                  >
+                    {piece.text}
+                  </button>
+                ) : (
+                  <span key={k}>{piece.text}</span>
+                )
+              )
+            : s.text}
           {s.pending && !s.audioUrl ? <span className="ml-1 text-workspace-muted">…</span> : null}
+          {bubble?.index === i ? (
+            <div role="dialog" aria-label={bubble.term.term} className="mt-2 rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-sm" data-testid="radio-phrase-bubble">
+              <p className="font-medium text-workspace-text">
+                {bubble.term.term}
+                {bubble.term.cefr ? <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-workspace-secondary">{bubble.term.cefr}</span> : null}
+              </p>
+              {bubble.term.gloss ? <p className="mt-1 text-workspace-secondary">{bubble.term.gloss}</p> : null}
+              <div className="mt-2 flex gap-2">
+                {onExplain ? (
+                  <button
+                    type="button"
+                    disabled={explainDisabled}
+                    onClick={() => {
+                      setBubble(null);
+                      onExplain(i);
+                    }}
+                    data-testid="radio-phrase-explain"
+                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+                  >
+                    {t('explain')}
+                  </button>
+                ) : null}
+                <button type="button" onClick={() => setBubble(null)} className="rounded-lg px-2 py-1.5 text-sm text-workspace-muted">
+                  {tRadio('notice.close')}
+                </button>
+              </div>
+            </div>
+          ) : null}
           {onExplain && menuAt === i ? (
             <div role="menu" className="mt-2 flex gap-2" data-testid="radio-sentence-menu">
               <button

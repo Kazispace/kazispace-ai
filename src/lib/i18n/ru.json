@@ -72,7 +72,8 @@
 		"profileGoalsLoading": "Загрузка целей подготовки...",
 		"billingLoading": "Переход к выбору тарифа...",
 		"ledgerLoading": "Загрузка аудита кредитов...",
-		"linkedAccountsGroupTitle": "Связанные аккаунты"
+		"linkedAccountsGroupTitle": "Связанные аккаунты",
+		"clearRadioData": "Clear personal radio data"
 	},
 	"profile": {
 		"title": "Редактировать профиль",

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2, Settings } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
+import { DeleteSaveDialog, ListenedSection, SaveMenu, useDailyGreeting } from '@/components/radio/radio-saves';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { newRadioRequestId, setRadioBand, startRadioStory } from '@/lib/radio/api';
@@ -38,6 +39,9 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
   const offered = isRadioLocale(locale);
   const studioHref = buildClinicHubHref(locale);
   const { access, home, isLoading, refresh, setHome } = useRadioHome({ enabled: offered && ready && authenticated });
+  const [deleting, setDeleting] = useState<RadioSaveSummary | null>(null);
+  const [listenedKey, setListenedKey] = useState(0);
+  const greet = useDailyGreeting();
 
   const [starting, setStarting] = useState<string | null>(null);
   const [notice, setNotice] = useState<RadioNotice | null>(null);
@@ -160,6 +164,11 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
 
   return (
     <Shell back={back} title={tStudio('sections.radio')} action={gear}>
+      {greet ? (
+        <p className="text-sm text-workspace-secondary" data-testid="radio-greeting">
+          {t('home.greeting')}
+        </p>
+      ) : null}
       {askLevel ? (
         <section data-testid="radio-level-question" className="rounded-xl border border-primary/30 bg-primary/5 p-4">
           <p className="text-sm font-medium text-workspace-text">{t('level.question')}</p>
@@ -193,7 +202,7 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
       {home.continue_listening.length > 0 ? (
         <Section title={t('home.continueSection')} testId="radio-home-continue">
           {home.continue_listening.map((save) => (
-            <ContinueCard key={save.save_id} save={save} locale={locale} />
+            <ContinueCard key={save.save_id} save={save} locale={locale} onDelete={setDeleting} />
           ))}
         </Section>
       ) : null}
@@ -255,6 +264,25 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
         )}
       </Section>
 
+      <ListenedSection locale={locale} reloadKey={listenedKey} onDelete={setDeleting} />
+
+      {deleting ? (
+        <DeleteSaveDialog
+          save={deleting}
+          onCancel={() => setDeleting(null)}
+          onDeleted={() => {
+            setDeleting(null);
+            setListenedKey((n) => n + 1);
+            void refresh();
+          }}
+          onClosed={() => router.replace(studioHref)}
+          onFailed={() => {
+            setDeleting(null);
+            showToast(tStates('retry'), 'error');
+          }}
+        />
+      ) : null}
+
       {limitFor ? (
         <SaveLimitSheet
           saves={home.continue_listening}
@@ -312,7 +340,15 @@ function Tag({ children }: { children: React.ReactNode }) {
   return <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-workspace-secondary">{children}</span>;
 }
 
-function ContinueCard({ save, locale }: { save: RadioSaveSummary; locale: string }) {
+function ContinueCard({
+  save,
+  locale,
+  onDelete,
+}: {
+  save: RadioSaveSummary;
+  locale: string;
+  onDelete: (s: RadioSaveSummary) => void;
+}) {
   const t = useTranslations('radio.studio');
   return (
     <article data-testid="radio-continue-card" className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4">
@@ -322,12 +358,15 @@ function ContinueCard({ save, locale }: { save: RadioSaveSummary; locale: string
           {t('lastListened', { date: formatRadioDate(save.updated_at, locale) })}
         </p>
       </div>
-      <Link
-        href={radioStoryHref(locale, save.save_id)}
-        className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
-      >
-        {t('continue')}
-      </Link>
+      <div className="flex shrink-0 items-center gap-1">
+        <Link
+          href={radioStoryHref(locale, save.save_id)}
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+        >
+          {t('continue')}
+        </Link>
+        <SaveMenu save={save} locale={locale} onDelete={onDelete} />
+      </div>
     </article>
   );
 }
