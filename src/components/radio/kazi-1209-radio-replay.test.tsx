@@ -77,7 +77,8 @@ import { ClearRadioDataRow } from '@/components/radio/clear-radio-data-row';
 import { RadioHomeScreen } from '@/components/radio/radio-home';
 import { RadioReplayScreen } from '@/components/radio/radio-replay';
 import { StoryPlayerScreen } from '@/components/radio/story-player';
-import { nextStory } from '@/components/radio/radio-summary';
+import { nextStory, replayPhrases } from '@/components/radio/radio-summary';
+import { radioChoiceNumber, radioMinutes } from '@/lib/radio/format';
 
 class FakeAudio {
   static all: FakeAudio[] = [];
@@ -102,7 +103,7 @@ class FakeAudio {
 const profile = { band: 'B1', en_ratio: 0.4, voice_id: 'en_gb_f1', source: 'override' } as const;
 const HOME: RadioHome = {
   continue_listening: [
-    { save_id: 'sv1', story_id: 'st1', title: '雨夜来客', status: 'active', current_node_id: 'n1', save_version: 3, updated_at: '2026-11-03T10:00:00Z' },
+    { save_id: 'sv1', story_id: 'st1', title: '雨夜来客', status: 'active', current_node_id: 'n1', save_version: 3, updated_at: '2026-11-03T10:00:00Z', choices_made: 1 },
   ],
   stories: [
     { story_id: 'st1', slug: 's1', title: '雨夜来客', tags: [], base_cefr: 'B1', recommended: true },
@@ -114,6 +115,7 @@ const HOME: RadioHome = {
   prefs: {},
   availability: { tts: true, asr: true, new_render: true },
   voices: ['en_gb_f1'],
+  voice_samples: [],
 };
 const ok = { success: true, data: { accepted: 1, duplicates: 0, rejected: [] } };
 
@@ -146,6 +148,7 @@ beforeEach(() => {
   m.events.mockResolvedValue(ok);
   m.saves.mockResolvedValue({ success: true, data: { saves: [] } });
   m.refresh.mockResolvedValue(undefined);
+  m.replay.mockResolvedValue({ success: false, status: 500 });
   m.homeState = HOME;
   EV.resetRadioEventsForTest();
 });
@@ -330,8 +333,8 @@ describe('the radio home: more menu, deleting, listened, greeting', () => {
       data: {
         saves: [
           { ...HOME.continue_listening[0] },
-          { save_id: 'sv8', story_id: 'st8', title: 'Done', status: 'completed', current_node_id: 'e', save_version: 9, updated_at: 'x' },
-          { save_id: 'sv9', story_id: 'st9', title: 'Replaced', status: 'overwritten', current_node_id: 'n', save_version: 2, updated_at: 'x' },
+          { save_id: 'sv8', story_id: 'st8', title: 'Done', status: 'completed', current_node_id: 'e', save_version: 9, updated_at: 'x', choices_made: 1 },
+          { save_id: 'sv9', story_id: 'st9', title: 'Replaced', status: 'overwritten', current_node_id: 'n', save_version: 2, updated_at: 'x', choices_made: 1 },
         ],
       },
     });
@@ -505,5 +508,101 @@ describe('the story player: phrases, events, the ending summary', () => {
   it('nextStory: same level, not heard; none ⇒ no next', () => {
     expect(nextStory(HOME, new Set(['st1']))?.story_id).toBe('st2');
     expect(nextStory(HOME, new Set(['st1', 'st2']))).toBeNull();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+describe('the fields the screens were missing (personal-radio.md 0.13 / 0.14)', () => {
+  it('"Choice n" is the choice the listener is heading to; lengths round up to whole minutes, at least 1', () => {
+    expect(radioChoiceNumber(0)).toBe(1);
+    expect(radioChoiceNumber(2)).toBe(3);
+    expect(radioMinutes(61_000)).toBe(2);
+    expect(radioMinutes(60_000)).toBe(1);
+    expect(radioMinutes(5_000)).toBe(1);
+  });
+
+  it('the continue card shows its progress; a program row shows length and level only when it has them', async () => {
+    m.homeState = {
+      ...HOME,
+      continue_listening: [{ ...HOME.continue_listening[0], choices_made: 2 }],
+      programs: [
+        { program_id: 'p1', kind: 'column', title: 'With a version', band: 'B2', duration_ms: 125_000 },
+        { program_id: 'p2', kind: 'column', title: 'No version here', band: null, duration_ms: null },
+      ],
+    };
+    m.home.mockResolvedValue({ success: true, data: m.homeState });
+    await mount(<RadioHomeScreen locale="zh" />);
+    expect(q('radio-continue-progress')?.textContent).toBe('radio.studio.progress(n=3)');
+    const rows = qa('radio-program');
+    expect(rows).toHaveLength(2); // a program with no version is still listed
+    expect(rows[0].querySelector('[data-testid="radio-program-meta"]')?.textContent).toBe('radio.home.minutes(n=3)B2');
+    expect(rows[1].querySelector('[data-testid="radio-program-meta"]')).toBeNull();
+  });
+
+  it('replay: the letter heard; no letter ⇒ the label alone', async () => {
+    m.replay.mockResolvedValue({
+      success: true,
+      data: {
+        save_id: 'sv1', title: 't', status: 'active',
+        steps: [
+          { step: 1, node_id: 'n1', node_type: 'choice', undone: false, segments: [], chosen: { choice_id: 'c2', key: 'B', label: 'Call the desk', via: 'tap' } },
+          { step: 2, node_id: 'n2', node_type: 'choice', undone: false, segments: [], chosen: { choice_id: 'c1', key: null, label: 'Wait', via: 'voice' } },
+        ],
+      },
+    });
+    await mount(<RadioReplayScreen locale="zh" saveId="sv1" />);
+    const chosen = qa('radio-replay-chosen');
+    expect(chosen[0].textContent).toContain('radio.replay.youChose(key=B,label=Call the desk)');
+    expect(chosen[1].textContent).toContain('radio.replay.youChose(key=,label=Wait)');
+  });
+
+  it("replayPhrases: every step's phrases in the order heard, the first of each term kept", () => {
+    const g = (term: string) => ({ term, gloss: term.toUpperCase() });
+    expect(
+      replayPhrases({
+        save_id: 's', status: 'completed',
+        steps: [
+          { step: 1, node_id: 'a', segments: [], undone: false, glossary: [g('knock'), g('lobby')] },
+          { step: 2, node_id: 'b', segments: [], undone: false },
+          { step: 3, node_id: 'c', segments: [], undone: false, glossary: [g('Lobby'), g('the real thief')] },
+        ],
+      }).map((x) => x.term)
+    ).toEqual(['knock', 'lobby', 'the real thief']);
+    expect(replayPhrases(null)).toEqual([]);
+  });
+
+  const ending = (title: string | null) =>
+    ({
+      save_id: 'sv1', save_version: 9, status: 'completed', profile, ai_calls_used: 0, listen_window_ms: null,
+      node: {
+        node_id: 'e1', node_type: 'ending', render_id: 'r_e1', source: 'cache',
+        segments: [{ seq: 1, lang: 'en', text: 'The end.', audio_url: 'https://a/e.mp3', duration_ms: 900, pending: false }],
+        choices: [], glossary: [{ term: 'the end', gloss: '结束' }],
+        ending: { ending_key: 'ending_proof', title },
+      },
+    }) as RadioPlayerResponse;
+
+  it("the ending summary: the ending's name; the whole story's phrases from the replay; no questions part", async () => {
+    m.save.mockResolvedValue({ success: true, data: ending('真相大白') });
+    m.replay.mockResolvedValue({
+      success: true,
+      data: { save_id: 'sv1', status: 'completed', steps: [
+        { step: 1, node_id: 'n1', segments: [], undone: false, glossary: [{ term: 'heard before resuming', gloss: '早先' }] },
+        { step: 2, node_id: 'e1', segments: [], undone: false, glossary: [{ term: 'the end', gloss: '结束' }] },
+      ] },
+    });
+    await mount(<StoryPlayerScreen locale="zh" saveId="sv1" from="home" />);
+    expect(q('radio-summary-ending')?.textContent).toBe('radio.summary.ending(name=真相大白)');
+    expect(q('radio-summary-phrases')?.textContent).toContain('heard before resuming');
+    expect(container.textContent).not.toContain('radio.summary.asked');
+    expect(EV.radioEventQueue().concat(m.events.mock.calls.flatMap((c) => c[0])).find((e) => e.kind === 'radio_summary_shown')?.payload)
+      .toMatchObject({ glossary_count: 2 });
+  });
+
+  it('no name ⇒ no ending line; the replay cannot be read ⇒ the phrases heard on this visit', async () => {
+    m.save.mockResolvedValue({ success: true, data: ending(null) });
+    await mount(<StoryPlayerScreen locale="zh" saveId="sv1" from="home" />);
+    expect(q('radio-summary-ending')).toBeNull();
+    expect(q('radio-summary-phrases')?.textContent).toContain('the end');
   });
 });

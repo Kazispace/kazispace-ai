@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Play, Square } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
 import { PlayerShell } from '@/components/radio/player-parts';
@@ -30,7 +30,7 @@ import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
 import { isTelegramWebApp } from '@/lib/telegram';
 import { cn } from '@/lib/utils';
-import { RADIO_BANDS, type RadioBand, type RadioHome, type RadioListenerProfile, type RadioPrefs } from '@/types/radio';
+import { RADIO_BANDS, type RadioBand, type RadioHome, type RadioListenerProfile, type RadioPrefs, type RadioVoiceSample } from '@/types/radio';
 
 /** Data · Saving settings / Replay and deleting: busy is resent, at most 5 times. */
 export const SETTINGS_BUSY_LIMIT = 5;
@@ -275,6 +275,13 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
               options={home.voices.map((v) => ({ value: v, label: VOICE_LABEL_KEY[v] ? t(`settings.voice.${VOICE_LABEL_KEY[v]}`) : v }))}
               onChange={onVoice}
             />
+            <VoiceSamples
+              samples={home.voice_samples ?? []}
+              voices={home.voices}
+              labelOf={(v) => (VOICE_LABEL_KEY[v] ? t(`settings.voice.${VOICE_LABEL_KEY[v]}`) : v)}
+              playLabel={t('settings.voice.preview')}
+              onExpired={refresh}
+            />
           </Group>
         ) : null}
 
@@ -383,6 +390,74 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
       <h2 className="mb-2 text-sm font-semibold text-workspace-text">{title}</h2>
       {children}
     </section>
+  );
+}
+
+/**
+ * A sample button for each offered voice that has one (`voice_samples` from `GET home`, in the order of
+ * `voices`); a voice with no sample gets no button (personal-radio.md, Radio settings). Playing changes
+ * no setting. The URL is signed for 15 minutes: if it no longer loads, read `GET home` again.
+ */
+function VoiceSamples({
+  samples,
+  voices,
+  labelOf,
+  playLabel,
+  onExpired,
+}: {
+  samples: RadioVoiceSample[];
+  voices: string[];
+  labelOf: (voiceId: string) => string;
+  playLabel: string;
+  onExpired: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState<string | null>(null);
+  const offered = samples.filter((s) => voices.includes(s.voice_id) && s.audio_url);
+
+  useEffect(
+    () => () => {
+      audioRef.current?.pause();
+    },
+    []
+  );
+
+  if (!offered.length) return null;
+
+  const play = (sample: RadioVoiceSample) => {
+    const a = audioRef.current ?? new Audio();
+    audioRef.current = a;
+    a.pause();
+    if (playing === sample.voice_id) {
+      setPlaying(null);
+      return;
+    }
+    a.onended = () => setPlaying(null);
+    a.onerror = () => {
+      setPlaying(null);
+      onExpired();
+    };
+    a.src = sample.audio_url;
+    setPlaying(sample.voice_id);
+    void a.play().catch(() => setPlaying(null));
+  };
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-2" data-testid="radio-settings-voice-samples">
+      {offered.map((s) => (
+        <button
+          key={s.voice_id}
+          type="button"
+          onClick={() => play(s)}
+          aria-pressed={playing === s.voice_id}
+          data-voice={s.voice_id}
+          className="inline-flex min-h-11 items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-xs text-workspace-secondary hover:border-primary"
+        >
+          {playing === s.voice_id ? <Square className="h-3 w-3" aria-hidden /> : <Play className="h-3 w-3" aria-hidden />}
+          {playLabel} · {labelOf(s.voice_id)}
+        </button>
+      ))}
+    </div>
   );
 }
 

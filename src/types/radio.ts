@@ -43,6 +43,8 @@ export interface RadioSaveSummary {
   current_node_id: string;
   save_version: number;
   updated_at: string;
+  /** Choices made so far, not counting those taken back; shown as "Choice {n}" with n = choices_made + 1. */
+  choices_made: number;
 }
 
 export interface RadioStorySummary {
@@ -61,6 +63,16 @@ export interface RadioProgramSummary {
   series?: string | null;
   title: string;
   tags?: string[];
+  /** Level and length of the version this listener will hear; null when there is none. */
+  band?: RadioBand | null;
+  duration_ms?: number | null;
+}
+
+/** A short sample of one host voice, signed for 15 minutes. */
+export interface RadioVoiceSample {
+  voice_id: string;
+  audio_url: string;
+  duration_ms: number;
 }
 
 export interface RadioHome {
@@ -71,6 +83,8 @@ export interface RadioHome {
   prefs: RadioPrefs;
   availability: RadioAvailability;
   voices: string[];
+  /** One per voice in `voices` that has a sample, in that order; may be empty. */
+  voice_samples: RadioVoiceSample[];
 }
 
 export interface RadioPrefsResponse {
@@ -109,7 +123,13 @@ export interface RadioNode {
   segments: RadioSegment[];
   choices?: RadioChoice[];
   glossary?: RadioGlossaryItem[];
-  ending?: { ending_key?: string | null } | null;
+  ending?: RadioEnding | null;
+}
+
+/** The ending reached; `title` is null when the story gives no name. */
+export interface RadioEnding {
+  ending_key?: string | null;
+  title?: string | null;
 }
 
 export type RadioNoticeKind =
@@ -231,10 +251,12 @@ export interface RadioReplayStep {
   node_id: string;
   node_type?: 'narration' | 'choice' | 'ending' | null;
   segments: RadioReplaySegment[];
-  chosen?: { choice_id: string; label?: string | null; via?: 'tap' | 'voice' | null } | null;
+  chosen?: { choice_id: string; key?: 'A' | 'B' | 'C' | null; label?: string | null; via?: 'tap' | 'voice' | null } | null;
   undone: boolean;
   at?: string | null;
-  ending?: Record<string, unknown> | null;
+  ending?: RadioEnding | null;
+  /** The key phrases of that part, as heard. */
+  glossary?: RadioGlossaryItem[];
 }
 
 export interface RadioReplay {

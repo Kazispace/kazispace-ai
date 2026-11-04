@@ -72,7 +72,7 @@ import { StoryPlayerScreen } from '@/components/radio/story-player';
 const profile = { band: 'B1', en_ratio: 0.4, voice_id: 'en_gb_f1', source: 'override' } as const;
 const HOME: RadioHome = {
   continue_listening: [
-    { save_id: 'sv1', story_id: 'st1', title: '雨夜来客', status: 'active', current_node_id: 'n1', save_version: 3, updated_at: '2026-11-03T10:00:00Z' },
+    { save_id: 'sv1', story_id: 'st1', title: '雨夜来客', status: 'active', current_node_id: 'n1', save_version: 3, updated_at: '2026-11-03T10:00:00Z', choices_made: 1 },
   ],
   stories: [],
   programs: [],
@@ -80,6 +80,7 @@ const HOME: RadioHome = {
   prefs: { band_override: null, en_ratio_override: null, voice_id: null, bgm_on: null, bgm_level: null, listen_window_on: null },
   availability: { tts: true, asr: true, new_render: true },
   voices: ['en_us_f1', 'en_us_m1', 'en_gb_f1'],
+  voice_samples: [],
 };
 
 class FakeAudio {
@@ -389,5 +390,46 @@ describe('the player and settings', () => {
     await mount(<StoryPlayerScreen locale="zh" saveId="sv1" from="home" />);
     expect(q('radio-title')?.textContent).toBe('radio.player.title');
     expect(m.refresh).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+describe('voice samples (personal-radio.md 0.13, Radio settings)', () => {
+  const sample = (voice_id: string) => ({ voice_id, audio_url: `https://cdn/${voice_id}.mp3`, duration_ms: 3000 });
+
+  it('one sample button per offered voice that has a sample, in the order of voices; none ⇒ no buttons', async () => {
+    m.home = { ...HOME, voice_samples: [sample('en_gb_f1'), sample('en_us_f1'), sample('en_gb_m1')] };
+    await settings();
+    const buttons = Array.from(container.querySelectorAll('[data-testid="radio-settings-voice-samples"] button'));
+    // en_us_m1 has no sample ⇒ no button; en_gb_m1 is not offered here ⇒ no button
+    expect(buttons.map((b) => b.getAttribute('data-voice'))).toEqual(['en_gb_f1', 'en_us_f1']);
+    expect(buttons[0].textContent).toContain('radio.settings.voice.preview');
+    act(() => root.unmount());
+    root = createRoot(container);
+    m.home = { ...HOME, voice_samples: [] };
+    await settings();
+    expect(q('radio-settings-voice-samples')).toBeNull();
+  });
+
+  it('a sample plays its URL, tapping it again stops it, and playing changes no setting', async () => {
+    m.home = { ...HOME, voice_samples: [sample('en_us_m1')] };
+    await settings();
+    const button = container.querySelector('[data-voice="en_us_m1"]');
+    await click(button);
+    const audio = FakeAudio.all.at(-1)!;
+    expect(audio.src).toBe('https://cdn/en_us_m1.mp3');
+    expect(audio.paused).toBe(false);
+    expect(button?.getAttribute('aria-pressed')).toBe('true');
+    await click(button);
+    expect(audio.paused).toBe(true);
+    expect(m.prefs).not.toHaveBeenCalled();
+  });
+
+  it('a sample that no longer loads (the signed URL expired) reads GET home again', async () => {
+    m.home = { ...HOME, voice_samples: [sample('en_us_f1')] };
+    await settings();
+    await click(container.querySelector('[data-voice="en_us_f1"]'));
+    await act(async () => FakeAudio.all.at(-1)!.onerror?.());
+    expect(m.refresh).toHaveBeenCalled();
   });
 });

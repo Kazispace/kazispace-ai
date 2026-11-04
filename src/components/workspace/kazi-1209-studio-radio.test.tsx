@@ -37,6 +37,7 @@ const HOME = {
   prefs: {},
   availability: { tts: true, asr: true, new_render: true },
   voices: ['en_us_f1', 'en_us_m1', 'en_gb_f1'],
+  voice_samples: [],
 };
 
 let container: HTMLDivElement;
@@ -98,12 +99,14 @@ describe('Studio · Personal radio', () => {
       data: {
         ...HOME,
         continue_listening: [
-          { save_id: 'sv1', title: 'The Hotel Note', status: 'active', current_node_id: 'n2', save_version: 3, updated_at: '2026-11-03T12:00:00Z' },
+          { save_id: 'sv1', title: 'The Hotel Note', status: 'active', current_node_id: 'n2', save_version: 3, updated_at: '2026-11-03T12:00:00Z', choices_made: 1 },
         ],
       },
     });
     await render('zh');
     expect(q('studio-radio-current')?.textContent).toBe('The Hotel Note');
+    // personal-radio.md 0.13 / studio.md 0.4.3: "Choice n" with n = choices_made + 1 (here 1 ⇒ 2)
+    expect(q('studio-radio-progress')?.textContent).toMatch(/progress.*2/);
     expect(q('studio-radio-continue')?.getAttribute('href')).toBe('/zh/radio/story/sv1?from=studio');
     expect(q('studio-radio-open')?.getAttribute('href')).toBe('/zh/radio');
   });
