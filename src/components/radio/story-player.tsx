@@ -359,7 +359,12 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     void openWindow();
   }, [openWindow, saveId]);
 
-  const player = useSentencePlayer({ sentences, speed, autoplay: true, onDone: onNodeDone, partKey: answerCount });
+  // `player_left.listened_ms` (KAZI-1255): audio that actually played on this visit, parts and answers alike.
+  const listenedMs = useRef(0);
+  const addListened = useCallback((ms: number) => {
+    listenedMs.current += ms;
+  }, []);
+  const player = useSentencePlayer({ sentences, speed, autoplay: true, onDone: onNodeDone, partKey: answerCount, onPlayed: addListened });
   const playerRef = useRef(player);
   playerRef.current = player;
 
@@ -384,7 +389,10 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     const leave = () => {
       if (sent || !leftAt.current) return;
       sent = true;
-      sendPlayerLeft({ saveId }, { ...leftAt.current, offset_ms: playerRef.current.offsetMs() });
+      sendPlayerLeft(
+        { saveId },
+        { ...leftAt.current, offset_ms: playerRef.current.offsetMs(), listened_ms: Math.round(listenedMs.current) }
+      );
     };
     // Closing the tab never unmounts the player: `pagehide` is the only moment that remains.
     window.addEventListener('pagehide', leave);
@@ -430,7 +438,14 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       (answer?.segments ?? []).map((s) => ({ seq: s.seq, text: s.text, audioUrl: null })),
     [answer]
   );
-  const answerPlayer = useSentencePlayer({ sentences: answerSentences, speed, autoplay: true, onDone: onAnswerDone, partKey: answer?.key });
+  const answerPlayer = useSentencePlayer({
+    sentences: answerSentences,
+    speed,
+    autoplay: true,
+    onDone: onAnswerDone,
+    partKey: answer?.key,
+    onPlayed: addListened,
+  });
 
   /** Back to where the user was before they spoke. */
   const carryOn = useCallback(() => {

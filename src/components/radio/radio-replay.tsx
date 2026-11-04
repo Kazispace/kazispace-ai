@@ -8,6 +8,7 @@ import { Pause, Play } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
 import { PlayerShell } from '@/components/radio/player-parts';
+import { RadioRating } from '@/components/radio/radio-rating';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioEvents } from '@/hooks/use-radio-events';
 import { radioAccessOf } from '@/lib/radio/api';
@@ -174,6 +175,8 @@ export function RadioReplayScreen({ locale, saveId }: { locale: string; saveId: 
           </li>
         ))}
       </ol>
+      {/* The rating for the whole story, so it can be changed later (personal-radio.md 0.15, Replay). */}
+      {replay.story_id ? <RadioRating kind="story" targetId={replay.story_id} initial={replay.my_rating ?? null} /> : null}
     </PlayerShell>
   );
 }

@@ -12,6 +12,8 @@ import type {
   RadioPlayerResponse,
   RadioPosition,
   RadioProgramAskResponse,
+  RadioRatingReason,
+  RadioRatingResponse,
   RadioReplay,
   RadioSaveSummary,
 } from '@/types/radio';
@@ -94,6 +96,23 @@ export function getRadioSaves(): Promise<ApiResponse<{ saves: RadioSaveSummary[]
 /** `GET saves/{save_id}/replay`: every step as it was heard. Changes nothing. */
 export function getRadioReplay(saveId: string): Promise<ApiResponse<RadioReplay>> {
   return apiRequest<RadioReplay>(`${BASE}/saves/${encodeURIComponent(saveId)}/replay`);
+}
+
+/**
+ * `PUT stories/{story_id}/rating` · `PUT programs/{program_id}/rating` (personal-radio.md, Rating): the whole
+ * current state each time; `rating: null` takes it back; `reasons` only with `down`.
+ */
+export function putRadioRating(
+  kind: 'story' | 'program',
+  id: string,
+  rating: 'up' | 'down' | null,
+  reasons: RadioRatingReason[] = []
+): Promise<ApiResponse<RadioRatingResponse>> {
+  const path = kind === 'story' ? 'stories' : 'programs';
+  return apiRequest<RadioRatingResponse>(`${BASE}/${path}/${encodeURIComponent(id)}/rating`, {
+    method: 'PUT',
+    body: JSON.stringify(rating === 'down' ? { rating, reasons } : { rating }),
+  });
 }
 
 /** `DELETE saves/{save_id}`: `204`; sending it again, or for a story already gone, answers the same. */

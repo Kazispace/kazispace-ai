@@ -1663,6 +1663,21 @@
 			"ttsDisabled": "New stories aren't available in your region yet; saved stories and programs still play"
 		},
 		"offline": "You're offline — press play once you're back",
-		"contentMissing": "This part can't be found right now. Back to the radio home — your progress is kept."
+		"contentMissing": "This part can't be found right now. Back to the radio home — your progress is kept.",
+		"rating": {
+			"question": "How was it?",
+			"up": "I liked it",
+			"down": "Not for me",
+			"reasonsTitle": "What didn't work? (optional)",
+			"reason": {
+				"tooHard": "Too hard",
+				"tooEasy": "Too easy",
+				"boring": "Boring",
+				"voice": "The host's voice",
+				"enRatio": "The English–Chinese mix"
+			},
+			"thanks": "Thanks, this helps us choose what to play",
+			"failed": "Couldn't save your rating. Try again."
+		}
 	}
 }

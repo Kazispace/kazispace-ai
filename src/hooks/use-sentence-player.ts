@@ -38,6 +38,7 @@ export function useSentencePlayer({
   autoplay,
   onDone,
   partKey,
+  onPlayed,
 }: {
   sentences: PlayableSentence[];
   speed: PlayerSpeed;
@@ -45,6 +46,11 @@ export function useSentencePlayer({
   onDone?: () => void;
   /** Changing it starts the list again from its first sentence (a new answer, even for the same part). */
   partKey?: string | number;
+  /**
+   * Audio that actually played, in ms, as it plays (forward progress of the audio only: pauses, reading
+   * pauses with no audio and seeking back add nothing). For `player_left.listened_ms` (KAZI-1255).
+   */
+  onPlayed?: (ms: number) => void;
 }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -56,6 +62,9 @@ export function useSentencePlayer({
   const sentencesRef = useRef(sentences);
   const onDoneRef = useRef(onDone);
   const speedRef = useRef(speed);
+  const onPlayedRef = useRef(onPlayed);
+  onPlayedRef.current = onPlayed;
+  const lastTime = useRef(0);
   sentencesRef.current = sentences;
   onDoneRef.current = onDone;
   speedRef.current = speed;
@@ -99,6 +108,14 @@ export function useSentencePlayer({
       const a = audioRef.current ?? new Audio();
       audioRef.current = a;
       a.src = s.audioUrl;
+      lastTime.current = 0;
+      a.ontimeupdate = () => {
+        const t = a.currentTime;
+        const d = t - lastTime.current;
+        lastTime.current = t;
+        // a jump (a seek, a new source) is not listening; normal updates come a few times a second
+        if (d > 0 && d < 2) onPlayedRef.current?.(d * 1000);
+      };
       a.playbackRate = speedRef.current;
       (a as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
       a.onended = next;

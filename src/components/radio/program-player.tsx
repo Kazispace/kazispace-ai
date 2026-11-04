@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackLink } from '@/components/navigation/back-link';
 import { AnswerCaptions, CareCard, NoticeCard, VoiceLine, explainQuestion } from '@/components/radio/ask-parts';
 import { Captions, PlayerControls, PlayerShell } from '@/components/radio/player-parts';
+import { RadioRating } from '@/components/radio/radio-rating';
 import { BlockedHelpDialog, ListeningIndicator, MicButton, micButtonState } from '@/components/radio/voice-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioEvents } from '@/hooks/use-radio-events';
@@ -102,13 +103,24 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
     [segments]
   );
   const variantBand = load.state === 'ready' ? load.program.band : null;
+  // The rating appears once the programme has played to its end, and stays (personal-radio.md 0.15, Programs).
+  const [finishedOnce, setFinishedOnce] = useState(false);
   const durationMs = load.state === 'ready' ? load.program.duration_ms : null;
+  // `player_left.listened_ms` (KAZI-1255): audio that actually played on this visit.
+  const listenedMs = useRef(0);
+  const addListened = useCallback((ms: number) => {
+    listenedMs.current += ms;
+  }, []);
   const player = useSentencePlayer({
     sentences,
     speed,
     autoplay: true,
+    onPlayed: addListened,
     // `program_finished`: the programme played to its end.
-    onDone: () => trackRadioEvent('program_finished', { programId }, { variant_band: variantBand, position_ms: durationMs }),
+    onDone: () => {
+      setFinishedOnce(true);
+      trackRadioEvent('program_finished', { programId }, { variant_band: variantBand, position_ms: durationMs });
+    },
   });
 
   // Playback events: sent while here, and `player_left` with where the programme was as the user leaves.
@@ -122,7 +134,7 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
       // Only when a programme was loaded: leaving a "content missing" screen played nothing.
       if (sent || posRef.current === null) return;
       sent = true;
-      sendPlayerLeft({ programId }, { position_ms: posRef.current });
+      sendPlayerLeft({ programId }, { position_ms: posRef.current, listened_ms: Math.round(listenedMs.current) });
     };
     // Closing the tab never unmounts the player: `pagehide` is the only moment that remains.
     window.addEventListener('pagehide', leave);
@@ -153,6 +165,7 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
     speed,
     autoplay: true,
     partKey: answer?.key,
+    onPlayed: addListened,
     onDone: () => {
       setAnswer(null);
       carryOn();
@@ -432,6 +445,9 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
               {tStates('retry')}
             </button>
           </div>
+        ) : null}
+        {finishedOnce && load.state === 'ready' ? (
+          <RadioRating kind="program" targetId={programId} initial={load.program.my_rating ?? null} />
         ) : null}
         {player.done && !answer && !inFlight ? (
           <div className="mt-6 flex justify-center" data-testid="radio-program-done">
