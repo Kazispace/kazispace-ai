@@ -91,43 +91,57 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const pathAtBoot = pathname;
     let recheckTimer: ReturnType<typeof setTimeout> | undefined;
     let rechecksLeft = SESSION_RECHECKS;
+    // One check at a time: a second one started while the first is still retrying could
+    // finish later and overwrite a session the first one has just resumed.
+    let checking = false;
+    const signedIn = () => useAuthStore.getState().isLoggedIn;
+    const stopRechecks = () => {
+      window.removeEventListener("online", recheck);
+      if (recheckTimer) clearTimeout(recheckTimer);
+      recheckTimer = undefined;
+    };
     // /me could not be reached: the session is kept (token, cookie), not ended. Check
     // again when the browser is back online, or after a pause, a few times.
-    const recheck = () => {
-      if (cancelled || rechecksLeft <= 0) return;
+    function recheck() {
+      if (cancelled || checking) return; // an "online" during a check does not count
+      if (signedIn() || rechecksLeft <= 0) return stopRechecks();
       rechecksLeft -= 1;
       if (recheckTimer) clearTimeout(recheckTimer);
+      recheckTimer = undefined;
       void boot();
-    };
+    }
     async function boot() {
-      const result = await hydrateAuthFromSession(() => getMe());
+      checking = true;
+      let result: Awaited<ReturnType<typeof hydrateAuthFromSession>>;
+      try {
+        result = await hydrateAuthFromSession(() => getMe());
+      } finally {
+        checking = false;
+      }
       if (cancelled) return;
       if (result.status === "authenticated") {
-        window.removeEventListener("online", recheck);
+        stopRechecks();
         useAuthStore.getState().login(result.token, result.user);
         return;
       }
-      useAuthStore.setState({
-        token: null,
-        user: null,
-        isLoggedIn: false,
-        authReady: true,
-      });
       if (result.status === "unreachable") {
+        // Signed in meanwhile (e.g. a code entered on the login page): leave it alone.
+        if (signedIn()) return stopRechecks();
+        useAuthStore.setState({ token: null, user: null, isLoggedIn: false, authReady: true });
+        window.addEventListener("online", recheck);
         recheckTimer = setTimeout(recheck, SESSION_RECHECK_MS);
         return;
       }
-      window.removeEventListener("online", recheck);
+      stopRechecks();
+      useAuthStore.setState({ token: null, user: null, isLoggedIn: false, authReady: true });
       if (result.status === "invalid" && !isLoginPath(pathAtBoot)) {
         router.replace(`/${localeFromPathname(pathAtBoot)}/login`);
       }
     }
-    window.addEventListener("online", recheck);
     void boot();
     return () => {
       cancelled = true;
-      window.removeEventListener("online", recheck);
-      if (recheckTimer) clearTimeout(recheckTimer);
+      stopRechecks();
     };
     // Session resume is once per mount. Pathname is only used for the
     // invalid-token redirect, not as a re-fetch trigger.
