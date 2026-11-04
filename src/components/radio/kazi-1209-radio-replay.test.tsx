@@ -263,6 +263,16 @@ describe('replay', () => {
     expect(m.turn).not.toHaveBeenCalled(); // replay never changes the story
   });
 
+  it('the replay events it queues are sent when the screen is left', async () => {
+    m.replay.mockResolvedValue({ success: true, data: REPLAY });
+    await mount(<RadioReplayScreen locale="zh" saveId="sv1" />);
+    await click(q('radio-replay-play'));
+    act(() => root.unmount());
+    root = createRoot(container);
+    await act(async () => {});
+    expect(m.events.mock.calls.flatMap((c) => c[0]).some((e: { kind: string }) => e.kind === 'replay')).toBe(true);
+  });
+
   it('409 save_not_found: content cannot be found; closed: Studio', async () => {
     m.replay.mockResolvedValue({ success: false, status: 409, errorCode: 'save_not_found' });
     await mount(<RadioReplayScreen locale="zh" saveId="gone" />);
@@ -461,6 +471,20 @@ describe('the story player: phrases, events, the ending summary', () => {
     await act(async () => {});
     const left = m.events.mock.calls.flatMap((c) => c[0]).find((e: { kind: string }) => e.kind === 'player_left');
     expect(left).toMatchObject({ save_id: 'sv1', payload: { node_id: 'n1', seq: 2, offset_ms: 400 } });
+  });
+
+  it('closing the tab (pagehide) sends player_left once, and leaving afterwards does not send it again', async () => {
+    m.save.mockResolvedValue({ success: true, data: resp() });
+    await mount(<StoryPlayerScreen locale="zh" saveId="sv1" from="home" />);
+    await act(async () => window.dispatchEvent(new Event('pagehide')));
+    // Sent at pagehide itself: closing a tab never unmounts the player.
+    expect(m.events.mock.calls.flatMap((c) => c[0]).filter((e: { kind: string }) => e.kind === 'player_left')).toHaveLength(1);
+    act(() => root.unmount());
+    root = createRoot(container);
+    await act(async () => {});
+    const left = m.events.mock.calls.flatMap((c) => c[0]).filter((e: { kind: string }) => e.kind === 'player_left');
+    expect(left).toHaveLength(1);
+    expect(left[0]).toMatchObject({ save_id: 'sv1', payload: { node_id: 'n1', seq: 1 } });
   });
 
   it('the ending: the summary card with the phrases heard, a next story at the same level not heard, and summary_shown', async () => {

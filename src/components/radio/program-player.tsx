@@ -116,13 +116,21 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
   const posRef = useRef<number | null>(null);
   const at = segments[Math.min(player.index, Math.max(0, segments.length - 1))];
   if (at) posRef.current = (at.start_ms ?? 0) + player.offsetMs();
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    let sent = false;
+    const leave = () => {
       // Only when a programme was loaded: leaving a "content missing" screen played nothing.
-      if (posRef.current !== null) sendPlayerLeft({ programId }, { position_ms: posRef.current });
-    },
-    [programId]
-  );
+      if (sent || posRef.current === null) return;
+      sent = true;
+      sendPlayerLeft({ programId }, { position_ms: posRef.current });
+    };
+    // Closing the tab never unmounts the player: `pagehide` is the only moment that remains.
+    window.addEventListener('pagehide', leave);
+    return () => {
+      window.removeEventListener('pagehide', leave);
+      leave();
+    };
+  }, [programId]);
   const changeSpeed = (to: PlayerSpeed) => {
     if (to !== speed) trackRadioEvent('speed_changed', { programId }, { from: speed, to });
     setSpeed(to);

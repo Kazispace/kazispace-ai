@@ -101,7 +101,14 @@ export function deleteRadioSave(saveId: string): Promise<ApiResponse<unknown>> {
   return apiRequest<unknown>(`${BASE}/saves/${encodeURIComponent(saveId)}`, { method: 'DELETE' });
 }
 
-/** `POST events`: 1 to 50 events. */
+/**
+ * `POST events`: 1 to 50 events. Sent with `keepalive: true` (not `sendBeacon`, which cannot carry the
+ * auth header), so a batch sent while the page is being left still reaches the server.
+ */
 export function postRadioEvents(events: RadioClientEvent[]): Promise<ApiResponse<RadioEventsResponse>> {
-  return apiRequest<RadioEventsResponse>(`${BASE}/events`, { method: 'POST', body: JSON.stringify({ events }) });
+  return apiRequest<RadioEventsResponse>(`${BASE}/events`, {
+    method: 'POST',
+    body: JSON.stringify({ events }),
+    keepalive: true,
+  });
 }

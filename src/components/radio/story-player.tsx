@@ -379,14 +379,20 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const leftAt = useRef<{ node_id: string; seq: number } | null>(null);
   const nowAt = respRef.current?.node && segments[Math.min(player.index, Math.max(0, segments.length - 1))];
   leftAt.current = respRef.current?.node && nowAt ? { node_id: respRef.current.node.node_id, seq: nowAt.seq } : leftAt.current;
-  useEffect(
-    () => () => {
-      if (leftAt.current) {
-        sendPlayerLeft({ saveId }, { ...leftAt.current, offset_ms: playerRef.current.offsetMs() });
-      }
-    },
-    [saveId]
-  );
+  useEffect(() => {
+    let sent = false;
+    const leave = () => {
+      if (sent || !leftAt.current) return;
+      sent = true;
+      sendPlayerLeft({ saveId }, { ...leftAt.current, offset_ms: playerRef.current.offsetMs() });
+    };
+    // Closing the tab never unmounts the player: `pagehide` is the only moment that remains.
+    window.addEventListener('pagehide', leave);
+    return () => {
+      window.removeEventListener('pagehide', leave);
+      leave();
+    };
+  }, [saveId]);
   // Declared after the player, so it runs after the player's own "start the part" effect.
   useEffect(() => {
     if (resumeAt.current == null) return;

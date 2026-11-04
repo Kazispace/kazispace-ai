@@ -215,7 +215,12 @@ export function ListenedSection({
 const GREETING_KEY = 'kazi.radio.greetedOn';
 
 /** The host's greeting (Radio home · Greeting): once a day, on the first visit of the day. */
-export function useDailyGreeting(today: string = new Date().toISOString().slice(0, 10)): boolean {
+/** Today in the user's own time zone (a UTC date would greet a user in China twice before 08:00). */
+export function localDay(d: Date = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function useDailyGreeting(today: string = localDay()): boolean {
   const [show, setShow] = useState(false);
   useEffect(() => {
     try {

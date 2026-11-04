@@ -9,6 +9,7 @@ import { Pause, Play } from 'lucide-react';
 import { BackLink } from '@/components/navigation/back-link';
 import { PlayerShell } from '@/components/radio/player-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
+import { useRadioEvents } from '@/hooks/use-radio-events';
 import { radioAccessOf } from '@/lib/radio/api';
 import { trackRadioEvent } from '@/lib/radio/events';
 import { getRadioReplay } from '@/lib/radio/player-api';
@@ -40,6 +41,8 @@ export function RadioReplayScreen({ locale, saveId }: { locale: string; saveId: 
   const routerRef = useRef(router);
   routerRef.current = router;
   const studioHref = buildClinicHubHref(locale);
+  // The `replay` events this screen reports are sent while here and when it is left.
+  useRadioEvents(ready && authenticated);
 
   useEffect(() => {
     if (!isRadioLocale(locale)) {
