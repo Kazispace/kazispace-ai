@@ -19,6 +19,18 @@ export function radioStoryHref(locale: string, saveId: string, from: RadioFrom =
   return `/${locale}/${RADIO_SEGMENT}/story/${encodeURIComponent(saveId)}${q}`;
 }
 
+/**
+ * Radio settings (Radio settings · Screens and back). Opened from the player it carries the story,
+ * so Back returns to it; from the radio home it carries nothing and Back returns home.
+ */
+export function radioSettingsHref(locale: string, from?: { saveId: string; from: RadioFrom }): string {
+  const base = `${radioHomeHref(locale)}/settings`;
+  if (!from) return base;
+  const qs = new URLSearchParams({ save: from.saveId });
+  if (from.from === 'studio') qs.set('from', 'studio');
+  return `${base}?${qs.toString()}`;
+}
+
 export function radioProgramHref(locale: string, programId: string): string {
   return `/${locale}/${RADIO_SEGMENT}/program/${encodeURIComponent(programId)}`;
 }

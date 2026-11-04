@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MoreHorizontal } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
 import { AnswerCaptions, CareCard, NoticeCard, VoiceLine, explainQuestion } from '@/components/radio/ask-parts';
@@ -29,7 +29,8 @@ import {
   radioAccessOf,
 } from '@/lib/radio/api';
 import { postRadioTurnAudio } from '@/lib/radio/player-api';
-import { isRadioLocale, radioHomeHref } from '@/lib/radio/routes';
+import { isRadioLocale, radioHomeHref, radioSettingsHref } from '@/lib/radio/routes';
+import { readDefaultSpeed, rememberPlace, takePlace } from '@/lib/radio/settings';
 import {
   DEFAULT_LISTEN_WINDOW_MS,
   SLOW_AFTER_MS,
@@ -99,7 +100,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const { ready, authenticated } = useAuthReady();
   const studioHref = buildClinicHubHref(locale);
   const backHref = from === 'studio' ? studioHref : radioHomeHref(locale);
-  const { home } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
+  const { home, refresh: refreshHome } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
 
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [resp, setResp] = useState<RadioPlayerResponse | null>(null);
@@ -108,6 +109,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const [answerCount, setAnswerCount] = useState(0);
   const [notice, setNotice] = useState<RadioNotice | null>(null);
   const [speed, setSpeed] = useState<PlayerSpeed>(1);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const resumeAt = useRef<number | null>(null);
   const [inFlight, setInFlight] = useState(false);
   const [slow, setSlow] = useState(false);
   const [failedTurn, setFailedTurn] = useState<FailedTurn | null>(null);
@@ -207,6 +210,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     const res = await getRadioSave(saveId);
     if (res.success && res.data) {
       accept(res.data, { restart: true });
+      // Back from radio settings: resume from the sentence where the player stopped (same part only).
+      if (res.data.node) resumeAt.current = takePlace(saveId, res.data.node.node_id);
       setLoad({ state: 'ready' });
       return;
     }
@@ -343,6 +348,28 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const player = useSentencePlayer({ sentences, speed, autoplay: true, onDone: onNodeDone, partKey: answerCount });
   const playerRef = useRef(player);
   playerRef.current = player;
+  // Declared after the player, so it runs after the player's own "start the part" effect.
+  useEffect(() => {
+    if (resumeAt.current == null) return;
+    const i = resumeAt.current;
+    resumeAt.current = null;
+    if (i < sentences.length) playerRef.current.playFrom(i);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answerCount]);
+
+  // The default speed is kept by the app (Radio settings).
+  useEffect(() => setSpeed(readDefaultSpeed()), []);
+
+  // The header shows the story's name (Player · Layout). A story just started may not be in the
+  // cached radio home yet: read it again once.
+  const storyTitle = home?.continue_listening?.find((x) => x.save_id === saveId)?.title ?? null;
+  const askedHomeAgain = useRef(false);
+  useEffect(() => {
+    if (home && !storyTitle && !askedHomeAgain.current) {
+      askedHomeAgain.current = true;
+      void refreshHome();
+    }
+  }, [home, storyTitle, refreshHome]);
 
   const atChoicePoint = () => respRef.current?.node?.node_type === 'choice' && playerRef.current.done;
   const readChoicesAgain = useCallback(() => playerRef.current.playFrom(segLen), [segLen]);
@@ -432,7 +459,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
           return;
         case 'save':
           toastRef.current(tRef.current('player.saved'));
-          carryOn();
+          // A tapped Save never stopped the voice; a spoken one goes back to where the user was.
+          if (spoken) carryOn();
           return;
         case 'exit':
           routerRef.current.push(backHref);
@@ -719,7 +747,51 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       <ListeningIndicator on={micOn} />
       <PlayerShell
         back={back}
-        title={t('player.title')}
+        title={storyTitle ?? t('player.title')}
+        action={
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-label={t('player.more')}
+              aria-haspopup="menu"
+              aria-expanded={moreOpen}
+              data-testid="radio-player-more"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100"
+            >
+              <MoreHorizontal className="h-5 w-5" aria-hidden />
+            </button>
+            {moreOpen ? (
+              <div role="menu" className="absolute right-0 z-20 mt-1 w-40 rounded-xl border border-gray-200 bg-white py-1 shadow-lg" data-testid="radio-player-menu">
+                <Link
+                  role="menuitem"
+                  href={radioSettingsHref(locale, { saveId, from })}
+                  onClick={() => {
+                    // Opening settings leaves the player; Back resumes from this sentence.
+                    if (node) rememberPlace(saveId, node.node_id, Math.min(player.index, Math.max(0, segLen - 1)));
+                  }}
+                  data-testid="radio-player-settings"
+                  className="block px-4 py-2 text-sm text-workspace-text hover:bg-gray-50"
+                >
+                  {t('settings.title')}
+                </Link>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={inFlight}
+                  onClick={() => {
+                    setMoreOpen(false);
+                    void sendTurn({ kind: 'command', command: 'save' });
+                  }}
+                  data-testid="radio-player-save"
+                  className="block w-full px-4 py-2 text-left text-sm text-workspace-text hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {t('player.save')}
+                </button>
+              </div>
+            ) : null}
+          </div>
+        }
         footer={
           <div className="flex flex-col items-center gap-3">
             {!ended ? (

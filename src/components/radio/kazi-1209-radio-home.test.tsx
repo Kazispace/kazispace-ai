@@ -174,6 +174,14 @@ describe('Radio home', () => {
     expect(m.start.mock.calls[1][1]).not.toBe(m.start.mock.calls[0][1]);
   });
 
+  it('the header has the settings gear, named radio.settings.title', async () => {
+    m.home.mockResolvedValue({ success: true, data: HOME });
+    await home();
+    const gear = q('radio-settings-open');
+    expect(gear?.getAttribute('href')).toBe('/zh/radio/settings');
+    expect(gear?.getAttribute('aria-label')).toBe('radio.settings.title');
+  });
+
   it('a story just taken down: toast, and the home reloads', async () => {
     m.home.mockResolvedValue({ success: true, data: HOME });
     m.start.mockResolvedValue({ success: false, status: 409, errorCode: 'story_unavailable' });

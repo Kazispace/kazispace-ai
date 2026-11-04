@@ -39,6 +39,7 @@ vi.mock('@/hooks/use-radio-home', () => ({
     access: 'open',
     home: { prefs: { listen_window_on: false }, availability: { tts: true, asr: true, new_render: true } },
     isLoading: false,
+    refresh: () => Promise.resolve(),
   }),
 }));
 vi.mock('@/lib/radio/api', async (orig) => ({

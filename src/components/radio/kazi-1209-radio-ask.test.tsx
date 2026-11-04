@@ -47,7 +47,7 @@ vi.mock('@/lib/store', () => ({
   useUIStore: (select: (s: { showToast: typeof m.toast }) => unknown) => select({ showToast: m.toast }),
 }));
 vi.mock('@/hooks/use-radio-home', () => ({
-  useRadioHome: () => ({ access: 'open', home: m.home, isLoading: false }),
+  useRadioHome: () => ({ access: 'open', home: m.home, isLoading: false, refresh: () => Promise.resolve() }),
 }));
 vi.mock('@/hooks/use-radio-mic', async () => {
   const React = await import('react');

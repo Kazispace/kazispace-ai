@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Settings } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { newRadioRequestId, setRadioBand, startRadioStory } from '@/lib/radio/api';
 import { formatRadioDate } from '@/lib/radio/format';
-import { isRadioLocale, radioProgramHref, radioStoryHref } from '@/lib/radio/routes';
+import { isRadioLocale, radioProgramHref, radioSettingsHref, radioStoryHref } from '@/lib/radio/routes';
 import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -145,8 +145,21 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
   const askLevel = home.profile.source === 'none' && !home.prefs.band_override;
   const canStart = home.availability.tts;
 
+  // Radio home · Settings: a gear button in the header, named radio.settings.title.
+  const gear = (
+    <Link
+      href={radioSettingsHref(locale)}
+      aria-label={t('settings.title')}
+      title={t('settings.title')}
+      data-testid="radio-settings-open"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100"
+    >
+      <Settings className="h-5 w-5" aria-hidden />
+    </Link>
+  );
+
   return (
-    <Shell back={back} title={tStudio('sections.radio')}>
+    <Shell back={back} title={tStudio('sections.radio')} action={gear}>
       {askLevel ? (
         <section data-testid="radio-level-question" className="rounded-xl border border-primary/30 bg-primary/5 p-4">
           <p className="text-sm font-medium text-workspace-text">{t('level.question')}</p>
@@ -261,12 +274,25 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
   );
 }
 
-function Shell({ back, title, children }: { back: React.ReactNode; title: string; children: React.ReactNode }) {
+function Shell({
+  back,
+  title,
+  action,
+  children,
+}: {
+  back: React.ReactNode;
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="h-full overflow-y-auto bg-gray-50" data-testid="radio-home">
       <div className="mx-auto max-w-2xl px-4 pt-2">{back}</div>
       <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pb-10 pt-2">
-        <h1 className="text-2xl font-bold text-kazi-navy">{title}</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold text-kazi-navy">{title}</h1>
+          {action}
+        </div>
         {children}
       </main>
     </div>
