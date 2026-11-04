@@ -1,15 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  Bot,
-  Files,
-  FolderOpen,
-  LayoutGrid,
-  PanelLeftClose,
-  Search,
-  User,
-} from 'lucide-react';
+import { Bot, Files, PanelLeftClose, Search } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -22,6 +14,7 @@ import {
   type TopLevelDestination,
 } from '@/lib/top-level-nav';
 import { SessionIconRailCredits } from '@/components/session-nav/session-nav-primary-chrome';
+import { TOP_LEVEL_ICONS } from '@/components/navigation/top-level-icons';
 
 interface SessionIconRailProps {
   locale: string;
@@ -70,33 +63,42 @@ export function SessionIconRail({
       aria-label={label}
       title={label}
       className={cn(
-        'relative flex h-10 w-10 items-center justify-center rounded-lg text-workspace-muted transition-colors hover:bg-workspace-hover hover:text-workspace-text',
-        active &&
-          'bg-workspace-active text-primary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary'
+        'flex h-10 w-10 items-center justify-center rounded-lg text-workspace-muted transition-colors hover:bg-workspace-hover hover:text-workspace-text',
+        // A panel toggle, not a destination: a neutral fill when open, never the blue pill.
+        active && 'bg-workspace-hover text-workspace-text'
       )}
     >
       {icon}
     </button>
   );
 
-  const destinationLink = (destination: TopLevelDestination, icon: React.ReactNode) => {
+  // Each destination: icon on a pill with its label below, as in the mobile tab bar
+  // (kazispace-ui component "Navigation rail", D31; KAZIOP-3).
+  const destinationLink = (destination: TopLevelDestination) => {
     const active = activeDestination === destination;
+    const Icon = TOP_LEVEL_ICONS[destination];
     return (
       <Link
         href={topLevelHref(locale, destination)}
         prefetch={destination === 'space' ? undefined : false}
         onClick={() => markNavIntent()}
         aria-current={active ? 'page' : undefined}
+        data-testid={`rail-${destination}`}
         className={cn(
-          'relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
-          active
-            ? 'bg-workspace-active text-primary before:absolute before:left-0 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-primary'
-            : 'text-workspace-secondary hover:bg-workspace-hover'
+          'group flex w-16 flex-col items-center gap-1 rounded-lg py-1.5 text-xs leading-4 transition-colors',
+          active ? 'font-semibold text-workspace-text' : 'font-medium text-workspace-secondary hover:text-workspace-text'
         )}
-        aria-label={tNav(destination)}
-        title={tNav(destination)}
       >
-        {icon}
+        <span
+          data-testid={active ? 'rail-pill' : undefined}
+          className={cn(
+            'flex h-7 w-12 items-center justify-center rounded-full transition-colors',
+            active ? 'bg-primary text-tab-bar-icon-active' : 'group-hover:bg-workspace-hover'
+          )}
+        >
+          <Icon className="h-5 w-5" aria-hidden />
+        </span>
+        {tNav(destination)}
       </Link>
     );
   };
@@ -108,7 +110,7 @@ export function SessionIconRail({
   return (
     <nav
       aria-label={t('iconRail')}
-      className="hidden md:flex w-12 shrink-0 flex-col items-center gap-1 border-r border-workspace-border bg-workspace-bg py-3"
+      className="hidden md:flex w-[72px] shrink-0 flex-col items-center gap-1 border-r border-workspace-border bg-workspace-bg py-3"
     >
       <Link
         href={`/${locale}`}
@@ -122,11 +124,13 @@ export function SessionIconRail({
       </Link>
 
       {/* Top-level destinations, same order as the mobile tab bar (kazispace-ui D2). */}
-      {destinationLink('space', <LayoutGrid className="h-5 w-5" />)}
-      {destinationLink('studio', <FolderOpen className="h-5 w-5" />)}
-      {destinationLink('me', <User className="h-5 w-5" />)}
+      <div className="flex flex-col items-center gap-2">
+        {destinationLink('space')}
+        {destinationLink('studio')}
+        {destinationLink('me')}
+      </div>
 
-      <div className="my-1 h-px w-6 bg-workspace-border" aria-hidden />
+      <div className="my-2 h-px w-8 bg-workspace-border" aria-hidden />
 
       {iconBtn(agentsActive, handleAgentsClick, t('agents'), <Bot className="h-5 w-5" />)}
       {iconBtn(filesActive, onOpenFilesPanel, t('files'), <Files className="h-5 w-5" />)}
