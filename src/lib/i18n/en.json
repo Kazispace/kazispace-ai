@@ -1,6 +1,6 @@
 {
 	"login": {
-		"title": "Login",
+		"title": "Log in",
 		"phoneLabel": "Phone number",
 		"phonePlaceholder": "+77015551234",
 		"phoneHint": "Kazakhstan (+7), Uzbekistan (+998), or China (+86) numbers only",
@@ -20,7 +20,12 @@
 		"sessionExpiredContent": "Your session has expired. Please log in again to continue.",
 		"reLogin": "Log In",
 		"cancel": "Cancel",
-		"regionNotice": "Mainland China numbers (+86) are stored in China; other numbers are stored on the international cluster. This cannot be changed after registration."
+		"regionNotice": "Mainland China numbers (+86) are stored in China; other numbers are stored on the international cluster. This cannot be changed after registration.",
+		"signUpTitle": "Sign up",
+		"haveAccount": "Already have an account?",
+		"switchToLogIn": "Log in",
+		"noAccount": "New to KaziSpace?",
+		"switchToSignUp": "Sign up"
 	},
 	"mine": {
 		"title": "Profile",

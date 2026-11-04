@@ -34,6 +34,9 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [sessionExpired, setSessionExpired] = useState(false);
+  // Which button opened the screen (kazispace-ui Homepage 0.4): "Sign up" passes mode=signup.
+  // Same steps either way; only the title and the switch line differ.
+  const [mode, setMode] = useState<"signup" | "login">("login");
   const authReady = useAuthStore((s) => s.authReady);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const user = useAuthStore((s) => s.user);
@@ -44,6 +47,7 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
     if (search.get("expired") === "1") {
       setSessionExpired(true);
     }
+    if (search.get("mode") === "signup") setMode("signup");
     const pendingPhone = getPendingOtpPhone();
     if (pendingPhone) setPhone(pendingPhone);
   }, []);
@@ -67,6 +71,16 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
   }, [authReady, isLoggedIn, user, router]);
 
   const normalizedPhone = phone.replace(/\s/g, "");
+
+  const switchMode = () => {
+    const next = mode === "signup" ? "login" : "signup";
+    setMode(next);
+    // Keep the URL in step (redirect and other params stay) so a reload keeps the title.
+    const url = new URL(window.location.href);
+    if (next === "signup") url.searchParams.set("mode", "signup");
+    else url.searchParams.delete("mode");
+    window.history.replaceState(window.history.state, "", url.toString());
+  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,7 +176,9 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
             height={96}
             className="mx-auto mb-2 h-24 w-auto"
           />
-          <CardTitle className="text-xl">{t("title")}</CardTitle>
+          <CardTitle className="text-xl" data-testid="login-title">
+            {mode === "signup" ? t("signUpTitle") : t("title")}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {sessionExpired && (
@@ -196,6 +212,12 @@ export default function LoginPage({ params: _params }: LoginPageProps) {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? t("sending") : t("sendCode")}
               </Button>
+              <p className="text-center text-sm text-workspace-secondary" data-testid="login-switch">
+                {mode === "signup" ? t("haveAccount") : t("noAccount")}{" "}
+                <button type="button" onClick={switchMode} className="font-medium text-primary hover:underline">
+                  {mode === "signup" ? t("switchToLogIn") : t("switchToSignUp")}
+                </button>
+              </p>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-4">

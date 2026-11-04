@@ -20,7 +20,12 @@
 		"sessionExpiredContent": "Sizning seansingiz muddati tugadi. Davom etish uchun qayta kiring.",
 		"reLogin": "Kirish",
 		"cancel": "Bekor qilish",
-		"regionNotice": "Xitoy materigi (+86) raqamlari Xitoyda saqlanadi; boshqalari xalqaro klasterda. Ro‘yxatdan o‘tgach o‘zgartirib bo‘lmaydi."
+		"regionNotice": "Xitoy materigi (+86) raqamlari Xitoyda saqlanadi; boshqalari xalqaro klasterda. Ro‘yxatdan o‘tgach o‘zgartirib bo‘lmaydi.",
+		"signUpTitle": "Sign up",
+		"haveAccount": "Already have an account?",
+		"switchToLogIn": "Log in",
+		"noAccount": "New to KaziSpace?",
+		"switchToSignUp": "Sign up"
 	},
 	"mine": {
 		"title": "Profil",

@@ -20,7 +20,12 @@
 		"sessionExpiredContent": "Сессияңыздың мерзімі аяқталды. Жалғастыру үшін қайта кіріңіз.",
 		"reLogin": "Кіру",
 		"cancel": "Бас тарту",
-		"regionNotice": "Қытай материгі (+86) нөмірлері Қытайда сақталады; басқалары халықаралық кластерде. Тіркелгеннен кейін өзгертуге болмайды."
+		"regionNotice": "Қытай материгі (+86) нөмірлері Қытайда сақталады; басқалары халықаралық кластерде. Тіркелгеннен кейін өзгертуге болмайды.",
+		"signUpTitle": "Sign up",
+		"haveAccount": "Already have an account?",
+		"switchToLogIn": "Log in",
+		"noAccount": "New to KaziSpace?",
+		"switchToSignUp": "Sign up"
 	},
 	"mine": {
 		"title": "Жеке кабинет",
