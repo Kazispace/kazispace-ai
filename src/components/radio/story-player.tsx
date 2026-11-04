@@ -947,7 +947,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
           </div>
         ) : null}
 
-        {ended ? <EndingSummary locale={locale} saveId={saveId} glossary={heardGlossary} home={home} /> : null}
+        {ended ? <EndingSummary locale={locale} saveId={saveId} glossary={heardGlossary} endingTitle={node.ending?.title ?? null} home={home} /> : null}
       </PlayerShell>
       {helpOpen ? <BlockedHelpDialog platform={platform} onClose={() => setHelpOpen(false)} /> : null}
     </div>

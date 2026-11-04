@@ -11,7 +11,7 @@ import { DeleteSaveDialog, ListenedSection, SaveMenu, useDailyGreeting } from '@
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { newRadioRequestId, setRadioBand, startRadioStory } from '@/lib/radio/api';
-import { formatRadioDate } from '@/lib/radio/format';
+import { formatRadioDate, radioChoiceNumber, radioMinutes } from '@/lib/radio/format';
 import { isRadioLocale, radioProgramHref, radioSettingsHref, radioStoryHref } from '@/lib/radio/routes';
 import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
@@ -252,6 +252,13 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
             >
               {program.series ? <p className="text-xs text-workspace-muted">{program.series}</p> : null}
               <h3 className="text-base font-semibold text-workspace-text">{program.title}</h3>
+              {/* The version this listener will hear; both null ⇒ show neither (personal-radio.md, Programs). */}
+              {program.band && program.duration_ms ? (
+                <p className="mt-1 flex gap-1" data-testid="radio-program-meta">
+                  <Tag>{t('home.minutes', { n: radioMinutes(program.duration_ms) })}</Tag>
+                  <Tag>{program.band}</Tag>
+                </p>
+              ) : null}
               {program.tags?.length ? (
                 <p className="mt-2 flex flex-wrap gap-1">
                   {program.tags.map((tag) => (
@@ -355,6 +362,8 @@ function ContinueCard({
       <div className="min-w-0">
         <h3 className="truncate text-base font-semibold text-workspace-text">{save.title}</h3>
         <p className="mt-0.5 text-xs text-workspace-secondary">
+          <span data-testid="radio-continue-progress">{t('progress', { n: radioChoiceNumber(save.choices_made) })}</span>
+          {' · '}
           {t('lastListened', { date: formatRadioDate(save.updated_at, locale) })}
         </p>
       </div>

@@ -46,7 +46,7 @@ vi.mock('@/lib/radio/api', async (orig) => ({
 import { RadioHomeScreen } from '@/components/radio/radio-home';
 import { ProgramPlayerScreen } from '@/components/radio/program-player';
 
-const SAVE = { save_id: 'sv1', title: 'Old story', status: 'active', current_node_id: 'n3', save_version: 2, updated_at: '2026-11-03T12:00:00Z' };
+const SAVE = { save_id: 'sv1', title: 'Old story', status: 'active', current_node_id: 'n3', save_version: 2, updated_at: '2026-11-03T12:00:00Z', choices_made: 1 };
 const HOME = {
   continue_listening: [] as (typeof SAVE)[],
   stories: [{ story_id: 's1', slug: 'hotel', title: 'The Hotel Note', synopsis: 'A note under the door', tags: ['mystery'], base_cefr: 'B1', recommended: true }],
@@ -55,6 +55,7 @@ const HOME = {
   prefs: { band_override: 'B1' },
   availability: { tts: true, asr: true, new_render: true },
   voices: ['en_us_f1', 'en_us_m1', 'en_gb_f1'],
+  voice_samples: [],
 };
 
 let container: HTMLDivElement;

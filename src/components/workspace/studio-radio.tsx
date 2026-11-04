@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
 import { useRadioHome } from '@/hooks/use-radio-home';
-import { formatRadioDate } from '@/lib/radio/format';
+import { formatRadioDate, radioChoiceNumber } from '@/lib/radio/format';
 import { isRadioLocale, radioHomeHref, radioStoryHref } from '@/lib/radio/routes';
 
 /**
@@ -52,6 +52,8 @@ export function StudioRadio({ locale, authenticated }: { locale: string; authent
             {current.title}
           </p>
           <p className="mt-0.5 text-xs text-workspace-secondary">
+            <span data-testid="studio-radio-progress">{t('progress', { n: radioChoiceNumber(current.choices_made) })}</span>
+            {' · '}
             {t('lastListened', { date: formatRadioDate(current.updated_at, locale) })}
           </p>
           <div className="mt-2 flex items-center gap-2">

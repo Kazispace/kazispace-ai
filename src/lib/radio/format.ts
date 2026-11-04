@@ -16,7 +16,12 @@ export function formatRadioDate(iso: string, locale: string): string {
   }
 }
 
-/** Whole minutes, at least 1, for a duration in milliseconds (`radio.home.minutes`). */
+/** Whole minutes, rounded up, at least 1, for a duration in milliseconds (`radio.home.minutes`; personal-radio.md, Programs). */
 export function radioMinutes(ms: number | null | undefined): number {
-  return Math.max(1, Math.round((ms ?? 0) / 60_000));
+  return Math.max(1, Math.ceil((ms ?? 0) / 60_000));
+}
+
+/** `radio.studio.progress` "Choice {n}": the choice the listener is heading to (personal-radio.md 0.13). */
+export function radioChoiceNumber(choicesMade: number | null | undefined): number {
+  return Math.max(0, choicesMade ?? 0) + 1;
 }

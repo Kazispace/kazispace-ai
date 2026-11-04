@@ -24,7 +24,8 @@ type Load = { state: 'loading' } | { state: 'ready'; replay: RadioReplay } | { s
  * Replay (KAZI-1209 part 5; personal-radio.md, Replay · Data · Replay and deleting).
  *
  * Every step of a story, top to bottom, as the user heard it: the part's captions with a play button per
- * sentence (`radio.replay.play`), and the choice made (`radio.replay.youChose`, marked voice or tap). A step
+ * sentence (`radio.replay.play`), and the choice made (`radio.replay.youChose` with the letter heard, `chosen.key`;
+ * the label alone when there is none), marked voice or tap. A step
  * taken back with "go back" stays, greyed, labelled `radio.replay.undone`. Replay is free, changes nothing
  * and never opens the microphone. `409 save_not_found` shows "content cannot be found".
  */
@@ -157,7 +158,12 @@ export function RadioReplayScreen({ locale, saveId }: { locale: string; saveId: 
             </ul>
             {step.chosen?.label ? (
               <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-workspace-secondary" data-testid="radio-replay-chosen">
-                <span>{t('replay.youChose', { key: '', label: step.chosen.label }).replace(/\s+([：:])/, '$1')}</span>
+                <span>
+                  {step.chosen.key
+                    ? t('replay.youChose', { key: step.chosen.key, label: step.chosen.label })
+                    : // no letter (rare: the recorded part's choices could not be read) ⇒ the label alone
+                      t('replay.youChose', { key: '', label: step.chosen.label }).replace(/\s+([：:])/, '$1')}
+                </span>
                 {step.chosen.via ? (
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs">
                     {step.chosen.via === 'voice' ? t('replay.viaVoice') : t('replay.viaTap')}

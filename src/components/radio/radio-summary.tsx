@@ -8,12 +8,30 @@ import { Loader2 } from 'lucide-react';
 
 import { newRadioRequestId, startRadioStory } from '@/lib/radio/api';
 import { trackRadioEvent } from '@/lib/radio/events';
-import { getRadioSaves } from '@/lib/radio/player-api';
+import { getRadioReplay, getRadioSaves } from '@/lib/radio/player-api';
 import { radioHomeHref, radioReplayHref, radioStoryHref } from '@/lib/radio/routes';
-import type { RadioGlossaryItem, RadioHome, RadioStorySummary } from '@/types/radio';
+import type { RadioGlossaryItem, RadioHome, RadioReplay, RadioStorySummary } from '@/types/radio';
 
 /** Ending summary · Phrases: up to 8. */
 export const SUMMARY_PHRASES_MAX = 8;
+
+/**
+ * The story's key phrases from the replay: each step's `glossary` in the order the steps were heard, the
+ * first occurrence of each term kept (personal-radio.md 0.14, Ending summary · Phrases).
+ */
+export function replayPhrases(replay: RadioReplay | null | undefined): RadioGlossaryItem[] {
+  const seen = new Set<string>();
+  const out: RadioGlossaryItem[] = [];
+  for (const step of replay?.steps ?? []) {
+    for (const g of step.glossary ?? []) {
+      const key = g.term?.trim().toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(g);
+    }
+  }
+  return out;
+}
 
 /** A story at the listener's level that they have not heard (no save of it, in progress or listened). */
 export function nextStory(home: RadioHome | null, heard: Set<string>): RadioStorySummary | null {
@@ -24,24 +42,26 @@ export function nextStory(home: RadioHome | null, heard: Set<string>): RadioStor
 /**
  * The ending summary card (KAZI-1209 part 5; personal-radio.md, Ending summary).
  *
- * - Phrases: up to 8 key phrases heard in this story, each opening its meaning.
+ * - Ending: `radio.summary.ending` with the ending's name; left out when the story gives none (`title` null).
+ * - Phrases: up to 8 key phrases from the whole story, read from the replay (so parts heard before a resume
+ *   count too); until the replay answers, or if it cannot be read, the phrases heard on this visit.
  * - Next: a story at the same level the user has not heard; starting it is a new start (a new request id).
  * - Buttons: `radio.summary.replay` · `radio.summary.next` · `radio.summary.home`.
  * - No quiz, no score, no stars: the radio cannot measure understanding, so it does not report it.
  * - Reports `radio_summary_shown` once (`glossary_count`, `recommended_story_id`).
- *
- * The ending's name and the user's own questions are not in the contract yet, so those two parts are
- * not shown (KAZI-1209 PR notes).
+ * - Questions: not shown; the radio does not keep the user's questions (personal-radio.md 0.14).
  */
 export function EndingSummary({
   locale,
   saveId,
   glossary,
+  endingTitle,
   home,
 }: {
   locale: string;
   saveId: string;
   glossary: RadioGlossaryItem[];
+  endingTitle?: string | null;
   home: RadioHome | null;
 }) {
   const t = useTranslations('radio.summary');
@@ -50,7 +70,19 @@ export function EndingSummary({
   const [open, setOpen] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const reported = useRef(false);
-  const phrases = glossary.slice(0, SUMMARY_PHRASES_MAX);
+  // null while the replay has not answered; [] or a list once it has (a failure counts as answered).
+  const [fromReplay, setFromReplay] = useState<RadioGlossaryItem[] | null>(null);
+  const phrases = (fromReplay && fromReplay.length ? fromReplay : glossary).slice(0, SUMMARY_PHRASES_MAX);
+
+  useEffect(() => {
+    let live = true;
+    void getRadioReplay(saveId).then((res) => {
+      if (live) setFromReplay(res.success ? replayPhrases(res.data) : []);
+    });
+    return () => {
+      live = false;
+    };
+  }, [saveId]);
 
   useEffect(() => {
     let live = true;
@@ -69,13 +101,13 @@ export function EndingSummary({
   const next = heard ? nextStory(home, heard) : null;
 
   useEffect(() => {
-    if (heard === null || reported.current) return;
+    if (heard === null || fromReplay === null || reported.current) return;
     reported.current = true;
     trackRadioEvent('radio_summary_shown', { saveId }, {
       glossary_count: phrases.length,
       recommended_story_id: next?.story_id ?? null,
     });
-  }, [heard, next, phrases.length, saveId]);
+  }, [heard, fromReplay, next, phrases.length, saveId]);
 
   const startNext = async () => {
     if (!next || starting) return;
@@ -89,6 +121,11 @@ export function EndingSummary({
   const btn = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm';
   return (
     <section className="mt-6 rounded-xl border border-gray-200 p-4" data-testid="radio-ending">
+      {endingTitle ? (
+        <p className="mb-3 text-base font-semibold text-workspace-text" data-testid="radio-summary-ending">
+          {t('ending', { name: endingTitle })}
+        </p>
+      ) : null}
       {phrases.length ? (
         <div>
           <h2 className="text-sm font-semibold text-workspace-text">{t('phrases')}</h2>
