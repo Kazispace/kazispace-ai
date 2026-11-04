@@ -72,7 +72,8 @@
 		"billingServicesGroupTitle": "To'lovlar",
 		"subscriptionPlansLabel": "Obuna",
 		"creditsLedgerLabel": "Balans va tarix",
-		"linkedAccountsGroupTitle": "Bog'langan akkauntlar"
+		"linkedAccountsGroupTitle": "Bog'langan akkauntlar",
+		"clearRadioData": "Clear personal radio data"
 	},
 	"profile": {
 		"title": "Profilni tahrirlash",

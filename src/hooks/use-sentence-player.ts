@@ -167,5 +167,11 @@ export function useSentencePlayer({
   /** Plays from sentence `i` (the choice point reads its choices again from the first choice). */
   const playFrom = useCallback((i: number) => playAt(Math.max(0, i)), [playAt]);
 
-  return { index, playing, done, play, pause, repeat, playFrom };
+  /** Where in the current sentence's audio the player is, in ms (0 for a reading pause). */
+  const offsetMs = useCallback(() => {
+    const a = audioRef.current;
+    return a && Number.isFinite(a.currentTime) ? Math.round(a.currentTime * 1000) : 0;
+  }, []);
+
+  return { index, playing, done, play, pause, repeat, playFrom, offsetMs };
 }

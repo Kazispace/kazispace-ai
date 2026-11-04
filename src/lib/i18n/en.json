@@ -72,7 +72,8 @@
 		"profileGoalsLoading": "Loading preparation goal settings...",
 		"billingLoading": "Opening subscription checkout...",
 		"ledgerLoading": "Retrieving credit audit logs...",
-		"linkedAccountsGroupTitle": "Linked accounts"
+		"linkedAccountsGroupTitle": "Linked accounts",
+		"clearRadioData": "Clear personal radio data"
 	},
 	"profile": {
 		"title": "Edit Profile",

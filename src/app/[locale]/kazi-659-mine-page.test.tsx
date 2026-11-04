@@ -30,6 +30,9 @@ vi.mock('@/hooks/use-nba-action', () => ({
   useNbaAction: () => useNbaActionMock(),
 }));
 
+// KAZI-1209 part 5: the radio row reads the radio's status itself; its own tests cover it
+// (`kazi-1209-radio-replay.test.tsx`), so it is a stub here.
+vi.mock('@/components/radio/clear-radio-data-row', () => ({ ClearRadioDataRow: () => null }));
 vi.mock('@/lib/api-client', () => ({
   getMe: () => getMeMock(),
 }));

@@ -5,7 +5,16 @@
  */
 import { apiRequest } from '@/lib/api-client';
 import type { ApiResponse } from '@/types';
-import type { RadioBgmTrack, RadioPlayerResponse, RadioPosition, RadioProgramAskResponse } from '@/types/radio';
+import type {
+  RadioBgmTrack,
+  RadioClientEvent,
+  RadioEventsResponse,
+  RadioPlayerResponse,
+  RadioPosition,
+  RadioProgramAskResponse,
+  RadioReplay,
+  RadioSaveSummary,
+} from '@/types/radio';
 
 const BASE = '/api/v1/radio';
 
@@ -75,4 +84,31 @@ export function getRadioBgm(): Promise<ApiResponse<{ tracks: RadioBgmTrack[] }>>
 /** `DELETE memory`: `204` with no body; a resend after a lost answer is safe. */
 export function deleteRadioMemory(): Promise<ApiResponse<unknown>> {
   return apiRequest<unknown>(`${BASE}/memory`, { method: 'DELETE' });
+}
+
+/** `GET saves`: in progress, finished and replaced stories, the most recent first. */
+export function getRadioSaves(): Promise<ApiResponse<{ saves: RadioSaveSummary[] }>> {
+  return apiRequest<{ saves: RadioSaveSummary[] }>(`${BASE}/saves`);
+}
+
+/** `GET saves/{save_id}/replay`: every step as it was heard. Changes nothing. */
+export function getRadioReplay(saveId: string): Promise<ApiResponse<RadioReplay>> {
+  return apiRequest<RadioReplay>(`${BASE}/saves/${encodeURIComponent(saveId)}/replay`);
+}
+
+/** `DELETE saves/{save_id}`: `204`; sending it again, or for a story already gone, answers the same. */
+export function deleteRadioSave(saveId: string): Promise<ApiResponse<unknown>> {
+  return apiRequest<unknown>(`${BASE}/saves/${encodeURIComponent(saveId)}`, { method: 'DELETE' });
+}
+
+/**
+ * `POST events`: 1 to 50 events. Sent with `keepalive: true` (not `sendBeacon`, which cannot carry the
+ * auth header), so a batch sent while the page is being left still reaches the server.
+ */
+export function postRadioEvents(events: RadioClientEvent[]): Promise<ApiResponse<RadioEventsResponse>> {
+  return apiRequest<RadioEventsResponse>(`${BASE}/events`, {
+    method: 'POST',
+    body: JSON.stringify({ events }),
+    keepalive: true,
+  });
 }

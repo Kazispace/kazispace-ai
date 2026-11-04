@@ -79,7 +79,7 @@ vi.mock('@/lib/radio/api', async (orig) => ({
   getRadioRender: vi.fn(),
 }));
 
-vi.mock('@/lib/radio/player-api', () => ({ askRadioProgram: m.ask, askRadioProgramAudio: m.askAudio, postRadioTurnAudio: vi.fn() }));
+vi.mock('@/lib/radio/player-api', () => ({ postRadioEvents: vi.fn(async () => ({ success: true, data: { accepted: 0, duplicates: 0, rejected: [] } })), getRadioSaves: vi.fn(async () => ({ success: true, data: { saves: [] } })), getRadioReplay: vi.fn(), deleteRadioSave: vi.fn(), askRadioProgram: m.ask, askRadioProgramAudio: m.askAudio, postRadioTurnAudio: vi.fn() }));
 
 import { ProgramPlayerScreen } from '@/components/radio/program-player';
 import { StoryPlayerScreen } from '@/components/radio/story-player';

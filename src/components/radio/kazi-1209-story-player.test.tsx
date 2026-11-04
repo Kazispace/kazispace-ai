@@ -255,7 +255,8 @@ describe('StoryPlayerScreen', () => {
   it('the ending offers the way back to the radio home', async () => {
     m.save.mockResolvedValue({ success: true, data: resp({ nodeType: 'ending', nodeId: 'end1' }) });
     await mount();
-    expect(q('radio-ending')?.querySelector('a')?.getAttribute('href')).toBe('/zh/radio');
+    // Part 5: the ending is now the summary card (replay · next · home); the way home is its home button.
+    expect(q('radio-summary-home')?.getAttribute('href')).toBe('/zh/radio');
     expect(qa('radio-choice')).toHaveLength(0);
   });
 });

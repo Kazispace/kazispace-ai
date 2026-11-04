@@ -216,3 +216,56 @@ export interface RadioBgmTrack {
   mood?: string | null;
   audio_url?: string | null;
 }
+
+/** `GET saves/{save_id}/replay` (Data · Replay and deleting). */
+export interface RadioReplaySegment {
+  seq: number;
+  lang?: string | null;
+  text?: string | null;
+  audio_url?: string | null;
+  duration_ms?: number | null;
+}
+
+export interface RadioReplayStep {
+  step: number;
+  node_id: string;
+  node_type?: 'narration' | 'choice' | 'ending' | null;
+  segments: RadioReplaySegment[];
+  chosen?: { choice_id: string; label?: string | null; via?: 'tap' | 'voice' | null } | null;
+  undone: boolean;
+  at?: string | null;
+  ending?: Record<string, unknown> | null;
+}
+
+export interface RadioReplay {
+  save_id: string;
+  story_id?: string | null;
+  title?: string | null;
+  status: string;
+  steps: RadioReplayStep[];
+}
+
+/** `POST events` (Data · Playback events). Payload keys are fixed per kind; never free text. */
+export type RadioEventKind =
+  | 'radio_interrupted'
+  | 'radio_summary_shown'
+  | 'node_finished'
+  | 'replay'
+  | 'speed_changed'
+  | 'ttfa'
+  | 'program_finished'
+  | 'player_left';
+
+export interface RadioClientEvent {
+  client_event_id: string;
+  kind: RadioEventKind;
+  save_id?: string | null;
+  program_id?: string | null;
+  payload?: Record<string, string | number | boolean | null> | null;
+}
+
+export interface RadioEventsResponse {
+  accepted: number;
+  duplicates: number;
+  rejected: { index: number; reason: string }[];
+}
