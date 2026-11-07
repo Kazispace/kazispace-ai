@@ -1243,7 +1243,27 @@
 			"storiesEmpty": "还没有故事，新故事正在路上。",
 			"programsEmpty": "还没有节目。",
 			"storyUnavailable": "这个故事暂时下架了",
-			"refreshed": "电台记忆已清除，已为你刷新首页"
+			"refreshed": "电台记忆已清除，已为你刷新首页",
+			"filter": {
+				"genre": "题材",
+				"suspense": "悬疑度",
+				"atLeast": "至少 {n}",
+				"age": "适合年龄",
+				"level": "难度",
+				"any": "不限",
+				"clear": "清除筛选",
+				"empty": "没有符合条件的故事",
+				"reset": "筛选项有更新，已为你清除"
+			},
+			"sort": {
+				"title": "排序",
+				"default": "推荐",
+				"suspense": "悬疑度高的在前",
+				"popularity": "最受欢迎",
+				"novelty": "新上架",
+				"completionRate": "听完率高",
+				"updated": "最近更新"
+			}
 		},
 		"level": {
 			"question": "你觉得自己英语大概什么水平？",
@@ -1382,6 +1402,19 @@
 			},
 			"thanks": "谢谢，这能帮我们挑更好的内容",
 			"failed": "评价没保存上，请再试一次。"
+		},
+		"genre": {
+			"mystery": "悬疑",
+			"adventure": "冒险",
+			"comedy": "喜剧",
+			"dailyLife": "日常",
+			"scifi": "科幻",
+			"history": "历史"
+		},
+		"age": {
+			"kids": "儿童",
+			"teens": "青少年",
+			"adults": "成人"
 		}
 	}
 }

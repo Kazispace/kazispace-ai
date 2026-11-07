@@ -55,6 +55,38 @@ export interface RadioStorySummary {
   tags?: string[];
   base_cefr?: string | null;
   recommended: boolean;
+  /** Catalog attributes (KAZI-1257 E); `null` for a story not from the catalog. A `null` attribute = not labelled. */
+  attrs?: RadioStoryAttrs | null;
+}
+
+export interface RadioStoryAttrs {
+  suspense?: number | null;
+  age_range?: string[] | null;
+  genre?: string | null;
+  duration_s_est?: number | null;
+}
+
+/** One filter `GET /radio/facets` offers (kazispace-ui personal-radio.md, Filtering and sorting stories). */
+export interface RadioFacetFilter {
+  key: string;
+  type: 'int_range' | 'enum' | 'enum_multi' | 'int';
+  /** enum / enum_multi: the allowed values; int_range: `{min, max}`; int: `{min}`. */
+  values: unknown;
+  /** The `GET /radio/stories` query parameters for it. */
+  params: string[];
+  meaning?: string | null;
+}
+
+export interface RadioFacets {
+  vocab_version: number;
+  source: string;
+  fetched_at?: string | null;
+  filters: RadioFacetFilter[];
+  sorts: string[];
+}
+
+export interface RadioStoriesResponse {
+  stories: RadioStorySummary[];
 }
 
 export interface RadioProgramSummary {
