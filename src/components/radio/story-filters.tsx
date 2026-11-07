@@ -136,7 +136,7 @@ function Chip({ pressed, onClick, children, testId }: { pressed: boolean; onClic
       onClick={onClick}
       data-testid={testId}
       className={cn(
-        'min-h-9 shrink-0 rounded-full border px-3 text-xs',
+        'min-h-11 shrink-0 rounded-full border px-3 text-xs',
         pressed ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-workspace-secondary hover:border-primary'
       )}
     >
@@ -165,7 +165,7 @@ export function StoryFilterBar({ state }: { state: StoryFilterState }) {
             data-testid="radio-sort"
             value={selection.sort ?? ''}
             onChange={(e) => setSelection({ ...selection, sort: e.target.value || null })}
-            className="min-h-9 rounded-lg border border-gray-200 bg-white px-2 text-xs text-workspace-text"
+            className="min-h-11 rounded-lg border border-gray-200 bg-white px-2 text-xs text-workspace-text"
           >
             <option value="">{t('home.sort.default')}</option>
             {bar.sorts.map((s) => (
@@ -184,7 +184,7 @@ export function StoryFilterBar({ state }: { state: StoryFilterState }) {
               data-testid="radio-filter-suspense"
               value={selection.suspenseAtLeast ?? ''}
               onChange={(e) => setSelection({ ...selection, suspenseAtLeast: e.target.value ? Number(e.target.value) : null })}
-              className="min-h-9 rounded-lg border border-gray-200 bg-white px-2 text-xs text-workspace-text"
+              className="min-h-11 rounded-lg border border-gray-200 bg-white px-2 text-xs text-workspace-text"
             >
               <option value="">{t('home.filter.any')}</option>
               {c.options.map((n) => (
@@ -220,7 +220,7 @@ export function StoryFilterBar({ state }: { state: StoryFilterState }) {
         )
       )}
       {active ? (
-        <button type="button" onClick={clear} data-testid="radio-filter-clear" className="min-h-9 shrink-0 text-xs text-primary underline">
+        <button type="button" onClick={clear} data-testid="radio-filter-clear" className="min-h-11 shrink-0 text-xs text-primary underline">
           {t('home.filter.clear')}
         </button>
       ) : null}
