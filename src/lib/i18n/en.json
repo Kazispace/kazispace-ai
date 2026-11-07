@@ -1539,7 +1539,27 @@
 			"storiesEmpty": "No stories yet. New ones are on the way.",
 			"programsEmpty": "No programs yet.",
 			"storyUnavailable": "This story is unavailable for now",
-			"refreshed": "Your radio memory was cleared — home refreshed"
+			"refreshed": "Your radio memory was cleared — home refreshed",
+			"filter": {
+				"genre": "Genre",
+				"suspense": "Suspense",
+				"atLeast": "At least {n}",
+				"age": "Age",
+				"level": "Level",
+				"any": "Any",
+				"clear": "Clear filters",
+				"empty": "No stories match these filters",
+				"reset": "The filters changed, so yours were cleared"
+			},
+			"sort": {
+				"title": "Sort",
+				"default": "Recommended",
+				"suspense": "Most suspense first",
+				"popularity": "Most popular",
+				"novelty": "New",
+				"completionRate": "Most finished",
+				"updated": "Recently updated"
+			}
 		},
 		"level": {
 			"question": "Roughly what's your English level?",
@@ -1678,6 +1698,19 @@
 			},
 			"thanks": "Thanks, this helps us choose what to play",
 			"failed": "Couldn't save your rating. Try again."
+		},
+		"genre": {
+			"mystery": "Mystery",
+			"adventure": "Adventure",
+			"comedy": "Comedy",
+			"dailyLife": "Everyday life",
+			"scifi": "Sci-fi",
+			"history": "History"
+		},
+		"age": {
+			"kids": "Kids",
+			"teens": "Teens",
+			"adults": "Adults"
 		}
 	}
 }

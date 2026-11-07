@@ -8,6 +8,7 @@ import { Loader2, Settings } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
 import { DeleteSaveDialog, ListenedSection, SaveMenu, useDailyGreeting } from '@/components/radio/radio-saves';
+import { StoryFilterBar, storyGenreLabel, useStoryFilters } from '@/components/radio/story-filters';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { newRadioRequestId, setRadioBand, startRadioStory } from '@/lib/radio/api';
@@ -42,6 +43,12 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
   const [deleting, setDeleting] = useState<RadioSaveSummary | null>(null);
   const [listenedKey, setListenedKey] = useState(0);
   const greet = useDailyGreeting();
+  // Filtering and sorting stories (KAZI-1257 E): for this visit only.
+  const filters = useStoryFilters({
+    enabled: offered && ready && authenticated && access === 'open',
+    onReset: () => showToast(t('home.filter.reset'), 'info'),
+    onClosed: () => void refresh(),
+  });
 
   const [starting, setStarting] = useState<string | null>(null);
   const [notice, setNotice] = useState<RadioNotice | null>(null);
@@ -148,6 +155,7 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
 
   const askLevel = home.profile.source === 'none' && !home.prefs.band_override;
   const canStart = home.availability.tts;
+  const stories = filters.active && filters.stories ? filters.stories : home.stories;
 
   // Radio home · Settings: a gear button in the header, named radio.settings.title.
   const gear = (
@@ -209,16 +217,36 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
 
       <Section title={t('home.stories')} testId="radio-home-stories">
         {!canStart ? <p className="text-xs text-workspace-secondary" data-testid="radio-tts-disabled">{t('region.ttsDisabled')}</p> : null}
-        {home.stories.length === 0 ? (
+        <StoryFilterBar state={filters} />
+        {filters.active && filters.failed ? (
+          <div className="flex items-center gap-3 text-sm text-workspace-secondary" data-testid="radio-stories-error">
+            <span>{t('offline')}</span>
+            <button type="button" onClick={filters.retry} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50">
+              {tStates('retry')}
+            </button>
+          </div>
+        ) : filters.active && (filters.loading || !filters.stories) ? (
+          <p className="flex justify-center py-4" data-testid="radio-stories-loading">
+            <Loader2 className="h-5 w-5 animate-spin text-workspace-muted" aria-hidden />
+          </p>
+        ) : filters.active && filters.stories?.length === 0 ? (
+          <p className="flex flex-wrap items-center gap-2 text-sm text-workspace-secondary" data-testid="radio-filter-empty">
+            {t('home.filter.empty')}
+            <button type="button" onClick={filters.clear} className="text-xs text-primary underline">
+              {t('home.filter.clear')}
+            </button>
+          </p>
+        ) : stories.length === 0 ? (
           <p className="text-sm text-workspace-secondary">{t('home.storiesEmpty')}</p>
         ) : (
-          home.stories.map((story) => (
+          stories.map((story) => (
             <article key={story.story_id} data-testid="radio-story" className="rounded-xl border border-gray-200 bg-white p-4">
               <h3 className="text-base font-semibold text-workspace-text">{story.title}</h3>
               {story.synopsis ? <p className="mt-1 text-sm text-workspace-secondary">{story.synopsis}</p> : null}
-              {story.tags?.length || story.base_cefr ? (
+              {story.tags?.length || story.base_cefr || storyGenreLabel(t, story) ? (
                 <p className="mt-2 flex flex-wrap gap-1">
                   {story.base_cefr ? <Tag>{story.base_cefr}</Tag> : null}
+                  {storyGenreLabel(t, story) ? <Tag>{storyGenreLabel(t, story)}</Tag> : null}
                   {(story.tags ?? []).map((tag) => (
                     <Tag key={tag}>{tag}</Tag>
                   ))}

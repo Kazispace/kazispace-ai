@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const m = vi.hoisted(() => ({
   home: vi.fn(),
+  facets: vi.fn(),
   start: vi.fn(),
   band: vi.fn(),
   program: vi.fn(),
@@ -38,6 +39,8 @@ vi.mock('@/lib/store', () => ({
 vi.mock('@/lib/radio/api', async (orig) => ({
   ...(await orig<typeof import('@/lib/radio/api')>()),
   getRadioHome: m.home,
+  // KAZI-1257 E: no filter row in these tests (GET /facets unavailable ⇒ the library as before).
+  getRadioFacets: m.facets,
   startRadioStory: m.start,
   setRadioBand: m.band,
   getRadioProgram: m.program,
@@ -83,6 +86,7 @@ beforeEach(() => {
   document.body.appendChild(container);
   root = createRoot(container);
   Object.values(m).forEach((f) => f.mockReset());
+  m.facets.mockResolvedValue({ success: false, status: 503, error: 'x' });
 });
 afterEach(() => {
   act(() => root.unmount());

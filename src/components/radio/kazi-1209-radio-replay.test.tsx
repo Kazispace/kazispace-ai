@@ -44,6 +44,12 @@ vi.mock('@/hooks/use-auth-ready', () => ({ useAuthReady: () => ({ ready: true, a
 vi.mock('@/lib/store', () => ({
   useUIStore: (select: (s: { showToast: typeof m.toast }) => unknown) => select({ showToast: m.toast }),
 }));
+// KAZI-1257 E: these tests are about saves; the story filter row is covered in kazi-1257-radio-filters.test.tsx.
+vi.mock('@/components/radio/story-filters', () => ({
+  StoryFilterBar: () => null,
+  storyGenreLabel: () => null,
+  useStoryFilters: () => ({ bar: null, active: false, stories: null, loading: false, failed: false }),
+}));
 vi.mock('@/hooks/use-radio-home', () => ({
   useRadioHome: () => ({
     access: m.homeState ? 'open' : null,

@@ -9,12 +9,14 @@ import { apiRequest } from '@/lib/api-client';
 import type { ApiResponse } from '@/types';
 import type {
   RadioBand,
+  RadioFacets,
   RadioHome,
   RadioPlayerResponse,
   RadioPrefs,
   RadioPrefsResponse,
   RadioProgramDetail,
   RadioRenderAudio,
+  RadioStoriesResponse,
   RadioTurnInput,
 } from '@/types/radio';
 
@@ -56,6 +58,20 @@ export function newRadioRequestId(prefix: string): string {
 
 export function getRadioHome(): Promise<ApiResponse<RadioHome>> {
   return apiRequest<RadioHome>(`${BASE}/home`);
+}
+
+/** The filters and sorts `GET /radio/stories` accepts (KAZI-1257 E). */
+export function getRadioFacets(): Promise<ApiResponse<RadioFacets>> {
+  return apiRequest<RadioFacets>(`${BASE}/facets`);
+}
+
+/**
+ * The story library, filtered and sorted. `query` comes from `radioStoryQuery` (lib/radio/filters):
+ * an unknown parameter is `400 unknown_facet`, a value not offered `400 bad_facet_value`.
+ */
+export function getRadioStories(query: URLSearchParams): Promise<ApiResponse<RadioStoriesResponse>> {
+  const qs = query.toString();
+  return apiRequest<RadioStoriesResponse>(`${BASE}/stories${qs ? `?${qs}` : ''}`);
 }
 
 export function patchRadioPrefs(patch: RadioPrefs): Promise<ApiResponse<RadioPrefsResponse>> {
