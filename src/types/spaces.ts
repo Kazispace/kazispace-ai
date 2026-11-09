@@ -56,6 +56,11 @@ export interface SpaceTurnRequest {
   language_preference?: string;
   /** Payload-based next_action transport (KAZI-469). */
   meta?: import('@/types/chat-envelope').UserMessageActionMeta;
+  /**
+   * Turn id the backend keys its Trace on (and KAZI-1031 reply replay). `sendSpaceTurn`
+   * fills a fresh one per attempt when the caller gives none.
+   */
+  request_id?: string;
 }
 
 export interface SpaceTurnResponse {

@@ -173,15 +173,37 @@ export async function listSpaceTemplates(): Promise<
   return apiRequest<SpaceTemplatesResponse>('/api/v1/space-templates');
 }
 
+/**
+ * A fresh id for one turn POST (`web_` + 32 hex). Without one the backend still
+ * runs the turn, but nobody can find its Trace afterwards: the reply carries no id
+ * (KAZI-1273).
+ */
+export function newSpaceTurnRequestId(): string {
+  const raw =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID().replace(/-/g, '')
+      : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+  return `web_${raw}`;
+}
+
+/**
+ * Every attempt gets its own `request_id`, retries included. Reusing one on
+ * "Try again" would make the backend replay its stored reply (KAZI-1031) instead of
+ * running the turn again, which is a behaviour change this does not make.
+ */
 export async function sendSpaceTurn(
   spaceId: string,
   body: SpaceTurnRequest
 ): Promise<ApiResponse<SpaceTurnResponse>> {
+  const payload: SpaceTurnRequest = {
+    ...body,
+    request_id: body.request_id || newSpaceTurnRequestId(),
+  };
   return apiRequest<SpaceTurnResponse>(
     `/api/v1/spaces/${encodeURIComponent(spaceId)}/turn`,
     {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     }
   );
 }
