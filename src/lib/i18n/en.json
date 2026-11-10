@@ -1744,7 +1744,13 @@
 				"title": "Tonight's sentence",
 				"note": "This card isn't saved."
 			},
-			"done": "Done"
+			"done": "Done",
+			"consent": {
+				"title": "Turn on the microphone",
+				"body": "Live is a voice show: tap the microphone and talk to the host. Your recording is only turned into text so the host can answer you. The audio isn't saved, and the text is deleted within a day.",
+				"allow": "Turn on microphone",
+				"later": "Not now"
+			}
 		}
 	}
 }
