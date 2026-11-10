@@ -8,7 +8,16 @@ import { apiRequest } from '@/lib/api-client';
 import { RADIO_CODE_NOT_IN_AUDIENCE, RADIO_CODE_PRO_REQUIRED } from '@/lib/radio/api';
 import type { ApiResponse } from '@/types';
 import { recordingFileName } from '@/lib/radio/voice';
-import type { LiveClose, LiveHome, LiveSession, LiveStartRequest, LiveTurn, LiveUpgrade } from '@/types/radio-live';
+import type {
+  LiveClientEvent,
+  LiveClose,
+  LiveEventsResult,
+  LiveHome,
+  LiveSession,
+  LiveStartRequest,
+  LiveTurn,
+  LiveUpgrade,
+} from '@/types/radio-live';
 
 const BASE = '/api/v1/radio/live';
 
@@ -112,4 +121,16 @@ export function getLiveUpgrade(sessionId: string): Promise<ApiResponse<LiveUpgra
 /** The closing and the end card. Sending it again returns the same closing. */
 export function postLiveClose(sessionId: string): Promise<ApiResponse<LiveClose>> {
   return apiRequest<LiveClose>(`${sessionPath(sessionId)}/close`, { method: 'POST' });
+}
+
+/**
+ * Playback events (live-room.md, Playback events): 1 to 50 per batch. `keepalive` (not `sendBeacon`, which
+ * cannot carry the auth header), because a batch is sent as the user leaves.
+ */
+export function postLiveEvents(sessionId: string, events: LiveClientEvent[]): Promise<ApiResponse<LiveEventsResult>> {
+  return apiRequest<LiveEventsResult>(`${sessionPath(sessionId)}/events`, {
+    method: 'POST',
+    body: JSON.stringify({ events }),
+    keepalive: true,
+  });
 }
