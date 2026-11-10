@@ -10,6 +10,7 @@ import { useLiveMic } from '@/hooks/use-live-mic';
 import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/hooks/use-sentence-player';
 import { buildClinicHubHref } from '@/lib/hub-entry';
 import { getLiveTurn, getLiveUpgrade, isRadioAudienceCode, postLiveClose, sendLiveEnd } from '@/lib/radio/live-api';
+import { AIGC_MORSE_URL } from '@/lib/radio/aigc-morse';
 import { LIVE_NOTICE_MS, newLiveTurnId, splitKeyWord } from '@/lib/radio/live-recording';
 import {
   liveAudioElement,
@@ -68,7 +69,13 @@ interface PartLine {
   lang?: LiveLang | null;
   audioUrl: string | null;
   pending: boolean;
+  /** The Morse "AI" rhythm (KAZI-1242): played like a line, but never a caption and never reported. */
+  marker?: boolean;
 }
+
+/** The rhythm as the first "line" of a part. */
+const MARKER_LINE: PartLine = { seq: 0, text: '', audioUrl: AIGC_MORSE_URL, pending: false, marker: true };
+const spoken = (lines: PartLine[]) => lines.filter((l) => !l.marker);
 interface Part {
   key: number;
   kind: PartKind;
@@ -125,14 +132,25 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
 
   const [phase, setPhase] = useState<Phase>('talk');
   const [history, setHistory] = useState<LiveCaption[]>([]);
+  // D20 = E1 (KAZI-1242): where the region must label, the Morse "AI" rhythm plays once, before the first host
+  // line with audio: the opening, or, if the opening has no audio, the first part that has some.
+  const markerDue = useRef(started.aigcLabel === true);
+  const withMarker = useCallback((lines: PartLine[], speed: PlayerSpeed): PartLine[] => {
+    if (!markerDue.current || speed !== 1 || !lines.some((l) => l.audioUrl)) return lines;
+    markerDue.current = false;
+    return [MARKER_LINE, ...lines];
+  }, []);
   const [part, setPart] = useState<Part>(() => ({
     key: 1,
     kind: 'opening',
     speed: 1,
     caption: true,
-    lines: [...session.opening]
-      .sort((a, b) => a.seq - b.seq)
-      .map((s) => ({ seq: s.seq, text: s.text, lang: s.lang, audioUrl: s.audio_url ?? null, pending: s.pending ?? false })),
+    lines: withMarker(
+      [...session.opening]
+        .sort((a, b) => a.seq - b.seq)
+        .map((s) => ({ seq: s.seq, text: s.text, lang: s.lang, audioUrl: s.audio_url ?? null, pending: s.pending ?? false })),
+      1
+    ),
   }));
   const [line, setLine] = useState<string | null>(null);
   const [care, setCare] = useState<LiveNotice | null>(null);
@@ -208,7 +226,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   const keepCaptions = useCallback((p: Part, count: number) => {
     if (!p.caption || kept.current.has(p.key)) return;
     kept.current.add(p.key);
-    const lines = p.lines.slice(0, count);
+    const lines = spoken(p.lines.slice(0, count));
     if (lines.length) setHistory((h) => [...h, ...lines.map((l) => ({ key: `${p.key}-${l.seq}`, text: l.text, lang: l.lang }))]);
   }, []);
 
@@ -217,9 +235,9 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
       const prev = partRef.current;
       keepCaptions(prev, playerRef.current.done ? prev.lines.length : Math.min(prev.lines.length, playerRef.current.index + 1));
       partKey.current += 1;
-      setPart({ ...p, key: partKey.current });
+      setPart({ ...p, lines: withMarker(p.lines, p.speed), key: partKey.current });
     },
-    [keepCaptions]
+    [keepCaptions, withMarker]
   );
   const addCaption = useCallback((text: string) => {
     partKey.current += 1;
@@ -664,7 +682,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   // ---- What is on screen.
   // A part already moved to the history is not drawn twice.
   const current: LiveCaption[] = part.caption && !kept.current.has(part.key)
-    ? part.lines.slice(0, Math.min(part.lines.length, player.index + 1)).map((l) => ({ key: `${part.key}-${l.seq}`, text: l.text, lang: l.lang }))
+    ? spoken(part.lines.slice(0, Math.min(part.lines.length, player.index + 1))).map((l) => ({ key: `${part.key}-${l.seq}`, text: l.text, lang: l.lang }))
     : [];
   const captions = [...history, ...current];
   const activeKey = part.caption && player.playing ? `${part.key}-${part.lines[player.index]?.seq}` : null;

@@ -132,7 +132,7 @@ export function LiveSection({ locale, onRadioClosed }: { locale: string; onRadio
     setStarting(false);
     if (res.success && res.data) {
       pending.current = null;
-      setStartedLiveSession({ session: res.data, host });
+      setStartedLiveSession({ session: res.data, host, aigcLabel: home?.availability.aigc_label === true });
       router.push(radioLiveHref(locale));
       return;
     }

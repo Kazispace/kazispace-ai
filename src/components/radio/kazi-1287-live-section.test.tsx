@@ -200,8 +200,16 @@ describe('Starting a session', () => {
     const body = m.start.mock.calls[0][0];
     expect(body).toMatchObject({ host: 'warm', topic_id: 't1' });
     expect(body.request_id).toMatch(/^[A-Za-z0-9_-]{8,40}$/);
-    expect(m.setStarted).toHaveBeenCalledWith({ session: SESSION, host: HOSTS[0] });
+    expect(m.setStarted).toHaveBeenCalledWith({ session: SESSION, host: HOSTS[0], aigcLabel: false });
     expect(m.push).toHaveBeenCalledWith('/zh/radio/live');
+  });
+
+  it('KAZI-1242: availability.aigc_label is handed to the Live screen (the rhythm before the opening)', async () => {
+    m.home.mockResolvedValue(ok({ ...HOME, availability: { ...HOME.availability, aigc_label: true } }));
+    m.start.mockResolvedValue(ok(SESSION));
+    await mount();
+    await click(q('radio-live-start'));
+    expect(m.setStarted).toHaveBeenCalledWith({ session: SESSION, host: HOSTS[0], aigcLabel: true });
   });
 
   it('a network error keeps the request: the next Start resends the same request_id', async () => {
