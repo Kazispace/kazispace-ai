@@ -12,13 +12,14 @@ import { buildClinicHubHref } from '@/lib/hub-entry';
 import { getLiveTurn, getLiveUpgrade, isRadioAudienceCode, postLiveClose, sendLiveEnd } from '@/lib/radio/live-api';
 import { LIVE_NOTICE_MS, newLiveTurnId, splitKeyWord } from '@/lib/radio/live-recording';
 import { liveAudioElement, takeStartedLiveSession, type StartedLiveSession } from '@/lib/radio/live-session';
+import { LiveEventQueue } from '@/lib/radio/live-events';
 import { LiveTurnUpload } from '@/lib/radio/live-uploader';
 import { radioHomeHref } from '@/lib/radio/routes';
 import { SLOW_AFTER_MS, blockedHelpPlatform } from '@/lib/radio/voice';
-import { isTelegramWebApp } from '@/lib/telegram';
+import { getTelegramWebApp, isTelegramWebApp } from '@/lib/telegram';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types';
-import type { LiveCard, LiveLang, LiveNotice, LiveTurn, LiveUpgrade } from '@/types/radio-live';
+import type { LiveCard, LiveLang, LiveNotice, LivePart, LiveTurn, LiveUpgrade } from '@/types/radio-live';
 
 /** A host line on screen: captions keep every line the host has said this session. */
 export interface LiveCaption {
@@ -40,6 +41,15 @@ export const LIVE_SLOW_SPEED: PlayerSpeed = 0.75;
 export const LIVE_UPGRADE_RETRY_MS = 1_500;
 /** Network failures on `upgrade` / `close` before the app gives up on that part. */
 export const LIVE_FETCH_TRIES = 4;
+
+/**
+ * Where a replayed line was, for `live_replay` (live-room.md, Playback events): `reply`, `upgrade` or
+ * `closing`. The opening, the ack and the handover are none of these, so their replays are not reported.
+ */
+export function livePartOf(kind: string): LivePart | null {
+  if (kind === 'reply' || kind === 'upgrade' || kind === 'closing') return kind;
+  return null;
+}
 
 /** `ended` codes after which the closing follows (live-room.md, Answers). */
 const CLOSING_AFTER_ENDED = new Set(['asr_failed', 'retry_limit']);
@@ -142,6 +152,10 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   phaseRef.current = phase;
 
   // ---- Ending: once, whichever way the user leaves. `pagehide` because closing a tab never unmounts.
+  // Playback events: sent when the session ends and when the app goes to the background.
+  const events = useRef<LiveEventQueue | null>(null);
+  if (!events.current) events.current = new LiveEventQueue(sessionId);
+
   const endedRef = useRef(false);
   useEffect(() => {
     const end = () => {
@@ -149,6 +163,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
       endedRef.current = true;
       over.current = true;
       upload.current?.stop();
+      events.current?.flush();
       sendLiveEnd(sessionId);
     };
     window.addEventListener('pagehide', end);
@@ -535,6 +550,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   useEffect(() => {
     const onVis = () => {
       if (document.visibilityState === 'hidden') {
+        events.current?.flush();
         if (micRef.current.state === 'recording') {
           micRef.current.done();
         } else if (playerRef.current.playing) {
@@ -556,12 +572,59 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
     if (phase === 'care' || phase === 'unavailable') coverRef.current?.focus();
   }, [phase]);
 
-  const end = () => {
+  const end = useCallback(() => {
     // The voice and the microphone stop in the same moment as the tap; the rest happens on unmount.
     over.current = true;
     playerRef.current.pause();
     goHome();
+  }, [goHome]);
+
+  /** Replay the current line, reported with where it was (`reply`, `upgrade` or `closing`) and its seq. */
+  const replay = () => {
+    const p = partRef.current;
+    const where = livePartOf(p.kind);
+    const lineSeq = p.lines[Math.min(playerRef.current.index, p.lines.length - 1)]?.seq;
+    if (where && lineSeq !== undefined) events.current?.add('live_replay', where, lineSeq);
+    playerRef.current.repeat();
   };
+
+  // Telegram's back button is End (Platform notes).
+  const endRef = useRef(end);
+  endRef.current = end;
+  useEffect(() => {
+    if (!isTelegramWebApp()) return;
+    const back = getTelegramWebApp()?.BackButton;
+    if (!back) return;
+    const onBack = () => endRef.current();
+    back.onClick(onBack);
+    back.show();
+    return () => {
+      back.offClick(onBack);
+      back.hide();
+    };
+  }, []);
+
+  // The lock screen controls: the host's name, pause and stop only; stop ends the session.
+  useEffect(() => {
+    const ms = typeof navigator !== 'undefined' ? navigator.mediaSession : undefined;
+    if (!ms) return;
+    if (typeof MediaMetadata !== 'undefined') ms.metadata = new MediaMetadata({ title: host.name, artist: t('aiLabel') });
+    const set = (action: MediaSessionAction, fn: MediaSessionActionHandler | null) => {
+      try {
+        ms.setActionHandler(action, fn);
+      } catch {
+        // An action this browser does not know.
+      }
+    };
+    set('pause', () => playerRef.current.pause());
+    set('play', () => playerRef.current.play());
+    set('stop', () => endRef.current());
+    for (const a of ['previoustrack', 'nexttrack', 'seekbackward', 'seekforward', 'seekto'] as MediaSessionAction[]) set(a, null);
+    return () => {
+      for (const a of ['pause', 'play', 'stop'] as MediaSessionAction[]) set(a, null);
+      ms.metadata = null;
+    };
+  }, [host.name, t]);
 
   // ---- What is on screen.
   // A part already moved to the history is not drawn twice.
@@ -635,7 +698,10 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
                     <button
                       key={i}
                       type="button"
-                      onClick={() => setBubble((b) => !b)}
+                      onClick={() => {
+                        events.current?.add('live_key_word_tap', 'upgrade');
+                        setBubble((b) => !b);
+                      }}
                       aria-expanded={bubble}
                       data-testid="radio-live-key-word"
                       className="font-bold underline underline-offset-4"
@@ -676,7 +742,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
             <div className="flex items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={() => playerRef.current.repeat()}
+                onClick={replay}
                 disabled={phase === 'recording' || phase === 'waiting'}
                 data-testid="radio-live-replay"
                 className="min-h-11 rounded-lg border border-gray-300 px-4 text-sm disabled:opacity-50"
@@ -693,7 +759,13 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
                 labels={{ talk: t('mic.talk'), done: t('mic.done'), slow: tStates('slow'), blocked: tMic('blockedHelp.title'), unavailable: t('unavailable') }}
               />
               {phase === 'english' && englishLines.length ? (
-                <button type="button" onClick={slower} data-testid="radio-live-slower" className="min-h-11 rounded-lg border border-gray-300 px-4 text-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    events.current?.add('live_slow', 'upgrade');
+                    slower();
+                  }}
+                  data-testid="radio-live-slower" className="min-h-11 rounded-lg border border-gray-300 px-4 text-sm">
                   {t('slower')}
                 </button>
               ) : null}

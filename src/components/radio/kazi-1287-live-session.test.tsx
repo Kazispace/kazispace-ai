@@ -19,7 +19,9 @@ const m = vi.hoisted(() => ({
   push: vi.fn(),
   micOpen: vi.fn(),
   micDone: vi.fn(),
+  events: vi.fn(),
 }));
+const tg = vi.hoisted(() => ({ on: false, back: { show: vi.fn(), hide: vi.fn(), onClick: vi.fn(), offClick: vi.fn() } }));
 
 /** The fake microphone: the test plays the user's part. */
 const mic = vi.hoisted(() => ({
@@ -34,7 +36,10 @@ vi.mock('next-intl', () => ({
     vars ? `${ns}.${key}:${JSON.stringify(vars)}` : `${ns}.${key}`,
 }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: m.replace, push: m.push }) }));
-vi.mock('@/lib/telegram', () => ({ isTelegramWebApp: () => false }));
+vi.mock('@/lib/telegram', () => ({
+  isTelegramWebApp: () => tg.on,
+  getTelegramWebApp: () => (tg.on ? { BackButton: tg.back } : null),
+}));
 vi.mock('@/lib/radio/live-api', async (orig) => ({
   ...(await orig<typeof import('@/lib/radio/live-api')>()),
   postLiveChunk: m.chunk,
@@ -42,6 +47,7 @@ vi.mock('@/lib/radio/live-api', async (orig) => ({
   getLiveUpgrade: m.upgrade,
   postLiveClose: m.close,
   sendLiveEnd: m.end,
+  postLiveEvents: m.events,
 }));
 vi.mock('@/hooks/use-live-mic', () => ({
   useLiveMic: (o: { onPiece: typeof mic.onPiece; onFinal: typeof mic.onFinal }) => {
@@ -143,6 +149,9 @@ beforeEach(() => {
   root = createRoot(container);
   Object.values(m).forEach((f) => f.mockReset());
   mic.state = 'idle';
+  tg.on = false;
+  Object.values(tg.back).forEach((f) => f.mockReset());
+  m.events.mockResolvedValue({ success: true, status: 200, data: { accepted: 1, duplicates: 0 } });
   mic.secondsLeft = null;
   m.micOpen.mockResolvedValue('ok');
   m.chunk.mockImplementation((a: { final: boolean }) => Promise.resolve(a.final ? reply() : ok({ received: 1 }, 202)));
@@ -526,5 +535,94 @@ describe('Recording, the edges', () => {
     expect(m.turn).not.toHaveBeenCalled();
     expect(m.close).not.toHaveBeenCalled();
     root = createRoot(container);
+  });
+});
+
+describe('Playback events', () => {
+  const sent = () => m.events.mock.calls.flatMap((c) => c[1]).map((e: Record<string, unknown>) => ({ kind: e.kind, part: e.part, seq: e.seq }));
+
+  it('Replay during an answer is live_replay with part reply and the line seq; sent when the session ends', async () => {
+    await mount();
+    await finishPart();
+    await talk();
+    await act(async () => audio().onended?.()); // the ack
+    await settle();
+    await act(async () => audio().onended?.()); // line 1 of the answer
+    await settle();
+    await click(q('radio-live-replay'));
+    expect(m.events).not.toHaveBeenCalled(); // batched
+    await click(q('radio-live-end'));
+    act(() => root.unmount());
+    expect(sent()).toEqual([{ kind: 'live_replay', part: 'reply', seq: 2 }]);
+    expect(m.events.mock.calls[0][0]).toBe('ls1');
+    root = createRoot(container);
+  });
+
+  it('Replay during the opening is not reported (it is not reply, upgrade or closing)', async () => {
+    await mount();
+    await click(q('radio-live-replay'));
+    act(() => root.unmount());
+    expect(m.events).not.toHaveBeenCalled();
+    root = createRoot(container);
+  });
+
+  it('Slower is live_slow and a tap on the key word live_key_word_tap, both part upgrade with no seq; sent when the app goes to the background', async () => {
+    m.chunk.mockImplementation((a: { final: boolean }) =>
+      Promise.resolve(a.final ? ok({ turn_id: 'tf', kind: 'final', next: 'upgrade', segments: [seg(1, '真好。')] }) : ok({ received: 1 }, 202))
+    );
+    m.upgrade.mockResolvedValue(
+      ok({ status: 'ready', handover: { text: 'In English:', audio_url: 'https://a/h.mp3' }, lines: [{ seq: 1, text: 'I had noodles.', audio_url: 'https://a/e1.mp3' }], key_word: 'noodles', key_word_zh: '面条' })
+    );
+    await mount();
+    await finishPart();
+    await talk();
+    for (let i = 0; i < 3; i += 1) {
+      await act(async () => audio().onended?.());
+      await settle();
+    }
+    await click(q('radio-live-key-word'));
+    await click(q('radio-live-slower'));
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+    expect(sent()).toEqual([
+      { kind: 'live_key_word_tap', part: 'upgrade', seq: undefined },
+      { kind: 'live_slow', part: 'upgrade', seq: undefined },
+    ]);
+  });
+});
+
+describe('Platform notes', () => {
+  it("Telegram's back button is End", async () => {
+    tg.on = true;
+    await mount();
+    expect(tg.back.show).toHaveBeenCalled();
+    const onBack = tg.back.onClick.mock.calls[0][0] as () => void;
+    await act(async () => onBack());
+    expect(m.replace).toHaveBeenCalledWith('/zh/radio');
+    act(() => root.unmount());
+    expect(tg.back.offClick).toHaveBeenCalledWith(onBack);
+    expect(tg.back.hide).toHaveBeenCalled();
+    root = createRoot(container);
+  });
+
+  it("the lock screen: the host's name, pause and stop only; stop ends the session", async () => {
+    const handlers: Record<string, (() => void) | null> = {};
+    const session = { metadata: null as unknown, setActionHandler: (a: string, fn: (() => void) | null) => (handlers[a] = fn) };
+    Object.defineProperty(navigator, 'mediaSession', { configurable: true, value: session });
+    vi.stubGlobal('MediaMetadata', class { title: string; artist: string; constructor(o: { title: string; artist: string }) { this.title = o.title; this.artist = o.artist; } });
+    await mount();
+    expect((session.metadata as { title: string }).title).toBe('Warm host');
+    expect(handlers.nexttrack).toBeNull();
+    expect(handlers.seekforward).toBeNull();
+    await act(async () => handlers.pause?.());
+    expect(audio().paused).toBe(true);
+    await act(async () => handlers.stop?.());
+    expect(m.replace).toHaveBeenCalledWith('/zh/radio');
+    act(() => root.unmount());
+    expect(session.metadata).toBeNull();
+    expect(handlers.stop).toBeNull();
+    root = createRoot(container);
+    Object.defineProperty(navigator, 'mediaSession', { configurable: true, value: undefined });
   });
 });
