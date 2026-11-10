@@ -38,7 +38,10 @@ export function MicButton({
   onTap,
   onDone,
   onCancel,
+  disabled = false,
 }: {
+  /** KAZI-1242: the AI marker is playing and cannot be cut short; the button waits for it. */
+  disabled?: boolean;
   state: MicButtonState;
   level: number;
   windowMs: number | null;
@@ -94,11 +97,13 @@ export function MicButton({
       <button
         type="button"
         onClick={onTap}
+        disabled={disabled}
         aria-label={t('speak')}
         data-testid="radio-mic-button"
         className={cn(
           ring,
-          unavailable ? 'border border-gray-300 bg-white text-workspace-muted' : 'bg-primary text-white hover:bg-primary/90'
+          unavailable ? 'border border-gray-300 bg-white text-workspace-muted' : 'bg-primary text-white hover:bg-primary/90',
+          'disabled:opacity-40'
         )}
       >
         {state === 'window' && windowMs ? (

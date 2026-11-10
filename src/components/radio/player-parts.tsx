@@ -267,9 +267,15 @@ export function PlayerShell({
   action,
   children,
   footer,
+  aigcLabel,
 }: {
   back: React.ReactNode;
   title: string;
+  /**
+   * KAZI-1242 (D20 = E1): where the region must label, the permanent line "本音频由人工智能生成" under the
+   * header. Always there while the page is: no close button, not only once, not tucked in a menu.
+   */
+  aigcLabel?: string | null;
   /** A control on the title row: the radio home's settings gear, the player's "more" menu. */
   action?: React.ReactNode;
   children: React.ReactNode;
@@ -284,6 +290,11 @@ export function PlayerShell({
         </h1>
         {action}
       </div>
+      {aigcLabel ? (
+        <p className="mx-auto w-full max-w-2xl px-4 pb-2 text-xs text-workspace-muted" data-testid="radio-aigc-label">
+          {aigcLabel}
+        </p>
+      ) : null}
       <main className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-4 pb-4">{children}</main>
       {footer ? <div className="mx-auto w-full max-w-2xl border-t border-gray-100 px-4 py-3">{footer}</div> : null}
     </div>

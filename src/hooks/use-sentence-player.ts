@@ -40,6 +40,7 @@ export function useSentencePlayer({
   partKey,
   onPlayed,
   element,
+  preroll,
 }: {
   sentences: PlayableSentence[];
   speed: PlayerSpeed;
@@ -57,10 +58,21 @@ export function useSentencePlayer({
    * Start tap unlocked, so the opening may play without another tap.
    */
   element?: HTMLAudioElement | null;
+  /**
+   * A sound played once, at 1.0×, through the same element, before the first sentence that has audio
+   * (KAZI-1242: the Morse "AI" rhythm where the region must label). Not a sentence: `index` does not move
+   * for it, it adds nothing to `onPlayed`, and it never plays twice for this player.
+   */
+  preroll?: string | null;
 }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [done, setDone] = useState(false);
+  const [prerolling, setPrerolling] = useState(false);
+  const prerollRef = useRef(preroll ?? null);
+  prerollRef.current = preroll ?? null;
+  const prerollDone = useRef(false);
+  const prerollingRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Paused inside a sentence's audio: play resumes from the same point in it.
@@ -113,6 +125,31 @@ export function useSentencePlayer({
       }
       const a = audioRef.current ?? element ?? new Audio();
       audioRef.current = a;
+      if (prerollRef.current && !prerollDone.current) {
+        // The pre-roll first, then this sentence; it is not a sentence and is never cut by a speed change.
+        const after = () => {
+          prerollDone.current = true;
+          prerollingRef.current = false;
+          setPrerolling(false);
+          playAt(i);
+        };
+        prerollingRef.current = true;
+        setPrerolling(true);
+        a.src = prerollRef.current;
+        a.ontimeupdate = null;
+        a.playbackRate = 1;
+        a.onended = after;
+        a.onerror = after;
+        a.play().catch((err: unknown) => {
+          if ((err as { name?: string } | null)?.name === 'NotAllowedError') {
+            pausedInAudio.current = true;
+            setPlaying(false);
+          } else {
+            after();
+          }
+        });
+        return;
+      }
       a.src = s.audioUrl;
       lastTime.current = 0;
       a.ontimeupdate = () => {
@@ -152,7 +189,7 @@ export function useSentencePlayer({
   }, [firstKey, sentences.length === 0, partKey]);
 
   useEffect(() => {
-    if (audioRef.current) audioRef.current.playbackRate = speed;
+    if (audioRef.current && !prerollingRef.current) audioRef.current.playbackRate = speed;
   }, [speed]);
 
   useEffect(() => () => clear(), [clear]);
@@ -178,7 +215,7 @@ export function useSentencePlayer({
     if (pausedInAudio.current && a) {
       pausedInAudio.current = false;
       setPlaying(true);
-      a.playbackRate = speedRef.current;
+      a.playbackRate = prerollingRef.current ? 1 : speedRef.current;
       a.play().catch(() => playAt(index + 1));
       return;
     }
@@ -193,8 +230,9 @@ export function useSentencePlayer({
   /** Where in the current sentence's audio the player is, in ms (0 for a reading pause). */
   const offsetMs = useCallback(() => {
     const a = audioRef.current;
+    if (prerollingRef.current) return 0; // still before the sentence
     return a && Number.isFinite(a.currentTime) ? Math.round(a.currentTime * 1000) : 0;
   }, []);
 
-  return { index, playing, done, play, pause, repeat, playFrom, offsetMs };
+  return { index, playing, done, play, pause, repeat, playFrom, offsetMs, prerolling };
 }
