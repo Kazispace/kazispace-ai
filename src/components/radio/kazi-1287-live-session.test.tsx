@@ -58,7 +58,7 @@ vi.mock('@/hooks/use-live-mic', () => ({
 }));
 
 import { LiveScreen } from '@/components/radio/live-screen';
-import { resetLiveSessionForTest, setStartedLiveSession } from '@/lib/radio/live-session';
+import { LIVE_MIC_CONSENT_KEY, resetLiveSessionForTest, setStartedLiveSession } from '@/lib/radio/live-session';
 
 class FakeAudio {
   static all: FakeAudio[] = [];
@@ -157,6 +157,9 @@ beforeEach(() => {
   m.chunk.mockImplementation((a: { final: boolean }) => Promise.resolve(a.final ? reply() : ok({ received: 1 }, 202)));
   m.close.mockResolvedValue(ok({ session_id: 'ls1', end_reason: 'finished', closing: [{ seq: 1, clip_id: 'c1', text: 'Good night.', audio_url: 'https://a/c1.mp3', lang: 'en' }], card: { sentence: 'I had noodles with my sister.', key_word: 'noodles', key_word_zh: '面条' } }));
   resetLiveSessionForTest();
+  // These tests are about the session: the microphone card was already answered on this device
+  // (the card itself: "Microphone access" below).
+  window.localStorage.setItem(LIVE_MIC_CONSENT_KEY, '1');
 });
 afterEach(() => {
   act(() => root.unmount());
@@ -624,5 +627,75 @@ describe('Platform notes', () => {
     expect(handlers.stop).toBeNull();
     root = createRoot(container);
     Object.defineProperty(navigator, 'mediaSession', { configurable: true, value: undefined });
+  });
+});
+
+describe('Microphone access (live-room.md 0.4)', () => {
+  beforeEach(() => window.localStorage.removeItem(LIVE_MIC_CONSENT_KEY));
+  afterEach(() => {
+    Object.defineProperty(navigator, 'permissions', { configurable: true, value: undefined });
+  });
+
+  it('the first tap shows Live Room\'s own card before the system prompt; two buttons of equal weight; focus moves to it', async () => {
+    await mount();
+    await click(q('radio-live-mic'));
+    const cardEl = q('radio-live-consent')!;
+    expect(m.micOpen).not.toHaveBeenCalled();
+    for (const k of ['title', 'body', 'allow', 'later']) expect(cardEl.textContent).toContain(`radio.live.consent.${k}`);
+    // Not the radio's story-choice card.
+    expect(container.textContent).not.toContain('radio.consent.');
+    const [allow, later] = [q('radio-live-consent-allow')!, q('radio-live-consent-later')!];
+    expect(allow.className).toBe(later.className);
+    expect(document.activeElement).toBe(cardEl);
+    // The card replaces the controls; the captions stay.
+    expect(q('radio-live-mic')).toBeNull();
+    expect(captions()).toEqual(['晚上好。今天吃了什么？']);
+  });
+
+  it('Turn on microphone: only now is the system asked; recording starts; the card does not come back on this device', async () => {
+    await mount();
+    await click(q('radio-live-mic'));
+    await click(q('radio-live-consent-allow'));
+    expect(m.micOpen).toHaveBeenCalledTimes(1);
+    expect(phase()).toBe('recording');
+    expect(window.localStorage.getItem(LIVE_MIC_CONSENT_KEY)).toBe('1');
+    await act(async () => mic.onFinal?.(1, new Blob(['f']), 3000, 'audio/webm'));
+    await settle();
+    await finishPart();
+    await finishPart();
+    await click(q('radio-live-mic'));
+    expect(q('radio-live-consent')).toBeNull();
+    expect(m.micOpen).toHaveBeenCalledTimes(2);
+  });
+
+  it('Not now: nothing is asked, the session waits, focus returns to the microphone; the next tap shows the card again', async () => {
+    await mount();
+    await click(q('radio-live-mic'));
+    await click(q('radio-live-consent-later'));
+    expect(m.micOpen).not.toHaveBeenCalled();
+    expect(q('radio-live-consent')).toBeNull();
+    expect(phase()).toBe('talk');
+    expect(document.activeElement).toBe(q('radio-live-mic'));
+    expect(window.localStorage.getItem(LIVE_MIC_CONSENT_KEY)).toBeNull();
+    await click(q('radio-live-mic'));
+    expect(q('radio-live-consent')).not.toBeNull();
+  });
+
+  it('decided by the user\'s choice, not the browser: an earlier Turn on skips the card even if the browser would prompt again', async () => {
+    window.localStorage.setItem(LIVE_MIC_CONSENT_KEY, '1');
+    Object.defineProperty(navigator, 'permissions', { configurable: true, value: { query: () => Promise.resolve({ state: 'prompt' }) } });
+    await mount();
+    await click(q('radio-live-mic'));
+    expect(q('radio-live-consent')).toBeNull();
+    expect(m.micOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('already blocked by the system: no card; the tap opens the blocked-microphone help', async () => {
+    Object.defineProperty(navigator, 'permissions', { configurable: true, value: { query: () => Promise.resolve({ state: 'denied' }) } });
+    m.micOpen.mockResolvedValue('blocked');
+    await mount();
+    await click(q('radio-live-mic'));
+    expect(q('radio-live-consent')).toBeNull();
+    expect(container.textContent).toContain('radio.mic.blockedHelp');
   });
 });

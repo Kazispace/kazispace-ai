@@ -11,7 +11,14 @@ import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/ho
 import { buildClinicHubHref } from '@/lib/hub-entry';
 import { getLiveTurn, getLiveUpgrade, isRadioAudienceCode, postLiveClose, sendLiveEnd } from '@/lib/radio/live-api';
 import { LIVE_NOTICE_MS, newLiveTurnId, splitKeyWord } from '@/lib/radio/live-recording';
-import { liveAudioElement, takeStartedLiveSession, type StartedLiveSession } from '@/lib/radio/live-session';
+import {
+  liveAudioElement,
+  liveMicConsented,
+  liveMicDenied,
+  setLiveMicConsented,
+  takeStartedLiveSession,
+  type StartedLiveSession,
+} from '@/lib/radio/live-session';
 import { LiveEventQueue } from '@/lib/radio/live-events';
 import { LiveTurnUpload } from '@/lib/radio/live-uploader';
 import { radioHomeHref } from '@/lib/radio/routes';
@@ -136,6 +143,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   const [slow, setSlow] = useState(false);
   const [micBlock, setMicBlock] = useState<MicBlock>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [consentOpen, setConsentOpen] = useState(false);
 
   const routerRef = useRef(router);
   routerRef.current = router;
@@ -510,6 +518,20 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   const micRef = useRef(mic);
   micRef.current = mic;
 
+  const record = useCallback(async () => {
+    const opened = await micRef.current.open();
+    if (opened !== 'ok') {
+      setMicBlock(opened);
+      // The tap was the user's request: a blocked microphone opens the help at once.
+      if (opened === 'blocked') setHelpOpen(true);
+      return;
+    }
+    if (over.current) return;
+    turnId.current = newLiveTurnId();
+    upload.current = new LiveTurnUpload({ sessionId, turnId: turnId.current, mime: '' });
+    setPhase('recording');
+  }, [sessionId]);
+
   const tapMic = useCallback(async () => {
     if (phaseRef.current !== 'talk' || over.current) return;
     if (micBlock === 'blocked') {
@@ -517,19 +539,32 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
       return;
     }
     if (micBlock) return;
-    // The host stops at once and recording starts.
+    // The host stops at once.
     playerRef.current.pause();
     setLine(null);
-    const opened = await micRef.current.open();
-    if (opened !== 'ok') {
-      setMicBlock(opened);
+    // Explain first, then ask (Microphone access): Live Room's own card, once per device. Not when the
+    // system has already blocked the microphone: the help opens instead.
+    if (!liveMicConsented() && !(await liveMicDenied())) {
+      setConsentOpen(true);
       return;
     }
-    if (over.current) return;
-    turnId.current = newLiveTurnId();
-    upload.current = new LiveTurnUpload({ sessionId, turnId: turnId.current, mime: '' });
-    setPhase('recording');
-  }, [micBlock, sessionId]);
+    await record();
+  }, [micBlock, record]);
+
+  // Focus returns to the microphone button when the card closes.
+  const consentWasOpen = useRef(false);
+  useEffect(() => {
+    if (consentWasOpen.current && !consentOpen) {
+      (document.querySelector('[data-testid="radio-live-mic"]') as HTMLElement | null)?.focus();
+    }
+    consentWasOpen.current = consentOpen;
+  }, [consentOpen]);
+
+  const allowMic = useCallback(() => {
+    setLiveMicConsented();
+    setConsentOpen(false);
+    void record();
+  }, [record]);
 
   // A `retry` line goes after 3 seconds.
   useEffect(() => {
@@ -724,7 +759,9 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
       </main>
 
       <footer className="border-t border-gray-200 bg-white px-4 py-3">
-        {phase === 'card' ? (
+        {consentOpen && phase === 'talk' ? (
+          <LiveConsentCard onAllow={allowMic} onLater={() => setConsentOpen(false)} />
+        ) : phase === 'card' ? (
           <EndCard card={card} onDone={goHome} />
         ) : phase === 'over' ? (
           <div className="flex justify-center">
@@ -895,6 +932,41 @@ function LiveMicButton({
       <Mic className="h-6 w-6" aria-hidden />
       {labels.talk}
     </button>
+  );
+}
+
+/**
+ * Live Room's microphone card (live-room.md 0.4, Microphone access): before the system prompt, two
+ * buttons of equal weight. It takes focus, and gives it back to the microphone button when it closes.
+ */
+function LiveConsentCard({ onAllow, onLater }: { onAllow: () => void; onLater: () => void }) {
+  const t = useTranslations('radio.live.consent');
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    ref.current?.focus();
+  }, []);
+  const btn = 'min-h-11 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-workspace-text hover:bg-gray-50';
+  return (
+    <section
+      ref={ref}
+      tabIndex={-1}
+      aria-labelledby="radio-live-consent-title"
+      data-testid="radio-live-consent"
+      className="mx-auto max-w-2xl rounded-xl border border-gray-200 p-4 outline-none"
+    >
+      <h2 id="radio-live-consent-title" className="text-sm font-semibold text-workspace-text">
+        {t('title')}
+      </h2>
+      <p className="mt-1 text-sm text-workspace-secondary">{t('body')}</p>
+      <div className="mt-3 flex gap-2">
+        <button type="button" className={btn} onClick={onAllow} data-testid="radio-live-consent-allow">
+          {t('allow')}
+        </button>
+        <button type="button" className={btn} onClick={onLater} data-testid="radio-live-consent-later">
+          {t('later')}
+        </button>
+      </div>
+    </section>
   );
 }
 

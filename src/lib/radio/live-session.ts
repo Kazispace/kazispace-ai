@@ -59,3 +59,38 @@ export function resetLiveSessionForTest(): void {
   started = null;
   unlocked = null;
 }
+
+/** The microphone card's answer on this device (live-room.md 0.4, Microphone access). */
+export const LIVE_MIC_CONSENT_KEY = 'kazi.radio.live.micConsent';
+
+/**
+ * Whether the user turned the microphone on from Live Room's card on this device. Decided by the
+ * user's choice, not the browser's permission state (some browsers forget it at every visit).
+ */
+export function liveMicConsented(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.localStorage.getItem(LIVE_MIC_CONSENT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function setLiveMicConsented(): void {
+  try {
+    window.localStorage.setItem(LIVE_MIC_CONSENT_KEY, '1');
+  } catch {
+    // Storage blocked (a private window): the card shows again next visit, which is safe.
+  }
+}
+
+/** The system has already blocked the microphone: the card would lead nowhere, so the help opens instead. */
+export async function liveMicDenied(): Promise<boolean> {
+  try {
+    const perms = typeof navigator !== 'undefined' ? navigator.permissions : undefined;
+    if (!perms?.query) return false;
+    const st = await perms.query({ name: 'microphone' as PermissionName });
+    return st.state === 'denied';
+  } catch {
+    return false;
+  }
+}
