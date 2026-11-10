@@ -1311,7 +1311,8 @@
 			"captions": "字幕",
 			"choice": "选项 {key}：{label}",
 			"explain": "解释这句",
-			"explainCost": "解释这句 · {n, plural, other {# 积分}}"
+			"explainCost": "解释这句 · {n, plural, other {# 积分}}",
+			"aigcLabel": "本音频由人工智能生成"
 		},
 		"mic": {
 			"speak": "说话",

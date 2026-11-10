@@ -21,6 +21,7 @@ import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioEvents } from '@/hooks/use-radio-events';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { useRadioMic, type RadioMicOpen } from '@/hooks/use-radio-mic';
+import { AIGC_MORSE_URL } from '@/lib/radio/aigc-morse';
 import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/hooks/use-sentence-player';
 import {
   getRadioRender,
@@ -105,6 +106,10 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const studioHref = buildClinicHubHref(locale);
   const backHref = from === 'studio' ? studioHref : radioHomeHref(locale);
   const { home, refresh: refreshHome } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
+  // KAZI-1242 (D20 = E1): where the region must label, the line under the header and, once per visit, the
+  // Morse "AI" rhythm before the first voiced sentence (never decided from the interface language).
+  const mustLabel = home?.availability?.aigc_label === true;
+  const aigcLabel = mustLabel ? t('player.aigcLabel') : null;
 
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [resp, setResp] = useState<RadioPlayerResponse | null>(null);
@@ -364,7 +369,15 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const addListened = useCallback((ms: number) => {
     listenedMs.current += ms;
   }, []);
-  const player = useSentencePlayer({ sentences, speed, autoplay: true, onDone: onNodeDone, partKey: answerCount, onPlayed: addListened });
+  const player = useSentencePlayer({
+    sentences,
+    speed,
+    autoplay: true,
+    onDone: onNodeDone,
+    partKey: answerCount,
+    onPlayed: addListened,
+    preroll: mustLabel ? AIGC_MORSE_URL : null,
+  });
   const playerRef = useRef(player);
   playerRef.current = player;
 
@@ -673,6 +686,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   };
 
   const onMicTap = async () => {
+    // The AI marker cannot be cut short (「放完才能录音」, user 2026-11-10): the microphone waits for it.
+    if (player.prerolling) return;
     tappedHere.current = true;
     if (inFlight) return; // taps while working are ignored, never queued
     if (mic.state === 'window') {
@@ -766,7 +781,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
 
   if (load.state === 'loading') {
     return (
-      <PlayerShell back={back} title="">
+      <PlayerShell back={back} title="" aigcLabel={aigcLabel}>
         <div aria-busy="true" className="flex flex-col gap-2">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-10 animate-pulse rounded-lg bg-gray-100" />
@@ -777,7 +792,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   }
   if (load.state === 'missing' || load.state === 'error' || !node) {
     return (
-      <PlayerShell back={back} title="">
+      <PlayerShell back={back} title="" aigcLabel={aigcLabel}>
         <div data-testid="radio-story-missing" className="flex flex-col items-start gap-3 py-6">
           <p className="text-sm text-workspace-secondary">{load.state === 'error' ? t('offline') : t('contentMissing')}</p>
           {load.state === 'error' ? (
@@ -812,6 +827,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       <ListeningIndicator on={micOn} />
       <PlayerShell
         back={back}
+        aigcLabel={aigcLabel}
         title={storyTitle ?? t('player.title')}
         action={
           <div className="relative">
@@ -867,6 +883,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
                 choiceCount={choices.length}
                 slow={slow}
                 onTap={() => void onMicTap()}
+                disabled={player.prerolling}
                 onDone={mic.done}
                 onCancel={onMicCancel}
               />

@@ -14,6 +14,7 @@ import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioEvents } from '@/hooks/use-radio-events';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { useRadioMic, type RadioMicOpen } from '@/hooks/use-radio-mic';
+import { AIGC_MORSE_URL } from '@/lib/radio/aigc-morse';
 import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/hooks/use-sentence-player';
 import { getRadioProgram, newRadioRequestId, radioAccessOf } from '@/lib/radio/api';
 import { sendPlayerLeft, trackRadioEvent } from '@/lib/radio/events';
@@ -55,6 +56,10 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
   const showToast = useUIStore((s) => s.showToast);
   const { ready, authenticated } = useAuthReady();
   const { home } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
+  // KAZI-1242 (D20 = E1): the line under the header and, once per programme played, the Morse "AI" rhythm
+  // before its first voiced sentence (programmes count too: the user, 2026-11-10, 「节目也播一次」).
+  const mustLabel = home?.availability?.aigc_label === true;
+  const aigcLabel = mustLabel ? t('player.aigcLabel') : null;
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [speed, setSpeed] = useState<PlayerSpeed>(1);
   const [attempt, setAttempt] = useState(0);
@@ -116,6 +121,7 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
     speed,
     autoplay: true,
     onPlayed: addListened,
+    preroll: mustLabel ? AIGC_MORSE_URL : null,
     // `program_finished`: the programme played to its end.
     onDone: () => {
       setFinishedOnce(true);
@@ -291,6 +297,8 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
   // When the radio home's availability.asr is false, the microphone is not offered in a program.
   const regionOff = asrOff || (home ? home.availability?.asr === false : false);
   const onMicTap = async () => {
+    // The AI marker cannot be cut short (「放完才能录音」, user 2026-11-10): the microphone waits for it.
+    if (player.prerolling) return;
     if (inFlight || mic.state !== 'idle') return;
     if (noDevice) {
       showToast(t('mic.noDevice'));
@@ -332,7 +340,7 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
 
   if (load.state === 'loading') {
     return (
-      <PlayerShell back={back} title="">
+      <PlayerShell back={back} title="" aigcLabel={aigcLabel}>
         <div aria-busy="true" className="flex flex-col gap-2">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-10 animate-pulse rounded-lg bg-gray-100" />
@@ -343,7 +351,7 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
   }
   if (load.state === 'missing' || load.state === 'error') {
     return (
-      <PlayerShell back={back} title="">
+      <PlayerShell back={back} title="" aigcLabel={aigcLabel}>
         <div data-testid="radio-program-missing" className="flex flex-col items-start gap-3 py-6">
           <p className="text-sm text-workspace-secondary">{load.state === 'missing' ? t('contentMissing') : t('offline')}</p>
           {load.state === 'error' ? (
@@ -370,6 +378,7 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
       <ListeningIndicator on={mic.state === 'recording'} />
       <PlayerShell
         back={back}
+        aigcLabel={aigcLabel}
         title={program.title ?? ''}
         footer={
           <div className="flex flex-col items-center gap-3">
@@ -381,6 +390,7 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
                 choiceCount={0}
                 slow={slow}
                 onTap={() => void onMicTap()}
+                disabled={player.prerolling}
                 onDone={mic.done}
                 onCancel={() => {
                   mic.cancel();

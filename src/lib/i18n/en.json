@@ -1607,7 +1607,8 @@
 			"captions": "Captions",
 			"choice": "Choice {key}: {label}",
 			"explain": "Explain this sentence",
-			"explainCost": "Explain this sentence · {n, plural, one {# credit} other {# credits}}"
+			"explainCost": "Explain this sentence · {n, plural, one {# credit} other {# credits}}",
+			"aigcLabel": "This audio is AI-generated."
 		},
 		"mic": {
 			"speak": "Speak",
