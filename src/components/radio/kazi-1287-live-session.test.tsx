@@ -58,6 +58,7 @@ vi.mock('@/hooks/use-live-mic', () => ({
 }));
 
 import { LiveScreen } from '@/components/radio/live-screen';
+import type { LiveSession } from '@/types/radio-live';
 import { LIVE_MIC_CONSENT_KEY, resetLiveSessionForTest, setStartedLiveSession } from '@/lib/radio/live-session';
 
 class FakeAudio {
@@ -702,7 +703,7 @@ describe('Microphone access (live-room.md 0.4)', () => {
 
 describe('The audible AI marker (KAZI-1242; content compliance §6.3, D20 = E1)', () => {
   const MORSE = '/audio/aigc-ai-morse.wav';
-  async function mountLabelled(session = SESSION) {
+  async function mountLabelled(session: LiveSession = SESSION) {
     setStartedLiveSession({ session, host: HOST, aigcLabel: true });
     await act(async () => root.render(<LiveScreen locale="zh" />));
     await settle();
