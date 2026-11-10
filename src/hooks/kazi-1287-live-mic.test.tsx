@@ -129,26 +129,43 @@ describe('Recording', () => {
     expect(api.state).toBe('idle');
   });
 
-  it('no quiet moment: pieces cut every 20 s; 72 s makes 4 pieces, never a 5th', async () => {
+  it('no quiet moment: pieces cut every 19.8 s; 72 s makes 4 pieces, never a 5th', async () => {
     await act(async () => void (await api.open()));
     await advance(72_000);
     expect(pieces).toEqual([
-      [1, 20_000],
-      [2, 20_000],
-      [3, 20_000],
+      [1, 19_800],
+      [2, 19_800],
+      [3, 19_800],
     ]);
-    expect(finals).toEqual([[4, 12_000, 'audio/webm;codecs=opus']]);
+    expect(finals).toEqual([[4, 12_600, 'audio/webm;codecs=opus']]);
     expect(FakeRecorder.all).toHaveLength(4);
   });
 
-  it('a quiet moment cuts the piece, but not before 12 s', async () => {
+  it('a late timer (as in a real browser) never reports a piece over 20 s (#290 review R1)', async () => {
+    await act(async () => void (await api.open()));
+    // Every check now runs 30 ms late against the recording's clock, and one runs 150 ms late.
+    vi.setSystemTime(Date.now() + 30);
+    await advance(40_000);
+    vi.setSystemTime(Date.now() + 150);
+    await advance(32_000);
+    const all = [...pieces.map((p) => p[1]), ...finals.map((f) => f[1])];
+    expect(all.length).toBeLessThanOrEqual(LIMITS.chunks_max);
+    for (const ms of all) {
+      expect(ms).toBeGreaterThanOrEqual(1);
+      expect(ms).toBeLessThanOrEqual(LIMITS.chunk_max_ms);
+    }
+  });
+
+  it('a quiet moment cuts the piece, but not before 12.6 s', async () => {
     await act(async () => void (await api.open()));
     await advance(8_000);
     loud = false; // quiet from 8 s: too early to cut
     await advance(3_000);
     expect(pieces).toEqual([]);
-    await advance(1_000); // 12 s
-    expect(pieces).toEqual([[1, 12_000]]);
+    await advance(1_000); // 12 s: still too early (12.6 s with the 19.8 s pieces)
+    expect(pieces).toEqual([]);
+    await advance(600);
+    expect(pieces).toEqual([[1, 12_600]]);
   });
 
   it('each piece is its own recorder on the same stream; the next starts before the last stops', async () => {
