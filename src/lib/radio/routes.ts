@@ -41,6 +41,14 @@ export function radioProgramHref(locale: string, programId: string): string {
 }
 
 /** D9 / MVP: the radio is offered to a Chinese interface only (the user, 2026-11-03: "For MVP, only support Chinese"). */
+/**
+ * The Live screen (KAZI-1287; live-room.md, Screens and back). Opened only by Start on the radio
+ * home, which hands it the session; back returns to the radio home and ends the session.
+ */
+export function radioLiveHref(locale: string): string {
+  return `${radioHomeHref(locale)}/live`;
+}
+
 export function isRadioLocale(locale: string | null | undefined): boolean {
   const tag = (locale ?? '').trim().toLowerCase().replace('_', '-');
   return tag === 'zh' || tag.startsWith('zh-');

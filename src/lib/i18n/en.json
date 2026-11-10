@@ -1711,6 +1711,40 @@
 			"kids": "Kids",
 			"teens": "Teens",
 			"adults": "Adults"
+		},
+		"live": {
+			"section": "Live with a host",
+			"subtitle": "Tell the host about your day in Chinese or English, and leave with one English sentence of your own.",
+			"left": "{n, plural, one {# session left today} other {# sessions left today}}",
+			"noneLeft": "You've used today's sessions. Come back tomorrow.",
+			"question": "Tonight's question",
+			"start": "Go live",
+			"empty": "No topics tonight.",
+			"unavailable": "Live isn't available right now. Please try again later.",
+			"sessionEnded": "This session has ended.",
+			"disclaimer": {
+				"title": "Before you start",
+				"what": "Welcome to Live. This is an English speaking show: tell us about your day in Chinese or English, and the AI host will help you turn it into a natural English sentence.",
+				"not": "The host is an AI, not a doctor or any other professional. This is not a medical service, and nothing said here replaces seeing a doctor or getting professional help. You can end at any time.",
+				"help": "If you are thinking of hurting yourself right now, please contact someone you trust nearby, or call the 12356 mental health helpline or your local emergency number.",
+				"agree": "I understand, start",
+				"later": "Not now"
+			},
+			"aiLabel": "AI host",
+			"end": "End",
+			"mic": {
+				"talk": "Tap to talk",
+				"done": "Done",
+				"remaining": "{s}s left"
+			},
+			"replay": "Replay",
+			"slower": "Slower",
+			"yourSentence": "Your sentence",
+			"card": {
+				"title": "Tonight's sentence",
+				"note": "This card isn't saved."
+			},
+			"done": "Done"
 		}
 	}
 }

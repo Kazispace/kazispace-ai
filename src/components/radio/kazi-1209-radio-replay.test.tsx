@@ -50,6 +50,8 @@ vi.mock('@/components/radio/story-filters', () => ({
   storyGenreLabel: () => null,
   useStoryFilters: () => ({ bar: null, active: false, stories: null, loading: false, failed: false }),
 }));
+// KAZI-1287: the Live section reads its own endpoint; it has its own tests (kazi-1287-live-section).
+vi.mock('@/components/radio/live-section', () => ({ LiveSection: () => null }));
 vi.mock('@/hooks/use-radio-home', () => ({
   useRadioHome: () => ({
     access: m.homeState ? 'open' : null,
