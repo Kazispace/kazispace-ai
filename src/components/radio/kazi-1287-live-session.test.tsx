@@ -58,6 +58,7 @@ vi.mock('@/hooks/use-live-mic', () => ({
 }));
 
 import { LiveScreen } from '@/components/radio/live-screen';
+import type { LiveSession } from '@/types/radio-live';
 import { LIVE_MIC_CONSENT_KEY, resetLiveSessionForTest, setStartedLiveSession } from '@/lib/radio/live-session';
 
 class FakeAudio {
@@ -697,5 +698,71 @@ describe('Microphone access (live-room.md 0.4)', () => {
     await click(q('radio-live-mic'));
     expect(q('radio-live-consent')).toBeNull();
     expect(container.textContent).toContain('radio.mic.blockedHelp');
+  });
+});
+
+describe('The audible AI marker (KAZI-1242; content compliance §6.3, D20 = E1)', () => {
+  const MORSE = '/audio/aigc-ai-morse.wav';
+  async function mountLabelled(session: LiveSession = SESSION) {
+    setStartedLiveSession({ session, host: HOST, aigcLabel: true });
+    await act(async () => root.render(<LiveScreen locale="zh" />));
+    await settle();
+  }
+
+  it('where the region must label: the rhythm plays first, at 1.0×, then the opening; it is never a caption', async () => {
+    await mountLabelled();
+    expect(audio().played[0]).toEqual([MORSE, 1]);
+    expect(captions()).toEqual([]);
+    await act(async () => audio().onended?.());
+    await settle();
+    expect(audio().src).toBe('https://a/o1.mp3');
+    expect(captions()).toEqual(['晚上好。今天吃了什么？']);
+  });
+
+  it('once per session: not before the answers, the English part or the closing', async () => {
+    await mountLabelled();
+    await finishPart();
+    await talk();
+    await finishPart();
+    await finishPart();
+    expect(audio().played.filter((p) => p[0] === MORSE)).toHaveLength(1);
+  });
+
+  it('not where the region need not label', async () => {
+    await mount();
+    expect(audio().played.map((p) => p[0])).not.toContain(MORSE);
+  });
+
+  it('an opening with no audio gets no rhythm; it plays before the first host line that has audio', async () => {
+    await mountLabelled({ ...SESSION, opening: [{ ...SESSION.opening[0], audio_url: null }] });
+    expect(FakeAudio.all.length === 0 || !audio().played.some((p) => p[0] === MORSE)).toBe(true);
+    // the opening is a reading pause; the user answers
+    await click(q('radio-live-mic'));
+    await act(async () => mic.onFinal?.(1, new Blob(['f']), 3000, 'audio/webm'));
+    await settle();
+    expect(audio().played[0]).toEqual([MORSE, 1]); // before the ack, the first line with audio
+    expect(audio().played.filter((p) => p[0] === MORSE)).toHaveLength(1);
+  });
+
+  it('the microphone is not ready until the rhythm has finished (user 2026-11-10: 「放完才能录音」)', async () => {
+    await mountLabelled();
+    const btn = q('radio-live-mic') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    await click(btn);
+    expect(m.micOpen).not.toHaveBeenCalled();
+    expect(audio().paused).toBe(false); // the rhythm was not cut short
+    await act(async () => audio().onended?.());
+    await settle();
+    expect((q('radio-live-mic') as HTMLButtonElement).disabled).toBe(false);
+    await click(q('radio-live-mic'));
+    expect(m.micOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('Replay during the rhythm is not reported as a line', async () => {
+    await mountLabelled();
+    await click(q('radio-live-replay'));
+    act(() => root.unmount());
+    expect(m.events).not.toHaveBeenCalled();
+    root = createRoot(container);
   });
 });

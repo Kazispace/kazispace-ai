@@ -31,6 +31,8 @@ export interface RadioAvailability {
   tts: boolean;
   asr: boolean;
   new_render: boolean;
+  /** KAZI-1242: this region must label AI-generated audio (D20 = E1). Not used by the radio's players yet. */
+  aigc_label?: boolean;
 }
 
 export type RadioSaveStatus = 'active' | 'completed' | 'overwritten';

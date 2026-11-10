@@ -11,6 +11,8 @@ import type { LiveHost, LiveSession } from '@/types/radio-live';
 export interface StartedLiveSession {
   session: LiveSession;
   host: LiveHost;
+  /** `GET live/home` said this region must label (KAZI-1242): the Morse "AI" rhythm plays before the opening. */
+  aigcLabel?: boolean;
 }
 
 let started: StartedLiveSession | null = null;

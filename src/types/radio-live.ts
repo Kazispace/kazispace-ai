@@ -27,6 +27,8 @@ export interface LiveAvailability {
   asr: boolean;
   tts: boolean;
   llm: boolean;
+  /** This region must mark the host's voice as AI-generated (KAZI-1242): the Morse "AI" rhythm before the opening. */
+  aigc_label: boolean;
 }
 
 export interface LiveLimits {
