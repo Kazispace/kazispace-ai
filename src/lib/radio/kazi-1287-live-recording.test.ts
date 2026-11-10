@@ -4,14 +4,18 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { earliestCutMs, newLiveTurnId, secondsLeft, shouldCutPiece, splitKeyWord } from '@/lib/radio/live-recording';
+import { earliestCutMs, newLiveTurnId, pieceMaxMs, reportedPieceMs, secondsLeft, shouldCutPiece, splitKeyWord } from '@/lib/radio/live-recording';
 import { LIVE_MISSING_ROUNDS, LIVE_PIECE_RETRY_MS, LiveTurnUpload } from '@/lib/radio/live-uploader';
 
 const LIMITS = { record_max_ms: 72_000, chunk_max_ms: 20_000, chunks_max: 4 };
 
 describe('Where to cut', () => {
-  it('with 72 s, 20 s and 4 pieces: piece 1 at 12 s at the earliest, piece 2 at 32 s, piece 3 at 52 s', () => {
-    expect([1, 2, 3].map((k) => earliestCutMs(k, LIMITS))).toEqual([12_000, 32_000, 52_000]);
+  it('pieces aim at 19.8 s, so a late timer never reports more than 20 s (#290 review R1)', () => {
+    expect(pieceMaxMs(LIMITS)).toBe(19_800);
+  });
+
+  it("with 72 s, 20 s and 4 pieces: 12.6 s, 32.4 s, 52.2 s at the earliest (no earlier than the spec's 12 / 32 / 52 s)", () => {
+    expect([1, 2, 3].map((k) => earliestCutMs(k, LIMITS))).toEqual([12_600, 32_400, 52_200]);
   });
 
   it('every k: the pieces left can still hold the rest of the longest recording', () => {
@@ -22,22 +26,28 @@ describe('Where to cut', () => {
   });
 
   it('a quiet moment before the earliest cut is not used', () => {
-    expect(shouldCutPiece({ k: 1, elapsedMs: 11_900, pieceStartMs: 0, quiet: true, limits: LIMITS })).toBe(false);
-    expect(shouldCutPiece({ k: 1, elapsedMs: 12_000, pieceStartMs: 0, quiet: true, limits: LIMITS })).toBe(true);
+    expect(shouldCutPiece({ k: 1, elapsedMs: 12_500, pieceStartMs: 0, quiet: true, limits: LIMITS })).toBe(false);
+    expect(shouldCutPiece({ k: 1, elapsedMs: 12_600, pieceStartMs: 0, quiet: true, limits: LIMITS })).toBe(true);
   });
 
-  it('no quiet moment: cut at the latest, 20 s after the piece began', () => {
-    expect(shouldCutPiece({ k: 1, elapsedMs: 19_900, pieceStartMs: 0, quiet: false, limits: LIMITS })).toBe(false);
-    expect(shouldCutPiece({ k: 1, elapsedMs: 20_000, pieceStartMs: 0, quiet: false, limits: LIMITS })).toBe(true);
-    expect(shouldCutPiece({ k: 2, elapsedMs: 31_000, pieceStartMs: 12_000, quiet: false, limits: LIMITS })).toBe(false);
-    expect(shouldCutPiece({ k: 2, elapsedMs: 32_000, pieceStartMs: 12_000, quiet: false, limits: LIMITS })).toBe(true);
+  it('no quiet moment: cut at the latest, 19.8 s after the piece began', () => {
+    expect(shouldCutPiece({ k: 1, elapsedMs: 19_700, pieceStartMs: 0, quiet: false, limits: LIMITS })).toBe(false);
+    expect(shouldCutPiece({ k: 1, elapsedMs: 19_800, pieceStartMs: 0, quiet: false, limits: LIMITS })).toBe(true);
+    expect(shouldCutPiece({ k: 2, elapsedMs: 32_300, pieceStartMs: 12_600, quiet: false, limits: LIMITS })).toBe(false);
+    expect(shouldCutPiece({ k: 2, elapsedMs: 32_400, pieceStartMs: 12_600, quiet: false, limits: LIMITS })).toBe(true);
+  });
+
+  it('a reported length is never above chunk_max_ms nor below 1 ms', () => {
+    expect(reportedPieceMs(20_030, LIMITS)).toBe(20_000);
+    expect(reportedPieceMs(0, LIMITS)).toBe(1);
+    expect(reportedPieceMs(12_345.6, LIMITS)).toBe(12_346);
   });
 
   it('the last allowed piece is never cut: it ends at Done or at 72 s', () => {
-    expect(shouldCutPiece({ k: 4, elapsedMs: 71_000, pieceStartMs: 52_000, quiet: true, limits: LIMITS })).toBe(false);
+    expect(shouldCutPiece({ k: 4, elapsedMs: 71_000, pieceStartMs: 52_200, quiet: true, limits: LIMITS })).toBe(false);
   });
 
-  it('cut as late or as early as allowed, a whole 72 s recording fits in 4 pieces of at most 20 s', () => {
+  it('cut as late or as early as allowed, a whole 72 s recording fits in 4 pieces of at most 19.8 s', () => {
     for (const quietAlways of [true, false]) {
       let k = 1;
       let start = 0;
@@ -51,7 +61,7 @@ describe('Where to cut', () => {
       }
       lengths.push(LIMITS.record_max_ms - start);
       expect(lengths.length).toBeLessThanOrEqual(LIMITS.chunks_max);
-      expect(Math.max(...lengths)).toBeLessThanOrEqual(LIMITS.chunk_max_ms);
+      expect(Math.max(...lengths)).toBeLessThanOrEqual(pieceMaxMs(LIMITS));
     }
   });
 });

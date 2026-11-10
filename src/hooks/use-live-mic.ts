@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { LIVE_QUIET_MS, secondsLeft, shouldCutPiece } from '@/lib/radio/live-recording';
+import { LIVE_QUIET_MS, reportedPieceMs, secondsLeft, shouldCutPiece } from '@/lib/radio/live-recording';
 import { LEVEL_SAMPLE_MS, SPEECH_LEVEL, micErrorKind, pickRecordingMime } from '@/lib/radio/voice';
 import type { LiveLimits } from '@/types/radio-live';
 
@@ -92,7 +92,7 @@ export function useLiveMic({
       clearInterval(r.timer);
       const elapsed = Math.min(Date.now() - r.startedAt, cb.current.limits.record_max_ms);
       const seq = r.seq;
-      const durationMs = Math.max(1, elapsed - r.pieceStartMs);
+      const durationMs = reportedPieceMs(elapsed - r.pieceStartMs, cb.current.limits);
       stopPiece(r.recorder, r.mime, (blob) => {
         release(r);
         cb.current.onFinal(seq, blob, durationMs, r.mime);
@@ -110,7 +110,7 @@ export function useLiveMic({
     }
     const old = r.recorder;
     const seq = r.seq;
-    const durationMs = Math.max(1, atMs - r.pieceStartMs);
+    const durationMs = reportedPieceMs(atMs - r.pieceStartMs, cb.current.limits);
     startPiece(next);
     r.recorder = next;
     r.seq = seq + 1;
