@@ -34,6 +34,11 @@ vi.mock('@/hooks/use-auth-ready', () => ({ useAuthReady: () => ({ ready: true, a
 vi.mock('@/lib/store', () => ({
   useUIStore: (select: (s: { showToast: typeof m.toast }) => unknown) => select({ showToast: m.toast }),
 }));
+// KAZI-1287: Live Room off here (404 hides the Live section); the section has its own tests.
+vi.mock('@/lib/radio/live-api', async (orig) => ({
+  ...(await orig<typeof import('@/lib/radio/live-api')>()),
+  getLiveHome: () => Promise.resolve({ success: false, status: 404, error: 'Not Found' }),
+}));
 vi.mock('@/lib/radio/api', async (orig) => ({
   ...(await orig<typeof import('@/lib/radio/api')>()),
   getRadioHome: m.home,

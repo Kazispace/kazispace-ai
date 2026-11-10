@@ -39,6 +39,7 @@ export function useSentencePlayer({
   onDone,
   partKey,
   onPlayed,
+  element,
 }: {
   sentences: PlayableSentence[];
   speed: PlayerSpeed;
@@ -51,6 +52,11 @@ export function useSentencePlayer({
    * pauses with no audio and seeking back add nothing). For `player_left.listened_ms` (KAZI-1255).
    */
   onPlayed?: (ms: number) => void;
+  /**
+   * An element to play through instead of a new one: Live Room (KAZI-1287) passes the element its
+   * Start tap unlocked, so the opening may play without another tap.
+   */
+  element?: HTMLAudioElement | null;
 }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -105,7 +111,7 @@ export function useSentencePlayer({
         hold();
         return;
       }
-      const a = audioRef.current ?? new Audio();
+      const a = audioRef.current ?? element ?? new Audio();
       audioRef.current = a;
       a.src = s.audioUrl;
       lastTime.current = 0;
@@ -131,7 +137,7 @@ export function useSentencePlayer({
         }
       });
     },
-    [clear]
+    [clear, element]
   );
 
   // A new list (a new part) starts from its first sentence.

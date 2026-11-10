@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2, Settings } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
+import { LiveSection } from '@/components/radio/live-section';
 import { DeleteSaveDialog, ListenedSection, SaveMenu, useDailyGreeting } from '@/components/radio/radio-saves';
 import { StoryFilterBar, storyGenreLabel, useStoryFilters } from '@/components/radio/story-filters';
 import { useAuthReady } from '@/hooks/use-auth-ready';
@@ -214,6 +215,9 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
           ))}
         </Section>
       ) : null}
+
+      {/* Live Room (KAZI-1287): between Continue listening and Stories, kept apart from both. */}
+      <LiveSection locale={locale} onRadioClosed={() => router.replace(studioHref)} />
 
       <Section title={t('home.stories')} testId="radio-home-stories">
         {!canStart ? <p className="text-xs text-workspace-secondary" data-testid="radio-tts-disabled">{t('region.ttsDisabled')}</p> : null}
