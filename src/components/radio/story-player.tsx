@@ -105,11 +105,14 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const { ready, authenticated } = useAuthReady();
   const studioHref = buildClinicHubHref(locale);
   const backHref = from === 'studio' ? studioHref : radioHomeHref(locale);
-  const { home, refresh: refreshHome } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
+  const { access: homeAccess, home, refresh: refreshHome } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
   // KAZI-1242 (D20 = E1): where the region must label, the line under the header and, once per visit, the
   // Morse "AI" rhythm before the first voiced sentence (never decided from the interface language).
   const mustLabel = home?.availability?.aigc_label === true;
   const aigcLabel = mustLabel ? t('player.aigcLabel') : null;
+  // Until the region has answered, no voice: a first sentence must not play before the rhythm it may need
+  // (a link opened directly, or a reload, asks for the part before the radio home has answered).
+  const labelUnknown = isRadioLocale(locale) && homeAccess === null;
 
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [resp, setResp] = useState<RadioPlayerResponse | null>(null);
@@ -377,6 +380,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     partKey: answerCount,
     onPlayed: addListened,
     preroll: mustLabel ? AIGC_MORSE_URL : null,
+    hold: labelUnknown,
   });
   const playerRef = useRef(player);
   playerRef.current = player;
