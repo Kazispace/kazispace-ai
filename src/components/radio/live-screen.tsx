@@ -217,6 +217,11 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   });
   const playerRef = useRef(player);
   playerRef.current = player;
+  // The AI marker cannot be cut short (user 2026-11-10: 「放完才能录音」): the microphone is ready only once it
+  // has finished. It counts as playing until the player has moved past it, paused or not.
+  const markerActive = part.lines[player.index]?.marker === true && !player.done;
+  const markerActiveRef = useRef(markerActive);
+  markerActiveRef.current = markerActive;
 
   const partRef = useRef(part);
   partRef.current = part;
@@ -551,7 +556,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   }, [sessionId]);
 
   const tapMic = useCallback(async () => {
-    if (phaseRef.current !== 'talk' || over.current) return;
+    if (phaseRef.current !== 'talk' || over.current || markerActiveRef.current) return;
     if (micBlock === 'blocked') {
       setHelpOpen(true);
       return;
@@ -688,7 +693,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   const activeKey = part.caption && player.playing ? `${part.key}-${part.lines[player.index]?.seq}` : null;
   const englishLines = upgrade?.status === 'ready' ? [...(upgrade.lines ?? [])].sort((a, b) => a.seq - b.seq) : [];
   const showSentence = phase === 'english' && englishLines.length > 0 && (part.kind === 'upgrade' || part.kind === 'handover');
-  const micOpen = phase === 'talk' && !micBlock;
+  const micOpen = phase === 'talk' && !micBlock && !markerActive;
 
   return (
     <div className="flex h-full flex-col bg-gray-50" data-testid="radio-live-screen" data-phase={phase}>

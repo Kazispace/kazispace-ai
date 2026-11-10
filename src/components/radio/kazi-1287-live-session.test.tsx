@@ -744,6 +744,20 @@ describe('The audible AI marker (KAZI-1242; content compliance §6.3, D20 = E1)'
     expect(audio().played.filter((p) => p[0] === MORSE)).toHaveLength(1);
   });
 
+  it('the microphone is not ready until the rhythm has finished (user 2026-11-10: 「放完才能录音」)', async () => {
+    await mountLabelled();
+    const btn = q('radio-live-mic') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    await click(btn);
+    expect(m.micOpen).not.toHaveBeenCalled();
+    expect(audio().paused).toBe(false); // the rhythm was not cut short
+    await act(async () => audio().onended?.());
+    await settle();
+    expect((q('radio-live-mic') as HTMLButtonElement).disabled).toBe(false);
+    await click(q('radio-live-mic'));
+    expect(m.micOpen).toHaveBeenCalledTimes(1);
+  });
+
   it('Replay during the rhythm is not reported as a line', async () => {
     await mountLabelled();
     await click(q('radio-live-replay'));
