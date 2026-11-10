@@ -7,7 +7,17 @@
 import { apiRequest } from '@/lib/api-client';
 import { RADIO_CODE_NOT_IN_AUDIENCE, RADIO_CODE_PRO_REQUIRED } from '@/lib/radio/api';
 import type { ApiResponse } from '@/types';
-import type { LiveHome, LiveSession, LiveStartRequest } from '@/types/radio-live';
+import { recordingFileName } from '@/lib/radio/voice';
+import type {
+  LiveClientEvent,
+  LiveClose,
+  LiveEventsResult,
+  LiveHome,
+  LiveSession,
+  LiveStartRequest,
+  LiveTurn,
+  LiveUpgrade,
+} from '@/types/radio-live';
 
 const BASE = '/api/v1/radio/live';
 
@@ -62,4 +72,65 @@ export function sendLiveEnd(sessionId: string): void {
     method: 'POST',
     keepalive: true,
   }).catch(() => undefined);
+}
+
+const sessionPath = (sessionId: string) => `${BASE}/sessions/${encodeURIComponent(sessionId)}`;
+
+/**
+ * One piece of a recording (live-room.md, Sending a recording): `202` for a piece that is not the last,
+ * `200` with the host's answer for the last (`meta` `{"final": true}`). Sending a piece again with the
+ * same `turn_id` and `seq` is safe: the last piece sent again returns the same answer.
+ */
+export function postLiveChunk({
+  sessionId,
+  turnId,
+  seq,
+  audio,
+  durationMs,
+  final,
+  mime,
+}: {
+  sessionId: string;
+  turnId: string;
+  seq: number;
+  audio: Blob;
+  durationMs: number;
+  final: boolean;
+  mime: string;
+}): Promise<ApiResponse<LiveTurn | { received: number }>> {
+  const form = new FormData();
+  form.append('audio', audio, recordingFileName(mime || audio.type));
+  form.append('duration_ms', String(Math.max(1, Math.round(durationMs))));
+  form.append('meta', JSON.stringify(final ? { final: true } : {}));
+  return apiRequest<LiveTurn | { received: number }>(
+    `${sessionPath(sessionId)}/turns/${encodeURIComponent(turnId)}/chunks/${seq}`,
+    { method: 'POST', body: form }
+  );
+}
+
+/** A turn's answer with every line's audio: asked once, when the first line of an answer with `pending` lines starts. */
+export function getLiveTurn(sessionId: string, turnId: string): Promise<ApiResponse<LiveTurn>> {
+  return apiRequest<LiveTurn>(`${sessionPath(sessionId)}/turns/${encodeURIComponent(turnId)}`);
+}
+
+/** The English part: `pending` (ask again after `retry_after_ms`), `ready` or `skipped`. */
+export function getLiveUpgrade(sessionId: string): Promise<ApiResponse<LiveUpgrade>> {
+  return apiRequest<LiveUpgrade>(`${sessionPath(sessionId)}/upgrade`);
+}
+
+/** The closing and the end card. Sending it again returns the same closing. */
+export function postLiveClose(sessionId: string): Promise<ApiResponse<LiveClose>> {
+  return apiRequest<LiveClose>(`${sessionPath(sessionId)}/close`, { method: 'POST' });
+}
+
+/**
+ * Playback events (live-room.md, Playback events): 1 to 50 per batch. `keepalive` (not `sendBeacon`, which
+ * cannot carry the auth header), because a batch is sent as the user leaves.
+ */
+export function postLiveEvents(sessionId: string, events: LiveClientEvent[]): Promise<ApiResponse<LiveEventsResult>> {
+  return apiRequest<LiveEventsResult>(`${sessionPath(sessionId)}/events`, {
+    method: 'POST',
+    body: JSON.stringify({ events }),
+    keepalive: true,
+  });
 }
