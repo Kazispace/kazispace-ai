@@ -58,7 +58,9 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
   const { access: homeAccess, home } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
   // KAZI-1242 (D20 = E1): the line under the header and, once per programme played, the Morse "AI" rhythm
   // before its first voiced sentence (programmes count too: the user, 2026-11-10, 「节目也播一次」).
-  const mustLabel = home?.availability?.aigc_label === true;
+  // The radio home did not answer (`unknown`: a 5xx, a network failure): label anyway, the safe side
+  // (the user, 2026-11-11, chose 「按需标识处理」 on #296's review: fail closed in a radio locale).
+  const mustLabel = home?.availability?.aigc_label === true || (isRadioLocale(locale) && homeAccess === 'unknown');
   const aigcLabel = mustLabel ? t('player.aigcLabel') : null;
   // Until the region has answered, no voice: a first sentence must not play before the rhythm it may need
   // (a link opened directly, or a reload, asks for the part before the radio home has answered).

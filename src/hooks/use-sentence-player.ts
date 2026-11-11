@@ -67,7 +67,8 @@ export function useSentencePlayer({
   preroll?: string | null;
   /**
    * While true nothing starts: autoplay, `playFrom` and play are remembered and the remembered sentence
-   * starts once it turns false. For a `preroll` that is not known yet (KAZI-1242: the region's answer has
+   * starts once it turns false. (Resuming inside a paused sentence is another path; it cannot happen while
+   * held, since nothing has played yet.) For a `preroll` that is not known yet (KAZI-1242: the region's answer has
    * not arrived) — without it the first sentence would play before the rhythm.
    */
   hold?: boolean;
