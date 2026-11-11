@@ -269,9 +269,12 @@ export function useBgm({
     }
     if (ctx.state !== 'running') {
       // Allowed without a tap where the page already has the user's activation; otherwise the tap does it.
+      // A refusal here is not final: on iOS a resume outside a gesture may be refused, and the next tap
+      // (below) tries again. Only a context or node that cannot be made, or a track that errors twice, ends
+      // the music for the session (#297 R1).
       resumeContext(ctx).then(
         () => setRunning(ctx.state === 'running'),
-        () => setFailed(true)
+        () => setRunning(false)
       );
       return;
     }
@@ -289,8 +292,12 @@ export function useBgm({
       if (!ctx) return;
       if (ctx.state !== 'running') {
         resumeContext(ctx).then(
-          () => setRunning(ctx.state === 'running'),
-          () => setFailed(true)
+          () => {
+            setRunning(ctx.state === 'running');
+            const el = audioRef.current;
+            if (wantRef.current && el && el.paused && ctx.state === 'running') el.play().catch(() => undefined);
+          },
+          () => setRunning(false) // still locked: the next tap tries again
         );
       }
       const a = audioRef.current;

@@ -471,6 +471,37 @@ describe('the story page', () => {
     expect(el.volume).toBe(1);
   });
 
+  it('a refused resume is not final: a later tap still starts the music (#297 R1)', async () => {
+    FakeAudioContext.initial = 'suspended';
+    FakeAudioContext.resumeFails = true;
+    await mountStory();
+    await end();
+    await tap();
+    expect(bgm()!.played).toEqual([]);
+    FakeAudioContext.resumeFails = false; // e.g. the user's tap now counts as activation
+    await tap();
+    expect(ctx().state).toBe('running');
+    expect(bgm()!.played.length).toBeGreaterThan(0);
+    expect(bgm()!.volume).toBe(1);
+  });
+
+  it('the gain node cannot be made: no element plays and none gets the music url (never full volume) (#297 R1)', async () => {
+    const original = FakeAudioContext.prototype.createMediaElementSource;
+    FakeAudioContext.prototype.createMediaElementSource = function () {
+      throw new Error('no source');
+    } as never;
+    try {
+      await mountStory();
+      await end();
+      await tap();
+      const playing = FakeAudio.all.filter((a) => a.played.some((p) => String(p[0] ?? p).includes('https://m/')));
+      expect(playing).toEqual([]);
+      expect(FakeAudio.all.filter((a) => a.loop && a.src)).toEqual([]);
+    } finally {
+      FakeAudioContext.prototype.createMediaElementSource = original;
+    }
+  });
+
   it('a locked audio context: the music waits for the first tap on the page, then plays', async () => {
     FakeAudioContext.initial = 'suspended';
     FakeAudioContext.needsTap = true;
