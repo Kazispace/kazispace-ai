@@ -34,6 +34,7 @@ function bgmContext(): AudioContext | null {
   const Ctor = contextCtor();
   if (!Ctor) return null;
   try {
+    preferPlayback();
     sharedContext = new Ctor();
   } catch {
     contextFailed = true;
@@ -45,6 +46,28 @@ function bgmContext(): AudioContext | null {
 export function resetBgmContextForTests() {
   sharedContext = null;
   contextFailed = false;
+  sessionSet = false;
+}
+
+// iOS (Safari 17+, and the WebViews built on it) mutes Web Audio with the ringer switch unless the page
+// says it plays media: then the music is heard with the switch on silent, as the voice is.
+let sessionSet = false;
+function preferPlayback() {
+  if (sessionSet || typeof navigator === 'undefined') return;
+  sessionSet = true;
+  const session = (navigator as Navigator & { audioSession?: { type?: string } }).audioSession;
+  if (!session || !('type' in session)) return;
+  try {
+    session.type = 'playback';
+  } catch {
+    /* not settable here */
+  }
+}
+
+/** `resume()`, after the audio session is set where the browser has one. */
+function resumeContext(ctx: AudioContext): Promise<void> {
+  preferPlayback();
+  return ctx.resume ? ctx.resume() : Promise.resolve();
 }
 
 // A tap unlocks the context. These are the events browsers count as the user's activation
@@ -66,7 +89,9 @@ const GESTURES = ['pointerup', 'touchend', 'click', 'keydown'] as const;
  * - Level: `levelDb` below the voice, through a GainNode (`10^(dB/20)`), never through the element's
  *   `volume` (iOS ignores it). The element is `crossOrigin="anonymous"` so a server that does not allow
  *   it fails to load rather than playing through an unreadable (and so ungainable) source.
- * - No Web Audio, a context that cannot be made or resumed, or a track that fails to load ⇒ no music for
+ * - A track that errors (an expired signed URL) is asked for again once, by `track_id`, and carries on
+ *   from where it was (from the start where it cannot seek).
+ * - No Web Audio, a context that cannot be made or resumed, or a track that errors twice ⇒ no music for
  *   the session, silently: music at full volume over the voice is never acceptable.
  * - Unmounting stops it.
  */
@@ -94,6 +119,8 @@ export function useBgm({
   const wantRef = useRef(false);
   const levelRef = useRef(levelDb);
   levelRef.current = levelDb;
+  // A load or playback error: ask `GET bgm` again once (a signed URL lasts 15 minutes).
+  const recoverRef = useRef<() => void>(() => undefined);
 
   // `GET bgm`, once per page; only where the gain can be applied (there is no use for it otherwise).
   useEffect(() => {
@@ -131,6 +158,7 @@ export function useBgm({
 
   // The element and its gain, for the session's track.
   const url = enabled && pick?.key === sessionKey ? (pick.track?.audio_url ?? null) : null;
+  const trackId = url ? (pick?.track?.track_id ?? null) : null;
   useEffect(() => {
     if (!url) return;
     const ctx = bgmContext();
@@ -153,11 +181,48 @@ export function useBgm({
       setFailed(true);
       return;
     }
-    // A track that fails to load is skipped for the session: no notice, the voice carries on.
-    a.onerror = () => {
+    // An error (most often the signed URL expired while the track looped): ask `GET bgm` once more for
+    // the same track and carry on from where it was. A second error: the track is skipped for the
+    // session, with no notice, and the voice carries on.
+    let live = true;
+    let retried = false;
+    const giveUp = () => {
       a.pause();
       setFailed(true);
     };
+    const recover = () => {
+      if (!live) return;
+      const at = Number.isFinite(a.currentTime) ? a.currentTime : 0;
+      a.pause();
+      if (retried) {
+        giveUp();
+        return;
+      }
+      retried = true;
+      void getRadioBgm()
+        .then((res) => {
+          if (!live) return;
+          const fresh = res.success ? res.data?.tracks?.find((x) => x.track_id === trackId)?.audio_url : null;
+          if (!fresh) {
+            giveUp();
+            return;
+          }
+          a.onloadedmetadata = () => {
+            a.onloadedmetadata = null;
+            try {
+              if (at > 0) a.currentTime = at;
+            } catch {
+              /* not seekable: from the start */
+            }
+            if (wantRef.current && ctx.state === 'running') a.play().catch(() => recoverRef.current());
+          };
+          a.src = fresh;
+          a.load?.();
+        })
+        .catch(() => live && giveUp());
+    };
+    recoverRef.current = recover;
+    a.onerror = recover;
     a.src = url;
     audioRef.current = a;
     gainRef.current = gain;
@@ -165,8 +230,11 @@ export function useBgm({
     onState();
     ctx.addEventListener?.('statechange', onState);
     return () => {
+      live = false;
+      recoverRef.current = () => undefined;
       ctx.removeEventListener?.('statechange', onState);
       a.onerror = null;
+      a.onloadedmetadata = null;
       a.pause();
       a.removeAttribute?.('src');
       a.load?.();
@@ -179,7 +247,7 @@ export function useBgm({
       audioRef.current = null;
       gainRef.current = null;
     };
-  }, [url]);
+  }, [url, trackId]);
 
   // The level follows the setting.
   useEffect(() => {
@@ -201,15 +269,15 @@ export function useBgm({
     }
     if (ctx.state !== 'running') {
       // Allowed without a tap where the page already has the user's activation; otherwise the tap does it.
-      ctx.resume?.().then(
+      resumeContext(ctx).then(
         () => setRunning(ctx.state === 'running'),
         () => setFailed(true)
       );
       return;
     }
     a.play().catch((err: unknown) => {
-      // Not yet allowed: the next tap plays it (below). Anything else: no music this session.
-      if ((err as { name?: string } | null)?.name !== 'NotAllowedError') setFailed(true);
+      // Not yet allowed: the next tap plays it (below). Anything else: one more try, as for a load error.
+      if ((err as { name?: string } | null)?.name !== 'NotAllowedError') recoverRef.current();
     });
   }, [want, running]);
 
@@ -220,7 +288,7 @@ export function useBgm({
       const ctx = sharedContext;
       if (!ctx) return;
       if (ctx.state !== 'running') {
-        ctx.resume?.().then(
+        resumeContext(ctx).then(
           () => setRunning(ctx.state === 'running'),
           () => setFailed(true)
         );
@@ -234,5 +302,5 @@ export function useBgm({
     return () => GESTURES.forEach((e) => window.removeEventListener(e, onGesture, true));
   }, [url]);
 
-  return { trackId: url ? (pick?.track?.track_id ?? null) : null, playing: want && running && !failed };
+  return { trackId, playing: want && running && !failed };
 }

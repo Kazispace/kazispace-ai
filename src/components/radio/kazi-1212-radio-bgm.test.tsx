@@ -103,6 +103,7 @@ class FakeAudio {
   currentTime = 0;
   onended: (() => void) | null = null;
   onerror: (() => void) | null = null;
+  onloadedmetadata: (() => void) | null = null;
   ontimeupdate: (() => void) | null = null;
   played: string[] = [];
   constructor() {
@@ -483,20 +484,86 @@ describe('the story page', () => {
     expect(el.volume).toBe(1);
   });
 
-  it('a track that fails to load is skipped for the session, silently; the voice carries on', async () => {
+  it('an expired URL: GET bgm is asked again once, and the same track carries on from where it was', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    await mountStory();
+    await end();
+    const el = bgm()!;
+    expect(el.src).toBe(T1);
+    el.currentTime = 42;
+    m.bgm.mockResolvedValueOnce({
+      success: true,
+      status: 200,
+      data: {
+        tracks: [
+          { track_id: 't2', title: 'Two', audio_url: `${T2}?fresh` },
+          { track_id: 't1', title: 'One', audio_url: `${T1}?fresh` },
+        ],
+      },
+    });
+    await act(async () => el.onerror?.());
+    await settle();
+    expect(m.bgm).toHaveBeenCalledTimes(2);
+    expect(el.src).toBe(`${T1}?fresh`); // the same track, by track_id
+    expect(el.paused).toBe(true); // until it has loaded
+    el.currentTime = 0; // a new source starts at 0
+    await act(async () => el.onloadedmetadata?.());
+    await settle();
+    expect(el.currentTime).toBe(42);
+    expect(el.paused).toBe(false);
+    expect(el.volume).toBe(1);
+    expect(music()).toHaveLength(1); // the same element, still behind the gain node
+    expect(ctx().sources.map((x) => x.el)).toEqual([el]);
+  });
+
+  it('a second error: the track is skipped for the session, silently; the voice carries on', async () => {
     await mountStory();
     await end();
     const el = bgm()!;
     await act(async () => el.onerror?.());
     await settle();
+    await act(async () => el.onloadedmetadata?.());
+    await settle();
+    expect(el.paused).toBe(false);
+    await act(async () => el.onerror?.());
+    await settle();
     expect(el.paused).toBe(true);
+    expect(m.bgm).toHaveBeenCalledTimes(2); // asked again once, not twice
     await act(async () => button('radio.player.pause').click());
     await act(async () => button('radio.player.play').click());
     await settle();
     expect(el.paused).toBe(true);
-    expect(el.played).toHaveLength(1);
+    expect(el.volume).toBe(1);
     expect(m.toast).not.toHaveBeenCalled();
     expect(voice().paused).toBe(false);
+  });
+
+  it('the track is gone from GET bgm when asked again: no music for the session, silently', async () => {
+    await mountStory();
+    await end();
+    const el = bgm()!;
+    const played = el.played.length;
+    m.bgm.mockResolvedValueOnce({ success: true, status: 200, data: { tracks: [{ track_id: 'other', title: 'X', audio_url: 'https://m/x.mp3' }] } });
+    await act(async () => el.onerror?.());
+    await settle();
+    await act(async () => el.onloadedmetadata?.());
+    expect(el.paused).toBe(true);
+    expect(el.played).toHaveLength(played);
+    expect(el.volume).toBe(1);
+  });
+
+  it('iOS: the audio session is set to playback, so the ringer switch does not mute the music', async () => {
+    const session = { type: 'auto' };
+    Object.defineProperty(navigator, 'audioSession', { value: session, configurable: true });
+    FakeAudioContext.initial = 'suspended';
+    try {
+      await mountStory();
+      await end();
+      expect(session.type).toBe('playback');
+      expect(bgm()!.paused).toBe(false);
+    } finally {
+      delete (navigator as { audioSession?: unknown }).audioSession;
+    }
   });
 });
 
