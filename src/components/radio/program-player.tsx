@@ -55,11 +55,16 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
   const router = useRouter();
   const showToast = useUIStore((s) => s.showToast);
   const { ready, authenticated } = useAuthReady();
-  const { home } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
+  const { access: homeAccess, home } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
   // KAZI-1242 (D20 = E1): the line under the header and, once per programme played, the Morse "AI" rhythm
   // before its first voiced sentence (programmes count too: the user, 2026-11-10, 「节目也播一次」).
-  const mustLabel = home?.availability?.aigc_label === true;
+  // The radio home did not answer (`unknown`: a 5xx, a network failure): label anyway, the safe side
+  // (the user, 2026-11-11: option ⒜ "fail closed", recorded verbatim with its question on KAZI-1242 comment 15146).
+  const mustLabel = home?.availability?.aigc_label === true || (isRadioLocale(locale) && homeAccess === 'unknown');
   const aigcLabel = mustLabel ? t('player.aigcLabel') : null;
+  // Until the region has answered, no voice: a first sentence must not play before the rhythm it may need
+  // (a link opened directly, or a reload, asks for the part before the radio home has answered).
+  const labelUnknown = isRadioLocale(locale) && homeAccess === null;
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [speed, setSpeed] = useState<PlayerSpeed>(1);
   const [attempt, setAttempt] = useState(0);
@@ -122,6 +127,7 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
     autoplay: true,
     onPlayed: addListened,
     preroll: mustLabel ? AIGC_MORSE_URL : null,
+    hold: labelUnknown,
     // `program_finished`: the programme played to its end.
     onDone: () => {
       setFinishedOnce(true);

@@ -41,6 +41,7 @@ export function useSentencePlayer({
   onPlayed,
   element,
   preroll,
+  hold,
 }: {
   sentences: PlayableSentence[];
   speed: PlayerSpeed;
@@ -64,6 +65,13 @@ export function useSentencePlayer({
    * for it, it adds nothing to `onPlayed`, and it never plays twice for this player.
    */
   preroll?: string | null;
+  /**
+   * While true nothing starts: autoplay, `playFrom` and play are remembered and the remembered sentence
+   * starts once it turns false. (Resuming inside a paused sentence is another path; it cannot happen while
+   * held, since nothing has played yet.) For a `preroll` that is not known yet (KAZI-1242: the region's answer has
+   * not arrived) — without it the first sentence would play before the rhythm.
+   */
+  hold?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -73,6 +81,10 @@ export function useSentencePlayer({
   prerollRef.current = preroll ?? null;
   const prerollDone = useRef(false);
   const prerollingRef = useRef(false);
+  const holdRef = useRef(!!hold);
+  holdRef.current = !!hold;
+  // The sentence asked for while held.
+  const heldAt = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Paused inside a sentence's audio: play resumes from the same point in it.
@@ -102,6 +114,11 @@ export function useSentencePlayer({
 
   const playAt = useCallback(
     (i: number) => {
+      if (holdRef.current) {
+        heldAt.current = i;
+        return;
+      }
+      heldAt.current = null;
       clear();
       pausedInAudio.current = false;
       const list = sentencesRef.current;
@@ -188,6 +205,15 @@ export function useSentencePlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firstKey, sentences.length === 0, partKey]);
 
+  // Declared after the start effect: a part that arrives as the hold ends starts there, once.
+  useEffect(() => {
+    if (hold || heldAt.current == null) return;
+    const i = heldAt.current;
+    heldAt.current = null;
+    playAt(i);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hold]);
+
   useEffect(() => {
     if (audioRef.current && !prerollingRef.current) audioRef.current.playbackRate = speed;
   }, [speed]);
@@ -195,6 +221,7 @@ export function useSentencePlayer({
   useEffect(() => () => clear(), [clear]);
 
   const pause = useCallback(() => {
+    heldAt.current = null; // paused before it could start: it stays paused
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;

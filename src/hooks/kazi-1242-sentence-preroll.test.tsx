@@ -34,8 +34,8 @@ class FakeAudio {
 
 let api: ReturnType<typeof useSentencePlayer>;
 const listened: number[] = [];
-function Harness({ sentences, speed = 1, preroll, element }: { sentences: PlayableSentence[]; speed?: PlayerSpeed; preroll: string | null; element?: HTMLAudioElement }) {
-  api = useSentencePlayer({ sentences, speed, autoplay: true, preroll, element, onPlayed: (ms) => listened.push(ms) });
+function Harness({ sentences, speed = 1, preroll, element, hold }: { sentences: PlayableSentence[]; speed?: PlayerSpeed; preroll: string | null; element?: HTMLAudioElement; hold?: boolean }) {
+  api = useSentencePlayer({ sentences, speed, autoplay: true, preroll, element, hold, onPlayed: (ms) => listened.push(ms) });
   return null;
 }
 
@@ -113,5 +113,38 @@ describe('preroll', () => {
     await act(async () => root.render(<Harness sentences={[S(1, 'u1')]} preroll={null} />));
     expect(a().played).toEqual([['u1', 1]]);
     expect(api.prerolling).toBe(false);
+  });
+});
+
+describe('hold: the preroll is not known yet (KAZI-1242, www.kazispace.cn 2026-11-10: a story opened by its link)', () => {
+  it('nothing plays while held; once released with the rhythm known, the rhythm first, then the first sentence', async () => {
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1'), S(2, 'u2')]} preroll={null} hold />));
+    expect(FakeAudio.all.flatMap((x) => x.played)).toEqual([]);
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1'), S(2, 'u2')]} preroll="/m.wav" hold={false} />));
+    expect(a().played).toEqual([['/m.wav', 1]]);
+    await act(async () => a().onended?.());
+    expect(a().played[1]).toEqual(['u1', 1]);
+  });
+
+  it('a jump asked for while held (resume from sentence 2) starts there on release, after the rhythm', async () => {
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1'), S(2, 'u2')]} preroll={null} hold />));
+    await act(async () => api.playFrom(1));
+    expect(FakeAudio.all.flatMap((x) => x.played)).toEqual([]);
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1'), S(2, 'u2')]} preroll="/m.wav" hold={false} />));
+    await act(async () => a().onended?.());
+    expect(a().played.map((p) => p[0])).toEqual(['/m.wav', 'u2']);
+  });
+
+  it('released with no rhythm needed: the first sentence, once', async () => {
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1')]} preroll={null} hold />));
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1')]} preroll={null} hold={false} />));
+    expect(a().played).toEqual([['u1', 1]]);
+  });
+
+  it('paused while held: it stays paused on release', async () => {
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1')]} preroll={null} hold />));
+    await act(async () => api.pause());
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1')]} preroll="/m.wav" hold={false} />));
+    expect(FakeAudio.all.flatMap((x) => x.played)).toEqual([]);
   });
 });

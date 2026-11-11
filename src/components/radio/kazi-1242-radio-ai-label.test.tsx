@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RadioPlayerResponse } from '@/types/radio';
 
 const m = vi.hoisted(() => ({ save: vi.fn(), turn: vi.fn(), render: vi.fn(), program: vi.fn(), replace: vi.fn(), push: vi.fn(), toast: vi.fn() }));
-const region = vi.hoisted(() => ({ label: true }));
+const region = vi.hoisted(() => ({ label: true, answered: true, failed: false }));
 
 vi.mock('next-intl', () => ({
   useTranslations: (ns: string) => (key: string) => `${ns}.${key}`,
@@ -33,11 +33,13 @@ vi.mock('@/lib/store', () => ({
 }));
 vi.mock('@/hooks/use-radio-home', () => ({
   useRadioHome: () => ({
-    access: 'open',
-    home: {
-      prefs: { listen_window_on: false },
-      availability: { tts: true, asr: true, new_render: true, aigc_label: region.label },
-    },
+    access: region.failed ? 'unknown' : region.answered ? 'open' : null,
+    home: region.answered && !region.failed
+      ? {
+          prefs: { listen_window_on: false },
+          availability: { tts: true, asr: true, new_render: true, aigc_label: region.label },
+        }
+      : null,
     isLoading: false,
     refresh: () => Promise.resolve(),
   }),
@@ -141,6 +143,8 @@ beforeEach(() => {
   root = createRoot(container);
   Object.values(m).forEach((f) => f.mockReset());
   region.label = true;
+  region.answered = true;
+  region.failed = false;
   m.save.mockResolvedValue({ success: true, status: 200, data: story() });
   m.turn.mockResolvedValue({ success: true, status: 200, data: story('n2') });
   m.program.mockResolvedValue({ success: true, status: 200, data: PROGRAM });
@@ -241,5 +245,55 @@ describe('the programme page (the user, 2026-11-10: 「节目也播一次」)', 
     await mountProgram();
     expect(q('radio-aigc-label')).toBeNull();
     expect(srcs()).not.toContain(MORSE);
+  });
+});
+
+describe('opened by its link: the part arrives before the radio home has answered (www.kazispace.cn, 2026-11-10)', () => {
+  it('story: no voice until the region answers; then the rhythm first', async () => {
+    region.answered = false;
+    await mountStory();
+    expect(FakeAudio.all.flatMap((x) => x.played)).toEqual([]);
+    region.answered = true;
+    await mountStory(); // the home query answers: the same screen renders again
+    expect(audio().played[0]).toEqual([MORSE, 1]);
+    await end();
+    expect(audio().src).toBe('https://a/n1-1.mp3');
+  });
+
+  it('programme: the same', async () => {
+    region.answered = false;
+    await mountProgram();
+    expect(FakeAudio.all.flatMap((x) => x.played)).toEqual([]);
+    region.answered = true;
+    await mountProgram();
+    expect(audio().played[0]).toEqual([MORSE, 1]);
+  });
+
+  it('us-west answering late: the first sentence, with no rhythm', async () => {
+    region.answered = false;
+    region.label = false;
+    await mountStory();
+    expect(FakeAudio.all.flatMap((x) => x.played)).toEqual([]);
+    region.answered = true;
+    await mountStory();
+    expect(srcs()).toEqual(['https://a/n1-1.mp3']);
+  });
+});
+
+describe('the radio home failed (`unknown`): label anyway (the user, 2026-11-11: 「按需标识处理」)', () => {
+  it('story: the line and the rhythm first', async () => {
+    region.failed = true;
+    await mountStory();
+    expect(q('radio-aigc-label')?.textContent).toBe('radio.player.aigcLabel');
+    expect(audio().played[0]).toEqual([MORSE, 1]);
+    await end();
+    expect(audio().src).toBe('https://a/n1-1.mp3');
+  });
+
+  it('programme: the line and the rhythm first', async () => {
+    region.failed = true;
+    await mountProgram();
+    expect(q('radio-aigc-label')?.textContent).toBe('radio.player.aigcLabel');
+    expect(audio().played[0]).toEqual([MORSE, 1]);
   });
 });
