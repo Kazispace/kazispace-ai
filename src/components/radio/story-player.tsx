@@ -109,7 +109,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   // KAZI-1242 (D20 = E1): where the region must label, the line under the header and, once per visit, the
   // Morse "AI" rhythm before the first voiced sentence (never decided from the interface language).
   // The radio home did not answer (`unknown`: a 5xx, a network failure): label anyway, the safe side
-  // (the user, 2026-11-11, chose 「按需标识处理」 on #296's review: fail closed in a radio locale).
+  // (the user, 2026-11-11: option ⒜ "fail closed", recorded verbatim with its question on KAZI-1242 comment 15146).
   const mustLabel = home?.availability?.aigc_label === true || (isRadioLocale(locale) && homeAccess === 'unknown');
   const aigcLabel = mustLabel ? t('player.aigcLabel') : null;
   // Until the region has answered, no voice: a first sentence must not play before the rhythm it may need
