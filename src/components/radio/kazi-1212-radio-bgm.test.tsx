@@ -121,8 +121,10 @@ class FakeAudio {
   }
   load() {}
   play() {
-    this.paused = false;
     this.played.push(this._src);
+    // As a browser does: an element with no source refuses to play (#298 R1).
+    if (!this._src) return Promise.reject(new DOMException('no source', 'NotSupportedError'));
+    this.paused = false;
     return Promise.resolve();
   }
   pause() {
@@ -177,6 +179,11 @@ class FakeAudioContext {
       this.state = 'running';
       this.listeners.forEach((f) => f());
     }
+    return Promise.resolve();
+  }
+  suspend() {
+    this.state = 'suspended';
+    this.listeners.forEach((f) => f());
     return Promise.resolve();
   }
   addEventListener(_: string, f: () => void) {
@@ -526,6 +533,8 @@ describe('the story page', () => {
     expect(ctx().state).toBe('running');
     const primed = FakeAudio.all.filter((a) => a.crossOrigin === 'anonymous');
     expect(primed).toHaveLength(1);
+    // Played inside the tap, with no source yet: that play is what iOS counts (#298 R1).
+    expect(primed[0].played).toEqual(['']);
     await act(async () => answer({ success: true, status: 200, data: { tracks: [{ track_id: 't1', title: 'One', audio_url: T1 }] } }));
     await settle();
     await end();
@@ -534,6 +543,19 @@ describe('the story page', () => {
     expect(el.src).toBe(T1);
     expect(el.paused).toBe(false);
     expect(ctx().gains[0].gain.value).toBeCloseTo(10 ** (-18 / 20));
+  });
+
+  it('a tap before GET bgm answers with no tracks: the context is suspended and the made element dropped', async () => {
+    let answer: (v: unknown) => void = () => undefined;
+    m.bgm.mockReturnValue(new Promise((r) => (answer = r)));
+    await mountStory();
+    await tap();
+    expect(ctx().state).toBe('running');
+    await act(async () => answer({ success: true, status: 200, data: { tracks: [] } }));
+    await settle();
+    await end();
+    expect(ctx().state).toBe('suspended');
+    expect(bgm()).toBeNull();
   });
 
   it('GET bgm answered with no tracks: a tap makes no audio context and no element', async () => {

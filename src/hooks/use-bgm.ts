@@ -145,6 +145,14 @@ export function useBgm({
     };
   }, [enabled]);
 
+  // No music on this page after all: a tap that came first left a running context and an element made for a
+  // track; put the context back to sleep and drop the element (#298 R1).
+  useEffect(() => {
+    if (!tracks || tracks.length) return;
+    primedRef.current = null;
+    if (sharedContext && sharedContext.state === 'running') void sharedContext.suspend?.().catch(() => undefined);
+  }, [tracks]);
+
   // One track per listening session, at random.
   useEffect(() => {
     if (sessionKey == null || !tracks) return;
