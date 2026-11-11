@@ -11,6 +11,7 @@ import { Captions, PlayerControls, PlayerShell } from '@/components/radio/player
 import { RadioRating } from '@/components/radio/radio-rating';
 import { BlockedHelpDialog, ListeningIndicator, MicButton, micButtonState } from '@/components/radio/voice-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
+import { useBgm } from '@/hooks/use-bgm';
 import { useRadioEvents } from '@/hooks/use-radio-events';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { useRadioMic, type RadioMicOpen } from '@/hooks/use-radio-mic';
@@ -332,6 +333,22 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
     return () => clearTimeout(id);
   }, [line]);
 
+  // KAZI-1212 (Player · Background music): one random track per programme played, looped under the voice
+  // from the first sentence that has audio (after the AI rhythm); it pauses when the user pauses, while the
+  // microphone records, and once the programme has played to its end (play again resumes it).
+  const [userPaused, setUserPaused] = useState(false);
+  const voicePlaying = player.playing || answerPlayer.playing;
+  useEffect(() => {
+    if (voicePlaying) setUserPaused(false);
+  }, [voicePlaying]);
+  useBgm({
+    enabled: !!home && home.prefs?.bgm_on !== false,
+    levelDb: home?.prefs?.bgm_level,
+    sessionKey: programId,
+    voiced: player.playing && !player.prerolling && !!sentences[player.index]?.audioUrl,
+    held: userPaused || !!care || mic.state === 'recording' || (player.done && !answer && !answerPlayer.playing),
+  });
+
   const micRef = useRef(mic);
   micRef.current = mic;
   useEffect(() => {
@@ -412,7 +429,10 @@ export function ProgramPlayerScreen({ locale, programId }: { locale: string; pro
                 setCare(null);
                 player.play();
               }}
-              onPause={pauseAll}
+              onPause={() => {
+                setUserPaused(true);
+                pauseAll();
+              }}
               onRepeat={() => {
                 if (at) trackRadioEvent('replay', { programId }, { seq: at.seq });
                 player.repeat();
