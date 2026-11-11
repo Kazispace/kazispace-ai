@@ -18,6 +18,7 @@ import {
   micButtonState,
 } from '@/components/radio/voice-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
+import { useBgm } from '@/hooks/use-bgm';
 import { useRadioEvents } from '@/hooks/use-radio-events';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { useRadioMic, type RadioMicOpen } from '@/hooks/use-radio-mic';
@@ -140,6 +141,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const [helpOpen, setHelpOpen] = useState(false);
   const [voiceLine, setVoiceLine] = useState<VoiceLine | null>(null);
   const [paused, setPaused] = useState(false);
+  // The user paused (the control, or saying "pause"): the background music pauses with the voice.
+  const [userPaused, setUserPaused] = useState(false);
   const [care, setCare] = useState<RadioNotice | null>(null);
   const [answer, setAnswer] = useState<{ segments: RadioAnswerSegment[]; key: number } | null>(null);
 
@@ -466,6 +469,21 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     onPlayed: addListened,
   });
 
+  // KAZI-1212 (Player · Background music): one random track per visit, looped under the voice from the
+  // first sentence that has audio (after the AI rhythm); it pauses when the user pauses and while the
+  // microphone records, and carries on between parts and at choice points. Never in Live Room.
+  const voicePlaying = player.playing || answerPlayer.playing;
+  useEffect(() => {
+    if (voicePlaying) setUserPaused(false);
+  }, [voicePlaying]);
+  useBgm({
+    enabled: !!home && home.prefs?.bgm_on !== false,
+    levelDb: home?.prefs?.bgm_level,
+    sessionKey: saveId,
+    voiced: player.playing && !player.prerolling && !!sentences[player.index]?.audioUrl,
+    held: userPaused || paused || !!care || mic.state === 'recording' || resp?.node?.node_type === 'ending',
+  });
+
   /** Back to where the user was before they spoke. */
   const carryOn = useCallback(() => {
     if (atChoicePoint()) void openWindow();
@@ -530,6 +548,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
           carryOn();
           return;
         case 'pause':
+          setUserPaused(true);
           playerRef.current.pause();
           return;
         case 'resume':
@@ -900,6 +919,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
               speed={speed}
               onPlay={onPlay}
               onPause={() => {
+                setUserPaused(true);
                 player.pause();
                 answerPlayer.pause();
               }}
