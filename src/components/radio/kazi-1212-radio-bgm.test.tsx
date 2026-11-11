@@ -515,6 +515,36 @@ describe('the story page', () => {
     expect(el.volume).toBe(1);
   });
 
+  it('a tap before GET bgm answers unlocks too: the music then plays with no second tap (iOS N8 check 4)', async () => {
+    FakeAudioContext.initial = 'suspended';
+    FakeAudioContext.needsTap = true;
+    let answer: (v: unknown) => void = () => undefined;
+    m.bgm.mockReturnValue(new Promise((r) => (answer = r)));
+    await mountStory();
+    expect(bgm()).toBeNull();
+    await tap();
+    expect(ctx().state).toBe('running');
+    const primed = FakeAudio.all.filter((a) => a.crossOrigin === 'anonymous');
+    expect(primed).toHaveLength(1);
+    await act(async () => answer({ success: true, status: 200, data: { tracks: [{ track_id: 't1', title: 'One', audio_url: T1 }] } }));
+    await settle();
+    await end();
+    const el = bgm()!;
+    expect(el).toBe(primed[0]);
+    expect(el.src).toBe(T1);
+    expect(el.paused).toBe(false);
+    expect(ctx().gains[0].gain.value).toBeCloseTo(10 ** (-18 / 20));
+  });
+
+  it('GET bgm answered with no tracks: a tap makes no audio context and no element', async () => {
+    m.bgm.mockResolvedValue({ success: true, status: 200, data: { tracks: [] } });
+    await mountStory();
+    const before = FakeAudio.all.length;
+    await tap();
+    expect(FakeAudioContext.all).toHaveLength(0);
+    expect(FakeAudio.all.length).toBe(before);
+  });
+
   it('an expired URL: GET bgm is asked again once, and the same track carries on from where it was', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     await mountStory();

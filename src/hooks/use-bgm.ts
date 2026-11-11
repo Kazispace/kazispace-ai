@@ -93,6 +93,7 @@ const GESTURES = ['pointerup', 'touchend', 'click', 'keydown'] as const;
  *   from where it was (from the start where it cannot seek).
  * - No Web Audio, a context that cannot be made or resumed, or a track that errors twice ⇒ no music for
  *   the session, silently: music at full volume over the voice is never acceptable.
+ * - The first tap on the page unlocks the context, even before `GET bgm` answers (iOS N8 check 4).
  * - Unmounting stops it.
  */
 export function useBgm({
@@ -115,6 +116,11 @@ export function useBgm({
   const [failed, setFailed] = useState(false);
   const [running, setRunning] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // An element made and played inside a tap that came before the track was known (iOS lets an element
+  // play later only once it has been played inside a gesture); the session's track then uses it.
+  const primedRef = useRef<HTMLAudioElement | null>(null);
+  const tracksRef = useRef<RadioBgmTrack[] | null>(null);
+  tracksRef.current = tracks;
   const gainRef = useRef<GainNode | null>(null);
   const wantRef = useRef(false);
   const levelRef = useRef(levelDb);
@@ -163,7 +169,8 @@ export function useBgm({
     if (!url) return;
     const ctx = bgmContext();
     if (!ctx || typeof Audio === 'undefined') return;
-    const a = new Audio();
+    const a = primedRef.current ?? new Audio();
+    primedRef.current = null;
     // Before `src`: a cross-origin source without CORS would play, but Web Audio would read only silence
     // from it and could not set its level. With this it fails to load instead.
     a.crossOrigin = 'anonymous';
@@ -284,12 +291,25 @@ export function useBgm({
     });
   }, [want, running]);
 
-  // The first tap on the page unlocks the context (and, on iOS, the element), inside the gesture.
+  // The first tap on the page unlocks the context (and, on iOS, the element), inside the gesture, whether
+  // or not `GET bgm` has answered: a user who taps play straight away would otherwise wait for a second
+  // tap. Not once `GET bgm` has answered with no tracks.
   useEffect(() => {
-    if (!url) return;
+    if (!enabled) return;
     const onGesture = () => {
-      const ctx = sharedContext;
+      if (tracksRef.current && !tracksRef.current.length) return;
+      const ctx = bgmContext();
       if (!ctx) return;
+      if (!audioRef.current && !primedRef.current && typeof Audio !== 'undefined') {
+        const p = new Audio();
+        p.crossOrigin = 'anonymous';
+        primedRef.current = p;
+        try {
+          void p.play()?.catch(() => undefined);
+        } catch {
+          /* nothing to play yet: the gesture is what counts */
+        }
+      }
       if (ctx.state !== 'running') {
         resumeContext(ctx).then(
           () => {
@@ -307,7 +327,7 @@ export function useBgm({
     };
     GESTURES.forEach((e) => window.addEventListener(e, onGesture, true));
     return () => GESTURES.forEach((e) => window.removeEventListener(e, onGesture, true));
-  }, [url]);
+  }, [enabled]);
 
   return { trackId, playing: want && running && !failed };
 }
