@@ -19,6 +19,15 @@ export function readingPauseMs(text: string): number {
 }
 
 /**
+ * A play() cut short by a later pause() or a new source is rejected with AbortError. That is not "this sound
+ * failed": whoever interrupted it decides what comes next (KAZI-1212 browser test: read as a failure it skipped the
+ * AI rhythm, or moved on to the next sentence while paused).
+ */
+export function playInterrupted(err: unknown): boolean {
+  return (err as { name?: string } | null)?.name === 'AbortError';
+}
+
+/**
  * Plays sentences in order (KAZI-1209; kazispace-ui personal-radio.md, The audio of a part · Player).
  *
  * - Each sentence with an `audioUrl` is played through one `<audio>` element; one without audio
@@ -32,15 +41,6 @@ export function readingPauseMs(text: string): number {
  * The sentence list may change while playing (audio arriving for a pending sentence); the player
  * reads the current list each time it moves on.
  */
-/**
- * A play() cut short by a later pause() or a new source is rejected with AbortError. That is not "this sound
- * failed": whoever interrupted it decides what comes next (KAZI-1212 browser test: read as a failure it skipped the
- * AI rhythm, or moved on to the next sentence while paused).
- */
-export function playInterrupted(err: unknown): boolean {
-  return (err as { name?: string } | null)?.name === 'AbortError';
-}
-
 export function useSentencePlayer({
   sentences,
   speed,

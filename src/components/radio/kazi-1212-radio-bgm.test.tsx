@@ -625,6 +625,34 @@ describe('the story page', () => {
     expect(ctx().sources.map((x) => x.el)).toEqual([el]);
   });
 
+  it('after an expired URL, the fresh play interrupted by a pause is not a second error (#299 R1)', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    await mountStory();
+    await end();
+    const el = bgm()!;
+    m.bgm.mockResolvedValueOnce({ success: true, status: 200, data: { tracks: [{ track_id: 't1', title: 'One', audio_url: `${T1}?fresh` }] } });
+    await act(async () => el.onerror?.());
+    await settle();
+    expect(m.bgm).toHaveBeenCalledTimes(2);
+    const original = FakeAudio.prototype.play;
+    FakeAudio.prototype.play = function (this: FakeAudio) {
+      FakeAudio.prototype.play = original;
+      return Promise.reject(new DOMException('interrupted by pause()', 'AbortError'));
+    };
+    try {
+      await act(async () => el.onloadedmetadata?.());
+      await settle();
+    } finally {
+      FakeAudio.prototype.play = original;
+    }
+    // Not counted as a failure: no third GET bgm, and the track is not given up — the next play goes on.
+    expect(m.bgm).toHaveBeenCalledTimes(2);
+    await act(async () => button('radio.player.pause').click());
+    await act(async () => button('radio.player.play').click());
+    await settle();
+    expect(el.paused).toBe(false);
+  });
+
   it('a second error: the track is skipped for the session, silently; the voice carries on', async () => {
     await mountStory();
     await end();

@@ -113,6 +113,34 @@ describe('an interrupted play is not the end of the sound', () => {
     expect(a().played).toEqual(['/m.wav', '/m.wav']);
   });
 
+  it('resuming the rhythm and pausing again before it starts keeps the rhythm (not skipped to the first sentence)', async () => {
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1'), S(2, 'u2')]} preroll="/m.wav" />));
+    a().start(); // the rhythm is playing
+    await act(async () => api.pause()); // paused inside the rhythm
+    await flush();
+    await act(async () => api.play()); // resume: play() is pending …
+    await act(async () => api.pause()); // … and is cut short by a second pause (a double tap, the microphone)
+    await flush();
+    expect(api.prerolling).toBe(true);
+    expect(a().src).toBe('/m.wav');
+    expect(a().played).not.toContain('u1');
+    await act(async () => api.play());
+    expect(a().played[a().played.length - 1]).toBe('/m.wav');
+  });
+
+  it('resuming a sentence and pausing again before it starts stays on that sentence', async () => {
+    await act(async () => root.render(<Harness sentences={[S(1, 'u1'), S(2, 'u2')]} preroll={null} />));
+    a().start();
+    await act(async () => api.pause());
+    await flush();
+    await act(async () => api.play());
+    await act(async () => api.pause());
+    await flush();
+    await act(async () => vi.advanceTimersByTime(60_000));
+    expect(api.index).toBe(0);
+    expect(a().played).not.toContain('u2');
+  });
+
   it('pausing while a sentence is starting does not move on to the next sentence', async () => {
     await act(async () => root.render(<Harness sentences={[S(1, 'u1'), S(2, 'u2')]} preroll={null} />));
     expect(a().played).toEqual(['u1']);
