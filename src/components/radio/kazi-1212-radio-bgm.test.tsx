@@ -386,6 +386,32 @@ describe('the story page', () => {
     expect(music()).toHaveLength(1);
   });
 
+  it('a music play interrupted by a pause is not a failed track: GET bgm is not asked again, the music goes on', async () => {
+    const original = FakeAudio.prototype.play;
+    let interruptOnce = true;
+    FakeAudio.prototype.play = function (this: FakeAudio) {
+      if (this.loop && interruptOnce) {
+        interruptOnce = false;
+        this.played.push(this.src);
+        return Promise.reject(new DOMException('interrupted by pause()', 'AbortError'));
+      }
+      return original.call(this);
+    };
+    try {
+      await mountStory();
+      await end();
+      const el = bgm()!;
+      expect(m.bgm).toHaveBeenCalledTimes(1);
+      await act(async () => button('radio.player.pause').click());
+      await act(async () => button('radio.player.play').click());
+      await settle();
+      expect(m.bgm).toHaveBeenCalledTimes(1);
+      expect(el.paused).toBe(false);
+    } finally {
+      FakeAudio.prototype.play = original;
+    }
+  });
+
   it('pauses while the microphone records and resumes when the recording ends', async () => {
     await mountStory();
     await end();
