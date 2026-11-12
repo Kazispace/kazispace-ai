@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getRadioBgm } from '@/lib/radio/player-api';
 import { BGM_LEVEL_DEFAULT, BGM_LEVEL_MAX, BGM_LEVEL_MIN } from '@/lib/radio/settings';
 import type { RadioBgmTrack } from '@/types/radio';
+import { playInterrupted } from '@/hooks/use-sentence-player';
 
 /**
  * The music's gain relative to the voice (the voice plays at 1.0): `10^(dB/20)`. `null` ⇒ −18 dB;
@@ -229,7 +230,11 @@ export function useBgm({
             } catch {
               /* not seekable: from the start */
             }
-            if (wantRef.current && ctx.state === 'running') a.play().catch(() => recoverRef.current());
+            if (wantRef.current && ctx.state === 'running') {
+              a.play().catch((err: unknown) => {
+                if (!playInterrupted(err)) recoverRef.current();
+              });
+            }
           };
           a.src = fresh;
           a.load?.();
@@ -295,6 +300,8 @@ export function useBgm({
     }
     a.play().catch((err: unknown) => {
       // Not yet allowed: the next tap plays it (below). Anything else: one more try, as for a load error.
+      // Interrupted by a pause (the voice paused, the microphone opened) is not a failed track.
+      if (playInterrupted(err)) return;
       if ((err as { name?: string } | null)?.name !== 'NotAllowedError') recoverRef.current();
     });
   }, [want, running]);

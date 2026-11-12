@@ -19,6 +19,15 @@ export function readingPauseMs(text: string): number {
 }
 
 /**
+ * A play() cut short by a later pause() or a new source is rejected with AbortError. That is not "this sound
+ * failed": whoever interrupted it decides what comes next (KAZI-1212 browser test: read as a failure it skipped the
+ * AI rhythm, or moved on to the next sentence while paused).
+ */
+export function playInterrupted(err: unknown): boolean {
+  return (err as { name?: string } | null)?.name === 'AbortError';
+}
+
+/**
  * Plays sentences in order (KAZI-1209; kazispace-ui personal-radio.md, The audio of a part · Player).
  *
  * - Each sentence with an `audioUrl` is played through one `<audio>` element; one without audio
@@ -158,6 +167,7 @@ export function useSentencePlayer({
         a.onended = after;
         a.onerror = after;
         a.play().catch((err: unknown) => {
+          if (playInterrupted(err)) return;
           if ((err as { name?: string } | null)?.name === 'NotAllowedError') {
             pausedInAudio.current = true;
             setPlaying(false);
@@ -183,6 +193,7 @@ export function useSentencePlayer({
       a.play().catch((err: unknown) => {
         // Autoplay blocked: wait for a tap on play, which resumes this sentence. Any other failure
         // is a sentence with no voice (a reading pause).
+        if (playInterrupted(err)) return;
         if ((err as { name?: string } | null)?.name === 'NotAllowedError') {
           pausedInAudio.current = true;
           setPlaying(false);
@@ -243,7 +254,9 @@ export function useSentencePlayer({
       pausedInAudio.current = false;
       setPlaying(true);
       a.playbackRate = prerollingRef.current ? 1 : speedRef.current;
-      a.play().catch(() => playAt(index + 1));
+      a.play().catch((err: unknown) => {
+        if (!playInterrupted(err)) playAt(index + 1);
+      });
       return;
     }
     playAt(index);
