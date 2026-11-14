@@ -248,6 +248,25 @@ describe('Answers', () => {
     expect(m.chunk.mock.calls[1][0].turnId).not.toBe(first);
   });
 
+  it('KAZI-1335: a retry with its line is said by the host, as a caption; the microphone is ready again', async () => {
+    const line = seg(1, '没太听清，可以再说一次吗？', { audio_url: 'https://a/retry_unheard.mp3' });
+    m.chunk.mockImplementationOnce(() =>
+      Promise.resolve(ok({ turn_id: 't1', kind: 'retry', notice: notice('retry', 'voice_unrecognized', '没太听清，可以再说一次吗？'), segments: [line] }))
+    );
+    await mount();
+    await finishPart();
+    await talk();
+    await finishPart(); // the ack
+    expect(audio().played.map((p) => p[0])).toContain('https://a/retry_unheard.mp3');
+    expect(captions()).toContain('没太听清，可以再说一次吗？');
+    expect(q('radio-live-line')).toBeNull();
+    expect(q('radio-live-mic')?.getAttribute('data-state')).toBe('ready');
+    const first = m.chunk.mock.calls[0][0].turnId;
+    await finishPart(); // the retry line
+    await talk();
+    expect(m.chunk.mock.calls[1][0].turnId).not.toBe(first);
+  });
+
   it.each(['asr_failed', 'retry_limit'])('ended %s: notice.text as a host caption, then the closing', async (code) => {
     m.chunk.mockResolvedValue(ok({ turn_id: 't', kind: 'ended', notice: notice('ended', code, '今天先到这里。'), segments: [] }));
     await mount();

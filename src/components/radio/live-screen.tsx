@@ -62,7 +62,7 @@ export function livePartOf(kind: string): LivePart | null {
 /** `ended` codes after which the closing follows (live-room.md, Answers). */
 const CLOSING_AFTER_ENDED = new Set(['asr_failed', 'retry_limit']);
 
-type PartKind = 'opening' | 'ack' | 'reply' | 'handover' | 'upgrade' | 'closing';
+type PartKind = 'opening' | 'ack' | 'reply' | 'retry' | 'handover' | 'upgrade' | 'closing';
 interface PartLine {
   seq: number;
   text: string;
@@ -448,9 +448,20 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
           return;
         }
         if (turn.kind === 'retry') {
-          // Spoken by nobody; the microphone is ready again for the same turn, with a new turn_id.
-          setLine(n?.text ?? null);
+          // KAZI-1335: the host says the retry line when it comes with one (a caption, like any host line); without
+          // one it stays a line above the microphone. Either way the microphone is ready again, with a new turn_id.
+          const said = [...(turn.segments ?? [])].sort((a, b) => a.seq - b.seq);
           setPhase('talk');
+          if (said.length) {
+            play({
+              kind: 'retry',
+              speed: 1,
+              caption: true,
+              lines: said.map((s) => ({ seq: s.seq, text: s.text, audioUrl: s.audio_url ?? null, pending: false })),
+            });
+          } else {
+            setLine(n?.text ?? null);
+          }
           return;
         }
         if (turn.kind === 'ended' || turn.kind === 'limit') {

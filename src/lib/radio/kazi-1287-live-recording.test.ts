@@ -4,7 +4,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-import { earliestCutMs, newLiveTurnId, pieceMaxMs, reportedPieceMs, secondsLeft, shouldCutPiece, splitKeyWord } from '@/lib/radio/live-recording';
+import { LIVE_MIN_PIECE_MS, earliestCutMs, newLiveTurnId, pieceMaxMs, reportedPieceMs, secondsLeft, shouldCutPiece, splitKeyWord } from '@/lib/radio/live-recording';
 import { LIVE_MISSING_ROUNDS, LIVE_PIECE_RETRY_MS, LiveTurnUpload } from '@/lib/radio/live-uploader';
 
 const LIMITS = { record_max_ms: 72_000, chunk_max_ms: 20_000, chunks_max: 4 };
@@ -28,6 +28,33 @@ describe('Where to cut', () => {
   it('a quiet moment before the earliest cut is not used', () => {
     expect(shouldCutPiece({ k: 1, elapsedMs: 12_500, pieceStartMs: 0, quiet: true, limits: LIMITS })).toBe(false);
     expect(shouldCutPiece({ k: 1, elapsedMs: 12_600, pieceStartMs: 0, quiet: true, limits: LIMITS })).toBe(true);
+  });
+
+  it('KAZI-1335: with 5 s × 20 pieces, a pause never ends a piece shorter than 3 s', () => {
+    const L = { record_max_ms: 72_000, chunk_max_ms: 5_000, chunks_max: 20 };
+    expect(LIVE_MIN_PIECE_MS).toBe(3_000);
+    expect(shouldCutPiece({ k: 1, elapsedMs: 800, pieceStartMs: 0, quiet: true, limits: L })).toBe(false);
+    expect(shouldCutPiece({ k: 1, elapsedMs: 2_900, pieceStartMs: 0, quiet: true, limits: L })).toBe(false);
+    expect(shouldCutPiece({ k: 1, elapsedMs: 3_000, pieceStartMs: 0, quiet: true, limits: L })).toBe(true);
+    expect(shouldCutPiece({ k: 3, elapsedMs: 9_500, pieceStartMs: 7_000, quiet: true, limits: L })).toBe(false);
+    // without a pause it is still cut at the latest, 4.8 s after it began
+    expect(shouldCutPiece({ k: 1, elapsedMs: 4_800, pieceStartMs: 0, quiet: false, limits: L })).toBe(true);
+  });
+
+  it('KAZI-1335: pausing all the time, a 72 s recording still fits in 20 pieces, none under 3 s but the last', () => {
+    const L = { record_max_ms: 72_000, chunk_max_ms: 5_000, chunks_max: 20 };
+    const lengths: number[] = [];
+    let start = 0;
+    let k = 1;
+    for (let t = 100; t <= L.record_max_ms; t += 100) {
+      if (shouldCutPiece({ k, elapsedMs: t, pieceStartMs: start, quiet: true, limits: L })) {
+        lengths.push(t - start);
+        start = t;
+        k += 1;
+      }
+    }
+    expect(k).toBeLessThanOrEqual(L.chunks_max);
+    expect(lengths.every((n) => n >= LIVE_MIN_PIECE_MS)).toBe(true);
   });
 
   it('no quiet moment: cut at the latest, 19.8 s after the piece began', () => {
