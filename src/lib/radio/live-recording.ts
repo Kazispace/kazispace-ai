@@ -9,6 +9,12 @@ import type { LiveLimits } from '@/types/radio-live';
 export const LIVE_REMAINING_FROM_MS = 10_000;
 /** A quiet moment long enough to cut at without splitting a word. */
 export const LIVE_QUIET_MS = 300;
+/**
+ * KAZI-1335: a piece is never cut at a quiet moment before it is this long. With 5 s pieces and room to spare, the
+ * earliest cut is 0 for the first pieces, so every 300 ms pause made a piece of under a second, which the server's
+ * speech recognition could not read: the user's turns came back as "say it again" (KAZI-1335 write-back 15454).
+ */
+export const LIVE_MIN_PIECE_MS = 3_000;
 /** A `retry` notice shows above the microphone for 3 seconds. */
 export const LIVE_NOTICE_MS = 3_000;
 
@@ -58,7 +64,7 @@ export function shouldCutPiece({
 }): boolean {
   if (k >= limits.chunks_max) return false;
   if (elapsedMs - pieceStartMs >= pieceMaxMs(limits)) return true;
-  return quiet && elapsedMs >= earliestCutMs(k, limits);
+  return quiet && elapsedMs - pieceStartMs >= LIVE_MIN_PIECE_MS && elapsedMs >= earliestCutMs(k, limits);
 }
 
 /** Seconds left to show under the button, or `null` before the last 10 seconds. */
