@@ -14,6 +14,10 @@ import { AIGC_MORSE_URL } from '@/lib/radio/aigc-morse';
 import { LIVE_NOTICE_MS, newLiveTurnId, splitKeyWord } from '@/lib/radio/live-recording';
 import {
   liveAudioElement,
+  keepLiveEnglish,
+  forgetLiveEnglish,
+  takeLiveEnglish,
+  unlockLiveAudio,
   liveMicConsented,
   liveMicDenied,
   setLiveMicConsented,
@@ -109,18 +113,37 @@ export function LiveScreen({ locale }: { locale: string }) {
   const router = useRouter();
   const homeHref = radioHomeHref(locale);
   // Taken once: a reload or a second screen gets nothing and goes back to the radio home, which ends
-  // the session through `open_session_id`.
-  const [started] = useState<StartedLiveSession | null>(() => takeStartedLiveSession());
+  // the session through `open_session_id` — unless the English part was due (KAZI-1366): then the reload
+  // comes back to it.
+  const [entry] = useState<{ started: StartedLiveSession; resume: boolean } | null>(() => {
+    const fresh = takeStartedLiveSession();
+    if (fresh) return { started: fresh, resume: false };
+    const kept = takeLiveEnglish();
+    return kept ? { started: kept, resume: true } : null;
+  });
 
   useEffect(() => {
-    if (!started) router.replace(homeHref);
-  }, [started, router, homeHref]);
+    if (!entry) router.replace(homeHref);
+  }, [entry, router, homeHref]);
 
-  if (!started) return null;
-  return <LiveSessionView started={started} homeHref={homeHref} studioHref={buildClinicHubHref(locale)} />;
+  if (!entry) return null;
+  return (
+    <LiveSessionView started={entry.started} resume={entry.resume} homeHref={homeHref} studioHref={buildClinicHubHref(locale)} />
+  );
 }
 
-function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLiveSession; homeHref: string; studioHref: string }) {
+function LiveSessionView({
+  started,
+  resume = false,
+  homeHref,
+  studioHref,
+}: {
+  started: StartedLiveSession;
+  /** A reload during the English part (KAZI-1366): open on it, with one tap to play it from the start. */
+  resume?: boolean;
+  homeHref: string;
+  studioHref: string;
+}) {
   const t = useTranslations('radio.live');
   const tMic = useTranslations('radio.mic');
   const tNotice = useTranslations('radio.notice');
@@ -130,7 +153,9 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   const sessionId = session.session_id;
   const limits = session.limits;
 
-  const [phase, setPhase] = useState<Phase>('talk');
+  const [phase, setPhase] = useState<Phase>(resume ? 'english' : 'talk');
+  // The tap a reloaded page needs before it may play sound (live-room.md 0.11, "Coming back to it").
+  const [resumeTap, setResumeTap] = useState(resume);
   const [history, setHistory] = useState<LiveCaption[]>([]);
   // D20 = E1 (KAZI-1242): where the region must label, the Morse "AI" rhythm plays once, before the first host
   // line with audio: the opening, or, if the opening has no audio, the first part that has some.
@@ -144,8 +169,9 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
     key: 1,
     kind: 'opening',
     speed: 1,
-    caption: true,
-    lines: withMarker(
+    caption: !resume,
+    // Coming back to the English part: the opening is not played again.
+    lines: resume ? [] : withMarker(
       [...session.opening]
         .sort((a, b) => a.seq - b.seq)
         .map((s) => ({ seq: s.seq, text: s.text, lang: s.lang, audioUrl: s.audio_url ?? null, pending: s.pending ?? false })),
@@ -195,6 +221,9 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
     window.addEventListener('pagehide', end);
     return () => {
       window.removeEventListener('pagehide', end);
+      // Leaving the screen inside the app is leaving: nothing to come back to. A `pagehide` (the phone
+      // putting the page away) keeps the English part for a reload (KAZI-1366).
+      forgetLiveEnglish();
       end();
     };
   }, [sessionId]);
@@ -253,6 +282,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   const toClosing = useCallback(async () => {
     if (closeSent.current || over.current) return;
     closeSent.current = true;
+    forgetLiveEnglish();  // the English part is over: a reload from here goes back to the radio home
     setPhase('closing');
     let res = await postLiveClose(sessionId);
     for (let i = 1; i < LIVE_FETCH_TRIES && !res.success && res.errorCode === 'NETWORK_ERROR' && !over.current; i += 1) {
@@ -284,6 +314,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   // ---- Care: the voice stops, the microphone stays off, a card that stays.
   const toCare = useCallback((n: LiveNotice) => {
     over.current = true;
+    forgetLiveEnglish();
     upload.current?.stop();
     playerRef.current.pause();
     setCare(n);
@@ -475,7 +506,10 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
           return;
         }
         const final = turn.kind === 'final';
-        if (final) askUpgrade();
+        if (final) {
+          keepLiveEnglish(started);  // KAZI-1366: a phone may unload the page before the English part plays
+          askUpgrade();
+        }
         setPhase(final ? 'english' : 'talk');
         play({
           kind: 'reply',
@@ -516,7 +550,7 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
       playerRef.current.pause();
       setPhase('unavailable');
     },
-    [addCaption, askUpgrade, goHome, play, studioHref, t, toCare, toClosing]
+    [addCaption, askUpgrade, goHome, play, started, studioHref, t, toCare, toClosing]
   );
 
   // ---- Recording.
@@ -544,7 +578,10 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
       void up.finish(seq, audio, durationMs).then((res) => {
         answer = res;
         // Not waiting for the ack to finish: the English part can be made while it plays.
-        if (res.success && res.data && 'kind' in res.data && res.data.kind === 'final' && !over.current) askUpgrade();
+        if (res.success && res.data && 'kind' in res.data && res.data.kind === 'final' && !over.current) {
+          keepLiveEnglish(started);  // KAZI-1366: kept from the moment the last answer arrives
+          askUpgrade();
+        }
         settle();
       });
     },
@@ -640,6 +677,14 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
   useEffect(() => {
     if (phase === 'care' || phase === 'unavailable') coverRef.current?.focus();
   }, [phase]);
+
+  /** The tap on `radio.live.resumeEnglish`: the English part from the start, then the closing. */
+  const resumeEnglish = useCallback(() => {
+    unlockLiveAudio();  // inside the tap: a reloaded page may not play sound without one
+    setResumeTap(false);
+    askUpgrade();
+    startEnglish();
+  }, [askUpgrade, startEnglish]);
 
   const end = useCallback(() => {
     // The voice and the microphone stop in the same moment as the tap; the rest happens on unmount.
@@ -795,6 +840,17 @@ function LiveSessionView({ started, homeHref, studioHref }: { started: StartedLi
       <footer className="border-t border-gray-200 bg-white px-4 py-3">
         {consentOpen && phase === 'talk' ? (
           <LiveConsentCard onAllow={allowMic} onLater={() => setConsentOpen(false)} />
+        ) : resumeTap ? (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={resumeEnglish}
+              data-testid="radio-live-resume"
+              className="min-h-11 rounded-lg bg-primary px-6 text-sm font-medium text-white"
+            >
+              {t('resumeEnglish')}
+            </button>
+          </div>
         ) : phase === 'card' ? (
           <EndCard card={card} onDone={goHome} />
         ) : phase === 'over' ? (

@@ -5,6 +5,10 @@
  * The session is held in memory only: there is no saved place and no "continue later"
  * (live-room.md, Screens and back). A Live screen opened with no session here (a reload, a link)
  * goes back to the radio home, whose `open_session_id` then ends the session that was left.
+ *
+ * One exception (KAZI-1366, live-room.md 0.11, The English part: "Coming back to it"): from the last
+ * answer until the closing starts, the session is also kept in the tab's session storage, so a phone
+ * that unloads the page while the screen is locked brings the user back to the English part.
  */
 import type { LiveHost, LiveSession } from '@/types/radio-live';
 
@@ -54,6 +58,44 @@ export function takeStartedLiveSession(): StartedLiveSession | null {
   const s = started;
   started = null;
   return s;
+}
+
+/** The English part's session, kept in the tab across a reload (KAZI-1366). */
+export const LIVE_ENGLISH_KEY = 'kazi.radio.live.english';
+/** A kept English part older than this is forgotten (live-room.md 0.11). */
+export const LIVE_ENGLISH_MAX_MS = 60 * 60 * 1000;
+
+/** The last answer arrived: keep the session until the closing starts or the user leaves. */
+export function keepLiveEnglish(s: StartedLiveSession, now: number = Date.now()): void {
+  try {
+    window.sessionStorage.setItem(LIVE_ENGLISH_KEY, JSON.stringify({ at: now, started: s }));
+  } catch {
+    // No session storage (private mode, a full quota): a reload goes back to the radio home, as before.
+  }
+}
+
+export function forgetLiveEnglish(): void {
+  try {
+    window.sessionStorage.removeItem(LIVE_ENGLISH_KEY);
+  } catch {
+    // Nothing kept.
+  }
+}
+
+/** The kept English part, if any and not older than {@link LIVE_ENGLISH_MAX_MS}; the AI marker never plays again. */
+export function takeLiveEnglish(now: number = Date.now()): StartedLiveSession | null {
+  try {
+    const raw = window.sessionStorage.getItem(LIVE_ENGLISH_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw) as { at?: unknown; started?: StartedLiveSession };
+    if (typeof v.at !== 'number' || now - v.at > LIVE_ENGLISH_MAX_MS || !v.started?.session?.session_id || !v.started.host) {
+      forgetLiveEnglish();
+      return null;
+    }
+    return { ...v.started, aigcLabel: false };
+  } catch {
+    return null;
+  }
 }
 
 /** For tests. */
