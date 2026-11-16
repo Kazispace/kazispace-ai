@@ -109,6 +109,18 @@ type MicBlock = null | 'blocked' | 'no_device';
  * Leaving ends the session: End, back, switching destination or closing the tab stop the voice and the
  * microphone at once and send `POST end`, never waited for. Nothing asks "are you sure?".
  */
+/**
+ * Tonight's sentence from the English part, as the server's closing builds it: the line that holds the key word
+ * (else the first line), the key word and its Chinese. `null` without a ready English part.
+ */
+export function cardFromUpgrade(u: LiveUpgrade | null): LiveCard | null {
+  if (!u || u.status !== 'ready' || !u.lines?.length) return null;
+  const lines = [...u.lines].sort((a, b) => a.seq - b.seq);
+  const kw = (u.key_word ?? '').toLocaleLowerCase();
+  const line = (kw && lines.find((l) => l.text.toLocaleLowerCase().includes(kw))) || lines[0];
+  return { sentence: line.text, key_word: u.key_word ?? null, key_word_zh: u.key_word_zh ?? null };
+}
+
 export function LiveScreen({ locale }: { locale: string }) {
   const router = useRouter();
   const homeHref = radioHomeHref(locale);
@@ -209,6 +221,8 @@ function LiveSessionView({
   if (!events.current) events.current = new LiveEventQueue(sessionId);
 
   const endedRef = useRef(false);
+  // The last answer has arrived (or this screen came back to the English part): the English part is due.
+  const englishDue = useRef(resume);
   useEffect(() => {
     const end = () => {
       if (endedRef.current) return;
@@ -218,9 +232,19 @@ function LiveSessionView({
       events.current?.flush();
       sendLiveEnd(sessionId);
     };
-    window.addEventListener('pagehide', end);
+    const hide = () => {
+      // KAZI-1366 (#301 R1): once the English part is due, the phone putting the page away is not leaving.
+      // Ending here would make the server drop an English part still being made and refuse the closing; the
+      // server's idle timeout ends the session if the user never comes back.
+      if (englishDue.current && !closeSent.current) {
+        events.current?.flush();
+        return;
+      }
+      end();
+    };
+    window.addEventListener('pagehide', hide);
     return () => {
-      window.removeEventListener('pagehide', end);
+      window.removeEventListener('pagehide', hide);
       // Leaving the screen inside the app is leaving: nothing to come back to. A `pagehide` (the phone
       // putting the page away) keeps the English part for a reload (KAZI-1366).
       forgetLiveEnglish();
@@ -291,8 +315,9 @@ function LiveSessionView({
     }
     if (over.current) return;
     if (!res.success || !res.data) {
-      // `409 live_no_closing`, a closing that cannot be read: the end card with Done only.
-      setCard(null);
+      // `409 live_no_closing` (the session timed out while the phone was locked, KAZI-1366), a closing that cannot
+      // be read: the end card from the English part already in hand, as the server builds it; Done only without one.
+      setCard(cardFromUpgrade(upgradeRef.current));
       setPhase('card');
       return;
     }
@@ -507,6 +532,7 @@ function LiveSessionView({
         }
         const final = turn.kind === 'final';
         if (final) {
+          englishDue.current = true;
           keepLiveEnglish(started);  // KAZI-1366: a phone may unload the page before the English part plays
           askUpgrade();
         }
@@ -579,6 +605,7 @@ function LiveSessionView({
         answer = res;
         // Not waiting for the ack to finish: the English part can be made while it plays.
         if (res.success && res.data && 'kind' in res.data && res.data.kind === 'final' && !over.current) {
+          englishDue.current = true;
           keepLiveEnglish(started);  // KAZI-1366: kept from the moment the last answer arrives
           askUpgrade();
         }

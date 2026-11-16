@@ -59,7 +59,7 @@ vi.mock('@/hooks/use-live-mic', () => ({
   },
 }));
 
-import { LiveScreen } from '@/components/radio/live-screen';
+import { LiveScreen, cardFromUpgrade } from '@/components/radio/live-screen';
 import type { LiveSession } from '@/types/radio-live';
 import {
   LIVE_ENGLISH_KEY,
@@ -210,17 +210,27 @@ describe('Keeping the English part in the tab', () => {
     expect(kept()).toBeNull();
   });
 
-  it('the phone putting the page away (pagehide) keeps it; leaving the screen forgets it', async () => {
+  it('after the last answer, pagehide keeps it and does NOT end the session; leaving the screen does both', async () => {
     m.chunk.mockImplementation((a: { final: boolean }) => Promise.resolve(a.final ? finalAnswer() : ok({ received: 1 }, 202)));
     m.upgrade.mockImplementation(() => new Promise(() => undefined)); // never ready: the page is put away first
     await mount();
     await finishPart();
     await talk();
     await act(async () => window.dispatchEvent(new Event('pagehide')));
-    expect(m.end).toHaveBeenCalledTimes(1);
+    // #301 R1: ending here would make the server drop an English part still being made and refuse the closing
+    expect(m.end).not.toHaveBeenCalled();
     expect(kept()).not.toBeNull();
     await act(async () => root.unmount());
     root = createRoot(container);
+    expect(m.end).toHaveBeenCalledTimes(1);
+    expect(kept()).toBeNull();
+  });
+
+  it('before the last answer, pagehide still ends the session (leaving, as before)', async () => {
+    await mount();
+    await finishPart();
+    await act(async () => window.dispatchEvent(new Event('pagehide')));
+    expect(m.end).toHaveBeenCalledTimes(1);
     expect(kept()).toBeNull();
   });
 
@@ -270,7 +280,7 @@ describe('Coming back to it after a reload', () => {
     expect(kept()).toBeNull();
   });
 
-  it('a session that already timed out: the English part still plays; the closing answers 409, the end card has Done only', async () => {
+  it('the real path (#301 R1): the session timed out while locked; English part ready before; close 409 ⇒ the card from the English part', async () => {
     m.upgrade.mockResolvedValue(READY);
     m.close.mockResolvedValue(fail(409, 'live_no_closing'));
     await reload();
@@ -278,9 +288,23 @@ describe('Coming back to it after a reload', () => {
     for (let i = 0; i < 4; i += 1) await finishPart();
     expect(audio().played.some((p) => p[0] === 'https://a/e1.mp3')).toBe(true);
     expect(m.close).toHaveBeenCalledTimes(1);
-    expect(q('radio-live-card-sentence')).toBeNull();
+    // the server builds no card for a timed-out session; the app builds tonight's sentence from the English part
+    expect(q('radio-live-card-sentence')?.textContent).toBe('I had noodles with my sister.');
+    expect(q('radio-live-card-key-word')?.textContent).toBe('noodles面条');
     await click(q('radio-live-done'));
     expect(m.replace).toHaveBeenCalledWith('/zh/radio');
+  });
+
+  it('the English part was dropped (skipped, code ended): nothing plays, the closing answers 409, Done only', async () => {
+    m.upgrade.mockResolvedValue(ok({ status: 'skipped', notice: null }));
+    m.close.mockResolvedValue(fail(409, 'live_no_closing'));
+    await reload();
+    await click(q('radio-live-resume'));
+    for (let i = 0; i < 4; i += 1) await finishPart();
+    expect(audio().played.some((p) => p[0] === 'https://a/e1.mp3')).toBe(false);
+    expect(m.close).toHaveBeenCalledTimes(1);
+    expect(q('radio-live-card-sentence')).toBeNull();
+    expect(q('radio-live-done')).not.toBeNull();
   });
 
   it('End on the way back is leaving: the session ends, nothing is kept', async () => {
@@ -298,5 +322,22 @@ describe('Coming back to it after a reload', () => {
     await reload();
     expect(m.replace).toHaveBeenCalledWith('/zh/radio');
     expect(q('radio-live-screen')).toBeNull();
+  });
+});
+
+describe('cardFromUpgrade', () => {
+  const up = (lines: string[], key_word: string | null) =>
+    ({ status: 'ready', lines: lines.map((text, i) => ({ seq: i + 1, text })), key_word, key_word_zh: '中' }) as never;
+
+  it('the line that holds the key word, as the server picks it', () => {
+    expect(cardFromUpgrade(up(['I came home late.', 'I had Noodles.'], 'noodles'))).toEqual({
+      sentence: 'I had Noodles.', key_word: 'noodles', key_word_zh: '中',
+    });
+  });
+
+  it('no line holds it: the first line; nothing ready: null', () => {
+    expect(cardFromUpgrade(up(['First.', 'Second.'], 'xyz'))?.sentence).toBe('First.');
+    expect(cardFromUpgrade({ status: 'skipped' } as never)).toBeNull();
+    expect(cardFromUpgrade(null)).toBeNull();
   });
 });
