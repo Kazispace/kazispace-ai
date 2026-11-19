@@ -242,11 +242,25 @@ export interface RadioPosition {
   offset_ms?: number;
 }
 
+/**
+ * `GET renders/{render_id}`. `state`, each sentence's `text` / `lang`, choice `label`s and `glossary` come only on a
+ * part written while it plays (personal-radio.md 0.21): `writing` ⇒ more sentences may still arrive; `done` ⇒ the
+ * list is final; absent ⇒ a complete part, the same as `done`.
+ */
 export interface RadioRenderAudio {
   render_id: string;
   voice_id: string;
-  segments: { seq: number; audio_url?: string | null; duration_ms?: number | null; pending: boolean }[];
-  choices: { choice_id: string; audio_url?: string | null }[];
+  state?: 'writing' | 'done' | null;
+  segments: {
+    seq: number;
+    audio_url?: string | null;
+    duration_ms?: number | null;
+    pending: boolean;
+    lang?: 'en' | 'zh' | 'mix' | null;
+    text?: string | null;
+  }[];
+  choices: { choice_id: string; audio_url?: string | null; label?: string | null }[];
+  glossary?: RadioGlossaryItem[] | null;
 }
 
 export interface RadioProgramSegment {
