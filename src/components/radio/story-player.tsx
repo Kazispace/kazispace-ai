@@ -351,6 +351,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     /**
      * Still `writing` after 45 s (or a failure while writing): `GET saves` once. The part ended there ⇒ go on from it;
      * another part ⇒ that part; still being written ⇒ `'again'` (one more minute of GET renders when allowed).
+     * "Ended": a choice part has its choices; a part without choices is ended only when one more GET renders says it
+     * is complete (#302 review R1-1: a save cannot tell a narration part still being written from a finished one).
      */
     const askSave = async (): Promise<'again' | 'stop'> => {
       const sv = await getRadioSave(saveId);
@@ -365,8 +367,19 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
         accept(sv.data, { restart: true });
         return 'stop';
       }
-      const ended = n.node_type !== 'choice' || (n.choices?.length ?? 0) > 0;
-      if (!ended) return 'again';
+      if (n.node_type !== 'choice') {
+        // A save carries no `state`, and a part without choices looks the same written or not: ask GET renders once
+        // more and take it as ended only when that answer says complete (no `state`, or `done`).
+        const re = await getRadioRender(renderId, voiceId);
+        if (!live) return 'stop';
+        if (!re?.success || !re.data || re.data.state === 'writing') return 'again';
+        const data = re.data;
+        setSegments((prev) => mergeRenderSegments(prev, data.segments, data.state != null));
+        finish(data);
+        setPartOpen(false);
+        return 'stop';
+      }
+      if ((n.choices?.length ?? 0) === 0) return 'again';
       setSegments((prev) => mergeRenderSegments(prev, n.segments ?? [], true));
       finish({ choices: (n.choices ?? []).map((c) => ({ choice_id: c.choice_id, label: c.label, audio_url: c.audio_url })), glossary: n.glossary });
       setPartOpen(false);

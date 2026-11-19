@@ -334,3 +334,95 @@ describe('45 seconds still writing', () => {
     expect(q('radio-story-missing')?.textContent).toContain('radio.contentMissing');
   });
 });
+
+describe('#302 review R1-1: the edge paths', () => {
+  it('a narration part in GET saves: one more GET renders still writing ⇒ not ended, keeps waiting the extra minute', async () => {
+    m.save.mockResolvedValue({ success: true, data: streamed('narration') });
+    m.turn.mockResolvedValue({ success: true, data: complete('n2') });
+    m.render.mockResolvedValue(writing(1));
+    await mount();
+    await ends();
+    await tick(RENDER_WRITING_WAIT_MS);
+    expect(m.save).toHaveBeenCalledTimes(2);
+    expect(m.turn).not.toHaveBeenCalled(); // not taken as ended: no advance
+    expect(q('radio-story-missing')).toBeNull();
+    await tick(RENDER_WRITING_EXTRA_MS);
+    expect(q('radio-story-missing')?.textContent).toContain('radio.contentMissing');
+    expect(m.turn).not.toHaveBeenCalled();
+  });
+
+  it('a narration part in GET saves: one more GET renders says done ⇒ ended, with the sentences it adds', async () => {
+    m.save.mockResolvedValue({ success: true, data: streamed('narration') });
+    m.turn.mockResolvedValue({ success: true, data: complete('n2') });
+    let n = 0;
+    m.render.mockImplementation(() => {
+      n += 1;
+      return Promise.resolve(n <= RENDER_WRITING_WAIT_MS / 1000 + 1 ? writing(1) : render({ state: 'done', segments: [seg(1), seg(2)] }));
+    });
+    await mount();
+    await ends();
+    await tick(RENDER_WRITING_WAIT_MS);
+    expect(m.save).toHaveBeenCalledTimes(2);
+    expect(FakeAudio.played).toEqual(['https://a/1.mp3', 'https://a/2.mp3']); // the skeleton remainder is played
+    expect(m.turn).not.toHaveBeenCalled();
+    await ends();
+    expect(m.turn).toHaveBeenCalledTimes(1);
+    expect(q('radio-story-missing')).toBeNull();
+  });
+
+  it('GET saves has moved on to another part ⇒ that part is shown and its audio asked for', async () => {
+    m.save.mockResolvedValueOnce({ success: true, data: streamed() }).mockResolvedValueOnce({ success: true, data: complete('n2') });
+    m.render.mockImplementation((rid: string) =>
+      Promise.resolve(rid === 'r_n1' ? writing(1) : render({ segments: [seg(1, 'n2 first'), seg(2)] }, rid))
+    );
+    await mount();
+    await tick(RENDER_WRITING_WAIT_MS);
+    expect(m.save).toHaveBeenCalledTimes(2);
+    expect(m.render.mock.calls.at(-1)?.[0]).toBe('r_n2');
+    expect(qa('radio-choice').map((b) => b.textContent)).toEqual(['AKnock', 'BLeave']);
+    const calls = m.render.mock.calls.length;
+    await tick(10_000);
+    expect(m.render.mock.calls.slice(calls).every((c) => c[0] !== 'r_n1')).toBe(true); // the old part is dropped
+    expect(q('radio-story-missing')).toBeNull();
+  });
+
+  it('a request fails after writing was seen ⇒ exactly one GET saves; part still open there ⇒ "content cannot be found"', async () => {
+    m.save.mockResolvedValue({ success: true, data: streamed() });
+    m.render.mockResolvedValueOnce(writing(1)).mockResolvedValue({ success: false, status: 500 });
+    await mount();
+    expect(m.save).toHaveBeenCalledTimes(1);
+    await tick(1000);
+    expect(m.save).toHaveBeenCalledTimes(2);
+    expect(q('radio-story-missing')?.textContent).toContain('radio.contentMissing');
+    await tick(60_000);
+    expect(m.save).toHaveBeenCalledTimes(2);
+    expect(m.render).toHaveBeenCalledTimes(2); // not retried
+  });
+
+  it('a request fails after writing was seen, and GET saves has the part ended ⇒ goes on from it', async () => {
+    const ended = complete();
+    ended.node!.segments = [seg(1), seg(2)];
+    m.save.mockResolvedValueOnce({ success: true, data: streamed() }).mockResolvedValueOnce({ success: true, data: ended });
+    m.render.mockResolvedValueOnce(writing(1)).mockResolvedValue({ success: false, status: 500 });
+    await mount();
+    await tick(1000);
+    expect(m.save).toHaveBeenCalledTimes(2);
+    expect(q('radio-story-missing')).toBeNull();
+    expect(captions()).toContain('s2');
+    expect(qa('radio-choice').map((b) => b.textContent)).toEqual(['AKnock', 'BLeave']);
+  });
+
+  it('paused while waiting silently, then play ⇒ waits again (nothing replayed) and goes on when the sentence arrives', async () => {
+    m.save.mockResolvedValue({ success: true, data: streamed('narration') });
+    m.render.mockResolvedValue(writing(1));
+    await mount();
+    await ends(); // waiting silently after s1
+    await act(async () => (q('radio-play-pause') as HTMLButtonElement).click()); // pause
+    await act(async () => (q('radio-play-pause') as HTMLButtonElement).click()); // play
+    await tick(1000);
+    expect(FakeAudio.played).toEqual(['https://a/1.mp3']); // s1 is not played again
+    m.render.mockResolvedValue(writing(2));
+    await tick(1000);
+    expect(FakeAudio.played).toEqual(['https://a/1.mp3', 'https://a/2.mp3']);
+  });
+});
