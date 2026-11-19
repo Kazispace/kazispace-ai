@@ -56,13 +56,20 @@ import type {
   RadioNotice,
   RadioPlayerResponse,
   RadioPosition,
+  RadioRenderAudio,
   RadioSegment,
   RadioTurnInput,
 } from '@/types/radio';
 
-/** personal-radio.md, The audio of a part: at most 10 render requests, one a second. */
+/** personal-radio.md, The audio of a part: at most 10 render requests for a complete part, one a second. */
 export const RENDER_POLL_LIMIT = 10;
 export const RENDER_POLL_INTERVAL_MS = 1000;
+/**
+ * A part written while it plays (personal-radio.md 0.21): the server ends every part within 45 s of the answer that
+ * carried it, so the app keeps asking that long; still `writing` then ⇒ `GET saves` once, then at most one more minute.
+ */
+export const RENDER_WRITING_WAIT_MS = 45_000;
+export const RENDER_WRITING_EXTRA_MS = 60_000;
 /** Data · Busy: after 5 busy answers in a row the turn shows as failed. */
 export const TURN_BUSY_LIMIT = 5;
 /** Data · Saving settings: after 5 busy answers in a row the setting goes back. */
@@ -76,6 +83,50 @@ type VoiceLine = { text: string | null; sticky: boolean; key: number };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Choice readings sit after the part's sentences in the play queue, with their own seq range. */
 const CHOICE_SEQ_BASE = 10_000;
+
+/** A missing-pending sentence: still being made and no audio yet. */
+const stillPending = (s: { pending: boolean; audio_url?: string | null }) => s.pending && !s.audio_url;
+
+/**
+ * Merges a `GET renders` answer into the part's sentences: audio for the sentences the app has (their text never
+ * changes) and, on a part written while it plays (`grow`), the new sentences after them by `seq`, in order. A new
+ * sentence with no text stops the append there, so a later one is never taken before it.
+ */
+function mergeRenderSegments(
+  prev: RadioSegment[],
+  rows: { seq: number; audio_url?: string | null; duration_ms?: number | null; pending: boolean; lang?: string | null; text?: string | null }[],
+  grow: boolean
+): RadioSegment[] {
+  const bySeq = new Map(rows.map((r) => [r.seq, r]));
+  const held = prev.map((s) => {
+    const a = bySeq.get(s.seq);
+    if (!a) return s;
+    return { ...s, audio_url: a.audio_url ?? s.audio_url, duration_ms: a.duration_ms ?? s.duration_ms, pending: a.pending };
+  });
+  if (!grow) return held;
+  let last = held.reduce((m, s) => Math.max(m, s.seq), Number.NEGATIVE_INFINITY);
+  const added: RadioSegment[] = [];
+  for (const a of [...rows].sort((x, y) => x.seq - y.seq)) {
+    if (a.seq <= last) continue;
+    if (typeof a.text !== 'string') break;
+    const lang = a.lang === 'en' || a.lang === 'zh' ? a.lang : 'mix';
+    added.push({ seq: a.seq, lang, text: a.text, audio_url: a.audio_url ?? null, duration_ms: a.duration_ms ?? null, pending: a.pending });
+    last = a.seq;
+  }
+  return added.length ? [...held, ...added] : held;
+}
+
+/** A part's choices from its final `GET renders` answer; the letters follow the order, as in a turn's answer. */
+function choicesFromRender(prev: RadioChoice[], rows: RadioRenderAudio['choices']): RadioChoice[] {
+  if (prev.length) {
+    const byId = new Map(rows.map((c) => [c.choice_id, c]));
+    return prev.map((c) => {
+      const a = byId.get(c.choice_id);
+      return a ? { ...c, label: a.label ?? c.label, audio_url: a.audio_url ?? c.audio_url } : c;
+    });
+  }
+  return rows.map((c, i) => ({ key: String.fromCharCode(65 + i), choice_id: c.choice_id, label: c.label ?? null, audio_url: c.audio_url ?? null }));
+}
 
 /**
  * A story in the player (KAZI-1209; personal-radio.md, Player · Voice · Notices · Data).
@@ -180,6 +231,14 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       .catch(() => undefined);
   }, []);
 
+  const addHeard = useCallback((fresh: RadioGlossaryItem[]) => {
+    if (!fresh.length) return;
+    setHeardGlossary((prev) => {
+      const have = new Set(prev.map((g) => g.term.toLowerCase()));
+      return [...prev, ...fresh.filter((g) => g.term && !have.has(g.term.toLowerCase()))];
+    });
+  }, []);
+
   /** Takes an answer in; true when it moved the story to a new part (which then plays by itself). */
   const accept = useCallback((next: RadioPlayerResponse, { restart = false }: { restart?: boolean } = {}): boolean => {
     const prev = respRef.current;
@@ -199,13 +258,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       setSegments(next.node.segments ?? []);
       setChoices(next.node.node_type === 'choice' ? next.node.choices ?? [] : []);
       setAnswerCount((n) => n + 1);
-      const fresh = next.node.glossary ?? [];
-      if (fresh.length) {
-        setHeardGlossary((prev) => {
-          const have = new Set(prev.map((g) => g.term.toLowerCase()));
-          return [...prev, ...fresh.filter((g) => g.term && !have.has(g.term.toLowerCase()))];
-        });
-      }
+      addHeard(next.node.glossary ?? []);
       // The story moved on: voice works again at the new point.
       strikes.current = 0;
       tapOnlyHere.current = false;
@@ -215,7 +268,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     const special = !!n && (n.kind === 'retry' || n.kind === 'paused' || n.code === 'input_self_harm');
     setNotice(special ? null : n);
     return !!next.node && !sameNode;
-  }, []);
+  }, [addHeard]);
 
   const closedOrMissing = useCallback(
     (status: number | undefined, errorCode: string | undefined, access: ReturnType<typeof radioAccessOf>) => {
@@ -254,44 +307,130 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     void reload();
   }, [locale, ready, authenticated, studioHref, reload, attempt]);
 
-  // The audio of a part: ask GET renders/{id} while a sentence is pending (≤ 10 requests, ≥ 1 s apart).
+  // The audio of a part (personal-radio.md, The audio of a part · A part written while it plays): one GET renders/{id}
+  // as soon as the answer arrives, for every part with a render id. Its `state` says which rules follow:
+  // - complete (no `state`, or `done`): ask again only while a sentence is pending, ≤ 10 such answers, ≥ 1 s apart;
+  // - `writing`: ask again (≥ 1 s apart) for 45 s from the answer, taking new sentences and, at `done`, the choices.
   const node = resp?.node ?? null;
   const renderId = node?.render_id ?? null;
   const voiceId = resp?.profile.voice_id ?? null;
-  const hasPending = segments.some((s) => s.pending && !s.audio_url);
+  // The part may still grow: from its answer until a GET renders answer says it is complete. Narration that reaches
+  // the last sentence meanwhile waits silently (`more` on the sentence player) instead of ending the part.
+  const [partOpen, setPartOpen] = useState(false);
+  const choicesRef = useRef(choices);
+  choicesRef.current = choices;
   useEffect(() => {
-    if (!renderId || !voiceId || !hasPending) return;
+    if (!renderId || !voiceId) {
+      setPartOpen(false);
+      return;
+    }
     let live = true;
+    const arrived = Date.now();
+    setPartOpen(true);
+    const isChoicePart = respRef.current?.node?.node_type === 'choice';
+    const noVoiceForPending = () => setSegments((prev) => prev.map((s) => (s.pending ? { ...s, pending: false } : s)));
+    /** The part is final: its choices and glossary (a part written while it plays), then whatever follows a part. */
+    const finish = (data: Pick<RadioRenderAudio, 'choices' | 'glossary'>) => {
+      const fresh = data.glossary ?? [];
+      const next = isChoicePart ? choicesFromRender(choicesRef.current, data.choices ?? []) : null;
+      if (next) {
+        choicesRef.current = next;
+        setChoices(next);
+      }
+      const r = respRef.current;
+      if (r?.node && r.node.render_id === renderId) {
+        const updated = {
+          ...r,
+          node: { ...r.node, glossary: fresh.length ? fresh : r.node.glossary, choices: next ?? r.node.choices },
+        };
+        respRef.current = updated;
+        setResp(updated);
+      }
+      addHeard(fresh);
+    };
+    /**
+     * Still `writing` after 45 s (or a failure while writing): `GET saves` once. The part ended there ⇒ go on from it;
+     * another part ⇒ that part; still being written ⇒ `'again'` (one more minute of GET renders when allowed).
+     */
+    const askSave = async (): Promise<'again' | 'stop'> => {
+      const sv = await getRadioSave(saveId);
+      if (!live) return 'stop';
+      if (!sv?.success || !sv.data) {
+        if (sv && radioAccessOf(sv) === 'closed') routerRef.current.replace(studioHref);
+        else setLoad({ state: 'missing' });
+        return 'stop';
+      }
+      const n = sv.data.node;
+      if (!n || n.render_id !== renderId) {
+        accept(sv.data, { restart: true });
+        return 'stop';
+      }
+      const ended = n.node_type !== 'choice' || (n.choices?.length ?? 0) > 0;
+      if (!ended) return 'again';
+      setSegments((prev) => mergeRenderSegments(prev, n.segments ?? [], true));
+      finish({ choices: (n.choices ?? []).map((c) => ({ choice_id: c.choice_id, label: c.label, audio_url: c.audio_url })), glossary: n.glossary });
+      setPartOpen(false);
+      return 'stop';
+    };
     void (async () => {
-      for (let i = 0; i < RENDER_POLL_LIMIT && live; i += 1) {
+      let complete = 0; // answers that said the part is complete: the 10-request cap counts these
+      let writingSeen = false;
+      let writingUntil = arrived + RENDER_WRITING_WAIT_MS;
+      let extraMinute = false;
+      for (let i = 0; live; i += 1) {
         if (i > 0) await sleep(RENDER_POLL_INTERVAL_MS);
         if (!live) return;
         const res = await getRadioRender(renderId, voiceId);
         if (!live) return;
-        if (!res.success || !res.data) {
-          if (radioAccessOf(res) === 'closed') routerRef.current.replace(studioHref);
-          break; // any other failure: not retried; what is still pending has no voice
+        if (!res?.success || !res.data) {
+          if (res && radioAccessOf(res) === 'closed') {
+            routerRef.current.replace(studioHref);
+            return;
+          }
+          // Not retried; what is still pending has no voice. A part seen being written cannot end on its own here.
+          noVoiceForPending();
+          if (writingSeen && !extraMinute) {
+            if ((await askSave()) === 'again' && live) setLoad({ state: 'missing' });
+          } else if (writingSeen) {
+            setLoad({ state: 'missing' });
+          } else {
+            setPartOpen(false);
+          }
+          return;
         }
-        const bySeq = new Map(res.data.segments.map((s) => [s.seq, s]));
-        setSegments((prev) =>
-          prev.map((s) => {
-            const a = bySeq.get(s.seq);
-            if (!a) return s;
-            return { ...s, audio_url: a.audio_url ?? s.audio_url, duration_ms: a.duration_ms ?? s.duration_ms, pending: a.pending };
-          })
+        const data = res.data;
+        const writing = data.state === 'writing';
+        setSegments((prev) => mergeRenderSegments(prev, data.segments, data.state != null));
+        const byChoice = new Map((data.choices ?? []).map((c) => [c.choice_id, c.audio_url]));
+        setChoices((prev) =>
+          writing ? [] : prev.map((c) => (byChoice.get(c.choice_id) ? { ...c, audio_url: byChoice.get(c.choice_id) } : c))
         );
-        const byChoice = new Map((res.data.choices ?? []).map((c) => [c.choice_id, c.audio_url]));
-        setChoices((prev) => prev.map((c) => (byChoice.get(c.choice_id) ? { ...c, audio_url: byChoice.get(c.choice_id) } : c)));
-        if (!res.data.segments.some((s) => s.pending && !s.audio_url)) return;
+        if (writing) {
+          writingSeen = true;
+          if (Date.now() < writingUntil) continue;
+          if (extraMinute) {
+            setLoad({ state: 'missing' });
+            return;
+          }
+          if ((await askSave()) === 'stop' || !live) return;
+          extraMinute = true;
+          writingUntil = Date.now() + RENDER_WRITING_EXTRA_MS;
+          continue;
+        }
+        if (data.state === 'done') finish(data);
+        setPartOpen(false);
+        complete += 1;
+        if (!data.segments.some(stillPending)) return;
+        if (complete >= RENDER_POLL_LIMIT) break;
       }
-      if (live) setSegments((prev) => prev.map((s) => (s.pending ? { ...s, pending: false } : s)));
+      if (live) noVoiceForPending();
     })();
     return () => {
       live = false;
     };
-    // Only a new part (render) restarts polling, not each merged answer.
+    // Only a new answer carrying a part restarts this, not each merged answer for the same part.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [renderId, voiceId]);
+  }, [renderId, voiceId, answerCount]);
 
   // The play queue: the part's sentences, then the host reading the choices.
   const segLen = segments.length;
@@ -386,6 +525,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     onPlayed: addListened,
     preroll: mustLabel ? AIGC_MORSE_URL : null,
     hold: labelUnknown,
+    more: partOpen,
   });
   const playerRef = useRef(player);
   playerRef.current = player;

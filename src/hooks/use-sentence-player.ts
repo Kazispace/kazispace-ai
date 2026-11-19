@@ -36,6 +36,9 @@ export function playInterrupted(err: unknown): boolean {
  * - Pause stops at once; play carries on from the same sentence. `repeat` replays the current one.
  * - `playFrom(i)` plays from sentence `i`.
  * - `onDone` fires once when the last sentence has been played.
+ * - `more` (KAZI-1402: a part written while it plays): reaching the end of the list while `more` is true waits
+ *   silently there (nothing plays, nothing is shown, `playing` stays as it was) and goes on as soon as a sentence
+ *   is added; if `more` turns false first, the list is over and `onDone` fires then.
  * - Unmounting stops everything (leaving the player stops it).
  *
  * The sentence list may change while playing (audio arriving for a pending sentence); the player
@@ -51,6 +54,7 @@ export function useSentencePlayer({
   element,
   preroll,
   hold,
+  more,
 }: {
   sentences: PlayableSentence[];
   speed: PlayerSpeed;
@@ -81,6 +85,8 @@ export function useSentencePlayer({
    * not arrived) — without it the first sentence would play before the rhythm.
    */
   hold?: boolean;
+  /** More sentences may still be added to this list: the end of the list waits for them instead of ending. */
+  more?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -94,6 +100,12 @@ export function useSentencePlayer({
   holdRef.current = !!hold;
   // The sentence asked for while held.
   const heldAt = useRef<number | null>(null);
+  const moreRef = useRef(!!more);
+  moreRef.current = !!more;
+  // Narration reached the end of a list that may still grow: the sentence to play when one is added.
+  const waitingAt = useRef<number | null>(null);
+  // Paused while waiting there: play goes back to waiting (or on, if the sentence has arrived meanwhile).
+  const pausedWaitingAt = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Paused inside a sentence's audio: play resumes from the same point in it.
@@ -130,7 +142,16 @@ export function useSentencePlayer({
       heldAt.current = null;
       clear();
       pausedInAudio.current = false;
+      waitingAt.current = null;
+      pausedWaitingAt.current = null;
       const list = sentencesRef.current;
+      if (i >= list.length && moreRef.current) {
+        // Wait silently at the end of what has arrived (personal-radio.md, A part written while it plays).
+        waitingAt.current = i;
+        setPlaying(true);
+        setDone(false);
+        return;
+      }
       if (i >= list.length) {
         setPlaying(false);
         setDone(true);
@@ -209,6 +230,8 @@ export function useSentencePlayer({
   const firstKey = sentences.length ? `${sentences[0].seq}:${sentences[0].text}` : '';
   useEffect(() => {
     clear();
+    waitingAt.current = null;
+    pausedWaitingAt.current = null;
     setIndex(0);
     setDone(false);
     setPlaying(false);
@@ -225,6 +248,15 @@ export function useSentencePlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hold]);
 
+  // Waiting at the end of the list: a sentence arrived, or the list became final (then it is over).
+  const listLength = sentences.length;
+  useEffect(() => {
+    const i = waitingAt.current;
+    if (i == null) return;
+    if (listLength > i || !more) playAt(i);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listLength, more]);
+
   useEffect(() => {
     if (audioRef.current && !prerollingRef.current) audioRef.current.playbackRate = speed;
   }, [speed]);
@@ -233,6 +265,10 @@ export function useSentencePlayer({
 
   const pause = useCallback(() => {
     heldAt.current = null; // paused before it could start: it stays paused
+    if (waitingAt.current != null) {
+      pausedWaitingAt.current = waitingAt.current;
+      waitingAt.current = null;
+    }
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
@@ -245,6 +281,10 @@ export function useSentencePlayer({
   }, []);
 
   const play = useCallback(() => {
+    if (pausedWaitingAt.current != null) {
+      playAt(pausedWaitingAt.current);
+      return;
+    }
     if (done) {
       playAt(0);
       return;
