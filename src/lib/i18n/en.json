@@ -1324,7 +1324,8 @@
 				"grammar": "Grammar",
 				"vocabulary": "Vocabulary",
 				"writing": "Writing",
-				"speaking": "Speaking"
+				"speaking": "Speaking",
+				"reading": "Reading"
 			},
 			"weak": {
 				"title": "Practise next",
