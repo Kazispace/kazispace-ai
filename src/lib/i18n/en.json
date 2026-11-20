@@ -1324,7 +1324,8 @@
 				"grammar": "Grammar",
 				"vocabulary": "Vocabulary",
 				"writing": "Writing",
-				"speaking": "Speaking"
+				"speaking": "Speaking",
+				"reading": "Reading"
 			},
 			"weak": {
 				"title": "Practise next",
@@ -1395,7 +1396,23 @@
 				"mcq": "Multiple choice",
 				"cloze": "Fill in the blank",
 				"error_correction": "Find the error"
-			}
+			},
+			"passageOpen": "Answer the passage",
+			"passageReopen": "Continue answering",
+			"passageText": "Passage",
+			"passageOptions": "Options",
+			"passageBlank": "Blank {n}",
+			"passageJumpToBlank": "Go to blank {n}",
+			"passageBackToText": "Blank {n}: back to the passage",
+			"passageFillPlaceholder": "Type 1–3 words",
+			"passageKind": {
+				"passage_cloze": "Cloze",
+				"grammar_fill": "Grammar fill-in",
+				"reading_comprehension": "Reading comprehension",
+				"seven_choose_five": "Seven-choose-five"
+			},
+			"passageEmptyWarning": "{count, plural, one {# blank is} other {# blanks are}} still empty and will be marked wrong.",
+			"passageSubmitAnyway": "Submit anyway"
 		}
 	},
 	"tma": {
