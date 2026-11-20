@@ -19,7 +19,8 @@ export type EtFormKind =
   | 'writing_draft'
   | 'writing_revision'
   | 'speaking_answer'
-  | 'objective_set';
+  | 'objective_set'
+  | 'passage';
 
 export interface EtFormOption {
   id: string;
@@ -56,11 +57,35 @@ export interface EtObjectiveItem {
   options?: string[];
 }
 
+/**
+ * KAZI-1405 · one place to answer in a `passage` form (UI repo reply-form 0.3.0 "Passages").
+ * `input` is kept as sent; the view treats anything but `choice` / `text` as a plain text box.
+ */
+export interface EtPassageBlank {
+  blank: string;
+  input: string;
+  /** The question, for `reading_comprehension`. */
+  stem?: string;
+  /** This blank's own options (`passage_cloze`, `reading_comprehension`). */
+  options?: string[];
+}
+
+/** KAZI-1405 · the one passage a `passage` form carries. Never answers, tags or explanations. */
+export interface EtPassage {
+  item_id: string;
+  /** `passage_cloze` · `grammar_fill` today; `reading_comprehension` · `seven_choose_five` with step 2. */
+  item_kind: string;
+  passage_text: string;
+  blanks: EtPassageBlank[];
+  /** `seven_choose_five`: the seven options every gap picks from, shown once. */
+  shared_options?: string[];
+}
+
 export interface EtForm {
   form_id: string;
   kind: EtFormKind;
   presentation: 'inline' | 'modal';
-  control: 'radio' | 'textarea' | 'audio' | 'objective_set';
+  control: 'radio' | 'textarea' | 'audio' | 'objective_set' | 'passage';
   title: string;
   prompt: string | null;
   options: EtFormOption[];
@@ -71,6 +96,8 @@ export interface EtForm {
   followup?: EtFormFollowup;
   /** Only on `objective_set`: the questions, in the order the backend set them. */
   items?: EtObjectiveItem[];
+  /** Only on `passage`: the passage and its numbered blanks. */
+  passage?: EtPassage;
 }
 
 /** kind → the only (presentation, control) pair the contract allows. */
@@ -82,6 +109,8 @@ const SHAPE_BY_KIND: Record<EtFormKind, Pick<EtForm, 'presentation' | 'control'>
   speaking_answer: { presentation: 'inline', control: 'audio' },
   // KAZI-1075: grammar / vocabulary set — all questions answered, then one submit.
   objective_set: { presentation: 'inline', control: 'objective_set' },
+  // KAZI-1405: one Gaokao passage — modal (full screen on phones), every blank answered, one submit.
+  passage: { presentation: 'modal', control: 'passage' },
 };
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
@@ -125,6 +154,8 @@ export function parseEtForm(meta?: Record<string, unknown> | null): EtForm | nul
   if (shape.control === 'radio' && options.length === 0) return null;
   const items = shape.control === 'objective_set' ? parseObjectiveItems(raw.items) : undefined;
   if (shape.control === 'objective_set' && !items) return null;
+  const passage = shape.control === 'passage' ? parsePassage(raw.item) : undefined;
+  if (shape.control === 'passage' && !passage) return null;
 
   const form: EtForm = {
     form_id: formId,
@@ -149,6 +180,7 @@ export function parseEtForm(meta?: Record<string, unknown> | null): EtForm | nul
     if (followup) form.followup = followup;
   }
   if (items) form.items = items;
+  if (passage) form.passage = passage;
   return form;
 }
 
@@ -177,6 +209,116 @@ function parseObjectiveItems(value: unknown): EtObjectiveItem[] | undefined {
     items.push(item);
   }
   return items;
+}
+
+function readOptionList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const options = value.filter((o): o is string => typeof o === 'string' && o.trim() !== '');
+  return options.length >= 2 && options.length === value.length ? options : undefined;
+}
+
+/**
+ * KAZI-1405: the passage must carry its text and every blank, or the whole
+ * form is dropped (same rule as `objective_set`: ⛔ a half-built passage would
+ * hide blanks the server then grades as wrong).
+ *
+ * A blank whose `input` this build does not know, or a `choice` blank with no
+ * options to pick from, is still kept and shown as a plain text box (contract:
+ * "shows the passage text and a plain text box per blank rather than nothing").
+ */
+function parsePassage(value: unknown): EtPassage | undefined {
+  const raw = asRecord(value);
+  const itemId = readString(raw?.item_id);
+  const text = readString(raw?.passage_text);
+  if (!raw || !itemId || !text || !Array.isArray(raw.blanks) || raw.blanks.length === 0) return undefined;
+  const shared = readOptionList(raw.shared_options);
+  const blanks: EtPassageBlank[] = [];
+  const seen = new Set<string>();
+  for (const entry of raw.blanks) {
+    const row = asRecord(entry);
+    const number =
+      typeof row?.blank === 'number' && Number.isInteger(row.blank) ? String(row.blank) : readString(row?.blank);
+    if (!row || !number || seen.has(number)) return undefined;
+    seen.add(number);
+    const blank: EtPassageBlank = { blank: number, input: readString(row.input) ?? '' };
+    const stem = readString(row.stem);
+    if (stem) blank.stem = stem;
+    const options = readOptionList(row.options);
+    if (options) blank.options = options;
+    blanks.push(blank);
+  }
+  return {
+    item_id: itemId,
+    item_kind: readString(raw.item_kind) ?? '',
+    passage_text: text,
+    blanks,
+    ...(shared ? { shared_options: shared } : {}),
+  };
+}
+
+/**
+ * KAZI-1405: the options a blank is answered from — its own, else the
+ * passage's shared list (`seven_choose_five`). `undefined` ⇒ show a text box.
+ */
+export function passageBlankOptions(passage: EtPassage, blank: EtPassageBlank): string[] | undefined {
+  if (blank.input !== 'choice') return undefined;
+  return blank.options ?? passage.shared_options;
+}
+
+/**
+ * KAZI-1405: split the passage text so each `(n)` that names one of its
+ * blanks can be shown as a marker. `(go)` in `(3) ___ (go)` and numbers that
+ * are not blanks stay plain text.
+ */
+export function splitPassageMarkers(
+  text: string,
+  blanks: ReadonlyArray<string>
+): Array<{ text: string; blank?: string }> {
+  const known = new Set(blanks);
+  const parts: Array<{ text: string; blank?: string }> = [];
+  let cursor = 0;
+  const marker = /\((\d{1,3})\)/g;
+  for (let match = marker.exec(text); match; match = marker.exec(text)) {
+    const number = match[1];
+    const at = match.index;
+    if (!known.has(number)) continue;
+    if (at > cursor) parts.push({ text: text.slice(cursor, at) });
+    parts.push({ text: match[0], blank: number });
+    cursor = at + match[0].length;
+  }
+  if (cursor < text.length) parts.push({ text: text.slice(cursor) });
+  return parts;
+}
+
+/**
+ * KAZI-1405 · the chat send for a passage (reply-form 0.3.0 "Submitting").
+ * - `action_payload` = JSON `{"answers": {"<blank>": value}}`: the chosen
+ *   option's text exactly as sent (with its `A)` prefix, ⛔ never the letter
+ *   alone) or the typed words; unanswered blanks are left out.
+ * - `content` = one line per blank, numbered by blank, for the user bubble.
+ * At least one answer is required.
+ */
+export function buildEtPassageSubmit(
+  form: EtForm,
+  answers: Readonly<Record<string, string>>
+): EtFormSubmit | null {
+  if (form.control !== 'passage' || !form.passage) return null;
+  const picked: Record<string, string> = {};
+  const lines: string[] = [];
+  for (const { blank } of form.passage.blanks) {
+    const value = (answers[blank] ?? '').trim();
+    if (value) picked[blank] = value;
+    lines.push(`(${blank}) ${value || '—'}`);
+  }
+  if (Object.keys(picked).length === 0) return null;
+  return {
+    display: lines.join('\n'),
+    meta: {
+      action_type: ET_FORM_SUBMIT_ACTION_TYPE,
+      form_id: form.form_id,
+      action_payload: JSON.stringify({ [ET_OBJECTIVE_ANSWERS_KEY]: picked }),
+    },
+  };
 }
 
 /** The key the backend reads answers from (`objective_set.ANSWERS_KEY`). */
@@ -290,7 +432,7 @@ export function buildEtFormSubmit(
   }
   const text = answer.text.trim();
   // objective_set answers go through `buildEtObjectiveSubmit` (a JSON payload), never as one text.
-  if (!text || form.control === 'radio' || form.control === 'objective_set') return null;
+  if (!text || form.control === 'radio' || form.control === 'objective_set' || form.control === 'passage') return null;
   return { display: text, meta: base };
 }
 

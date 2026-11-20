@@ -1099,6 +1099,20 @@
 				"mcq": "选择",
 				"cloze": "填空",
 				"error_correction": "改错"
+			},
+			"passageOpen": "作答这篇",
+			"passageReopen": "继续作答",
+			"passageText": "原文",
+			"passageOptions": "选项",
+			"passageBlank": "第 {n} 空",
+			"passageJumpToBlank": "跳到第 {n} 空",
+			"passageBackToText": "第 {n} 空：回到原文",
+			"passageFillPlaceholder": "填 1–3 个词",
+			"passageKind": {
+				"passage_cloze": "完形填空",
+				"grammar_fill": "语法填空",
+				"reading_comprehension": "阅读理解",
+				"seven_choose_five": "七选五"
 			}
 		}
 	},

@@ -1,0 +1,463 @@
+{
+  "_source": "kazispace-backend main @ 8147982a · agents/english_tutor/form_schema.passage_form(locale, set_item_ids=[...], bank=...) over tests/fixtures/kazi1403/*.json · the `meta.form` the ET graph sends for one Gaokao passage (KAZI-1403)",
+  "passage_cloze": {
+    "zh": {
+      "form": {
+        "form_id": "et:passage:ai_gaokao_pc_roof_garden_001",
+        "kind": "passage",
+        "presentation": "modal",
+        "control": "passage",
+        "title": "篇章练习",
+        "prompt": "逐空作答后一次提交；没作答的空按错判。",
+        "options": [],
+        "submit_label": "提交答案",
+        "item": {
+          "item_id": "ai_gaokao_pc_roof_garden_001",
+          "item_kind": "passage_cloze",
+          "passage_text": "Directions: Read the passage and choose the best answer (A, B, C or D) for each blank. Last spring our school turned an empty roof into a vegetable garden. At first only a few students (1) to help, because most of us thought gardening was (2). Mr Chen, our biology teacher, did not give up. He (3) each class a small bed and asked us to keep a diary of what we (4). Within weeks the roof changed. Tiny green leaves (5) through the soil, and the diaries filled with notes and drawings. When a storm (6) half of the tomato plants, nobody complained. (7), we rebuilt the frames together and tied the stems more (8). By June the garden was producing more than we could eat, so we decided to (9) the extra vegetables to an old people's home nearby. The visit was a (10) for many of us: the old people told us about the farms they had (11) as children. Now the garden is part of school life. New students (12) up for it every September, and the diaries have become a small library. Looking back, I (13) that the garden taught us more than how to grow beans. It taught us (14) to care for something over time, and how much (15) a small piece of land can bring. (AI)",
+          "blanks": [
+            {
+              "blank": "1",
+              "input": "choice",
+              "options": [
+                "A) promised",
+                "B) volunteered",
+                "C) refused",
+                "D) pretended"
+              ]
+            },
+            {
+              "blank": "2",
+              "input": "choice",
+              "options": [
+                "A) boring",
+                "B) useful",
+                "C) dangerous",
+                "D) expensive"
+              ]
+            },
+            {
+              "blank": "3",
+              "input": "choice",
+              "options": [
+                "A) lent",
+                "B) sold",
+                "C) gave",
+                "D) showed"
+              ]
+            },
+            {
+              "blank": "4",
+              "input": "choice",
+              "options": [
+                "A) observed",
+                "B) ignored",
+                "C) borrowed",
+                "D) repaired"
+              ]
+            },
+            {
+              "blank": "5",
+              "input": "choice",
+              "options": [
+                "A) fell",
+                "B) pushed",
+                "C) ran",
+                "D) looked"
+              ]
+            },
+            {
+              "blank": "6",
+              "input": "choice",
+              "options": [
+                "A) protected",
+                "B) watered",
+                "C) damaged",
+                "D) planted"
+              ]
+            },
+            {
+              "blank": "7",
+              "input": "choice",
+              "options": [
+                "A) Instead",
+                "B) Besides",
+                "C) However",
+                "D) Otherwise"
+              ]
+            },
+            {
+              "blank": "8",
+              "input": "choice",
+              "options": [
+                "A) loosely",
+                "B) firmly",
+                "C) quickly",
+                "D) rarely"
+              ]
+            },
+            {
+              "blank": "9",
+              "input": "choice",
+              "options": [
+                "A) sell",
+                "B) donate",
+                "C) throw",
+                "D) lend"
+              ]
+            },
+            {
+              "blank": "10",
+              "input": "choice",
+              "options": [
+                "A) surprise",
+                "B) mistake",
+                "C) habit",
+                "D) secret"
+              ]
+            },
+            {
+              "blank": "11",
+              "input": "choice",
+              "options": [
+                "A) worked on",
+                "B) given up",
+                "C) put off",
+                "D) run out"
+              ]
+            },
+            {
+              "blank": "12",
+              "input": "choice",
+              "options": [
+                "A) sign",
+                "B) give",
+                "C) turn",
+                "D) make"
+              ]
+            },
+            {
+              "blank": "13",
+              "input": "choice",
+              "options": [
+                "A) doubt",
+                "B) realize",
+                "C) forget",
+                "D) pretend"
+              ]
+            },
+            {
+              "blank": "14",
+              "input": "choice",
+              "options": [
+                "A) what",
+                "B) why",
+                "C) how",
+                "D) where"
+              ]
+            },
+            {
+              "blank": "15",
+              "input": "choice",
+              "options": [
+                "A) joy",
+                "B) noise",
+                "C) trouble",
+                "D) money"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "en": {
+      "form": {
+        "form_id": "et:passage:ai_gaokao_pc_roof_garden_001",
+        "kind": "passage",
+        "presentation": "modal",
+        "control": "passage",
+        "title": "Passage practice",
+        "prompt": "Fill in each blank, then submit once. Unanswered blanks count as wrong.",
+        "options": [],
+        "submit_label": "Submit answers",
+        "item": {
+          "item_id": "ai_gaokao_pc_roof_garden_001",
+          "item_kind": "passage_cloze",
+          "passage_text": "Directions: Read the passage and choose the best answer (A, B, C or D) for each blank. Last spring our school turned an empty roof into a vegetable garden. At first only a few students (1) to help, because most of us thought gardening was (2). Mr Chen, our biology teacher, did not give up. He (3) each class a small bed and asked us to keep a diary of what we (4). Within weeks the roof changed. Tiny green leaves (5) through the soil, and the diaries filled with notes and drawings. When a storm (6) half of the tomato plants, nobody complained. (7), we rebuilt the frames together and tied the stems more (8). By June the garden was producing more than we could eat, so we decided to (9) the extra vegetables to an old people's home nearby. The visit was a (10) for many of us: the old people told us about the farms they had (11) as children. Now the garden is part of school life. New students (12) up for it every September, and the diaries have become a small library. Looking back, I (13) that the garden taught us more than how to grow beans. It taught us (14) to care for something over time, and how much (15) a small piece of land can bring. (AI)",
+          "blanks": [
+            {
+              "blank": "1",
+              "input": "choice",
+              "options": [
+                "A) promised",
+                "B) volunteered",
+                "C) refused",
+                "D) pretended"
+              ]
+            },
+            {
+              "blank": "2",
+              "input": "choice",
+              "options": [
+                "A) boring",
+                "B) useful",
+                "C) dangerous",
+                "D) expensive"
+              ]
+            },
+            {
+              "blank": "3",
+              "input": "choice",
+              "options": [
+                "A) lent",
+                "B) sold",
+                "C) gave",
+                "D) showed"
+              ]
+            },
+            {
+              "blank": "4",
+              "input": "choice",
+              "options": [
+                "A) observed",
+                "B) ignored",
+                "C) borrowed",
+                "D) repaired"
+              ]
+            },
+            {
+              "blank": "5",
+              "input": "choice",
+              "options": [
+                "A) fell",
+                "B) pushed",
+                "C) ran",
+                "D) looked"
+              ]
+            },
+            {
+              "blank": "6",
+              "input": "choice",
+              "options": [
+                "A) protected",
+                "B) watered",
+                "C) damaged",
+                "D) planted"
+              ]
+            },
+            {
+              "blank": "7",
+              "input": "choice",
+              "options": [
+                "A) Instead",
+                "B) Besides",
+                "C) However",
+                "D) Otherwise"
+              ]
+            },
+            {
+              "blank": "8",
+              "input": "choice",
+              "options": [
+                "A) loosely",
+                "B) firmly",
+                "C) quickly",
+                "D) rarely"
+              ]
+            },
+            {
+              "blank": "9",
+              "input": "choice",
+              "options": [
+                "A) sell",
+                "B) donate",
+                "C) throw",
+                "D) lend"
+              ]
+            },
+            {
+              "blank": "10",
+              "input": "choice",
+              "options": [
+                "A) surprise",
+                "B) mistake",
+                "C) habit",
+                "D) secret"
+              ]
+            },
+            {
+              "blank": "11",
+              "input": "choice",
+              "options": [
+                "A) worked on",
+                "B) given up",
+                "C) put off",
+                "D) run out"
+              ]
+            },
+            {
+              "blank": "12",
+              "input": "choice",
+              "options": [
+                "A) sign",
+                "B) give",
+                "C) turn",
+                "D) make"
+              ]
+            },
+            {
+              "blank": "13",
+              "input": "choice",
+              "options": [
+                "A) doubt",
+                "B) realize",
+                "C) forget",
+                "D) pretend"
+              ]
+            },
+            {
+              "blank": "14",
+              "input": "choice",
+              "options": [
+                "A) what",
+                "B) why",
+                "C) how",
+                "D) where"
+              ]
+            },
+            {
+              "blank": "15",
+              "input": "choice",
+              "options": [
+                "A) joy",
+                "B) noise",
+                "C) trouble",
+                "D) money"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "grammar_fill": {
+    "zh": {
+      "form": {
+        "form_id": "et:passage:ai_gaokao_gf_paper_cutting_001",
+        "kind": "passage",
+        "presentation": "modal",
+        "control": "passage",
+        "title": "篇章练习",
+        "prompt": "逐空作答后一次提交；没作答的空按错判。",
+        "options": [],
+        "submit_label": "提交答案",
+        "item": {
+          "item_id": "ai_gaokao_gf_paper_cutting_001",
+          "item_kind": "grammar_fill",
+          "passage_text": "Directions: Read the passage. Fill in each blank with one proper word or the correct form of the word in brackets. Paper cutting is one of (1) ___ oldest folk arts in China. It (2) ___ (practise) for more than 1,500 years, and today it is still popular (3) ___ people of all ages. Artists cut red paper into flowers, animals and characters, (4) ___ are often put on windows during the Spring Festival. The patterns are not only beautiful but also (5) ___ (meaning): a fish stands for plenty, and a bat for good luck. Learning the art is not easy. A beginner needs (6) ___ (patient) and steady hands, because one wrong cut can spoil the whole work. My grandmother, (7) ___ taught me paper cutting when I was eight, still cuts every week. She says she enjoys (8) ___ (watch) a plain sheet turn into a picture. Last year her works (9) ___ (show) in a local museum, and many visitors asked how she had learned. \"With time and love,\" she answered, (10) ___ (smile). (AI)",
+          "blanks": [
+            {
+              "blank": "1",
+              "input": "text"
+            },
+            {
+              "blank": "2",
+              "input": "text"
+            },
+            {
+              "blank": "3",
+              "input": "text"
+            },
+            {
+              "blank": "4",
+              "input": "text"
+            },
+            {
+              "blank": "5",
+              "input": "text"
+            },
+            {
+              "blank": "6",
+              "input": "text"
+            },
+            {
+              "blank": "7",
+              "input": "text"
+            },
+            {
+              "blank": "8",
+              "input": "text"
+            },
+            {
+              "blank": "9",
+              "input": "text"
+            },
+            {
+              "blank": "10",
+              "input": "text"
+            }
+          ]
+        }
+      }
+    },
+    "en": {
+      "form": {
+        "form_id": "et:passage:ai_gaokao_gf_paper_cutting_001",
+        "kind": "passage",
+        "presentation": "modal",
+        "control": "passage",
+        "title": "Passage practice",
+        "prompt": "Fill in each blank, then submit once. Unanswered blanks count as wrong.",
+        "options": [],
+        "submit_label": "Submit answers",
+        "item": {
+          "item_id": "ai_gaokao_gf_paper_cutting_001",
+          "item_kind": "grammar_fill",
+          "passage_text": "Directions: Read the passage. Fill in each blank with one proper word or the correct form of the word in brackets. Paper cutting is one of (1) ___ oldest folk arts in China. It (2) ___ (practise) for more than 1,500 years, and today it is still popular (3) ___ people of all ages. Artists cut red paper into flowers, animals and characters, (4) ___ are often put on windows during the Spring Festival. The patterns are not only beautiful but also (5) ___ (meaning): a fish stands for plenty, and a bat for good luck. Learning the art is not easy. A beginner needs (6) ___ (patient) and steady hands, because one wrong cut can spoil the whole work. My grandmother, (7) ___ taught me paper cutting when I was eight, still cuts every week. She says she enjoys (8) ___ (watch) a plain sheet turn into a picture. Last year her works (9) ___ (show) in a local museum, and many visitors asked how she had learned. \"With time and love,\" she answered, (10) ___ (smile). (AI)",
+          "blanks": [
+            {
+              "blank": "1",
+              "input": "text"
+            },
+            {
+              "blank": "2",
+              "input": "text"
+            },
+            {
+              "blank": "3",
+              "input": "text"
+            },
+            {
+              "blank": "4",
+              "input": "text"
+            },
+            {
+              "blank": "5",
+              "input": "text"
+            },
+            {
+              "blank": "6",
+              "input": "text"
+            },
+            {
+              "blank": "7",
+              "input": "text"
+            },
+            {
+              "blank": "8",
+              "input": "text"
+            },
+            {
+              "blank": "9",
+              "input": "text"
+            },
+            {
+              "blank": "10",
+              "input": "text"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
