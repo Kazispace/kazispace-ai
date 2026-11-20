@@ -268,7 +268,8 @@ export function passageBlankOptions(passage: EtPassage, blank: EtPassageBlank): 
 /**
  * KAZI-1405: split the passage text so each `(n)` that names one of its
  * blanks can be shown as a marker. `(go)` in `(3) ___ (go)` and numbers that
- * are not blanks stay plain text.
+ * are not blanks stay plain text. Only the **first** `(n)` of a blank is a
+ * marker (#303 review ⚪2): a repeated one would give two elements the same id.
  */
 export function splitPassageMarkers(
   text: string,
@@ -282,6 +283,7 @@ export function splitPassageMarkers(
     const number = match[1];
     const at = match.index;
     if (!known.has(number)) continue;
+    known.delete(number);
     if (at > cursor) parts.push({ text: text.slice(cursor, at) });
     parts.push({ text: match[0], blank: number });
     cursor = at + match[0].length;

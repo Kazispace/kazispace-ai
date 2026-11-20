@@ -1410,7 +1410,9 @@
 				"grammar_fill": "Grammar fill-in",
 				"reading_comprehension": "Reading comprehension",
 				"seven_choose_five": "Seven-choose-five"
-			}
+			},
+			"passageEmptyWarning": "{count, plural, one {# blank is} other {# blanks are}} still empty and will be marked wrong.",
+			"passageSubmitAnyway": "Submit anyway"
 		}
 	},
 	"tma": {

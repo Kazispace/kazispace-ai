@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { BookOpen, Loader2, PenLine, X } from 'lucide-react';
@@ -395,6 +395,12 @@ function PassageDialog({
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   useDialogFocusTrap({ open, onClose, dialogRef, initialFocusRef: closeRef });
+  // #303 review ⚪1: the server grades an empty blank as wrong (and records it as evidence) —
+  // say so once before sending a partly answered passage. Reset whenever the dialog closes.
+  const [confirmingEmpty, setConfirmingEmpty] = useState(false);
+  useEffect(() => {
+    if (!open) setConfirmingEmpty(false);
+  }, [open]);
 
   if (!open || typeof document === 'undefined') return null;
   const ids = passageIds(form.form_id);
@@ -498,11 +504,26 @@ function PassageDialog({
           <span className="mr-auto text-xs text-workspace-muted" data-et-passage-progress>
             {t('objectiveAnswered', { count: answered, total: passage.blanks.length })}
           </span>
+          {confirmingEmpty && answered < passage.blanks.length ? (
+            <p role="status" className="w-full text-xs text-amber-700" data-et-passage-empty-warning>
+              {t('passageEmptyWarning', { count: passage.blanks.length - answered })}
+            </p>
+          ) : null}
           <Button type="button" variant="ghost" onClick={onClose}>
             {t('cancel')}
           </Button>
-          <Button type="button" disabled={answered === 0} onClick={onSubmit}>
-            {form.submit_label}
+          <Button
+            type="button"
+            disabled={answered === 0}
+            onClick={() => {
+              if (answered < passage.blanks.length && !confirmingEmpty) {
+                setConfirmingEmpty(true);
+                return;
+              }
+              onSubmit();
+            }}
+          >
+            {confirmingEmpty && answered < passage.blanks.length ? t('passageSubmitAnyway') : form.submit_label}
           </Button>
         </div>
       </div>

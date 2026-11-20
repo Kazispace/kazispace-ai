@@ -126,6 +126,11 @@ describe('KAZI-1405 · parseEtForm reads the backend passage form', () => {
     expect(parts.filter((p) => p.blank).map((p) => p.text)).toEqual(['(2)']);
     expect(parts.map((p) => p.text).join('')).toBe('It (2) ___ (practise) for (1,500) years; (11) is not a blank.');
   });
+
+  it('only the first (n) of a blank is a marker (#303 review ⚪2: no duplicate ids)', () => {
+    const parts = splitPassageMarkers('Gap (1) here; the text later quotes "(1)" again.', ['1']);
+    expect(parts.filter((p) => p.blank)).toEqual([{ text: '(1)', blank: '1' }]);
+  });
 });
 
 describe('KAZI-1405 · passage_cloze (real backend form, real copy)', () => {
@@ -157,6 +162,11 @@ describe('KAZI-1405 · passage_cloze (real backend form, real copy)', () => {
     pick('3', fixture.passage_cloze.zh.form.item.blanks[2].options[0]);
     expect(dialog()?.textContent).toContain('已作答 2/15');
     expect(submitButton().textContent).toBe('提交答案');
+    // #303 review ⚪1: a partly answered passage first says the empties count as wrong, and does not send.
+    await act(async () => submitButton().click());
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(dialog()?.querySelector('[data-et-passage-empty-warning]')?.textContent).toBe('还有 13 空没作答，提交后按错判。');
+    expect(submitButton().textContent).toBe('仍然提交');
     await act(async () => submitButton().click());
 
     expect(onSubmit).toHaveBeenCalledTimes(1);
@@ -194,6 +204,33 @@ describe('KAZI-1405 · passage_cloze (real backend form, real copy)', () => {
   });
 });
 
+describe('KAZI-1405 · the empty-blank warning', () => {
+  it('a fully answered passage sends on the first click, with no warning', async () => {
+    const onSubmit = vi.fn();
+    const f = form('passage_cloze', 'en');
+    render(f, 'en', { onSubmit });
+    openDialog();
+    for (const b of f.passage?.blanks ?? []) pick(b.blank, (b.options ?? [])[0]);
+    await act(async () => submitButton().click());
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('the warning resets when the dialog is closed and reopened', async () => {
+    const onSubmit = vi.fn();
+    render(form('passage_cloze', 'en'), 'en', { onSubmit });
+    openDialog();
+    pick('1', 'B) volunteered');
+    await act(async () => submitButton().click());
+    expect(dialog()?.querySelector('[data-et-passage-empty-warning]')).not.toBeNull();
+    const close = dialog()?.querySelector(`button[aria-label="Close"]:not(.absolute)`) as HTMLButtonElement;
+    act(() => close.click());
+    openDialog();
+    expect(dialog()?.querySelector('[data-et-passage-empty-warning]')).toBeNull();
+    expect(submitButton().textContent).toBe('Submit answers');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+});
+
 describe('KAZI-1405 · grammar_fill (real backend form, real copy)', () => {
   it('one text box per blank, with the 1–3 words hint; typed words are sent trimmed', async () => {
     const onSubmit = vi.fn();
@@ -204,6 +241,8 @@ describe('KAZI-1405 · grammar_fill (real backend form, real copy)', () => {
     expect((blank('2').querySelector('input') as HTMLInputElement).placeholder).toBe('Type 1–3 words');
     type('1', ' the ');
     type('2', 'has been practised');
+    await act(async () => submitButton().click());
+    expect(dialog()?.textContent).toContain('8 blanks are still empty and will be marked wrong.');
     await act(async () => submitButton().click());
     expect(JSON.parse(onSubmit.mock.calls[0][0].meta.action_payload)).toEqual({
       answers: { '1': 'the', '2': 'has been practised' },

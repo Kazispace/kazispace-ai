@@ -1114,7 +1114,9 @@
 				"grammar_fill": "语法填空",
 				"reading_comprehension": "阅读理解",
 				"seven_choose_five": "七选五"
-			}
+			},
+			"passageEmptyWarning": "还有 {count} 空没作答，提交后按错判。",
+			"passageSubmitAnyway": "仍然提交"
 		}
 	},
 	"tma": {
