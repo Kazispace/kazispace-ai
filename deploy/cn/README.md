@@ -43,6 +43,10 @@ docker push "$ACR_HOST/$ACR_NS/$ACR_REPO:latest"
    without rendering a page or calling the backend, and `/api/*` skips the locale middleware.
    Do not probe `/`: it redirects to a locale page. A probe that is not configured shows as
    `InstanceHealthStatus = WithoutHealthCheckConfig` and SAE never restarts a dead instance.
+   Configure it as **liveness** (SAE restarts the instance when it fails). With one instance, do
+   not use readiness alone: a readiness failure takes the only instance out of rotation without
+   restarting it, so the site stays down. Starting values (cold pull + `next start`):
+   initial delay **30 s**, period **10 s**, timeout **3 s**, failure threshold **3**.
 5. Env: keep `NEXT_PUBLIC_*` in sync with `netlify.toml` if you override at runtime (build-time publics are already baked in).
 
 Optional edge: put `deploy/public-edge/nginx.conf` (+ `rum-ingest.conf`) in front for `/api/rum` rate limits (replaces Netlify edge).
