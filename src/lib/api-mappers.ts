@@ -70,8 +70,8 @@ export function isProPlan(plan: CurrentPlan | null): boolean {
   return planType.includes('pro') || planType.startsWith('sprint');
 }
 
-/** CIS phone prefixes supported by backend OTP */
-export const SUPPORTED_PHONE_PATTERN = /^\+(7|998|86)\d{8,12}$/;
+/** E.164 prefixes the OTP API accepts. US numbers are +1 plus 10 digits. */
+export const SUPPORTED_PHONE_PATTERN = /^\+(1\d{10}|7\d{8,12}|998\d{8,12}|86\d{8,12})$/;
 
 export function isValidOtpPhone(phone: string): boolean {
   return SUPPORTED_PHONE_PATTERN.test(phone.replace(/\s/g, ''));

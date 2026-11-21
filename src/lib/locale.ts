@@ -53,6 +53,7 @@ export const inferLocaleFromPhone = inferLanguagePreferenceFromPhone;
 
 export function inferCountryFromPhone(phone: string): string {
   const normalized = phone.replace(/\s/g, '');
+  if (normalized.startsWith('+1')) return 'US';
   if (normalized.startsWith('+86')) return 'CN';
   if (normalized.startsWith('+998')) return 'UZ';
   if (normalized.startsWith('+7')) return 'KZ';
