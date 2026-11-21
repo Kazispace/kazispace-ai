@@ -39,7 +39,14 @@ docker push "$ACR_HOST/$ACR_NS/$ACR_REPO:latest"
 1. Create **轻量版** app, deploy via **镜像**.
 2. Select `$ACR_HOST/$ACR_NS/$ACR_REPO:$TAG`.
 3. Listen port **3000**; instances **1** first; ~1 vCPU / 2 GB.
-4. Health check: HTTP `GET /` (or add a dedicated route later).
+4. Health check: HTTP `GET /api/healthz` on port 3000, expect **200** (KAZI-1422). It answers
+   without rendering a page or calling the backend, and `/api/*` skips the locale middleware.
+   Do not probe `/`: it redirects to a locale page. A probe that is not configured shows as
+   `InstanceHealthStatus = WithoutHealthCheckConfig` and SAE never restarts a dead instance.
+   Configure it as **liveness** (SAE restarts the instance when it fails). With one instance, do
+   not use readiness alone: a readiness failure takes the only instance out of rotation without
+   restarting it, so the site stays down. Starting values (cold pull + `next start`):
+   initial delay **30 s**, period **10 s**, timeout **3 s**, failure threshold **3**.
 5. Env: keep `NEXT_PUBLIC_*` in sync with `netlify.toml` if you override at runtime (build-time publics are already baked in).
 
 Optional edge: put `deploy/public-edge/nginx.conf` (+ `rum-ingest.conf`) in front for `/api/rum` rate limits (replaces Netlify edge).
