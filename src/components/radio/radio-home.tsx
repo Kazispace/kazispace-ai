@@ -14,7 +14,7 @@ import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { newRadioRequestId, setRadioBand, startRadioStory } from '@/lib/radio/api';
 import { formatRadioDate, radioChoiceNumber, radioMinutes } from '@/lib/radio/format';
-import { isRadioLocale, radioProgramHref, radioSettingsHref, radioStoryHref } from '@/lib/radio/routes';
+import { isLiveRoomLocale, isRadioLocale, radioProgramHref, radioSettingsHref, radioStoryHref } from '@/lib/radio/routes';
 import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -216,8 +216,12 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
         </Section>
       ) : null}
 
-      {/* Live Room (KAZI-1287): between Continue listening and Stories, kept apart from both. */}
-      <LiveSection locale={locale} onRadioClosed={() => router.replace(studioHref)} />
+      {/* Live Room (KAZI-1287): between Continue listening and Stories, kept apart from both. Chinese
+          interface only (KAZI-1442, `isLiveRoomLocale`): an English interface gets no Live section and
+          does not ask the Live Room server at all. */}
+      {isLiveRoomLocale(locale) ? (
+        <LiveSection locale={locale} onRadioClosed={() => router.replace(studioHref)} />
+      ) : null}
 
       <Section title={t('home.stories')} testId="radio-home-stories">
         {!canStart ? <p className="text-xs text-workspace-secondary" data-testid="radio-tts-disabled">{t('region.ttsDisabled')}</p> : null}

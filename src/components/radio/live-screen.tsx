@@ -26,7 +26,7 @@ import {
 } from '@/lib/radio/live-session';
 import { LiveEventQueue } from '@/lib/radio/live-events';
 import { LiveTurnUpload } from '@/lib/radio/live-uploader';
-import { radioHomeHref } from '@/lib/radio/routes';
+import { isLiveRoomLocale, radioHomeHref } from '@/lib/radio/routes';
 import { SLOW_AFTER_MS, blockedHelpPlatform } from '@/lib/radio/voice';
 import { getTelegramWebApp, isTelegramWebApp } from '@/lib/telegram';
 import { cn } from '@/lib/utils';
@@ -127,7 +127,11 @@ export function LiveScreen({ locale }: { locale: string }) {
   // Taken once: a reload or a second screen gets nothing and goes back to the radio home, which ends
   // the session through `open_session_id` — unless the English part was due (KAZI-1366): then the reload
   // comes back to it.
+  // Chinese interface only (KAZI-1442, `isLiveRoomLocale`): any other interface takes nothing and goes
+  // back to the radio home, the same way as a screen opened with no session.
+  const offered = isLiveRoomLocale(locale);
   const [entry] = useState<{ started: StartedLiveSession; resume: boolean } | null>(() => {
+    if (!offered) return null;
     const fresh = takeStartedLiveSession();
     if (fresh) return { started: fresh, resume: false };
     const kept = takeLiveEnglish();
