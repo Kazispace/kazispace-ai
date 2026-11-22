@@ -36,13 +36,17 @@ describe('request ids', () => {
   });
 });
 
-describe('MVP audience: Chinese interface only', () => {
+describe('audience: a Chinese or an English interface (KAZI-1442)', () => {
   it.each([
     ['zh', true],
     ['zh-CN', true],
     ['zh_Hans', true],
-    ['en', false],
+    ['en', true],
+    ['en-US', true],
+    ['EN_gb', true],
     ['ru', false],
+    ['ar', false],
+    ['eng', false],
     ['', false],
     [null, false],
   ] as const)('%s → %s', (locale, expected) => {

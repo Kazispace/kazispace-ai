@@ -40,7 +40,6 @@ export function radioProgramHref(locale: string, programId: string): string {
   return `/${locale}/${RADIO_SEGMENT}/program/${encodeURIComponent(programId)}`;
 }
 
-/** D9 / MVP: the radio is offered to a Chinese interface only (the user, 2026-11-03: "For MVP, only support Chinese"). */
 /**
  * The Live screen (KAZI-1287; live-room.md, Screens and back). Opened only by Start on the radio
  * home, which hands it the session; back returns to the radio home and ends the session.
@@ -49,7 +48,25 @@ export function radioLiveHref(locale: string): string {
   return `${radioHomeHref(locale)}/live`;
 }
 
+/**
+ * Who is offered the radio (KAZI-1442; personal-radio.md, Who sees it): a Chinese or an English
+ * interface. ❌ Former (D9 / MVP, 2026-11-03): Chinese only. Every other interface language is still
+ * not offered. The server decides too; this only stops the app from asking for a closed language.
+ */
 export function isRadioLocale(locale: string | null | undefined): boolean {
+  const tag = (locale ?? '').trim().toLowerCase().replace('_', '-');
+  return tag === 'zh' || tag.startsWith('zh-') || tag === 'en' || tag.startsWith('en-');
+}
+
+/**
+ * Who is offered Live Room (KAZI-1442; live-room.md, Who sees it): a Chinese interface only, narrower
+ * than the radio. Owen 2026-11-22 chose "Live Room stays Chinese-only (Recommended)": "Open the stories
+ * and programs to English, but keep Live Room Chinese-only until the English disclaimer is approved (a
+ * legal question)" (the option wording is the agent's, the choice is Owen's). ⛔ Do not use
+ * `isRadioLocale` for Live Room: an English interface gets the stories and programs but no Live section
+ * and no Live screen.
+ */
+export function isLiveRoomLocale(locale: string | null | undefined): boolean {
   const tag = (locale ?? '').trim().toLowerCase().replace('_', '-');
   return tag === 'zh' || tag.startsWith('zh-');
 }

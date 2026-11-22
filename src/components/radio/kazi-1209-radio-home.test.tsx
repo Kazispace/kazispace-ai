@@ -237,9 +237,9 @@ describe('Radio home', () => {
     expect(m.replace).toHaveBeenCalledWith('/zh/clinic/hub');
   });
 
-  it('a non-Chinese interface goes to Studio without asking the server', async () => {
-    await home('en');
-    expect(m.replace).toHaveBeenCalledWith('/en/clinic/hub');
+  it('an interface neither Chinese nor English goes to Studio without asking the server (KAZI-1442)', async () => {
+    await home('ru');
+    expect(m.replace).toHaveBeenCalledWith('/ru/clinic/hub');
     expect(m.home).not.toHaveBeenCalled();
   });
 });

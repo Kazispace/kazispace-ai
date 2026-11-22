@@ -174,7 +174,10 @@ describe('Studio', () => {
     render();
     expect(headings()).toEqual(SECTIONS);
     expect(container.querySelector('[data-testid="studio-empty"]')).toBeNull();
-    expect(container.querySelector('[data-testid="studio-radio"]')?.textContent).toBe('studio.comingSoon');
+    // An English interface is offered the radio (KAZI-1442): its section asks the server instead of
+    // saying Coming soon. What the radio section then shows is covered in kazi-1209-studio-radio.test.tsx.
+    expect(section('studio.sections.radio')?.querySelector('[data-testid^="studio-radio"]')).not.toBeNull();
+    expect(section('studio.sections.radio')?.textContent).not.toContain('studio.comingSoon');
     expect(container.querySelector('[data-testid="studio-classroom"]')?.textContent).toBe('studio.comingSoon');
     expect(section('studio.sections.jobHistory')?.textContent).toContain('studio.jobHistoryEmpty');
     expect(section('studio.sections.resumes')?.textContent).toContain('studio.resumesEmpty');

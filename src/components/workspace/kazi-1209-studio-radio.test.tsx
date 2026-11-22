@@ -72,10 +72,19 @@ afterEach(() => {
 });
 
 describe('Studio · Personal radio', () => {
-  it('a non-Chinese interface sees Coming soon and the server is not asked', async () => {
-    await render('en');
+  it('an interface neither Chinese nor English sees Coming soon and the server is not asked (KAZI-1442)', async () => {
+    await render('ru');
     expect(q('studio-radio')?.textContent).toBe('studio.comingSoon');
     expect(api.home).not.toHaveBeenCalled();
+  });
+
+  it('English, open, no story in progress: the entry to the radio home (KAZI-1442)', async () => {
+    api.home.mockResolvedValue({ success: true, data: HOME });
+    await render('en');
+    expect(api.home).toHaveBeenCalledTimes(1);
+    expect(q('studio-radio')?.textContent).toContain('radio.studio.title');
+    expect(q('studio-radio-open')?.getAttribute('href')).toBe('/en/radio');
+    expect(q('studio-radio')?.textContent).not.toContain('studio.comingSoon');
   });
 
   it('signed out: Coming soon, no request', async () => {
