@@ -40,6 +40,16 @@ export function radioProgramHref(locale: string, programId: string): string {
   return `/${locale}/${RADIO_SEGMENT}/program/${encodeURIComponent(programId)}`;
 }
 
+/** A serial story line's page: its episodes (KAZI-1455). Back returns to the radio home. */
+export function radioStorylineHref(locale: string, storylineId: string): string {
+  return `/${locale}/${RADIO_SEGMENT}/serial/${encodeURIComponent(storylineId)}`;
+}
+
+/** One episode in the player. Back returns to the story line's page. */
+export function radioEpisodeHref(locale: string, storylineId: string, programId: string): string {
+  return `${radioStorylineHref(locale, storylineId)}/${encodeURIComponent(programId)}`;
+}
+
 /**
  * The Live screen (KAZI-1287; live-room.md, Screens and back). Opened only by Start on the radio
  * home, which hands it the session; back returns to the radio home and ends the session.

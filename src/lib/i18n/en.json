@@ -1780,6 +1780,31 @@
 				"allow": "Turn on microphone",
 				"later": "Not now"
 			}
+		},
+		"serial": {
+			"section": "Serial stories",
+			"empty": "No serial stories yet.",
+			"episodes": "{n, plural, one {# episode} other {# episodes}}",
+			"episodeNumber": "Season {season} · Episode {episode}",
+			"continueEpisode": "Continue · S{season} E{episode}",
+			"start": "Start from episode 1",
+			"allEpisodes": "All episodes",
+			"nextEpisode": "Next episode",
+			"current": "You are here",
+			"missing": "This story can't be found right now.",
+			"commentaryLabel": "Host",
+			"recapLabel": "Previously",
+			"skipCommentary": "Skip commentary",
+			"mode": {
+				"label": "Commentary",
+				"immersive": "Immersive",
+				"balanced": "Balanced",
+				"intensive": "Intensive",
+				"immersiveHint": "The story with almost no interruptions.",
+				"balancedHint": "The story with short explanations at key points.",
+				"intensiveHint": "The story with every explanation: words, grammar, background."
+			},
+			"season": "Season {season}"
 		}
 	}
 }
