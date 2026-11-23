@@ -196,12 +196,25 @@ export function ProgramPlayerScreen({
     [segments, episode]
   );
   // An episode carries on after the last line heard: on this visit if there is one (a mode change), else as stored.
-  const startAt = useMemo(() => {
+  const resumeAt = useMemo(() => {
     if (!episode) return 0;
     const after = heardSeq.current ?? episode.resume_seq;
     const i = episode.segments.findIndex((s) => s.seq > after);
     return i < 0 ? 0 : i;
   }, [episode]);
+  // A recap the server put in front (the listener was away, or jumped) plays first, then the episode carries on
+  // from where the listener was: the recap is for exactly the listener who comes back to the middle.
+  const recapLines = useMemo(() => {
+    if (!episode?.recap) return 0;
+    const n = episode.segments.findIndex((s) => s.role !== 'recap');
+    return n < 0 ? episode.segments.length : n;
+  }, [episode]);
+  const recapFirst = recapLines > 0 && resumeAt > recapLines;
+  const startAt = recapFirst ? 0 : resumeAt;
+  const nextOf = useCallback(
+    (i: number) => (recapFirst && i === recapLines - 1 ? resumeAt : undefined),
+    [recapFirst, recapLines, resumeAt]
+  );
 
   /** Where the listener is, sent to the server. Never blocks playback; a failed write is left to the next. */
   const saveProgress = useCallback(
@@ -234,6 +247,7 @@ export function ProgramPlayerScreen({
     preroll: mustLabel ? AIGC_MORSE_URL : null,
     hold: labelUnknown,
     startAt,
+    nextOf,
     partKey: episode ? episode.mode : undefined,
     // `program_finished`: the programme played to its end.
     onDone: () => {
@@ -273,7 +287,8 @@ export function ProgramPlayerScreen({
     if (!episode || player.done) return;
     const prev = episode.segments[player.index - 1];
     if (!prev || !player.playing) return;
-    // Repeating a sentence, or the recap, never moves the listener back.
+    // Repeating a sentence, or hearing the recap again, never moves the listener back.
+    if (prev.seq <= episode.resume_seq) return;
     if (heardSeq.current != null && prev.seq <= heardSeq.current) return;
     heardSeq.current = prev.seq;
     if (Date.now() - sentProgressAt.current >= PROGRESS_EVERY_MS) saveProgressRef.current();

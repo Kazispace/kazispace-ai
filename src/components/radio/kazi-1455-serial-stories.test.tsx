@@ -341,6 +341,19 @@ describe('an episode in the player', () => {
     expect(m.track.mock.calls.filter((c) => c[0] === 'recap_played')).toEqual([['recap_played', { programId: 'dee_s01e01' }, { mode: 'balanced' }]]);
   });
 
+  it('back in the middle of an episode with a recap: the recap plays first, then on from where the listener was', async () => {
+    const recap = { seq: 1, role: 'recap' as const, lang: 'zh' as const, text: '上一集……', audio_url: 'https://e/r.mp3', duration_ms: 1000 };
+    const rest = episode().segments.map((s) => ({ ...s, seq: s.seq + 1, audio_url: `https://e/${s.seq + 1}.mp3` }));
+    m.episode.mockResolvedValue(ok(episode({ recap: true, resume_seq: 4, sentences: 6, segments: [recap, ...rest] })));
+    await player();
+    expect(audio().src).toBe('https://e/r.mp3');
+    await endSentence();
+    expect(audio().src).toBe('https://e/5.mp3'); // the first line after seq 4, not the line after the recap
+    // Hearing the recap never moved the listener back.
+    await click(q('radio-play-pause'));
+    expect(m.progress).not.toHaveBeenCalled();
+  });
+
   it('played to its end: saved at its last line, the next episode is offered, and there is no rating', async () => {
     m.episode.mockResolvedValue(ok(episode({ resume_seq: 4 })));
     await player();
