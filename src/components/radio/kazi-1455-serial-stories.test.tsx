@@ -365,6 +365,19 @@ describe('an episode in the player', () => {
     expect(container.querySelector('a[href="/zh/radio/serial/dee"]')).not.toBeNull();
   });
 
+  it('listening again from the top never moves the saved place back', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    await player();
+    for (let i = 0; i < 5; i += 1) await endSentence(); // played to its end: saved at seq 5
+    expect(m.progress).toHaveBeenLastCalledWith('dee', expect.objectContaining({ seq: 5 }));
+    m.progress.mockClear();
+    await click(q('radio-play-pause')); // play again, from the top
+    expect(audio().src).toBe('https://e/1.mp3');
+    await endSentence(); // seq 1 heard again
+    await click(q('radio-play-pause')); // pause: a save is attempted
+    expect(m.progress).not.toHaveBeenCalled(); // seq 1 is behind the place: nothing to save
+  });
+
   it('the last episode offers no next episode', async () => {
     m.episode.mockResolvedValue(ok(episode({ resume_seq: 4, next_program_id: null })));
     await player();
