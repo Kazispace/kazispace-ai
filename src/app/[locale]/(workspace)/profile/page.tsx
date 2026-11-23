@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getMe, patchMe, type PatchMeBody } from "@/lib/api-client";
+import { nativeLanguageOptions, nativeLanguageToApi } from "@/lib/native-language";
 import { setUserInfo } from "@/lib/auth";
 import { canEnterCvBuilder } from "@/lib/nba-display";
 import {
@@ -35,6 +36,8 @@ type ProfileForm = {
   careerGoal: string;
   targetRole: string;
   englishLevel: string;
+  /** "" = Not set. */
+  nativeLanguage: string;
   weeklyHoursBudget: string;
   currentStatus: string;
   education: string;
@@ -47,6 +50,7 @@ const EMPTY_FORM: ProfileForm = {
   careerGoal: "",
   targetRole: "",
   englishLevel: "",
+  nativeLanguage: "",
   weeklyHoursBudget: "",
   currentStatus: "student",
   education: "",
@@ -65,6 +69,7 @@ function formFromUser(user: User): ProfileForm {
     careerGoal: user.careerGoal ?? "",
     targetRole: user.targetRole ?? "",
     englishLevel: user.englishLevel ?? "",
+    nativeLanguage: user.nativeLanguage ?? "",
     weeklyHoursBudget:
       user.weeklyHoursBudget != null ? String(user.weeklyHoursBudget) : "",
     currentStatus: user.currentStatus ?? "student",
@@ -90,6 +95,10 @@ function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody
   }
   if (current.englishLevel !== initial.englishLevel) {
     body.english_level = current.englishLevel || null;
+  }
+  if (current.nativeLanguage !== initial.nativeLanguage) {
+    // Not set sends null, which clears it (personal-radio.md, Story list by native language).
+    body.native_language = nativeLanguageToApi(current.nativeLanguage);
   }
   if (current.weeklyHoursBudget !== initial.weeklyHoursBudget) {
     const parsed = current.weeklyHoursBudget.trim();
@@ -381,6 +390,27 @@ function ProfilePageContent({ locale }: { locale: string }) {
                   <option value="intermediate">{t("englishLevels.intermediate")}</option>
                   <option value="advanced">{t("englishLevels.advanced")}</option>
                   <option value="fluent">{t("englishLevels.fluent")}</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="profile-native-language"
+                  className="text-sm font-medium text-gray-700 mb-1 block"
+                >
+                  {t("nativeLanguageLabel")}
+                </label>
+                <select
+                  id="profile-native-language"
+                  data-testid="profile-native-language"
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  value={form.nativeLanguage}
+                  onChange={(e) => setForm({ ...form, nativeLanguage: e.target.value })}
+                >
+                  {nativeLanguageOptions(t).map((o) => (
+                    <option key={o.value || "unset"} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

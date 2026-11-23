@@ -214,4 +214,73 @@ describe('KAZI-659 /profile page', () => {
     expect(showToastMock).toHaveBeenCalledWith('saveFailed', 'error');
     expect(host?.querySelector('form')).not.toBeNull();
   });
+
+  // KAZI-1443 — native language: a seven-item single-choice list (personal-radio.md, Story list by
+  // native language). Not set clears it with null; an unchanged value is not sent.
+  describe('native language', () => {
+    function setSelect(select: HTMLSelectElement, value: string) {
+      const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLSelectElement.prototype, 'value')!.set!;
+      nativeSetter.call(select, value);
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    async function load(nativeLanguage: User['nativeLanguage']) {
+      getMeMock.mockResolvedValue({ success: true, data: sampleUser({ targetRole: 'Dev', nativeLanguage }) });
+      await act(async () => {
+        root!.render(<ProfilePage params={{ locale: 'en' }} />);
+      });
+      await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      return host!.querySelector('[data-testid="profile-native-language"]') as HTMLSelectElement;
+    }
+    async function submit() {
+      const form = host!.querySelector('form') as HTMLFormElement;
+      await act(async () => {
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        await Promise.resolve();
+      });
+    }
+
+    it('lists the seven items in spec order and shows the stored value', async () => {
+      const select = await load('ru');
+      expect(Array.from(select.options).map((o) => o.value)).toEqual(['zh', 'ru', 'kk', 'uz', 'en', 'other', '']);
+      expect(Array.from(select.options).map((o) => o.textContent)).toEqual([
+        'nativeLanguageOptions.zh',
+        'nativeLanguageOptions.ru',
+        'nativeLanguageOptions.kk',
+        'nativeLanguageOptions.uz',
+        'nativeLanguageOptions.en',
+        'nativeLanguageOptions.other',
+        'nativeLanguageUnset',
+      ]);
+      expect(select.value).toBe('ru');
+    });
+
+    it('sends a newly picked language', async () => {
+      patchMeMock.mockResolvedValue({ success: true, data: sampleUser({ nativeLanguage: 'kk' }) });
+      const select = await load(null);
+      expect(select.value).toBe('');
+      await act(async () => setSelect(select, 'kk'));
+      await submit();
+      expect(patchMeMock).toHaveBeenCalledWith({ native_language: 'kk' });
+    });
+
+    it('Not set sends null', async () => {
+      patchMeMock.mockResolvedValue({ success: true, data: sampleUser({ nativeLanguage: null }) });
+      const select = await load('en');
+      await act(async () => setSelect(select, ''));
+      await submit();
+      expect(patchMeMock).toHaveBeenCalledWith({ native_language: null });
+    });
+
+    it('an unchanged value is not sent with other changes', async () => {
+      patchMeMock.mockResolvedValue({ success: true, data: sampleUser({ nativeLanguage: 'uz', targetRole: 'Lead' }) });
+      await load('uz');
+      const input = host!.querySelector('input[placeholder="targetRolePlaceholder"]') as HTMLInputElement;
+      await act(async () => setInputValue(input, 'Lead'));
+      await submit();
+      expect(patchMeMock).toHaveBeenCalledWith({ target_role: 'Lead' });
+    });
+  });
 });

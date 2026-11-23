@@ -1,4 +1,5 @@
 import type { CreditBalance, ProfileCompletion, User } from '@/types';
+import { nativeLanguageFromApi } from '@/lib/native-language';
 import type { BillingSummary, CurrentPlan } from '@/types';
 
 function mapProfileCompletion(raw: Record<string, unknown>): ProfileCompletion | undefined {
@@ -31,6 +32,7 @@ export function mapUserFromApi(raw: Record<string, unknown>): User {
     careerGoal: profile.career_goal as string | undefined,
     targetRole: profile.target_role as string | undefined,
     englishLevel: profile.english_level as string | undefined,
+    nativeLanguage: nativeLanguageFromApi(raw.native_language),
     weeklyHoursBudget: profile.weekly_hours_budget as number | null | undefined,
     currentStatus: profile.current_status as string | undefined,
     education: (profile.education_text ?? profile.education) as string | undefined,

@@ -23,6 +23,7 @@ const m = vi.hoisted(() => ({
   toast: vi.fn(),
   refresh: vi.fn(),
   setHome: vi.fn(),
+  getMe: vi.fn(),
   home: null as RadioHome | null,
   access: 'open' as 'open' | 'closed' | 'unknown' | null,
 }));
@@ -57,6 +58,11 @@ vi.mock('@/lib/radio/api', async (orig) => ({
   getRadioSave: m.save,
   postRadioTurn: m.turn,
   getRadioRender: vi.fn(),
+}));
+// The native-language row reads `/me` (KAZI-1443; covered in kazi-1443-native-language.test.tsx). Here it is not read.
+vi.mock('@/lib/api-client', async (orig) => ({
+  ...(await orig<typeof import('@/lib/api-client')>()),
+  getMe: m.getMe,
 }));
 vi.mock('@/lib/radio/player-api', () => ({
   postRadioEvents: vi.fn(async () => ({ success: true, data: { accepted: 0, duplicates: 0, rejected: [] } })),
@@ -138,6 +144,7 @@ beforeEach(() => {
   m.access = 'open';
   m.bgm.mockResolvedValue({ success: true, data: { tracks: [] } });
   m.refresh.mockResolvedValue(undefined);
+  m.getMe.mockResolvedValue({ success: false });
 });
 afterEach(() => {
   act(() => root.unmount());

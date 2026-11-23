@@ -137,6 +137,16 @@
 			"advanced": "Продвинутый",
 			"fluent": "Свободный"
 		},
+		"nativeLanguageLabel": "Родной язык",
+		"nativeLanguageUnset": "Не указан",
+		"nativeLanguageOptions": {
+			"zh": "中文",
+			"ru": "Русский",
+			"kk": "Қазақша",
+			"uz": "Oʻzbekcha",
+			"en": "English",
+			"other": "Другой"
+		},
 		"confirmText": "Готово",
 		"cancelText": "Отмена",
 		"countries": {

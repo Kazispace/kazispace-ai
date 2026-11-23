@@ -1,4 +1,6 @@
 // User types
+import type { NativeLanguage } from '@/lib/native-language';
+
 // API path types: run `npm run gen:api` → src/types/api.generated.ts (from docs/openapi.json)
 
 export interface ProfileCompletion {
@@ -19,6 +21,8 @@ export interface User {
   careerGoal?: string;
   targetRole?: string;
   englishLevel?: string;
+  /** Profile native language; `null` = Not set. */
+  nativeLanguage?: NativeLanguage | null;
   weeklyHoursBudget?: number | null;
   currentStatus?: string;
   education?: string;

@@ -137,6 +137,16 @@
 			"advanced": "高级",
 			"fluent": "流利"
 		},
+		"nativeLanguageLabel": "母语",
+		"nativeLanguageUnset": "未设置",
+		"nativeLanguageOptions": {
+			"zh": "中文",
+			"ru": "Русский",
+			"kk": "Қазақша",
+			"uz": "Oʻzbekcha",
+			"en": "English",
+			"other": "其他"
+		},
 		"confirmText": "确认",
 		"cancelText": "取消",
 		"countries": {
