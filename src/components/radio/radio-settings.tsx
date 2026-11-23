@@ -8,6 +8,8 @@ import { Loader2, Play, Square } from 'lucide-react';
 import { BackLink } from '@/components/navigation/back-link';
 import { PlayerShell } from '@/components/radio/player-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
+import { getMe, patchMe } from '@/lib/api-client';
+import { nativeLanguageOptions, nativeLanguageToApi, type NativeLanguage } from '@/lib/native-language';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { patchRadioPrefs } from '@/lib/radio/api';
 import { dropRadioEvents } from '@/lib/radio/events';
@@ -53,6 +55,7 @@ type Stored = { prefs: RadioPrefs; profile: RadioListenerProfile };
  */
 export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; saveId?: string | null; from?: RadioFrom }) {
   const t = useTranslations('radio');
+  const tProfile = useTranslations('profile');
   const tStudio = useTranslations('studio');
   const tStates = useTranslations('states');
   const router = useRouter();
@@ -69,6 +72,8 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   const [micBlocked, setMicBlocked] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [clearing, setClearing] = useState(false);
+  /** Profile native language from `GET /me`: `undefined` until read (or if it could not be), `null` = Not set. */
+  const [native, setNative] = useState<NativeLanguage | null | undefined>(undefined);
   const homeRef = useRef<RadioHome | null>(home);
   homeRef.current = home;
 
@@ -91,6 +96,18 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     let live = true;
     void getRadioBgm().then((res) => {
       if (live) setHasMusic(!!res.success && (res.data?.tracks?.length ?? 0) > 0);
+    });
+    return () => {
+      live = false;
+    };
+  }, [offered, ready, authenticated]);
+
+  // Native language lives on the profile (`/me`), not in radio prefs; the row shows once it is read.
+  useEffect(() => {
+    if (!offered || !ready || !authenticated) return;
+    let live = true;
+    void getMe().then((res) => {
+      if (live && res.success && res.data) setNative(res.data.nativeLanguage ?? null);
     });
     return () => {
       live = false;
@@ -221,6 +238,25 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     void save({ listen_window_on: true }, { prefs: { ...prefs, listen_window_on: true }, profile }, () => undefined);
   };
 
+  /**
+   * Native language (personal-radio.md, Story list by native language): the same value as Me's Profile.
+   * Not set sends `null`. The server orders the lists by it, so the radio home is read again on success.
+   */
+  const onNative = async (choice: string) => {
+    const next = nativeLanguageToApi(choice);
+    if (next === native) return;
+    const before = native;
+    setNative(next);
+    const res = await patchMe({ native_language: next });
+    if (res.success && res.data) {
+      setNative(res.data.nativeLanguage ?? null);
+      void refresh();
+      return;
+    }
+    setNative(before);
+    showToast(t('settings.saveFailed'));
+  };
+
   const onClear = async () => {
     setClearing(true);
     for (let busy = 0; busy <= SETTINGS_BUSY_LIMIT; busy += 1) {
@@ -249,6 +285,17 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   return (
     <PlayerShell back={back} title={t('settings.title')}>
       <div className="flex flex-col gap-6 pb-6" data-testid="radio-settings">
+        {native !== undefined ? (
+          <Group title={tProfile('nativeLanguageLabel')}>
+            <Choices
+              name="native-language"
+              value={native ?? ''}
+              options={nativeLanguageOptions(tProfile)}
+              onChange={(v) => void onNative(v)}
+            />
+          </Group>
+        ) : null}
+
         <Group title={t('settings.band')}>
           <Choices
             name="band"

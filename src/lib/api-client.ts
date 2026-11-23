@@ -1,6 +1,7 @@
 import { getAuthToken, getDeviceId, clearAuthToken, setRegionAuthSession } from './auth';
 import { getActiveLanguagePreference } from './locale';
 import { mapUserFromApi } from './api-mappers';
+import type { NativeLanguage } from './native-language';
 import { parseAssistantEnvelope } from './chat-envelope';
 import { isReferralDismissed } from './referral-dismiss';
 import {
@@ -391,6 +392,8 @@ export interface PatchMeBody {
   career_goal?: string | null;
   target_role?: string | null;
   english_level?: string | null;
+  /** `null` clears it (Not set). */
+  native_language?: NativeLanguage | null;
   weekly_hours_budget?: number | null;
   current_status?: string | null;
   education_text?: string | null;
