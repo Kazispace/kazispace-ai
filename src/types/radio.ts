@@ -119,6 +119,82 @@ export interface RadioHome {
   voices: string[];
   /** One per voice in `voices` that has a sample, in that order; may be empty. */
   voice_samples: RadioVoiceSample[];
+  /** KAZI-1455: serial story lines. `null` (or absent) while serial stories are switched off: no section. */
+  storylines?: RadioStorylineSummary[] | null;
+  /** The story lines the listener has started, most recently played first. */
+  continue_storylines?: RadioStorylineSummary[] | null;
+}
+
+/** Serial stories (KAZI-1455; contract: paths under `/api/v1/radio/storylines/`). */
+export type RadioSerialMode = 'immersive' | 'balanced' | 'intensive';
+export type RadioSerialRole = 'story' | 'commentary' | 'recap';
+
+export interface RadioSerialProgress {
+  program_id: string;
+  season: number;
+  episode: number;
+  /** The last sentence heard; 0 = start from the top (also when the text or the band changed since). */
+  seq: number;
+  mode: RadioSerialMode;
+  band: RadioBand;
+  updated_at: string;
+}
+
+export interface RadioStorylineSummary {
+  storyline_id: string;
+  title: string;
+  synopsis: string;
+  tags: string[];
+  episodes: number;
+  seasons: number[];
+  progress?: RadioSerialProgress | null;
+}
+
+export interface RadioEpisodeSummary {
+  program_id: string;
+  season: number;
+  episode: number;
+  title: string;
+  band: RadioBand;
+  duration_ms?: number | null;
+}
+
+export interface RadioStoryline extends RadioStorylineSummary {
+  episode_list: RadioEpisodeSummary[];
+}
+
+export interface RadioEpisodeSegment {
+  /** The sentence's place in the episode; the same in every mode. Sent back in progress and questions. */
+  seq: number;
+  role: RadioSerialRole;
+  bp?: 'vocab' | 'grammar' | 'culture' | 'plot_recall' | 'listening' | null;
+  lang: 'en' | 'zh';
+  text: string;
+  audio_url?: string | null;
+  duration_ms?: number | null;
+}
+
+export interface RadioEpisode {
+  storyline_id: string;
+  program_id: string;
+  season: number;
+  episode: number;
+  title: string;
+  band: RadioBand;
+  voice_id: string;
+  mode: RadioSerialMode;
+  recap: boolean;
+  /** Start after this seq; 0 = from the top. */
+  resume_seq: number;
+  sentences: number;
+  segments: RadioEpisodeSegment[];
+  next_program_id?: string | null;
+}
+
+export interface RadioProgressResponse {
+  storyline_id: string;
+  applied: boolean;
+  progress?: RadioSerialProgress | null;
 }
 
 export interface RadioPrefsResponse {
@@ -343,7 +419,11 @@ export type RadioEventKind =
   | 'speed_changed'
   | 'ttfa'
   | 'program_finished'
-  | 'player_left';
+  | 'player_left'
+  // KAZI-1455: serial episodes, always sent with the episode's `program_id`.
+  | 'commentary_skipped'
+  | 'commentary_mode_changed'
+  | 'recap_played';
 
 export interface RadioClientEvent {
   client_event_id: string;

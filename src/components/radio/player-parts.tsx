@@ -126,9 +126,17 @@ export function Captions({
           }
           className={cn(
             'select-none rounded-lg px-3 py-2 text-base leading-relaxed transition-colors [-webkit-touch-callout:none]',
-            i === activeIndex ? 'bg-primary/10 text-workspace-text' : i < activeIndex ? 'text-workspace-secondary' : 'text-workspace-muted'
+            i === activeIndex ? 'bg-primary/10 text-workspace-text' : i < activeIndex ? 'text-workspace-secondary' : 'text-workspace-muted',
+            // KAZI-1455: the host's commentary and the recap are set apart from the story text.
+            s.tone ? 'border-l-2 border-primary/40 pl-3 text-sm' : null
           )}
+          data-tone={s.tone}
         >
+          {s.tone ? (
+            <span className="mb-0.5 block text-xs font-medium text-workspace-muted">
+              {tRadio(s.tone === 'recap' ? 'serial.recapLabel' : 'serial.commentaryLabel')}
+            </span>
+          ) : null}
           {glossary?.length
             ? splitPhrases(s.text, glossary).map((piece, k) =>
                 piece.term ? (

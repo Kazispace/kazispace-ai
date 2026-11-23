@@ -14,11 +14,26 @@ import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { newRadioRequestId, setRadioBand, startRadioStory } from '@/lib/radio/api';
 import { formatRadioDate, radioChoiceNumber, radioMinutes } from '@/lib/radio/format';
-import { isLiveRoomLocale, isRadioLocale, radioProgramHref, radioSettingsHref, radioStoryHref } from '@/lib/radio/routes';
+import {
+  isLiveRoomLocale,
+  isRadioLocale,
+  radioEpisodeHref,
+  radioProgramHref,
+  radioSettingsHref,
+  radioStoryHref,
+  radioStorylineHref,
+} from '@/lib/radio/routes';
 import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
-import { RADIO_BANDS, type RadioBand, type RadioNotice, type RadioSaveSummary, type RadioStorySummary } from '@/types/radio';
+import {
+  RADIO_BANDS,
+  type RadioBand,
+  type RadioNotice,
+  type RadioSaveSummary,
+  type RadioStorylineSummary,
+  type RadioStorySummary,
+} from '@/types/radio';
 
 /**
  * The radio home (KAZI-1209; kazispace-ui personal-radio.md, Radio home · Starting a new story · States).
@@ -275,6 +290,9 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
         )}
       </Section>
 
+      {/* Serial stories (KAZI-1455): only while the server lists them (`null` = switched off: no section). */}
+      {home.storylines ? <SerialSection locale={locale} storylines={home.storylines} started={home.continue_storylines ?? []} /> : null}
+
       <Section title={t('home.programs')} testId="radio-home-programs">
         {home.programs.length === 0 ? (
           <p className="text-sm text-workspace-secondary">{t('home.programsEmpty')}</p>
@@ -367,6 +385,55 @@ function Shell({
         {children}
       </main>
     </div>
+  );
+}
+
+/**
+ * Serial stories on the radio home (personal-radio.md, Serial stories): the story lines the listener has
+ * started first (most recently played first), each with "continue" to the episode they were in; then the rest.
+ */
+function SerialSection({
+  locale,
+  storylines,
+  started,
+}: {
+  locale: string;
+  storylines: RadioStorylineSummary[];
+  started: RadioStorylineSummary[];
+}) {
+  const t = useTranslations('radio');
+  const startedIds = new Set(started.map((s) => s.storyline_id));
+  const lines = [...started, ...storylines.filter((s) => !startedIds.has(s.storyline_id))];
+  return (
+    <Section title={t('serial.section')} testId="radio-home-serial">
+      {lines.length === 0 ? (
+        <p className="text-sm text-workspace-secondary">{t('serial.empty')}</p>
+      ) : (
+        lines.map((line) => (
+          <div key={line.storyline_id} data-testid="radio-storyline" className="rounded-xl border border-gray-200 bg-white p-4">
+            <Link href={radioStorylineHref(locale, line.storyline_id)} className="block hover:text-primary">
+              <h3 className="text-base font-semibold text-workspace-text">{line.title}</h3>
+              {line.synopsis ? <p className="mt-1 line-clamp-2 text-sm text-workspace-secondary">{line.synopsis}</p> : null}
+              <p className="mt-2 flex flex-wrap gap-1">
+                <Tag>{t('serial.episodes', { n: line.episodes })}</Tag>
+                {line.tags.map((tag) => (
+                  <Tag key={tag}>{tag}</Tag>
+                ))}
+              </p>
+            </Link>
+            {line.progress ? (
+              <Link
+                href={radioEpisodeHref(locale, line.storyline_id, line.progress.program_id)}
+                data-testid="radio-storyline-continue"
+                className="mt-3 inline-flex min-h-9 items-center rounded-lg bg-primary px-3 text-sm text-white"
+              >
+                {t('serial.continueEpisode', { season: line.progress.season, episode: line.progress.episode })}
+              </Link>
+            ) : null}
+          </div>
+        ))
+      )}
+    </Section>
   );
 }
 

@@ -9,6 +9,8 @@ export interface PlayableSentence {
   audioUrl?: string | null;
   durationMs?: number | null;
   pending?: boolean;
+  /** KAZI-1455: a serial episode's host commentary or recap, shown apart from the story text. */
+  tone?: 'commentary' | 'recap';
 }
 
 export type PlayerSpeed = 1 | 0.75;
@@ -55,6 +57,8 @@ export function useSentencePlayer({
   preroll,
   hold,
   more,
+  startAt,
+  nextOf,
 }: {
   sentences: PlayableSentence[];
   speed: PlayerSpeed;
@@ -87,6 +91,16 @@ export function useSentencePlayer({
   hold?: boolean;
   /** More sentences may still be added to this list: the end of the list waits for them instead of ending. */
   more?: boolean;
+  /**
+   * The sentence a new list starts from when it autoplays (KAZI-1455: a serial episode carries on after the
+   * last sentence heard). Read when the list starts; past the end of the list ⇒ from the first sentence.
+   */
+  startAt?: number;
+  /**
+   * The sentence that follows sentence `i` when it is not `i + 1` (KAZI-1455: after an episode's recap, on to
+   * where the listener was). Asked each time a sentence ends; `undefined` ⇒ the next one.
+   */
+  nextOf?: (i: number) => number | undefined;
 }) {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -102,6 +116,10 @@ export function useSentencePlayer({
   const heldAt = useRef<number | null>(null);
   const moreRef = useRef(!!more);
   moreRef.current = !!more;
+  const startAtRef = useRef(startAt ?? 0);
+  startAtRef.current = startAt ?? 0;
+  const nextOfRef = useRef(nextOf);
+  nextOfRef.current = nextOf;
   // Narration reached the end of a list that may still grow: the sentence to play when one is added.
   const waitingAt = useRef<number | null>(null);
   // Paused while waiting there: play goes back to waiting (or on, if the sentence has arrived meanwhile).
@@ -162,7 +180,7 @@ export function useSentencePlayer({
       setPlaying(true);
       setDone(false);
       const s = list[i];
-      const next = () => playAt(i + 1);
+      const next = () => playAt(nextOfRef.current?.(i) ?? i + 1);
       const hold = () => {
         timerRef.current = setTimeout(next, readingPauseMs(s.text) / speedRef.current);
       };
@@ -232,10 +250,11 @@ export function useSentencePlayer({
     clear();
     waitingAt.current = null;
     pausedWaitingAt.current = null;
-    setIndex(0);
+    const first = startAtRef.current > 0 && startAtRef.current < sentencesRef.current.length ? startAtRef.current : 0;
+    setIndex(first);
     setDone(false);
     setPlaying(false);
-    if (autoplay && sentencesRef.current.length) playAt(0);
+    if (autoplay && sentencesRef.current.length) playAt(first);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [firstKey, sentences.length === 0, partKey]);
 

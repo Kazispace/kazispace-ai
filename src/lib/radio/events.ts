@@ -37,6 +37,10 @@ const PAYLOAD_KEYS: Record<RadioEventKind, readonly string[]> = {
   ttfa: ['target', 'cached', 'ms', 'render_id'],
   program_finished: ['variant_band', 'position_ms'],
   player_left: ['node_id', 'seq', 'offset_ms', 'position_ms', 'listened_ms'],
+  // KAZI-1455 (serial episodes)
+  commentary_skipped: ['seq', 'bp', 'mode'],
+  commentary_mode_changed: ['from', 'to'],
+  recap_played: ['mode'],
 };
 
 let queue: RadioClientEvent[] = [];

@@ -1484,6 +1484,31 @@
 				"allow": "打开麦克风",
 				"later": "先不了"
 			}
+		},
+		"serial": {
+			"section": "连载故事",
+			"empty": "暂时还没有连载故事。",
+			"episodes": "共 {n} 集",
+			"episodeNumber": "第 {season} 季 · 第 {episode} 集",
+			"continueEpisode": "继续听 · 第 {season} 季第 {episode} 集",
+			"start": "从第 1 集开始",
+			"allEpisodes": "全部剧集",
+			"nextEpisode": "下一集",
+			"current": "听到这里",
+			"missing": "暂时找不到这个故事。",
+			"commentaryLabel": "主播",
+			"recapLabel": "前情回顾",
+			"skipCommentary": "跳过讲解",
+			"mode": {
+				"label": "讲解",
+				"immersive": "沉浸",
+				"balanced": "均衡",
+				"intensive": "精讲",
+				"immersiveHint": "几乎不打断，专心听故事。",
+				"balancedHint": "在关键处做简短讲解。",
+				"intensiveHint": "完整讲解：词汇、语法和背景。"
+			},
+			"season": "第 {season} 季"
 		}
 	}
 }
