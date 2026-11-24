@@ -260,6 +260,24 @@ describe('an episode in the player', () => {
     expect(q('radio-skip-commentary')).toBeNull(); // a story sentence is playing
   });
 
+  it('starts at the default speed from Radio settings (slow ⇒ 0.75×), and at 1× with none saved', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    window.localStorage.setItem('kazi.radio.defaultSpeed', '0.75');
+    try {
+      await player();
+      expect(q('radio-speed')?.textContent).toContain('0.75×');
+      expect(audio().playbackRate).toBe(0.75);
+    } finally {
+      window.localStorage.removeItem('kazi.radio.defaultSpeed');
+    }
+    act(() => root.unmount());
+    root = createRoot(container);
+    FakeAudio.all = [];
+    await player();
+    expect(q('radio-speed')?.textContent).toContain('1×');
+    expect(audio().playbackRate).toBe(1);
+  });
+
   it('carries on after the last line heard', async () => {
     m.episode.mockResolvedValue(ok(episode({ resume_seq: 3 })));
     await player();
