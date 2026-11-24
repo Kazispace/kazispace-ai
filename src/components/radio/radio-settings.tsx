@@ -22,6 +22,7 @@ import {
   EN_RATIOS,
   EN_RATIO_DEFAULT,
   VOICE_LABEL_KEY,
+  clearSavedSpeed,
   percent,
   levelSpeed,
   startSpeed,
@@ -276,6 +277,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
       const res = await deleteRadioMemory();
       if (res.success) {
         dropRadioEvents(); // the server cannot tell an old batch sent after clearing from a new one
+        clearSavedSpeed(); // the account's speed is gone with the settings; a device copy would bring it back
         setClearing(false);
         setConfirming(false);
         showToast(t('settings.cleared'));

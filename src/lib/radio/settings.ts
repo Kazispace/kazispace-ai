@@ -81,6 +81,15 @@ export function startSpeed(band: string | null | undefined, account?: number | n
   return readSavedSpeed() ?? (band ? SPEED_BY_BAND[band] : undefined) ?? 1;
 }
 
+/** Clearing radio memory removes the saved speed on the account; the device copy goes with it. */
+export function clearSavedSpeed(): void {
+  try {
+    window.localStorage.removeItem(SPEED_KEY);
+  } catch {
+    // Blocked storage: there was no copy to remove.
+  }
+}
+
 export function writeDefaultSpeed(speed: number): void {
   try {
     window.localStorage.setItem(SPEED_KEY, String(clampSpeed(speed)));

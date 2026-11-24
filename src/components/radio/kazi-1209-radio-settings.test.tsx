@@ -334,10 +334,12 @@ describe('RadioSettingsScreen', () => {
 
   it('clear radio memory: 204 → cleared toast, the home is read again, and the radio home opens', async () => {
     m.memory.mockResolvedValue({ success: true });
+    writeDefaultSpeed(0.6);
     await settings();
     await click(q('radio-clear-memory'));
     await click(q('radio-clear-confirm'));
     expect(m.memory).toHaveBeenCalledTimes(1);
+    expect(readSavedSpeed()).toBeNull(); // the device copy of the speed goes with the account's settings
     expect(m.toast).toHaveBeenCalledWith('radio.settings.cleared');
     expect(m.refresh).toHaveBeenCalled();
     expect(m.replace).toHaveBeenCalledWith('/zh/radio');
@@ -345,11 +347,13 @@ describe('RadioSettingsScreen', () => {
 
   it('clear radio memory: any other failure → clearFailed', async () => {
     m.memory.mockResolvedValue({ success: false, errorCode: 'NETWORK_ERROR' });
+    writeDefaultSpeed(0.6);
     await settings();
     await click(q('radio-clear-memory'));
     await click(q('radio-clear-confirm'));
     expect(m.toast).toHaveBeenCalledWith('radio.settings.clearFailed');
     expect(q('radio-clear-dialog')).toBeNull();
+    expect(readSavedSpeed()).toBe(0.6); // nothing was cleared, so the copy stays
   });
 
   it('back: to the player when opened from it, else to the radio home', async () => {
