@@ -13,7 +13,8 @@ export interface PlayableSentence {
   tone?: 'commentary' | 'recap';
 }
 
-export type PlayerSpeed = 1 | 0.75;
+/** Playback rate, pitch kept: 0.5 … 1.2 (the speed slider's range). */
+export type PlayerSpeed = number;
 
 /** A sentence with no voice is held on screen for reading: ~1 s per 15 characters, at least 2 s. */
 export function readingPauseMs(text: string): number {
@@ -34,7 +35,7 @@ export function playInterrupted(err: unknown): boolean {
  *
  * - Each sentence with an `audioUrl` is played through one `<audio>` element; one without audio
  *   (or still `pending` when narration reaches it) is highlighted for a reading pause instead.
- * - `speed` switches between 1× and 0.75× keeping the pitch.
+ * - `speed` is the playback rate (0.5× … 1.2×), keeping the pitch.
  * - Pause stops at once; play carries on from the same sentence. `repeat` replays the current one.
  * - `playFrom(i)` plays from sentence `i`.
  * - `onDone` fires once when the last sentence has been played.

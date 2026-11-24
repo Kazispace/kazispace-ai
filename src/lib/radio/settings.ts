@@ -37,20 +37,63 @@ export function shownEnRatio(band: RadioBand, ratio: number | null | undefined):
   return EN_RATIO_DEFAULT[band];
 }
 
-// ── default speed: kept by the app, not the server (Saving settings) ─────────────────────────
+// ── speed: kept by the app, not the server (Saving settings) ─────────────────────────────────
+// One slider, in the player and in Radio settings. Until the listener moves it, it sits at the position for
+// their level; once moved, the position is saved on the account (`PATCH prefs` `speed`) and used everywhere.
+// A copy on this device has two jobs only: a save from the player that failed, and a listener who chose "Slow"
+// before the slider. It is removed once a save succeeds and when radio memory is cleared.
 const SPEED_KEY = 'kazi.radio.defaultSpeed';
+export const SPEED_MIN = 0.5;
+export const SPEED_MAX = 1.2;
+export const SPEED_STEP = 0.05;
+/** Where the slider sits for each level while the listener has not moved it. */
+export const SPEED_BY_BAND: Record<string, number> = { A2: 0.7, B1: 0.8, B2: 0.9, C1: 1 };
 
-export function readDefaultSpeed(): 1 | 0.75 {
+/** The slider position for a level, or `null` when the level is not known: the mark on the slider. */
+export function levelSpeed(band: string | null | undefined): number | null {
+  return (band ? SPEED_BY_BAND[band] : undefined) ?? null;
+}
+
+/** Onto the slider's range and step (0.5 … 1.2 in steps of 0.05). */
+export function clampSpeed(v: number): number {
+  if (!Number.isFinite(v)) return 1;
+  const stepped = Math.round(v / SPEED_STEP) * SPEED_STEP;
+  return Math.round(Math.min(SPEED_MAX, Math.max(SPEED_MIN, stepped)) * 100) / 100;
+}
+
+/** The position the listener saved on this device, or `null` when they never moved the slider. */
+export function readSavedSpeed(): number | null {
   try {
-    return typeof window !== 'undefined' && window.localStorage.getItem(SPEED_KEY) === '0.75' ? 0.75 : 1;
+    const raw = typeof window !== 'undefined' ? window.localStorage.getItem(SPEED_KEY) : null;
+    if (raw == null || raw.trim() === '') return null;
+    const v = Number(raw);
+    return Number.isFinite(v) ? clampSpeed(v) : null;
   } catch {
-    return 1;
+    return null;
   }
 }
 
-export function writeDefaultSpeed(speed: 1 | 0.75): void {
+/**
+ * The speed a listen starts at: the position saved on the account (`prefs.speed`), else the copy on this device,
+ * else the one for the listener's level, else 1×.
+ */
+export function startSpeed(band: string | null | undefined, account?: number | null): number {
+  if (typeof account === 'number' && Number.isFinite(account)) return clampSpeed(account);
+  return readSavedSpeed() ?? (band ? SPEED_BY_BAND[band] : undefined) ?? 1;
+}
+
+/** Clearing radio memory removes the saved speed on the account; the device copy goes with it. */
+export function clearSavedSpeed(): void {
   try {
-    window.localStorage.setItem(SPEED_KEY, String(speed));
+    window.localStorage.removeItem(SPEED_KEY);
+  } catch {
+    // Blocked storage: there was no copy to remove.
+  }
+}
+
+export function writeDefaultSpeed(speed: number): void {
+  try {
+    window.localStorage.setItem(SPEED_KEY, String(clampSpeed(speed)));
   } catch {
     // Private mode or blocked storage: the setting lasts for this visit only.
   }

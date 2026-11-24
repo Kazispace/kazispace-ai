@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2, Play, Square } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
-import { PlayerShell } from '@/components/radio/player-parts';
+import { PlayerShell, SpeedSlider, speedLabel } from '@/components/radio/player-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { getMe, patchMe } from '@/lib/api-client';
 import { nativeLanguageOptions, nativeLanguageToApi, type NativeLanguage } from '@/lib/native-language';
@@ -22,10 +22,11 @@ import {
   EN_RATIOS,
   EN_RATIO_DEFAULT,
   VOICE_LABEL_KEY,
+  clearSavedSpeed,
   percent,
-  readDefaultSpeed,
+  levelSpeed,
+  startSpeed,
   shownEnRatio,
-  writeDefaultSpeed,
 } from '@/lib/radio/settings';
 import { blockedHelpPlatform, micErrorKind } from '@/lib/radio/voice';
 import { buildClinicHubHref } from '@/lib/hub-entry';
@@ -66,7 +67,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   const studioHref = buildClinicHubHref(locale);
 
   const [stored, setStored] = useState<Stored | null>(null);
-  const [speed, setSpeed] = useState<1 | 0.75>(1);
+  const [speed, setSpeed] = useState<number>(1);
   const [hasMusic, setHasMusic] = useState(false);
   const [bgmLevel, setBgmLevel] = useState<number>(BGM_LEVEL_DEFAULT);
   const [micBlocked, setMicBlocked] = useState(false);
@@ -88,7 +89,11 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     }
   }, [home, stored]);
 
-  useEffect(() => setSpeed(readDefaultSpeed()), []);
+  // The speed slider: the saved position, else the one for the listener's level (it follows a level change
+  // until the listener moves it).
+  const speedBand = stored?.profile.band ?? null;
+  const accountSpeed = stored?.prefs.speed ?? null;
+  useEffect(() => setSpeed(startSpeed(speedBand, accountSpeed)), [speedBand, accountSpeed]);
 
   // Background music: the group shows only when there is music to play.
   useEffect(() => {
@@ -114,8 +119,8 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     };
   }, [offered, ready, authenticated]);
 
-  /** Saves one change; on failure the toast and `revert` put the control back. */
-  async function save(patch: RadioPrefs, optimistic: Stored, revert: () => void) {
+  /** Saves one change; on failure the toast and `revert` put the control back. Resolves to whether it was saved. */
+  async function save(patch: RadioPrefs, optimistic: Stored, revert: () => void): Promise<boolean> {
     const before = stored;
     setStored(optimistic);
     for (let busy = 0; busy <= SETTINGS_BUSY_LIMIT; busy += 1) {
@@ -124,7 +129,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
         const next = { prefs: res.data.prefs ?? {}, profile: res.data.profile };
         setStored(next);
         if (homeRef.current) setHome({ ...homeRef.current, prefs: next.prefs, profile: next.profile });
-        return;
+        return true;
       }
       if (res.status === 503 && res.errorCode === 'busy' && busy < SETTINGS_BUSY_LIMIT) {
         await sleep(Math.max(1, res.retryAfter ?? 1) * 1000);
@@ -132,13 +137,14 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
       }
       if (res.status === 404 || (res.status === 403 && res.errorCode?.startsWith('radio_'))) {
         router.replace(studioHref);
-        return;
+        return false;
       }
       break;
     }
     setStored(before);
     revert();
     showToast(t('settings.saveFailed'));
+    return false;
   }
 
   const back = saveId ? (
@@ -206,9 +212,15 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     if (v === voice) return;
     void save({ voice_id: v }, { prefs: { ...prefs, voice_id: v }, profile }, () => undefined);
   };
-  const onSpeed = (s: 1 | 0.75) => {
+  const onSpeed = (s: number) => {
     setSpeed(s);
-    writeDefaultSpeed(s);
+  };
+  // Let go: saved on the account like the other settings. Once it is there the device copy has no job left;
+  // a refused save puts the slider back where it was and leaves any copy as it is.
+  const commitSpeed = (from: number, to: number) => {
+    void save({ speed: to }, { prefs: { ...prefs, speed: to }, profile }, () => setSpeed(from)).then((saved) => {
+      if (saved) clearSavedSpeed();
+    });
   };
   const onBgm = (on: boolean) => void save({ bgm_on: on }, { prefs: { ...prefs, bgm_on: on }, profile }, () => undefined);
   const commitBgmLevel = () => {
@@ -263,6 +275,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
       const res = await deleteRadioMemory();
       if (res.success) {
         dropRadioEvents(); // the server cannot tell an old batch sent after clearing from a new one
+        clearSavedSpeed(); // the account's speed is gone with the settings; a device copy would bring it back
         setClearing(false);
         setConfirming(false);
         showToast(t('settings.cleared'));
@@ -333,14 +346,13 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
         ) : null}
 
         <Group title={t('settings.speed')}>
-          <Segmented
-            name="speed"
-            value={String(speed)}
-            options={[
-              { value: '1', label: t('settings.speedNormal') },
-              { value: '0.75', label: t('settings.speedSlow') },
-            ]}
-            onChange={(v) => onSpeed(v === '0.75' ? 0.75 : 1)}
+          <SpeedSlider
+            value={speed}
+            level={levelSpeed(speedBand)}
+            label={speedLabel(speed)}
+            hint={t('settings.speedHint')}
+            onChange={onSpeed}
+            onCommit={(from, to) => commitSpeed(from, to)}
           />
         </Group>
 

@@ -6,6 +6,7 @@ import { Pause, Play, RotateCcw } from 'lucide-react';
 
 import type { PlayableSentence, PlayerSpeed } from '@/hooks/use-sentence-player';
 import type { RadioGlossaryItem } from '@/types/radio';
+import { clampSpeed, SPEED_MAX, SPEED_MIN, SPEED_STEP } from '@/lib/radio/settings';
 import { cn } from '@/lib/utils';
 
 type Piece = { text: string; term?: RadioGlossaryItem };
@@ -220,51 +221,148 @@ export function Captions({
   );
 }
 
-/** Controls: play / pause, repeat the current sentence, speed 1× ⇄ 0.75× (pitch kept). */
+/** `0.8` → `0.8×`, `0.75` → `0.75×`, `1` → `1×`. */
+export function speedLabel(v: number): string {
+  return `${Number(v.toFixed(2))}×`;
+}
+
+/**
+ * The speed slider (0.5× … 1.2×, pitch kept). `onChange` follows the thumb; `onCommit` is called once when the
+ * listener lets go (pointer up, key up, or leaving the slider) with where it was before and where it is now.
+ * `level` is the position for the listener's level: a mark on the track that does not move, so the listener sees
+ * whether they are faster or slower than it. No mark when the level is not known.
+ */
+export function SpeedSlider({
+  value,
+  level,
+  disabled,
+  hint,
+  label,
+  onChange,
+  onCommit,
+}: {
+  value: PlayerSpeed;
+  level?: PlayerSpeed | null;
+  disabled?: boolean;
+  hint?: string | null;
+  label: string;
+  onChange: (s: PlayerSpeed) => void;
+  onCommit?: (from: PlayerSpeed, to: PlayerSpeed) => void;
+}) {
+  const from = useRef<PlayerSpeed | null>(null);
+  const latest = useRef(value);
+  latest.current = value;
+  const commit = () => {
+    const start = from.current;
+    from.current = null;
+    if (start != null && start !== latest.current) onCommit?.(start, latest.current);
+  };
+  const t = useTranslations('radio.player');
+  // Where the mark sits: the same fraction of the track as the thumb's centre at that value (the thumb is about
+  // 16px wide, so its centre runs from 8px inside one end to 8px inside the other).
+  const at = level != null ? (clampSpeed(level) - SPEED_MIN) / (SPEED_MAX - SPEED_MIN) : null;
+  const side = level == null || value === level ? 'at' : value > level ? 'above' : 'below';
+  return (
+    <label className="flex w-full max-w-xs flex-col items-center gap-1 text-sm text-gray-700">
+      <span data-testid="radio-speed-label">{label}</span>
+      <span className="relative block w-full pb-5">
+      <input
+        type="range"
+        className="w-full accent-primary disabled:opacity-50"
+        min={SPEED_MIN}
+        max={SPEED_MAX}
+        step={SPEED_STEP}
+        value={value}
+        disabled={disabled}
+        aria-valuetext={speedLabel(value)}
+        data-testid="radio-speed"
+        onChange={(e) => {
+          if (from.current == null) from.current = latest.current;
+          const next = clampSpeed(Number(e.target.value));
+          latest.current = next;
+          onChange(next);
+        }}
+        onPointerUp={commit}
+        onKeyUp={commit}
+        onBlur={commit}
+      />
+      {at != null && level != null ? (
+        <span
+          className="pointer-events-none absolute top-0 flex -translate-x-1/2 flex-col items-center"
+          style={{ left: `calc(${at * 100}% + ${8 - at * 16}px)` }}
+          data-testid="radio-speed-level"
+          data-level={level}
+          data-side={side}
+        >
+          <span className="h-5 w-0.5 rounded bg-gray-500" aria-hidden />
+          <span className="mt-0.5 whitespace-nowrap text-xs text-gray-500">{t('speedLevel', { rate: speedLabel(level) })}</span>
+        </span>
+      ) : null}
+      </span>
+      {hint ? (
+        <span className="text-xs text-gray-500" data-testid="radio-speed-hint">
+          {hint}
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
+/**
+ * Controls: play / pause, repeat the current sentence, and the speed slider. The slider can be moved before
+ * playback starts and while it is paused; while a sentence plays it is locked and says so.
+ */
 export function PlayerControls({
   playing,
   disabled,
   speed,
+  speedLevel,
   onPlay,
   onPause,
   onRepeat,
   onSpeed,
+  onSpeedCommit,
 }: {
   playing: boolean;
   disabled?: boolean;
   speed: PlayerSpeed;
+  /** The position for the listener's level: marked on the slider. */
+  speedLevel?: PlayerSpeed | null;
   onPlay: () => void;
   onPause: () => void;
   onRepeat: () => void;
   onSpeed: (s: PlayerSpeed) => void;
+  onSpeedCommit?: (from: PlayerSpeed, to: PlayerSpeed) => void;
 }) {
   const t = useTranslations('radio.player');
   const btn =
     'inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-gray-200 bg-white px-3 text-sm hover:bg-gray-50 disabled:opacity-50';
   return (
-    <div className="flex items-center justify-center gap-3" data-testid="radio-controls">
-      <button type="button" className={btn} onClick={onRepeat} disabled={disabled} aria-label={t('repeat')}>
-        <RotateCcw className="h-5 w-5" aria-hidden />
-      </button>
-      <button
-        type="button"
-        className={cn(btn, 'h-14 w-14 bg-primary text-white hover:bg-primary/90')}
-        onClick={playing ? onPause : onPlay}
-        disabled={disabled}
-        aria-label={playing ? t('pause') : t('play')}
-        data-testid="radio-play-pause"
-      >
-        {playing ? <Pause className="h-6 w-6" aria-hidden /> : <Play className="h-6 w-6" aria-hidden />}
-      </button>
-      <button
-        type="button"
-        className={btn}
-        onClick={() => onSpeed(speed === 1 ? 0.75 : 1)}
-        disabled={disabled}
-        data-testid="radio-speed"
-      >
-        {t('speed', { rate: speed === 1 ? '1×' : '0.75×' })}
-      </button>
+    <div className="flex flex-col items-center gap-3" data-testid="radio-controls">
+      <div className="flex items-center justify-center gap-3">
+        <button type="button" className={btn} onClick={onRepeat} disabled={disabled} aria-label={t('repeat')}>
+          <RotateCcw className="h-5 w-5" aria-hidden />
+        </button>
+        <button
+          type="button"
+          className={cn(btn, 'h-14 w-14 bg-primary text-white hover:bg-primary/90')}
+          onClick={playing ? onPause : onPlay}
+          disabled={disabled}
+          aria-label={playing ? t('pause') : t('play')}
+          data-testid="radio-play-pause"
+        >
+          {playing ? <Pause className="h-6 w-6" aria-hidden /> : <Play className="h-6 w-6" aria-hidden />}
+        </button>
+      </div>
+      <SpeedSlider
+        value={speed}
+        level={speedLevel}
+        disabled={disabled || playing}
+        hint={playing ? t('speedLocked') : null}
+        label={t('speed', { rate: speedLabel(speed) })}
+        onChange={onSpeed}
+        onCommit={onSpeedCommit}
+      />
     </div>
   );
 }

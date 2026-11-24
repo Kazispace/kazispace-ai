@@ -23,6 +23,7 @@ const m = vi.hoisted(() => ({
   replace: vi.fn(),
   push: vi.fn(),
   toast: vi.fn(),
+  prefs: vi.fn(),
 }));
 
 vi.mock('next-intl', () => ({
@@ -55,6 +56,7 @@ vi.mock('@/lib/radio/api', async (orig) => ({
   getRadioHome: m.home,
   getRadioFacets: () => Promise.resolve({ success: false, status: 503, error: 'x' }),
   getRadioProgram: vi.fn(),
+  patchRadioPrefs: m.prefs,
 }));
 vi.mock('@/lib/radio/serial-api', async (orig) => ({
   ...(await orig<typeof import('@/lib/radio/serial-api')>()),
@@ -138,6 +140,18 @@ let container: HTMLDivElement;
 let root: Root;
 const q = (id: string) => container.querySelector(`[data-testid="${id}"]`);
 const qa = (id: string) => Array.from(container.querySelectorAll(`[data-testid="${id}"]`));
+/** Drag the speed slider to `v` and let go. */
+const drag = async (el: Element | null, v: number) => {
+  const input = el as HTMLInputElement;
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+  await act(async () => {
+    set.call(input, String(v));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await act(async () => {
+    input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+  });
+};
 const click = async (el: Element | null) => {
   expect(el).not.toBeNull();
   await act(async () => (el as HTMLElement).click());
@@ -169,8 +183,10 @@ beforeEach(() => {
   Object.values(m).forEach((f) => f.mockReset());
   m.home.mockResolvedValue(ok(HOME));
   m.progress.mockResolvedValue(ok({ storyline_id: 'dee', applied: true, progress: null }));
+  m.prefs.mockResolvedValue({ success: false, status: 503, error: 'x' });
 });
 afterEach(() => {
+  window.localStorage.removeItem('kazi.radio.defaultSpeed');
   act(() => root.unmount());
   container.remove();
   vi.unstubAllGlobals();
@@ -260,22 +276,99 @@ describe('an episode in the player', () => {
     expect(q('radio-skip-commentary')).toBeNull(); // a story sentence is playing
   });
 
-  it('starts at the default speed from Radio settings (slow ⇒ 0.75×), and at 1× with none saved', async () => {
+  it('starts at the saved speed; with none saved, at the position for the listener\'s level', async () => {
     m.episode.mockResolvedValue(ok(episode()));
     window.localStorage.setItem('kazi.radio.defaultSpeed', '0.75');
-    try {
-      await player();
-      expect(q('radio-speed')?.textContent).toContain('0.75×');
-      expect(audio().playbackRate).toBe(0.75);
-    } finally {
-      window.localStorage.removeItem('kazi.radio.defaultSpeed');
-    }
+    await player();
+    expect(q('radio-speed-label')?.textContent).toContain('0.75×');
+    expect(audio().playbackRate).toBe(0.75);
+    window.localStorage.removeItem('kazi.radio.defaultSpeed');
     act(() => root.unmount());
     root = createRoot(container);
     FakeAudio.all = [];
     await player();
-    expect(q('radio-speed')?.textContent).toContain('1×');
-    expect(audio().playbackRate).toBe(1);
+    expect(q('radio-speed-label')?.textContent).toContain('0.8×'); // HOME.profile.band is B1
+    expect(audio().playbackRate).toBe(0.8);
+  });
+
+  it('a save that succeeds leaves no copy on the device (so clearing memory, or another account, starts from the level)', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    m.prefs.mockResolvedValue(ok({ prefs: { ...HOME.prefs, speed: 0.6 }, profile: HOME.profile }));
+    await player();
+    await click(q('radio-play-pause'));
+    await drag(q('radio-speed'), 0.6);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(m.prefs.mock.calls).toEqual([[{ speed: 0.6 }]]);
+    expect(window.localStorage.getItem('kazi.radio.defaultSpeed')).toBeNull();
+  });
+
+  it('let go where the drag started ⇒ nothing is sent or reported', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    await player();
+    await click(q('radio-play-pause'));
+    await drag(q('radio-speed'), 0.8);
+    expect(m.prefs).not.toHaveBeenCalled();
+    expect(m.track.mock.calls.filter((c) => c[0] === 'speed_changed')).toEqual([]);
+  });
+
+  it('once the listener has moved the slider, a home answer arriving later does not move it back', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    let answer: (v: unknown) => void = () => undefined;
+    m.home.mockReturnValue(new Promise((r) => (answer = r)));
+    await player();
+    await click(q('radio-play-pause'));
+    await drag(q('radio-speed'), 0.6);
+    await act(async () => {
+      answer(ok({ ...HOME, prefs: { ...HOME.prefs, speed: 1.1 } }));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect((q('radio-speed') as HTMLInputElement).value).toBe('0.6');
+  });
+
+  it('the position saved on the account wins over the copy on this device and over the level', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    m.home.mockResolvedValue(ok({ ...HOME, prefs: { ...HOME.prefs, speed: 0.95 } }));
+    window.localStorage.setItem('kazi.radio.defaultSpeed', '0.6');
+    await player();
+    expect(q('radio-speed-label')?.textContent).toContain('0.95×');
+    expect(audio().playbackRate).toBe(0.95);
+    expect(m.prefs).not.toHaveBeenCalled(); // starting at a position saves nothing
+  });
+
+  it('the slider marks the position for the listener\'s level; the mark stays put and says which side the thumb is on', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    await player();
+    const mark = () => q('radio-speed-level') as HTMLElement;
+    expect(mark().getAttribute('data-level')).toBe('0.8'); // HOME.profile.band is B1
+    expect(mark().textContent).toContain('0.8×');
+    expect(mark().getAttribute('data-side')).toBe('at');
+    const left = mark().style.left;
+    await click(q('radio-play-pause'));
+    await drag(q('radio-speed'), 0.6);
+    expect(mark().getAttribute('data-side')).toBe('below');
+    await drag(q('radio-speed'), 1.1);
+    expect(mark().getAttribute('data-side')).toBe('above');
+    expect(mark().getAttribute('data-level')).toBe('0.8');
+    expect(mark().style.left).toBe(left);
+  });
+
+  it('the speed slider: locked while a sentence plays; paused, a drag is saved and reported once', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    await player();
+    const slider = () => q('radio-speed') as HTMLInputElement;
+    expect(slider().disabled).toBe(true);
+    expect(q('radio-speed-hint')).not.toBeNull();
+    await click(q('radio-play-pause'));
+    expect(slider().disabled).toBe(false);
+    expect(q('radio-speed-hint')).toBeNull();
+    await drag(slider(), 0.6);
+    expect(m.prefs.mock.calls).toEqual([[{ speed: 0.6 }]]); // sent to the account, once, when the listener lets go
+    expect(window.localStorage.getItem('kazi.radio.defaultSpeed')).toBe('0.6'); // the send failed: the copy holds it
+    expect(m.track.mock.calls.filter((c) => c[0] === 'speed_changed').map((c) => c[2])).toEqual([{ from: 0.8, to: 0.6 }]);
+    await click(q('radio-play-pause'));
+    expect(audio().playbackRate).toBe(0.6);
   });
 
   it('carries on after the last line heard', async () => {

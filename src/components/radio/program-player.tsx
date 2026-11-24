@@ -15,10 +15,10 @@ import { useBgm } from '@/hooks/use-bgm';
 import { useRadioEvents } from '@/hooks/use-radio-events';
 import { useRadioHome } from '@/hooks/use-radio-home';
 import { useRadioMic, type RadioMicOpen } from '@/hooks/use-radio-mic';
+import { useRadioSpeed } from '@/hooks/use-radio-speed';
 import { AIGC_MORSE_URL } from '@/lib/radio/aigc-morse';
 import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/hooks/use-sentence-player';
 import { getRadioProgram, newRadioRequestId, radioAccessOf } from '@/lib/radio/api';
-import { readDefaultSpeed } from '@/lib/radio/settings';
 import { sendPlayerLeft, trackRadioEvent } from '@/lib/radio/events';
 import { askRadioProgram, askRadioProgramAudio } from '@/lib/radio/player-api';
 import { isRadioLocale, radioEpisodeHref, radioHomeHref, radioStorylineHref } from '@/lib/radio/routes';
@@ -105,7 +105,7 @@ export function ProgramPlayerScreen({
   const router = useRouter();
   const showToast = useUIStore((s) => s.showToast);
   const { ready, authenticated } = useAuthReady();
-  const { access: homeAccess, home } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
+  const { access: homeAccess, home, setHome } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
   // KAZI-1242 (D20 = E1): the line under the header and, once per programme played, the Morse "AI" rhythm
   // before its first voiced sentence (programmes count too: the user, 2026-11-10, 「节目也播一次」).
   // The radio home did not answer (`unknown`: a 5xx, a network failure): label anyway, the safe side
@@ -116,9 +116,8 @@ export function ProgramPlayerScreen({
   // (a link opened directly, or a reload, asks for the part before the radio home has answered).
   const labelUnknown = isRadioLocale(locale) && homeAccess === null;
   const [load, setLoad] = useState<Load>({ state: 'loading' });
-  const [speed, setSpeed] = useState<PlayerSpeed>(1);
-  // The default speed is kept by the app (Radio settings). A programme or an episode starts at it, as a story does.
-  useEffect(() => setSpeed(readDefaultSpeed()), []);
+  // Speed (Player · Speed): the saved position, else the one for the listener's level.
+  const { speed, slide: slideSpeed, save: saveSpeed, level: speedLevel } = useRadioSpeed({ band: home?.profile?.band ?? null, home, setHome });
   const [attempt, setAttempt] = useState(0);
   const [inFlight, setInFlight] = useState(false);
   const [slow, setSlow] = useState(false);
@@ -333,9 +332,10 @@ export function ProgramPlayerScreen({
     player.playFrom(next);
   };
 
-  const changeSpeed = (to: PlayerSpeed) => {
-    if (to !== speed) trackRadioEvent('speed_changed', { programId }, { from: speed, to });
-    setSpeed(to);
+  // The listener let go of the slider: the position is saved and reported once.
+  const commitSpeed = (from: PlayerSpeed, to: PlayerSpeed) => {
+    saveSpeed(to);
+    trackRadioEvent('speed_changed', { programId }, { from, to });
   };
   const playerRef = useRef(player);
   playerRef.current = player;
@@ -621,6 +621,7 @@ export function ProgramPlayerScreen({
               playing={player.playing || answerPlayer.playing}
               disabled={inFlight}
               speed={speed}
+              speedLevel={speedLevel}
               onPlay={() => {
                 setCare(null);
                 player.play();
@@ -634,7 +635,8 @@ export function ProgramPlayerScreen({
                 if (at) trackRadioEvent('replay', { programId }, { seq: at.seq });
                 player.repeat();
               }}
-              onSpeed={changeSpeed}
+              onSpeed={slideSpeed}
+              onSpeedCommit={commitSpeed}
             />
           </div>
         }
