@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getRadioHome, radioAccessOf } from '@/lib/radio/api';
 import { dropRadioEvents } from '@/lib/radio/events';
 import { deleteRadioMemory } from '@/lib/radio/player-api';
+import { clearSavedSpeed } from '@/lib/radio/settings';
 import { useUIStore } from '@/lib/store';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -53,6 +54,7 @@ export function ClearRadioDataRow({ authenticated }: { authenticated: boolean })
       const res = await deleteRadioMemory();
       if (res.success) {
         dropRadioEvents();
+        clearSavedSpeed(); // the account's speed is gone; a device copy would bring it back
         setClearing(false);
         setConfirming(false);
         showToast(t('settings.cleared'));

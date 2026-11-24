@@ -27,7 +27,6 @@ import {
   levelSpeed,
   startSpeed,
   shownEnRatio,
-  writeDefaultSpeed,
 } from '@/lib/radio/settings';
 import { blockedHelpPlatform, micErrorKind } from '@/lib/radio/voice';
 import { buildClinicHubHref } from '@/lib/hub-entry';
@@ -120,8 +119,8 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     };
   }, [offered, ready, authenticated]);
 
-  /** Saves one change; on failure the toast and `revert` put the control back. */
-  async function save(patch: RadioPrefs, optimistic: Stored, revert: () => void) {
+  /** Saves one change; on failure the toast and `revert` put the control back. Resolves to whether it was saved. */
+  async function save(patch: RadioPrefs, optimistic: Stored, revert: () => void): Promise<boolean> {
     const before = stored;
     setStored(optimistic);
     for (let busy = 0; busy <= SETTINGS_BUSY_LIMIT; busy += 1) {
@@ -130,7 +129,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
         const next = { prefs: res.data.prefs ?? {}, profile: res.data.profile };
         setStored(next);
         if (homeRef.current) setHome({ ...homeRef.current, prefs: next.prefs, profile: next.profile });
-        return;
+        return true;
       }
       if (res.status === 503 && res.errorCode === 'busy' && busy < SETTINGS_BUSY_LIMIT) {
         await sleep(Math.max(1, res.retryAfter ?? 1) * 1000);
@@ -138,13 +137,14 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
       }
       if (res.status === 404 || (res.status === 403 && res.errorCode?.startsWith('radio_'))) {
         router.replace(studioHref);
-        return;
+        return false;
       }
       break;
     }
     setStored(before);
     revert();
     showToast(t('settings.saveFailed'));
+    return false;
   }
 
   const back = saveId ? (
@@ -215,13 +215,11 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   const onSpeed = (s: number) => {
     setSpeed(s);
   };
-  // Let go: saved on the account like the other settings (and kept on this device). A refused save puts the
-  // slider back where it was.
+  // Let go: saved on the account like the other settings. Once it is there the device copy has no job left;
+  // a refused save puts the slider back where it was and leaves any copy as it is.
   const commitSpeed = (from: number, to: number) => {
-    writeDefaultSpeed(to);
-    void save({ speed: to }, { prefs: { ...prefs, speed: to }, profile }, () => {
-      writeDefaultSpeed(from);
-      setSpeed(from);
+    void save({ speed: to }, { prefs: { ...prefs, speed: to }, profile }, () => setSpeed(from)).then((saved) => {
+      if (saved) clearSavedSpeed();
     });
   };
   const onBgm = (on: boolean) => void save({ bgm_on: on }, { prefs: { ...prefs, bgm_on: on }, profile }, () => undefined);

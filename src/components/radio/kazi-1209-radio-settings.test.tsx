@@ -264,21 +264,29 @@ describe('RadioSettingsScreen', () => {
     expect(checked('voice')).toBe('en_us_m1');
   });
 
-  it('the speed slider: letting go saves the position on the account, and keeps a copy on the device', async () => {
+  it('the speed slider: letting go saves the position on the account; a device copy has no job left and is removed', async () => {
+    writeDefaultSpeed(0.75); // e.g. "Slow" chosen before the slider, or an earlier save that failed
     m.prefs.mockResolvedValue(ok({ speed: 0.65 }));
     await settings();
+    expect((q('radio-speed') as HTMLInputElement).value).toBe('0.75'); // the account has none: the copy
     await drag(q('radio-speed'), 0.65);
     expect(m.prefs.mock.calls).toEqual([[{ speed: 0.65 }]]);
-    expect(readSavedSpeed()).toBe(0.65);
     expect(q('radio-speed-label')?.textContent).toBe('0.65×');
+    expect(readSavedSpeed()).toBeNull();
   });
 
-  it('the speed slider: a save that fails puts it back where it was', async () => {
+  it('the speed slider: a save that fails puts it back where it was and makes no device copy', async () => {
     m.prefs.mockResolvedValue({ success: false, status: 500, error: 'x' });
     await settings();
     await drag(q('radio-speed'), 0.65);
     expect((q('radio-speed') as HTMLInputElement).value).toBe('0.8');
-    expect(readSavedSpeed()).toBe(0.8);
+    expect(readSavedSpeed()).toBeNull(); // the level's position was never the listener's choice
+  });
+
+  it('the speed slider: let go where it started ⇒ nothing is sent', async () => {
+    await settings();
+    await drag(q('radio-speed'), 0.8);
+    expect(m.prefs).not.toHaveBeenCalled();
   });
 
   it('the speed slider shows the position saved on the account', async () => {

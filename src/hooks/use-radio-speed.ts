@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { PlayerSpeed } from '@/hooks/use-sentence-player';
 import { patchRadioPrefs } from '@/lib/radio/api';
-import { levelSpeed, startSpeed, writeDefaultSpeed } from '@/lib/radio/settings';
+import { clearSavedSpeed, levelSpeed, startSpeed, writeDefaultSpeed } from '@/lib/radio/settings';
 import type { RadioHome } from '@/types/radio';
 
 /**
@@ -16,8 +16,10 @@ import type { RadioHome } from '@/types/radio';
  *
  * - `level` is the position for the listener's level, marked on the slider.
  * - `slide` follows the thumb (and a spoken "slower" / "normal speed"): this listen only, nothing saved.
- * - `save` is called when the listener lets go: the position is kept on this device and sent to the account
- *   (`PATCH prefs`). A failed send is not shown: the device copy still holds the position.
+ * - `save` is called when the listener lets go: the position is sent to the account (`PATCH prefs`). Until the
+ *   send succeeds a copy is kept on this device; a failed send is not shown and the copy holds the position.
+ *   Once the send succeeds the copy is removed, so clearing radio memory, or another account on this device,
+ *   starts from the level again.
  */
 export function useRadioSpeed({
   band,
@@ -45,8 +47,10 @@ export function useRadioSpeed({
       writeDefaultSpeed(to);
       void patchRadioPrefs({ speed: to })
         .then((res) => {
+          if (!res.success || !res.data) return; // the device copy holds the position until a save succeeds
+          clearSavedSpeed(); // the account has it now: the copy's only job is a save that failed
           const h = homeRef.current;
-          if (res.success && res.data && h) setHome({ ...h, prefs: res.data.prefs ?? {}, profile: res.data.profile });
+          if (h) setHome({ ...h, prefs: res.data.prefs ?? {}, profile: res.data.profile });
         })
         .catch(() => undefined);
     },

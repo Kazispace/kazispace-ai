@@ -40,7 +40,8 @@ export function shownEnRatio(band: RadioBand, ratio: number | null | undefined):
 // ── speed: kept by the app, not the server (Saving settings) ─────────────────────────────────
 // One slider, in the player and in Radio settings. Until the listener moves it, it sits at the position for
 // their level; once moved, the position is saved on the account (`PATCH prefs` `speed`) and used everywhere.
-// A copy stays on this device: it covers a failed save, and a listener who chose "Slow" before the slider.
+// A copy on this device has two jobs only: a save from the player that failed, and a listener who chose "Slow"
+// before the slider. It is removed once a save succeeds and when radio memory is cleared.
 const SPEED_KEY = 'kazi.radio.defaultSpeed';
 export const SPEED_MIN = 0.5;
 export const SPEED_MAX = 1.2;

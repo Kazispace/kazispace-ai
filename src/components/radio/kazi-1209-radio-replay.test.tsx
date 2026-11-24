@@ -396,6 +396,7 @@ describe('Me: clear personal radio data (D29)', () => {
     m.home.mockResolvedValue({ success: false, status: 403, errorCode: 'radio_not_in_audience' });
     m.memory.mockResolvedValue({ success: true });
     EV.trackRadioEvent('replay', { saveId: 'sv1' }, { seq: 1 });
+    window.localStorage.setItem('kazi.radio.defaultSpeed', '0.6'); // a device copy of the speed
     await mount(<ClearRadioDataRow authenticated />);
     await click(q('me-clear-radio-data'));
     expect(q('me-clear-radio-dialog')?.textContent).toContain('radio.settings.clearMemoryConfirm');
@@ -404,6 +405,7 @@ describe('Me: clear personal radio data (D29)', () => {
     expect(EV.radioEventQueue()).toHaveLength(0);
     expect(m.push).not.toHaveBeenCalled();
     expect(m.replace).not.toHaveBeenCalled();
+    expect(window.localStorage.getItem('kazi.radio.defaultSpeed')).toBeNull(); // gone with the account's settings
   });
 
   it('404 after Me opened: the dialog closes and the row disappears, no toast; other failures: clearFailed', async () => {
