@@ -1608,7 +1608,7 @@
 				"preview": "Play sample"
 			},
 			"speed": "Speed",
-			"speedHint": "Until you move it, it follows your level. Your position is saved on this device.",
+			"speedHint": "Until you move it, it follows your level. Your position is saved to your account.",
 			"bgm": "Background music",
 			"bgmLevel": "Music volume",
 			"listenWindow": "Listen for my answer at choices",
