@@ -161,6 +161,8 @@ async function mount(el: React.ReactElement) {
 }
 
 beforeEach(() => {
+  // These cases time the reading pauses at 1×; without a saved position the player starts at the level's speed.
+  window.localStorage.setItem('kazi.radio.defaultSpeed', '1');
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   FakeAudio.all = [];
   vi.stubGlobal('Audio', FakeAudio);
@@ -175,6 +177,7 @@ beforeEach(() => {
   m.program.mockResolvedValue({ success: true, data: program });
 });
 afterEach(() => {
+  window.localStorage.removeItem('kazi.radio.defaultSpeed');
   act(() => root.unmount());
   container.remove();
   vi.unstubAllGlobals();

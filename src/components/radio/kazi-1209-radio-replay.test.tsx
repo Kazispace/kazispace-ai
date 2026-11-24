@@ -131,6 +131,18 @@ let container: HTMLDivElement;
 let root: Root;
 const q = (id: string) => container.querySelector(`[data-testid="${id}"]`);
 const qa = (id: string) => Array.from(container.querySelectorAll(`[data-testid="${id}"]`));
+/** Drag the speed slider to `v` and let go. */
+const drag = async (el: Element | null, v: number) => {
+  const input = el as HTMLInputElement;
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+  await act(async () => {
+    set.call(input, String(v));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await act(async () => {
+    input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+  });
+};
 const click = async (el: Element | null) => {
   expect(el).not.toBeNull();
   await act(async () => (el as HTMLElement).click());
@@ -473,8 +485,15 @@ describe('the story player: phrases, events, the ending summary', () => {
     m.save.mockResolvedValue({ success: true, data: resp() });
     m.turn.mockResolvedValue({ success: true, data: resp({ nodeId: 'n2', save_version: 4 }) });
     await mount(<StoryPlayerScreen locale="zh" saveId="sv1" from="home" />);
-    await click(q('radio-speed'));
-    expect(EV.radioEventQueue().find((e) => e.kind === 'speed_changed')?.payload).toEqual({ from: 1, to: 0.75 });
+    // The slider is locked while a sentence plays; paused, it moves from the level's position (B1 ⇒ 0.8×).
+    expect((q('radio-speed') as HTMLInputElement).disabled).toBe(true);
+    await click(q('radio-play-pause'));
+    expect((q('radio-speed') as HTMLInputElement).disabled).toBe(false);
+    await drag(q('radio-speed'), 0.6);
+    expect(EV.radioEventQueue().filter((e) => e.kind === 'speed_changed').map((e) => e.payload)).toEqual([{ from: 0.8, to: 0.6 }]);
+    expect(window.localStorage.getItem('kazi.radio.defaultSpeed')).toBe('0.6');
+    await click(q('radio-play-pause'));
+    expect(FakeAudio.all[0].playbackRate).toBe(0.6);
     await act(async () => FakeAudio.all[0].onended?.());
     FakeAudio.all[0].currentTime = 0.4;
     act(() => root.unmount());

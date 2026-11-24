@@ -18,7 +18,7 @@ import { useRadioMic, type RadioMicOpen } from '@/hooks/use-radio-mic';
 import { AIGC_MORSE_URL } from '@/lib/radio/aigc-morse';
 import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/hooks/use-sentence-player';
 import { getRadioProgram, newRadioRequestId, radioAccessOf } from '@/lib/radio/api';
-import { readDefaultSpeed } from '@/lib/radio/settings';
+import { startSpeed, writeDefaultSpeed } from '@/lib/radio/settings';
 import { sendPlayerLeft, trackRadioEvent } from '@/lib/radio/events';
 import { askRadioProgram, askRadioProgramAudio } from '@/lib/radio/player-api';
 import { isRadioLocale, radioEpisodeHref, radioHomeHref, radioStorylineHref } from '@/lib/radio/routes';
@@ -117,8 +117,13 @@ export function ProgramPlayerScreen({
   const labelUnknown = isRadioLocale(locale) && homeAccess === null;
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [speed, setSpeed] = useState<PlayerSpeed>(1);
-  // The default speed is kept by the app (Radio settings). A programme or an episode starts at it, as a story does.
-  useEffect(() => setSpeed(readDefaultSpeed()), []);
+  // Speed (Player · Speed): the position the listener saved, else the one for their level. Once they move the
+  // slider here, the level arriving later does not move it back.
+  const speedTouched = useRef(false);
+  const band = home?.profile?.band ?? null;
+  useEffect(() => {
+    if (!speedTouched.current) setSpeed(startSpeed(band));
+  }, [band]);
   const [attempt, setAttempt] = useState(0);
   const [inFlight, setInFlight] = useState(false);
   const [slow, setSlow] = useState(false);
@@ -334,8 +339,13 @@ export function ProgramPlayerScreen({
   };
 
   const changeSpeed = (to: PlayerSpeed) => {
-    if (to !== speed) trackRadioEvent('speed_changed', { programId }, { from: speed, to });
+    speedTouched.current = true;
     setSpeed(to);
+  };
+  // The listener let go of the slider: the position is saved on this device and reported once.
+  const commitSpeed = (from: PlayerSpeed, to: PlayerSpeed) => {
+    writeDefaultSpeed(to);
+    trackRadioEvent('speed_changed', { programId }, { from, to });
   };
   const playerRef = useRef(player);
   playerRef.current = player;
@@ -635,6 +645,7 @@ export function ProgramPlayerScreen({
                 player.repeat();
               }}
               onSpeed={changeSpeed}
+              onSpeedCommit={commitSpeed}
             />
           </div>
         }

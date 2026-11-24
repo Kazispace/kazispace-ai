@@ -201,6 +201,8 @@ async function mount() {
 }
 
 beforeEach(() => {
+  // These cases time the reading pauses at 1×; without a saved position the player starts at the level's speed.
+  window.localStorage.setItem('kazi.radio.defaultSpeed', '1');
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   FakeAudio.all = [];
   srcs.length = 0;
@@ -224,6 +226,7 @@ beforeEach(() => {
   setHome();
 });
 afterEach(() => {
+  window.localStorage.removeItem('kazi.radio.defaultSpeed');
   act(() => root.unmount());
   container.remove();
   vi.unstubAllGlobals();

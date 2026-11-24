@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Loader2, Play, Square } from 'lucide-react';
 
 import { BackLink } from '@/components/navigation/back-link';
-import { PlayerShell } from '@/components/radio/player-parts';
+import { PlayerShell, SpeedSlider, speedLabel } from '@/components/radio/player-parts';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { getMe, patchMe } from '@/lib/api-client';
 import { nativeLanguageOptions, nativeLanguageToApi, type NativeLanguage } from '@/lib/native-language';
@@ -23,7 +23,7 @@ import {
   EN_RATIO_DEFAULT,
   VOICE_LABEL_KEY,
   percent,
-  readDefaultSpeed,
+  startSpeed,
   shownEnRatio,
   writeDefaultSpeed,
 } from '@/lib/radio/settings';
@@ -66,7 +66,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   const studioHref = buildClinicHubHref(locale);
 
   const [stored, setStored] = useState<Stored | null>(null);
-  const [speed, setSpeed] = useState<1 | 0.75>(1);
+  const [speed, setSpeed] = useState<number>(1);
   const [hasMusic, setHasMusic] = useState(false);
   const [bgmLevel, setBgmLevel] = useState<number>(BGM_LEVEL_DEFAULT);
   const [micBlocked, setMicBlocked] = useState(false);
@@ -88,7 +88,10 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     }
   }, [home, stored]);
 
-  useEffect(() => setSpeed(readDefaultSpeed()), []);
+  // The speed slider: the saved position, else the one for the listener's level (it follows a level change
+  // until the listener moves it).
+  const speedBand = stored?.profile.band ?? null;
+  useEffect(() => setSpeed(startSpeed(speedBand)), [speedBand]);
 
   // Background music: the group shows only when there is music to play.
   useEffect(() => {
@@ -206,9 +209,8 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     if (v === voice) return;
     void save({ voice_id: v }, { prefs: { ...prefs, voice_id: v }, profile }, () => undefined);
   };
-  const onSpeed = (s: 1 | 0.75) => {
+  const onSpeed = (s: number) => {
     setSpeed(s);
-    writeDefaultSpeed(s);
   };
   const onBgm = (on: boolean) => void save({ bgm_on: on }, { prefs: { ...prefs, bgm_on: on }, profile }, () => undefined);
   const commitBgmLevel = () => {
@@ -333,14 +335,12 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
         ) : null}
 
         <Group title={t('settings.speed')}>
-          <Segmented
-            name="speed"
-            value={String(speed)}
-            options={[
-              { value: '1', label: t('settings.speedNormal') },
-              { value: '0.75', label: t('settings.speedSlow') },
-            ]}
-            onChange={(v) => onSpeed(v === '0.75' ? 0.75 : 1)}
+          <SpeedSlider
+            value={speed}
+            label={speedLabel(speed)}
+            hint={t('settings.speedHint')}
+            onChange={onSpeed}
+            onCommit={(_from, to) => writeDefaultSpeed(to)}
           />
         </Group>
 

@@ -138,6 +138,18 @@ let container: HTMLDivElement;
 let root: Root;
 const q = (id: string) => container.querySelector(`[data-testid="${id}"]`);
 const qa = (id: string) => Array.from(container.querySelectorAll(`[data-testid="${id}"]`));
+/** Drag the speed slider to `v` and let go. */
+const drag = async (el: Element | null, v: number) => {
+  const input = el as HTMLInputElement;
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+  await act(async () => {
+    set.call(input, String(v));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await act(async () => {
+    input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+  });
+};
 const click = async (el: Element | null) => {
   expect(el).not.toBeNull();
   await act(async () => (el as HTMLElement).click());
@@ -171,6 +183,7 @@ beforeEach(() => {
   m.progress.mockResolvedValue(ok({ storyline_id: 'dee', applied: true, progress: null }));
 });
 afterEach(() => {
+  window.localStorage.removeItem('kazi.radio.defaultSpeed');
   act(() => root.unmount());
   container.remove();
   vi.unstubAllGlobals();
@@ -260,22 +273,35 @@ describe('an episode in the player', () => {
     expect(q('radio-skip-commentary')).toBeNull(); // a story sentence is playing
   });
 
-  it('starts at the default speed from Radio settings (slow ⇒ 0.75×), and at 1× with none saved', async () => {
+  it('starts at the saved speed; with none saved, at the position for the listener\'s level', async () => {
     m.episode.mockResolvedValue(ok(episode()));
     window.localStorage.setItem('kazi.radio.defaultSpeed', '0.75');
-    try {
-      await player();
-      expect(q('radio-speed')?.textContent).toContain('0.75×');
-      expect(audio().playbackRate).toBe(0.75);
-    } finally {
-      window.localStorage.removeItem('kazi.radio.defaultSpeed');
-    }
+    await player();
+    expect(q('radio-speed-label')?.textContent).toContain('0.75×');
+    expect(audio().playbackRate).toBe(0.75);
+    window.localStorage.removeItem('kazi.radio.defaultSpeed');
     act(() => root.unmount());
     root = createRoot(container);
     FakeAudio.all = [];
     await player();
-    expect(q('radio-speed')?.textContent).toContain('1×');
-    expect(audio().playbackRate).toBe(1);
+    expect(q('radio-speed-label')?.textContent).toContain('0.8×'); // HOME.profile.band is B1
+    expect(audio().playbackRate).toBe(0.8);
+  });
+
+  it('the speed slider: locked while a sentence plays; paused, a drag is saved and reported once', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    await player();
+    const slider = () => q('radio-speed') as HTMLInputElement;
+    expect(slider().disabled).toBe(true);
+    expect(q('radio-speed-hint')).not.toBeNull();
+    await click(q('radio-play-pause'));
+    expect(slider().disabled).toBe(false);
+    expect(q('radio-speed-hint')).toBeNull();
+    await drag(slider(), 0.6);
+    expect(window.localStorage.getItem('kazi.radio.defaultSpeed')).toBe('0.6');
+    expect(m.track.mock.calls.filter((c) => c[0] === 'speed_changed').map((c) => c[2])).toEqual([{ from: 0.8, to: 0.6 }]);
+    await click(q('radio-play-pause'));
+    expect(audio().playbackRate).toBe(0.6);
   });
 
   it('carries on after the last line heard', async () => {

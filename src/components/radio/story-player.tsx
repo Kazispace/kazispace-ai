@@ -35,7 +35,7 @@ import {
 import { sendPlayerLeft, trackRadioEvent } from '@/lib/radio/events';
 import { postRadioTurnAudio } from '@/lib/radio/player-api';
 import { isRadioLocale, radioHomeHref, radioSettingsHref } from '@/lib/radio/routes';
-import { readDefaultSpeed, rememberPlace, takePlace } from '@/lib/radio/settings';
+import { rememberPlace, startSpeed, takePlace, writeDefaultSpeed } from '@/lib/radio/settings';
 import {
   DEFAULT_LISTEN_WINDOW_MS,
   SLOW_AFTER_MS,
@@ -546,10 +546,25 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   // Speed changes (control, "slower" / "faster") are reported as `speed_changed`.
   const speedRef = useRef(speed);
   speedRef.current = speed;
+  const speedTouched = useRef(false);
+  // "slower" / "normal speed" said aloud: applied at once and reported; the saved position is not changed.
   const changeSpeed = useCallback(
     (to: PlayerSpeed) => {
+      speedTouched.current = true;
       if (to !== speedRef.current) trackRadioEvent('speed_changed', { saveId }, { from: speedRef.current, to });
       setSpeed(to);
+    },
+    [saveId]
+  );
+  // The slider: follows the thumb; when the listener lets go, the position is saved on this device and reported once.
+  const slideSpeed = useCallback((to: PlayerSpeed) => {
+    speedTouched.current = true;
+    setSpeed(to);
+  }, []);
+  const commitSpeed = useCallback(
+    (from: PlayerSpeed, to: PlayerSpeed) => {
+      writeDefaultSpeed(to);
+      trackRadioEvent('speed_changed', { saveId }, { from, to });
     },
     [saveId]
   );
@@ -585,8 +600,11 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answerCount]);
 
-  // The default speed is kept by the app (Radio settings).
-  useEffect(() => setSpeed(readDefaultSpeed()), []);
+  // Speed (Player · Speed): the position the listener saved, else the one for their level.
+  const band = resp?.profile.band ?? null;
+  useEffect(() => {
+    if (!speedTouched.current) setSpeed(startSpeed(band));
+  }, [band]);
 
   // The header shows the story's name (Player · Layout). A story just started may not be in the
   // cached radio home yet: read it again once.
@@ -1081,7 +1099,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
                 if (node && seg) trackRadioEvent('replay', { saveId }, { node_id: node.node_id, seq: seg.seq });
                 player.repeat();
               }}
-              onSpeed={changeSpeed}
+              onSpeed={slideSpeed}
+              onSpeedCommit={commitSpeed}
             />
           </div>
         }

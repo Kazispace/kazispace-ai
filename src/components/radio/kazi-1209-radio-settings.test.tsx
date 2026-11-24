@@ -8,7 +8,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { EN_RATIOS, readDefaultSpeed, rememberPlace, shownEnRatio, takePlace, writeDefaultSpeed } from '@/lib/radio/settings';
+import { EN_RATIOS, readSavedSpeed, rememberPlace, shownEnRatio, startSpeed, takePlace, writeDefaultSpeed } from '@/lib/radio/settings';
 import { radioSettingsHref } from '@/lib/radio/routes';
 import type { RadioHome, RadioPlayerResponse } from '@/types/radio';
 
@@ -115,6 +115,18 @@ const opt = (group: string, value: string) =>
   container.querySelector(`[data-testid="radio-settings-${group}"] [data-value="${value}"]`) as HTMLButtonElement | null;
 const checked = (group: string) =>
   container.querySelector(`[data-testid="radio-settings-${group}"] [aria-checked="true"]`)?.getAttribute('data-value');
+/** Drag the speed slider to `v` and let go. */
+const drag = async (el: Element | null, v: number) => {
+  const input = el as HTMLInputElement;
+  const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!;
+  await act(async () => {
+    set.call(input, String(v));
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await act(async () => {
+    input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+  });
+};
 const click = async (el: Element | null) => {
   expect(el).not.toBeNull();
   await act(async () => (el as HTMLElement).click());
@@ -161,10 +173,23 @@ describe('the rules', () => {
     expect(shownEnRatio('A2', null)).toBe(0.3);
   });
 
-  it('the default speed is kept by the app', () => {
-    expect(readDefaultSpeed()).toBe(1);
+  it('the speed: the level\'s position until the listener saves one, which then wins at every level', () => {
+    expect(readSavedSpeed()).toBeNull();
+    expect(['A2', 'B1', 'B2', 'C1', null].map((b) => startSpeed(b))).toEqual([0.7, 0.8, 0.9, 1, 1]);
     writeDefaultSpeed(0.75);
-    expect(readDefaultSpeed()).toBe(0.75);
+    expect(readSavedSpeed()).toBe(0.75);
+    expect(['A2', 'C1', null].map((b) => startSpeed(b))).toEqual([0.75, 0.75, 0.75]);
+  });
+
+  it('a saved speed is kept on the slider\'s range and step; rubbish reads as not saved', () => {
+    writeDefaultSpeed(3);
+    expect(readSavedSpeed()).toBe(1.2);
+    writeDefaultSpeed(0.1);
+    expect(readSavedSpeed()).toBe(0.5);
+    writeDefaultSpeed(0.83);
+    expect(readSavedSpeed()).toBe(0.85);
+    window.localStorage.setItem('kazi.radio.defaultSpeed', 'fast');
+    expect(readSavedSpeed()).toBeNull();
   });
 
   it('the place is remembered once, for the same part only', () => {
@@ -189,7 +214,8 @@ describe('RadioSettingsScreen', () => {
     expect(Array.from(container.querySelectorAll('[data-testid="radio-settings-en-ratio"] [role="radio"]')).map((b) => b.textContent)).toEqual(['30%', '40%', '50%']);
     expect(checked('voice')).toBe('en_gb_f1'); // profile.voice_id, not the first in the list
     expect(Array.from(container.querySelectorAll('[data-testid="radio-settings-voice"] [role="radio"]')).map((b) => b.getAttribute('data-value'))).toEqual(HOME.voices);
-    expect(checked('speed')).toBe('1');
+    expect((q('radio-speed') as HTMLInputElement).value).toBe('0.8'); // nothing saved: the position for B1
+    expect(q('radio-speed-label')?.textContent).toBe('0.8×');
     expect(q('radio-listen')?.getAttribute('aria-checked')).toBe('false'); // off until the user turns it on
     expect(q('radio-bgm')).toBeNull(); // no music available → the whole group is hidden
   });
@@ -237,8 +263,9 @@ describe('RadioSettingsScreen', () => {
 
   it('the default speed is saved on the device, not sent', async () => {
     await settings();
-    await click(opt('speed', '0.75'));
-    expect(readDefaultSpeed()).toBe(0.75);
+    await drag(q('radio-speed'), 0.65);
+    expect(readSavedSpeed()).toBe(0.65);
+    expect(q('radio-speed-label')?.textContent).toBe('0.65×');
     expect(m.prefs).not.toHaveBeenCalled();
   });
 
