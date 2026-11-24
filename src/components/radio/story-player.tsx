@@ -21,6 +21,7 @@ import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useBgm } from '@/hooks/use-bgm';
 import { useRadioEvents } from '@/hooks/use-radio-events';
 import { useRadioHome } from '@/hooks/use-radio-home';
+import { useRadioSpeed } from '@/hooks/use-radio-speed';
 import { useRadioMic, type RadioMicOpen } from '@/hooks/use-radio-mic';
 import { AIGC_MORSE_URL } from '@/lib/radio/aigc-morse';
 import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/hooks/use-sentence-player';
@@ -35,7 +36,7 @@ import {
 import { sendPlayerLeft, trackRadioEvent } from '@/lib/radio/events';
 import { postRadioTurnAudio } from '@/lib/radio/player-api';
 import { isRadioLocale, radioHomeHref, radioSettingsHref } from '@/lib/radio/routes';
-import { rememberPlace, startSpeed, takePlace, writeDefaultSpeed } from '@/lib/radio/settings';
+import { rememberPlace, takePlace } from '@/lib/radio/settings';
 import {
   DEFAULT_LISTEN_WINDOW_MS,
   SLOW_AFTER_MS,
@@ -157,7 +158,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const { ready, authenticated } = useAuthReady();
   const studioHref = buildClinicHubHref(locale);
   const backHref = from === 'studio' ? studioHref : radioHomeHref(locale);
-  const { access: homeAccess, home, refresh: refreshHome } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
+  const { access: homeAccess, home, refresh: refreshHome, setHome } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
   // KAZI-1242 (D20 = E1): where the region must label, the line under the header and, once per visit, the
   // Morse "AI" rhythm before the first voiced sentence (never decided from the interface language).
   // The radio home did not answer (`unknown`: a 5xx, a network failure): label anyway, the safe side
@@ -170,11 +171,12 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
 
   const [load, setLoad] = useState<Load>({ state: 'loading' });
   const [resp, setResp] = useState<RadioPlayerResponse | null>(null);
+  // Speed (Player · Speed): the saved position, else the one for the listener's level.
+  const { speed, slide: slideSpeed, save: saveSpeed, level: speedLevel } = useRadioSpeed({ band: resp?.profile.band ?? home?.profile?.band ?? null, home, setHome });
   const [segments, setSegments] = useState<RadioSegment[]>([]);
   const [choices, setChoices] = useState<RadioChoice[]>([]);
   const [answerCount, setAnswerCount] = useState(0);
   const [notice, setNotice] = useState<RadioNotice | null>(null);
-  const [speed, setSpeed] = useState<PlayerSpeed>(1);
   // Key phrases heard in this story so far (the ending summary lists up to 8).
   const [heardGlossary, setHeardGlossary] = useState<RadioGlossaryItem[]>([]);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -546,27 +548,21 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   // Speed changes (control, "slower" / "faster") are reported as `speed_changed`.
   const speedRef = useRef(speed);
   speedRef.current = speed;
-  const speedTouched = useRef(false);
   // "slower" / "normal speed" said aloud: applied at once and reported; the saved position is not changed.
   const changeSpeed = useCallback(
     (to: PlayerSpeed) => {
-      speedTouched.current = true;
       if (to !== speedRef.current) trackRadioEvent('speed_changed', { saveId }, { from: speedRef.current, to });
-      setSpeed(to);
+      slideSpeed(to);
     },
-    [saveId]
+    [saveId, slideSpeed]
   );
-  // The slider: follows the thumb; when the listener lets go, the position is saved on this device and reported once.
-  const slideSpeed = useCallback((to: PlayerSpeed) => {
-    speedTouched.current = true;
-    setSpeed(to);
-  }, []);
+  // The slider: when the listener lets go, the position is saved and reported once.
   const commitSpeed = useCallback(
     (from: PlayerSpeed, to: PlayerSpeed) => {
-      writeDefaultSpeed(to);
+      saveSpeed(to);
       trackRadioEvent('speed_changed', { saveId }, { from, to });
     },
-    [saveId]
+    [saveId, saveSpeed]
   );
 
   // Playback events (Data · Playback events): sent while here, and `player_left` as the user leaves.
@@ -600,11 +596,6 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answerCount]);
 
-  // Speed (Player · Speed): the position the listener saved, else the one for their level.
-  const band = resp?.profile.band ?? null;
-  useEffect(() => {
-    if (!speedTouched.current) setSpeed(startSpeed(band));
-  }, [band]);
 
   // The header shows the story's name (Player · Layout). A story just started may not be in the
   // cached radio home yet: read it again once.
@@ -1088,6 +1079,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
               playing={player.playing || answerPlayer.playing}
               disabled={inFlight}
               speed={speed}
+              speedLevel={speedLevel}
               onPlay={onPlay}
               onPause={() => {
                 setUserPaused(true);

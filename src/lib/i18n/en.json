@@ -1626,6 +1626,7 @@
 			"repeat": "Replay sentence",
 			"speed": "Speed {rate}",
 			"speedLocked": "Pause to change the speed",
+			"speedLevel": "Your level {rate}",
 			"play": "Play",
 			"pause": "Pause",
 			"continue": "Continue",

@@ -25,6 +25,8 @@ export interface RadioPrefs {
   bgm_on?: boolean | null;
   bgm_level?: number | null;
   listen_window_on?: boolean | null;
+  /** The speed slider's position (0.5 … 1.2); null = the listener never moved it. */
+  speed?: number | null;
 }
 
 export interface RadioAvailability {

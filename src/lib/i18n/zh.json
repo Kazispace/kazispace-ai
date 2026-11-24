@@ -1330,6 +1330,7 @@
 			"repeat": "重听这句",
 			"speed": "倍速 {rate}",
 			"speedLocked": "暂停后可以调节语速",
+			"speedLevel": "你的水平 {rate}",
 			"play": "播放",
 			"pause": "暂停",
 			"continue": "继续",

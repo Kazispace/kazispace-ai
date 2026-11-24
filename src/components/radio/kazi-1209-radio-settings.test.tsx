@@ -179,6 +179,8 @@ describe('the rules', () => {
     writeDefaultSpeed(0.75);
     expect(readSavedSpeed()).toBe(0.75);
     expect(['A2', 'C1', null].map((b) => startSpeed(b))).toEqual([0.75, 0.75, 0.75]);
+    expect(startSpeed('A2', 1.1)).toBe(1.1); // the account's position comes first
+    expect(startSpeed('A2', null)).toBe(0.75);
   });
 
   it('a saved speed is kept on the slider\'s range and step; rubbish reads as not saved', () => {
@@ -216,6 +218,7 @@ describe('RadioSettingsScreen', () => {
     expect(Array.from(container.querySelectorAll('[data-testid="radio-settings-voice"] [role="radio"]')).map((b) => b.getAttribute('data-value'))).toEqual(HOME.voices);
     expect((q('radio-speed') as HTMLInputElement).value).toBe('0.8'); // nothing saved: the position for B1
     expect(q('radio-speed-label')?.textContent).toBe('0.8×');
+    expect(q('radio-speed-level')?.getAttribute('data-level')).toBe('0.8'); // the mark for B1
     expect(q('radio-listen')?.getAttribute('aria-checked')).toBe('false'); // off until the user turns it on
     expect(q('radio-bgm')).toBeNull(); // no music available → the whole group is hidden
   });
@@ -261,12 +264,27 @@ describe('RadioSettingsScreen', () => {
     expect(checked('voice')).toBe('en_us_m1');
   });
 
-  it('the default speed is saved on the device, not sent', async () => {
+  it('the speed slider: letting go saves the position on the account, and keeps a copy on the device', async () => {
+    m.prefs.mockResolvedValue(ok({ speed: 0.65 }));
     await settings();
     await drag(q('radio-speed'), 0.65);
+    expect(m.prefs.mock.calls).toEqual([[{ speed: 0.65 }]]);
     expect(readSavedSpeed()).toBe(0.65);
     expect(q('radio-speed-label')?.textContent).toBe('0.65×');
-    expect(m.prefs).not.toHaveBeenCalled();
+  });
+
+  it('the speed slider: a save that fails puts it back where it was', async () => {
+    m.prefs.mockResolvedValue({ success: false, status: 500, error: 'x' });
+    await settings();
+    await drag(q('radio-speed'), 0.65);
+    expect((q('radio-speed') as HTMLInputElement).value).toBe('0.8');
+    expect(readSavedSpeed()).toBe(0.8);
+  });
+
+  it('the speed slider shows the position saved on the account', async () => {
+    m.home = { ...HOME, prefs: { ...HOME.prefs, speed: 1.1 } } as typeof HOME;
+    await settings();
+    expect((q('radio-speed') as HTMLInputElement).value).toBe('1.1');
   });
 
   it('background music shows when there is music: on by default; turning it off sends bgm_on false', async () => {

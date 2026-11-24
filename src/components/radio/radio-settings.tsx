@@ -23,6 +23,7 @@ import {
   EN_RATIO_DEFAULT,
   VOICE_LABEL_KEY,
   percent,
+  levelSpeed,
   startSpeed,
   shownEnRatio,
   writeDefaultSpeed,
@@ -91,7 +92,8 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   // The speed slider: the saved position, else the one for the listener's level (it follows a level change
   // until the listener moves it).
   const speedBand = stored?.profile.band ?? null;
-  useEffect(() => setSpeed(startSpeed(speedBand)), [speedBand]);
+  const accountSpeed = stored?.prefs.speed ?? null;
+  useEffect(() => setSpeed(startSpeed(speedBand, accountSpeed)), [speedBand, accountSpeed]);
 
   // Background music: the group shows only when there is music to play.
   useEffect(() => {
@@ -211,6 +213,15 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   };
   const onSpeed = (s: number) => {
     setSpeed(s);
+  };
+  // Let go: saved on the account like the other settings (and kept on this device). A refused save puts the
+  // slider back where it was.
+  const commitSpeed = (from: number, to: number) => {
+    writeDefaultSpeed(to);
+    void save({ speed: to }, { prefs: { ...prefs, speed: to }, profile }, () => {
+      writeDefaultSpeed(from);
+      setSpeed(from);
+    });
   };
   const onBgm = (on: boolean) => void save({ bgm_on: on }, { prefs: { ...prefs, bgm_on: on }, profile }, () => undefined);
   const commitBgmLevel = () => {
@@ -337,10 +348,11 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
         <Group title={t('settings.speed')}>
           <SpeedSlider
             value={speed}
+            level={levelSpeed(speedBand)}
             label={speedLabel(speed)}
             hint={t('settings.speedHint')}
             onChange={onSpeed}
-            onCommit={(_from, to) => writeDefaultSpeed(to)}
+            onCommit={(from, to) => commitSpeed(from, to)}
           />
         </Group>
 

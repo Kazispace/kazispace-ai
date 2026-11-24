@@ -229,9 +229,12 @@ export function speedLabel(v: number): string {
 /**
  * The speed slider (0.5× … 1.2×, pitch kept). `onChange` follows the thumb; `onCommit` is called once when the
  * listener lets go (pointer up, key up, or leaving the slider) with where it was before and where it is now.
+ * `level` is the position for the listener's level: a mark on the track that does not move, so the listener sees
+ * whether they are faster or slower than it. No mark when the level is not known.
  */
 export function SpeedSlider({
   value,
+  level,
   disabled,
   hint,
   label,
@@ -239,6 +242,7 @@ export function SpeedSlider({
   onCommit,
 }: {
   value: PlayerSpeed;
+  level?: PlayerSpeed | null;
   disabled?: boolean;
   hint?: string | null;
   label: string;
@@ -253,9 +257,15 @@ export function SpeedSlider({
     from.current = null;
     if (start != null && start !== latest.current) onCommit?.(start, latest.current);
   };
+  const t = useTranslations('radio.player');
+  // Where the mark sits: the same fraction of the track as the thumb's centre at that value (the thumb is about
+  // 16px wide, so its centre runs from 8px inside one end to 8px inside the other).
+  const at = level != null ? (clampSpeed(level) - SPEED_MIN) / (SPEED_MAX - SPEED_MIN) : null;
+  const side = level == null || value === level ? 'at' : value > level ? 'above' : 'below';
   return (
     <label className="flex w-full max-w-xs flex-col items-center gap-1 text-sm text-gray-700">
       <span data-testid="radio-speed-label">{label}</span>
+      <span className="relative block w-full pb-5">
       <input
         type="range"
         className="w-full accent-primary disabled:opacity-50"
@@ -276,6 +286,19 @@ export function SpeedSlider({
         onKeyUp={commit}
         onBlur={commit}
       />
+      {at != null && level != null ? (
+        <span
+          className="pointer-events-none absolute top-0 flex -translate-x-1/2 flex-col items-center"
+          style={{ left: `calc(${at * 100}% + ${8 - at * 16}px)` }}
+          data-testid="radio-speed-level"
+          data-level={level}
+          data-side={side}
+        >
+          <span className="h-5 w-0.5 rounded bg-gray-500" aria-hidden />
+          <span className="mt-0.5 whitespace-nowrap text-xs text-gray-500">{t('speedLevel', { rate: speedLabel(level) })}</span>
+        </span>
+      ) : null}
+      </span>
       {hint ? (
         <span className="text-xs text-gray-500" data-testid="radio-speed-hint">
           {hint}
@@ -293,6 +316,7 @@ export function PlayerControls({
   playing,
   disabled,
   speed,
+  speedLevel,
   onPlay,
   onPause,
   onRepeat,
@@ -302,6 +326,8 @@ export function PlayerControls({
   playing: boolean;
   disabled?: boolean;
   speed: PlayerSpeed;
+  /** The position for the listener's level: marked on the slider. */
+  speedLevel?: PlayerSpeed | null;
   onPlay: () => void;
   onPause: () => void;
   onRepeat: () => void;
@@ -330,6 +356,7 @@ export function PlayerControls({
       </div>
       <SpeedSlider
         value={speed}
+        level={speedLevel}
         disabled={disabled || playing}
         hint={playing ? t('speedLocked') : null}
         label={t('speed', { rate: speedLabel(speed) })}

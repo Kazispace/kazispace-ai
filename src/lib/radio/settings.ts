@@ -39,13 +39,19 @@ export function shownEnRatio(band: RadioBand, ratio: number | null | undefined):
 
 // ── speed: kept by the app, not the server (Saving settings) ─────────────────────────────────
 // One slider, in the player and in Radio settings. Until the listener moves it, it sits at the position for
-// their level; once moved, the position is saved on this device and used everywhere.
+// their level; once moved, the position is saved on the account (`PATCH prefs` `speed`) and used everywhere.
+// A copy stays on this device: it covers a failed save, and a listener who chose "Slow" before the slider.
 const SPEED_KEY = 'kazi.radio.defaultSpeed';
 export const SPEED_MIN = 0.5;
 export const SPEED_MAX = 1.2;
 export const SPEED_STEP = 0.05;
 /** Where the slider sits for each level while the listener has not moved it. */
 export const SPEED_BY_BAND: Record<string, number> = { A2: 0.7, B1: 0.8, B2: 0.9, C1: 1 };
+
+/** The slider position for a level, or `null` when the level is not known: the mark on the slider. */
+export function levelSpeed(band: string | null | undefined): number | null {
+  return (band ? SPEED_BY_BAND[band] : undefined) ?? null;
+}
 
 /** Onto the slider's range and step (0.5 … 1.2 in steps of 0.05). */
 export function clampSpeed(v: number): number {
@@ -66,8 +72,12 @@ export function readSavedSpeed(): number | null {
   }
 }
 
-/** The speed a listen starts at: the saved position, else the one for the listener's level, else 1×. */
-export function startSpeed(band: string | null | undefined): number {
+/**
+ * The speed a listen starts at: the position saved on the account (`prefs.speed`), else the copy on this device,
+ * else the one for the listener's level, else 1×.
+ */
+export function startSpeed(band: string | null | undefined, account?: number | null): number {
+  if (typeof account === 'number' && Number.isFinite(account)) return clampSpeed(account);
   return readSavedSpeed() ?? (band ? SPEED_BY_BAND[band] : undefined) ?? 1;
 }
 
