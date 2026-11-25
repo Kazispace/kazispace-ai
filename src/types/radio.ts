@@ -184,6 +184,11 @@ export interface RadioEpisode {
   title: string;
   band: RadioBand;
   voice_id: string;
+  /**
+   * Which text of the episode these segments are from (KAZI-1476). Sent back with `PUT progress`, unchanged.
+   * Absent on a server that does not send it yet: then it is not sent back either.
+   */
+  script_checksum?: string | null;
   mode: RadioSerialMode;
   recap: boolean;
   /** Start after this seq; 0 = from the top. */

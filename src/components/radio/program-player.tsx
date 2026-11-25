@@ -226,7 +226,15 @@ export function ProgramPlayerScreen({
       if (last && last.seq === seq && last.mode === episode.mode) return;
       sentProgress.current = { seq, mode: episode.mode };
       sentProgressAt.current = Date.now();
-      void putRadioProgress(storylineId, { programId, seq, band: episode.band as RadioBand, mode: episode.mode }).catch(() => undefined);
+      // `scriptChecksum`: the text these line numbers are in. If the episode was rewritten meanwhile the server
+      // keeps the write out, and so every later one from this text: nothing to do here (KAZI-1476).
+      void putRadioProgress(storylineId, {
+        programId,
+        seq,
+        band: episode.band as RadioBand,
+        mode: episode.mode,
+        scriptChecksum: episode.script_checksum,
+      }).catch(() => undefined);
     },
     [storylineId, programId, episode]
   );

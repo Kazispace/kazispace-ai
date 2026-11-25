@@ -404,6 +404,40 @@ describe('an episode in the player', () => {
     expect(m.progress).toHaveBeenLastCalledWith('dee', { programId: 'dee_s01e01', seq: 2, band: 'B1', mode: 'balanced' });
   });
 
+  it('a save names the text its line numbers are in, when the episode answer said which (KAZI-1476)', async () => {
+    m.episode.mockResolvedValue(ok({ ...episode(), script_checksum: 'sha256:abc' }));
+    await player();
+    m.progress.mockClear();
+    await endSentence();
+    await click(q('radio-play-pause'));
+    expect(m.progress).toHaveBeenLastCalledWith(
+      'dee',
+      expect.objectContaining({ programId: 'dee_s01e01', seq: 1, scriptChecksum: 'sha256:abc' })
+    );
+  });
+
+  it('an answer without it ⇒ the save names no text (a server that does not send the field yet)', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    await player();
+    m.progress.mockClear();
+    await endSentence();
+    await click(q('radio-play-pause'));
+    expect(m.progress.mock.calls.at(-1)?.[1].scriptChecksum).toBeUndefined();
+  });
+
+  it('a save the server kept out (the episode was rewritten) changes nothing on screen and playing goes on', async () => {
+    m.episode.mockResolvedValue(ok({ ...episode(), script_checksum: 'sha256:old' }));
+    m.progress.mockResolvedValue(
+      ok({ storyline_id: 'dee', applied: false, progress: { program_id: 'dee_s01e01', season: 1, episode: 1, seq: 1, mode: 'balanced', band: 'B1', updated_at: '2026-11-25T00:00:00Z' } })
+    );
+    await player();
+    await endSentence();
+    await endSentence();
+    await click(q('radio-play-pause'));
+    expect(m.progress).toHaveBeenLastCalledWith('dee', expect.objectContaining({ seq: 2, scriptChecksum: 'sha256:old' }));
+    expect(q('radio-play-pause')).not.toBeNull();
+  });
+
   it('nothing heard yet ⇒ nothing is saved (opening an episode does not move the listener)', async () => {
     m.episode.mockResolvedValue(ok(episode()));
     await player();
