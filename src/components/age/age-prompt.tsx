@@ -12,6 +12,7 @@ import { setUserInfo } from '@/lib/auth';
 import {
   agePromptDismissed,
   birthYearMonthPatch,
+  browserTimeZone,
   dismissAgePrompt,
   isAcceptableBirthYearMonth,
 } from '@/lib/birth-year-month';
@@ -20,7 +21,12 @@ import { useAuthStore, useUIStore } from '@/lib/store';
 /**
  * KAZI-1436 (unified user system v1.7.4 §5.1.1 ⑤): while `/me` says `needs_age`, the web asks for the
  * birth year-month once — right after OTP for a new user, after login for an existing one. 「Later」 closes it
- * for this user on this browser; 「我的」 › profile stays open for it any time. Login is never blocked (⑤).
+ * for this user on this browser; Escape only closes it for this page load. 「我的」 › profile
+ * stays open for it any time. Login is never blocked (⑤).
+ *
+ * Also (⑧, #310 review 🟡1): an account that has a birth year-month but no stored zone — e.g. it answered in
+ * the Telegram chat (KAZI-1437) — gets the browser's IANA zone sent once, silently, so its day and night window
+ * follow local time instead of the region's audience zone.
  */
 export function AgePrompt() {
   const t = useTranslations('profile');
@@ -41,6 +47,21 @@ export function AgePrompt() {
     setDismissed(userId ? agePromptDismissed(userId) : true);
   }, [userId]);
 
+  // ⑧ zone backfill: only for an account the backend already knows the age of (`birthYearMonth` is set, so this
+  // is a backend with the KAZI-1436 fields) and holds no zone for. One try per user per page load.
+  const zoneTried = useRef<string | null>(null);
+  const hasAge = Boolean(user?.birthYearMonth);
+  const hasZone = Boolean(user?.timeZone);
+  useEffect(() => {
+    if (!isLoggedIn || !userId || !hasAge || hasZone || zoneTried.current === userId) return;
+    const zone = browserTimeZone();
+    if (!zone) return;
+    zoneTried.current = userId;
+    void patchMe({ time_zone: zone }).then((res) => {
+      if (res.success && res.data) updateUser({ timeZone: res.data.timeZone ?? zone });
+    });
+  }, [isLoggedIn, userId, hasAge, hasZone, updateUser]);
+
   const open = Boolean(isLoggedIn && user && user.needsAge && !dismissed);
 
   const later = () => {
@@ -48,7 +69,8 @@ export function AgePrompt() {
     setDismissed(true);
   };
 
-  useDialogFocusTrap({ open, onClose: later, dialogRef, initialFocusRef: yearRef });
+  // Escape (#310 review 🟡2) closes it for this page load only: an accidental key press does not stop the ask.
+  useDialogFocusTrap({ open, onClose: () => setDismissed(true), dialogRef, initialFocusRef: yearRef });
 
   if (!open || typeof document === 'undefined') return null;
 

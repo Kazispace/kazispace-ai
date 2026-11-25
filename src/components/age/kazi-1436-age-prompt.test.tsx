@@ -96,6 +96,52 @@ describe('KAZI-1436 AgePrompt', () => {
     expect(dialog()).not.toBeNull();
   });
 
+  it('Escape closes it for this page load only (#310 review 🟡2)', async () => {
+    await mount(user());
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    expect(dialog()).toBeNull();
+    act(() => root.unmount());
+    root = createRoot(container);
+    await mount(user());
+    expect(dialog()).not.toBeNull(); // not remembered: the ask comes back on the next load
+  });
+
+  describe('zone backfill (§5.1.1 ⑧, #310 review 🟡1)', () => {
+    afterEach(() => vi.restoreAllMocks());
+    const zone = (tz: string) =>
+      vi.spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions').mockReturnValue({
+        timeZone: tz,
+      } as Intl.ResolvedDateTimeFormatOptions);
+
+    it('an aged account with no zone sends the browser zone once', async () => {
+      zone('Asia/Almaty');
+      patchMe.mockResolvedValue({ success: true, data: user({ needsAge: false, timeZone: 'Asia/Almaty' }) });
+      await mount(user({ needsAge: false, birthYearMonth: '2008-05', timeZone: null }));
+      expect(patchMe).toHaveBeenCalledTimes(1);
+      expect(patchMe).toHaveBeenCalledWith({ time_zone: 'Asia/Almaty' });
+      expect(useAuthStore.getState().user?.timeZone).toBe('Asia/Almaty');
+      expect(dialog()).toBeNull();
+    });
+
+    it.each([
+      ['a zone is already stored', { needsAge: false, birthYearMonth: '2008-05', timeZone: 'Asia/Shanghai' }],
+      ['no age yet (the save carries the zone)', { needsAge: true, birthYearMonth: null, timeZone: null }],
+      ['a backend without the fields', { needsAge: false, birthYearMonth: null, timeZone: null }],
+    ])('sends nothing when %s', async (_label, over) => {
+      zone('Asia/Almaty');
+      await mount(user(over as Partial<User>));
+      expect(patchMe).not.toHaveBeenCalled();
+    });
+
+    it('sends nothing when the browser has no IANA zone', async () => {
+      zone('UTC');
+      await mount(user({ needsAge: false, birthYearMonth: '2008-05', timeZone: null }));
+      expect(patchMe).not.toHaveBeenCalled();
+    });
+  });
+
   it('an incomplete choice is not sent', async () => {
     await mount(user());
     setSelect('age-prompt-year', '2008');

@@ -87,7 +87,7 @@
 		"birthMonthLabel": "Month",
 		"birthUnset": "Not set",
 		"birthPromptTitle": "When were you born?",
-		"birthWhy": "We ask for your birth year and month so we can follow the rules for younger users: English practice isn't available under 14 and has a daily time limit for ages 14–17. We keep only the year and month.",
+		"birthWhy": "We ask for your birth year and month so we can follow the rules for younger users: English practice isn't available under 14 and has a daily time limit for ages 14–17. We keep only the year and month (not the day), plus your time zone so the limits follow your local time.",
 		"birthEditAnytime": "You can change it anytime in Me › Edit Profile.",
 		"birthLater": "Later",
 		"birthSave": "Save",
