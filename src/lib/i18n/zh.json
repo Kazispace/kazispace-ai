@@ -82,6 +82,17 @@
 		"clearRadioData": "清除个人电台数据"
 	},
 	"profile": {
+		"birthLabel": "出生年月",
+		"birthYearLabel": "年",
+		"birthMonthLabel": "月",
+		"birthUnset": "未填写",
+		"birthPromptTitle": "请填写你的出生年月",
+		"birthWhy": "我们需要出生年月来执行未成年人规则：英语练习暂不向不满 14 岁的用户提供，14–17 岁每天有练习时长限制。我们只保存年和月。",
+		"birthEditAnytime": "之后可随时在「我的」›「编辑资料」里修改。",
+		"birthLater": "稍后",
+		"birthSave": "保存",
+		"birthSaved": "已保存",
+		"birthInvalid": "请同时选择年和月，且不能晚于本月。",
 		"title": "编辑资料",
 		"displayNameLabel": "显示名称",
 		"displayNamePlaceholder": "输入昵称",

@@ -82,6 +82,17 @@
 		"clearRadioData": "Clear personal radio data"
 	},
 	"profile": {
+		"birthLabel": "Birth year and month",
+		"birthYearLabel": "Year",
+		"birthMonthLabel": "Month",
+		"birthUnset": "Not set",
+		"birthPromptTitle": "When were you born?",
+		"birthWhy": "We ask for your birth year and month so we can follow the rules for younger users: English practice isn't available under 14 and has a daily time limit for ages 14–17. We keep only the year and month.",
+		"birthEditAnytime": "You can change it anytime in Me › Edit Profile.",
+		"birthLater": "Later",
+		"birthSave": "Save",
+		"birthSaved": "Saved",
+		"birthInvalid": "Choose both a year and a month, not later than this month.",
 		"title": "Edit Profile",
 		"displayNameLabel": "Display Name",
 		"displayNamePlaceholder": "Enter your nickname/name",

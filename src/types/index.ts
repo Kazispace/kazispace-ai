@@ -28,6 +28,14 @@ export interface User {
   education?: string;
   experience?: string;
   profileCompletion?: ProfileCompletion;
+  /** KAZI-1436: the user's own birth year-month, `"YYYY-MM"`; `null` = not filled in. */
+  birthYearMonth?: string | null;
+  /** KAZI-1436: derived by the backend; `null` = not filled in. */
+  ageBand?: 'under_14' | '14_17' | 'adult' | null;
+  /** KAZI-1436: true while the birth year-month is empty — the web asks once. */
+  needsAge?: boolean;
+  /** KAZI-1436: IANA zone the backend holds for this user; `null` = the region's audience zone. */
+  timeZone?: string | null;
   createdAt: string;
   updatedAt: string;
 }
