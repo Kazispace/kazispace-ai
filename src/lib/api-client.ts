@@ -398,6 +398,10 @@ export interface PatchMeBody {
   current_status?: string | null;
   education_text?: string | null;
   experience_text?: string | null;
+  /** KAZI-1436: `"YYYY-MM"`; the backend refuses `null` (it cannot go back to not filled in). */
+  birth_year_month?: string;
+  /** KAZI-1436: the browser's IANA zone, sent with the birth year-month (§5.1.1 ⑧). */
+  time_zone?: string;
 }
 
 export async function patchMe(body: PatchMeBody): Promise<ApiResponse<User>> {

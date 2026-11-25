@@ -9,6 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getMe, patchMe, type PatchMeBody } from "@/lib/api-client";
 import { nativeLanguageOptions, nativeLanguageToApi } from "@/lib/native-language";
+import { BirthYearMonthFields } from "@/components/age/birth-year-month-fields";
+import {
+  birthChangeInvalid,
+  birthYearMonthPatch,
+  parseBirthYearMonth,
+} from "@/lib/birth-year-month";
 import { setUserInfo } from "@/lib/auth";
 import { canEnterCvBuilder } from "@/lib/nba-display";
 import {
@@ -42,6 +48,9 @@ type ProfileForm = {
   currentStatus: string;
   education: string;
   experience: string;
+  /** KAZI-1436: "" = not chosen. */
+  birthYear: string;
+  birthMonth: string;
 };
 
 const EMPTY_FORM: ProfileForm = {
@@ -55,6 +64,8 @@ const EMPTY_FORM: ProfileForm = {
   currentStatus: "student",
   education: "",
   experience: "",
+  birthYear: "",
+  birthMonth: "",
 };
 
 function countryFromApi(value?: string): string {
@@ -75,7 +86,15 @@ function formFromUser(user: User): ProfileForm {
     currentStatus: user.currentStatus ?? "student",
     education: user.education ?? "",
     experience: user.experience ?? "",
+    ...birthFromUser(user),
   };
+}
+
+function birthFromUser(user: User): { birthYear: string; birthMonth: string } {
+  const parsed = parseBirthYearMonth(user.birthYearMonth);
+  return parsed
+    ? { birthYear: String(parsed.year), birthMonth: String(parsed.month) }
+    : { birthYear: "", birthMonth: "" };
 }
 
 function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody {
@@ -112,6 +131,15 @@ function buildPatchBody(initial: ProfileForm, current: ProfileForm): PatchMeBody
   }
   if (current.experience !== initial.experience) {
     body.experience_text = current.experience.trim() || null;
+  }
+  // KAZI-1436 (§5.1.1 ④ ⑧): a whole year-month only (the backend cannot go back to not filled in), with the
+  // browser's zone. `birthChangeInvalid` stops a partial or future one before this.
+  if (
+    (current.birthYear !== initial.birthYear || current.birthMonth !== initial.birthMonth) &&
+    current.birthYear &&
+    current.birthMonth
+  ) {
+    Object.assign(body, birthYearMonthPatch(Number(current.birthYear), Number(current.birthMonth)));
   }
 
   return body;
@@ -222,6 +250,15 @@ function ProfilePageContent({ locale }: { locale: string }) {
       return;
     }
 
+    if (
+      birthChangeInvalid(
+        { year: initialForm.birthYear, month: initialForm.birthMonth },
+        { year: form.birthYear, month: form.birthMonth }
+      )
+    ) {
+      showToast(t("birthInvalid"), "error");
+      return;
+    }
     const body = buildPatchBody(initialForm, form);
     if (Object.keys(body).length === 0) {
       showToast(t("saveNothing"), "info");
@@ -412,6 +449,18 @@ function ProfilePageContent({ locale }: { locale: string }) {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div data-testid="profile-birth">
+                <p className="text-sm font-medium text-gray-700 mb-1">{t("birthLabel")}</p>
+                <BirthYearMonthFields
+                  idPrefix="profile-birth"
+                  year={form.birthYear}
+                  month={form.birthMonth}
+                  onChange={(next) =>
+                    setForm({ ...form, birthYear: next.year, birthMonth: next.month })
+                  }
+                />
+                <p className="text-xs text-gray-500 mt-1">{t("birthWhy")}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1 block">

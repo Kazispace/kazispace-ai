@@ -38,6 +38,14 @@ export function mapUserFromApi(raw: Record<string, unknown>): User {
     education: (profile.education_text ?? profile.education) as string | undefined,
     experience: (profile.experience_text ?? profile.experience) as string | undefined,
     profileCompletion: mapProfileCompletion(raw),
+    // KAZI-1436 (unified user system v1.7.4 §5.1.1 ④). An older backend without these fields never asks.
+    birthYearMonth: typeof raw.birth_year_month === 'string' ? raw.birth_year_month : null,
+    ageBand:
+      raw.age_band === 'under_14' || raw.age_band === '14_17' || raw.age_band === 'adult'
+        ? raw.age_band
+        : null,
+    needsAge: raw.needs_age === true,
+    timeZone: typeof raw.time_zone === 'string' ? raw.time_zone : null,
     createdAt: String(raw.first_value_at ?? raw.created_at ?? ''),
     updatedAt: String(raw.hook_state_updated_at ?? raw.updated_at ?? ''),
   };
