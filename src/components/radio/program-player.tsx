@@ -144,6 +144,8 @@ export function ProgramPlayerScreen({
   // The last line heard in this episode on this visit; null until one has been.
   const heardSeq = useRef<number | null>(null);
   const sentProgress = useRef<{ seq: number; mode: RadioSerialMode } | null>(null);
+  // Which text of the episode `heardSeq` and `sentProgress` count lines of (`undefined` = no episode loaded yet).
+  const heardText = useRef<string | null | undefined>(undefined);
   const sentProgressAt = useRef(0);
 
   useEffect(() => {
@@ -200,6 +202,17 @@ export function ProgramPlayerScreen({
   // An episode carries on after the last line heard: on this visit if there is one (a mode change), else as stored.
   const resumeAt = useMemo(() => {
     if (!episode) return 0;
+    // KAZI-1476 (personal-radio.md 0.32, "When an episode's text is replaced"): a line number kept from this visit
+    // counts lines of the text it was heard in. If this load is another text (the episode was rewritten meanwhile;
+    // a mode change or a retry fetched it), that number is not a place in it: carried over, the player would
+    // start at the wrong line and then save it under the new text's checksum, which the server would store over
+    // the place it worked out for this listener. So forget it and start from the answer's `resume_seq`.
+    const text = episode.script_checksum ?? null;
+    if (heardText.current !== undefined && heardText.current !== text) {
+      heardSeq.current = null;
+      sentProgress.current = null;
+    }
+    heardText.current = text;
     const after = heardSeq.current ?? episode.resume_seq;
     const i = episode.segments.findIndex((s) => s.seq > after);
     return i < 0 ? 0 : i;

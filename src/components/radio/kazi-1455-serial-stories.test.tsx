@@ -438,6 +438,78 @@ describe('an episode in the player', () => {
     expect(q('radio-play-pause')).not.toBeNull();
   });
 
+  // The episode's new text: nine lines where there were five, and the server's place for this listener is line 1.
+  const rewritten = (over: Partial<RadioEpisode> = {}): RadioEpisode =>
+    episode({
+      script_checksum: 'sha256:new',
+      resume_seq: 1,
+      sentences: 9,
+      segments: Array.from({ length: 9 }, (_, i) => ({
+        seq: i + 1,
+        role: 'story' as const,
+        lang: 'en' as const,
+        text: `New line ${i + 1}.`,
+        audio_url: `https://n/${i + 1}.mp3`,
+        duration_ms: 2000,
+      })),
+      ...over,
+    });
+  const savesOf = () => m.progress.mock.calls.map((c) => ({ seq: c[1].seq, text: c[1].scriptChecksum }));
+  const flush = () => act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+  it('the episode was rewritten and a mode change loads the new text ⇒ start from resume_seq, not from the old line number', async () => {
+    m.episode.mockResolvedValue(ok(episode({ script_checksum: 'sha256:old' })));
+    await player();
+    for (let i = 0; i < 4; i += 1) await endSentence(); // old lines 1–4 heard, old line 5 playing
+    m.progress.mockClear();
+    m.episode.mockResolvedValueOnce(ok(rewritten({ mode: 'immersive' })));
+    await click(q('radio-serial-mode-immersive'));
+    await flush();
+    // the place the server worked out is line 1 ⇒ new line 2 plays; never new line 5
+    expect(audio().src).toBe('https://n/2.mp3');
+    // leaving the old text saved its place under the OLD checksum (the server keeps that out); nothing from the
+    // old text was saved under the new one
+    expect(savesOf().filter((x) => x.text === 'sha256:new')).toEqual([]);
+    await endSentence(); // new line 2 heard
+    await click(q('radio-play-pause'));
+    expect(savesOf().at(-1)).toEqual({ seq: 2, text: 'sha256:new' });
+  });
+
+  it('the same through the retry button: a failed reload, then the new text', async () => {
+    m.episode.mockResolvedValue(ok(episode({ script_checksum: 'sha256:old' })));
+    await player();
+    for (let i = 0; i < 4; i += 1) await endSentence();
+    m.episode.mockResolvedValueOnce({ success: false, status: 500, error: 'x' });
+    await click(q('radio-serial-mode-immersive'));
+    await flush();
+    m.progress.mockClear();
+    m.episode.mockResolvedValueOnce(ok(rewritten({ mode: 'immersive' })));
+    await click(container.querySelector('[data-testid="radio-program-missing"] button'));
+    await flush();
+    expect(audio().src).toBe('https://n/2.mp3');
+    expect(savesOf().filter((x) => x.text === 'sha256:new')).toEqual([]);
+  });
+
+  it('the same text after a mode change ⇒ carries on from the line heard on this visit, as before', async () => {
+    m.episode.mockResolvedValue(ok(episode({ script_checksum: 'sha256:old' })));
+    await player();
+    for (let i = 0; i < 4; i += 1) await endSentence(); // lines 1–4 heard
+    m.episode.mockResolvedValueOnce(ok(episode({ script_checksum: 'sha256:old', mode: 'intensive' })));
+    await click(q('radio-serial-mode-intensive'));
+    await flush();
+    expect(audio().src).toBe('https://e/5.mp3');
+  });
+
+  it('a server that sends no checksum: a mode change carries on from the line heard, as before', async () => {
+    m.episode.mockResolvedValue(ok(episode()));
+    await player();
+    for (let i = 0; i < 4; i += 1) await endSentence();
+    m.episode.mockResolvedValueOnce(ok(episode({ mode: 'intensive' })));
+    await click(q('radio-serial-mode-intensive'));
+    await flush();
+    expect(audio().src).toBe('https://e/5.mp3');
+  });
+
   it('nothing heard yet ⇒ nothing is saved (opening an episode does not move the listener)', async () => {
     m.episode.mockResolvedValue(ok(episode()));
     await player();
