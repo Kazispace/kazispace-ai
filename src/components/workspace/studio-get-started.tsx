@@ -3,20 +3,22 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { buildClinicChatHref } from '@/lib/cv-entry';
 import { leaveToMainChat } from '@/lib/leave-to-main-chat';
+import { isSpacesEnabled } from '@/lib/spaces/constants';
+import { englishSpaceHref } from '@/lib/spaces/routes';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { GetStartedGuide } from '@/lib/studio-get-started-api';
 
 /**
- * Studio's Get started row (kazispace-ui Studio pattern, Get started; D25).
- * A tap opens the main chat with the guide's text in the composer; the user
- * confirms, can edit, and sends it. Nothing is sent from here. If a specialist
- * is the current conversation, the tap leaves it first, as "Back to Clinic"
- * does, so the text always lands in the main chat (Owen, 2026-10-23, an option
- * chosen in a question). A dedicated hub or the CV builder is left by
- * navigation only, so its session stays open (see `leaveToMainChat`).
+ * Studio's Get started row (kazispace-ui Studio 0.5.1, Get started; D25 narrowed by D36).
+ * A tap opens Exam in Chat mode (the user's English Space) with the guide's text in the
+ * composer; the user confirms, can edit, and sends it. Nothing is sent from here. The text
+ * goes to the `exam` target, which only the English Space's composer takes, so a kept-alive
+ * CV Space cannot pick it up; Exam shows Chat whatever mode it was left in (KAZI-1485).
+ * With Spaces off, Exam is the main chat: the tap leaves a current specialist first and fills
+ * the main chat, as it did before D36.
+ * ❌ Former (D25): a tap always opened the main chat, leaving a current specialist first.
  */
 export function StudioGetStarted({
   locale,
@@ -50,9 +52,14 @@ export function StudioGetStarted({
   const open = async (guide: GetStartedGuide) => {
     if (tapped) return;
     setTapped(true);
-    await leaveToMainChat(locale);
-    requestComposerInsert(guide.text, 'clinic', 'replace', t('start.draftReplaced'));
-    onNavigate?.(buildClinicChatHref(locale));
+    // With Spaces off, Exam is the main chat (`englishSpaceHref`'s fallback), whose composer
+    // takes `clinic` inserts. A current specialist is left first, as before D36, so the text
+    // lands in the main chat and not in the specialist's composer (Owen, 2026-10-23, an option
+    // chosen in a question; #313 review).
+    const spaces = isSpacesEnabled();
+    if (!spaces) await leaveToMainChat(locale);
+    requestComposerInsert(guide.text, spaces ? 'exam' : 'clinic', 'replace', t('start.draftReplaced'));
+    onNavigate?.(englishSpaceHref(locale));
   };
 
   return (

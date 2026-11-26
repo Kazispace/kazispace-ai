@@ -23,6 +23,8 @@ interface VoiceEnabledChatInputProps {
   contextModule?: string;
   /** Quote insert routing — clinic vs space (PR #126 P2). */
   composerTarget?: ComposerInsertTarget;
+  /** A second target this composer also consumes (the English Space: `exam`). */
+  alsoAcceptsTarget?: ComposerInsertTarget;
   /** Keep the unsent text when the composer unmounts (main chat only). */
   keepDraft?: boolean;
   variant?: 'bar' | 'card';

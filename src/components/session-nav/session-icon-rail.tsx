@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react';
 import Link from 'next/link';
-import { Bot, Files, PanelLeftClose, Search } from 'lucide-react';
+import { Files, PanelLeftClose, Search } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
@@ -24,10 +24,8 @@ interface SessionIconRailProps {
   panelMode: SessionNavPanelMode;
   /** When true (Spaces MVP), hide list search entry on the rail. */
   spacesMode?: boolean;
-  onToggleAgentsPanel: () => void;
   onOpenFilesPanel: () => void;
   onOpenSearchPanel: () => void;
-  onOpenMobileDrawer: () => void;
 }
 
 export function SessionIconRail({
@@ -35,23 +33,13 @@ export function SessionIconRail({
   panelOpen,
   panelMode,
   spacesMode = false,
-  onToggleAgentsPanel,
   onOpenFilesPanel,
   onOpenSearchPanel,
-  onOpenMobileDrawer,
 }: SessionIconRailProps) {
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
   const tNav = useTranslations('nav');
   const activeDestination = resolveTopLevelDestination(pathname ?? '', locale);
-
-  const handleAgentsClick = () => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      onOpenMobileDrawer();
-      return;
-    }
-    onToggleAgentsPanel();
-  };
 
   const iconBtn = (
     active: boolean,
@@ -105,7 +93,6 @@ export function SessionIconRail({
     );
   };
 
-  const agentsActive = panelOpen && panelMode === 'agents';
   const filesActive = panelOpen && panelMode === 'files';
   const searchActive = panelOpen && panelMode === 'search';
 
@@ -134,7 +121,8 @@ export function SessionIconRail({
 
       <div className="my-2 h-px w-8 bg-workspace-border" aria-hidden />
 
-      {iconBtn(agentsActive, handleAgentsClick, t('agents'), <Bot className="h-5 w-5" />)}
+      {/* KAZI-1485 (kazispace-ui D36, Navigation 3.0): no conversation list, so no tool that
+          opens the spaces / specialists list. ❌ Former: a Bot button opening that panel. */}
       {iconBtn(filesActive, onOpenFilesPanel, t('files'), <Files className="h-5 w-5" />)}
       {!spacesMode
         ? iconBtn(searchActive, onOpenSearchPanel, t('search'), <Search className="h-5 w-5" />)
@@ -146,8 +134,7 @@ export function SessionIconRail({
           <button
             type="button"
             onClick={() => {
-              if (panelMode === 'agents') onToggleAgentsPanel();
-              else if (panelMode === 'files') onOpenFilesPanel();
+              if (panelMode === 'files') onOpenFilesPanel();
               else onOpenSearchPanel();
             }}
             className="flex h-10 w-10 items-center justify-center rounded-lg text-workspace-muted hover:bg-workspace-hover"

@@ -250,7 +250,7 @@ export function SpacePanelsWorkspace({
             welcomeKey={welcomeKey}
             active={active}
             composer={(ctx) => (
-              <SpaceComposerWithStarter space={space} muted={muted} {...ctx} />
+              <SpaceComposerWithStarter space={space} muted={muted} active={active} {...ctx} />
             )}
           />
         </section>

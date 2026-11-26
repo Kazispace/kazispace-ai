@@ -147,8 +147,18 @@ describe('KAZI-675 "+ New Space" login gate', () => {
     useAuthStore.setState({ isLoggedIn: false, user: null, token: null });
   });
 
-  it('redirects a guest to /login instead of opening the template picker', async () => {
-    useAuthStore.setState({ isLoggedIn: false, user: null, token: null });
+  // KAZI-1485 (kazispace-ui D36, Navigation 3.0): there is no space list, so there is no
+  // "+ New Space" button and no template picker in the shell, for a guest or a signed-in user.
+  // Exam creates the English Space itself (`/spaces?template=ielts_prep`).
+  // ❌ Former (KAZI-675): the button sent a guest to /login and opened the picker otherwise.
+  it.each([
+    ['a guest', { isLoggedIn: false, user: null, token: null }],
+    [
+      'a signed-in user',
+      { isLoggedIn: true, token: 'tok', user: { id: 'u1', displayName: 'Ada', createdAt: '', updatedAt: '' } },
+    ],
+  ])('%s sees no "+ New Space" button and no template picker', async (_who, auth) => {
+    useAuthStore.setState(auth as Parameters<typeof useAuthStore.setState>[0]);
 
     await act(async () => {
       root.render(
@@ -157,48 +167,13 @@ describe('KAZI-675 "+ New Space" login gate', () => {
         </SessionNavShell>
       );
     });
-    // Let the dynamic SessionNavPanel/SpaceTemplatePicker imports resolve.
     await act(async () => {
       await Promise.resolve();
       await Promise.resolve();
     });
 
-    const button = host.querySelector<HTMLButtonElement>('[data-testid="new-space-button"]');
-    expect(button).not.toBeNull();
-
-    await act(async () => {
-      button!.click();
-    });
-
-    expect(pushMock).toHaveBeenCalledWith('/en/login');
+    expect(host.querySelector('[data-testid="new-space-button"]')).toBeNull();
     expect(host.querySelector('[data-testid="template-picker"]')).toBeNull();
-  });
-
-  it('opens the template picker for a logged-in user', async () => {
-    useAuthStore.setState({
-      isLoggedIn: true,
-      token: 'tok',
-      user: { id: 'u1', displayName: 'Ada', createdAt: '', updatedAt: '' },
-    });
-
-    await act(async () => {
-      root.render(
-        <SessionNavShell locale="en">
-          <main>chat</main>
-        </SessionNavShell>
-      );
-    });
-    await act(async () => {
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    const button = host.querySelector<HTMLButtonElement>('[data-testid="new-space-button"]');
-    await act(async () => {
-      button!.click();
-    });
-
     expect(pushMock).not.toHaveBeenCalled();
-    expect(host.querySelector('[data-testid="template-picker"]')).not.toBeNull();
   });
 });

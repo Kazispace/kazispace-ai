@@ -9,6 +9,7 @@ import {
   useStarterPromptsController,
 } from '@/components/spaces/starter-prompts-bar';
 import type { SpaceSendResult } from '@/hooks/use-space-turn';
+import { ENGLISH_SPACE_TEMPLATE_ID } from '@/lib/spaces/routes';
 import type { SpaceDetail } from '@/types/spaces';
 
 export interface SpaceComposerWithStarterProps {
@@ -18,6 +19,8 @@ export interface SpaceComposerWithStarterProps {
   isSending: boolean;
   spaceSessionReady: boolean;
   hasUserMessage: boolean;
+  /** False when keep-alive hides this Space; a hidden Space never takes Exam's insert. */
+  active?: boolean;
 }
 
 /**
@@ -33,6 +36,7 @@ export function SpaceComposerWithStarter({
   isSending,
   spaceSessionReady,
   hasUserMessage,
+  active = true,
 }: SpaceComposerWithStarterProps) {
   const t = useTranslations('spaces');
   const inputDisabled = muted || isSending || !spaceSessionReady;
@@ -60,6 +64,12 @@ export function SpaceComposerWithStarter({
           onSend={(text) => void sendMessage(text)}
           contextModule={`space:${space.id}`}
           composerTarget="space"
+          // The English Space is Exam: it also takes Studio's Get started text (KAZI-1485), but
+          // only while it is the Space on screen, so an older English Space kept alive in the
+          // background cannot take it off-screen (#313 review).
+          alsoAcceptsTarget={
+            active && space.template_id === ENGLISH_SPACE_TEMPLATE_ID ? 'exam' : undefined
+          }
           disabled={inputDisabled}
           placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
           showAttachButton

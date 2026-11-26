@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 
 import { VoiceRecordButton } from "@/components/chat/voice-record-button";
 import { formatFileSize } from "@/lib/file-utils";
-import { useUIStore, type ComposerInsertTarget } from "@/lib/store";
+import { EXAM_INSERT_TTL_MS, useUIStore, type ComposerInsertTarget } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB — matches BE MAX_FILE_SIZE_BYTES
@@ -52,6 +52,11 @@ interface ChatInputProps {
    */
   composerTarget?: ComposerInsertTarget;
   /**
+   * A second target this composer also consumes: the English Space's composer takes `exam`
+   * inserts (Studio's Get started, KAZI-1485) as well as `space` ones.
+   */
+  alsoAcceptsTarget?: ComposerInsertTarget;
+  /**
    * KAZI-1155: keep the unsent text in the UI store under `composerTarget`,
    * so it is still here when the user leaves this chat and comes back.
    * Set on the main chat only; a specialist shares the `clinic` target and
@@ -83,6 +88,7 @@ export function ChatInput({
   isUploading,
   isTranscribing,
   composerTarget,
+  alsoAcceptsTarget,
   keepDraft = false,
   variant = "bar",
   toolbar,
@@ -162,7 +168,15 @@ export function ChatInput({
 
   useEffect(() => {
     if (!composerInsert) return;
-    if (!composerTarget || composerInsert.target !== composerTarget) return;
+    const accepts =
+      (composerTarget && composerInsert.target === composerTarget) ||
+      (alsoAcceptsTarget && composerInsert.target === alsoAcceptsTarget);
+    if (!accepts) return;
+    // A Get started text that waited too long (the English Space never opened) is dropped.
+    if (composerInsert.target === 'exam' && Date.now() - composerInsert.at > EXAM_INSERT_TTL_MS) {
+      clearComposerInsert();
+      return;
+    }
     const chunk = composerInsert.text;
     const mode = composerInsert.mode ?? 'append';
     const prev = messageRef.current;
@@ -199,6 +213,7 @@ export function ChatInput({
     composerInsert,
     clearComposerInsert,
     composerTarget,
+    alsoAcceptsTarget,
     showToast,
     t,
     resizeTextarea,

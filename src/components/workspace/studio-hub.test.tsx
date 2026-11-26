@@ -229,12 +229,41 @@ describe('Studio', () => {
       expect(row()!.querySelector('button .sr-only')?.textContent).toBe(': 我想练习四级英语考试');
     });
 
-    it('a tap leaves a current specialist, fills the main chat\'s composer and opens Chat; nothing is sent', async () => {
+    // KAZI-1485 (Studio 0.5.1, D25 narrowed by D36): a tap opens Exam in Chat mode, the English
+    // Space, and its text goes to the `exam` target, which only that Space's composer takes.
+    // ❌ Former: it left a current specialist and filled the main chat (`clinic`, `/en/chat`).
+    it('a tap fills Exam\'s composer and opens Exam; nothing is sent', async () => {
+      vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'true');
       state.start = { guides, isLoading: false, error: false };
       render();
       const button = row()!.querySelectorAll('button')[1] as HTMLButtonElement;
       await act(async () => {
         button.click();
+      });
+      expect(api.deactivate).not.toHaveBeenCalled();
+      expect(api.insert).toHaveBeenCalledWith(
+        '帮我快速搜索：今年哪些技术岗位需求最大',
+        'exam',
+        'replace',
+        'studio.start.draftReplaced'
+      );
+      expect(onNavigate).toHaveBeenCalledWith('/en/spaces?template=ielts_prep');
+      // A second tap does nothing more.
+      await act(async () => {
+        button.click();
+      });
+      expect(api.insert).toHaveBeenCalledTimes(1);
+      vi.unstubAllEnvs();
+    });
+
+    // #313 review: with Spaces off, a current specialist is left first, as before D36, so the
+    // text lands in the main chat and not in the specialist's composer.
+    it('with Spaces off, Exam is the main chat: a current specialist is left first, then the text goes to its composer', async () => {
+      vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'false');
+      state.start = { guides, isLoading: false, error: false };
+      render();
+      await act(async () => {
+        (row()!.querySelectorAll('button')[1] as HTMLButtonElement).click();
       });
       expect(api.deactivate).toHaveBeenCalledWith('en');
       expect(api.deactivate.mock.invocationCallOrder[0]).toBeLessThan(api.insert.mock.invocationCallOrder[0]);
@@ -245,12 +274,7 @@ describe('Studio', () => {
         'studio.start.draftReplaced'
       );
       expect(onNavigate).toHaveBeenCalledWith('/en/chat');
-      // A second tap does nothing more.
-      await act(async () => {
-        button.click();
-      });
-      expect(api.insert).toHaveBeenCalledTimes(1);
-      expect(api.deactivate).toHaveBeenCalledTimes(1);
+      vi.unstubAllEnvs();
     });
 
     it('is hidden when it fails or is empty; the sections stay', () => {
