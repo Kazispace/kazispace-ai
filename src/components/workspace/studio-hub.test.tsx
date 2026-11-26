@@ -256,13 +256,17 @@ describe('Studio', () => {
       vi.unstubAllEnvs();
     });
 
-    it('with Spaces off, Exam is the main chat: the text goes to its composer', async () => {
+    // #313 review: with Spaces off, a current specialist is left first, as before D36, so the
+    // text lands in the main chat and not in the specialist's composer.
+    it('with Spaces off, Exam is the main chat: a current specialist is left first, then the text goes to its composer', async () => {
       vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'false');
       state.start = { guides, isLoading: false, error: false };
       render();
       await act(async () => {
         (row()!.querySelectorAll('button')[1] as HTMLButtonElement).click();
       });
+      expect(api.deactivate).toHaveBeenCalledWith('en');
+      expect(api.deactivate.mock.invocationCallOrder[0]).toBeLessThan(api.insert.mock.invocationCallOrder[0]);
       expect(api.insert).toHaveBeenCalledWith(
         '帮我快速搜索：今年哪些技术岗位需求最大',
         'clinic',

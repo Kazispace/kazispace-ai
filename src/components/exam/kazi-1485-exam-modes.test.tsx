@@ -15,6 +15,18 @@ vi.mock('next-intl', () => ({
   useTranslations: (ns: string) => (key: string) => `${ns}.${key}`,
 }));
 const mounts = vi.hoisted(() => ({ count: 0 }));
+const composerProps = vi.hoisted(() => ({ last: {} as Record<string, unknown> }));
+vi.mock('@/components/chat/voice-enabled-chat-input', () => ({
+  VoiceEnabledChatInput: (props: Record<string, unknown>) => {
+    composerProps.last = props;
+    return null;
+  },
+}));
+vi.mock('@/components/spaces/starter-prompts-bar', () => ({
+  useStarterPromptsController: () => null,
+  StarterCapabilityToolbar: () => null,
+  StarterExampleStrip: () => null,
+}));
 vi.mock('@/components/spaces/space-panels-workspace', async () => {
   const { useEffect } = await import('react');
   return {
@@ -28,9 +40,10 @@ vi.mock('@/components/spaces/space-panels-workspace', async () => {
 });
 
 import { ChatInput } from '@/components/chat/chat-input';
+import { SpaceComposerWithStarter } from '@/components/spaces/space-composer-with-starter';
 import { IeltsPrepWorkspace } from '@/components/spaces/ielts-prep-workspace';
 import { EXAM_MODE_STORAGE_KEY } from '@/lib/exam-mode';
-import { useUIStore } from '@/lib/store';
+import { EXAM_INSERT_TTL_MS, useUIStore } from '@/lib/store';
 import type { SpaceDetail } from '@/types/spaces';
 
 const SPACE = { id: 'sp_en', template_id: 'ielts_prep' } as SpaceDetail;
@@ -124,5 +137,40 @@ describe('the exam composer target', () => {
     act(() => useUIStore.getState().requestComposerInsert('Practise IELTS speaking', 'exam', 'replace'));
     expect(textarea().value).toBe('');
     expect(useUIStore.getState().composerInsert?.target).toBe('exam');
+  });
+
+  // #313 review: an `exam` insert that waited too long (the English Space never opened) is
+  // dropped, so it cannot fill a composer on a much later visit.
+  it('drops an exam insert older than EXAM_INSERT_TTL_MS', () => {
+    act(() => useUIStore.getState().requestComposerInsert('old guide text', 'exam', 'replace'));
+    const insert = useUIStore.getState().composerInsert!;
+    useUIStore.setState({ composerInsert: { ...insert, at: insert.at - EXAM_INSERT_TTL_MS - 1 } });
+    act(() =>
+      root.render(<ChatInput onSend={() => undefined} composerTarget="space" alsoAcceptsTarget="exam" />)
+    );
+    expect(textarea().value).toBe('');
+    expect(useUIStore.getState().composerInsert).toBeNull();
+  });
+
+  // #313 review: only the English Space on screen takes it; an older one kept alive does not.
+  it.each([
+    ['the English Space on screen', { template_id: 'ielts_prep' }, true, 'exam'],
+    ['an English Space kept alive off-screen', { template_id: 'ielts_prep' }, false, undefined],
+    ['a CV Space on screen', { template_id: 'job_sprint' }, true, undefined],
+  ])('%s: alsoAcceptsTarget is %s', (_n, sp, active, expected) => {
+    act(() =>
+      root.render(
+        <SpaceComposerWithStarter
+          space={{ id: 'sp', ...sp } as SpaceDetail}
+          muted={false}
+          sendMessage={async () => ({ ok: true }) as never}
+          isSending={false}
+          spaceSessionReady
+          hasUserMessage={false}
+          active={active}
+        />
+      )
+    );
+    expect(composerProps.last.alsoAcceptsTarget).toBe(expected);
   });
 });

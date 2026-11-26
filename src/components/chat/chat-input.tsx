@@ -14,7 +14,7 @@ import { useTranslations } from "next-intl";
 
 import { VoiceRecordButton } from "@/components/chat/voice-record-button";
 import { formatFileSize } from "@/lib/file-utils";
-import { useUIStore, type ComposerInsertTarget } from "@/lib/store";
+import { EXAM_INSERT_TTL_MS, useUIStore, type ComposerInsertTarget } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB — matches BE MAX_FILE_SIZE_BYTES
@@ -172,6 +172,11 @@ export function ChatInput({
       (composerTarget && composerInsert.target === composerTarget) ||
       (alsoAcceptsTarget && composerInsert.target === alsoAcceptsTarget);
     if (!accepts) return;
+    // A Get started text that waited too long (the English Space never opened) is dropped.
+    if (composerInsert.target === 'exam' && Date.now() - composerInsert.at > EXAM_INSERT_TTL_MS) {
+      clearComposerInsert();
+      return;
+    }
     const chunk = composerInsert.text;
     const mode = composerInsert.mode ?? 'append';
     const prev = messageRef.current;

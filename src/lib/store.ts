@@ -92,6 +92,13 @@ export type PaywallTrigger = 'INSUFFICIENT_CREDITS' | 'PRO_FEATURE_LOCKED' | str
  * be taken by whichever Space composer is mounted, a kept-alive CV Space's included.
  */
 export type ComposerInsertTarget = 'clinic' | 'space' | 'exam';
+
+/**
+ * How long Studio's Get started text waits for the English Space's composer (#313 review). If
+ * the Space cannot be opened or created, the text is dropped rather than turning up in a later
+ * visit. Long enough to cover resolving or creating the Space.
+ */
+export const EXAM_INSERT_TTL_MS = 60_000;
 /** `append` = quote/emoji (default); `replace` = starter capability chips (PRD). */
 export type ComposerInsertMode = 'append' | 'replace';
 
@@ -107,6 +114,8 @@ interface UIStore {
     mode: ComposerInsertMode;
     /** Shown when `replace` overwrites a draft; defaults to the starter-prompt notice. */
     replacedNotice?: string;
+    /** When it was requested (ms since epoch); an `exam` insert expires (EXAM_INSERT_TTL_MS). */
+    at: number;
   } | null;
   /**
    * KAZI-1155: unsent text of a composer that keeps its draft (`keepDraft`),
@@ -158,6 +167,7 @@ export const useUIStore = create<UIStore>()((set) => ({
         target,
         mode,
         replacedNotice,
+        at: Date.now(),
         nonce: (state.composerInsert?.nonce ?? 0) + 1,
       },
     })),
