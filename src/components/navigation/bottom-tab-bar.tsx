@@ -76,13 +76,16 @@ export function BottomTabBar({ locale }: { locale: string }) {
           const Icon = TOP_LEVEL_ICONS[destination];
           const selected = destination === active;
           return (
-            <li key={destination} className="flex flex-1">
+            <li key={destination} className="flex min-w-0 flex-1">
               <Link
                 aria-current={selected ? 'page' : undefined}
                 href={topLevelHref(locale, destination)}
                 onClick={() => markNavIntent()}
                 className={cn(
-                  'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap text-xs font-medium',
+                  // One line, never cut short (tab bar spec 0.7). Five cells are 64px each on a 320px
+                  // phone, where ru "Сообщения" is 68.8px at 12px Inter; below 360px the labels are
+                  // 11px with tight tracking (60.6px), which fits every locale (#312 review 🟡3).
+                  'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap text-[11px] font-medium tracking-tight min-[360px]:text-xs min-[360px]:tracking-normal',
                   selected ? 'text-tab-bar-item-active' : 'text-tab-bar-item'
                 )}
               >

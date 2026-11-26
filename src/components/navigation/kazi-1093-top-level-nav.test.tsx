@@ -197,6 +197,20 @@ describe('BottomTabBar', () => {
     }
   });
 
+  // #312 review 🟡3: five cells are 64px each at 320px; ru "Сообщения" is 68.8px at 12px Inter.
+  // Labels stay on one line, uncut; below 360px they are 11px with tight tracking (60.6px).
+  it('keeps each label on one line, smaller below 360px, never truncated', () => {
+    pathnameRef.value = '/en/chat';
+    act(() => root.render(<BottomTabBar locale="en" />));
+    for (const tab of tabs()) {
+      expect(tab.className).toContain('whitespace-nowrap');
+      expect(tab.className).toContain('text-[11px]');
+      expect(tab.className).toContain('min-[360px]:text-xs');
+      expect(tab.className).not.toContain('truncate');
+      expect(tab.parentElement!.className).toContain('min-w-0');
+    }
+  });
+
   it('is hidden on Studio, a sub-screen of Me (D36)', () => {
     pathnameRef.value = '/en/clinic/hub';
     act(() => root.render(<BottomTabBar locale="en" />));
