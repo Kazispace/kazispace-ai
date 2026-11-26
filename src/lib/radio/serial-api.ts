@@ -39,10 +39,16 @@ export function getRadioEpisode(
 /**
  * Where the listener is. `seq` is the last sentence heard (0 = nothing yet); `at` is the client's clock.
  * A write that is not newer than the stored one changes nothing (`applied: false`).
+ *
+ * `scriptChecksum` (KAZI-1476; personal-radio.md 0.32, "When an episode's text is replaced"): the
+ * `script_checksum` of the episode answer being played. `seq` numbers the lines of one text; when the episode
+ * has been rewritten since, the server keeps the write out (`applied: false`) instead of reading an old line
+ * number as a place in the new text. **Sent only when the answer had one**: a server that does not send the
+ * field yet refuses a body with a field it does not know, and every save would fail there.
  */
 export function putRadioProgress(
   storylineId: string,
-  p: { programId: string; seq: number; band: RadioBand; mode: RadioSerialMode; at?: Date }
+  p: { programId: string; seq: number; band: RadioBand; mode: RadioSerialMode; at?: Date; scriptChecksum?: string | null }
 ): Promise<ApiResponse<RadioProgressResponse>> {
   return apiRequest<RadioProgressResponse>(`${line(storylineId)}/progress`, {
     method: 'PUT',
@@ -52,6 +58,7 @@ export function putRadioProgress(
       band: p.band,
       mode: p.mode,
       at: (p.at ?? new Date()).toISOString(),
+      ...(p.scriptChecksum ? { script_checksum: p.scriptChecksum } : {}),
     }),
     // Sent as the listener leaves too: the page may be gone before the answer.
     keepalive: true,
