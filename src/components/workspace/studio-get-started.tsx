@@ -3,20 +3,19 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { buildClinicChatHref } from '@/lib/cv-entry';
-import { leaveToMainChat } from '@/lib/leave-to-main-chat';
+import { isSpacesEnabled } from '@/lib/spaces/constants';
+import { englishSpaceHref } from '@/lib/spaces/routes';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import type { GetStartedGuide } from '@/lib/studio-get-started-api';
 
 /**
- * Studio's Get started row (kazispace-ui Studio pattern, Get started; D25).
- * A tap opens the main chat with the guide's text in the composer; the user
- * confirms, can edit, and sends it. Nothing is sent from here. If a specialist
- * is the current conversation, the tap leaves it first, as "Back to Clinic"
- * does, so the text always lands in the main chat (Owen, 2026-10-23, an option
- * chosen in a question). A dedicated hub or the CV builder is left by
- * navigation only, so its session stays open (see `leaveToMainChat`).
+ * Studio's Get started row (kazispace-ui Studio 0.5.1, Get started; D25 narrowed by D36).
+ * A tap opens Exam in Chat mode (the user's English Space) with the guide's text in the
+ * composer; the user confirms, can edit, and sends it. Nothing is sent from here. The text
+ * goes to the `exam` target, which only the English Space's composer takes, so a kept-alive
+ * CV Space cannot pick it up; Exam shows Chat whatever mode it was left in (KAZI-1485).
+ * ❌ Former (D25): a tap opened the main chat, leaving a current specialist first.
  */
 export function StudioGetStarted({
   locale,
@@ -47,12 +46,14 @@ export function StudioGetStarted({
   }
   if (guides.length === 0) return null;
 
-  const open = async (guide: GetStartedGuide) => {
+  const open = (guide: GetStartedGuide) => {
     if (tapped) return;
     setTapped(true);
-    await leaveToMainChat(locale);
-    requestComposerInsert(guide.text, 'clinic', 'replace', t('start.draftReplaced'));
-    onNavigate?.(buildClinicChatHref(locale));
+    // With Spaces off, Exam is the main chat (`englishSpaceHref`'s fallback), whose composer
+    // takes `clinic` inserts.
+    const target = isSpacesEnabled() ? 'exam' : 'clinic';
+    requestComposerInsert(guide.text, target, 'replace', t('start.draftReplaced'));
+    onNavigate?.(englishSpaceHref(locale));
   };
 
   return (
@@ -70,7 +71,7 @@ export function StudioGetStarted({
             disabled={tapped}
             aria-disabled={tapped}
             title={guide.text}
-            onClick={() => void open(guide)}
+            onClick={() => open(guide)}
             className={cn(
               'shrink-0 rounded-lg border border-workspace-border bg-white px-3 py-1.5 text-sm text-workspace-text',
               'hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',

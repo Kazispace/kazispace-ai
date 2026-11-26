@@ -2,15 +2,8 @@
 
 import { createContext, useContext } from 'react';
 
-import type { SessionNavViewTab } from '@/lib/session-nav';
-
-export type SessionNavOpenOptions = {
-  viewTab?: SessionNavViewTab;
-  expandAgentId?: string | null;
-};
-
+/** KAZI-1485 (D36): no `openPanel`: the spaces / specialists list it opened is gone. */
 export interface SessionNavControllerValue {
-  openPanel: (options?: SessionNavOpenOptions) => void;
   requestNewSession: (agentId: string, options?: { jobId?: string }) => void;
 }
 

@@ -9,6 +9,7 @@ import {
   useStarterPromptsController,
 } from '@/components/spaces/starter-prompts-bar';
 import type { SpaceSendResult } from '@/hooks/use-space-turn';
+import { ENGLISH_SPACE_TEMPLATE_ID } from '@/lib/spaces/routes';
 import type { SpaceDetail } from '@/types/spaces';
 
 export interface SpaceComposerWithStarterProps {
@@ -60,6 +61,8 @@ export function SpaceComposerWithStarter({
           onSend={(text) => void sendMessage(text)}
           contextModule={`space:${space.id}`}
           composerTarget="space"
+          // The English Space is Exam: it also takes Studio's Get started text (KAZI-1485).
+          alsoAcceptsTarget={space.template_id === ENGLISH_SPACE_TEMPLATE_ID ? 'exam' : undefined}
           disabled={inputDisabled}
           placeholder={muted ? t('composerMuted') : t('composerPlaceholder')}
           showAttachButton

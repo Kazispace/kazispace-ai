@@ -86,8 +86,12 @@ export const useAuthStore = create<AuthStore>()((set) => ({
 // ---- UI Store ----
 export type PaywallTrigger = 'INSUFFICIENT_CREDITS' | 'PRO_FEATURE_LOCKED' | string;
 
-/** Which ChatInput should consume a quote / composer insert (PR #126 P2). */
-export type ComposerInsertTarget = 'clinic' | 'space';
+/**
+ * Which ChatInput should consume a quote / composer insert (PR #126 P2). `exam` is consumed only
+ * by the English Space's composer, the Exam destination (KAZI-1485, D36): a `space` insert would
+ * be taken by whichever Space composer is mounted, a kept-alive CV Space's included.
+ */
+export type ComposerInsertTarget = 'clinic' | 'space' | 'exam';
 /** `append` = quote/emoji (default); `replace` = starter capability chips (PRD). */
 export type ComposerInsertMode = 'append' | 'replace';
 

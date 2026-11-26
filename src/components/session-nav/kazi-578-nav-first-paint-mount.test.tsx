@@ -108,15 +108,15 @@ vi.mock('@/hooks/use-space-lifecycle', () => ({
 
 vi.mock('@/components/session-nav/session-icon-rail', () => ({
   SessionIconRail: ({
-    onToggleAgentsPanel,
-    onOpenMobileDrawer,
+    onOpenFilesPanel,
+    onOpenSearchPanel,
   }: {
-    onToggleAgentsPanel: () => void;
-    onOpenMobileDrawer: () => void;
+    onOpenFilesPanel: () => void;
+    onOpenSearchPanel: () => void;
   }) => (
     <div data-testid="icon-rail">
-      <button type="button" data-testid="toggle-agents" onClick={onToggleAgentsPanel} />
-      <button type="button" data-testid="open-mobile" onClick={onOpenMobileDrawer} />
+      <button type="button" data-testid="open-files" onClick={onOpenFilesPanel} />
+      <button type="button" data-testid="open-search" onClick={onOpenSearchPanel} />
     </div>
   ),
 }));
@@ -234,35 +234,12 @@ describe('KAZI-578 SessionNav first-paint mount timing', () => {
     expect(reservedColumns(host!).length).toBe(0);
   });
 
-  it('desktop pinned/open reserves exactly one 260px column and loads the list once', async () => {
+  // KAZI-1485 (kazispace-ui D36, Navigation 3.0): no conversation list. The spaces / specialists
+  // panel is never mounted, nothing pins it open on desktop, and there is no menu button for it.
+  // ❌ Former: the list pinned open in Chat on desktop, and a menu button opened it on mobile.
+  it('desktop Chat neither pins nor loads the list, even with a stored "agents" panel', async () => {
     installViewport({ desktop: true, innerWidth: 1280 });
-    pathnameRef.value = '/en/chat';
-
-    await act(async () => {
-      root!.render(
-        <SessionNavShell locale="en">
-          <main data-testid="main-col">chat</main>
-        </SessionNavShell>
-      );
-    });
-
-    expect(panelLoad.load).toHaveBeenCalledTimes(1);
-    expect(reservedColumns(host!).length).toBe(1);
-    expect(host!.querySelector('[data-testid="session-nav-panel-slot"]')).not.toBeNull();
-
-    await act(async () => {
-      await panelLoad.resolve();
-    });
-
-    expect(reservedColumns(host!).length).toBe(1);
-    expect(host!.querySelector('[data-testid="session-nav-panel-slot"]')).toBeNull();
-    const panel = host!.querySelector('[data-testid="session-nav-panel"]');
-    expect(panel).not.toBeNull();
-    expect(panel?.getAttribute('data-open')).toBe('1');
-  });
-
-  it('mobile drawer closed does not load the list; opening it does', async () => {
-    installViewport({ desktop: false, innerWidth: 375 });
+    localStorage.setItem(SESSION_NAV_STORAGE_KEY, 'true');
     pathnameRef.value = '/en/chat';
 
     await act(async () => {
@@ -274,30 +251,30 @@ describe('KAZI-578 SessionNav first-paint mount timing', () => {
     });
 
     expect(panelLoad.load).not.toHaveBeenCalled();
+    expect(pickerLoad).not.toHaveBeenCalled();
     expect(reservedColumns(host!).length).toBe(0);
-
-    await act(async () => {
-      const open =
-        host!.querySelector<HTMLButtonElement>('[data-testid="open-mobile"]') ??
-        host!.querySelector<HTMLButtonElement>('[aria-label="openPanel"]');
-      expect(open).not.toBeNull();
-      open!.click();
-    });
-
-    await act(async () => {
-      await panelLoad.resolve();
-    });
-
-    expect(reservedColumns(host!).length).toBe(1);
-    const panel = host!.querySelector('[data-testid="session-nav-panel"]');
-    const slot = host!.querySelector('[data-testid="session-nav-panel-slot"]');
-    expect(Boolean(panel) || Boolean(slot)).toBe(true);
-    if (panel) {
-      expect(panel.getAttribute('data-mobile')).toBe('1');
-    }
   });
 
-  it('on Chat the menu button sits inside the context header: one bar, not two (D24)', async () => {
+  it('a panel tool still loads its own panel, never the list', async () => {
+    installViewport({ desktop: true, innerWidth: 1280 });
+    pathnameRef.value = '/en/chat';
+
+    await act(async () => {
+      root!.render(
+        <SessionNavShell locale="en">
+          <main data-testid="main-col">chat</main>
+        </SessionNavShell>
+      );
+    });
+    await act(async () => {
+      host!.querySelector<HTMLButtonElement>('[data-testid="open-files"]')!.click();
+    });
+
+    expect(fileLoad).toHaveBeenCalledTimes(1);
+    expect(panelLoad.load).not.toHaveBeenCalled();
+  });
+
+  it('on Chat on a phone there is no menu button for a list, in the header or above it', async () => {
     installViewport({ desktop: false, innerWidth: 375 });
     pathnameRef.value = '/en/chat';
 
@@ -309,10 +286,8 @@ describe('KAZI-578 SessionNav first-paint mount timing', () => {
       );
     });
 
-    const header = host!.querySelector('[data-testid="context-header"]');
-    expect(header).not.toBeNull();
-    const menus = host!.querySelectorAll('[aria-label="openPanel"]');
-    expect(menus.length).toBe(1);
-    expect(header!.contains(menus[0])).toBe(true);
+    expect(host!.querySelector('[data-testid="context-header"]')).not.toBeNull();
+    expect(host!.querySelectorAll('[aria-label="openPanel"]').length).toBe(0);
+    expect(panelLoad.load).not.toHaveBeenCalled();
   });
 });
