@@ -257,7 +257,12 @@
 		"studio": "Studio",
 		"me": "Me",
 		"primary": "Main navigation",
-		"backTo": "Back to {destination}"
+		"backTo": "Back to {destination}",
+		"exam": "Exam",
+		"radio": "Radio",
+		"scenes": "Scenes",
+		"messages": "Messages",
+		"messagesUnread": "Messages, unread messages"
 	},
 	"sessionNav": {
 		"iconRail": "Session navigation",
@@ -1472,7 +1477,7 @@
 		"sections": {
 			"passport": "English passport",
 			"radio": "Personal radio",
-			"classroom": "Personal classroom",
+			"classroom": "My classroom",
 			"jobHistory": "Job history",
 			"resumes": "Resumes"
 		},
@@ -1817,6 +1822,24 @@
 				"intensiveHint": "The story with every explanation: words, grammar, background."
 			},
 			"season": "Season {season}"
+		},
+		"planRequired": {
+			"body": "Personal radio is part of a paid plan. Upgrade to listen to interactive English stories and programs.",
+			"action": "Upgrade plan"
 		}
+	},
+	"exam": {
+		"modes": "Exam mode",
+		"mode": {
+			"chat": "Chat",
+			"form": "Form"
+		}
+	},
+	"messages": {
+		"personal": "My messages",
+		"forum": "Forum",
+		"personalEmpty": "No messages yet.",
+		"forumEmpty": "No forum messages yet.",
+		"unread": "Unread"
 	}
 }

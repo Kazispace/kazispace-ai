@@ -3,7 +3,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { getRadioHome, radioAccessOf, type RadioAccess } from '@/lib/radio/api';
+import {
+  getRadioHome,
+  radioAccessOf,
+  radioClosedReasonOf,
+  type RadioAccess,
+  type RadioClosedReason,
+} from '@/lib/radio/api';
 import type { RadioHome } from '@/types/radio';
 
 export const RADIO_HOME_KEY = ['radio-home'] as const;
@@ -11,13 +17,19 @@ export const RADIO_HOME_KEY = ['radio-home'] as const;
 export interface RadioHomeState {
   access: RadioAccess;
   home: RadioHome | null;
+  /** Set when `access` is `closed` (kazispace-ui D37). */
+  closedReason?: RadioClosedReason;
 }
 
 /** `GET /radio/home`, read as [Who sees it] reads it: open / closed (off or not for this user) / unknown. */
 export async function fetchRadioHome(): Promise<RadioHomeState> {
   const res = await getRadioHome();
   const access = radioAccessOf(res);
-  return { access, home: access === 'open' && res.data ? res.data : null };
+  return {
+    access,
+    home: access === 'open' && res.data ? res.data : null,
+    closedReason: access === 'closed' ? radioClosedReasonOf(res) : undefined,
+  };
 }
 
 /**
@@ -40,6 +52,7 @@ export function useRadioHome({ enabled }: { enabled: boolean }) {
   return {
     access: query.data?.access ?? (query.isError ? 'unknown' : null),
     home: query.data?.home ?? null,
+    closedReason: query.data?.closedReason,
     isLoading: enabled && query.isLoading,
     refresh,
     setHome: (home: RadioHome) =>

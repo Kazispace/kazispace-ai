@@ -9,8 +9,8 @@ import { useQuery } from '@tanstack/react-query';
 
 import { WorkspaceAssetPreviewPanel } from '@/components/workspace/workspace-asset-preview-panel';
 import { WorkspaceAssetRailHub } from '@/components/workspace/workspace-asset-rail-hub';
+import { topLevelHref } from '@/lib/top-level-nav';
 import { useWorkspaceAssetPreview } from '@/hooks/use-workspace-assets';
-import { buildClinicChatHref } from '@/lib/cv-entry';
 import {
   buildClinicHubHref,
   parseClinicHubAssetId,
@@ -97,7 +97,8 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
     [router]
   );
 
-  const chatHref = buildClinicChatHref(locale);
+  // Studio is a sub-screen of Me (kazispace-ui D36): back returns to Me. ❌ Former: back to Chat.
+  const meHref = topLevelHref(locale, 'me');
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-white">
@@ -113,9 +114,9 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
           </button>
         ) : (
           <Link
-            href={chatHref}
+            href={meHref}
             className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            aria-label={tNav('backTo', { destination: tNav('chat') })}
+            aria-label={tNav('backTo', { destination: tNav('me') })}
           >
             <ArrowLeft className="h-5 w-5" aria-hidden />
           </Link>
@@ -174,6 +175,7 @@ function ClinicWorkspaceHubContent({ locale }: ClinicWorkspaceHubShellProps) {
         ) : (
           <WorkspaceAssetRailHub
             locale={locale}
+            sections="studio"
             showCloseButton={false}
             onOpenAsset={openAsset}
             onNavigate={handleNavigate}

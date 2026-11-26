@@ -105,14 +105,14 @@ let container: HTMLDivElement;
 let root: Root;
 const onNavigate = vi.fn();
 
-function render() {
+function render(sections?: 'studio' | 'all') {
   // The app renders Studio inside QueryClientProvider (components/providers.tsx); the radio section
   // (KAZI-1209) reads its status through react-query.
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   act(() => {
     root.render(
       <QueryClientProvider client={client}>
-        <WorkspaceAssetRailHub locale="en" showCloseButton={false} onNavigate={onNavigate} />
+        <WorkspaceAssetRailHub locale="en" showCloseButton={false} onNavigate={onNavigate} sections={sections} />
       </QueryClientProvider>
     );
   });
@@ -366,5 +366,28 @@ describe('Studio', () => {
       render();
       expect(container.querySelector('[data-testid="studio-archive"]')).toBeNull();
     });
+  });
+});
+
+// KAZI-1485 (Owen 2026-11-26, kazispace-ui D36, Studio 0.5): the Studio page has two sections,
+// English passport and My classroom. The CV Space's side rail (the default) keeps all five.
+describe('the Studio page (D36)', () => {
+  it('shows only English passport and My classroom, in that order', () => {
+    state.data = {
+      resume: { items: [asset('resume', 'Data analyst — English')], count: 1, history: 0 },
+      english: { items: [asset('english', 'English report')], count: 1, history: 0 },
+      interview: { items: [asset('interview', 'Mock interview')], count: 1, history: 0 },
+    };
+    render('studio');
+    expect(headings()).toEqual(['studio.sections.passport', 'studio.sections.classroom']);
+    expect(section('studio.sections.passport')?.textContent).toContain('English report');
+    expect(container.textContent).not.toContain('Data analyst — English');
+    expect(container.textContent).not.toContain('Mock interview');
+    expect(container.querySelector('[data-testid="studio-classroom"]')?.textContent).toBe('studio.comingSoon');
+  });
+
+  it('the CV rail keeps the five sections', () => {
+    render();
+    expect(headings()).toEqual(SECTIONS);
   });
 });

@@ -236,7 +236,12 @@
 		"studio": "Студия",
 		"me": "Профиль",
 		"primary": "Негізгі навигация",
-		"backTo": "Артқа: {destination}"
+		"backTo": "Артқа: {destination}",
+		"exam": "Емтихан",
+		"radio": "Радио",
+		"scenes": "Сахналар",
+		"messages": "Хабарлар",
+		"messagesUnread": "Хабарлар, оқылмағандары бар"
 	},
 	"jobs": {
 		"title": "Жұмыс ұсыныстары",
@@ -1093,6 +1098,26 @@
 			"privacy": "Privacy policy",
 			"language": "Language",
 			"copyright": "© {year} {company}. All rights reserved."
+		}
+	},
+	"exam": {
+		"modes": "Емтихан режимі",
+		"mode": {
+			"chat": "Сөйлесу",
+			"form": "Форма"
+		}
+	},
+	"messages": {
+		"personal": "Менің хабарларым",
+		"forum": "Форум",
+		"personalEmpty": "Әзірге хабарлар жоқ.",
+		"forumEmpty": "Форумда әзірге хабарлар жоқ.",
+		"unread": "Оқылмаған"
+	},
+	"radio": {
+		"planRequired": {
+			"body": "Жеке радио ақылы тарифке кіреді. Ағылшын тіліндегі интерактивті әңгімелер мен бағдарламаларды тыңдау үшін тарифті жақсартыңыз.",
+			"action": "Тарифті жақсарту"
 		}
 	}
 }

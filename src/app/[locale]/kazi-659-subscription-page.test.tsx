@@ -125,6 +125,8 @@ describe('KAZI-659 /subscription page', () => {
   it.each([
     ['', '/en/mine', 'me'],
     ['?return=chat', '/en/chat', 'chat'],
+    // D37: the Radio destination's plan line.
+    ['?return=radio', '/en/radio', 'radio'],
     ['?return=other', '/en/mine', 'me'],
   ])('back link for %j goes to %s labelled %s', async (search, href, label) => {
     searchRef.value = search;

@@ -158,6 +158,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const { ready, authenticated } = useAuthReady();
   const studioHref = buildClinicHubHref(locale);
   const backHref = from === 'studio' ? studioHref : radioHomeHref(locale);
+  // A closed radio goes to the Radio destination, which says so (D36; ❌ former: Studio).
+  const closedHref = radioHomeHref(locale);
   const { access: homeAccess, home, refresh: refreshHome, setHome } = useRadioHome({ enabled: ready && authenticated && isRadioLocale(locale) });
   // KAZI-1242 (D20 = E1): where the region must label, the line under the header and, once per visit, the
   // Morse "AI" rhythm before the first voiced sentence (never decided from the interface language).
@@ -275,7 +277,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
   const closedOrMissing = useCallback(
     (status: number | undefined, errorCode: string | undefined, access: ReturnType<typeof radioAccessOf>) => {
       if (access === 'closed') {
-        routerRef.current.replace(studioHref);
+        routerRef.current.replace(closedHref);
         return true;
       }
       if (status === 409 && (errorCode === 'save_not_found' || errorCode === 'story_not_found')) {
@@ -284,7 +286,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       }
       return false;
     },
-    [studioHref]
+    [closedHref]
   );
 
   const reload = useCallback(async () => {
@@ -301,13 +303,13 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
 
   useEffect(() => {
     if (!isRadioLocale(locale)) {
-      routerRef.current.replace(studioHref);
+      routerRef.current.replace(closedHref);
       return;
     }
     if (!ready || !authenticated) return;
     setLoad({ state: 'loading' });
     void reload();
-  }, [locale, ready, authenticated, studioHref, reload, attempt]);
+  }, [locale, ready, authenticated, closedHref, reload, attempt]);
 
   // The audio of a part (personal-radio.md, The audio of a part · A part written while it plays): one GET renders/{id}
   // as soon as the answer arrives, for every part with a render id. Its `state` says which rules follow:
@@ -360,7 +362,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       const sv = await getRadioSave(saveId);
       if (!live) return 'stop';
       if (!sv?.success || !sv.data) {
-        if (sv && radioAccessOf(sv) === 'closed') routerRef.current.replace(studioHref);
+        if (sv && radioAccessOf(sv) === 'closed') routerRef.current.replace(closedHref);
         else setLoad({ state: 'missing' });
         return 'stop';
       }
@@ -399,7 +401,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
         if (!live) return;
         if (!res?.success || !res.data) {
           if (res && radioAccessOf(res) === 'closed') {
-            routerRef.current.replace(studioHref);
+            routerRef.current.replace(closedHref);
             return;
           }
           // Not retried; what is still pending has no voice. A part seen being written cannot end on its own here.

@@ -48,8 +48,8 @@ function useTextEntryFocused(): boolean {
 }
 
 /**
- * Mobile top-level navigation: Space · Studio · Me (KAZI-1171; kazispace-ui decisions D2, D20,
- * component spec "Tab bar"). Below 768px only; desktop uses the icon rail.
+ * Mobile top-level navigation: Exam · Radio · Scenes · Messages · Me (KAZI-1485; kazispace-ui
+ * decisions D2, D36, component spec "Tab bar" 0.7). Below 768px only; desktop uses the icon rail.
  */
 export function BottomTabBar({ locale }: { locale: string }) {
   const pathname = usePathname() ?? '';
@@ -69,20 +69,23 @@ export function BottomTabBar({ locale }: { locale: string }) {
       className="shrink-0 border-t border-tab-bar-border bg-tab-bar-bg pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       {/* Page navigation, not a tab widget: links + aria-current (kazispace-ui tab bar
-          spec, "Accessibility"). Tab roles would announce "tab 1 of 3" and promise
+          spec, "Accessibility"). Tab roles would announce "tab 1 of 5" and promise
           arrow-key movement that links do not have. */}
       <ul className="flex h-14">
         {TOP_LEVEL_DESTINATIONS.map((destination) => {
           const Icon = TOP_LEVEL_ICONS[destination];
           const selected = destination === active;
           return (
-            <li key={destination} className="flex flex-1">
+            <li key={destination} className="flex min-w-0 flex-1">
               <Link
                 aria-current={selected ? 'page' : undefined}
                 href={topLevelHref(locale, destination)}
                 onClick={() => markNavIntent()}
                 className={cn(
-                  'flex flex-1 flex-col items-center justify-center gap-1 text-xs font-medium',
+                  // One line, never cut short, 12px on every width (tab bar spec 0.7.2). Five cells
+                  // are 64px each on a 320px phone; every label fits at 12px Inter, the widest being
+                  // ru "Входящие" (60.5px). ❌ Former (0.7.1): 11px below 360px for ru "Сообщения".
+                  'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap text-xs font-medium',
                   selected ? 'text-tab-bar-item-active' : 'text-tab-bar-item'
                 )}
               >

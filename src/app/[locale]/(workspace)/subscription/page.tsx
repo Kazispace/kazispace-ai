@@ -19,15 +19,21 @@ interface SubscriptionPageProps {
 
 /**
  * Back returns to the screen that opened this one (kazispace-ui page header spec,
- * "Back target"): Chat when an upgrade prompt there added `?return=chat`, else Me.
+ * "Back target"): Chat when an upgrade prompt there added `?return=chat`, Radio for
+ * `?return=radio` (D37), else Me.
  */
 function SubscriptionBackLinkFromParams({ locale }: { locale: string }) {
   const tNav = useTranslations("nav");
-  const fromChat = useSearchParams()?.get("return") === "chat";
+  const from = useSearchParams()?.get("return");
+  const fromChat = from === "chat";
   // Chat here is the conversation that raised the prompt: the main chat, ⛔ the Space tab
   // (which opens the latest Space, not the conversation the user came from).
   if (fromChat) {
     return <BackLink href={getSurfacePath(locale, "clinic")} label={tNav("chat")} />;
+  }
+  // Opened from the Radio destination's plan line (D37): back returns to Radio.
+  if (from === "radio") {
+    return <BackLink href={topLevelHref(locale, "radio")} label={tNav("radio")} />;
   }
   return <BackLink href={topLevelHref(locale, "me")} label={tNav("me")} />;
 }

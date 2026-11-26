@@ -8,7 +8,6 @@ import { Loader2, Mic, MicOff } from 'lucide-react';
 import { BlockedHelpDialog, ListeningIndicator } from '@/components/radio/voice-parts';
 import { useLiveMic } from '@/hooks/use-live-mic';
 import { useSentencePlayer, type PlayableSentence, type PlayerSpeed } from '@/hooks/use-sentence-player';
-import { buildClinicHubHref } from '@/lib/hub-entry';
 import { getLiveTurn, getLiveUpgrade, isRadioAudienceCode, postLiveClose, sendLiveEnd } from '@/lib/radio/live-api';
 import { AIGC_MORSE_URL } from '@/lib/radio/aigc-morse';
 import { LIVE_NOTICE_MS, newLiveTurnId, splitKeyWord } from '@/lib/radio/live-recording';
@@ -144,7 +143,7 @@ export function LiveScreen({ locale }: { locale: string }) {
 
   if (!entry) return null;
   return (
-    <LiveSessionView started={entry.started} resume={entry.resume} homeHref={homeHref} studioHref={buildClinicHubHref(locale)} />
+    <LiveSessionView started={entry.started} resume={entry.resume} homeHref={homeHref} closedHref={radioHomeHref(locale)} />
   );
 }
 
@@ -152,13 +151,13 @@ function LiveSessionView({
   started,
   resume = false,
   homeHref,
-  studioHref,
+  closedHref,
 }: {
   started: StartedLiveSession;
   /** A reload during the English part (KAZI-1366): open on it, with one tap to play it from the start. */
   resume?: boolean;
   homeHref: string;
-  studioHref: string;
+  closedHref: string;
 }) {
   const t = useTranslations('radio.live');
   const tMic = useTranslations('radio.mic');
@@ -567,7 +566,7 @@ function LiveSessionView({
       }
       if (res.status === 403 && isRadioAudienceCode(res.errorCode)) {
         over.current = true;
-        routerRef.current.replace(studioHref);
+        routerRef.current.replace(closedHref);
         return;
       }
       if (res.status === 404) {
@@ -580,7 +579,7 @@ function LiveSessionView({
       playerRef.current.pause();
       setPhase('unavailable');
     },
-    [addCaption, askUpgrade, goHome, play, started, studioHref, t, toCare, toClosing]
+    [addCaption, askUpgrade, goHome, play, started, closedHref, t, toCare, toClosing]
   );
 
   // ---- Recording.

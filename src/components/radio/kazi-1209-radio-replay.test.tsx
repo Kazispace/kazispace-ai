@@ -296,7 +296,7 @@ describe('replay', () => {
     expect(m.events.mock.calls.flatMap((c) => c[0]).some((e: { kind: string }) => e.kind === 'replay')).toBe(true);
   });
 
-  it('409 save_not_found: content cannot be found; closed: Studio', async () => {
+  it('409 save_not_found: content cannot be found; closed: the Radio destination (D36)', async () => {
     m.replay.mockResolvedValue({ success: false, status: 409, errorCode: 'save_not_found' });
     await mount(<RadioReplayScreen locale="zh" saveId="gone" />);
     expect(q('radio-replay-missing')?.textContent).toContain('radio.contentMissing');
@@ -304,7 +304,7 @@ describe('replay', () => {
     root = createRoot(container);
     m.replay.mockResolvedValue({ success: false, status: 403, errorCode: 'radio_pro_required' });
     await mount(<RadioReplayScreen locale="zh" saveId="sv1" />);
-    expect(m.replace).toHaveBeenCalledWith('/zh/clinic/hub');
+    expect(m.replace).toHaveBeenCalledWith('/zh/radio');
   });
 });
 

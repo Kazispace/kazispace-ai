@@ -3,16 +3,22 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Loader2, Settings } from 'lucide-react';
 
-import { BackLink } from '@/components/navigation/back-link';
 import { LiveSection } from '@/components/radio/live-section';
 import { DeleteSaveDialog, ListenedSection, SaveMenu, useDailyGreeting } from '@/components/radio/radio-saves';
 import { StoryFilterBar, storyGenreLabel, useStoryFilters } from '@/components/radio/story-filters';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioHome } from '@/hooks/use-radio-home';
-import { newRadioRequestId, setRadioBand, startRadioStory } from '@/lib/radio/api';
+import {
+  newRadioRequestId,
+  radioClosedReasonOf,
+  setRadioBand,
+  startRadioStory,
+  type RadioClosedReason,
+} from '@/lib/radio/api';
+import { subscriptionHref } from '@/lib/top-level-nav';
 import { formatRadioDate, radioChoiceNumber, radioMinutes } from '@/lib/radio/format';
 import {
   isLiveRoomLocale,
@@ -23,7 +29,6 @@ import {
   radioStoryHref,
   radioStorylineHref,
 } from '@/lib/radio/routes';
-import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import {
@@ -38,24 +43,26 @@ import {
 /**
  * The radio home (KAZI-1209; kazispace-ui personal-radio.md, Radio home · Starting a new story · States).
  *
- * Opened from Studio; back returns to Studio. A user the radio is not open to (another interface
- * language, radio off, not Pro) who lands here anyway is sent to Studio: a link never gets round
- * [Who sees it].
+ * The Radio destination (KAZI-1485, kazispace-ui D36): a top-level screen with the tab bar and no
+ * back link. A user the radio is not open to (another interface language, radio off, not Pro) sees
+ * `studio.comingSoon` here, with nothing to tap: a link never gets round [Who sees it].
+ * ❌ Former (D28): opened from Studio, back to Studio, and a closed radio sent the user to Studio.
  *
  * Not in this part (KAZI-1209 follow-ups): the greeting audio, replay and the listened list, deleting
  * a story, radio settings.
  */
 export function RadioHomeScreen({ locale }: { locale: string }) {
   const t = useTranslations('radio');
-  const tNav = useTranslations('nav');
   const tStudio = useTranslations('studio');
   const tStates = useTranslations('states');
   const router = useRouter();
   const showToast = useUIStore((s) => s.showToast);
   const { ready, authenticated } = useAuthReady();
   const offered = isRadioLocale(locale);
-  const studioHref = buildClinicHubHref(locale);
-  const { access, home, isLoading, refresh, setHome } = useRadioHome({ enabled: offered && ready && authenticated });
+  // Set when the server says the radio is off or not open to this user after the home loaded.
+  const [closedByServer, setClosedByServer] = useState<RadioClosedReason | null>(null);
+  const closeRadio = (reason: RadioClosedReason = 'other') => setClosedByServer(reason);
+  const { access, closedReason: serverClosedReason, home, isLoading, refresh, setHome } = useRadioHome({ enabled: offered && ready && authenticated });
   const [deleting, setDeleting] = useState<RadioSaveSummary | null>(null);
   const [listenedKey, setListenedKey] = useState(0);
   const greet = useDailyGreeting();
@@ -73,10 +80,6 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
   // A retry after a network error, and the save-limit replace, reuse the first attempt's request id
   // (personal-radio.md, Save limit step 3), so a start is never counted twice.
   const pendingRequest = useRef<{ storyId: string; requestId: string } | null>(null);
-
-  useEffect(() => {
-    if (!offered || access === 'closed') router.replace(studioHref);
-  }, [offered, access, router, studioHref]);
 
   async function start(story: RadioStorySummary, overwriteSaveId?: string) {
     if (starting) return;
@@ -118,7 +121,7 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
       return;
     }
     if (res.status === 404 || res.status === 403) {
-      router.replace(studioHref);
+      closeRadio(radioClosedReasonOf(res));
       return;
     }
     showToast(tStates('retry'), 'error');
@@ -136,9 +139,38 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
     }
   }
 
-  const back = <BackLink href={studioHref} label={tNav('studio')} />;
+  // A top-level screen: no back link (Navigation 3.0, D36).
+  const back = null;
 
-  if (!offered || access === 'closed') return null;
+  const closedReason: RadioClosedReason | null = !offered
+    ? 'other'
+    : closedByServer ?? (access === 'closed' ? serverClosedReason ?? 'other' : null);
+  // No paid plan: say why and offer the plan page (kazispace-ui D37). ❌ Former: "coming soon".
+  if (closedReason === 'plan') {
+    return (
+      <Shell back={back} title={tStudio('sections.radio')}>
+        <section data-testid="radio-plan-required" className="flex flex-col items-start gap-3 py-2">
+          <p className="text-sm text-workspace-secondary">{t('planRequired.body')}</p>
+          <Link
+            href={subscriptionHref(locale, { fromRadio: true })}
+            data-testid="radio-plan-required-action"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-primary-dark"
+          >
+            {t('planRequired.action')}
+          </Link>
+        </section>
+      </Shell>
+    );
+  }
+  if (closedReason) {
+    return (
+      <Shell back={back} title={tStudio('sections.radio')}>
+        <p data-testid="radio-coming-soon" className="text-sm text-workspace-muted">
+          {tStudio('comingSoon')}
+        </p>
+      </Shell>
+    );
+  }
 
   if (isLoading || !ready || access === null) {
     return (
@@ -235,7 +267,7 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
           interface only (KAZI-1442, `isLiveRoomLocale`): an English interface gets no Live section and
           does not ask the Live Room server at all. */}
       {isLiveRoomLocale(locale) ? (
-        <LiveSection locale={locale} onRadioClosed={() => router.replace(studioHref)} />
+        <LiveSection locale={locale} onRadioClosed={() => closeRadio()} />
       ) : null}
 
       <Section title={t('home.stories')} testId="radio-home-stories">
@@ -336,7 +368,7 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
             setListenedKey((n) => n + 1);
             void refresh();
           }}
-          onClosed={() => router.replace(studioHref)}
+          onClosed={() => closeRadio()}
           onFailed={() => {
             setDeleting(null);
             showToast(tStates('retry'), 'error');
@@ -369,14 +401,14 @@ function Shell({
   action,
   children,
 }: {
-  back: React.ReactNode;
+  back: React.ReactNode | null;
   title: string;
   action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="h-full overflow-y-auto bg-gray-50" data-testid="radio-home">
-      <div className="mx-auto max-w-2xl px-4 pt-2">{back}</div>
+      {back ? <div className="mx-auto max-w-2xl px-4 pt-2">{back}</div> : null}
       <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pb-10 pt-2">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-2xl font-bold text-kazi-navy">{title}</h1>

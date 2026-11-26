@@ -349,13 +349,13 @@ describe('Answers', () => {
     expect(m.replace).toHaveBeenCalledWith('/zh/radio');
   });
 
-  it("403 radio_pro_required: the radio's rules (Studio)", async () => {
+  it("403 radio_pro_required: the radio's rules (the Radio destination, D36)", async () => {
     m.chunk.mockResolvedValue(fail(403, 'radio_pro_required'));
     await mount();
     await finishPart();
     await talk();
     await finishPart();
-    expect(m.replace).toHaveBeenCalledWith(expect.not.stringContaining('/radio'));
+    expect(m.replace).toHaveBeenCalledWith(expect.stringMatching(/^\/[a-z]+\/radio$/));
   });
 });
 
