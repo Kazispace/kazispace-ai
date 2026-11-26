@@ -53,8 +53,13 @@ export function studioHref(locale: string): string {
  * `?return=chat`, so its back link returns to Chat instead of Me (kazispace-ui page
  * header spec, "Back target": back returns to the screen that opened this one).
  */
-export function subscriptionHref(locale: string, opts: { fromChat?: boolean } = {}): string {
-  return `/${locale}/subscription${opts.fromChat ? '?return=chat' : ''}`;
+export function subscriptionHref(
+  locale: string,
+  opts: { fromChat?: boolean; fromRadio?: boolean } = {}
+): string {
+  // From the Radio destination's plan line (kazispace-ui D37), back returns to Radio.
+  const from = opts.fromChat ? '?return=chat' : opts.fromRadio ? '?return=radio' : '';
+  return `/${locale}/subscription${from}`;
 }
 
 /** Sub-screens of Me (profile edit, plan, credits). */

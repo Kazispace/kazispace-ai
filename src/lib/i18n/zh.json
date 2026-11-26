@@ -1526,6 +1526,10 @@
 				"intensiveHint": "完整讲解：词汇、语法和背景。"
 			},
 			"season": "第 {season} 季"
+		},
+		"planRequired": {
+			"body": "个人电台是付费套餐的功能。升级后即可收听互动英语故事和节目。",
+			"action": "升级套餐"
 		}
 	},
 	"exam": {

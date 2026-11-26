@@ -230,9 +230,22 @@ describe('Radio home', () => {
     expect(q('radio-home-programs')?.textContent).toContain('radio.home.programsEmpty');
   });
 
+  // KAZI-1485 (Owen 2026-11-26, D37): without a paid plan the radio says why and offers the plan
+  // page; every other closed case still says "coming soon". ❌ Former: "coming soon" for both.
+  it('no paid plan: says why and offers the plan page, back to Radio (D37)', async () => {
+    m.home.mockResolvedValue({ success: false, status: 403, errorCode: 'radio_pro_required' });
+    await home();
+    expect(m.replace).not.toHaveBeenCalled();
+    expect(q('radio-coming-soon')).toBeNull();
+    expect(q('radio-plan-required')?.textContent).toContain('radio.planRequired.body');
+    const action = q('radio-plan-required-action');
+    expect(action?.textContent).toBe('radio.planRequired.action');
+    expect(action?.getAttribute('href')).toBe('/zh/subscription?return=radio');
+  });
+
   it.each([
     ['radio off', { success: false, status: 404, errorCode: 'REGION_ACCOUNT_NOT_FOUND' }],
-    ['not Pro', { success: false, status: 403, errorCode: 'radio_pro_required' }],
+    ['not in the audience', { success: false, status: 403, errorCode: 'radio_not_in_audience' }],
   ])('%s: the Radio destination says studio.comingSoon, nothing to tap (D36)', async (_n, res) => {
     m.home.mockResolvedValue(res);
     await home();

@@ -47,6 +47,17 @@ export function radioAccessOf(res: ApiResponse<unknown>): RadioAccess {
   return 'unknown';
 }
 
+/**
+ * Why a `closed` answer is closed: `plan` when the user has no paid plan (`403 radio_pro_required`),
+ * which the Radio destination answers with the plan page (kazispace-ui D37); `other` for every other
+ * closed case (off, not in the audience), which says "coming soon".
+ */
+export type RadioClosedReason = 'plan' | 'other';
+
+export function radioClosedReasonOf(res: ApiResponse<unknown>): RadioClosedReason {
+  return res.status === 403 && res.errorCode === RADIO_CODE_PRO_REQUIRED ? 'plan' : 'other';
+}
+
 /** A request id the server accepts: `^[A-Za-z0-9_-]{8,40}$`. */
 export function newRadioRequestId(prefix: string): string {
   const raw =

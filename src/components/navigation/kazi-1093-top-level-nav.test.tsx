@@ -79,6 +79,7 @@ describe('subscriptionHref', () => {
   it('marks the Chat entry path so back returns to Chat (page header spec 0.2)', () => {
     expect(subscriptionHref('en')).toBe('/en/subscription');
     expect(subscriptionHref('en', { fromChat: true })).toBe('/en/subscription?return=chat');
+    expect(subscriptionHref('en', { fromRadio: true })).toBe('/en/subscription?return=radio');
     expect(isTopLevelScreen('/en/subscription', 'en')).toBe(false);
   });
 });

@@ -1822,6 +1822,10 @@
 				"intensiveHint": "The story with every explanation: words, grammar, background."
 			},
 			"season": "Season {season}"
+		},
+		"planRequired": {
+			"body": "Personal radio is part of a paid plan. Upgrade to listen to interactive English stories and programs.",
+			"action": "Upgrade plan"
 		}
 	},
 	"exam": {

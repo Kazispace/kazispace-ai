@@ -11,7 +11,14 @@ import { DeleteSaveDialog, ListenedSection, SaveMenu, useDailyGreeting } from '@
 import { StoryFilterBar, storyGenreLabel, useStoryFilters } from '@/components/radio/story-filters';
 import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useRadioHome } from '@/hooks/use-radio-home';
-import { newRadioRequestId, setRadioBand, startRadioStory } from '@/lib/radio/api';
+import {
+  newRadioRequestId,
+  radioClosedReasonOf,
+  setRadioBand,
+  startRadioStory,
+  type RadioClosedReason,
+} from '@/lib/radio/api';
+import { subscriptionHref } from '@/lib/top-level-nav';
 import { formatRadioDate, radioChoiceNumber, radioMinutes } from '@/lib/radio/format';
 import {
   isLiveRoomLocale,
@@ -53,9 +60,9 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
   const { ready, authenticated } = useAuthReady();
   const offered = isRadioLocale(locale);
   // Set when the server says the radio is off or not open to this user after the home loaded.
-  const [closedByServer, setClosedByServer] = useState(false);
-  const closeRadio = () => setClosedByServer(true);
-  const { access, home, isLoading, refresh, setHome } = useRadioHome({ enabled: offered && ready && authenticated });
+  const [closedByServer, setClosedByServer] = useState<RadioClosedReason | null>(null);
+  const closeRadio = (reason: RadioClosedReason = 'other') => setClosedByServer(reason);
+  const { access, closedReason: serverClosedReason, home, isLoading, refresh, setHome } = useRadioHome({ enabled: offered && ready && authenticated });
   const [deleting, setDeleting] = useState<RadioSaveSummary | null>(null);
   const [listenedKey, setListenedKey] = useState(0);
   const greet = useDailyGreeting();
@@ -114,7 +121,7 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
       return;
     }
     if (res.status === 404 || res.status === 403) {
-      closeRadio();
+      closeRadio(radioClosedReasonOf(res));
       return;
     }
     showToast(tStates('retry'), 'error');
@@ -135,7 +142,27 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
   // A top-level screen: no back link (Navigation 3.0, D36).
   const back = null;
 
-  if (!offered || access === 'closed' || closedByServer) {
+  const closedReason: RadioClosedReason | null = !offered
+    ? 'other'
+    : closedByServer ?? (access === 'closed' ? serverClosedReason ?? 'other' : null);
+  // No paid plan: say why and offer the plan page (kazispace-ui D37). ❌ Former: "coming soon".
+  if (closedReason === 'plan') {
+    return (
+      <Shell back={back} title={tStudio('sections.radio')}>
+        <section data-testid="radio-plan-required" className="flex flex-col items-start gap-3 py-2">
+          <p className="text-sm text-workspace-secondary">{t('planRequired.body')}</p>
+          <Link
+            href={subscriptionHref(locale, { fromRadio: true })}
+            data-testid="radio-plan-required-action"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-primary-dark"
+          >
+            {t('planRequired.action')}
+          </Link>
+        </section>
+      </Shell>
+    );
+  }
+  if (closedReason) {
     return (
       <Shell back={back} title={tStudio('sections.radio')}>
         <p data-testid="radio-coming-soon" className="text-sm text-workspace-muted">
@@ -240,7 +267,7 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
           interface only (KAZI-1442, `isLiveRoomLocale`): an English interface gets no Live section and
           does not ask the Live Room server at all. */}
       {isLiveRoomLocale(locale) ? (
-        <LiveSection locale={locale} onRadioClosed={closeRadio} />
+        <LiveSection locale={locale} onRadioClosed={() => closeRadio()} />
       ) : null}
 
       <Section title={t('home.stories')} testId="radio-home-stories">
@@ -341,7 +368,7 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
             setListenedKey((n) => n + 1);
             void refresh();
           }}
-          onClosed={closeRadio}
+          onClosed={() => closeRadio()}
           onFailed={() => {
             setDeleting(null);
             showToast(tStates('retry'), 'error');
