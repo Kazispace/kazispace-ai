@@ -82,10 +82,10 @@ export function BottomTabBar({ locale }: { locale: string }) {
                 href={topLevelHref(locale, destination)}
                 onClick={() => markNavIntent()}
                 className={cn(
-                  // One line, never cut short (tab bar spec 0.7). Five cells are 64px each on a 320px
-                  // phone, where ru "Сообщения" is 68.8px at 12px Inter; below 360px the labels are
-                  // 11px with tight tracking (60.6px), which fits every locale (#312 review 🟡3).
-                  'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap text-[11px] font-medium tracking-tight min-[360px]:text-xs min-[360px]:tracking-normal',
+                  // One line, never cut short, 12px on every width (tab bar spec 0.7.2). Five cells
+                  // are 64px each on a 320px phone; every label fits at 12px Inter, the widest being
+                  // ru "Входящие" (60.5px). ❌ Former (0.7.1): 11px below 360px for ru "Сообщения".
+                  'flex min-w-0 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap text-xs font-medium',
                   selected ? 'text-tab-bar-item-active' : 'text-tab-bar-item'
                 )}
               >
