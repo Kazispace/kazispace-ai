@@ -54,7 +54,7 @@ describe('audience: a Chinese or an English interface (KAZI-1442)', () => {
   });
 });
 
-describe('the radio screens are Studio sub-screens', () => {
+describe('the radio screens', () => {
   it('builds the three addresses', () => {
     expect(radioHomeHref('zh')).toBe('/zh/radio');
     expect(radioStoryHref('zh', 'sv1')).toBe('/zh/radio/story/sv1');
@@ -62,10 +62,17 @@ describe('the radio screens are Studio sub-screens', () => {
     expect(radioProgramHref('zh', 'sotd_20261103')).toBe('/zh/radio/program/sotd_20261103');
   });
 
-  it.each(['/zh/radio', '/zh/radio/story/sv1', '/zh/radio/program/p1'])(
-    '%s belongs to Studio and hides the tab bar',
+  // KAZI-1485 (D36): the radio home is the Radio destination, with the tab bar; the player
+  // and the other radio screens are its sub-screens. ❌ Former (D28): all Studio sub-screens.
+  it('the radio home is the Radio destination and shows the tab bar', () => {
+    expect(resolveTopLevelDestination('/zh/radio', 'zh')).toBe('radio');
+    expect(isTopLevelScreen('/zh/radio', 'zh')).toBe(true);
+  });
+
+  it.each(['/zh/radio/story/sv1', '/zh/radio/program/p1', '/zh/radio/settings'])(
+    '%s belongs to Radio and hides the tab bar',
     (path) => {
-      expect(resolveTopLevelDestination(path, 'zh')).toBe('studio');
+      expect(resolveTopLevelDestination(path, 'zh')).toBe('radio');
       expect(isTopLevelScreen(path, 'zh')).toBe(false);
     }
   );

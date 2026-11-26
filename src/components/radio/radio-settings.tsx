@@ -29,7 +29,6 @@ import {
   shownEnRatio,
 } from '@/lib/radio/settings';
 import { blockedHelpPlatform, micErrorKind } from '@/lib/radio/voice';
-import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
 import { isTelegramWebApp } from '@/lib/telegram';
 import { cn } from '@/lib/utils';
@@ -64,7 +63,8 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   const { ready, authenticated } = useAuthReady();
   const offered = isRadioLocale(locale);
   const { access, home, isLoading, refresh, setHome } = useRadioHome({ enabled: offered && ready && authenticated });
-  const studioHref = buildClinicHubHref(locale);
+  // A closed radio goes to the Radio destination, which says so (D36; ❌ former: Studio).
+  const studioHref = radioHomeHref(locale);
 
   const [stored, setStored] = useState<Stored | null>(null);
   const [speed, setSpeed] = useState<number>(1);

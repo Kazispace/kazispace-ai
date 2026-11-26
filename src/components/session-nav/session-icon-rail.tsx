@@ -1,5 +1,6 @@
 'use client';
 
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { Bot, Files, PanelLeftClose, Search } from 'lucide-react';
 import { usePathname } from 'next/navigation';
@@ -9,6 +10,7 @@ import type { SessionNavPanelMode } from '@/lib/session-nav';
 import { cn } from '@/lib/utils';
 import { markNavIntent } from '@/lib/perf/nav-intent';
 import {
+  TOP_LEVEL_DESTINATIONS,
   resolveTopLevelDestination,
   topLevelHref,
   type TopLevelDestination,
@@ -80,7 +82,7 @@ export function SessionIconRail({
     return (
       <Link
         href={topLevelHref(locale, destination)}
-        prefetch={destination === 'space' ? undefined : false}
+        prefetch={destination === 'exam' ? undefined : false}
         onClick={() => markNavIntent()}
         aria-current={active ? 'page' : undefined}
         data-testid={`rail-${destination}`}
@@ -123,11 +125,11 @@ export function SessionIconRail({
         <img src="/brand/kazispace-mark.png" alt="" width={32} height={32} className="h-8 w-8" />
       </Link>
 
-      {/* Top-level destinations, same order as the mobile tab bar (kazispace-ui D2). */}
+      {/* Top-level destinations, same order as the mobile tab bar (kazispace-ui D2, D36). */}
       <div className="flex flex-col items-center gap-2">
-        {destinationLink('space')}
-        {destinationLink('studio')}
-        {destinationLink('me')}
+        {TOP_LEVEL_DESTINATIONS.map((destination) => (
+          <Fragment key={destination}>{destinationLink(destination)}</Fragment>
+        ))}
       </div>
 
       <div className="my-2 h-px w-8 bg-workspace-border" aria-hidden />

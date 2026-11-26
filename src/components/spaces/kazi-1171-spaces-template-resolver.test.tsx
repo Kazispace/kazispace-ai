@@ -176,14 +176,19 @@ describe('/spaces?template=', () => {
     expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_en');
   });
 
-  it('Space tab opens the latest Space once the list arrives, not /chat', async () => {
+  // KAZI-1485 (D36): `/spaces` with no template (the old Space tab) opens Exam, the English
+  // Space. ❌ Former (D27): the latest user Space of any template.
+  it('the old Space tab opens the English Space once the list arrives, not another Space', async () => {
     state.hasLoaded = false;
     await render();
     state.hasLoaded = true;
-    state.spaces = [space('sp_job', 'job_sprint')];
+    state.spaces = [
+      space('sp_job', 'job_sprint', { last_active_at: '2026-10-30T00:00:00Z' }),
+      space('sp_en', 'ielts_prep'),
+    ];
     await render();
     expect(state.replace).toHaveBeenCalledTimes(1);
-    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_job');
+    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_en');
   });
 
   it('decides once: a later list refresh does not route again', async () => {
@@ -214,26 +219,23 @@ describe('/spaces?template=', () => {
   });
 
   // UAT 14213: the Space tab landed on a Space archived minutes earlier.
-  it('Space tab skips a just-archived Space and opens the latest in-progress one', async () => {
+  it('the old Space tab never opens an archived English Space; it creates a new one', async () => {
     state.spaces = [
       space('sp_archived', 'ielts_prep', { status: 'archived', last_active_at: '2026-10-26T12:00:00Z' }),
       space('sp_active', 'blank_conversation', { last_active_at: '2026-10-18T09:09:00Z' }),
     ];
+    state.create.mockResolvedValue({ success: true, data: space('sp_created', 'ielts_prep') });
     await render();
-    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_active');
+    expect(state.create).toHaveBeenCalledWith({ template_id: 'ielts_prep' });
+    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_created');
+    expect(state.replace).not.toHaveBeenCalledWith('/zh/spaces/sp_archived');
   });
 
-  it('Space tab goes to the main chat when every Space is archived', async () => {
-    state.spaces = [space('sp_archived', 'ielts_prep', { status: 'archived' })];
-    await render();
-    expect(state.replace).toHaveBeenCalledWith('/zh/chat');
-  });
-
-  it('ignores an unknown template and behaves as before', async () => {
+  it('an unknown template opens the English Space', async () => {
     state.query = 'template=nope';
-    state.spaces = [space('sp_job', 'job_sprint')];
+    state.spaces = [space('sp_job', 'job_sprint'), space('sp_en', 'ielts_prep')];
     await render();
     expect(state.create).not.toHaveBeenCalled();
-    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_job');
+    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_en');
   });
 });

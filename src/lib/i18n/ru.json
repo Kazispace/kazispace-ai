@@ -257,7 +257,12 @@
 		"studio": "Студия",
 		"me": "Профиль",
 		"primary": "Основная навигация",
-		"backTo": "Назад: {destination}"
+		"backTo": "Назад: {destination}",
+		"exam": "Экзамен",
+		"radio": "Радио",
+		"scenes": "Ситуации",
+		"messages": "Сообщения",
+		"messagesUnread": "Сообщения, есть непрочитанные"
 	},
 	"jobs": {
 		"title": "Подбор вакансий",
@@ -1165,5 +1170,19 @@
 			"language": "Язык",
 			"copyright": "© {year} {company}. Все права защищены."
 		}
+	},
+	"exam": {
+		"modes": "Режим экзамена",
+		"mode": {
+			"chat": "Чат",
+			"form": "Форма"
+		}
+	},
+	"messages": {
+		"personal": "Мои сообщения",
+		"forum": "Форум",
+		"personalEmpty": "Сообщений пока нет.",
+		"forumEmpty": "Сообщений на форуме пока нет.",
+		"unread": "Не прочитано"
 	}
 }

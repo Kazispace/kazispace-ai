@@ -100,13 +100,15 @@ afterEach(() => {
 });
 
 describe('Radio home', () => {
-  it('lists the story library and the programs (KAZIOP-2), back to Studio', async () => {
+  // KAZI-1485 (D36): the radio home is the Radio destination, with no back link.
+  it('lists the story library and the programs (KAZIOP-2), with no back link', async () => {
     m.home.mockResolvedValue({ success: true, data: HOME });
     await home();
     expect(qa('radio-story').map((s) => s.querySelector('h3')?.textContent)).toEqual(['The Hotel Note']);
     expect(q('radio-story')?.textContent).toContain('A note under the door');
     expect(qa('radio-program')[0]?.getAttribute('href')).toBe('/zh/radio/program/sotd_20261103');
-    expect(container.querySelector('a[href="/zh/clinic/hub"]')).not.toBeNull();
+    expect(container.querySelector('a[href="/zh/clinic/hub"]')).toBeNull();
+    expect(container.querySelector('a[aria-label^="nav.backTo"]')).toBeNull();
     expect(q('radio-level-question')).toBeNull();
     expect(q('radio-home-continue')).toBeNull(); // hidden when there are none
   });
@@ -231,15 +233,18 @@ describe('Radio home', () => {
   it.each([
     ['radio off', { success: false, status: 404, errorCode: 'REGION_ACCOUNT_NOT_FOUND' }],
     ['not Pro', { success: false, status: 403, errorCode: 'radio_pro_required' }],
-  ])('%s: a link here goes to Studio', async (_n, res) => {
+  ])('%s: the Radio destination says studio.comingSoon, nothing to tap (D36)', async (_n, res) => {
     m.home.mockResolvedValue(res);
     await home();
-    expect(m.replace).toHaveBeenCalledWith('/zh/clinic/hub');
+    expect(m.replace).not.toHaveBeenCalled();
+    expect(q('radio-coming-soon')?.textContent).toContain('studio.comingSoon');
+    expect(container.querySelector('main button, main a')).toBeNull();
   });
 
-  it('an interface neither Chinese nor English goes to Studio without asking the server (KAZI-1442)', async () => {
+  it('an interface neither Chinese nor English says studio.comingSoon without asking the server (KAZI-1442)', async () => {
     await home('ru');
-    expect(m.replace).toHaveBeenCalledWith('/ru/clinic/hub');
+    expect(m.replace).not.toHaveBeenCalled();
+    expect(q('radio-coming-soon')?.textContent).toContain('studio.comingSoon');
     expect(m.home).not.toHaveBeenCalled();
   });
 });

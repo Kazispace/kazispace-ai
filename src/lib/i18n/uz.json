@@ -236,7 +236,12 @@
 		"studio": "Studiya",
 		"me": "Profil",
 		"primary": "Asosiy navigatsiya",
-		"backTo": "Orqaga: {destination}"
+		"backTo": "Orqaga: {destination}",
+		"exam": "Imtihon",
+		"radio": "Radio",
+		"scenes": "Vaziyatlar",
+		"messages": "Xabarlar",
+		"messagesUnread": "Xabarlar, o‘qilmaganlari bor"
 	},
 	"jobs": {
 		"title": "Ish tavsiyalari",
@@ -1063,5 +1068,19 @@
 			"language": "Language",
 			"copyright": "© {year} {company}. All rights reserved."
 		}
+	},
+	"exam": {
+		"modes": "Imtihon rejimi",
+		"mode": {
+			"chat": "Chat",
+			"form": "Shakl"
+		}
+	},
+	"messages": {
+		"personal": "Mening xabarlarim",
+		"forum": "Forum",
+		"personalEmpty": "Hozircha xabarlar yo‘q.",
+		"forumEmpty": "Forumda hozircha xabarlar yo‘q.",
+		"unread": "O‘qilmagan"
 	}
 }

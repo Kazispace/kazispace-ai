@@ -24,7 +24,6 @@ import { askRadioProgram, askRadioProgramAudio } from '@/lib/radio/player-api';
 import { isRadioLocale, radioEpisodeHref, radioHomeHref, radioStorylineHref } from '@/lib/radio/routes';
 import { SERIAL_MODES, askRadioEpisode, askRadioEpisodeAudio, getRadioEpisode, putRadioProgress } from '@/lib/radio/serial-api';
 import { SLOW_AFTER_MS, VOICE_LINE_MS, blockedHelpPlatform, recordingFileName } from '@/lib/radio/voice';
-import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
 import { isTelegramWebApp } from '@/lib/telegram';
 import type { ApiResponse } from '@/types';
@@ -150,7 +149,7 @@ export function ProgramPlayerScreen({
 
   useEffect(() => {
     if (!isRadioLocale(locale)) {
-      routerRef.current.replace(buildClinicHubHref(locale));
+      routerRef.current.replace(radioHomeHref(locale));
       return;
     }
     if (!ready || !authenticated) return;
@@ -162,7 +161,7 @@ export function ProgramPlayerScreen({
         if (res.success && res.data) setLoad({ state: 'ready', program: episodeAsProgram(res.data), episode: res.data });
         // The serial routes answer 404 with a code of their own for an episode that is not there.
         else if (res.status === 404 && res.errorCode === 'serial_not_found') setLoad({ state: 'missing' });
-        else if (radioAccessOf(res) === 'closed') routerRef.current.replace(buildClinicHubHref(locale));
+        else if (radioAccessOf(res) === 'closed') routerRef.current.replace(radioHomeHref(locale));
         else if (res.status === 409) setLoad({ state: 'missing' });
         else setLoad({ state: 'error' });
       });
@@ -173,7 +172,7 @@ export function ProgramPlayerScreen({
     void getRadioProgram(programId).then((res) => {
       if (!live) return;
       if (res.success && res.data) setLoad({ state: 'ready', program: res.data });
-      else if (radioAccessOf(res) === 'closed') routerRef.current.replace(buildClinicHubHref(locale));
+      else if (radioAccessOf(res) === 'closed') routerRef.current.replace(radioHomeHref(locale));
       else if (res.status === 409) setLoad({ state: 'missing' });
       else setLoad({ state: 'error' });
     });
@@ -431,7 +430,7 @@ export function ProgramPlayerScreen({
         }
         setInFlight(false);
         if (radioAccessOf(res) === 'closed') {
-          routerRef.current.replace(buildClinicHubHref(locale));
+          routerRef.current.replace(radioHomeHref(locale));
           return;
         }
         if (res.status === 409 && res.errorCode === 'request_consumed') {

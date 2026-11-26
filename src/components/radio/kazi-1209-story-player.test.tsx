@@ -240,10 +240,10 @@ describe('StoryPlayerScreen', () => {
     expect(q('radio-story-missing')?.textContent).toContain('radio.contentMissing');
   });
 
-  it('radio off / not for this user: goes to Studio', async () => {
+  it('radio off / not for this user: goes to the Radio destination (D36)', async () => {
     m.save.mockResolvedValue({ success: false, status: 403, errorCode: 'radio_pro_required' });
     await mount();
-    expect(m.replace).toHaveBeenCalledWith('/zh/clinic/hub');
+    expect(m.replace).toHaveBeenCalledWith('/zh/radio');
   });
 
   it('a notice from the server is shown and can be closed', async () => {

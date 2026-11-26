@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requestOtp, verifyOtp, getMe } from "@/lib/api-client";
 import { isValidOtpPhone } from "@/lib/api-mappers";
+import { topLevelHref } from "@/lib/top-level-nav";
 import type { OtpAttempt } from "@/lib/region";
 import { getPendingOtpPhone, setPendingOtpPhone } from "@/lib/auth";
 import {
@@ -70,7 +71,7 @@ export default function LoginPage({ params: _params, searchParams }: LoginPagePr
     const destination =
       redirect && redirect.startsWith("/")
         ? switchLocalePath(redirect, targetLocale)
-        : `/${targetLocale}/chat`;
+        : topLevelHref(targetLocale, "exam");
     router.replace(destination);
   }, [authReady, isLoggedIn, user, router]);
 
@@ -142,7 +143,7 @@ export default function LoginPage({ params: _params, searchParams }: LoginPagePr
         router.prefetch(
           redirect && redirect.startsWith("/")
             ? switchLocalePath(redirect, likelyLocale)
-            : `/${likelyLocale}/chat`
+            : topLevelHref(likelyLocale, "exam")
         );
         // The code is accepted: from here the card says the app is opening (Homepage 0.4.1).
         setEntering(true);
@@ -164,7 +165,7 @@ export default function LoginPage({ params: _params, searchParams }: LoginPagePr
         const destination =
           redirect && redirect.startsWith("/")
             ? switchLocalePath(redirect, targetLocale)
-            : `/${targetLocale}/chat`;
+            : topLevelHref(targetLocale, "exam");
         router.push(destination);
       } else {
         setError(

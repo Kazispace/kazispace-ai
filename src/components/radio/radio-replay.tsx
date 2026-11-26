@@ -15,7 +15,6 @@ import { radioAccessOf } from '@/lib/radio/api';
 import { trackRadioEvent } from '@/lib/radio/events';
 import { getRadioReplay } from '@/lib/radio/player-api';
 import { isRadioLocale, radioHomeHref } from '@/lib/radio/routes';
-import { buildClinicHubHref } from '@/lib/hub-entry';
 import { cn } from '@/lib/utils';
 import type { RadioReplay } from '@/types/radio';
 
@@ -42,7 +41,8 @@ export function RadioReplayScreen({ locale, saveId }: { locale: string; saveId: 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const routerRef = useRef(router);
   routerRef.current = router;
-  const studioHref = buildClinicHubHref(locale);
+  // A closed radio goes to the Radio destination, which says so (D36; ❌ former: Studio).
+  const studioHref = radioHomeHref(locale);
   // The `replay` events this screen reports are sent while here and when it is left.
   useRadioEvents(ready && authenticated);
 

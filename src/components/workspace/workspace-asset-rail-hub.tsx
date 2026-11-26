@@ -42,6 +42,11 @@ interface WorkspaceAssetRailHubProps {
   onClose?: () => void;
   onOpenAsset?: (asset: WorkspaceAsset) => void;
   onNavigate?: (path: string) => void;
+  /**
+   * `studio`: the Studio page, two sections (English passport, My classroom; kazispace-ui D36,
+   * Studio 0.5). `all` (the default): the CV Space's side rail, which keeps every section.
+   */
+  sections?: 'studio' | 'all';
 }
 
 type AssetTone = 'resume' | 'assessment' | 'muted';
@@ -80,14 +85,16 @@ export function WorkspaceAssetRailHub({
   onClose,
   onOpenAsset,
   onNavigate,
+  sections = 'all',
 }: WorkspaceAssetRailHubProps) {
+  const studioOnly = sections === 'studio';
   const t = useTranslations('cv.railHub');
   const tV2 = useTranslations('cv.railHub.assetV2');
   const tCv = useTranslations('cv');
 
   const resumeQuery = useWorkspaceAssets(
     { scope: WORKSPACE_ASSET_HUB_SCOPE, category: 'resume', includeHistory: false },
-    true
+    !studioOnly
   );
   const englishQuery = useWorkspaceAssets(
     { scope: WORKSPACE_ASSET_HUB_SCOPE, category: 'english', includeHistory: false },
@@ -95,7 +102,7 @@ export function WorkspaceAssetRailHub({
   );
   const interviewQuery = useWorkspaceAssets(
     { scope: WORKSPACE_ASSET_HUB_SCOPE, category: 'interview', includeHistory: false },
-    true
+    !studioOnly
   );
   const tStudio = useTranslations('studio');
   const showToast = useUIStore((s) => s.showToast);
@@ -157,7 +164,9 @@ export function WorkspaceAssetRailHub({
   const settled =
     authReady &&
     authenticated &&
-    [resumeQuery, englishQuery, interviewQuery].every((q) => !q.isLoading && !q.error);
+    (studioOnly ? [englishQuery] : [resumeQuery, englishQuery, interviewQuery]).every(
+      (q) => !q.isLoading && !q.error
+    );
   const hasAny = (
     q: typeof resumeQuery,
     category: WorkspaceAssetCategory
@@ -221,14 +230,20 @@ export function WorkspaceAssetRailHub({
         ) : null}
       </StudioSection>
 
-      <StudioSection title={tStudio('sections.radio')}>
-        <StudioRadio locale={locale} authenticated={authReady && authenticated} />
-      </StudioSection>
+      {/* D36: the radio is its own destination; the Studio page no longer has its section. */}
+      {studioOnly ? null : (
+        <StudioSection title={tStudio('sections.radio')}>
+          <StudioRadio locale={locale} authenticated={authReady && authenticated} />
+        </StudioSection>
+      )}
 
       <StudioSection title={tStudio('sections.classroom')}>
         <StudioComingSoon label={tStudio('comingSoon')} testId="studio-classroom" />
       </StudioSection>
 
+      {/* D36: resumes and job history leave the Studio page; the CV rail keeps them. */}
+      {studioOnly ? null : (
+        <>
       <StudioSection title={tStudio('sections.jobHistory')}>
         {showInterview ? (
           <div className={HUB_ASSET_GRID_CLASS}>
@@ -307,6 +322,8 @@ export function WorkspaceAssetRailHub({
           </>
         ) : null}
       </StudioSection>
+        </>
+      )}
     </div>
   );
 }

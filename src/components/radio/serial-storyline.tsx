@@ -12,7 +12,6 @@ import { radioAccessOf } from '@/lib/radio/api';
 import { radioMinutes } from '@/lib/radio/format';
 import { isRadioLocale, radioEpisodeHref, radioHomeHref } from '@/lib/radio/routes';
 import { getRadioStoryline } from '@/lib/radio/serial-api';
-import { buildClinicHubHref } from '@/lib/hub-entry';
 import type { RadioStoryline } from '@/types/radio';
 
 type Load = { state: 'loading' } | { state: 'ready'; line: RadioStoryline } | { state: 'missing' } | { state: 'error' };
@@ -34,7 +33,7 @@ export function SerialStorylineScreen({ locale, storylineId }: { locale: string;
 
   useEffect(() => {
     if (!isRadioLocale(locale)) {
-      routerRef.current.replace(buildClinicHubHref(locale));
+      routerRef.current.replace(radioHomeHref(locale));
       return;
     }
     if (!ready || !authenticated) return;
@@ -44,7 +43,7 @@ export function SerialStorylineScreen({ locale, storylineId }: { locale: string;
       if (!live) return;
       if (res.success && res.data) setLoad({ state: 'ready', line: res.data });
       else if (res.status === 404 && res.errorCode === 'serial_not_found') setLoad({ state: 'missing' });
-      else if (radioAccessOf(res) === 'closed') routerRef.current.replace(buildClinicHubHref(locale));
+      else if (radioAccessOf(res) === 'closed') routerRef.current.replace(radioHomeHref(locale));
       else setLoad({ state: 'error' });
     });
     return () => {

@@ -15,10 +15,11 @@ import { planBadgeKey } from "@/lib/api-mappers";
 import { getMe } from "@/lib/api-client";
 import { syncUserLanguageCookies } from "@/lib/locale";
 import { resolveMineNbaAction } from "@/lib/nba-display";
-import { LogOut, ChevronRight, CreditCard, FileText, Mic, Zap, Globe, Languages, User, Wallet } from "lucide-react";
+import { LogOut, ChevronRight, LayoutDashboard, CreditCard, FileText, Mic, Zap, Globe, Languages, User, Wallet } from "lucide-react";
 import { NbaActionCard } from "@/components/nba/nba-action-card";
 import { NbaActionCardSkeleton } from "@/components/nba/nba-action-card-skeleton";
 import { LocaleSwitcher } from "@/components/locale/locale-switcher";
+import { studioHref } from "@/lib/top-level-nav";
 
 interface MinePageProps {
   params: { locale: string };
@@ -98,6 +99,15 @@ export default function MinePage({ params }: MinePageProps) {
             </div>
           </CardContent>
         </Card>
+
+        {/* Studio is the first row of Me (kazispace-ui D36, Navigation 3.0): it is no longer a
+            destination; it opens as a sub-screen, and its back link returns here. */}
+        <MeLinkRow
+          href={studioHref(locale)}
+          icon={<LayoutDashboard className="w-5 h-5 text-workspace-secondary" />}
+          label={tNav("studio")}
+          testId="me-studio-row"
+        />
 
         {isLoggedIn && nbaLoading ? (
           <NbaActionCardSkeleton />
@@ -232,14 +242,16 @@ function MeLinkRow({
   icon,
   label,
   value,
+  testId,
 }: {
   href: string;
   icon: ReactNode;
   label: string;
   value?: string;
+  testId?: string;
 }) {
   return (
-    <Link href={href} className="block">
+    <Link href={href} className="block" data-testid={testId}>
       <Card className="hover:border-primary cursor-pointer transition-colors">
         <CardContent className="p-4 flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">

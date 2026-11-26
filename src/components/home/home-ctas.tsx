@@ -30,9 +30,9 @@ export function HomeCtas({
   const authReady = useAuthStore((s) => s.authReady);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const signedIn = authReady && isLoggedIn;
-  const space = topLevelHref(locale, 'space');
-  // After sign-in the visitor lands in Space (Homepage 0.1, "Calls to action").
-  const login = `/${locale}/login?redirect=${encodeURIComponent(space)}`;
+  const exam = topLevelHref(locale, 'exam');
+  // After sign-in the visitor lands in Exam (Navigation 3.0, D36; ❌ former: Space).
+  const login = `/${locale}/login?redirect=${encodeURIComponent(exam)}`;
   // "Sign up" opens the same screen titled for signing up (Homepage 0.4).
   const signUp = `${login}&mode=signup`;
   // Hidden but laid out: keeps the slot's width so nothing moves when the session is known.
@@ -87,7 +87,7 @@ export function HomeCtas({
       {signedOut}
       {signedIn && (
         <div className="col-start-1 row-start-1 flex items-center">
-          <Link href={space} className={PRIMARY}>
+          <Link href={exam} className={PRIMARY}>
             {t('openApp')}
           </Link>
         </div>

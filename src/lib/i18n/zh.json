@@ -257,7 +257,12 @@
 		"studio": "工作室",
 		"me": "我的",
 		"primary": "主导航",
-		"backTo": "返回{destination}"
+		"backTo": "返回{destination}",
+		"exam": "考试",
+		"radio": "电台",
+		"scenes": "场景",
+		"messages": "消息",
+		"messagesUnread": "消息，有未读消息"
 	},
 	"sessionNav": {
 		"iconRail": "会话导航",
@@ -1176,7 +1181,7 @@
 		"sections": {
 			"passport": "英语护照",
 			"radio": "个人电台",
-			"classroom": "个人教室",
+			"classroom": "我的教室",
 			"jobHistory": "求职历史",
 			"resumes": "个人简历"
 		},
@@ -1522,5 +1527,19 @@
 			},
 			"season": "第 {season} 季"
 		}
+	},
+	"exam": {
+		"modes": "考试模式",
+		"mode": {
+			"chat": "对话",
+			"form": "表单"
+		}
+	},
+	"messages": {
+		"personal": "我的消息",
+		"forum": "论坛",
+		"personalEmpty": "暂无消息。",
+		"forumEmpty": "暂无论坛消息。",
+		"unread": "未读"
 	}
 }

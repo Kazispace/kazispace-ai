@@ -1,36 +1,51 @@
 /**
- * Top-level destinations: Space · Studio · Me (KAZI-1171, Owen 2026-10-26;
- * kazispace-ui decisions D2, D20). Space opens the spaces resolver, /spaces:
- * the latest Space with the Space list beside it, or the main chat when the
- * user has none. Studio keeps the old Assets address, /clinic/hub, so existing
- * links keep working.
+ * Top-level destinations: Exam · Radio · Scenes · Messages · Me (KAZI-1485, Owen
+ * 2026-11-26; kazispace-ui decision D36). Exam opens the user's English Space (no Space
+ * list); Radio is the personal radio's home; Scenes and Messages are their own pages;
+ * Studio is no longer a destination: it is the first row of Me and keeps its address,
+ * /clinic/hub, as a sub-screen of Me.
+ *
+ * ❌ Former (D27): Space · Studio · Me.
  *
  * Desktop draws them in the icon rail, mobile in the bottom tab bar; both read
  * the destination list and the active one from here so they cannot drift.
  */
-import { getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { buildClinicHubHref } from '@/lib/hub-entry';
-import { isSpacesEnabled } from '@/lib/spaces/constants';
-import { RADIO_SEGMENT } from '@/lib/radio/routes';
+import { englishSpaceHref } from '@/lib/spaces/routes';
+import { RADIO_SEGMENT, radioHomeHref } from '@/lib/radio/routes';
 
-export type TopLevelDestination = 'space' | 'studio' | 'me';
+export type TopLevelDestination = 'exam' | 'radio' | 'scenes' | 'messages' | 'me';
 
 export const TOP_LEVEL_DESTINATIONS: readonly TopLevelDestination[] = [
-  'space',
-  'studio',
+  'exam',
+  'radio',
+  'scenes',
+  'messages',
   'me',
 ] as const;
 
+export const SCENES_SEGMENT = 'scenes';
+export const MESSAGES_SEGMENT = 'messages';
+
 export function topLevelHref(locale: string, destination: TopLevelDestination): string {
   switch (destination) {
-    case 'space':
-      // With Spaces off there is no Space list; the main chat is the only conversation.
-      return isSpacesEnabled() ? `/${locale}/spaces` : getSurfacePath(locale, 'clinic');
-    case 'studio':
-      return buildClinicHubHref(locale);
+    case 'exam':
+      // The English Space; with Spaces off, the main chat (englishSpaceHref's own fallback).
+      return englishSpaceHref(locale);
+    case 'radio':
+      return radioHomeHref(locale);
+    case 'scenes':
+      return `/${locale}/${SCENES_SEGMENT}`;
+    case 'messages':
+      return `/${locale}/${MESSAGES_SEGMENT}`;
     case 'me':
       return `/${locale}/mine`;
   }
+}
+
+/** Studio, now a sub-screen of Me (D36): Me's first row opens it, its back link returns to Me. */
+export function studioHref(locale: string): string {
+  return buildClinicHubHref(locale);
 }
 
 /**
@@ -47,32 +62,46 @@ const ME_SUB_SCREENS = ['profile', 'credits', 'ledger', 'subscription'];
 /** Me and its sub-screens. */
 const ME_SEGMENTS = ['mine', ...ME_SUB_SCREENS];
 
+function pathSegments(pathname: string, locale: string): string[] {
+  const rest = pathname.startsWith(`/${locale}`) ? pathname.slice(locale.length + 1) : pathname;
+  return rest.split('/').filter(Boolean);
+}
+
+function isStudioPath(segments: string[]): boolean {
+  return segments[0] === 'clinic' && segments[1] === 'hub';
+}
+
 /**
- * Which destination a path belongs to. Everything in the workspace that is not
- * Studio or Me is a conversation (main chat, specialists, spaces) and so is Space.
+ * Which destination a path belongs to. Studio belongs to Me (D36). Everything in the
+ * workspace that is not Radio, Scenes, Messages or Me is a conversation (the English
+ * Space, the main chat, specialists, other spaces) and so is Exam.
  */
 export function resolveTopLevelDestination(
   pathname: string,
   locale: string
 ): TopLevelDestination {
-  const rest = pathname.startsWith(`/${locale}`) ? pathname.slice(locale.length + 1) : pathname;
-  const segments = rest.split('/').filter(Boolean);
-  if (segments[0] === 'clinic' && segments[1] === 'hub') return 'studio';
-  // KAZI-1209: the radio's screens are reached from Studio (kazispace-ui personal-radio, Platform notes:
-  // on desktop the rail highlights Studio).
-  if (segments[0] === RADIO_SEGMENT) return 'studio';
+  const segments = pathSegments(pathname, locale);
+  if (isStudioPath(segments)) return 'me';
+  if (segments[0] === RADIO_SEGMENT) return 'radio';
+  if (segments[0] === SCENES_SEGMENT) return 'scenes';
+  if (segments[0] === MESSAGES_SEGMENT) return 'messages';
   if (segments[0] && ME_SEGMENTS.includes(segments[0])) return 'me';
-  return 'space';
+  return 'exam';
 }
 
 /** Screens reached from a top-level destination; they hide the mobile tab bar. */
 // Derived from ME_SUB_SCREENS so a new Me sub-page cannot be added to only one list.
-// The radio's screens hide the tab bar too (kazispace-ui D28: the radio is a sub-screen).
-const SUB_SCREEN_SEGMENTS = [...ME_SUB_SCREENS, 'jobs', RADIO_SEGMENT];
+const SUB_SCREEN_SEGMENTS = [...ME_SUB_SCREENS, 'jobs'];
 
-/** True on a top-level screen (Space, Studio, Me), where the mobile tab bar shows. */
+/**
+ * True on a top-level screen (Exam, Radio's home, Scenes, Messages, Me), where the mobile
+ * tab bar shows. Studio and the radio's other screens (player, settings, replay) are
+ * sub-screens (D36; ❌ former D28: every radio screen, the home included, was one).
+ */
 export function isTopLevelScreen(pathname: string, locale: string): boolean {
-  const rest = pathname.startsWith(`/${locale}`) ? pathname.slice(locale.length + 1) : pathname;
-  const first = rest.split('/').filter(Boolean)[0];
+  const segments = pathSegments(pathname, locale);
+  const first = segments[0];
+  if (isStudioPath(segments)) return false;
+  if (first === RADIO_SEGMENT) return segments.length === 1;
   return !(first && SUB_SCREEN_SEGMENTS.includes(first));
 }

@@ -4,8 +4,10 @@
  * KAZI-1093 — top-level navigation (kazispace-ui decisions D2, D20).
  *
  * ❌ Former: Chat · Studio · Me, Chat opening the main chat.
- * ✅ KAZI-1171 (Owen 2026-10-26): Space · Studio · Me. Space opens the Space list (`/spaces`);
- * with Spaces off it falls back to the main chat, the only conversation there is.
+ * ❌ KAZI-1171 (Owen 2026-10-26): Space · Studio · Me.
+ * ✅ KAZI-1485 (Owen 2026-11-26, kazispace-ui D36): Exam · Radio · Scenes · Messages · Me. Exam
+ * opens the English Space (`/spaces?template=ielts_prep`); with Spaces off it falls back to the
+ * main chat. Studio is a sub-screen of Me.
  */
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -37,10 +39,14 @@ import { BottomTabBar } from '@/components/navigation/bottom-tab-bar';
 
 describe('resolveTopLevelDestination', () => {
   it.each([
-    ['/en/chat', 'space'],
-    ['/en/spaces/abc', 'space'],
-    ['/en/interview', 'space'],
-    ['/en/clinic/hub', 'studio'],
+    ['/en/chat', 'exam'],
+    ['/en/spaces/abc', 'exam'],
+    ['/en/interview', 'exam'],
+    ['/en/clinic/hub', 'me'],
+    ['/en/radio', 'radio'],
+    ['/en/radio/story/s1', 'radio'],
+    ['/en/scenes', 'scenes'],
+    ['/en/messages', 'messages'],
     ['/en/mine', 'me'],
     ['/en/profile', 'me'],
     ['/en/credits', 'me'],
@@ -49,20 +55,22 @@ describe('resolveTopLevelDestination', () => {
     expect(resolveTopLevelDestination(path, 'en')).toBe(expected);
   });
 
-  it('keeps the D2 order and targets', () => {
+  it('keeps the D36 order and targets', () => {
     vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'true');
-    expect(TOP_LEVEL_DESTINATIONS).toEqual(['space', 'studio', 'me']);
+    expect(TOP_LEVEL_DESTINATIONS).toEqual(['exam', 'radio', 'scenes', 'messages', 'me']);
     expect(TOP_LEVEL_DESTINATIONS.map((d) => topLevelHref('ru', d))).toEqual([
-      '/ru/spaces',
-      '/ru/clinic/hub',
+      '/ru/spaces?template=ielts_prep',
+      '/ru/radio',
+      '/ru/scenes',
+      '/ru/messages',
       '/ru/mine',
     ]);
     vi.unstubAllEnvs();
   });
 
-  it('Space falls back to the main chat when Spaces are off', () => {
+  it('Exam falls back to the main chat when Spaces are off', () => {
     vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'false');
-    expect(topLevelHref('ru', 'space')).toBe('/ru/chat');
+    expect(topLevelHref('ru', 'exam')).toBe('/ru/chat');
     vi.unstubAllEnvs();
   });
 });
@@ -89,29 +97,25 @@ describe('the Me destination has one name', () => {
   });
 });
 
-describe('the first tab is Space (KAZI-1171)', () => {
-  it('has nav.space in every locale', async () => {
-    const expected: Record<string, string> = { en: 'Spaces', zh: '空间' };
+describe('the five tab labels (D36)', () => {
+  it('has every destination label, one line of 10 characters or fewer, in every locale', async () => {
+    // Owen's own tab names (KAZI-1485): 考试， 电台， 场景， 消息， 我的.
+    const zh = { exam: '考试', radio: '电台', scenes: '场景', messages: '消息', me: '我的' };
     for (const locale of ['en', 'ru', 'kk', 'uz', 'zh']) {
       const messages = (await import(`@/lib/i18n/${locale}.json`)).default as {
         nav: Record<string, string>;
       };
-      expect(messages.nav.space).toBeTruthy();
-      if (expected[locale]) expect(messages.nav.space).toBe(expected[locale]);
-    }
-  });
-});
-
-describe('the middle tab is Studio (D20)', () => {
-  it('has nav.studio and no nav.assets in every locale', async () => {
-    const expected: Record<string, string> = { en: 'Studio', zh: '工作室' };
-    for (const locale of ['en', 'ru', 'kk', 'uz', 'zh']) {
-      const messages = (await import(`@/lib/i18n/${locale}.json`)).default as {
-        nav: Record<string, string>;
-      };
+      for (const destination of TOP_LEVEL_DESTINATIONS) {
+        const label = messages.nav[destination];
+        expect(label, `${locale} nav.${destination}`).toBeTruthy();
+        expect(label.length, `${locale} nav.${destination}`).toBeLessThanOrEqual(10);
+      }
+      if (locale === 'zh') {
+        for (const [key, value] of Object.entries(zh)) expect(messages.nav[key]).toBe(value);
+      }
+      // Studio keeps its key: Me's Studio row and Studio's own name use it.
       expect(messages.nav).not.toHaveProperty('assets');
       expect(messages.nav.studio).toBeTruthy();
-      if (expected[locale]) expect(messages.nav.studio).toBe(expected[locale]);
     }
   });
 });
@@ -120,7 +124,12 @@ describe('isTopLevelScreen', () => {
   it.each([
     ['/en/chat', true],
     ['/en/spaces/abc', true],
-    ['/en/clinic/hub', true],
+    ['/en/clinic/hub', false],
+    ['/en/radio', true],
+    ['/en/radio/story/s1', false],
+    ['/en/radio/settings', false],
+    ['/en/scenes', true],
+    ['/en/messages', true],
     ['/en/mine', true],
     ['/en/profile', false],
     ['/en/credits', false],
@@ -150,28 +159,48 @@ describe('BottomTabBar', () => {
 
   const tabs = () => Array.from(container.querySelectorAll('nav[data-testid="bottom-tab-bar"] a'));
 
-  it('renders Space · Studio · Me with the current destination selected', () => {
+  it('renders Exam · Radio · Scenes · Messages · Me with the current destination selected', () => {
     vi.stubEnv('NEXT_PUBLIC_SPACES_ENABLED', 'true');
-    pathnameRef.value = '/en/clinic/hub';
+    pathnameRef.value = '/en/radio';
     act(() => root.render(<BottomTabBar locale="en" />));
-    expect(tabs().map((tab) => tab.textContent)).toEqual(['nav.space', 'nav.studio', 'nav.me']);
-    expect(tabs().map((tab) => tab.getAttribute('aria-current'))).toEqual([null, 'page', null]);
+    expect(tabs().map((tab) => tab.textContent)).toEqual([
+      'nav.exam',
+      'nav.radio',
+      'nav.scenes',
+      'nav.messages',
+      'nav.me',
+    ]);
+    expect(tabs().map((tab) => tab.getAttribute('aria-current'))).toEqual([
+      null,
+      'page',
+      null,
+      null,
+      null,
+    ]);
     // Page navigation, not a tab widget (kazispace-ui tab bar spec 0.2).
     expect(container.querySelector('[role="tab"], [role="tablist"], [aria-selected]')).toBeNull();
     expect(tabs().map((tab) => tab.getAttribute('href'))).toEqual([
-      '/en/spaces',
-      '/en/clinic/hub',
+      '/en/spaces?template=ielts_prep',
+      '/en/radio',
+      '/en/scenes',
+      '/en/messages',
       '/en/mine',
     ]);
     vi.unstubAllEnvs();
   });
 
-  it('marks Space current in a Space and in the main chat', () => {
+  it('marks Exam current in a Space and in the main chat', () => {
     for (const path of ['/en/spaces/sp_1', '/en/chat']) {
       pathnameRef.value = path;
       act(() => root.render(<BottomTabBar locale="en" />));
-      expect(tabs().map((tab) => tab.getAttribute('aria-current'))).toEqual(['page', null, null]);
+      expect(tabs().map((tab) => tab.getAttribute('aria-current'))).toEqual(['page', null, null, null, null]);
     }
+  });
+
+  it('is hidden on Studio, a sub-screen of Me (D36)', () => {
+    pathnameRef.value = '/en/clinic/hub';
+    act(() => root.render(<BottomTabBar locale="en" />));
+    expect(container.querySelector('[data-testid="bottom-tab-bar"]')).toBeNull();
   });
 
   it('is hidden on a sub-screen, which uses back navigation instead', () => {
@@ -204,7 +233,7 @@ describe('BottomTabBar', () => {
   });
 
   it('has its own warm background and marks the current destination with a pill (D24)', () => {
-    pathnameRef.value = '/en/clinic/hub';
+    pathnameRef.value = '/en/messages';
     act(() => root.render(<BottomTabBar locale="en" />));
     const nav = container.querySelector('[data-testid="bottom-tab-bar"]')!;
     expect(nav.className).toContain('bg-tab-bar-bg');
@@ -214,6 +243,6 @@ describe('BottomTabBar', () => {
     expect(pills.length).toBe(1);
     expect(pills[0].className).toContain('text-tab-bar-icon-active');
     expect(pills[0].closest('a')!.getAttribute('aria-current')).toBe('page');
-    expect(pills[0].closest('a')!.textContent).toBe('nav.studio');
+    expect(pills[0].closest('a')!.textContent).toBe('nav.messages');
   });
 });

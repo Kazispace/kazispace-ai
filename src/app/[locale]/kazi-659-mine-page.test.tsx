@@ -141,6 +141,18 @@ describe('KAZI-659 /mine page', () => {
     expect(hrefs).not.toContain('/en/interview');
   });
 
+  // KAZI-1485 (D36): Studio is no longer a destination; it is Me's first row, above the account list.
+  it('opens Studio from its first row, before the account groups', async () => {
+    useAuthStore.setState({ user: sampleUser() });
+    await act(async () => {
+      root!.render(<MinePage params={{ locale: 'en' }} />);
+    });
+    const row = host?.querySelector('[data-testid="me-studio-row"]');
+    expect(row?.getAttribute('href')).toBe('/en/clinic/hub');
+    const firstGroup = host?.querySelector('section > h3');
+    expect(firstGroup && row!.compareDocumentPosition(firstGroup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('falls back to a guest label when there is no user', async () => {
     useAuthStore.setState({ token: null, user: null, isLoggedIn: false, authReady: true });
 

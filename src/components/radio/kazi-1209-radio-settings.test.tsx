@@ -383,11 +383,11 @@ describe('RadioSettingsScreen', () => {
     expect(m.refresh).toHaveBeenCalled();
   });
 
-  it('not open to this user: goes to Studio', async () => {
+  it('not open to this user: goes to the Radio destination (D36)', async () => {
     m.access = 'closed';
     m.home = null;
     await settings();
-    expect(m.replace).toHaveBeenCalledWith('/zh/clinic/hub');
+    expect(m.replace).toHaveBeenCalledWith('/zh/radio');
   });
 });
 

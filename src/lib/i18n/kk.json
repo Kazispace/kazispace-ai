@@ -236,7 +236,12 @@
 		"studio": "Студия",
 		"me": "Профиль",
 		"primary": "Негізгі навигация",
-		"backTo": "Артқа: {destination}"
+		"backTo": "Артқа: {destination}",
+		"exam": "Емтихан",
+		"radio": "Радио",
+		"scenes": "Сахналар",
+		"messages": "Хабарлар",
+		"messagesUnread": "Хабарлар, оқылмағандары бар"
 	},
 	"jobs": {
 		"title": "Жұмыс ұсыныстары",
@@ -1094,5 +1099,19 @@
 			"language": "Language",
 			"copyright": "© {year} {company}. All rights reserved."
 		}
+	},
+	"exam": {
+		"modes": "Емтихан режимі",
+		"mode": {
+			"chat": "Сөйлесу",
+			"form": "Форма"
+		}
+	},
+	"messages": {
+		"personal": "Менің хабарларым",
+		"forum": "Форум",
+		"personalEmpty": "Әзірге хабарлар жоқ.",
+		"forumEmpty": "Форумда әзірге хабарлар жоқ.",
+		"unread": "Оқылмаған"
 	}
 }

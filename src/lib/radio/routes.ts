@@ -1,9 +1,9 @@
 /**
  * Personal radio routes (KAZI-1209; kazispace-ui personal-radio.md, Screens and back).
  *
- * The radio is a set of sub-screens under `/radio`: the home, a story's player and a program's
- * player. They hide the tab bar and belong to the Studio destination (the desktop rail highlights
- * Studio), see `top-level-nav.ts`.
+ * The radio lives under `/radio`. Its home is the Radio destination, with the tab bar (KAZI-1485,
+ * kazispace-ui D36); a story's player, a program's player, replay and settings are sub-screens of it
+ * and hide the tab bar, see `top-level-nav.ts`. ❌ Former (D28): all of them Studio sub-screens.
  */
 export const RADIO_SEGMENT = 'radio';
 
