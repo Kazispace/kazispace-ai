@@ -1,7 +1,7 @@
 /**
  * Top-level destinations: Exam · Radio · Scenes · Messages · Me (KAZI-1485, Owen
- * 2026-11-26; kazispace-ui decision D36). Exam opens the user's English Space (no Space
- * list); Radio is the personal radio's home; Scenes and Messages are their own pages;
+ * 2026-11-26; kazispace-ui decisions D36, D38). Exam opens the latest Space with the Space
+ * list beside it (D38: its Chat mode is the spaces); Radio is the personal radio's home; Scenes and Messages are their own pages;
  * Studio is no longer a destination: it is the first row of Me and keeps its address,
  * /clinic/hub, as a sub-screen of Me.
  *
@@ -11,7 +11,8 @@
  * the destination list and the active one from here so they cannot drift.
  */
 import { buildClinicHubHref } from '@/lib/hub-entry';
-import { englishSpaceHref } from '@/lib/spaces/routes';
+import { getSurfacePath } from '@/lib/agent-transition/surfaces';
+import { isSpacesEnabled } from '@/lib/spaces/constants';
 import { RADIO_SEGMENT, radioHomeHref } from '@/lib/radio/routes';
 
 export type TopLevelDestination = 'exam' | 'radio' | 'scenes' | 'messages' | 'me';
@@ -30,8 +31,10 @@ export const MESSAGES_SEGMENT = 'messages';
 export function topLevelHref(locale: string, destination: TopLevelDestination): string {
   switch (destination) {
     case 'exam':
-      // The English Space; with Spaces off, the main chat (englishSpaceHref's own fallback).
-      return englishSpaceHref(locale);
+      // Exam's Chat mode is the spaces (D38): the latest Space with the Space list beside it,
+      // the old Space destination's resolver. With Spaces off, the main chat.
+      // ❌ Former (D36): the English Space (`englishSpaceHref`).
+      return isSpacesEnabled() ? `/${locale}/spaces` : getSurfacePath(locale, 'clinic');
     case 'radio':
       return radioHomeHref(locale);
     case 'scenes':

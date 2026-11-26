@@ -16,15 +16,13 @@ describe('KAZI-578 SessionNav first-paint split', () => {
     expect(src).toMatch(/SessionNavShell/);
   });
 
-  // KAZI-1485 (D36): the side list and the template picker are gone from the shell; the file
-  // and search panels are still deferred.
-  it('shell defers the file and search panels and no longer loads the side list or template picker', () => {
+  it('shell defers side list / file / search / template picker', () => {
     const src = readRel('./session-nav-shell.tsx');
     expect(src).toMatch(/next\/dynamic/);
-    expect(src).not.toMatch(/loadSessionNavPanel/);
+    expect(src).toMatch(/loadSessionNavPanel/);
     expect(src).toMatch(/loadSessionFileLibraryPanel/);
     expect(src).toMatch(/loadSessionGlobalSearchPanel/);
-    expect(src).not.toMatch(/loadSpaceTemplatePicker/);
+    expect(src).toMatch(/loadSpaceTemplatePicker/);
     expect(src).toMatch(/SessionNavPanelSlot/);
     expect(src).toMatch(/w-\[260px\]/);
     expect(src).toMatch(/mountDesktopPanel/);

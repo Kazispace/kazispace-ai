@@ -184,9 +184,8 @@ describe('KAZI-588 Space switch cache and latest pin', () => {
     const hook = readSrc('hooks/use-spaces.ts');
     expect(hook).toMatch(/prefetchRecentSpaceSwitches/);
     expect(hook).toMatch(/locale\?: string/);
-    // KAZI-1485 (D36): the shell no longer lists spaces, so it no longer reads them.
     const shell = readSrc('components/session-nav/session-nav-shell.tsx');
-    expect(shell).not.toMatch(/useSpaces\(/);
+    expect(shell).toMatch(/useSpaces\(\{ panelOpen: panelVisible, locale \}\)/);
   });
 
   it('prefetchSpaceSwitch still warms detail plus the history window', async () => {
