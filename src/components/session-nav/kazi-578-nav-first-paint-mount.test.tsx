@@ -351,6 +351,22 @@ describe('KAZI-578 SessionNav first-paint mount timing', () => {
     expect(reservedColumns(host!).length).toBe(1);
   });
 
+  it.each(['/en/interview/growth', '/en/interview/readiness', '/en/interview/profile'])(
+    'a report page (%s) is a sub-screen: no switch (#314 review)',
+    async (path) => {
+      installViewport({ desktop: true, innerWidth: 1280 });
+      pathnameRef.value = path;
+      await act(async () => {
+        root!.render(
+          <SessionNavShell locale="en">
+            <main data-testid="main-col">report</main>
+          </SessionNavShell>
+        );
+      });
+      expect(host!.querySelector('[data-testid="exam-mode-switch"]')).toBeNull();
+    }
+  );
+
   it('there is no switch outside Exam', async () => {
     installViewport({ desktop: true, innerWidth: 1280 });
     pathnameRef.value = '/en/mine';

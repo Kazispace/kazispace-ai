@@ -111,5 +111,10 @@ export function isTopLevelScreen(pathname: string, locale: string): boolean {
   const first = segments[0];
   if (isStudioPath(segments)) return false;
   if (first === RADIO_SEGMENT) return segments.length === 1;
+  // The interview's report pages (readiness, growth, profile) are pages, not conversations:
+  // sub-screens of Exam with their own back link to the interview, so no tab bar and no
+  // Chat / Form switch (kazispace-ui Navigation 3.1, Exam 0.2; #314 review). The interview
+  // itself, `/interview`, is a conversation.
+  if (first === 'interview') return segments.length === 1;
   return !(first && SUB_SCREEN_SEGMENTS.includes(first));
 }

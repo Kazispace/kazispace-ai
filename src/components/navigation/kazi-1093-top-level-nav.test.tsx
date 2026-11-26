@@ -138,6 +138,11 @@ describe('isTopLevelScreen', () => {
     ['/en/ledger', false],
     ['/en/subscription', false],
     ['/en/jobs', false],
+    // #314 review: the interview's report pages are sub-screens; the interview is a conversation.
+    ['/en/interview', true],
+    ['/en/interview/growth', false],
+    ['/en/interview/readiness', false],
+    ['/en/interview/profile', false],
     ['/en/jobs/42', false],
   ])('%s → %s', (path, expected) => {
     expect(isTopLevelScreen(path, 'en')).toBe(expected);
