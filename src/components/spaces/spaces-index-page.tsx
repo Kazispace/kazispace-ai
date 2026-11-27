@@ -8,7 +8,7 @@ import { useAuthReady } from '@/hooks/use-auth-ready';
 import { useSpaces } from '@/hooks/use-spaces';
 import { createSpace } from '@/lib/spaces-api';
 import { isSupportedSpaceTemplate } from '@/lib/spaces/constants';
-import { ENGLISH_SPACE_TEMPLATE_ID, pickLatestUserSpaceOfTemplate } from '@/lib/spaces/routes';
+import { pickLatestUserSpace, pickLatestUserSpaceOfTemplate } from '@/lib/spaces/routes';
 
 interface SpacesIndexPageProps {
   locale: string;
@@ -16,7 +16,7 @@ interface SpacesIndexPageProps {
 
 /**
  * `/spaces` resolver only — no main-area UI.
- * With no `?template=` it opens the English Space, Exam (D36).
+ * Latest user space → `/spaces/{id}`; otherwise Clinic (`/chat`).
  * Create space: sidebar panel 「+ 新建空间」 only (SessionNavPanel).
  *
  * `?template=<id>` (KAZI-1171): open the user's latest active Space of that
@@ -32,13 +32,12 @@ interface SpacesIndexPageProps {
 export function SpacesIndexPage({ locale }: SpacesIndexPageProps) {
   const router = useRouter();
   const requested = useSearchParams()?.get('template') ?? '';
-  // D36 (KAZI-1485): with no template, `/spaces` (the old Space tab) opens Exam, the English
-  // Space. ❌ Former (D27): the latest user Space of any template.
-  const template = isSupportedSpaceTemplate(requested) ? requested : ENGLISH_SPACE_TEMPLATE_ID;
+  const template = isSupportedSpaceTemplate(requested) ? requested : null;
   const { ready: authReady, authenticated } = useAuthReady();
   const { spaces, hasLoaded, error, enabled } = useSpaces({ fetchImmediately: true, locale });
+  const latestUserSpace = useMemo(() => pickLatestUserSpace(spaces), [spaces]);
   const latestOfTemplate = useMemo(
-    () => pickLatestUserSpaceOfTemplate(spaces, template),
+    () => (template ? pickLatestUserSpaceOfTemplate(spaces, template) : null),
     [spaces, template]
   );
   // One decision per visit: later list refreshes (focus, invalidate after create) must not
@@ -60,29 +59,40 @@ export function SpacesIndexPage({ locale }: SpacesIndexPageProps) {
     if (!hasLoaded) return;
     decided.current = true;
 
-    if (latestOfTemplate) {
-      open(latestOfTemplate.id);
-      return;
-    }
-    if (error) {
-      toChat();
-      return;
-    }
-    void createSpace({ template_id: template }).then((res) => {
-      // No id ⇒ never `/spaces/`: it lands back on this page and spins.
-      if (res.success && res.data?.id) {
-        open(res.data.id);
+    if (template) {
+      if (latestOfTemplate) {
+        open(latestOfTemplate.id);
         return;
       }
-      // Could not create it: fall back to the main chat rather than a dead end.
-      toChat();
-    });
+      if (error) {
+        toChat();
+        return;
+      }
+      void createSpace({ template_id: template }).then((res) => {
+        // No id ⇒ never `/spaces/`: it lands back on this page with no template and spins.
+        if (res.success && res.data?.id) {
+          open(res.data.id);
+          return;
+        }
+        // Could not create it: fall back to the main chat rather than a dead end.
+        toChat();
+      });
+      return;
+    }
+
+    if (latestUserSpace) {
+      open(latestUserSpace.id);
+      return;
+    }
+
+    toChat();
   }, [
     authReady,
     authenticated,
     enabled,
     hasLoaded,
     error,
+    latestUserSpace,
     latestOfTemplate,
     template,
     locale,

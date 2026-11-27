@@ -1,73 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 
 import type { SpaceDetail } from '@/types/spaces';
 
-import { ExamModeSwitch } from '@/components/exam/exam-mode-switch';
-import { SpacePanelsWorkspace } from '@/components/spaces/space-panels-workspace';
-import { readExamMode, writeExamMode, type ExamMode } from '@/lib/exam-mode';
-import { useUIStore } from '@/lib/store';
-import { cn } from '@/lib/utils';
+import { SpaceChatPane } from '@/components/spaces/space-chat-pane';
+import { SpaceComposerWithStarter } from '@/components/spaces/space-composer-with-starter';
+import { isSpaceComposerMuted } from '@/lib/spaces/lifecycle';
 
 interface IeltsPrepWorkspaceProps {
   space: SpaceDetail;
   active?: boolean;
 }
 
-const panelId = (mode: ExamMode) => `exam-mode-panel-${mode}`;
-
 /**
- * The English Space, which is the Exam destination (kazispace-ui D36, Exam 0.1.1; KAZI-1485):
- * the Chat / Form switch on top. Chat is the Space's conversation with its EPP panel (ADR-006
- * Phase B). Form is not built yet: `studio.comingSoon`, nothing to tap, while the switch still
- * offers both. Switching is navigation and ends nothing, so Chat stays mounted (hidden) while
- * Form shows: a practice in progress is still there when the user switches back.
+ * The English Space (ADR-006 Phase B — 雅思备考): its conversation only, with no panel row
+ * (kazispace-ui D38, Exam 0.2). Exam's Chat / Form switch is the only row of tabs; the panel
+ * row added a second "Chat" under it, and its one panel, the English passport, is in Studio.
+ * ❌ Former: space chat + EPP panel behind a "Chat | English passport" row; then (D36) the
+ * Chat / Form switch on top of that row.
  */
 export function IeltsPrepWorkspace({ space, active = true }: IeltsPrepWorkspaceProps) {
-  const tStudio = useTranslations('studio');
-  // Chat on the server and on first paint; the remembered mode after mount, so the HTML
-  // the server sends and the first client render agree.
-  const [mode, setMode] = useState<ExamMode>('chat');
-  useEffect(() => setMode(readExamMode()), []);
-  // Studio's Get started sends its text to Exam's Chat mode (Studio 0.5.1): show Chat whatever
-  // mode Exam was left in, so the composer that takes the text is the one on screen.
-  const examInsertPending = useUIStore((s) => s.composerInsert?.target === 'exam');
-  useEffect(() => {
-    if (!examInsertPending) return;
-    setMode('chat');
-    writeExamMode('chat');
-  }, [examInsertPending]);
-  const choose = (next: ExamMode) => {
-    setMode(next);
-    writeExamMode(next);
-  };
+  const locale = useLocale();
+  const muted = isSpaceComposerMuted(space.status);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <ExamModeSwitch mode={mode} onChange={choose} panelId={panelId} />
-      <div
-        id={panelId('chat')}
-        role="tabpanel"
-        aria-labelledby="exam-mode-tab-chat"
-        hidden={mode !== 'chat'}
-        className={cn('min-h-0 flex-1 flex-col', mode === 'chat' ? 'flex' : 'hidden')}
-      >
-        <SpacePanelsWorkspace space={space} welcomeKey="ieltsWelcome" active={active} />
-      </div>
-      <div
-        id={panelId('form')}
-        role="tabpanel"
-        aria-labelledby="exam-mode-tab-form"
-        hidden={mode !== 'form'}
-        data-testid="exam-form-panel"
-        className={cn('min-h-0 flex-1 overflow-y-auto bg-gray-bg px-4 py-6', mode === 'form' ? 'block' : 'hidden')}
-      >
-        <p data-testid="exam-form-coming-soon" className="text-sm text-workspace-muted">
-          {tStudio('comingSoon')}
-        </p>
-      </div>
-    </div>
+    <SpaceChatPane
+      key={space.id}
+      locale={locale}
+      space={space}
+      welcomeKey="ieltsWelcome"
+      active={active}
+      composer={(ctx) => (
+        <SpaceComposerWithStarter space={space} muted={muted} active={active} {...ctx} />
+      )}
+    />
   );
 }

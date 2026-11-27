@@ -41,9 +41,11 @@ describe('KAZIOP-3 navigation rail', () => {
         <SessionIconRail
           locale="zh"
           panelOpen={panelOpen}
-          panelMode="files"
+          panelMode="agents"
+          onToggleAgentsPanel={() => {}}
           onOpenFilesPanel={() => {}}
           onOpenSearchPanel={() => {}}
+          onOpenMobileDrawer={() => {}}
         />
       )
     );
@@ -72,7 +74,7 @@ describe('KAZIOP-3 navigation rail', () => {
       'nav.me',
     ]);
     expect(links.map((a) => a.getAttribute('href'))).toEqual([
-      expect.stringMatching(/^\/zh\/(spaces\?template=ielts_prep|chat)$/),
+      expect.stringMatching(/^\/zh\/(spaces|chat)$/),
       '/zh/radio',
       '/zh/scenes',
       '/zh/messages',
@@ -100,7 +102,7 @@ describe('KAZIOP-3 navigation rail', () => {
 
   it('an open panel tool is a neutral fill, never the pill or the old blue side bar', () => {
     render('/zh/chat', true);
-    const tool = host.querySelector('button[aria-label="sessionNav.files"]')!;
+    const tool = host.querySelector('button[aria-label="sessionNav.agents"]')!;
     expect(tool.className).toContain('bg-workspace-hover');
     expect(tool.className).not.toMatch(/bg-primary|before:bg-primary|text-primary/);
   });
@@ -120,13 +122,5 @@ describe('KAZIOP-3 navigation rail', () => {
       expect(src).toMatch(/TOP_LEVEL_ICONS/);
       expect(src).not.toMatch(/FolderOpen/);
     }
-  });
-
-  // KAZI-1485 (kazispace-ui D36, Navigation 3.0): there is no conversation list, so the rail
-  // has no tool for it. ❌ Former: a Bot button that opened the spaces / specialists panel.
-  it('has no tool that opens a conversation list', () => {
-    render('/zh/chat', false);
-    expect(host.querySelector('button[aria-label="sessionNav.agents"]')).toBeNull();
-    expect(host.querySelector('button[aria-label="sessionNav.files"]')).not.toBeNull();
   });
 });

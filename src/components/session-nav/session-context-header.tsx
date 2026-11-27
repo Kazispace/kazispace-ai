@@ -7,7 +7,6 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
-import { AgentNavIcon } from '@/components/agents/agent-nav-icon';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SessionHeaderDrawer } from '@/components/session-nav/session-header-drawer';
 import type { CurrentSessionsByAgent } from '@/lib/current-agent-sessions';
@@ -71,6 +70,7 @@ export function SessionContextHeader({
   const tSpaces = useTranslations('spaces');
   const tRailHub = useTranslations('cv.railHub');
   const tClinic = useTranslations('clinic');
+  const tNav = useTranslations('nav');
   const showToast = useUIStore((s) => s.showToast);
   const clinicActiveAgentId = useAgentStore((s) => s.activeAgentId);
   const hubAgentId = getDedicatedHubAgentFromPathname(pathname);
@@ -106,7 +106,11 @@ export function SessionContextHeader({
     drawer === 'search'
   );
 
-  const { title, titleAgentId, statusLabel, statusKind } = useMemo(() => {
+  // The title is `nav.exam` on every conversation in Exam (kazispace-ui D38, chat header 0.5):
+  // the header only shows there, and which space is open shows in the space list. The chat's
+  // own name (a space's generated name such as "ET-44 04:36:41", the main chat, a specialist)
+  // is no longer the title. ❌ Former: `title` / `titleAgentId` below.
+  const { statusLabel, statusKind } = useMemo(() => {
     const agent = agentId
       ? AGENT_REGISTRY.find((entry) => entry.agentId === agentId)
       : undefined;
@@ -269,10 +273,7 @@ export function SessionContextHeader({
           ) : null}
           <div className="min-w-0">
             <h1 className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold text-workspace-text">
-              {titleAgentId ? (
-                <AgentNavIcon agentId={titleAgentId} className="text-primary" />
-              ) : null}
-              <span className="truncate">{title}</span>
+              <span className="truncate">{tNav('exam')}</span>
             </h1>
             {subtitle ? (
               <p
