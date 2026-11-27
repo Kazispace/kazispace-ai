@@ -1,4 +1,4 @@
-import { isSpacesEnabled } from '@/lib/spaces/constants';
+import { isArchivedSpaceTemplate, isSpacesEnabled } from '@/lib/spaces/constants';
 import type { SpaceSummary } from '@/types/spaces';
 
 /** `/spaces` with no spaceId — not a workspace route; needs index resolver. */
@@ -23,7 +23,10 @@ function latestByActivity(spaces: SpaceSummary[]): SpaceSummary | null {
  * and the tab opened 「此空间已归档」 (KAZI-1171 UAT 14213).
  */
 export function pickLatestUserSpace(spaces: SpaceSummary[]): SpaceSummary | null {
-  const userSpaces = spaces.filter((space) => !space.is_entry_point);
+  // D39: a CV / job-search space is archived, so it is never the latest space.
+  const userSpaces = spaces.filter(
+    (space) => !space.is_entry_point && !isArchivedSpaceTemplate(space.template_id)
+  );
   return (
     latestByActivity(userSpaces.filter((space) => space.status === 'active')) ??
     latestByActivity(userSpaces.filter((space) => space.status === 'completed'))

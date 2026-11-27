@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { FileText, FolderOpen, LayoutGrid, Menu, MoreHorizontal, Search } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
+import { AgentNavIcon } from '@/components/agents/agent-nav-icon';
 import { LocaleSwitcher } from '@/components/locale/locale-switcher';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SessionHeaderDrawer } from '@/components/session-nav/session-header-drawer';
@@ -20,13 +21,13 @@ import { canRunSpaceLifecycle } from '@/lib/spaces/lifecycle';
 import { getDedicatedHubAgentFromPathname, getSurfacePath } from '@/lib/agent-transition/surfaces';
 import { AGENT_REGISTRY, getAgentLabel } from '@/lib/agents/registry';
 import { CV_BUILDER_AGENT_ID } from '@/lib/cv-agent-config';
-import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
+import { CLINIC_SPACE_ID, TEMPLATE_I18N_KEYS } from '@/lib/spaces/constants';
 import {
   formatRegisteredCapabilityLabel,
   resolveActiveCapability,
   shouldUseGlobalAgentForContextHeader,
 } from '@/lib/spaces/capability';
-import { isClinicChatPathname, resolveSpaceIdFromPathname } from '@/lib/space-nav';
+import { isClinicChatPathname, readableSpaceName, resolveSpaceIdFromPathname } from '@/lib/space-nav';
 import { publishSessionNavOpenFile, publishSessionNavToggleWorkspaceRail } from '@/lib/session-nav-events';
 import {
   resolveContextHeaderSession,
@@ -70,7 +71,13 @@ export function SessionContextHeader({
   const tSpaces = useTranslations('spaces');
   const tRailHub = useTranslations('cv.railHub');
   const tClinic = useTranslations('clinic');
-  const tNav = useTranslations('nav');
+  const spaceTemplateLabel = useCallback(
+    (templateId: string) => {
+      const keys = TEMPLATE_I18N_KEYS[templateId];
+      return keys ? tSpaces(keys.title) : null;
+    },
+    [tSpaces]
+  );
   const showToast = useUIStore((s) => s.showToast);
   const clinicActiveAgentId = useAgentStore((s) => s.activeAgentId);
   const hubAgentId = getDedicatedHubAgentFromPathname(pathname);
@@ -106,11 +113,11 @@ export function SessionContextHeader({
     drawer === 'search'
   );
 
-  // The title is `nav.exam` on every conversation in Exam (kazispace-ui D38, chat header 0.5):
-  // the header only shows there, and which space is open shows in the space list. The chat's
-  // own name (a space's generated name such as "ET-44 04:36:41", the main chat, a specialist)
-  // is no longer the title. ❌ Former: `title` / `titleAgentId` below.
-  const { statusLabel, statusKind } = useMemo(() => {
+  // The title is the open chat's readable name (kazispace-ui D41, chat header 0.6): a user can
+  // have several spaces of one type, so it is not fixed to `nav.exam`. A space's name is the one
+  // the space list shows (D39): a name nobody chose reads as the type's name and its day.
+  // ❌ Former (D38 proposal): `nav.exam` on every conversation.
+  const { title, titleAgentId, statusLabel, statusKind } = useMemo(() => {
     const agent = agentId
       ? AGENT_REGISTRY.find((entry) => entry.agentId === agentId)
       : undefined;
@@ -153,7 +160,7 @@ export function SessionContextHeader({
           })
         : null;
       return {
-        title: `${space.name}`,
+        title: readableSpaceName(space, spaceTemplateLabel, locale),
         titleAgentId: null as string | null,
         statusLabel: capabilityLabel
           ? capabilityLabel
@@ -187,6 +194,7 @@ export function SessionContextHeader({
     space,
     spaceActiveCapability,
     spaceId,
+    spaceTemplateLabel,
     t,
   ]);
 
@@ -273,7 +281,10 @@ export function SessionContextHeader({
           ) : null}
           <div className="min-w-0">
             <h1 className="flex min-w-0 items-center gap-2 truncate text-sm font-semibold text-workspace-text">
-              <span className="truncate">{tNav('exam')}</span>
+              {titleAgentId ? (
+                <AgentNavIcon agentId={titleAgentId} className="text-primary" />
+              ) : null}
+              <span className="truncate">{title}</span>
             </h1>
             {subtitle ? (
               <p

@@ -45,7 +45,7 @@ import {
   type SessionNavViewTab,
   type SessionViewRow,
 } from '@/lib/session-nav';
-import { CLINIC_SPACE_ID } from '@/lib/spaces/constants';
+import { CLINIC_SPACE_ID, isArchivedSpaceTemplate } from '@/lib/spaces/constants';
 import { markNavIntent } from '@/lib/perf/nav-intent';
 import {
   isPrefetchableSpaceNavId,
@@ -202,7 +202,12 @@ export function SessionNavPanel({
   }, [spaces]);
 
   const hasArchivedSpaces = useMemo(
-    () => spaces.some((s) => !s.is_entry_point && (s.status === 'archived' || s.status === 'deleted')),
+    () =>
+      spaces.some(
+        (s) =>
+          !s.is_entry_point &&
+          (s.status === 'archived' || s.status === 'deleted' || isArchivedSpaceTemplate(s.template_id))
+      ),
     [spaces]
   );
 

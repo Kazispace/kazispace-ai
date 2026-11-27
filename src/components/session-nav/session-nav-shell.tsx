@@ -41,7 +41,12 @@ import {
   shouldPinWorkspaceNavPanel,
   type SpaceNavFilter,
 } from '@/lib/space-nav';
-import { CLINIC_SPACE_ID, isSpacesEnabled } from '@/lib/spaces/constants';
+import {
+  CLINIC_SPACE_ID,
+  TEMPLATE_I18N_KEYS,
+  isArchivedSpaceTemplate,
+  isSpacesEnabled,
+} from '@/lib/spaces/constants';
 import { createSpace } from '@/lib/spaces-api';
 import { useSpaceLifecycle } from '@/hooks/use-space-lifecycle';
 import { publishSessionNavSessionExited } from '@/lib/session-nav-events';
@@ -316,15 +321,24 @@ function SessionNavShellLayout({
   );
 
   const spaceNavRows = useMemo(
-    () => (spacesEnabled ? buildSpaceNavRowsFiltered(spaces, locale, t('clinic'), spaceFilter) : []),
-    [locale, spaceFilter, spaces, spacesEnabled, t]
+    () =>
+      spacesEnabled
+        ? buildSpaceNavRowsFiltered(spaces, locale, t('clinic'), spaceFilter, (templateId) => {
+            // D39: a name nobody chose shows as the space type's own name.
+            const keys = TEMPLATE_I18N_KEYS[templateId];
+            return keys ? tSpaces(keys.title) : null;
+          })
+        : [],
+    [locale, spaceFilter, spaces, spacesEnabled, t, tSpaces]
   );
 
   // P2-3: if Archived tab is empty after restore/delete, fall back to Current.
   useEffect(() => {
     if (spaceFilter !== 'archived') return;
     const hasArchived = spaces.some(
-      (s) => !s.is_entry_point && (s.status === 'archived' || s.status === 'deleted')
+      (s) =>
+        !s.is_entry_point &&
+        (s.status === 'archived' || s.status === 'deleted' || isArchivedSpaceTemplate(s.template_id))
     );
     if (!hasArchived) setSpaceFilter('active');
   }, [spaceFilter, spaces]);

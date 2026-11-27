@@ -180,10 +180,27 @@ describe('/spaces?template=', () => {
     state.hasLoaded = false;
     await render();
     state.hasLoaded = true;
-    state.spaces = [space('sp_job', 'job_sprint')];
+    state.spaces = [space('sp_blank', 'blank_conversation')];
     await render();
     expect(state.replace).toHaveBeenCalledTimes(1);
-    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_job');
+    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_blank');
+  });
+
+  // KAZI-1485 (Owen 2026-11-27, kazispace-ui D39): CV and job-search spaces are archived, so the
+  // latest-space rule skips them, however recently active.
+  it('never opens a job-search space as the latest space (D39)', async () => {
+    state.spaces = [
+      space('sp_job', 'job_sprint', { last_active_at: '2026-11-27T00:00:00Z' }),
+      space('sp_en', 'ielts_prep', { last_active_at: '2026-11-20T00:00:00Z' }),
+    ];
+    await render();
+    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_en');
+  });
+
+  it('with only a job-search space, goes to the main chat (D39)', async () => {
+    state.spaces = [space('sp_job', 'job_sprint')];
+    await render();
+    expect(state.replace).toHaveBeenCalledWith('/zh/chat');
   });
 
   it('decides once: a later list refresh does not route again', async () => {
@@ -231,9 +248,9 @@ describe('/spaces?template=', () => {
 
   it('ignores an unknown template and behaves as before', async () => {
     state.query = 'template=nope';
-    state.spaces = [space('sp_job', 'job_sprint')];
+    state.spaces = [space('sp_blank', 'blank_conversation')];
     await render();
     expect(state.create).not.toHaveBeenCalled();
-    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_job');
+    expect(state.replace).toHaveBeenCalledWith('/zh/spaces/sp_blank');
   });
 });
