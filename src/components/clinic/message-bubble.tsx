@@ -22,7 +22,7 @@ import {
   type CitationItem,
 } from "@/lib/clinic/citation-list";
 import { isLowConfidenceMeta } from "@/lib/english-tutor/custom-components";
-import { parseEtForm } from "@/lib/english-tutor/form";
+import { buildEtFormCancel, parseEtForm } from "@/lib/english-tutor/form";
 import { parseCvForm } from "@/lib/cv-form";
 import type { ReplyFormSubmitHandler } from "@/lib/reply-form";
 import {
@@ -147,6 +147,7 @@ export function MessageBubble({
   actionsDisabled,
 }: MessageBubbleProps) {
   const t = useTranslations("chat");
+  const tForm = useTranslations("english.form");
   const isUser = role === "user";
   const isFailed = isUser && status === "failed";
   const isQueued = isUser && status === "queued";
@@ -342,6 +343,12 @@ export function MessageBubble({
                 active={etFormActive}
                 prefill={etFormPrefill}
                 onSubmit={actionsDisabled ? undefined : onEtFormSubmit}
+                // KAZI-1505 (Reply form 0.4.1 "Cancel", Chat row): sent through the same form channel as an answer.
+                onCancel={
+                  actionsDisabled || !onEtFormSubmit
+                    ? undefined
+                    : () => onEtFormSubmit(buildEtFormCancel(etForm, tForm("dropSent")))
+                }
               />
             ) : null}
             {showCvForm && cvForm ? (
