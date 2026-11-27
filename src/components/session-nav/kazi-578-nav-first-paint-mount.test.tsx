@@ -49,6 +49,10 @@ const fileLoad = vi.hoisted(() => vi.fn(async () => ({ SessionFileLibraryPanel: 
 const searchLoad = vi.hoisted(() => vi.fn(async () => ({ SessionGlobalSearchPanel: () => null })));
 const pickerLoad = vi.hoisted(() => vi.fn(async () => ({ SpaceTemplatePicker: () => null })));
 
+vi.mock('@/components/exam/exam-form-panel', () => ({
+  ExamFormPanel: () => <div data-testid="exam-form-panel-stub" />,
+}));
+
 vi.mock('next/navigation', () => ({
   usePathname: () => pathnameRef.value,
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
@@ -340,7 +344,8 @@ describe('KAZI-578 SessionNav first-paint mount timing', () => {
     await act(async () => {
       host!.querySelector<HTMLButtonElement>('[data-testid="exam-mode-form"]')!.click();
     });
-    expect(host!.querySelector('[data-testid="exam-form-coming-soon"]')?.textContent).toBe('comingSoon');
+    // KAZI-1493: Form mode renders the Form page (its own tests: kazi-1493-exam-form-panel.test.tsx).
+    expect(host!.querySelector('[data-testid="exam-form-panel"] [data-testid="exam-form-panel-stub"]')).not.toBeNull();
     expect(host!.querySelector('[data-testid="main-col"]')?.closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(true);
     expect(reservedColumns(host!).length).toBe(0);
 

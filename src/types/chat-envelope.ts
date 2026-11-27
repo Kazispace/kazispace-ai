@@ -44,6 +44,11 @@ export interface UserMessageActionMeta {
   form_id?: string;
   /** KAZI-1082: forwarded only from an `et_next_practice` click; BE re-checks it against the enum. */
   focus_tag?: string;
+  /**
+   * KAZI-1493 (kazispace-ui D45, Exam 0.7.2): the exam a Form mode start attaches to its preset message.
+   * Read by the server only with `action_type: "et_form_preset"`; never sent with a `form_id`.
+   */
+  exam_type?: string;
 }
 
 export interface ChatNextAction {

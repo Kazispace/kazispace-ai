@@ -1833,6 +1833,37 @@
 		"mode": {
 			"chat": "Chat",
 			"form": "Form"
+		},
+		"form": {
+			"examsHeading": "Exams",
+			"historyHeading": "Past sets",
+			"inProgress": "In progress",
+			"continue": "Continue",
+			"drop": "Drop this set",
+			"backToList": "Back to the list",
+			"locked": "Finish or drop the set in progress to start another.",
+			"noList": "Tell the tutor which exam you are preparing for in Chat.",
+			"startFailed": "Could not start the set. Try again.",
+			"turnFailed": "The tutor did not answer. Try again.",
+			"cambridge": "Cambridge English",
+			"cambridgeNote": "Not official · not authorised by Cambridge",
+			"exams": {
+				"ielts": "IELTS",
+				"cet4": "CET-4",
+				"cet6": "CET-6",
+				"cky": "Postgraduate English (CKY)",
+				"gaokao": "Gaokao English",
+				"pet": "B1 Preliminary (PET)",
+				"fce": "B2 First (FCE)",
+				"cae": "C1 Advanced (CAE)"
+			},
+			"types": {
+				"grammar": "Grammar",
+				"vocabulary": "Vocabulary",
+				"reading": "Reading",
+				"writing": "Writing",
+				"speaking": "Speaking"
+			}
 		}
 	},
 	"messages": {
