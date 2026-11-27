@@ -64,13 +64,31 @@ beforeAll(async () => {
   ({ ExamFormPanel } = await import('./exam-form-panel'));
 });
 
+// Each kind in the one (presentation, control) shape the form contract allows.
+const SHAPE: Record<string, { presentation: string; control: string }> = {
+  objective_set: { presentation: 'inline', control: 'objective_set' },
+  writing_draft: { presentation: 'modal', control: 'textarea' },
+  writing_revision: { presentation: 'modal', control: 'textarea' },
+};
+
 const turnResponse = (kind: string | null, text = 'reply') => ({
   success: true,
   data: { envelope: { reply: text, assistant_response: { content: text, meta: kind ? { form: {
-    form_id: `et:${kind}:x`, kind, presentation: 'inline', control: kind === 'objective_set' ? 'objective_set' : 'radio',
-    title: 't', options: [], items: kind === 'objective_set' ? [{ item_id: 'q1', item_kind: 'mcq', prompt_text: 'p', options: ['a', 'b'] }] : [],
+    form_id: `et:${kind}:x`, kind, ...SHAPE[kind], title: 't', options: [],
+    items: kind === 'objective_set' ? [{ item_id: 'q1', item_kind: 'mcq', prompt_text: 'p', options: ['a', 'b'] }] : [],
   } } : {} } } },
 });
+
+/** A stored tutor reply as chat history returns it (the same envelope shape as a turn response). */
+const historyRow = (id: string, kind: string | null, text = 'reply') => ({
+  id, role: 'assistant', content: text, ...turnResponse(kind, text).data.envelope,
+});
+
+const settle = () => act(async () => {
+  await new Promise((r) => setTimeout(r, 0));
+});
+
+const openSet = { id: 'sp_open', name: '雅思 IELTS · 写作 · 11月27日', template_id: 'exam_form', status: 'active', master_session_id: 's', last_active_at: '2026-11-27T10:00:00Z' };
 
 let root: Root | null = null;
 let host: HTMLDivElement | null = null;
@@ -82,9 +100,12 @@ async function render() {
   await act(async () => {
     root!.render(<ExamFormPanel locale="zh" />);
   });
-  await act(async () => {
-    await new Promise((r) => setTimeout(r, 0));
-  });
+  // Home reads the exams and sets, then the newest set's turns: let every request settle.
+  for (let i = 0; i < 3; i += 1) {
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+  }
 }
 
 const q = (id: string) => host!.querySelector<HTMLElement>(`[data-testid="${id}"]`);
@@ -175,7 +196,7 @@ describe('Form mode page', () => {
       { message: '练语法', meta: { action_type: 'et_form_preset', exam_type: 'cet4' } },
     ]);
     expect(q('form-objective_set')?.getAttribute('data-active')).toBe('1');
-    expect(readCurrentSet()).toEqual({ spaceId: 'sp_form1', exam: 'cet4', type: 'grammar' });
+    expect(readCurrentSet()).toMatchObject({ spaceId: 'sp_form1', exam: 'cet4', type: 'grammar' });
   });
 
   it('submitting the set marks it done, unlocks the list and offers the way back', async () => {
@@ -204,20 +225,74 @@ describe('Form mode page', () => {
     expect(readCurrentSet()).toBeNull();
   });
 
-  it('a set in progress locks the list until it is continued to the end or dropped', async () => {
-    writeCurrentSet({ spaceId: 'sp_open', exam: 'ielts', type: 'writing' });
-    api.sets = [{ id: 'sp_open', name: 'n', template_id: 'exam_form', status: 'active', master_session_id: 's', last_active_at: null }];
+  it('a draft sent back to finish is still in progress; the set is marked only when the reply has no answer form', async () => {
+    api.sendSpaceTurn
+      .mockResolvedValueOnce(turnResponse('writing_draft'))
+      .mockResolvedValueOnce(turnResponse('writing_draft', 'Too short: add a paragraph.'))
+      .mockResolvedValueOnce(turnResponse('writing_revision', 'Band 6. Revise?'));
     await render();
-    expect(q('exam-form-in-progress')).not.toBeNull();
+    await act(async () => {
+      q('exam-form-start-ielts-writing')!.click();
+    });
+    await settle();
+    await act(async () => {
+      q('form-writing_draft')!.click();
+    });
+    await settle();
+    expect(q('exam-form-done-back')).toBeNull();
+    expect(readCurrentSet()).toMatchObject({ spaceId: 'sp_form1', exam: 'ielts', type: 'writing' });
+    const drafts = host!.querySelectorAll('[data-testid="form-writing_draft"]');
+    expect(drafts[drafts.length - 1].getAttribute('data-active')).toBe('1');
+    await act(async () => {
+      (drafts[drafts.length - 1] as HTMLElement).click();
+    });
+    await settle();
+    expect(q('exam-form-done-back')).not.toBeNull();
+    expect(readCurrentSet()).toBeNull();
+    // The revision editor after marking stays usable.
+    expect(q('form-writing_revision')?.getAttribute('data-active')).toBe('1');
+  });
+
+  it('the set in progress comes from the server, so it locks the list on a device that did not start it', async () => {
+    api.sets = [openSet];
+    api.fetchChatHistory.mockResolvedValue({ success: true, data: { messages: [historyRow('m1', 'writing_draft')] } });
+    await render();
+    expect(q('exam-form-in-progress-title')?.textContent).toBe('雅思 IELTS · 写作 · 11月27日');
     expect(q('exam-form-locked')).not.toBeNull();
     expect((q('exam-form-start-cet4-grammar') as HTMLButtonElement).disabled).toBe(true);
+    expect(host!.querySelectorAll('[data-testid="exam-form-history-row"]').length).toBe(0);
+  });
+
+  it('a set whose last reply has no answer form is history, even if this device remembers it as open', async () => {
+    writeCurrentSet({ spaceId: 'sp_open', exam: 'ielts', type: 'writing' });
+    api.sets = [openSet];
+    api.fetchChatHistory.mockResolvedValue({ success: true, data: { messages: [historyRow('m1', null, 'Band 6')] } });
+    await render();
+    expect(q('exam-form-in-progress')).toBeNull();
+    expect(readCurrentSet()).toBeNull();
+    expect(host!.querySelectorAll('[data-testid="exam-form-history-row"]').length).toBe(1);
+  });
+
+  it('drop removes the set and unlocks the list; a failed drop keeps it locked and says so', async () => {
+    writeCurrentSet({ spaceId: 'sp_open', exam: 'ielts', type: 'writing' });
+    api.sets = [openSet];
+    api.fetchChatHistory.mockResolvedValue({ success: true, data: { messages: [historyRow('m1', 'writing_draft')] } });
+    await render();
+    expect(q('exam-form-in-progress-title')?.textContent).toBe('exams.ielts · types.writing');
+    api.deleteSpace.mockResolvedValueOnce({ success: false, error: 'x' });
     await act(async () => {
       q('exam-form-drop')!.click();
     });
+    await settle();
+    expect(host!.textContent).toContain('dropFailed');
+    expect(readCurrentSet()).toMatchObject({ spaceId: 'sp_open' });
+    expect((q('exam-form-start-cet4-grammar') as HTMLButtonElement).disabled).toBe(true);
+    api.sets = [];
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 0));
+      q('exam-form-drop')!.click();
     });
-    expect(api.deleteSpace).toHaveBeenCalledWith('sp_open');
+    await settle();
+    expect(api.deleteSpace).toHaveBeenLastCalledWith('sp_open');
     expect(readCurrentSet()).toBeNull();
     expect((q('exam-form-start-cet4-grammar') as HTMLButtonElement).disabled).toBe(false);
   });

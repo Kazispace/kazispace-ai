@@ -30,6 +30,9 @@ export const CAMBRIDGE_EXAMS: readonly string[] = ['pet', 'fce', 'cae'];
  * Problem types listed under each exam (design SDD «考试 · 表单模式» §3). Reading is Gaokao only;
  * speaking only where the bank has speaking tasks. Which exams appear at all is the server's
  * `english_exams` (only exams it has questions for), so this table never adds an exam.
+ *
+ * ⚠ Client-side and not pinned by a server check: it can drift from the question bank (SDD §3, "会腐烂的量").
+ * Follow-up (KAZI-1493): have the server return each exam's problem types with `english_exams`.
  */
 const PROBLEM_TYPES: Record<string, readonly ProblemType[]> = {
   ielts: ['grammar', 'vocabulary', 'writing', 'speaking'],
@@ -74,7 +77,11 @@ export function presetTurn(exam: string, type: ProblemType): SpaceTurnRequest {
   return { message: ENTRY_PHRASE[type], meta: { action_type: FORM_PRESET_ACTION, exam_type: exam } };
 }
 
-/** Form kinds that are the practice itself: submitting one finishes the set. */
+/**
+ * Form kinds that are the practice itself. A set is in progress while the tutor's latest reply still holds
+ * one (the first set of questions, or the same editor sent back for a too-short draft); it is submitted and
+ * marked once a reply after an answer no longer does (#316 review: decided from the reply, not the submit).
+ */
 const ANSWER_KINDS = new Set(['objective_set', 'passage', 'writing_draft', 'speaking_answer']);
 
 export function isAnswerForm(kind: string | null | undefined): boolean {
@@ -93,14 +100,17 @@ export function setName(examLabel: string, typeLabel: string, locale: string, wh
 }
 
 /**
- * The set in progress on this device (Exam 0.7.2 "One set at a time"): the list stays locked until it is
- * submitted or dropped, also after leaving the screen. Browser storage can be unavailable: then nothing
- * is remembered and the page still works.
+ * The set in progress (Exam 0.7.2 "One set at a time"). Which set is in progress comes from the server
+ * (the Form panel's `findOpenSet`: the newest form set whose last tutor reply still holds an answer form), so it holds across
+ * devices. This device also remembers the exam and problem type of a set it started, which a new set needs
+ * for its first (preset) turn. Browser storage can be unavailable: then nothing is remembered locally.
  */
 export interface CurrentSet {
   spaceId: string;
-  exam: string;
-  type: ProblemType;
+  /** The set's own name, e.g. 「大学英语四级 · 语法 · 11月27日」. */
+  name?: string;
+  exam?: string;
+  type?: ProblemType;
 }
 
 const CURRENT_KEY = 'kazi.examForm.current';
@@ -112,7 +122,12 @@ export function readCurrentSet(): CurrentSet | null {
     const parsed = JSON.parse(raw) as Partial<CurrentSet>;
     if (typeof parsed.spaceId === 'string' && typeof parsed.exam === 'string' && typeof parsed.type === 'string'
         && parsed.type in ENTRY_PHRASE) {
-      return { spaceId: parsed.spaceId, exam: parsed.exam, type: parsed.type as ProblemType };
+      return {
+        spaceId: parsed.spaceId,
+        exam: parsed.exam,
+        type: parsed.type as ProblemType,
+        ...(typeof parsed.name === 'string' ? { name: parsed.name } : {}),
+      };
     }
   } catch {
     // storage unavailable or unreadable: nothing remembered

@@ -1845,6 +1845,7 @@
 			"noList": "Tell the tutor which exam you are preparing for in Chat.",
 			"startFailed": "Could not start the set. Try again.",
 			"turnFailed": "The tutor did not answer. Try again.",
+			"dropFailed": "Could not drop the set. Try again.",
 			"cambridge": "Cambridge English",
 			"cambridgeNote": "Not official · not authorised by Cambridge",
 			"exams": {

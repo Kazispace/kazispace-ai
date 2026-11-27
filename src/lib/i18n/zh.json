@@ -1549,6 +1549,7 @@
 			"noList": "请先在对话里告诉老师你要备考哪个考试。",
 			"startFailed": "没能开始这一组，请重试。",
 			"turnFailed": "老师没有回复，请重试。",
+			"dropFailed": "没能放弃这一组，请重试。",
 			"cambridge": "剑桥英语",
 			"cambridgeNote": "非剑桥官方 · 未获剑桥授权",
 			"exams": {

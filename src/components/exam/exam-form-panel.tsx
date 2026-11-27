@@ -65,12 +65,40 @@ async function loadTurns(spaceId: string, locale: string): Promise<FormTurn[] | 
 }
 
 /**
+ * The set in progress, read from the server (#316 review): only one set is open at a time (Exam 0.7.2), so
+ * it is the newest form set if that set's last tutor reply still holds an answer form. This device's own
+ * record adds the exam and problem type when it is the same set; a set started here whose first (preset)
+ * turn never got a reply is still open, since it can be sent again. `undefined`: the server could not be read.
+ */
+async function findOpenSet(
+  sets: SpaceSummary[],
+  saved: CurrentSet | null,
+  locale: string,
+): Promise<CurrentSet | null | undefined> {
+  const newest = sets[0];
+  if (!newest) return null;
+  const own = saved && saved.spaceId === newest.id ? saved : null;
+  const turns = await loadTurns(newest.id, locale);
+  if (turns === null) return undefined;
+  const last = turns[turns.length - 1];
+  const open = last ? isAnswerForm(last.form?.kind) : Boolean(own?.exam && own?.type);
+  if (!open) return null;
+  return { ...(own ?? {}), spaceId: newest.id, name: newest.name };
+}
+
+/** The set's title: its exam and problem type when this device knows them, else the set's own name. */
+function setTitle(current: CurrentSet, t: ReturnType<typeof useTranslations>): string {
+  if (current.exam && current.type) return `${t(`exams.${current.exam}`)} · ${t(`types.${current.type}`)}`;
+  return current.name ?? '';
+}
+
+/**
  * Exam tab · Form mode (KAZI-1493; kazispace-ui Exam 0.7.2, D43–D45).
  *
  * Home: the user's own exams (`english_exams`, server order; Cambridge as one group), each with its
  * problem types; the set in progress (Continue / Drop this set) locks the list; past sets as history.
  * Practice: one `exam_form` space per set, started by ONE preset turn; the tutor's reply forms are the
- * steps; submitting the practice form finishes the set.
+ * steps; the set is finished once the reply to an answer no longer holds an answer form.
  */
 export function ExamFormPanel({ locale }: { locale: string }) {
   const t = useTranslations('exam.form');
@@ -118,18 +146,17 @@ function FormHome({
   const load = useCallback(async () => {
     setError(null);
     const [list, formSets] = await Promise.all([getEnglishExams(), listFormSets()]);
-    setExams(list);
     const known = formSets ?? [];
-    setSets(known);
-    // A remembered set that no longer exists (dropped elsewhere) does not keep the list locked.
     const saved = readCurrentSet();
-    if (saved && formSets && !known.some((s) => s.id === saved.spaceId)) {
-      clearCurrentSet();
-      setCurrent(null);
-    } else {
-      setCurrent(saved);
-    }
-  }, []);
+    // The server decides which set is open (so it holds on every device); unreadable ⇒ this device's record.
+    const open = formSets ? await findOpenSet(known, saved, locale) : undefined;
+    const next = open === undefined ? saved : open;
+    if (saved && next?.spaceId !== saved.spaceId) clearCurrentSet();
+    else if (next) writeCurrentSet(next);
+    setExams(list);
+    setSets(known);
+    setCurrent(next);
+  }, [locale]);
 
   useEffect(() => {
     void load();
@@ -146,7 +173,7 @@ function FormHome({
       setError(t('startFailed'));
       return;
     }
-    const next: CurrentSet = { spaceId: created.data.id, exam, type };
+    const next: CurrentSet = { spaceId: created.data.id, name, exam, type };
     writeCurrentSet(next);
     onOpenPractice(next);
   };
@@ -154,10 +181,16 @@ function FormHome({
   const drop = async () => {
     if (!current || busy) return;
     setBusy(true);
-    await deleteSpace(current.spaceId);
+    setError(null);
+    const res = await deleteSpace(current.spaceId);
+    setBusy(false);
+    if (!res.success) {
+      // Not dropped: the set is still open on the server, so the list stays locked.
+      setError(t('dropFailed'));
+      return;
+    }
     clearCurrentSet();
     setCurrent(null);
-    setBusy(false);
     void load();
   };
 
@@ -185,8 +218,8 @@ function FormHome({
           className="rounded-xl border border-primary/30 bg-white p-4 shadow-sm"
         >
           <p className="text-xs font-medium text-primary">{t('inProgress')}</p>
-          <p className="mt-1 text-base font-semibold text-workspace-text">
-            {t(`exams.${current.exam}`)} · {t(`types.${current.type}`)}
+          <p className="mt-1 text-base font-semibold text-workspace-text" data-testid="exam-form-in-progress-title">
+            {setTitle(current, t)}
           </p>
           <div className="mt-3 flex gap-2">
             <Button size="sm" onClick={() => onOpenPractice(current)} data-testid="exam-form-continue">
@@ -334,6 +367,12 @@ function PracticeView({
         setSending(false);
         return;
       }
+      if (!current.exam || !current.type) {
+        // Only a set started on this device can send its first turn; nothing else reaches here.
+        setSending(false);
+        setError(t('turnFailed'));
+        return;
+      }
       const res = await sendSpaceTurn(current.spaceId, presetTurn(current.exam, current.type));
       setSending(false);
       if (!res.success || !res.data) {
@@ -345,11 +384,12 @@ function PracticeView({
   }, [current, locale, t]);
 
   const last = turns[turns.length - 1];
-  const activeKey = !done && !sending && last?.form ? last.key : null;
+  // The latest form stays usable after the set is marked (e.g. the writing revision editor).
+  const activeKey = !sending && last?.form ? last.key : null;
 
   const submit = async (built: EtFormSubmit): Promise<boolean> => {
     if (!last) return false;
-    const finishing = isAnswerForm(last.form?.kind);
+    const answered = isAnswerForm(last.form?.kind);
     setSending(true);
     setError(null);
     const res = await sendSpaceTurn(current.spaceId, { message: built.display, meta: built.meta });
@@ -358,9 +398,14 @@ function PracticeView({
       setError(t('turnFailed'));
       return false;
     }
-    setTurns((prev) => [...prev, turnFromResponse(res.data, `t${prev.length}`)]);
-    if (finishing) {
-      // Submitted and marked: the set becomes history and the list unlocks (Exam 0.7.2).
+    const reply = turnFromResponse(res.data, `t${turns.length}`);
+    setTurns((prev) => [...prev, { ...reply, key: `t${prev.length}` }]);
+    // Decided from the reply, not the submit (#316 review): an answer form sent back (a draft too short to
+    // mark) keeps the set open; a reply to an answer without one means it was marked ⇒ history, list unlocks.
+    if (isAnswerForm(reply.form?.kind)) {
+      writeCurrentSet(current);
+      setDone(false);
+    } else if (answered) {
       clearCurrentSet();
       setDone(true);
     }
@@ -379,9 +424,7 @@ function PracticeView({
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <h2 className="text-sm font-semibold text-workspace-text">
-          {t(`exams.${current.exam}`)} · {t(`types.${current.type}`)}
-        </h2>
+        <h2 className="text-sm font-semibold text-workspace-text">{setTitle(current, t)}</h2>
       </div>
       <TurnList turns={turns} activeKey={activeKey} onSubmit={submit} />
       {sending ? (
