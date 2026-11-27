@@ -126,6 +126,7 @@ export function EtFormBlock({ form, active, prefill, onSubmit, onCancel }: EtFor
           form={form}
           disabled={disabled}
           onSubmit={(answers) => send(buildEtPassageSubmit(form, answers))}
+          cancel={cancelButton}
         />
       ) : form.control === 'objective_set' ? (
         <ObjectiveSetForm
@@ -144,6 +145,7 @@ export function EtFormBlock({ form, active, prefill, onSubmit, onCancel }: EtFor
           disabled={disabled}
           initialDraft={form.kind === 'writing_revision' ? prefill : undefined}
           onSubmit={submit}
+          cancel={cancelButton}
         />
       )}
       {form.followup ? (
@@ -153,7 +155,8 @@ export function EtFormBlock({ form, active, prefill, onSubmit, onCancel }: EtFor
           onSubmit={(text) => send(buildEtFollowupSubmit(form.followup as EtFormFollowup, text))}
         />
       ) : null}
-      {droppable && form.control !== 'objective_set' ? (
+      {/* Inline sets and the modal cards place it beside their own button; the recorder has none. */}
+      {droppable && form.control === 'audio' ? (
         <div className="flex justify-end">{cancelButton}</div>
       ) : null}
       <ConfirmDialog
@@ -377,10 +380,13 @@ function PassageForm({
   form,
   disabled,
   onSubmit,
+  cancel,
 }: {
   form: EtForm;
   disabled: boolean;
   onSubmit: (answers: Record<string, string>) => Promise<boolean>;
+  /** KAZI-1505: Cancel, beside the button that opens the passage. */
+  cancel?: React.ReactNode;
 }) {
   const t = useTranslations('english.form');
   const passage = form.passage as EtPassage;
@@ -398,17 +404,20 @@ function PassageForm({
         </span>
       ) : null}
       <p className="line-clamp-3 text-sm leading-relaxed text-workspace-text">{passage.passage_text}</p>
-      <Button
-        type="button"
-        size="sm"
-        variant="secondary"
-        className="w-full"
-        disabled={disabled}
-        onClick={() => setOpen(true)}
-      >
-        <BookOpen className="mr-1.5 h-4 w-4" aria-hidden />
-        {answered > 0 ? t('passageReopen') : t('passageOpen')}
-      </Button>
+      <div className="flex gap-2">
+        {cancel}
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="flex-1"
+          disabled={disabled}
+          onClick={() => setOpen(true)}
+        >
+          <BookOpen className="mr-1.5 h-4 w-4" aria-hidden />
+          {answered > 0 ? t('passageReopen') : t('passageOpen')}
+        </Button>
+      </div>
       <p className="text-xs text-workspace-muted" data-et-passage-progress>
         {t('objectiveAnswered', { count: answered, total: passage.blanks.length })}
       </p>
@@ -789,11 +798,14 @@ function EssayForm({
   disabled,
   initialDraft,
   onSubmit,
+  cancel,
 }: {
   form: EtForm;
   disabled: boolean;
   initialDraft?: string;
   onSubmit: SubmitFn;
+  /** KAZI-1505: Cancel, beside the button that opens the editor. */
+  cancel?: React.ReactNode;
 }) {
   const t = useTranslations('english.form');
   const [open, setOpen] = useState(false);
@@ -805,17 +817,20 @@ function EssayForm({
       {form.prompt ? (
         <p className="line-clamp-3 whitespace-pre-wrap text-sm text-workspace-text">{form.prompt}</p>
       ) : null}
-      <Button
-        type="button"
-        size="sm"
-        variant="secondary"
-        className="w-full"
-        disabled={disabled}
-        onClick={() => setOpen(true)}
-      >
-        <PenLine className="mr-1.5 h-4 w-4" aria-hidden />
-        {draft.trim() ? t('reopen') : t('open')}
-      </Button>
+      <div className="flex gap-2">
+        {cancel}
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="flex-1"
+          disabled={disabled}
+          onClick={() => setOpen(true)}
+        >
+          <PenLine className="mr-1.5 h-4 w-4" aria-hidden />
+          {draft.trim() ? t('reopen') : t('open')}
+        </Button>
+      </div>
       <EssayDialog
         open={open && !disabled}
         form={form}

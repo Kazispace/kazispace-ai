@@ -317,6 +317,13 @@ describe('EtFormBlock · Cancel (KAZI-1505 · kazispace-ui D46, Reply form 0.4)'
     expect(container.querySelectorAll('[data-et-form-cancel]').length).toBe(1);
   });
 
+  it('a modal card shows Cancel beside the button that opens the editor', () => {
+    render(<EtFormBlock form={WRITING} active onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    const row = cancelButton()?.parentElement;
+    expect(row?.textContent).toContain('open');
+    expect(container.querySelectorAll('[data-et-form-cancel]').length).toBe(1);
+  });
+
   it('every answer kind offers it; other kinds, frozen forms and forms with no handler do not', () => {
     render(<EtFormBlock form={SPEAKING} active onSubmit={vi.fn()} onCancel={vi.fn()} />);
     expect(cancelButton()).not.toBeNull();
