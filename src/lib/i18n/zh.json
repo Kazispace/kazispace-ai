@@ -1537,6 +1537,38 @@
 		"mode": {
 			"chat": "对话",
 			"form": "表单"
+		},
+		"form": {
+			"examsHeading": "考试",
+			"historyHeading": "做过的题集",
+			"inProgress": "进行中",
+			"continue": "继续",
+			"drop": "放弃这一组",
+			"backToList": "回到列表",
+			"locked": "先做完或放弃进行中的这一组，才能开始新的一组。",
+			"noList": "请先在对话里告诉老师你要备考哪个考试。",
+			"startFailed": "没能开始这一组，请重试。",
+			"turnFailed": "老师没有回复，请重试。",
+			"dropFailed": "没能放弃这一组，请重试。",
+			"cambridge": "剑桥英语",
+			"cambridgeNote": "非剑桥官方 · 未获剑桥授权",
+			"exams": {
+				"ielts": "雅思 IELTS",
+				"cet4": "大学英语四级",
+				"cet6": "大学英语六级",
+				"cky": "考研英语",
+				"gaokao": "高考英语",
+				"pet": "B1 Preliminary（PET）",
+				"fce": "B2 First（FCE）",
+				"cae": "C1 Advanced（CAE）"
+			},
+			"types": {
+				"grammar": "语法",
+				"vocabulary": "词汇",
+				"reading": "阅读",
+				"writing": "写作",
+				"speaking": "口语"
+			}
 		}
 	},
 	"messages": {

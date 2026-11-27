@@ -14,6 +14,7 @@ import {
 import { SessionContextHeader } from '@/components/session-nav/session-context-header';
 import { SessionIconRail } from '@/components/session-nav/session-icon-rail';
 import { BottomTabBar } from '@/components/navigation/bottom-tab-bar';
+import { ExamFormPanel } from '@/components/exam/exam-form-panel';
 import { ExamModeSwitch } from '@/components/exam/exam-mode-switch';
 import { useExamMode } from '@/hooks/use-exam-mode';
 import type { ExamMode } from '@/lib/exam-mode';
@@ -528,7 +529,6 @@ function WorkspaceCenterColumn({
   onExamModeChange: (mode: ExamMode) => void;
   children: React.ReactNode;
 }) {
-  const tStudio = useTranslations('studio');
   const portal = useWorkspaceRailPortal();
   const chatSideRailOpen = portal?.chatSideRailOpen ?? false;
   const [portalHasChild, setPortalHasChild] = useState(false);
@@ -589,7 +589,7 @@ function WorkspaceCenterColumn({
             {children}
           </main>
           {examMode === 'form' ? (
-            // Form mode is not built yet (Exam 0.2): coming soon, nothing to tap.
+            // Form mode (KAZI-1493; kazispace-ui Exam 0.7.2): a preset conversation shown as a form.
             <div
               id={examPanelId('form')}
               role="tabpanel"
@@ -597,9 +597,7 @@ function WorkspaceCenterColumn({
               data-testid="exam-form-panel"
               className="min-h-0 flex-1 overflow-y-auto bg-gray-bg px-4 py-6"
             >
-              <p data-testid="exam-form-coming-soon" className="text-sm text-workspace-muted">
-                {tStudio('comingSoon')}
-              </p>
+              <ExamFormPanel locale={locale} />
             </div>
           ) : null}
         </div>
