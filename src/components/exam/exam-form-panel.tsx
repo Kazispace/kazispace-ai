@@ -310,10 +310,12 @@ function TurnList({
   turns,
   activeKey,
   onSubmit,
+  onCancel,
 }: {
   turns: FormTurn[];
   activeKey: string | null;
   onSubmit?: (submit: EtFormSubmit) => Promise<boolean | void>;
+  onCancel?: () => Promise<boolean | void>;
 }) {
   return (
     <div className="space-y-4">
@@ -330,6 +332,7 @@ function TurnList({
                 form={turn.form}
                 active={turn.key === activeKey}
                 onSubmit={turn.key === activeKey ? onSubmit : undefined}
+                onCancel={turn.key === activeKey ? onCancel : undefined}
               />
             </div>
           ) : null}
@@ -412,6 +415,19 @@ function PracticeView({
     return true;
   };
 
+  // Cancel on the answer card (KAZI-1505, D46): the same as Drop this set on the home page.
+  const cancel = async (): Promise<boolean> => {
+    setError(null);
+    const res = await deleteSpace(current.spaceId);
+    if (!res.success) {
+      setError(t('dropFailed'));
+      return false;
+    }
+    clearCurrentSet();
+    onBack();
+    return true;
+  };
+
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4" data-testid="exam-form-practice">
       <div className="flex items-center gap-2">
@@ -426,7 +442,7 @@ function PracticeView({
         </button>
         <h2 className="text-sm font-semibold text-workspace-text">{setTitle(current, t)}</h2>
       </div>
-      <TurnList turns={turns} activeKey={activeKey} onSubmit={submit} />
+      <TurnList turns={turns} activeKey={activeKey} onSubmit={submit} onCancel={cancel} />
       {sending ? (
         <div className="flex justify-center py-4">
           <Loader2 className="h-5 w-5 animate-spin text-workspace-muted" />

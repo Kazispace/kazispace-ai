@@ -9,7 +9,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: () => Object.assign((key: string) => key, { has: () => false }),
 }));
 vi.mock('@/hooks/use-voice-to-chat', () => ({
   useVoiceToChat: () => ({ handleSendAudio: vi.fn(), isTranscribing: false }),
@@ -283,5 +283,48 @@ describe('EtFormBlock · follow-up box (KAZI-1044 follow-up)', () => {
   it('no follow-up entry ⇒ no box', () => {
     render(<EtFormBlock form={REVISION} active onSubmit={vi.fn()} />);
     expect(container.querySelector('[data-et-followup]')).toBeNull();
+  });
+});
+
+describe('EtFormBlock · Cancel (KAZI-1505 · kazispace-ui D46, Reply form 0.4)', () => {
+  // Owen, 2026-11-27, quoted as written: "一个建议： 答题卡末端除了提交键 还需要取消键"
+  const cancelButton = () => container.querySelector('[data-et-form-cancel]');
+
+  it('an active answer form with a handler shows Cancel; it asks first, and only "drop" calls the handler', async () => {
+    const onCancel = vi.fn();
+    render(<EtFormBlock form={WRITING} active onSubmit={vi.fn()} onCancel={onCancel} />);
+    expect(cancelButton()?.textContent).toBe('dropSet');
+    click(cancelButton());
+    expect(document.body.textContent).toContain('dropConfirmTitle');
+    click(buttonByText('dropConfirmNo'));
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain('dropConfirmTitle');
+    click(cancelButton());
+    await act(async () => {
+      buttonByText('dropConfirmYes')!.click();
+    });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('a question set shows Cancel beside its Submit, in the same row', () => {
+    const SET = parseEtForm({ form: {
+      form_id: 'et:objective_set:q1', kind: 'objective_set', presentation: 'inline', control: 'objective_set',
+      title: 'Set', submit_label: 'Submit', items: [{ item_id: 'q1', item_kind: 'mcq', prompt_text: 'p', options: ['a', 'b'] }],
+    } }) as EtForm;
+    render(<EtFormBlock form={SET} active onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    const row = cancelButton()?.parentElement;
+    expect(row?.querySelector('button[type="submit"]')?.textContent).toBe('Submit');
+    expect(container.querySelectorAll('[data-et-form-cancel]').length).toBe(1);
+  });
+
+  it('every answer kind offers it; other kinds, frozen forms and forms with no handler do not', () => {
+    render(<EtFormBlock form={SPEAKING} active onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    expect(cancelButton()).not.toBeNull();
+    render(<EtFormBlock form={EXAM} active onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    expect(cancelButton()).toBeNull();
+    render(<EtFormBlock form={WRITING} active={false} onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    expect(cancelButton()).toBeNull();
+    render(<EtFormBlock form={WRITING} active onSubmit={vi.fn()} />);
+    expect(cancelButton()).toBeNull(); // Chat passes no handler until the server takes et_form_cancel
   });
 });
