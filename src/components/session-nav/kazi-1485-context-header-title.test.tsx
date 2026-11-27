@@ -84,7 +84,7 @@ function englishSpace(name: string): SpaceDetail {
     status: 'active',
     is_system: false,
     is_entry_point: false,
-    last_active_at: '2026-11-27T03:00:00Z',
+    last_active_at: '2026-11-27T12:00:00Z',
     space_state: {},
   } as unknown as SpaceDetail;
 }
@@ -93,7 +93,13 @@ describe('KAZI-1485 chat header title (D41)', () => {
   it('a space with a generated name shows the type name and its day', () => {
     spaceRef.value = englishSpace('ET-44 04:36:41');
     const title = renderTitle('/zh/spaces/sp_1', 'sp_1');
-    expect(title).toBe('雅思备考 · 11月27日');
+    // The header formats in the viewer's zone; format the expected day the same way, so this holds
+    // on any machine (review: the date tests depended on the machine's zone).
+    const day = new Intl.DateTimeFormat('zh', { month: 'short', day: 'numeric' }).format(
+      new Date('2026-11-27T12:00:00Z')
+    );
+    expect(title).toBe(`雅思备考 · ${day}`);
+    expect(title).toMatch(/^雅思备考 · 11月2[678]日$/);
     expect(title).not.toContain('ET-44');
     expect(title).not.toBe('考试');
   });

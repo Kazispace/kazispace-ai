@@ -15,7 +15,7 @@ const space = (id: string, template_id: string, extra: Partial<SpaceSummary> = {
   template_id,
   status: 'active',
   master_session_id: `sess_${id}`,
-  last_active_at: '2026-11-26T00:00:00Z',
+  last_active_at: '2026-11-26T12:00:00Z',
   ...extra,
 });
 const label = (templateId: string) => ({ ielts_prep: '雅思备考', blank_conversation: '空白对话' })[templateId] ?? null;
@@ -62,10 +62,10 @@ describe('readable space names (D39)', () => {
   });
 
   it('a name nobody chose shows as the space type\'s name and the day; a name the user gave is kept', () => {
-    expect(readableSpaceName(space('sp1', 'ielts_prep', { name: 'ET-44 04:36:41' }), label, 'zh')).toBe(
+    expect(readableSpaceName(space('sp1', 'ielts_prep', { name: 'ET-44 04:36:41' }), label, 'zh', 'UTC')).toBe(
       '雅思备考 · 11月26日'
     );
-    expect(readableSpaceName(space('sp2', 'ielts_prep', { name: '我的雅思计划' }), label, 'zh')).toBe('我的雅思计划');
+    expect(readableSpaceName(space('sp2', 'ielts_prep', { name: '我的雅思计划' }), label, 'zh', 'UTC')).toBe('我的雅思计划');
     expect(
       readableSpaceName(
         space('sp3', 'ielts_prep', { name: 'ET-1 01:02:03', template_display_name: 'IELTS', last_active_at: null }),
@@ -73,14 +73,14 @@ describe('readable space names (D39)', () => {
         'en'
       )
     ).toBe('IELTS');
-    expect(readableSpaceName(space('sp4', 'ielts_prep', { name: '' }), label, 'en')).toBe('雅思备考 · Nov 26');
+    expect(readableSpaceName(space('sp4', 'ielts_prep', { name: '' }), label, 'en', 'UTC')).toBe('雅思备考 · Nov 26');
   });
 
   it('the bare type name gets the day, in either language and whatever the viewer\'s label is', () => {
-    expect(readableSpaceName(space('sp5', 'ielts_prep', { name: '雅思备考' }), label, 'zh')).toBe('雅思备考 · 11月26日');
-    expect(readableSpaceName(space('sp6', 'ielts_prep', { name: 'IELTS prep' }), label, 'zh')).toBe('雅思备考 · 11月26日');
+    expect(readableSpaceName(space('sp5', 'ielts_prep', { name: '雅思备考' }), label, 'zh', 'UTC')).toBe('雅思备考 · 11月26日');
+    expect(readableSpaceName(space('sp6', 'ielts_prep', { name: 'IELTS prep' }), label, 'zh', 'UTC')).toBe('雅思备考 · 11月26日');
     expect(
-      readableSpaceName(space('sp7', 'ielts_prep', { name: 'IELTS', template_display_name: 'IELTS' }), undefined, 'en')
+      readableSpaceName(space('sp7', 'ielts_prep', { name: 'IELTS', template_display_name: 'IELTS' }), undefined, 'en', 'UTC')
     ).toBe('IELTS · Nov 26');
   });
 
@@ -92,6 +92,11 @@ describe('readable space names (D39)', () => {
       'active',
       label
     );
-    expect(rows[0]?.displayName).toBe('雅思备考 · 11月26日');
+    // The list formats in the viewer's zone; the expected day is formatted the same way, so this
+    // holds on any machine (kazispace-ai#315 review: the date tests depended on the machine's zone).
+    const day = new Intl.DateTimeFormat('zh', { month: 'short', day: 'numeric' }).format(
+      new Date('2026-11-26T12:00:00Z')
+    );
+    expect(rows[0]?.displayName).toBe(`雅思备考 · ${day}`);
   });
 });

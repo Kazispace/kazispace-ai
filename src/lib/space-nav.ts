@@ -83,12 +83,12 @@ function compareSpaces(a: SpaceSummary, b: SpaceSummary): number {
 export type TemplateLabelFn = (templateId: string) => string | null;
 
 /** A short day in the user's language: "11月26日", "Nov 26". Null when there is no valid date. */
-function shortDay(iso: string | null | undefined, locale: string): string | null {
+function shortDay(iso: string | null | undefined, locale: string, timeZone?: string): string | null {
   if (!iso) return null;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return null;
   try {
-    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(date);
+    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', timeZone }).format(date);
   } catch {
     return null;
   }
@@ -102,7 +102,9 @@ function shortDay(iso: string | null | undefined, locale: string): string | null
 export function readableSpaceName(
   space: SpaceSummary,
   templateLabel?: TemplateLabelFn,
-  locale = 'en'
+  locale = 'en',
+  /** The viewer's zone by default; tests pin it so the day does not depend on the machine. */
+  timeZone?: string
 ): string {
   const localLabel = templateLabel?.(space.template_id);
   if (!isMeaninglessSpaceName(space.name, space.template_id, [localLabel, space.template_display_name])) {
@@ -113,7 +115,7 @@ export function readableSpaceName(
     localLabel ||
     (server && server !== space.template_id ? server : null) ||
     space.template_id;
-  const day = shortDay(space.last_active_at, locale);
+  const day = shortDay(space.last_active_at, locale, timeZone);
   return day ? `${typeName} · ${day}` : typeName;
 }
 
