@@ -7,6 +7,7 @@ import { BookOpen, Loader2, PenLine, X } from 'lucide-react';
 
 import { VoiceRecordButton } from '@/components/chat/voice-record-button';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDialogFocusTrap } from '@/hooks/use-dialog-focus-trap';
 import { useVoiceToChat } from '@/hooks/use-voice-to-chat';
 import { ENGLISH_TUTOR_AGENT_ID } from '@/lib/english-tutor-config';
@@ -39,13 +40,22 @@ export interface EtFormBlockProps {
   prefill?: string;
   /** The shared reply-form handler (KAZI-1145 made it report `false` when nothing was sent; ET ignores it). */
   onSubmit?: (submit: EtFormSubmit) => boolean | void | Promise<boolean | void>;
+  /**
+   * KAZI-1505 (kazispace-ui D46, Reply form 0.4 "Cancel"): drop the set. Given ⇒ an active answer form shows
+   * Cancel at the end of the card; it asks first, then calls this. The caller decides what dropping means
+   * (Form mode deletes the form conversation; Chat waits for the server's `et_form_cancel`).
+   */
+  onCancel?: () => boolean | void | Promise<boolean | void>;
 }
+
+/** Answer forms (Reply form 0.4): the practice itself, so they can be dropped. */
+const DROPPABLE_KINDS = new Set(['objective_set', 'passage', 'writing_draft', 'speaking_answer']);
 
 /**
  * KAZI-1041 · renders `meta.form` (inline radio / inline audio / modal essay).
  * Frozen forms stay visible with whatever the user filled in, but disabled.
  */
-export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProps) {
+export function EtFormBlock({ form, active, prefill, onSubmit, onCancel }: EtFormBlockProps) {
   const t = useTranslations('english.form');
   const interactive = active && Boolean(onSubmit);
   const inFlightRef = useRef(false);
@@ -72,6 +82,32 @@ export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProp
   );
 
   const disabled = !interactive || submitting;
+  const [confirming, setConfirming] = useState(false);
+  const droppable = interactive && Boolean(onCancel) && DROPPABLE_KINDS.has(form.kind);
+  const cancelButton = droppable ? (
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      disabled={disabled}
+      onClick={() => setConfirming(true)}
+      data-et-form-cancel
+    >
+      {t('dropSet')}
+    </Button>
+  ) : null;
+  const drop = async () => {
+    setConfirming(false);
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    setSubmitting(true);
+    try {
+      await onCancel?.();
+    } finally {
+      inFlightRef.current = false;
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -90,12 +126,14 @@ export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProp
           form={form}
           disabled={disabled}
           onSubmit={(answers) => send(buildEtPassageSubmit(form, answers))}
+          cancel={cancelButton}
         />
       ) : form.control === 'objective_set' ? (
         <ObjectiveSetForm
           form={form}
           disabled={disabled}
           onSubmit={(answers) => send(buildEtObjectiveSubmit(form, answers))}
+          cancel={cancelButton}
         />
       ) : form.control === 'radio' ? (
         <RadioForm form={form} disabled={disabled} onSubmit={submit} />
@@ -107,6 +145,7 @@ export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProp
           disabled={disabled}
           initialDraft={form.kind === 'writing_revision' ? prefill : undefined}
           onSubmit={submit}
+          cancel={cancelButton}
         />
       )}
       {form.followup ? (
@@ -116,6 +155,20 @@ export function EtFormBlock({ form, active, prefill, onSubmit }: EtFormBlockProp
           onSubmit={(text) => send(buildEtFollowupSubmit(form.followup as EtFormFollowup, text))}
         />
       ) : null}
+      {/* Inline sets and the modal cards place it beside their own button; the recorder has none. */}
+      {droppable && form.control === 'audio' ? (
+        <div className="flex justify-end">{cancelButton}</div>
+      ) : null}
+      <ConfirmDialog
+        open={confirming}
+        title={t('dropConfirmTitle')}
+        description={t('dropConfirmBody')}
+        confirmLabel={t('dropConfirmYes')}
+        cancelLabel={t('dropConfirmNo')}
+        destructive
+        onConfirm={() => void drop()}
+        onCancel={() => setConfirming(false)}
+      />
       {!active ? <p className="text-[11px] text-workspace-muted">{t('frozen')}</p> : null}
     </div>
   );
@@ -178,10 +231,13 @@ function ObjectiveSetForm({
   form,
   disabled,
   onSubmit,
+  cancel,
 }: {
   form: EtForm;
   disabled: boolean;
   onSubmit: (answers: Record<string, string>) => Promise<boolean>;
+  /** KAZI-1505: Cancel, shown beside Submit in the set's own button row. */
+  cancel?: React.ReactNode;
 }) {
   const t = useTranslations('english.form');
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -216,9 +272,12 @@ function ObjectiveSetForm({
         <span className="text-xs text-workspace-muted" data-et-objective-progress>
           {t('objectiveAnswered', { count: answered, total: items.length })}
         </span>
-        <Button type="submit" size="sm" disabled={disabled || answered === 0}>
-          {form.submit_label}
-        </Button>
+        <div className="flex items-center gap-2">
+          {cancel}
+          <Button type="submit" size="sm" disabled={disabled || answered === 0}>
+            {form.submit_label}
+          </Button>
+        </div>
       </div>
     </form>
   );
@@ -321,10 +380,13 @@ function PassageForm({
   form,
   disabled,
   onSubmit,
+  cancel,
 }: {
   form: EtForm;
   disabled: boolean;
   onSubmit: (answers: Record<string, string>) => Promise<boolean>;
+  /** KAZI-1505: Cancel, beside the button that opens the passage. */
+  cancel?: React.ReactNode;
 }) {
   const t = useTranslations('english.form');
   const passage = form.passage as EtPassage;
@@ -342,17 +404,20 @@ function PassageForm({
         </span>
       ) : null}
       <p className="line-clamp-3 text-sm leading-relaxed text-workspace-text">{passage.passage_text}</p>
-      <Button
-        type="button"
-        size="sm"
-        variant="secondary"
-        className="w-full"
-        disabled={disabled}
-        onClick={() => setOpen(true)}
-      >
-        <BookOpen className="mr-1.5 h-4 w-4" aria-hidden />
-        {answered > 0 ? t('passageReopen') : t('passageOpen')}
-      </Button>
+      <div className="flex gap-2">
+        {cancel}
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="flex-1"
+          disabled={disabled}
+          onClick={() => setOpen(true)}
+        >
+          <BookOpen className="mr-1.5 h-4 w-4" aria-hidden />
+          {answered > 0 ? t('passageReopen') : t('passageOpen')}
+        </Button>
+      </div>
       <p className="text-xs text-workspace-muted" data-et-passage-progress>
         {t('objectiveAnswered', { count: answered, total: passage.blanks.length })}
       </p>
@@ -733,11 +798,14 @@ function EssayForm({
   disabled,
   initialDraft,
   onSubmit,
+  cancel,
 }: {
   form: EtForm;
   disabled: boolean;
   initialDraft?: string;
   onSubmit: SubmitFn;
+  /** KAZI-1505: Cancel, beside the button that opens the editor. */
+  cancel?: React.ReactNode;
 }) {
   const t = useTranslations('english.form');
   const [open, setOpen] = useState(false);
@@ -749,17 +817,20 @@ function EssayForm({
       {form.prompt ? (
         <p className="line-clamp-3 whitespace-pre-wrap text-sm text-workspace-text">{form.prompt}</p>
       ) : null}
-      <Button
-        type="button"
-        size="sm"
-        variant="secondary"
-        className="w-full"
-        disabled={disabled}
-        onClick={() => setOpen(true)}
-      >
-        <PenLine className="mr-1.5 h-4 w-4" aria-hidden />
-        {draft.trim() ? t('reopen') : t('open')}
-      </Button>
+      <div className="flex gap-2">
+        {cancel}
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="flex-1"
+          disabled={disabled}
+          onClick={() => setOpen(true)}
+        >
+          <PenLine className="mr-1.5 h-4 w-4" aria-hidden />
+          {draft.trim() ? t('reopen') : t('open')}
+        </Button>
+      </div>
       <EssayDialog
         open={open && !disabled}
         form={form}

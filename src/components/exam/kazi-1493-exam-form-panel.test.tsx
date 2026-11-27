@@ -47,13 +47,19 @@ vi.mock('@/components/clinic/markdown-content', () => ({
 }));
 // The real block is covered by its own tests; here a button stands in for "the user submitted this form".
 vi.mock('@/components/english/envelope/et-form-block', () => ({
-  EtFormBlock: ({ form, active, onSubmit }: { form: { kind: string }; active: boolean; onSubmit?: (s: unknown) => void }) => (
-    <button
-      type="button"
-      data-testid={`form-${form.kind}`}
-      data-active={active ? '1' : '0'}
-      onClick={() => onSubmit?.({ display: 'answers', meta: { action_type: 'et_form_submit', form_id: 'et:objective_set:x' } })}
-    />
+  EtFormBlock: ({ form, active, onSubmit, onCancel }: {
+    form: { kind: string }; active: boolean; onSubmit?: (s: unknown) => void; onCancel?: () => void;
+  }) => (
+    <>
+      <button
+        type="button"
+        data-testid={`form-${form.kind}`}
+        data-active={active ? '1' : '0'}
+        onClick={() => onSubmit?.({ display: 'answers', meta: { action_type: 'et_form_submit', form_id: 'et:objective_set:x' } })}
+      />
+      {/* The real block asks first; here a tap stands in for "confirmed". */}
+      {onCancel ? <button type="button" data-testid={`cancel-${form.kind}`} onClick={() => onCancel()} /> : null}
+    </>
   ),
 }));
 
@@ -313,5 +319,56 @@ describe('Form mode page', () => {
     await render();
     const rows = Array.from(host!.querySelectorAll('[data-testid="exam-form-history-row"]')).map((r) => r.textContent);
     expect(rows).toEqual(['大学英语四级 · 语法 · 11月27日', '雅思 IELTS · 写作 · 11月26日']);
+  });
+
+  it('Cancel on the answer card drops the set like Drop this set: deleted, back on the list, unlocked (KAZI-1505)', async () => {
+    await render();
+    await act(async () => {
+      q('exam-form-start-cet4-grammar')!.click();
+    });
+    await settle();
+    api.sets = [];
+    await act(async () => {
+      q('cancel-objective_set')!.click();
+    });
+    await settle();
+    await settle();
+    expect(api.deleteSpace).toHaveBeenCalledWith('sp_form1');
+    expect(api.sendSpaceTurn).toHaveBeenCalledTimes(1); // no turn is sent for a cancel
+    expect(readCurrentSet()).toBeNull();
+    expect(q('exam-form-home')).not.toBeNull();
+    expect((q('exam-form-start-cet4-grammar') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('a failed Cancel keeps the set open and says so', async () => {
+    api.deleteSpace.mockResolvedValue({ success: false, error: 'x' });
+    await render();
+    await act(async () => {
+      q('exam-form-start-cet4-grammar')!.click();
+    });
+    await settle();
+    await act(async () => {
+      q('cancel-objective_set')!.click();
+    });
+    await settle();
+    expect(q('exam-form-practice')).not.toBeNull();
+    expect(host!.textContent).toContain('dropFailed');
+    expect(readCurrentSet()).toMatchObject({ spaceId: 'sp_form1' });
+  });
+
+  it('once the set is marked there is nothing to cancel', async () => {
+    api.sendSpaceTurn
+      .mockResolvedValueOnce(turnResponse('objective_set'))
+      .mockResolvedValueOnce(turnResponse(null, '4 / 5 correct'));
+    await render();
+    await act(async () => {
+      q('exam-form-start-cet4-grammar')!.click();
+    });
+    await settle();
+    await act(async () => {
+      q('form-objective_set')!.click();
+    });
+    await settle();
+    expect(q('cancel-objective_set')).toBeNull();
   });
 });
