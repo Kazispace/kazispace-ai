@@ -104,10 +104,13 @@ export function readableSpaceName(
   templateLabel?: TemplateLabelFn,
   locale = 'en'
 ): string {
-  if (!isMeaninglessSpaceName(space.name, space.template_id)) return space.name;
+  const localLabel = templateLabel?.(space.template_id);
+  if (!isMeaninglessSpaceName(space.name, space.template_id, [localLabel, space.template_display_name])) {
+    return space.name;
+  }
   const server = space.template_display_name?.trim();
   const typeName =
-    templateLabel?.(space.template_id) ||
+    localLabel ||
     (server && server !== space.template_id ? server : null) ||
     space.template_id;
   const day = shortDay(space.last_active_at, locale);

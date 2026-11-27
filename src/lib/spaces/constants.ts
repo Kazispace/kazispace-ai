@@ -32,10 +32,32 @@ export function isArchivedSpaceTemplate(templateId: string | null | undefined): 
  */
 const GENERATED_SPACE_NAME = /^[A-Za-z][A-Za-z0-9]*-\d+\s+\d{1,2}:\d{2}(:\d{2})?$/;
 
-export function isMeaninglessSpaceName(name: string | null | undefined, templateId: string): boolean {
+/**
+ * The server's own display names for each template (backend `spaces/templates_seed.py`). Before
+ * KAZI-1492 an unnamed space was named the bare type name, e.g. 「雅思备考」, in the creator's language,
+ * which is not always the viewer's (kazispace-backend#1517 review 🟡2).
+ */
+export const SEED_TEMPLATE_DISPLAY_NAMES: Record<string, readonly string[]> = {
+  blank_conversation: ['空白对话', 'Blank chat'],
+  job_sprint: ['求职冲刺', 'Job sprint'],
+  ielts_prep: ['雅思备考', 'IELTS prep'],
+};
+
+/**
+ * A name nobody chose (kazispace-ui D39): empty, the template id, the template's bare type name
+ * (`bareNames`, plus the server's seed names), or a code-and-time label. Same rule as the backend's
+ * `is_meaningless_space_name`.
+ */
+export function isMeaninglessSpaceName(
+  name: string | null | undefined,
+  templateId: string,
+  bareNames: readonly (string | null | undefined)[] = []
+): boolean {
   const trimmed = (name ?? '').trim();
   if (!trimmed) return true;
   if (trimmed === templateId) return true;
+  const bare = [...bareNames, ...(SEED_TEMPLATE_DISPLAY_NAMES[templateId] ?? [])];
+  if (bare.some((b) => (b ?? '').trim() === trimmed)) return true;
   return GENERATED_SPACE_NAME.test(trimmed);
 }
 

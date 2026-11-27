@@ -1,7 +1,7 @@
 /**
  * KAZI-1485 (Owen 2026-11-27, kazispace-ui D39): "简历求职类会Archive。 未来暂时不支持。 聚焦在英语学习。"
  * and "没有意义的space名字 需要换成可读的。" CV / job-search spaces count as archived; a name nobody
- * chose shows as the space type's own name, and a name the user gave is kept.
+ * chose (the bare type name included) shows as the space type's name and a day; a name the user gave is kept.
  */
 import { describe, expect, it } from 'vitest';
 
@@ -51,7 +51,10 @@ describe('readable space names (D39)', () => {
     ['ET-5 9:05', true],
     ['', true],
     ['ielts_prep', true],
-    ['雅思备考', false],
+    // The bare type name was the default name before KAZI-1492 (kazispace-backend#1517 review 🟡2).
+    ['雅思备考', true],
+    ['IELTS prep', true],
+    ['雅思备考 · 11月26日', false],
     ['My IELTS plan', false],
     ['ET-44 notes', false],
   ])('%j is meaningless: %s', (name, expected) => {
@@ -71,6 +74,14 @@ describe('readable space names (D39)', () => {
       )
     ).toBe('IELTS');
     expect(readableSpaceName(space('sp4', 'ielts_prep', { name: '' }), label, 'en')).toBe('雅思备考 · Nov 26');
+  });
+
+  it('the bare type name gets the day, in either language and whatever the viewer\'s label is', () => {
+    expect(readableSpaceName(space('sp5', 'ielts_prep', { name: '雅思备考' }), label, 'zh')).toBe('雅思备考 · 11月26日');
+    expect(readableSpaceName(space('sp6', 'ielts_prep', { name: 'IELTS prep' }), label, 'zh')).toBe('雅思备考 · 11月26日');
+    expect(
+      readableSpaceName(space('sp7', 'ielts_prep', { name: 'IELTS', template_display_name: 'IELTS' }), undefined, 'en')
+    ).toBe('IELTS · Nov 26');
   });
 
   it('the list rows use the readable name', () => {
