@@ -1413,6 +1413,7 @@
 			"dropConfirmBody": "Your answers on this set will not be saved or graded.",
 			"dropConfirmYes": "Drop this set",
 			"dropConfirmNo": "Keep answering",
+			"dropSent": "Dropped this set",
 			"close": "Close",
 			"record": "Record answer",
 			"stop": "Stop and submit",

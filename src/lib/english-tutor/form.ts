@@ -416,6 +416,18 @@ export interface EtFormSubmit {
 }
 
 /**
+ * KAZI-1505 (kazispace-ui D46 · Reply form 0.4.1 "Cancel"; ET SSOT §5.3.6.11): Chat's Cancel on an answer card.
+ * The same form's `form_id` with `action_type = et_form_cancel` and no payload; the tutor closes that set without
+ * grading it, answers with one fixed line (`meta.event = et_form_cancelled`), and the turn is charged like any message
+ * (Owen 2026-11-27: "Decision waiting on me : 1. Yes, cost LLM credit.").
+ */
+export const ET_FORM_CANCEL_ACTION = 'et_form_cancel';
+
+export function buildEtFormCancel(form: EtForm, display: string): EtFormSubmit {
+  return { display, meta: { action_type: ET_FORM_CANCEL_ACTION, form_id: form.form_id } };
+}
+
+/**
  * Build the chat send for a form answer (SSOT §5.3.6.3).
  * - radio: `content` = option label, `action_payload` = option id
  *   (backend swaps the routed text for it ⇒ parsers see `ielts`, not the label).
