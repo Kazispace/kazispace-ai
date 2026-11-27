@@ -3,15 +3,19 @@
 import { useEffect, useState } from 'react';
 
 import { listSpaceTemplates } from '@/lib/spaces-api';
-import { MVP_SPACE_TEMPLATE_IDS } from '@/lib/spaces/constants';
+import { MVP_SPACE_TEMPLATE_IDS, isArchivedSpaceTemplate } from '@/lib/spaces/constants';
 import type { SpaceTemplateItem } from '@/types/spaces';
 
+/** D39: an archived template (CV / job search) is never offered for a new space. */
+const offered = (items: SpaceTemplateItem[]) =>
+  items.filter((item) => !isArchivedSpaceTemplate(item.template_id));
+
 function fallbackMvpTemplates(): SpaceTemplateItem[] {
-  return MVP_SPACE_TEMPLATE_IDS.map((template_id) => ({
+  return offered(MVP_SPACE_TEMPLATE_IDS.map((template_id) => ({
     template_id,
     display_name: template_id,
     mvp: true,
-  }));
+  })));
 }
 
 export function useSpaceTemplates(open: boolean) {
@@ -32,8 +36,8 @@ export function useSpaceTemplates(open: boolean) {
       setIsLoading(false);
 
       if (res.success && res.data?.templates?.length) {
-        setTemplates(res.data.templates);
-        setComingSoon(res.data.coming_soon ?? []);
+        setTemplates(offered(res.data.templates));
+        setComingSoon(offered(res.data.coming_soon ?? []));
         setUsedFallback(false);
         return;
       }

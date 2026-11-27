@@ -1,4 +1,9 @@
-import { CLINIC_SPACE_ID, TEMPLATE_EMOJI } from '@/lib/spaces/constants';
+import {
+  CLINIC_SPACE_ID,
+  TEMPLATE_EMOJI,
+  isArchivedSpaceTemplate,
+  isMeaninglessSpaceName,
+} from '@/lib/spaces/constants';
 import { isClinicHubPathname } from '@/lib/hub-entry';
 import type { SessionNavBadgeKind, SessionNavRow } from '@/lib/session-nav';
 import type { SpaceSummary } from '@/types/spaces';
@@ -74,10 +79,46 @@ function compareSpaces(a: SpaceSummary, b: SpaceSummary): number {
   return bTime.localeCompare(aTime);
 }
 
+/** The space type's readable name for a template id, or null when there is none locally. */
+export type TemplateLabelFn = (templateId: string) => string | null;
+
+/** A short day in the user's language: "11月26日", "Nov 26". Null when there is no valid date. */
+function shortDay(iso: string | null | undefined, locale: string): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  try {
+    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(date);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The name the list shows (kazispace-ui D39): the space's own name when the user gave it one;
+ * for a name nobody chose (`isMeaninglessSpaceName`), the space type's readable name and the day
+ * it was last active ("雅思备考 · 11月26日"), so several spaces of one type can be told apart.
+ */
+export function readableSpaceName(
+  space: SpaceSummary,
+  templateLabel?: TemplateLabelFn,
+  locale = 'en'
+): string {
+  if (!isMeaninglessSpaceName(space.name, space.template_id)) return space.name;
+  const server = space.template_display_name?.trim();
+  const typeName =
+    templateLabel?.(space.template_id) ||
+    (server && server !== space.template_id ? server : null) ||
+    space.template_id;
+  const day = shortDay(space.last_active_at, locale);
+  return day ? `${typeName} · ${day}` : typeName;
+}
+
 export function spaceSummaryToNavRow(
   space: SpaceSummary,
   locale: string,
-  clinicLabel: string
+  clinicLabel: string,
+  templateLabel?: TemplateLabelFn
 ): SessionNavRow {
   const isClinic = space.is_entry_point || space.id === CLINIC_SPACE_ID;
   const badge = spaceStatusBadge(space.status);
@@ -86,7 +127,7 @@ export function spaceSummaryToNavRow(
     id: space.id,
     agentId: null,
     emoji: space.template_icon ?? templateEmoji(space.template_id),
-    displayName: isClinic ? clinicLabel : space.name,
+    displayName: isClinic ? clinicLabel : readableSpaceName(space, templateLabel, locale),
     href: getSpaceHref(locale, space.id),
     // Navigation is href-only (navigateToSessionNavTarget). `surface` stays `clinic`
     // because AgentSurfaceId has no `space` variant yet — legacy field, not routing SSOT.
@@ -116,16 +157,20 @@ export function buildSpaceNavRowsFiltered(
   spaces: SpaceSummary[],
   locale: string,
   clinicLabel: string,
-  filter: SpaceNavFilter = 'active'
+  filter: SpaceNavFilter = 'active',
+  templateLabel?: TemplateLabelFn
 ): SessionNavRow[] {
   const filtered = spaces.filter((s) => {
     if (s.is_entry_point || s.id === CLINIC_SPACE_ID) return true;
-    if (filter === 'archived') return s.status === 'archived' || s.status === 'deleted';
-    return s.status === 'active' || s.status === 'completed';
+    // D39: a space of an archived template (CV / job search) counts as archived.
+    const archived =
+      s.status === 'archived' || s.status === 'deleted' || isArchivedSpaceTemplate(s.template_id);
+    if (filter === 'archived') return archived;
+    return !archived && (s.status === 'active' || s.status === 'completed');
   });
   return filtered
     .sort(compareSpaces)
-    .map((space) => spaceSummaryToNavRow(space, locale, clinicLabel));
+    .map((space) => spaceSummaryToNavRow(space, locale, clinicLabel, templateLabel));
 }
 
 export function filterSpaceNavRows(
