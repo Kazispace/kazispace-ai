@@ -148,9 +148,9 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
   }
 
   const back = saveId ? (
-    <BackLink href={radioStoryHref(locale, saveId, from ?? 'home')} label={t('player.title')} />
+    <BackLink tone="radio" href={radioStoryHref(locale, saveId, from ?? 'home')} label={t('player.title')} />
   ) : (
-    <BackLink href={radioHomeHref(locale)} label={tStudio('sections.radio')} />
+    <BackLink tone="radio" href={radioHomeHref(locale)} label={tStudio('sections.radio')} />
   );
 
   // The radio's status could not be read (network or server error): say so with a retry, as the radio
@@ -159,11 +159,11 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
     return (
       <PlayerShell back={back} title={t('settings.title')}>
         <div data-testid="radio-settings-error" className="flex flex-col items-start gap-2 py-6">
-          <p className="text-sm text-workspace-secondary">{t('offline')}</p>
+          <p className="text-sm text-radio-secondary">{t('offline')}</p>
           <button
             type="button"
             onClick={() => void refresh()}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50"
+            className="rounded-lg border border-radio-surface-raised px-3 py-1.5 text-sm hover:bg-radio-surface-raised"
           >
             {tStates('retry')}
           </button>
@@ -177,7 +177,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
       <PlayerShell back={back} title={t('settings.title')}>
         <div aria-busy="true" className="flex flex-col gap-3" data-testid="radio-settings-loading">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />
+            <div key={i} className="h-12 animate-pulse rounded-lg bg-radio-surface-raised" />
           ))}
         </div>
       </PlayerShell>
@@ -360,7 +360,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
           <Group title={t('settings.bgm')}>
             <Switch id="radio-bgm" label={t('settings.bgm')} checked={bgmOn} onChange={onBgm} />
             {bgmOn ? (
-              <label className="mt-3 flex items-center gap-3 text-sm text-workspace-secondary">
+              <label className="mt-3 flex items-center gap-3 text-sm text-radio-secondary">
                 <span className="shrink-0">{t('settings.bgmLevel')}</span>
                 <input
                   type="range"
@@ -383,20 +383,20 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
         <Group title={t('settings.listenWindow')}>
           <Switch id="radio-listen" label={t('settings.listenWindow')} checked={listenOn} onChange={(on) => void onListen(on)} />
           {micBlocked ? (
-            <div className="mt-3 rounded-lg bg-gray-50 p-3 text-sm" data-testid="radio-blocked-help" role="note">
-              <p className="font-medium text-workspace-text">{t('mic.blockedHelp.title')}</p>
-              <p className="mt-1 text-workspace-secondary">{t('mic.blockedHelp.body')}</p>
-              <p className="mt-2 text-workspace-text">{t(`mic.blockedHelp.${platform}`)}</p>
+            <div className="mt-3 rounded-lg bg-radio-surface-raised p-3 text-sm" data-testid="radio-blocked-help" role="note">
+              <p className="font-medium text-radio-text">{t('mic.blockedHelp.title')}</p>
+              <p className="mt-1 text-radio-secondary">{t('mic.blockedHelp.body')}</p>
+              <p className="mt-2 text-radio-text">{t(`mic.blockedHelp.${platform}`)}</p>
             </div>
           ) : null}
         </Group>
 
-        <div className="border-t border-gray-100 pt-4">
+        <div className="border-t border-radio-surface-raised pt-4">
           <button
             type="button"
             onClick={() => setConfirming(true)}
             data-testid="radio-clear-memory"
-            className="text-sm font-medium text-red-600 hover:underline"
+            className="text-sm font-medium text-radio-recording-ring hover:underline"
           >
             {t('settings.clearMemory')}
           </button>
@@ -410,10 +410,10 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
             aria-modal="true"
             aria-describedby="radio-clear-text"
             data-testid="radio-clear-dialog"
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+            className="w-full max-w-sm rounded-2xl bg-radio-surface p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <p id="radio-clear-text" className="text-sm text-workspace-text">
+            <p id="radio-clear-text" className="text-sm text-radio-text">
               {t('settings.clearMemoryConfirm')}
             </p>
             <div className="mt-4 flex gap-2">
@@ -421,7 +421,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
                 type="button"
                 disabled={clearing}
                 onClick={() => setConfirming(false)}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:opacity-50"
+                className="flex-1 rounded-lg border border-radio-surface-raised px-3 py-2 text-sm disabled:opacity-50"
               >
                 {t('cancel')}
               </button>
@@ -430,7 +430,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
                 disabled={clearing}
                 onClick={() => void onClear()}
                 data-testid="radio-clear-confirm"
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 disabled:opacity-70"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-radio-recording-ring px-3 py-2 text-sm font-medium text-radio-recording-ring disabled:opacity-70"
               >
                 {clearing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                 {t('settings.clearMemoryAction')}
@@ -446,7 +446,7 @@ export function RadioSettingsScreen({ locale, saveId, from }: { locale: string; 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="mb-2 text-sm font-semibold text-workspace-text">{title}</h2>
+      <h2 className="mb-2 text-sm font-semibold text-radio-text">{title}</h2>
       {children}
     </section>
   );
@@ -513,7 +513,7 @@ function VoiceSamples({
           onClick={() => play(s)}
           aria-pressed={playing === s.voice_id}
           data-voice={s.voice_id}
-          className="inline-flex min-h-11 items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-xs text-workspace-secondary hover:border-primary"
+          className="inline-flex min-h-11 items-center gap-1 rounded-full border border-radio-surface-raised px-3 py-1 text-xs text-radio-secondary hover:border-radio-ring"
         >
           {playing === s.voice_id ? <Square className="h-3 w-3" aria-hidden /> : <Play className="h-3 w-3" aria-hidden />}
           {playLabel} · {labelOf(s.voice_id)}
@@ -547,7 +547,7 @@ function Choices({
           data-value={o.value}
           className={cn(
             'rounded-lg border px-3 py-2 text-left text-sm',
-            o.value === value ? 'border-primary bg-primary/5 text-workspace-text' : 'border-gray-200 text-workspace-secondary hover:border-gray-300'
+            o.value === value ? 'border-radio-ring bg-radio-surface-raised text-radio-text' : 'border-radio-surface-raised text-radio-secondary hover:border-radio-ring'
           )}
         >
           {o.label}
@@ -570,7 +570,7 @@ function Segmented({
   onChange: (v: string) => void;
 }) {
   return (
-    <div role="radiogroup" className="inline-flex rounded-lg border border-gray-200 p-0.5" data-testid={`radio-settings-${name}`}>
+    <div role="radiogroup" className="inline-flex rounded-lg border border-radio-surface-raised p-0.5" data-testid={`radio-settings-${name}`}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -579,7 +579,7 @@ function Segmented({
           aria-checked={o.value === value}
           onClick={() => onChange(o.value)}
           data-value={o.value}
-          className={cn('min-w-16 rounded-md px-3 py-1.5 text-sm', o.value === value ? 'bg-primary text-white' : 'text-workspace-secondary')}
+          className={cn('min-w-16 rounded-md px-3 py-1.5 text-sm', o.value === value ? 'bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring text-white' : 'text-radio-secondary')}
         >
           {o.label}
         </button>
@@ -598,9 +598,9 @@ function Switch({ id, label, checked, onChange }: { id: string; label: string; c
       aria-label={label}
       onClick={() => onChange(!checked)}
       data-testid={id}
-      className={cn('relative inline-flex h-7 w-12 items-center rounded-full transition-colors', checked ? 'bg-primary' : 'bg-gray-300')}
+      className={cn('relative inline-flex h-7 w-12 items-center rounded-full transition-colors', checked ? 'bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring' : 'bg-radio-surface-raised')}
     >
-      <span className={cn('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', checked ? 'translate-x-6' : 'translate-x-1')} />
+      <span className={cn('inline-block h-5 w-5 rounded-full bg-radio-surface shadow transition-transform', checked ? 'translate-x-6' : 'translate-x-1')} />
     </button>
   );
 }

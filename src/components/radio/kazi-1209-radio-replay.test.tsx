@@ -112,6 +112,8 @@ const profile = { band: 'B1', en_ratio: 0.4, voice_id: 'en_gb_f1', source: 'over
 const HOME: RadioHome = {
   continue_listening: [
     { save_id: 'sv1', story_id: 'st1', title: '雨夜来客', status: 'active', current_node_id: 'n1', save_version: 3, updated_at: '2026-11-03T10:00:00Z', choices_made: 1 },
+    // KAZI-1512: the most recent story in progress goes to the resume bar; this one keeps sv1 under Continue listening.
+    { save_id: 'sv8', story_id: 'st9', title: 'Another story', status: 'active', current_node_id: 'n1', save_version: 1, updated_at: '2026-11-04T10:00:00Z', choices_made: 0 },
   ],
   stories: [
     { story_id: 'st1', slug: 's1', title: '雨夜来客', tags: [], base_cefr: 'B1', recommended: true },
@@ -553,7 +555,7 @@ describe('the fields the screens were missing (personal-radio.md 0.13 / 0.14)', 
   it('the continue card shows its progress; a program row shows length and level only when it has them', async () => {
     m.homeState = {
       ...HOME,
-      continue_listening: [{ ...HOME.continue_listening[0], choices_made: 2 }],
+      continue_listening: [{ ...HOME.continue_listening[0], choices_made: 2 }, HOME.continue_listening[1]],
       programs: [
         { program_id: 'p1', kind: 'column', title: 'With a version', band: 'B2', duration_ms: 125_000 },
         { program_id: 'p2', kind: 'column', title: 'No version here', band: null, duration_ms: null },

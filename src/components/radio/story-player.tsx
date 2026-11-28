@@ -48,6 +48,7 @@ import {
 import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
 import { isTelegramWebApp } from '@/lib/telegram';
+import { radioChoiceNumber } from '@/lib/radio/format';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types';
 import type {
@@ -601,7 +602,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
 
   // The header shows the story's name (Player · Layout). A story just started may not be in the
   // cached radio home yet: read it again once.
-  const storyTitle = home?.continue_listening?.find((x) => x.save_id === saveId)?.title ?? null;
+  const savedStory = home?.continue_listening?.find((x) => x.save_id === saveId) ?? null;
+  const storyTitle = savedStory?.title ?? null;
   const askedHomeAgain = useRef(false);
   useEffect(() => {
     if (home && !storyTitle && !askedHomeAgain.current) {
@@ -609,6 +611,16 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       void refreshHome();
     }
   }, [home, storyTitle, refreshHome]);
+  // Player · Now playing (Personal radio 0.35): "the choice the listener is heading to" comes from the save
+  // (`choices_made + 1`); the turn answer does not carry it, so the home is read again when the story moves to a
+  // new part (#321 review R1 small 3), and the line follows the listener instead of going stale.
+  const nodeId = resp?.node?.node_id ?? null;
+  const lastNodeForProgress = useRef<string | null>(null);
+  useEffect(() => {
+    if (!nodeId) return;
+    if (lastNodeForProgress.current !== null && lastNodeForProgress.current !== nodeId) void refreshHome();
+    lastNodeForProgress.current = nodeId;
+  }, [nodeId, refreshHome]);
 
   const atChoicePoint = () => respRef.current?.node?.node_type === 'choice' && playerRef.current.done;
   const readChoicesAgain = useCallback(() => playerRef.current.playFrom(segLen), [segLen]);
@@ -963,9 +975,9 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
 
   const back =
     from === 'studio' ? (
-      <BackLink href={studioHref} label={tNav('studio')} />
+      <BackLink tone="radio" href={studioHref} label={tNav('studio')} />
     ) : (
-      <BackLink href={radioHomeHref(locale)} label={tStudio('sections.radio')} />
+      <BackLink tone="radio" href={radioHomeHref(locale)} label={tStudio('sections.radio')} />
     );
 
   if (load.state === 'loading') {
@@ -973,7 +985,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       <PlayerShell back={back} title="" aigcLabel={aigcLabel}>
         <div aria-busy="true" className="flex flex-col gap-2">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-10 animate-pulse rounded-lg bg-gray-100" />
+            <div key={i} className="h-10 animate-pulse rounded-lg bg-radio-surface-raised" />
           ))}
         </div>
       </PlayerShell>
@@ -983,13 +995,13 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
     return (
       <PlayerShell back={back} title="" aigcLabel={aigcLabel}>
         <div data-testid="radio-story-missing" className="flex flex-col items-start gap-3 py-6">
-          <p className="text-sm text-workspace-secondary">{load.state === 'error' ? t('offline') : t('contentMissing')}</p>
+          <p className="text-sm text-radio-secondary">{load.state === 'error' ? t('offline') : t('contentMissing')}</p>
           {load.state === 'error' ? (
-            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm">
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-radio-surface-raised px-3 py-1.5 text-sm">
               {tStates('retry')}
             </button>
           ) : (
-            <Link href={radioHomeHref(locale)} className="text-sm text-primary underline">
+            <Link href={radioHomeHref(locale)} className="text-sm text-radio-progress underline">
               {t('summary.home')}
             </Link>
           )}
@@ -1013,11 +1025,11 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       onPointerDownCapture={() => (tappedHere.current = true)}
       onKeyDownCapture={() => (tappedHere.current = true)}
     >
-      <ListeningIndicator on={micOn} />
       <PlayerShell
         back={back}
         aigcLabel={aigcLabel}
         title={storyTitle ?? t('player.title')}
+        nowPlaying={{ kind: 'story', detail: savedStory ? t('studio.progress', { n: radioChoiceNumber(savedStory.choices_made) }) : null }}
         action={
           <div className="relative">
             <button
@@ -1027,12 +1039,12 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
               aria-haspopup="menu"
               aria-expanded={moreOpen}
               data-testid="radio-player-more"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full text-radio-secondary hover:bg-radio-surface-raised"
             >
               <MoreHorizontal className="h-5 w-5" aria-hidden />
             </button>
             {moreOpen ? (
-              <div role="menu" className="absolute right-0 z-20 mt-1 w-40 rounded-xl border border-gray-200 bg-white py-1 shadow-lg" data-testid="radio-player-menu">
+              <div role="menu" className="absolute right-0 z-20 mt-1 w-40 rounded-xl border border-radio-surface-raised bg-radio-surface py-1 shadow-lg" data-testid="radio-player-menu">
                 <Link
                   role="menuitem"
                   href={radioSettingsHref(locale, { saveId, from })}
@@ -1041,7 +1053,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
                     if (node) rememberPlace(saveId, node.node_id, Math.min(player.index, Math.max(0, segLen - 1)));
                   }}
                   data-testid="radio-player-settings"
-                  className="block px-4 py-2 text-sm text-workspace-text hover:bg-gray-50"
+                  className="block px-4 py-2 text-sm text-radio-text hover:bg-radio-surface-raised"
                 >
                   {t('settings.title')}
                 </Link>
@@ -1054,7 +1066,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
                     void sendTurn({ kind: 'command', command: 'save' });
                   }}
                   data-testid="radio-player-save"
-                  className="block w-full px-4 py-2 text-left text-sm text-workspace-text hover:bg-gray-50 disabled:opacity-50"
+                  className="block w-full px-4 py-2 text-left text-sm text-radio-text hover:bg-radio-surface-raised disabled:opacity-50"
                 >
                   {t('player.save')}
                 </button>
@@ -1064,6 +1076,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
         }
         footer={
           <div className="flex flex-col items-center gap-3">
+            {/* Listening indicator: a pill just above the microphone (Personal radio 0.35). */}
+            <ListeningIndicator on={micOn} />
             {!ended ? (
               <MicButton
                 state={micButtonState({ mic: mic.state, inFlight, unavailable: micUnavailable !== null })}
@@ -1099,12 +1113,12 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
           </div>
         }
       >
-        {allSilent ? <p className="mb-3 text-xs text-workspace-secondary" data-testid="radio-tts-failed">{t('tts.failed')}</p> : null}
+        {allSilent ? <p className="mb-3 text-xs text-radio-secondary" data-testid="radio-tts-failed">{t('tts.failed')}</p> : null}
         {paused ? (
-          <div role="status" data-testid="radio-paused" className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-gray-100 p-3 text-sm">
+          <div role="status" data-testid="radio-paused" className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-radio-surface-raised p-3 text-sm">
             <span>{t('notice.paused')}</span>
             {!care ? (
-              <button type="button" onClick={onContinue} className="rounded-lg bg-primary px-3 py-1.5 text-white" data-testid="radio-continue">
+              <button type="button" onClick={onContinue} className="rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-3 py-1.5 text-white" data-testid="radio-continue">
                 {t('player.continue')}
               </button>
             ) : null}
@@ -1141,30 +1155,31 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
                 data-testid="radio-choice"
                 data-reading={i === readingChoice ? 'true' : undefined}
                 className={cn(
-                  'flex min-h-14 items-center gap-3 rounded-xl border bg-white px-4 py-3 text-left hover:border-primary disabled:opacity-60',
-                  i === readingChoice ? 'border-primary bg-primary/5' : 'border-gray-200'
+                  // Look · Choice cards: the card being read aloud is raised with a 2px accent ring.
+                  'flex min-h-14 items-center gap-3 rounded-xl border-2 px-4 py-3 text-left hover:border-radio-ring disabled:opacity-60',
+                  i === readingChoice ? 'border-radio-ring bg-radio-surface-raised' : 'border-transparent bg-radio-surface'
                 )}
               >
-                <span className="text-2xl font-bold text-primary">{c.key}</span>
-                <span className="text-sm text-workspace-text">{c.label}</span>
+                <span className="text-2xl font-bold text-radio-text">{c.key}</span>
+                <span className="text-sm text-radio-text">{c.label}</span>
               </button>
             ))}
           </div>
         ) : null}
 
         {inFlight ? (
-          <p className="mt-3 flex items-center gap-2 text-xs text-workspace-muted" aria-live="polite">
+          <p className="mt-3 flex items-center gap-2 text-xs text-radio-muted" aria-live="polite">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           </p>
         ) : null}
 
         {failedTurn ? (
           <div className="mt-3 flex items-center gap-3 text-sm" data-testid="radio-turn-failed">
-            <span className="text-red-700">{tStates('notSent')}</span>
+            <span className="text-radio-recording-ring">{tStates('notSent')}</span>
             <button
               type="button"
               onClick={() => void runTurn(failedTurn.post, failedTurn.spoken, { turnId: failedTurn.turnId, version: failedTurn.version })}
-              className="rounded-lg border border-gray-300 px-3 py-1.5"
+              className="rounded-lg border border-radio-surface-raised px-3 py-1.5"
             >
               {tStates('retry')}
             </button>

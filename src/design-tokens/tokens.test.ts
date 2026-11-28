@@ -34,6 +34,23 @@ const MAPPED: Record<string, string> = {
   'workspace.active': 'color.bg.selected',
   'workspace.input': 'color.bg.surface',
   'workspace.accent': 'color.action.primary',
+  // KAZI-1512 (kazispace-ui D48, tokens 0.4): Radio's own dark look.
+  'radio.bg-top': 'color.radio.bg-top',
+  'radio.bg-bottom': 'color.radio.bg-bottom',
+  'radio.surface': 'color.radio.surface',
+  'radio.surface-raised': 'color.radio.surface-raised',
+  'radio.bar': 'color.radio.bar',
+  'radio.text': 'color.radio.text-primary',
+  'radio.secondary': 'color.radio.text-secondary',
+  'radio.muted': 'color.radio.text-muted',
+  'radio.accent-start': 'color.radio.accent-start',
+  'radio.accent-end': 'color.radio.accent-end',
+  'radio.on-accent': 'color.radio.on-accent',
+  'radio.ring': 'color.radio.accent-ring',
+  'radio.progress': 'color.radio.progress-fill',
+  'radio.recording': 'color.radio.recording',
+  'radio.recording-ring': 'color.radio.recording-ring',
+  'radio.now': 'color.radio.now-playing',
 };
 
 const colors = (config.theme?.extend?.colors ?? {}) as Record<string, unknown>;
@@ -51,7 +68,7 @@ describe('design tokens → Tailwind colours', () => {
 
 // The JSON is a verbatim copy from kazispace-ui. If it is edited by hand (or
 // re-copied without updating README.md), this hash no longer matches.
-const SOURCE_SHA256 = 'e0d768a39eae4fc4dbc8d666bbe0273f4f2e84950420cb2a12cd364d44462595';
+const SOURCE_SHA256 = '7f6f559d5245337736a8adfee684cedefdf9a7f601861bc07ad438ec62ee3fb6';
 
 describe('design tokens copy', () => {
   it('is the verbatim kazispace-ui file recorded in README.md', () => {

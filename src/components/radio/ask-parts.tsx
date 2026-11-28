@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { Info } from 'lucide-react';
 
 import type { PlayableSentence } from '@/hooks/use-sentence-player';
 import type { RadioNotice } from '@/types/radio';
@@ -25,8 +26,8 @@ export function AnswerCaptions({ sentences, activeIndex }: { sentences: Playable
         <li
           key={`${s.seq}-${i}`}
           className={cn(
-            'rounded-lg border-l-4 border-primary/40 px-3 py-2 text-base leading-relaxed',
-            i === activeIndex ? 'bg-primary/10 text-workspace-text' : 'text-workspace-secondary'
+            'rounded-lg border-l-4 border-radio-ring px-3 py-2 text-base leading-relaxed',
+            i === activeIndex ? 'bg-radio-surface-raised text-radio-text' : 'text-radio-secondary'
           )}
         >
           {s.text}
@@ -43,13 +44,13 @@ export function AnswerCaptions({ sentences, activeIndex }: { sentences: Playable
 export function CareCard({ notice, onKeepListening, onClose }: { notice: RadioNotice; onKeepListening: () => void; onClose: () => void }) {
   const t = useTranslations('radio.notice');
   return (
-    <div role="alertdialog" aria-live="assertive" data-testid="radio-care" className="mt-4 rounded-xl border border-gray-300 bg-white p-4 text-sm text-workspace-text shadow-sm">
+    <div role="alertdialog" aria-live="assertive" data-testid="radio-care" className="mt-4 rounded-xl border border-radio-surface-raised bg-radio-surface p-4 text-sm text-radio-text shadow-sm">
       <p className="whitespace-pre-line">{notice.text}</p>
       <div className="mt-3 flex gap-2">
-        <button type="button" onClick={onKeepListening} className="flex-1 rounded-lg border border-gray-300 px-3 py-2">
+        <button type="button" onClick={onKeepListening} className="flex-1 rounded-lg border border-radio-surface-raised px-3 py-2">
           {t('keepListening')}
         </button>
-        <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-gray-300 px-3 py-2">
+        <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-radio-surface-raised px-3 py-2">
           {t('close')}
         </button>
       </div>
@@ -71,9 +72,12 @@ export function NoticeCard({ notice, onClose }: { notice: RadioNotice; onClose: 
       role="status"
       data-testid="radio-notice"
       data-kind={notice.kind}
-      className="mt-4 flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+      className="mt-4 flex items-start justify-between gap-3 rounded-xl border-l-4 border-radio-ring bg-radio-surface-raised p-3 text-sm text-radio-text"
     >
-      <p>{notice.text}</p>
+      <p className="flex items-start gap-2">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-radio-ring" aria-hidden />
+        {notice.text}
+      </p>
       <button type="button" onClick={onClose} className="shrink-0 rounded-lg px-2 py-1 text-xs underline" data-testid="radio-notice-close">
         {gotIt ? t('gotIt') : t('close')}
       </button>
@@ -85,7 +89,7 @@ export function NoticeCard({ notice, onClose }: { notice: RadioNotice; onClose: 
 export function VoiceLine({ text }: { text: string | null }) {
   if (!text) return null;
   return (
-    <p role="status" data-testid="radio-voice-line" className="mt-4 text-sm text-workspace-secondary">
+    <p role="status" data-testid="radio-voice-line" className="mt-4 text-sm text-radio-secondary">
       {text}
     </p>
   );

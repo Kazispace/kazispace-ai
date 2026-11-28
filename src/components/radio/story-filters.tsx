@@ -137,7 +137,7 @@ function Chip({ pressed, onClick, children, testId }: { pressed: boolean; onClic
       data-testid={testId}
       className={cn(
         'min-h-11 shrink-0 rounded-full border px-3 text-xs',
-        pressed ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 bg-white text-workspace-secondary hover:border-primary'
+        pressed ? 'border-radio-ring bg-radio-surface-raised text-radio-progress' : 'border-radio-surface-raised bg-radio-surface text-radio-secondary hover:border-radio-ring'
       )}
     >
       {children}
@@ -159,13 +159,13 @@ export function StoryFilterBar({ state }: { state: StoryFilterState }) {
   return (
     <div data-testid="radio-story-filters" role="group" aria-label={t('home.sort.title')} className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
       {bar.sorts.length ? (
-        <label className="flex shrink-0 items-center gap-1 text-xs text-workspace-muted">
+        <label className="flex shrink-0 items-center gap-1 text-xs text-radio-muted">
           {t('home.sort.title')}
           <select
             data-testid="radio-sort"
             value={selection.sort ?? ''}
             onChange={(e) => setSelection({ ...selection, sort: e.target.value || null })}
-            className="min-h-11 rounded-lg border border-gray-200 bg-white px-2 text-xs text-workspace-text"
+            className="min-h-11 rounded-lg border border-radio-surface-raised bg-radio-surface px-2 text-xs text-radio-text"
           >
             <option value="">{t('home.sort.default')}</option>
             {bar.sorts.map((s) => (
@@ -178,13 +178,13 @@ export function StoryFilterBar({ state }: { state: StoryFilterState }) {
       ) : null}
       {bar.controls.map((c) =>
         c.kind === 'atLeast' ? (
-          <label key={c.key} className="flex shrink-0 items-center gap-1 text-xs text-workspace-muted">
+          <label key={c.key} className="flex shrink-0 items-center gap-1 text-xs text-radio-muted">
             {t('home.filter.suspense')}
             <select
               data-testid="radio-filter-suspense"
               value={selection.suspenseAtLeast ?? ''}
               onChange={(e) => setSelection({ ...selection, suspenseAtLeast: e.target.value ? Number(e.target.value) : null })}
-              className="min-h-11 rounded-lg border border-gray-200 bg-white px-2 text-xs text-workspace-text"
+              className="min-h-11 rounded-lg border border-radio-surface-raised bg-radio-surface px-2 text-xs text-radio-text"
             >
               <option value="">{t('home.filter.any')}</option>
               {c.options.map((n) => (
@@ -196,7 +196,7 @@ export function StoryFilterBar({ state }: { state: StoryFilterState }) {
           </label>
         ) : (
           <div key={c.key} role="group" aria-label={groupLabel(c.key)} className="flex shrink-0 items-center gap-1">
-            <span className="text-xs text-workspace-muted">{groupLabel(c.key)}</span>
+            <span className="text-xs text-radio-muted">{groupLabel(c.key)}</span>
             {c.options.map((v) => {
               const chosen = selection.multi[c.key] ?? [];
               const on = chosen.includes(v);
@@ -220,7 +220,7 @@ export function StoryFilterBar({ state }: { state: StoryFilterState }) {
         )
       )}
       {active ? (
-        <button type="button" onClick={clear} data-testid="radio-filter-clear" className="min-h-11 shrink-0 text-xs text-primary underline">
+        <button type="button" onClick={clear} data-testid="radio-filter-clear" className="min-h-11 shrink-0 text-xs text-radio-progress underline">
           {t('home.filter.clear')}
         </button>
       ) : null}

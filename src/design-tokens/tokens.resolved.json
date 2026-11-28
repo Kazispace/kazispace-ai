@@ -91,6 +91,10 @@
     "type": "color",
     "value": "#FEF2F2"
   },
+  "color.red.300": {
+    "type": "color",
+    "value": "#FCA5A5"
+  },
   "color.red.600": {
     "type": "color",
     "value": "#DC2626"
@@ -102,6 +106,54 @@
   "color.amber.700": {
     "type": "color",
     "value": "#B45309"
+  },
+  "color.indigo.200": {
+    "type": "color",
+    "value": "#D4D5F7"
+  },
+  "color.indigo.300": {
+    "type": "color",
+    "value": "#A9ABE6"
+  },
+  "color.indigo.700": {
+    "type": "color",
+    "value": "#3A2C8A"
+  },
+  "color.indigo.800": {
+    "type": "color",
+    "value": "#2C2D78"
+  },
+  "color.indigo.900": {
+    "type": "color",
+    "value": "#1B1D5E"
+  },
+  "color.indigo.950": {
+    "type": "color",
+    "value": "#16174A"
+  },
+  "color.violet.900": {
+    "type": "color",
+    "value": "#3B1F7A"
+  },
+  "color.fuchsia.300": {
+    "type": "color",
+    "value": "#F0ABFC"
+  },
+  "color.fuchsia.600": {
+    "type": "color",
+    "value": "#C026D3"
+  },
+  "color.pink.400": {
+    "type": "color",
+    "value": "#F472B6"
+  },
+  "color.pink.600": {
+    "type": "color",
+    "value": "#DB2777"
+  },
+  "color.teal.300": {
+    "type": "color",
+    "value": "#5EEAD4"
   },
   "font.family.sans": {
     "type": "fontFamily",
@@ -391,6 +443,86 @@
     "type": "color",
     "value": "#059669",
     "ref": "{color.green.600}"
+  },
+  "color.radio.bg-top": {
+    "type": "color",
+    "value": "#1B1D5E",
+    "ref": "{color.indigo.900}"
+  },
+  "color.radio.bg-bottom": {
+    "type": "color",
+    "value": "#3B1F7A",
+    "ref": "{color.violet.900}"
+  },
+  "color.radio.surface": {
+    "type": "color",
+    "value": "#2C2D78",
+    "ref": "{color.indigo.800}"
+  },
+  "color.radio.surface-raised": {
+    "type": "color",
+    "value": "#3A2C8A",
+    "ref": "{color.indigo.700}"
+  },
+  "color.radio.bar": {
+    "type": "color",
+    "value": "#16174A",
+    "ref": "{color.indigo.950}"
+  },
+  "color.radio.text-primary": {
+    "type": "color",
+    "value": "#FFFFFF",
+    "ref": "{color.white}"
+  },
+  "color.radio.text-secondary": {
+    "type": "color",
+    "value": "#D4D5F7",
+    "ref": "{color.indigo.200}"
+  },
+  "color.radio.text-muted": {
+    "type": "color",
+    "value": "#A9ABE6",
+    "ref": "{color.indigo.300}"
+  },
+  "color.radio.accent-start": {
+    "type": "color",
+    "value": "#C026D3",
+    "ref": "{color.fuchsia.600}"
+  },
+  "color.radio.accent-end": {
+    "type": "color",
+    "value": "#DB2777",
+    "ref": "{color.pink.600}"
+  },
+  "color.radio.on-accent": {
+    "type": "color",
+    "value": "#FFFFFF",
+    "ref": "{color.white}"
+  },
+  "color.radio.accent-ring": {
+    "type": "color",
+    "value": "#F0ABFC",
+    "ref": "{color.fuchsia.300}"
+  },
+  "color.radio.progress-fill": {
+    "type": "color",
+    "value": "#F472B6",
+    "ref": "{color.pink.400}"
+  },
+  "color.radio.recording": {
+    "type": "color",
+    "value": "#DC2626",
+    "ref": "{color.red.600}"
+  },
+  "color.radio.recording-ring": {
+    "type": "color",
+    "value": "#FCA5A5",
+    "ref": "{color.red.300}"
+  },
+  "color.radio.now-playing": {
+    "type": "color",
+    "value": "#5EEAD4",
+    "ref": "{color.teal.300}"
   },
   "text-style.title": {
     "type": "typography",
