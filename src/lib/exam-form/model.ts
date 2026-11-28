@@ -26,13 +26,14 @@ export const ENTRY_PHRASE: Record<ProblemType, string> = {
 
 export const CAMBRIDGE_EXAMS: readonly string[] = ['pet', 'fce', 'cae'];
 
+/** The order problem types are shown in (the server sends them in this order too). */
+export const PROBLEM_TYPE_ORDER: readonly ProblemType[] = ['grammar', 'vocabulary', 'reading', 'writing', 'speaking'];
+
 /**
- * Problem types listed under each exam (design SDD «考试 · 表单模式» §3). Reading is Gaokao only;
- * speaking only where the bank has speaking tasks. Which exams appear at all is the server's
- * `english_exams` (only exams it has questions for), so this table never adds an exam.
- *
- * ⚠ Client-side and not pinned by a server check: it can drift from the question bank (SDD §3, "会腐烂的量").
- * Follow-up (KAZI-1493): have the server return each exam's problem types with `english_exams`.
+ * **Fallback only** (KAZI-1510, kazispace-ui Exam 0.10): the problem types come from the server,
+ * `english_exam_problem_types` on `GET /api/v1/me`. This table is used for an exam only when that field is
+ * missing (an older server), `{}` (the server could not read its questions), or has no entry for the exam.
+ * Owen, 2026-11-28, quoted as written: 「标题可以固定 做过的题集显示得分 考试的题型由服务器下发」.
  */
 const PROBLEM_TYPES: Record<string, readonly ProblemType[]> = {
   ielts: ['grammar', 'vocabulary', 'writing', 'speaking'],
@@ -45,8 +46,60 @@ const PROBLEM_TYPES: Record<string, readonly ProblemType[]> = {
   cae: ['grammar', 'vocabulary', 'writing'],
 };
 
-export function problemTypesFor(exam: string): readonly ProblemType[] {
+/** The server's problem types per exam (`english_exam_problem_types`), or `null` when it sent none. */
+export type ServedProblemTypes = Record<string, readonly ProblemType[]>;
+
+/** The problem types under `exam`: the server's when it sent an entry for it, else this app's fallback table. */
+export function problemTypesFor(exam: string, served?: ServedProblemTypes | null): readonly ProblemType[] {
+  const fromServer = served?.[exam];
+  if (fromServer) return fromServer;
   return PROBLEM_TYPES[exam] ?? ['grammar', 'vocabulary', 'writing'];
+}
+
+/**
+ * The exams the home page shows: the server's order, leaving out only an exam whose problem-type list from the
+ * server is empty (kazispace-ui Exam 0.10; the server can list an exam whose questions are none of the five types).
+ */
+export function shownExams(exams: readonly string[], served?: ServedProblemTypes | null): string[] {
+  return exams.filter((exam) => problemTypesFor(exam, served).length > 0);
+}
+
+/** `english_exam_problem_types` as read: known types only, in `PROBLEM_TYPE_ORDER`; not an object ⇒ `null`. */
+export function parseServedProblemTypes(raw: unknown): ServedProblemTypes | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const out: Record<string, ProblemType[]> = {};
+  for (const [exam, list] of Object.entries(raw as Record<string, unknown>)) {
+    if (!Array.isArray(list)) continue;
+    out[exam] = PROBLEM_TYPE_ORDER.filter((t) => list.includes(t));
+  }
+  return out;
+}
+
+/**
+ * One set's result (`form_result` on `GET /api/v1/spaces?include_form=true`, KAZI-1510): right answers out of
+ * the set's questions, or the 0–6 score for writing and speaking (the same score as the marking card).
+ */
+export type FormResult =
+  | { kind: 'score'; correct: number; total: number }
+  | { kind: 'band'; score: number; max: number };
+
+export function parseFormResult(raw: unknown): FormResult | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+  if (r.kind === 'score' && num(r.correct) && num(r.total)) {
+    return { kind: 'score', correct: r.correct as number, total: r.total as number };
+  }
+  if (r.kind === 'band' && num(r.score) && num(r.max)) return { kind: 'band', score: r.score as number, max: r.max as number };
+  return null;
+}
+
+/** "3 / 5" for a set; "4.00 / 6" for writing and speaking (two decimals, as on the marking card). */
+export function formResultLabel(result: FormResult | null | undefined): string | null {
+  if (!result) return null;
+  if (result.kind === 'score') return `${result.correct} / ${result.total}`;
+  const max = Number.isInteger(result.max) ? String(result.max) : result.max.toFixed(2);
+  return `${result.score.toFixed(2)} / ${max}`;
 }
 
 /** First level, in the server's order; the Cambridge levels are one group where the first of them appears. */

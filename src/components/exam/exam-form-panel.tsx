@@ -9,14 +9,16 @@ import { EtFormBlock } from '@/components/english/envelope/et-form-block';
 import { Button } from '@/components/ui/button';
 import { fetchChatHistory } from '@/lib/api-client';
 import { parseEtForm, type EtForm, type EtFormSubmit } from '@/lib/english-tutor/form';
-import { getEnglishExams, listFormSets } from '@/lib/exam-form/api';
+import { getExamCatalog, listFormSets, type ExamCatalog, type FormSetSummary } from '@/lib/exam-form/api';
 import {
   FORM_TEMPLATE_ID,
   clearCurrentSet,
   groupExams,
   isAnswerForm,
   presetTurn,
+  formResultLabel,
   problemTypesFor,
+  shownExams,
   readCurrentSet,
   setName,
   writeCurrentSet,
@@ -137,15 +139,15 @@ function FormHome({
   onOpenHistory: (set: SpaceSummary) => void;
   t: ReturnType<typeof useTranslations>;
 }) {
-  const [exams, setExams] = useState<string[] | null | undefined>(undefined);
-  const [sets, setSets] = useState<SpaceSummary[]>([]);
+  const [catalog, setCatalog] = useState<ExamCatalog | null | undefined>(undefined);
+  const [sets, setSets] = useState<FormSetSummary[]>([]);
   const [current, setCurrent] = useState<CurrentSet | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
-    const [list, formSets] = await Promise.all([getEnglishExams(), listFormSets()]);
+    const [list, formSets] = await Promise.all([getExamCatalog(), listFormSets()]);
     const known = formSets ?? [];
     const saved = readCurrentSet();
     // The server decides which set is open (so it holds on every device); unreadable ⇒ this device's record.
@@ -153,7 +155,7 @@ function FormHome({
     const next = open === undefined ? saved : open;
     if (saved && next?.spaceId !== saved.spaceId) clearCurrentSet();
     else if (next) writeCurrentSet(next);
-    setExams(list);
+    setCatalog(list);
     setSets(known);
     setCurrent(next);
   }, [locale]);
@@ -194,7 +196,7 @@ function FormHome({
     void load();
   };
 
-  if (exams === undefined) {
+  if (catalog === undefined) {
     return (
       <div className="flex justify-center py-10" data-testid="exam-form-loading">
         <Loader2 className="h-5 w-5 animate-spin text-workspace-muted" />
@@ -203,6 +205,8 @@ function FormHome({
   }
 
   const history = sets.filter((s) => s.id !== current?.spaceId);
+  // Exam 0.10: only an exam whose problem-type list from the server is empty is left out.
+  const exams = catalog ? shownExams(catalog.exams, catalog.types) : null;
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6" data-testid="exam-form-home">
@@ -263,7 +267,7 @@ function FormHome({
                     {t(`exams.${exam}`)}
                   </h3>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {problemTypesFor(exam).map((type) => (
+                    {problemTypesFor(exam, catalog?.types).map((type) => (
                       <button
                         key={type}
                         type="button"
@@ -295,7 +299,14 @@ function FormHome({
                   className="w-full px-4 py-3 text-left text-sm text-workspace-text hover:bg-workspace-hover"
                   data-testid="exam-form-history-row"
                 >
-                  {s.name}
+                  <span className="flex items-center justify-between gap-3">
+                    <span>{s.name}</span>
+                    {formResultLabel(s.form_result) ? (
+                      <span className="shrink-0 tabular-nums text-workspace-secondary" data-testid="exam-form-history-score">
+                        {formResultLabel(s.form_result)}
+                      </span>
+                    ) : null}
+                  </span>
                 </button>
               </li>
             ))}
