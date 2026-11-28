@@ -54,6 +54,12 @@ interface SessionContextHeaderProps {
    */
   onOpenMobilePanel?: () => void;
   mobilePanelLabel?: string;
+  /**
+   * KAZI-1510 (Owen, 2026-11-28, quoted as written: "标题可以固定"): Exam's Form mode shows a fixed title, the
+   * Form tab's own name, instead of the open chat's name. The form page is not a chat, so nothing that belongs to a
+   * chat is shown either: no status pill, no subtitle, no chat actions (files, search, more, workspace rail).
+   */
+  fixedTitle?: string | null;
 }
 
 type HeaderDrawer = 'files' | 'search' | 'more' | null;
@@ -65,6 +71,7 @@ export function SessionContextHeader({
   workspaceRailOpen = false,
   onOpenMobilePanel,
   mobilePanelLabel,
+  fixedTitle = null,
 }: SessionContextHeaderProps) {
   const pathname = usePathname();
   const t = useTranslations('sessionNav');
@@ -118,6 +125,14 @@ export function SessionContextHeader({
   // the space list shows (D39): a name nobody chose reads as the type's name and its day.
   // ❌ Former (D38 proposal): `nav.exam` on every conversation.
   const { title, titleAgentId, statusLabel, statusKind } = useMemo(() => {
+    if (fixedTitle) {
+      return {
+        title: fixedTitle,
+        titleAgentId: null as string | null,
+        statusLabel: null as string | null,
+        statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
+      };
+    }
     const agent = agentId
       ? AGENT_REGISTRY.find((entry) => entry.agentId === agentId)
       : undefined;
@@ -187,6 +202,7 @@ export function SessionContextHeader({
       statusKind: null as ReturnType<typeof resolveSessionNavBadge> | null,
     };
   }, [
+    fixedTitle,
     agentId,
     currentSession,
     locale,
@@ -204,15 +220,17 @@ export function SessionContextHeader({
   // needs no second header under this one (D24).
   const slotSubtitle = useChatHeaderSlotStore((s) => s.subtitle);
   const slotAction = useChatHeaderSlotStore((s) => s.action);
-  const subtitle =
-    slotSubtitle ??
+  const subtitle = fixedTitle
+    ? null
+    : slotSubtitle ??
     (!agentId && isClinicChatPathname(pathname) ? tClinic('layerClinicActive') : null);
 
-  const showSessionActions = Boolean(agentId && currentSession?.session_id);
+  // A fixed title (Form mode) is not a chat: none of the chat controls below apply (KAZI-1510).
+  const showSessionActions = !fixedTitle && Boolean(agentId && currentSession?.session_id);
   // Dedicated hub routes — plain Link back to /chat. Inline clinic agent mode keeps
   // ChatHeader for deactivate (SessionContextHeader cannot call exitToClinic).
-  const showBackToClinic = Boolean(hubAgentId);
-  const showSpaceLifecycle = Boolean(
+  const showBackToClinic = !fixedTitle && Boolean(hubAgentId);
+  const showSpaceLifecycle = !fixedTitle && Boolean(
     spaceId &&
       space &&
       !space.is_system &&
@@ -222,7 +240,7 @@ export function SessionContextHeader({
   const showHeaderActions =
     showSessionActions || showBackToClinic || showSpaceLifecycle;
   const showClinicWorkspaceRail =
-    isClinicChatPathname(pathname) || Boolean(resolveSpaceIdFromPathname(pathname));
+    !fixedTitle && (isClinicChatPathname(pathname) || Boolean(resolveSpaceIdFromPathname(pathname)));
 
   const closeDrawer = () => {
     setDrawer(null);
@@ -308,7 +326,7 @@ export function SessionContextHeader({
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
-          {slotAction ? (
+          {slotAction && !fixedTitle ? (
             <button
               type="button"
               onClick={slotAction.onClick}

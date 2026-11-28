@@ -547,6 +547,8 @@ function WorkspaceCenterColumn({
   }, [portal?.portalHost]);
 
   const showPortalColumn = chatSideRailOpen && portalHasChild;
+  const tExamMode = useTranslations('exam.mode');
+  const formTitle = tExamMode('form');
 
   return (
     <div className="relative flex min-w-0 flex-1 min-h-0 flex-col">
@@ -574,6 +576,8 @@ function WorkspaceCenterColumn({
               workspaceRailOpen={chatSideRailOpen}
               onOpenMobilePanel={showConversationListButton ? onOpenMobilePanel : undefined}
               mobilePanelLabel={mobilePanelLabel}
+              // KAZI-1510 (Owen: "标题可以固定"): Form mode shows the Form tab's name, not the last chat's name.
+              fixedTitle={examMode === 'form' ? formTitle : null}
             />
           ) : null}
           {examMode ? (
