@@ -1,10 +1,12 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { Loader2, Mic, MicOff } from 'lucide-react';
 
 import type { RadioMicState } from '@/hooks/use-radio-mic';
 import type { BlockedHelpPlatform } from '@/lib/radio/voice';
+import { RADIO_ACCENT } from '@/lib/radio/theme';
 import { cn } from '@/lib/utils';
 
 /** What the microphone button shows (personal-radio.md, Voice · Microphone button). */
@@ -53,37 +55,41 @@ export function MicButton({
 }) {
   const t = useTranslations('radio.mic');
   const tStates = useTranslations('states');
-  const ring = 'relative inline-flex h-16 w-16 items-center justify-center rounded-full';
+  // KAZI-1512 (Personal radio 0.35, Microphone button · Look): round, 72px, with a 2px ring so its edge reaches
+  // 3:1 against the page. Tap to talk: there is no press and hold.
+  const ring = 'relative inline-flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full ring-2';
 
   if (state === 'recording') {
     const bars = Math.min(5, Math.round(level * 40));
     return (
-      <div className="flex flex-col items-center gap-2" data-testid="radio-mic" data-state="recording">
-        <div className="flex h-6 items-end gap-1" aria-hidden data-testid="radio-mic-level">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <span key={i} className={cn('w-1.5 rounded-sm bg-red-500 transition-all', i < bars ? 'h-6' : 'h-1.5 opacity-40')} />
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={onDone} data-testid="radio-mic-done" className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white">
-            {t('done')}
-          </button>
-          <button type="button" onClick={onCancel} data-testid="radio-mic-cancel" className="rounded-lg border border-gray-300 px-4 py-2 text-sm">
-            {t('cancel')}
-          </button>
-        </div>
+      <div className="flex items-center justify-center gap-5" data-testid="radio-mic" data-state="recording">
+        <button type="button" onClick={onCancel} data-testid="radio-mic-cancel" className="min-h-11 min-w-16 rounded-lg px-3 text-sm text-radio-secondary hover:bg-radio-surface-raised">
+          {t('cancel')}
+        </button>
+        <span className={cn(ring, 'flex-col gap-1 bg-radio-recording text-radio-on-accent ring-radio-recording-ring')}>
+          <Mic className="h-6 w-6" aria-hidden />
+          <span className="flex h-3 items-end gap-0.5" aria-hidden data-testid="radio-mic-level">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <span key={i} className={cn('w-1 rounded-sm bg-radio-on-accent transition-all', i < bars ? 'h-3' : 'h-1 opacity-50')} />
+            ))}
+          </span>
+        </span>
+        <button type="button" onClick={onDone} data-testid="radio-mic-done" className="min-h-11 min-w-16 rounded-lg px-3 text-sm font-medium text-radio-text hover:bg-radio-surface-raised">
+          {t('done')}
+        </button>
       </div>
     );
   }
 
   if (state === 'working') {
+    // A working control is not a disabled one: full accent, spinner in on-accent (4.6:1 or more).
     return (
       <div className="flex flex-col items-center gap-1" data-testid="radio-mic" data-state="working">
-        <span className={cn(ring, 'bg-gray-100')} aria-busy="true">
-          <Loader2 className="h-7 w-7 animate-spin text-workspace-muted" aria-hidden />
+        <span className={cn(ring, RADIO_ACCENT)} aria-busy="true">
+          <Loader2 className="h-7 w-7 animate-spin text-radio-on-accent" aria-hidden />
         </span>
         {slow ? (
-          <p className="text-xs text-workspace-muted" data-testid="radio-slow">
+          <p className="text-xs text-radio-muted" data-testid="radio-slow">
             {tStates('slow')}
           </p>
         ) : null}
@@ -93,7 +99,12 @@ export function MicButton({
 
   const unavailable = state === 'unavailable';
   return (
-    <div className="flex flex-col items-center gap-1" data-testid="radio-mic" data-state={state}>
+    <div className="flex flex-col items-center gap-2" data-testid="radio-mic" data-state={state}>
+      {state === 'window' ? (
+        <p className="text-sm text-radio-secondary" data-testid="radio-mic-listening">
+          {t('listening', { count: choiceCount })}
+        </p>
+      ) : null}
       <button
         type="button"
         onClick={onTap}
@@ -102,52 +113,70 @@ export function MicButton({
         data-testid="radio-mic-button"
         className={cn(
           ring,
-          unavailable ? 'border border-gray-300 bg-white text-workspace-muted' : 'bg-primary text-white hover:bg-primary/90',
+          unavailable ? 'bg-radio-surface-raised text-radio-muted ring-radio-surface-raised' : cn(RADIO_ACCENT, 'shadow-lg shadow-radio-accent-start/40 hover:opacity-90'),
           'disabled:opacity-40'
         )}
       >
         {state === 'window' && windowMs ? (
-          <svg className="absolute inset-0 h-16 w-16 -rotate-90" viewBox="0 0 36 36" aria-hidden>
+          <svg className="pointer-events-none absolute -inset-2 h-[88px] w-[88px] -rotate-90" viewBox="0 0 36 36" aria-hidden>
             <circle
               cx="18"
               cy="18"
-              r="16"
+              r="17"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
-              strokeDasharray="100.5"
-              className="radio-countdown text-white/70"
+              strokeWidth="1.2"
+              strokeDasharray="106.8"
+              className="radio-countdown text-radio-progress"
               style={{ animation: `radio-countdown ${windowMs}ms linear forwards` }}
             />
-            <style>{'@keyframes radio-countdown{from{stroke-dashoffset:0}to{stroke-dashoffset:100.5}}'}</style>
+            <style>{'@keyframes radio-countdown{from{stroke-dashoffset:0}to{stroke-dashoffset:106.8}}'}</style>
           </svg>
         ) : null}
         {unavailable ? <MicOff className="h-7 w-7" aria-hidden /> : <Mic className="h-7 w-7" aria-hidden />}
       </button>
-      {state === 'window' ? (
-        <p className="text-xs text-workspace-secondary" data-testid="radio-mic-listening">
-          {t('listening', { count: choiceCount })}
-        </p>
-      ) : null}
     </div>
   );
 }
 
+/** m:ss, for the listening indicator's running time. */
+export function formatElapsed(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
 /**
- * Listening indicator (Voice · Listening indicator): fixed, text and a red dot, shown exactly while
- * the microphone is on — the app's own, required even where the system shows one.
+ * Listening indicator (Voice · Listening indicator): text and a red dot, shown exactly while the microphone is
+ * on — the app's own, required even where the system shows one. KAZI-1512 (Personal radio 0.35): a pill just
+ * above the microphone button, in the recording colour, with the time so far counting up.
  */
 export function ListeningIndicator({ on }: { on: boolean }) {
   const t = useTranslations('radio.mic');
+  const [since, setSince] = useState<number | null>(null);
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    if (!on) {
+      setSince(null);
+      return;
+    }
+    const start = Date.now();
+    setSince(start);
+    setNow(start);
+    const id = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(id);
+  }, [on]);
   if (!on) return null;
   return (
     <div
       role="status"
       data-testid="radio-listening-indicator"
-      className="pointer-events-none fixed left-1/2 top-3 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-gray-900/90 px-3 py-1.5 text-xs text-white shadow"
+      className="flex items-center gap-2 self-center rounded-full bg-radio-recording px-3.5 py-1.5 text-sm font-medium text-radio-on-accent"
     >
-      <span className="h-2 w-2 rounded-full bg-red-500" aria-hidden />
+      <span className="h-2 w-2 rounded-full bg-radio-on-accent" aria-hidden />
       {t('recording')}
+      <span className="tabular-nums" data-testid="radio-listening-elapsed">
+        {formatElapsed(since === null ? 0 : now - since)}
+      </span>
     </div>
   );
 }
@@ -155,13 +184,13 @@ export function ListeningIndicator({ on }: { on: boolean }) {
 /** Explain first, then ask (Microphone access): two buttons of equal weight, neither primary. */
 export function ConsentCard({ onAllow, onDeny }: { onAllow: () => void; onDeny: () => void }) {
   const t = useTranslations('radio.consent');
-  const btn = 'flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-workspace-text hover:bg-gray-50';
+  const btn = 'flex-1 rounded-lg border border-radio-surface-raised bg-radio-surface px-3 py-2 text-sm font-medium text-radio-text hover:bg-radio-surface-raised';
   return (
-    <section data-testid="radio-consent" aria-labelledby="radio-consent-title" className="mt-4 rounded-xl border border-gray-200 p-4">
-      <h2 id="radio-consent-title" className="text-sm font-semibold text-workspace-text">
+    <section data-testid="radio-consent" aria-labelledby="radio-consent-title" className="mt-4 rounded-xl border border-radio-surface-raised p-4">
+      <h2 id="radio-consent-title" className="text-sm font-semibold text-radio-text">
         {t('title')}
       </h2>
-      <p className="mt-1 text-sm text-workspace-secondary">{t('body')}</p>
+      <p className="mt-1 text-sm text-radio-secondary">{t('body')}</p>
       <div className="mt-3 flex gap-2">
         <button type="button" className={btn} onClick={onAllow} data-testid="radio-consent-allow">
           {t('allow')}
@@ -185,17 +214,17 @@ export function BlockedHelpDialog({ platform, onClose }: { platform: BlockedHelp
         aria-modal="true"
         aria-labelledby="radio-blocked-title"
         data-testid="radio-blocked-help"
-        className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+        className="w-full max-w-sm rounded-2xl bg-radio-surface p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="radio-blocked-title" className="text-base font-semibold text-workspace-text">
+        <h2 id="radio-blocked-title" className="text-base font-semibold text-radio-text">
           {t('title')}
         </h2>
-        <p className="mt-2 text-sm text-workspace-secondary">{t('body')}</p>
-        <p className="mt-3 rounded-lg bg-gray-50 p-3 text-sm text-workspace-text" data-testid="radio-blocked-steps">
+        <p className="mt-2 text-sm text-radio-secondary">{t('body')}</p>
+        <p className="mt-3 rounded-lg bg-radio-surface-raised p-3 text-sm text-radio-text" data-testid="radio-blocked-steps">
           {t(platform)}
         </p>
-        <button type="button" onClick={onClose} className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+        <button type="button" onClick={onClose} className="mt-4 w-full rounded-lg border border-radio-surface-raised px-3 py-2 text-sm">
           {tNotice('gotIt')}
         </button>
       </div>

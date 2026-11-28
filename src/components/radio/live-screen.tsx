@@ -28,6 +28,7 @@ import { LiveTurnUpload } from '@/lib/radio/live-uploader';
 import { isLiveRoomLocale, radioHomeHref } from '@/lib/radio/routes';
 import { SLOW_AFTER_MS, blockedHelpPlatform } from '@/lib/radio/voice';
 import { getTelegramWebApp, isTelegramWebApp } from '@/lib/telegram';
+import { RADIO_PAGE } from '@/lib/radio/theme';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types';
 import type { LiveCard, LiveLang, LiveNotice, LivePart, LiveTurn, LiveUpgrade } from '@/types/radio-live';
@@ -782,21 +783,21 @@ function LiveSessionView({
   const micOpen = phase === 'talk' && !micBlock && !markerActive;
 
   return (
-    <div className="flex h-full flex-col bg-gray-50" data-testid="radio-live-screen" data-phase={phase}>
-      <header className="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-2">
+    <div className={cn('flex h-full flex-col', RADIO_PAGE)} data-testid="radio-live-screen" data-phase={phase}>
+      <header className="flex items-center gap-3 bg-radio-bar px-4 py-2">
         <button
           type="button"
           onClick={end}
           data-testid="radio-live-end"
-          className="min-h-11 rounded-lg px-3 text-sm font-medium text-workspace-text hover:bg-gray-100"
+          className="min-h-11 rounded-lg px-3 text-sm font-medium text-radio-text hover:bg-radio-surface-raised"
         >
           {t('end')}
         </button>
         <div className="flex min-w-0 flex-1 items-center justify-center gap-2">
-          <span className="truncate text-base font-semibold text-workspace-text" data-testid="radio-live-host-name">
+          <span className="truncate text-base font-semibold text-radio-text" data-testid="radio-live-host-name">
             {host.name}
           </span>
-          <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-workspace-secondary" data-testid="radio-live-ai-label">
+          <span className="shrink-0 rounded-full bg-radio-surface-raised px-2 py-0.5 text-xs text-radio-secondary" data-testid="radio-live-ai-label">
             {t('aiLabel')}
           </span>
         </div>
@@ -807,8 +808,6 @@ function LiveSessionView({
       <p className="sr-only" role="status" data-testid="radio-live-announce">
         {`${host.name}, ${t('aiLabel')}`}
       </p>
-      <ListeningIndicator on={mic.state === 'recording'} />
-
       <main className="flex-1 overflow-y-auto px-4 py-4">
         <ol className="mx-auto flex max-w-2xl flex-col gap-3" data-testid="radio-live-captions" aria-live="polite">
           {captions.map((c) => (
@@ -819,24 +818,24 @@ function LiveSessionView({
               aria-current={c.key === activeKey ? 'true' : undefined}
               className={cn(
                 'rounded-xl px-3 py-2 text-base leading-relaxed',
-                c.key === activeKey ? 'bg-white font-medium text-workspace-text shadow-sm' : 'text-workspace-secondary'
+                c.key === activeKey ? 'bg-radio-surface font-medium text-radio-text shadow-sm' : 'text-radio-secondary'
               )}
             >
               {c.text}
             </li>
           ))}
           {waitingEnglish ? (
-            <li data-testid="radio-live-english-waiting" className="px-3 py-2 text-base text-workspace-secondary" aria-label={tStates('slow')}>
+            <li data-testid="radio-live-english-waiting" className="px-3 py-2 text-base text-radio-secondary" aria-label={tStates('slow')}>
               …
             </li>
           ) : null}
         </ol>
 
         {showSentence ? (
-          <section className="mx-auto mt-4 max-w-2xl rounded-xl border border-primary/30 bg-white p-4" data-testid="radio-live-your-sentence">
-            <h2 className="text-xs font-semibold text-workspace-muted">{t('yourSentence')}</h2>
+          <section className="mx-auto mt-4 max-w-2xl rounded-xl border border-radio-ring bg-radio-surface p-4" data-testid="radio-live-your-sentence">
+            <h2 className="text-xs font-semibold text-radio-muted">{t('yourSentence')}</h2>
             {englishLines.map((l) => (
-              <p key={l.seq} lang="en" className="mt-2 text-lg leading-relaxed text-workspace-text">
+              <p key={l.seq} lang="en" className="mt-2 text-lg leading-relaxed text-radio-text">
                 {splitKeyWord(l.text, upgrade?.key_word).map((piece, i) =>
                   piece.key ? (
                     <button
@@ -867,7 +866,7 @@ function LiveSessionView({
         ) : null}
       </main>
 
-      <footer className="border-t border-gray-200 bg-white px-4 py-3">
+      <footer className="px-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pt-3">
         {consentOpen && phase === 'talk' ? (
           <LiveConsentCard onAllow={allowMic} onLater={() => setConsentOpen(false)} />
         ) : resumeTap ? (
@@ -876,7 +875,7 @@ function LiveSessionView({
               type="button"
               onClick={resumeEnglish}
               data-testid="radio-live-resume"
-              className="min-h-11 rounded-lg bg-primary px-6 text-sm font-medium text-white"
+              className="min-h-11 rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-6 text-sm font-medium text-white"
             >
               {t('resumeEnglish')}
             </button>
@@ -885,24 +884,26 @@ function LiveSessionView({
           <EndCard card={card} onDone={goHome} />
         ) : phase === 'over' ? (
           <div className="flex justify-center">
-            <button type="button" onClick={goHome} data-testid="radio-live-done" className="min-h-11 rounded-lg bg-primary px-6 text-sm font-medium text-white">
+            <button type="button" onClick={goHome} data-testid="radio-live-done" className="min-h-11 rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-6 text-sm font-medium text-white">
               {t('done')}
             </button>
           </div>
         ) : (
           <div className="mx-auto flex max-w-2xl flex-col items-center gap-2">
             {line ? (
-              <p role="status" data-testid="radio-live-line" className="text-sm text-workspace-secondary">
+              <p role="status" data-testid="radio-live-line" className="text-sm text-radio-secondary">
                 {line}
               </p>
             ) : null}
+            {/* Listening indicator: a pill just above the microphone (Personal radio 0.35, Look). */}
+            <ListeningIndicator on={mic.state === 'recording'} />
             <div className="flex items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={replay}
                 disabled={phase === 'recording' || phase === 'waiting'}
                 data-testid="radio-live-replay"
-                className="min-h-11 rounded-lg border border-gray-300 px-4 text-sm disabled:opacity-50"
+                className="min-h-11 rounded-lg border border-radio-surface-raised px-4 text-sm disabled:opacity-50"
               >
                 {t('replay')}
               </button>
@@ -922,13 +923,13 @@ function LiveSessionView({
                     events.current?.add('live_slow', 'upgrade');
                     slower();
                   }}
-                  data-testid="radio-live-slower" className="min-h-11 rounded-lg border border-gray-300 px-4 text-sm">
+                  data-testid="radio-live-slower" className="min-h-11 rounded-lg border border-radio-surface-raised px-4 text-sm">
                   {t('slower')}
                 </button>
               ) : null}
             </div>
             {phase === 'recording' && mic.secondsLeft !== null ? (
-              <p data-testid="radio-live-remaining" className="text-sm font-medium text-workspace-text" aria-live={mic.secondsLeft === 10 ? 'polite' : 'off'}>
+              <p data-testid="radio-live-remaining" className="text-sm font-medium text-radio-text" aria-live={mic.secondsLeft === 10 ? 'polite' : 'off'}>
                 {t('mic.remaining', { s: mic.secondsLeft })}
               </p>
             ) : null}
@@ -945,13 +946,13 @@ function LiveSessionView({
             aria-modal="true"
             aria-describedby="radio-live-care-text"
             data-testid="radio-live-care"
-            className="w-full max-w-md rounded-2xl bg-white p-5 outline-none"
+            className="w-full max-w-md rounded-2xl bg-radio-surface p-5 outline-none"
           >
-            <p id="radio-live-care-text" className="whitespace-pre-line text-base text-workspace-text">
+            <p id="radio-live-care-text" className="whitespace-pre-line text-base text-radio-text">
               {care.text}
             </p>
             <div className="mt-4 flex justify-end">
-              <button type="button" onClick={goHome} data-testid="radio-live-care-close" className="min-h-11 rounded-lg border border-gray-300 px-4 text-sm">
+              <button type="button" onClick={goHome} data-testid="radio-live-care-close" className="min-h-11 rounded-lg border border-radio-surface-raised px-4 text-sm">
                 {tNotice('close')}
               </button>
             </div>
@@ -961,10 +962,10 @@ function LiveSessionView({
 
       {phase === 'unavailable' ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div ref={coverRef} tabIndex={-1} role="alertdialog" aria-modal="true" data-testid="radio-live-unavailable" className="w-full max-w-sm rounded-2xl bg-white p-5 outline-none">
-            <p className="text-sm text-workspace-text">{t('unavailable')}</p>
+          <div ref={coverRef} tabIndex={-1} role="alertdialog" aria-modal="true" data-testid="radio-live-unavailable" className="w-full max-w-sm rounded-2xl bg-radio-surface p-5 outline-none">
+            <p className="text-sm text-radio-text">{t('unavailable')}</p>
             <div className="mt-4 flex justify-end">
-              <button type="button" onClick={goHome} className="min-h-11 rounded-lg bg-primary px-4 text-sm font-medium text-white">
+              <button type="button" onClick={goHome} className="min-h-11 rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-4 text-sm font-medium text-white">
                 {tNotice('gotIt')}
               </button>
             </div>
@@ -1010,7 +1011,7 @@ function LiveMicButton({
   const ring = 'inline-flex min-h-16 min-w-16 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium';
   if (phase === 'recording') {
     return (
-      <button type="button" onClick={onDone} data-testid="radio-live-mic" data-state="recording" className={cn(ring, 'bg-red-600 text-white')}>
+      <button type="button" onClick={onDone} data-testid="radio-live-mic" data-state="recording" className={cn(ring, 'bg-radio-recording text-radio-on-accent ring-2 ring-radio-recording-ring')}>
         {labels.done}
       </button>
     );
@@ -1018,10 +1019,10 @@ function LiveMicButton({
   if (phase === 'waiting') {
     return (
       <div className="flex flex-col items-center gap-1">
-        <button type="button" disabled aria-busy="true" aria-label={labels.talk} data-testid="radio-live-mic" data-state="working" className={cn(ring, 'bg-gray-200 text-workspace-secondary')}>
+        <button type="button" disabled aria-busy="true" aria-label={labels.talk} data-testid="radio-live-mic" data-state="working" className={cn(ring, 'bg-radio-surface-raised text-radio-secondary')}>
           <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
         </button>
-        {slow ? <span data-testid="radio-live-slow" className="text-xs text-workspace-secondary">{labels.slow}</span> : null}
+        {slow ? <span data-testid="radio-live-slow" className="text-xs text-radio-secondary">{labels.slow}</span> : null}
       </div>
     );
   }
@@ -1034,7 +1035,7 @@ function LiveMicButton({
         aria-label={block === 'blocked' ? labels.blocked : labels.unavailable}
         data-testid="radio-live-mic"
         data-state="unavailable"
-        className={cn(ring, 'bg-gray-100 text-workspace-muted')}
+        className={cn(ring, 'bg-radio-surface-raised text-radio-muted')}
       >
         <MicOff className="h-6 w-6" aria-hidden />
       </button>
@@ -1047,7 +1048,7 @@ function LiveMicButton({
       disabled={!open}
       data-testid="radio-live-mic"
       data-state={open ? 'ready' : 'off'}
-      className={cn(ring, 'bg-primary text-white disabled:opacity-40')}
+      className={cn(ring, 'bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring text-white disabled:opacity-40')}
     >
       <Mic className="h-6 w-6" aria-hidden />
       {labels.talk}
@@ -1065,19 +1066,19 @@ function LiveConsentCard({ onAllow, onLater }: { onAllow: () => void; onLater: (
   useEffect(() => {
     ref.current?.focus();
   }, []);
-  const btn = 'min-h-11 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-workspace-text hover:bg-gray-50';
+  const btn = 'min-h-11 flex-1 rounded-lg border border-radio-surface-raised bg-radio-surface px-3 py-2 text-sm font-medium text-radio-text hover:bg-radio-surface-raised';
   return (
     <section
       ref={ref}
       tabIndex={-1}
       aria-labelledby="radio-live-consent-title"
       data-testid="radio-live-consent"
-      className="mx-auto max-w-2xl rounded-xl border border-gray-200 p-4 outline-none"
+      className="mx-auto max-w-2xl rounded-xl border border-radio-surface-raised p-4 outline-none"
     >
-      <h2 id="radio-live-consent-title" className="text-sm font-semibold text-workspace-text">
+      <h2 id="radio-live-consent-title" className="text-sm font-semibold text-radio-text">
         {t('title')}
       </h2>
-      <p className="mt-1 text-sm text-workspace-secondary">{t('body')}</p>
+      <p className="mt-1 text-sm text-radio-secondary">{t('body')}</p>
       <div className="mt-3 flex gap-2">
         <button type="button" className={btn} onClick={onAllow} data-testid="radio-live-consent-allow">
           {t('allow')}
@@ -1097,8 +1098,8 @@ function EndCard({ card, onDone }: { card: LiveCard | null; onDone: () => void }
     <div className="mx-auto flex max-w-2xl flex-col gap-3" data-testid="radio-live-card">
       {card ? (
         <>
-          <h2 className="text-sm font-semibold text-workspace-muted">{t('card.title')}</h2>
-          <p lang="en" className="text-lg font-medium text-workspace-text" data-testid="radio-live-card-sentence">
+          <h2 className="text-sm font-semibold text-radio-muted">{t('card.title')}</h2>
+          <p lang="en" className="text-lg font-medium text-radio-text" data-testid="radio-live-card-sentence">
             {card.sentence}
           </p>
           {card.key_word ? (
@@ -1107,16 +1108,16 @@ function EndCard({ card, onDone }: { card: LiveCard | null; onDone: () => void }
                 {card.key_word}
               </span>
               {card.key_word_zh ? (
-                <span lang="zh" className="ml-2 text-sm text-workspace-secondary">
+                <span lang="zh" className="ml-2 text-sm text-radio-secondary">
                   {card.key_word_zh}
                 </span>
               ) : null}
             </p>
           ) : null}
-          <p className="text-xs text-workspace-muted">{t('card.note')}</p>
+          <p className="text-xs text-radio-muted">{t('card.note')}</p>
         </>
       ) : null}
-      <button type="button" onClick={onDone} data-testid="radio-live-done" className="min-h-11 self-center rounded-lg bg-primary px-6 text-sm font-medium text-white">
+      <button type="button" onClick={onDone} data-testid="radio-live-done" className="min-h-11 self-center rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-6 text-sm font-medium text-white">
         {t('done')}
       </button>
     </div>

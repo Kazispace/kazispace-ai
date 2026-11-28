@@ -51,14 +51,14 @@ export function SerialStorylineScreen({ locale, storylineId }: { locale: string;
     };
   }, [locale, storylineId, ready, authenticated, attempt]);
 
-  const back = <BackLink href={radioHomeHref(locale)} label={tStudio('sections.radio')} />;
+  const back = <BackLink tone="radio" href={radioHomeHref(locale)} label={tStudio('sections.radio')} />;
 
   if (load.state === 'loading') {
     return (
       <PlayerShell back={back} title="">
         <div aria-busy="true" className="flex flex-col gap-2">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-14 animate-pulse rounded-lg bg-gray-100" />
+            <div key={i} className="h-14 animate-pulse rounded-lg bg-radio-surface-raised" />
           ))}
         </div>
       </PlayerShell>
@@ -68,13 +68,13 @@ export function SerialStorylineScreen({ locale, storylineId }: { locale: string;
     return (
       <PlayerShell back={back} title="">
         <div data-testid="radio-storyline-missing" className="flex flex-col items-start gap-3 py-6">
-          <p className="text-sm text-workspace-secondary">{load.state === 'missing' ? t('serial.missing') : t('offline')}</p>
+          <p className="text-sm text-radio-secondary">{load.state === 'missing' ? t('serial.missing') : t('offline')}</p>
           {load.state === 'error' ? (
-            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm">
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-radio-surface-raised px-3 py-1.5 text-sm">
               {tStates('retry')}
             </button>
           ) : (
-            <Link href={radioHomeHref(locale)} className="text-sm text-primary underline">
+            <Link href={radioHomeHref(locale)} className="text-sm text-radio-progress underline">
               {t('summary.home')}
             </Link>
           )}
@@ -90,12 +90,12 @@ export function SerialStorylineScreen({ locale, storylineId }: { locale: string;
   const seasons = Array.from(new Set(line.episode_list.map((e) => e.season)));
   return (
     <PlayerShell back={back} title={line.title}>
-      {line.synopsis ? <p className="text-sm text-workspace-secondary">{line.synopsis}</p> : null}
+      {line.synopsis ? <p className="text-sm text-radio-secondary">{line.synopsis}</p> : null}
       {here ? (
         <Link
           href={radioEpisodeHref(locale, line.storyline_id, here.program_id)}
           data-testid="radio-storyline-continue"
-          className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-primary px-4 text-sm text-white"
+          className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-4 text-sm text-white"
         >
           {t('serial.continueEpisode', { season: here.season, episode: here.episode })}
         </Link>
@@ -103,17 +103,17 @@ export function SerialStorylineScreen({ locale, storylineId }: { locale: string;
         <Link
           href={radioEpisodeHref(locale, line.storyline_id, first.program_id)}
           data-testid="radio-storyline-start"
-          className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-primary px-4 text-sm text-white"
+          className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-4 text-sm text-white"
         >
           {t('serial.start')}
         </Link>
       ) : (
-        <p className="mt-4 text-sm text-workspace-secondary">{t('serial.empty')}</p>
+        <p className="mt-4 text-sm text-radio-secondary">{t('serial.empty')}</p>
       )}
       {seasons.map((season) => (
         <section key={season} className="mt-6" data-testid="radio-season">
           {seasons.length > 1 ? (
-            <h2 className="mb-2 text-sm font-semibold text-workspace-secondary">{t('serial.season', { season })}</h2>
+            <h2 className="mb-2 text-sm font-semibold text-radio-secondary">{t('serial.season', { season })}</h2>
           ) : null}
           <ol className="flex flex-col gap-2">
             {line.episode_list
@@ -128,16 +128,16 @@ export function SerialStorylineScreen({ locale, storylineId }: { locale: string;
                       aria-current={current ? 'true' : undefined}
                       className={
                         current
-                          ? 'block rounded-xl border border-primary bg-primary/5 p-3'
-                          : 'block rounded-xl border border-gray-200 bg-white p-3 hover:border-primary'
+                          ? 'block rounded-xl border border-radio-ring bg-radio-surface-raised p-3'
+                          : 'block rounded-xl border border-radio-surface-raised bg-radio-surface p-3 hover:border-radio-ring'
                       }
                     >
-                      <p className="text-xs text-workspace-muted">
+                      <p className="text-xs text-radio-muted">
                         {t('serial.episodeNumber', { season: e.season, episode: e.episode })}
-                        {current ? <span className="ml-2 font-medium text-primary">{t('serial.current')}</span> : null}
+                        {current ? <span className="ml-2 font-medium text-radio-progress">{t('serial.current')}</span> : null}
                       </p>
-                      <h3 className="text-base font-semibold text-workspace-text">{e.title}</h3>
-                      <p className="mt-1 flex gap-1 text-xs text-workspace-secondary">
+                      <h3 className="text-base font-semibold text-radio-text">{e.title}</h3>
+                      <p className="mt-1 flex gap-1 text-xs text-radio-secondary">
                         {e.duration_ms ? <span>{t('home.minutes', { n: radioMinutes(e.duration_ms) })}</span> : null}
                         <span>{e.band}</span>
                       </p>

@@ -86,14 +86,14 @@ export function RadioReplayScreen({ locale, saveId }: { locale: string; saveId: 
     trackRadioEvent('replay', { saveId }, { node_id: nodeId, seq });
   };
 
-  const back = <BackLink href={radioHomeHref(locale)} label={tStudio('sections.radio')} />;
+  const back = <BackLink tone="radio" href={radioHomeHref(locale)} label={tStudio('sections.radio')} />;
 
   if (load.state === 'loading') {
     return (
       <PlayerShell back={back} title={t('replay.title')}>
         <div aria-busy="true" className="flex flex-col gap-2" data-testid="radio-replay-loading">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-16 animate-pulse rounded-lg bg-gray-100" />
+            <div key={i} className="h-16 animate-pulse rounded-lg bg-radio-surface-raised" />
           ))}
         </div>
       </PlayerShell>
@@ -103,13 +103,13 @@ export function RadioReplayScreen({ locale, saveId }: { locale: string; saveId: 
     return (
       <PlayerShell back={back} title={t('replay.title')}>
         <div data-testid="radio-replay-missing" className="flex flex-col items-start gap-3 py-6">
-          <p className="text-sm text-workspace-secondary">{load.state === 'missing' ? t('contentMissing') : t('offline')}</p>
+          <p className="text-sm text-radio-secondary">{load.state === 'missing' ? t('contentMissing') : t('offline')}</p>
           {load.state === 'error' ? (
-            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm">
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-radio-surface-raised px-3 py-1.5 text-sm">
               {tStates('retry')}
             </button>
           ) : (
-            <Link href={radioHomeHref(locale)} className="text-sm text-primary underline">
+            <Link href={radioHomeHref(locale)} className="text-sm text-radio-progress underline">
               {t('summary.home')}
             </Link>
           )}
@@ -127,10 +127,10 @@ export function RadioReplayScreen({ locale, saveId }: { locale: string; saveId: 
             key={step.step}
             data-testid="radio-replay-step"
             data-undone={step.undone ? 'true' : undefined}
-            className={cn('rounded-xl border border-gray-200 p-3', step.undone && 'opacity-50')}
+            className={cn('rounded-xl border border-radio-surface-raised p-3', step.undone && 'opacity-50')}
           >
             {step.undone ? (
-              <p className="mb-2 text-xs font-medium text-workspace-muted" data-testid="radio-replay-undone">
+              <p className="mb-2 text-xs font-medium text-radio-muted" data-testid="radio-replay-undone">
                 {t('replay.undone')}
               </p>
             ) : null}
@@ -145,20 +145,20 @@ export function RadioReplayScreen({ locale, saveId }: { locale: string; saveId: 
                         onClick={() => play(key, seg.audio_url as string, step.node_id, seg.seq)}
                         aria-label={t('replay.play')}
                         data-testid="radio-replay-play"
-                        className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-gray-200 text-workspace-secondary hover:bg-gray-50"
+                        className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-radio-surface-raised text-radio-secondary hover:bg-radio-surface-raised"
                       >
                         {playing === key ? <Pause className="h-3.5 w-3.5" aria-hidden /> : <Play className="h-3.5 w-3.5" aria-hidden />}
                       </button>
                     ) : (
                       <span className="h-7 w-7 shrink-0" aria-hidden />
                     )}
-                    <span className="text-sm leading-relaxed text-workspace-text">{seg.text}</span>
+                    <span className="text-sm leading-relaxed text-radio-text">{seg.text}</span>
                   </li>
                 );
               })}
             </ul>
             {step.chosen?.label ? (
-              <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-workspace-secondary" data-testid="radio-replay-chosen">
+              <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-radio-secondary" data-testid="radio-replay-chosen">
                 <span>
                   {step.chosen.key
                     ? t('replay.youChose', { key: step.chosen.key, label: step.chosen.label })
@@ -166,7 +166,7 @@ export function RadioReplayScreen({ locale, saveId }: { locale: string; saveId: 
                       t('replay.youChose', { key: '', label: step.chosen.label }).replace(/\s+([：:])/, '$1')}
                 </span>
                 {step.chosen.via ? (
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs">
+                  <span className="rounded-full bg-radio-surface-raised px-2 py-0.5 text-xs">
                     {step.chosen.via === 'voice' ? t('replay.viaVoice') : t('replay.viaTap')}
                   </span>
                 ) : null}

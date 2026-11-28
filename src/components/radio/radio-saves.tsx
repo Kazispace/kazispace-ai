@@ -30,17 +30,17 @@ export function SaveMenu({ save, locale, onDelete }: { save: RadioSaveSummary; l
         aria-haspopup="menu"
         aria-expanded={open}
         data-testid="radio-save-more"
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full text-workspace-secondary hover:bg-gray-100"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-full text-radio-secondary hover:bg-radio-surface-raised"
       >
         <MoreHorizontal className="h-5 w-5" aria-hidden />
       </button>
       {open ? (
-        <div role="menu" className="absolute right-0 z-20 mt-1 w-32 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+        <div role="menu" className="absolute right-0 z-20 mt-1 w-32 rounded-xl border border-radio-surface-raised bg-radio-surface py-1 shadow-lg">
           <Link
             role="menuitem"
             href={radioReplayHref(locale, save.save_id)}
             data-testid="radio-save-replay"
-            className="block px-4 py-2 text-sm text-workspace-text hover:bg-gray-50"
+            className="block px-4 py-2 text-sm text-radio-text hover:bg-radio-surface-raised"
           >
             {t('replay')}
           </Link>
@@ -52,7 +52,7 @@ export function SaveMenu({ save, locale, onDelete }: { save: RadioSaveSummary; l
               onDelete(save);
             }}
             data-testid="radio-save-delete"
-            className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+            className="block w-full px-4 py-2 text-left text-sm text-radio-recording-ring hover:bg-radio-surface-raised"
           >
             {t('delete')}
           </button>
@@ -108,14 +108,14 @@ export function DeleteSaveDialog({
         aria-modal="true"
         aria-describedby="radio-delete-text"
         data-testid="radio-delete-dialog"
-        className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+        className="w-full max-w-sm rounded-2xl bg-radio-surface p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <p id="radio-delete-text" className="text-sm text-workspace-text">
+        <p id="radio-delete-text" className="text-sm text-radio-text">
           {t('home.deleteConfirm', { title: save.title })}
         </p>
         <div className="mt-4 flex gap-2">
-          <button type="button" disabled={busy} onClick={onCancel} className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:opacity-50">
+          <button type="button" disabled={busy} onClick={onCancel} className="flex-1 rounded-lg border border-radio-surface-raised px-3 py-2 text-sm disabled:opacity-50">
             {t('cancel')}
           </button>
           <button
@@ -123,7 +123,7 @@ export function DeleteSaveDialog({
             disabled={busy}
             onClick={() => void run()}
             data-testid="radio-delete-confirm"
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 disabled:opacity-70"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-radio-recording-ring px-3 py-2 text-sm font-medium text-radio-recording-ring disabled:opacity-70"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
             {t('home.delete')}
@@ -173,7 +173,7 @@ export function ListenedSection({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         data-testid="radio-history-toggle"
-        className="flex items-center gap-1 self-start text-sm font-semibold text-workspace-muted"
+        className="flex items-center gap-1 self-start text-sm font-semibold text-radio-muted"
       >
         {t('home.history')}
         <ChevronDown className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} aria-hidden />
@@ -181,24 +181,24 @@ export function ListenedSection({
       {open ? (
         failed ? (
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-workspace-secondary">{t('offline')}</span>
-            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-gray-300 px-3 py-1.5">
+            <span className="text-radio-secondary">{t('offline')}</span>
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-radio-surface-raised px-3 py-1.5">
               {tStates('retry')}
             </button>
           </div>
         ) : saves === null ? (
-          <div className="h-14 animate-pulse rounded-xl bg-gray-100" aria-busy="true" />
+          <div className="h-14 animate-pulse rounded-xl bg-radio-surface-raised" aria-busy="true" />
         ) : (
           saves.map((save) => (
             <article
               key={save.save_id}
               data-testid="radio-history-item"
-              className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4"
+              className="flex items-center justify-between gap-3 rounded-xl border border-radio-surface-raised bg-radio-surface p-4"
             >
               <div className="min-w-0">
-                <h3 className="truncate text-sm font-semibold text-workspace-text">{save.title}</h3>
+                <h3 className="truncate text-sm font-semibold text-radio-text">{save.title}</h3>
                 {save.status === 'overwritten' ? (
-                  <p className="mt-0.5 text-xs text-workspace-muted" data-testid="radio-history-overwritten">
+                  <p className="mt-0.5 text-xs text-radio-muted" data-testid="radio-history-overwritten">
                     {t('home.overwritten')}
                   </p>
                 ) : null}

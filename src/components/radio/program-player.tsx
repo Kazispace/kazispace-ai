@@ -571,9 +571,9 @@ export function ProgramPlayerScreen({
   }, []);
 
   const back = storylineId ? (
-    <BackLink href={radioStorylineHref(locale, storylineId)} label={t('serial.allEpisodes')} />
+    <BackLink tone="radio" href={radioStorylineHref(locale, storylineId)} label={t('serial.allEpisodes')} />
   ) : (
-    <BackLink href={radioHomeHref(locale)} label={tStudio('sections.radio')} />
+    <BackLink tone="radio" href={radioHomeHref(locale)} label={tStudio('sections.radio')} />
   );
   const exitHref = storylineId ? radioStorylineHref(locale, storylineId) : radioHomeHref(locale);
 
@@ -582,7 +582,7 @@ export function ProgramPlayerScreen({
       <PlayerShell back={back} title="" aigcLabel={aigcLabel}>
         <div aria-busy="true" className="flex flex-col gap-2">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-10 animate-pulse rounded-lg bg-gray-100" />
+            <div key={i} className="h-10 animate-pulse rounded-lg bg-radio-surface-raised" />
           ))}
         </div>
       </PlayerShell>
@@ -592,13 +592,13 @@ export function ProgramPlayerScreen({
     return (
       <PlayerShell back={back} title="" aigcLabel={aigcLabel}>
         <div data-testid="radio-program-missing" className="flex flex-col items-start gap-3 py-6">
-          <p className="text-sm text-workspace-secondary">{load.state === 'missing' ? t('contentMissing') : t('offline')}</p>
+          <p className="text-sm text-radio-secondary">{load.state === 'missing' ? t('contentMissing') : t('offline')}</p>
           {load.state === 'error' ? (
-            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm">
+            <button type="button" onClick={() => setAttempt((n) => n + 1)} className="rounded-lg border border-radio-surface-raised px-3 py-1.5 text-sm">
               {tStates('retry')}
             </button>
           ) : (
-            <Link href={exitHref} className="text-sm text-primary underline">
+            <Link href={exitHref} className="text-sm text-radio-progress underline">
               {storylineId ? t('serial.allEpisodes') : t('summary.home')}
             </Link>
           )}
@@ -608,19 +608,24 @@ export function ProgramPlayerScreen({
   }
 
   const { program } = load;
+  // Player · Now playing (Personal radio 0.35): an episode says which one it is; a programme has its cover only.
+  const nowPlaying = load.episode
+    ? { kind: 'serial' as const, detail: t('serial.episodeNumber', { season: load.episode.season, episode: load.episode.episode }) }
+    : { kind: 'program' as const };
   const platform =
     typeof navigator !== 'undefined'
       ? blockedHelpPlatform(navigator.userAgent, { telegram: isTelegramWebApp(), maxTouchPoints: navigator.maxTouchPoints })
       : 'desktop';
   return (
     <div className="h-full">
-      <ListeningIndicator on={mic.state === 'recording'} />
       <PlayerShell
         back={back}
         aigcLabel={aigcLabel}
         title={program.title ?? ''}
+        nowPlaying={nowPlaying}
         footer={
           <div className="flex flex-col items-center gap-3">
+            <ListeningIndicator on={mic.state === 'recording'} />
             {!regionOff ? (
               <MicButton
                 state={micButtonState({ mic: mic.state, inFlight, unavailable: blocked || noDevice })}
@@ -661,10 +666,10 @@ export function ProgramPlayerScreen({
           </div>
         }
       >
-        {program.series ? <p className="mb-2 text-xs text-workspace-muted">{program.series}</p> : null}
+        {program.series ? <p className="mb-2 text-xs text-radio-muted">{program.series}</p> : null}
         {episode ? (
           <div className="mb-3 flex flex-col gap-2">
-            <p className="text-xs text-workspace-muted" data-testid="radio-episode-number">
+            <p className="text-xs text-radio-muted" data-testid="radio-episode-number">
               {t('serial.episodeNumber', { season: episode.season, episode: episode.episode })}
             </p>
             <div role="radiogroup" aria-label={t('serial.mode.label')} className="flex flex-wrap gap-2" data-testid="radio-serial-modes">
@@ -680,19 +685,19 @@ export function ProgramPlayerScreen({
                   data-testid={`radio-serial-mode-${m}`}
                   className={
                     m === episode.mode
-                      ? 'min-h-9 rounded-full bg-primary px-3 text-sm text-white'
-                      : 'min-h-9 rounded-full border border-gray-300 bg-white px-3 text-sm text-workspace-text disabled:opacity-50'
+                      ? 'min-h-9 rounded-full bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-3 text-sm text-white'
+                      : 'min-h-9 rounded-full border border-radio-surface-raised bg-radio-surface px-3 text-sm text-radio-text disabled:opacity-50'
                   }
                 >
                   {t(`serial.mode.${m}`)}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-workspace-muted">{t(`serial.mode.${episode.mode}Hint`)}</p>
+            <p className="text-xs text-radio-muted">{t(`serial.mode.${episode.mode}Hint`)}</p>
           </div>
         ) : null}
         {care ? (
-          <div role="status" data-testid="radio-paused" className="mb-3 rounded-xl bg-gray-100 p-3 text-sm">
+          <div role="status" data-testid="radio-paused" className="mb-3 rounded-xl bg-radio-surface-raised p-3 text-sm">
             {t('notice.paused')}
           </div>
         ) : null}
@@ -703,7 +708,7 @@ export function ProgramPlayerScreen({
               type="button"
               onClick={skipCommentary}
               data-testid="radio-skip-commentary"
-              className="min-h-9 rounded-full border border-gray-300 bg-white px-3 text-sm text-workspace-text shadow-sm"
+              className="min-h-9 rounded-full border border-radio-surface-raised bg-radio-surface px-3 text-sm text-radio-text shadow-sm"
             >
               {t('serial.skipCommentary')}
             </button>
@@ -732,11 +737,11 @@ export function ProgramPlayerScreen({
         <VoiceLine text={line?.text ?? null} />
         {failed ? (
           <div className="mt-3 flex items-center gap-3 text-sm" data-testid="radio-ask-failed">
-            <span className="text-red-700">{tStates('notSent')}</span>
+            <span className="text-radio-recording-ring">{tStates('notSent')}</span>
             <button
               type="button"
               onClick={() => void runAsk(failed.post, failed.spoken, failed.requestId)}
-              className="rounded-lg border border-gray-300 px-3 py-1.5"
+              className="rounded-lg border border-radio-surface-raised px-3 py-1.5"
             >
               {tStates('retry')}
             </button>
@@ -751,12 +756,12 @@ export function ProgramPlayerScreen({
               <Link
                 href={radioEpisodeHref(locale, storylineId, episode.next_program_id)}
                 data-testid="radio-next-episode"
-                className="rounded-lg bg-primary px-4 py-2 text-sm text-white"
+                className="rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-4 py-2 text-sm text-white"
               >
                 {t('serial.nextEpisode')}
               </Link>
             ) : null}
-            <Link href={exitHref} className="rounded-lg border border-gray-300 px-4 py-2 text-sm">
+            <Link href={exitHref} className="rounded-lg border border-radio-surface-raised px-4 py-2 text-sm">
               {storylineId ? t('serial.allEpisodes') : t('summary.home')}
             </Link>
           </div>

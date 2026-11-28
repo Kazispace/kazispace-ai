@@ -82,11 +82,11 @@ export function RadioRating({
   const btn = (on: boolean) =>
     cn(
       'inline-flex min-h-11 items-center gap-2 rounded-lg border px-4 py-2 text-sm',
-      on ? 'border-primary bg-primary/5 text-workspace-text' : 'border-gray-300 text-workspace-secondary hover:border-gray-400'
+      on ? 'border-radio-ring bg-radio-surface-raised text-radio-text' : 'border-radio-surface-raised text-radio-secondary hover:border-radio-ring'
     );
   return (
     <section className="mt-4" data-testid="radio-rating" data-kind={kind}>
-      <p className="text-sm font-medium text-workspace-text" data-testid="radio-rating-prompt">
+      <p className="text-sm font-medium text-radio-text" data-testid="radio-rating-prompt">
         {rated ? t('thanks') : t('question')}
       </p>
       <div className="mt-2 flex gap-2">
@@ -101,7 +101,7 @@ export function RadioRating({
       </div>
       {state.rating === 'down' ? (
         <div className="mt-3" data-testid="radio-rating-reasons">
-          <p className="text-xs text-workspace-secondary">{t('reasonsTitle')}</p>
+          <p className="text-xs text-radio-secondary">{t('reasonsTitle')}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {RADIO_RATING_REASONS.map((r) => (
               <button
@@ -112,7 +112,7 @@ export function RadioRating({
                 data-reason={r}
                 className={cn(
                   'min-h-9 rounded-full border px-3 py-1 text-xs',
-                  state.reasons.includes(r) ? 'border-primary bg-primary/5 text-workspace-text' : 'border-gray-200 text-workspace-secondary'
+                  state.reasons.includes(r) ? 'border-radio-ring bg-radio-surface-raised text-radio-text' : 'border-radio-surface-raised text-radio-secondary'
                 )}
               >
                 {t(`reason.${REASON_KEY[r]}`)}

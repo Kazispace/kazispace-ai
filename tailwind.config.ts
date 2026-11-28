@@ -112,6 +112,29 @@ const config: Config = {
           input: t('color.bg.surface'),
           accent: t('color.action.primary'),
         },
+        /**
+         * KAZI-1512 (kazispace-ui D48, Personal radio 0.35 "Look"): Radio's own dark look, on every Radio
+         * screen whatever the system appearance. Only Radio screens use these; the tab bar, the rail and
+         * every other destination keep the colours above.
+         */
+        radio: {
+          'bg-top': t('color.radio.bg-top'),
+          'bg-bottom': t('color.radio.bg-bottom'),
+          surface: t('color.radio.surface'),
+          'surface-raised': t('color.radio.surface-raised'),
+          bar: t('color.radio.bar'),
+          text: t('color.radio.text-primary'),
+          secondary: t('color.radio.text-secondary'),
+          muted: t('color.radio.text-muted'),
+          'accent-start': t('color.radio.accent-start'),
+          'accent-end': t('color.radio.accent-end'),
+          'on-accent': t('color.radio.on-accent'),
+          ring: t('color.radio.accent-ring'),
+          progress: t('color.radio.progress-fill'),
+          recording: t('color.radio.recording'),
+          'recording-ring': t('color.radio.recording-ring'),
+          now: t('color.radio.now-playing'),
+        },
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],

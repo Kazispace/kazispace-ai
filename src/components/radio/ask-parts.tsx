@@ -25,8 +25,8 @@ export function AnswerCaptions({ sentences, activeIndex }: { sentences: Playable
         <li
           key={`${s.seq}-${i}`}
           className={cn(
-            'rounded-lg border-l-4 border-primary/40 px-3 py-2 text-base leading-relaxed',
-            i === activeIndex ? 'bg-primary/10 text-workspace-text' : 'text-workspace-secondary'
+            'rounded-lg border-l-4 border-radio-ring px-3 py-2 text-base leading-relaxed',
+            i === activeIndex ? 'bg-radio-surface-raised text-radio-text' : 'text-radio-secondary'
           )}
         >
           {s.text}
@@ -43,13 +43,13 @@ export function AnswerCaptions({ sentences, activeIndex }: { sentences: Playable
 export function CareCard({ notice, onKeepListening, onClose }: { notice: RadioNotice; onKeepListening: () => void; onClose: () => void }) {
   const t = useTranslations('radio.notice');
   return (
-    <div role="alertdialog" aria-live="assertive" data-testid="radio-care" className="mt-4 rounded-xl border border-gray-300 bg-white p-4 text-sm text-workspace-text shadow-sm">
+    <div role="alertdialog" aria-live="assertive" data-testid="radio-care" className="mt-4 rounded-xl border border-radio-surface-raised bg-radio-surface p-4 text-sm text-radio-text shadow-sm">
       <p className="whitespace-pre-line">{notice.text}</p>
       <div className="mt-3 flex gap-2">
-        <button type="button" onClick={onKeepListening} className="flex-1 rounded-lg border border-gray-300 px-3 py-2">
+        <button type="button" onClick={onKeepListening} className="flex-1 rounded-lg border border-radio-surface-raised px-3 py-2">
           {t('keepListening')}
         </button>
-        <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-gray-300 px-3 py-2">
+        <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-radio-surface-raised px-3 py-2">
           {t('close')}
         </button>
       </div>
@@ -85,7 +85,7 @@ export function NoticeCard({ notice, onClose }: { notice: RadioNotice; onClose: 
 export function VoiceLine({ text }: { text: string | null }) {
   if (!text) return null;
   return (
-    <p role="status" data-testid="radio-voice-line" className="mt-4 text-sm text-workspace-secondary">
+    <p role="status" data-testid="radio-voice-line" className="mt-4 text-sm text-radio-secondary">
       {text}
     </p>
   );

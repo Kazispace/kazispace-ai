@@ -114,11 +114,14 @@ describe('Radio home', () => {
   });
 
   it('stories in progress are listed under Continue listening, each opening its player', async () => {
-    m.home.mockResolvedValue({ success: true, data: { ...HOME, continue_listening: [SAVE] } });
+    // KAZI-1512: the most recent one is in the resume bar instead, so Continue listening lists the others.
+    const NEWER = { ...SAVE, save_id: 'sv2', title: 'Newer story', updated_at: '2026-11-04T12:00:00Z' };
+    m.home.mockResolvedValue({ success: true, data: { ...HOME, continue_listening: [SAVE, NEWER] } });
     await home();
     const card = q('radio-continue-card');
     expect(card?.textContent).toContain('Old story');
     expect(card?.querySelector('a')?.getAttribute('href')).toBe('/zh/radio/story/sv1');
+    expect(q('radio-resume-bar')?.getAttribute('href')).toBe('/zh/radio/story/sv2');
   });
 
   it('first visit with no level: asks once, saves the tapped level and shows the home', async () => {

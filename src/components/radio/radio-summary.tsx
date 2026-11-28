@@ -124,17 +124,17 @@ export function EndingSummary({
     router.push(res.success && res.data?.save_id ? radioStoryHref(locale, res.data.save_id) : radioHomeHref(locale));
   };
 
-  const btn = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm';
+  const btn = 'inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-radio-surface-raised px-4 py-2 text-sm';
   return (
-    <section className="mt-6 rounded-xl border border-gray-200 p-4" data-testid="radio-ending">
+    <section className="mt-6 rounded-xl border border-radio-surface-raised p-4" data-testid="radio-ending">
       {endingTitle ? (
-        <p className="mb-3 text-base font-semibold text-workspace-text" data-testid="radio-summary-ending">
+        <p className="mb-3 text-base font-semibold text-radio-text" data-testid="radio-summary-ending">
           {t('ending', { name: endingTitle })}
         </p>
       ) : null}
       {phrases.length ? (
         <div>
-          <h2 className="text-sm font-semibold text-workspace-text">{t('phrases')}</h2>
+          <h2 className="text-sm font-semibold text-radio-text">{t('phrases')}</h2>
           <ul className="mt-2 flex flex-wrap gap-2" data-testid="radio-summary-phrases">
             {phrases.map((g) => (
               <li key={g.term}>
@@ -142,7 +142,7 @@ export function EndingSummary({
                   type="button"
                   onClick={() => setOpen(open === g.term ? null : g.term)}
                   aria-expanded={open === g.term}
-                  className="rounded-full border border-gray-200 px-3 py-1 text-sm hover:border-primary"
+                  className="rounded-full border border-radio-surface-raised px-3 py-1 text-sm hover:border-radio-ring"
                 >
                   {g.term}
                 </button>
@@ -150,7 +150,7 @@ export function EndingSummary({
             ))}
           </ul>
           {open ? (
-            <p className="mt-2 text-sm text-workspace-secondary" data-testid="radio-summary-meaning">
+            <p className="mt-2 text-sm text-radio-secondary" data-testid="radio-summary-meaning">
               {phrases.find((g) => g.term === open)?.gloss ?? ''}
             </p>
           ) : null}
@@ -167,7 +167,7 @@ export function EndingSummary({
             {t('next')}
           </button>
         ) : null}
-        <Link href={radioHomeHref(locale)} className="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white" data-testid="radio-summary-home">
+        <Link href={radioHomeHref(locale)} className="inline-flex min-h-11 items-center rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-4 py-2 text-sm font-medium text-white" data-testid="radio-summary-home">
           {t('home')}
         </Link>
       </div>

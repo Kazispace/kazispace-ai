@@ -7,6 +7,8 @@ import { Pause, Play, RotateCcw } from 'lucide-react';
 import type { PlayableSentence, PlayerSpeed } from '@/hooks/use-sentence-player';
 import type { RadioGlossaryItem } from '@/types/radio';
 import { clampSpeed, SPEED_MAX, SPEED_MIN, SPEED_STEP } from '@/lib/radio/settings';
+import { RadioCover, type RadioCoverKind } from '@/components/radio/radio-cover';
+import { RADIO_PAGE } from '@/lib/radio/theme';
 import { cn } from '@/lib/utils';
 
 type Piece = { text: string; term?: RadioGlossaryItem };
@@ -127,14 +129,14 @@ export function Captions({
           }
           className={cn(
             'select-none rounded-lg px-3 py-2 text-base leading-relaxed transition-colors [-webkit-touch-callout:none]',
-            i === activeIndex ? 'bg-primary/10 text-workspace-text' : i < activeIndex ? 'text-workspace-secondary' : 'text-workspace-muted',
+            i === activeIndex ? 'bg-radio-surface-raised text-radio-text' : i < activeIndex ? 'text-radio-secondary' : 'text-radio-muted',
             // KAZI-1455: the host's commentary and the recap are set apart from the story text.
-            s.tone ? 'border-l-2 border-primary/40 pl-3 text-sm' : null
+            s.tone ? 'border-l-2 border-radio-ring pl-3 text-sm' : null
           )}
           data-tone={s.tone}
         >
           {s.tone ? (
-            <span className="mb-0.5 block text-xs font-medium text-workspace-muted">
+            <span className="mb-0.5 block text-xs font-medium text-radio-muted">
               {tRadio(s.tone === 'recap' ? 'serial.recapLabel' : 'serial.commentaryLabel')}
             </span>
           ) : null}
@@ -160,14 +162,14 @@ export function Captions({
                 )
               )
             : s.text}
-          {s.pending && !s.audioUrl ? <span className="ml-1 text-workspace-muted">…</span> : null}
+          {s.pending && !s.audioUrl ? <span className="ml-1 text-radio-muted">…</span> : null}
           {bubble?.index === i ? (
-            <div role="dialog" aria-label={bubble.term.term} className="mt-2 rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-sm" data-testid="radio-phrase-bubble">
-              <p className="font-medium text-workspace-text">
+            <div role="dialog" aria-label={bubble.term.term} className="mt-2 rounded-lg border border-radio-surface-raised bg-radio-surface p-3 text-sm shadow-sm" data-testid="radio-phrase-bubble">
+              <p className="font-medium text-radio-text">
                 {bubble.term.term}
-                {bubble.term.cefr ? <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-workspace-secondary">{bubble.term.cefr}</span> : null}
+                {bubble.term.cefr ? <span className="ml-2 rounded bg-radio-surface-raised px-1.5 py-0.5 text-xs text-radio-secondary">{bubble.term.cefr}</span> : null}
               </p>
-              {bubble.term.gloss ? <p className="mt-1 text-workspace-secondary">{bubble.term.gloss}</p> : null}
+              {bubble.term.gloss ? <p className="mt-1 text-radio-secondary">{bubble.term.gloss}</p> : null}
               <div className="mt-2 flex gap-2">
                 {onExplain ? (
                   <button
@@ -178,12 +180,12 @@ export function Captions({
                       onExplain(i);
                     }}
                     data-testid="radio-phrase-explain"
-                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+                    className="rounded-lg border border-radio-surface-raised px-3 py-1.5 text-sm disabled:opacity-50"
                   >
                     {t('explain')}
                   </button>
                 ) : null}
-                <button type="button" onClick={() => setBubble(null)} className="rounded-lg px-2 py-1.5 text-sm text-workspace-muted">
+                <button type="button" onClick={() => setBubble(null)} className="rounded-lg px-2 py-1.5 text-sm text-radio-muted">
                   {tRadio('notice.close')}
                 </button>
               </div>
@@ -201,7 +203,7 @@ export function Captions({
                   onExplain(i);
                 }}
                 data-testid="radio-explain"
-                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-workspace-text shadow-sm disabled:opacity-50"
+                className="rounded-lg border border-radio-surface-raised bg-radio-surface px-3 py-1.5 text-sm text-radio-text shadow-sm disabled:opacity-50"
               >
                 {t('explain')}
               </button>
@@ -209,7 +211,7 @@ export function Captions({
                 type="button"
                 role="menuitem"
                 onClick={() => setMenuAt(null)}
-                className="rounded-lg px-2 py-1.5 text-sm text-workspace-muted"
+                className="rounded-lg px-2 py-1.5 text-sm text-radio-muted"
               >
                 {tRadio('cancel')}
               </button>
@@ -263,7 +265,7 @@ export function SpeedSlider({
   const at = level != null ? (clampSpeed(level) - SPEED_MIN) / (SPEED_MAX - SPEED_MIN) : null;
   const side = level == null || value === level ? 'at' : value > level ? 'above' : 'below';
   return (
-    <label className="flex w-full max-w-xs flex-col items-center gap-1 text-sm text-gray-700">
+    <label className="flex w-full max-w-xs flex-col items-center gap-1 text-sm text-radio-secondary">
       <span data-testid="radio-speed-label">{label}</span>
       <span className="relative block w-full pb-5">
       <input
@@ -294,13 +296,13 @@ export function SpeedSlider({
           data-level={level}
           data-side={side}
         >
-          <span className="h-5 w-0.5 rounded bg-gray-500" aria-hidden />
-          <span className="mt-0.5 whitespace-nowrap text-xs text-gray-500">{t('speedLevel', { rate: speedLabel(level) })}</span>
+          <span className="h-5 w-0.5 rounded bg-radio-muted" aria-hidden />
+          <span className="mt-0.5 whitespace-nowrap text-xs text-radio-secondary">{t('speedLevel', { rate: speedLabel(level) })}</span>
         </span>
       ) : null}
       </span>
       {hint ? (
-        <span className="text-xs text-gray-500" data-testid="radio-speed-hint">
+        <span className="text-xs text-radio-secondary" data-testid="radio-speed-hint">
           {hint}
         </span>
       ) : null}
@@ -336,7 +338,7 @@ export function PlayerControls({
 }) {
   const t = useTranslations('radio.player');
   const btn =
-    'inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-gray-200 bg-white px-3 text-sm hover:bg-gray-50 disabled:opacity-50';
+    'inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-radio-surface-raised bg-radio-surface px-3 text-sm hover:bg-radio-surface-raised disabled:opacity-50';
   return (
     <div className="flex flex-col items-center gap-3" data-testid="radio-controls">
       <div className="flex items-center justify-center gap-3">
@@ -345,7 +347,7 @@ export function PlayerControls({
         </button>
         <button
           type="button"
-          className={cn(btn, 'h-14 w-14 bg-primary text-white hover:bg-primary/90')}
+          className={cn(btn, 'h-14 w-14 bg-radio-surface-raised text-radio-text')}
           onClick={playing ? onPause : onPlay}
           disabled={disabled}
           aria-label={playing ? t('pause') : t('play')}
@@ -374,6 +376,7 @@ export function PlayerShell({
   children,
   footer,
   aigcLabel,
+  nowPlaying,
 }: {
   back: React.ReactNode;
   title: string;
@@ -386,23 +389,43 @@ export function PlayerShell({
   action?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  /**
+   * KAZI-1512 (Personal radio 0.35, Player · Now playing): the cover and how far in, beside the title. Leave it
+   * out on screens that are not playing (settings, replay, a serial story's page).
+   */
+  nowPlaying?: { kind: RadioCoverKind; detail?: string | null } | null;
 }) {
   return (
-    <div className="flex h-full flex-col bg-white" data-testid="radio-player">
+    <div className={cn('flex h-full flex-col', RADIO_PAGE)} data-testid="radio-player">
       <div className="mx-auto w-full max-w-2xl px-4 pt-2">{back}</div>
       <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 pb-2">
-        <h1 className="text-lg font-semibold text-kazi-navy" data-testid="radio-title">
-          {title}
-        </h1>
+        <div className="flex min-w-0 items-center gap-3" data-testid={nowPlaying ? 'radio-now-playing' : undefined}>
+          {nowPlaying ? <RadioCover kind={nowPlaying.kind} size={64} /> : null}
+          <div className="min-w-0">
+            <h1 className="text-lg font-semibold text-radio-text" data-testid="radio-title">
+              {title}
+            </h1>
+            {nowPlaying?.detail ? (
+              <p className="text-xs text-radio-muted" data-testid="radio-now-playing-detail">
+                {nowPlaying.detail}
+              </p>
+            ) : null}
+          </div>
+        </div>
         {action}
       </div>
       {aigcLabel ? (
-        <p className="mx-auto w-full max-w-2xl px-4 pb-2 text-xs text-workspace-muted" data-testid="radio-aigc-label">
+        <p className="mx-auto w-full max-w-2xl px-4 pb-2 text-xs text-radio-muted" data-testid="radio-aigc-label">
           {aigcLabel}
         </p>
       ) : null}
       <main className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-4 pb-4">{children}</main>
-      {footer ? <div className="mx-auto w-full max-w-2xl border-t border-gray-100 px-4 py-3">{footer}</div> : null}
+      {/* The microphone's reserved space (Look · Space for the microphone): above the bottom safe area, never in it. */}
+      {footer ? (
+        <div className="mx-auto w-full max-w-2xl px-4 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] pt-3" data-testid="radio-player-footer">
+          {footer}
+        </div>
+      ) : null}
     </div>
   );
 }

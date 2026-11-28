@@ -95,8 +95,8 @@ export function LiveSection({ locale, onRadioClosed }: { locale: string; onRadio
     return (
       <Frame t={t}>
         <div aria-busy="true" data-testid="radio-live-loading" className="flex flex-col gap-2">
-          <div className="h-10 animate-pulse rounded-lg bg-gray-100" />
-          <div className="h-16 animate-pulse rounded-xl bg-gray-100" />
+          <div className="h-10 animate-pulse rounded-lg bg-radio-surface-raised" />
+          <div className="h-16 animate-pulse rounded-xl bg-radio-surface-raised" />
         </div>
       </Frame>
     );
@@ -105,9 +105,9 @@ export function LiveSection({ locale, onRadioClosed }: { locale: string; onRadio
   if (access === 'error' || !home) {
     return (
       <Frame t={t}>
-        <div data-testid="radio-live-error" className="flex items-center gap-3 text-sm text-workspace-secondary">
+        <div data-testid="radio-live-error" className="flex items-center gap-3 text-sm text-radio-secondary">
           <span>{t('unavailable')}</span>
-          <button type="button" onClick={reload} className="min-h-11 rounded-lg border border-gray-300 px-3 text-sm hover:bg-gray-50">
+          <button type="button" onClick={reload} className="min-h-11 rounded-lg border border-radio-surface-raised px-3 text-sm hover:bg-radio-surface-raised">
             {tStates('retry')}
           </button>
         </div>
@@ -195,12 +195,12 @@ export function LiveSection({ locale, onRadioClosed }: { locale: string; onRadio
   return (
     <Frame t={t}>
       {!anyTopic ? (
-        <p className="text-sm text-workspace-secondary" data-testid="radio-live-empty">
+        <p className="text-sm text-radio-secondary" data-testid="radio-live-empty">
           {t('empty')}
         </p>
       ) : (
         <>
-          <p className="text-xs text-workspace-secondary" data-testid="radio-live-left">
+          <p className="text-xs text-radio-secondary" data-testid="radio-live-left">
             {left > 0 ? t('left', { n: left }) : t('noneLeft')}
           </p>
           <div className="flex flex-wrap gap-2" role="group" aria-label={t('section')}>
@@ -216,7 +216,7 @@ export function LiveSection({ locale, onRadioClosed }: { locale: string; onRadio
                 }}
                 className={cn(
                   'min-h-11 rounded-full border px-4 text-sm',
-                  host?.key === h.key ? 'border-primary bg-primary/5 font-medium text-primary' : 'border-gray-200 bg-white text-workspace-text'
+                  host?.key === h.key ? 'border-radio-ring bg-radio-surface-raised font-medium text-radio-progress' : 'border-radio-surface-raised bg-radio-surface text-radio-text'
                 )}
               >
                 {h.name}
@@ -233,11 +233,11 @@ export function LiveSection({ locale, onRadioClosed }: { locale: string; onRadio
                 onClick={() => setTopicId(x.id)}
                 className={cn(
                   'min-h-11 rounded-xl border p-3 text-left',
-                  topic?.id === x.id ? 'border-primary bg-primary/5' : 'border-gray-200 bg-white'
+                  topic?.id === x.id ? 'border-radio-ring bg-radio-surface-raised' : 'border-radio-surface-raised bg-radio-surface'
                 )}
               >
-                <span className="block text-sm font-semibold text-workspace-text">{x.title_zh}</span>
-                <span className="mt-1 block text-xs text-workspace-secondary">
+                <span className="block text-sm font-semibold text-radio-text">{x.title_zh}</span>
+                <span className="mt-1 block text-xs text-radio-secondary">
                   {t('question')}
                   {': '}
                   <span lang="en">{x.question_en}</span>
@@ -254,7 +254,7 @@ export function LiveSection({ locale, onRadioClosed }: { locale: string; onRadio
               void start();
             }}
             data-testid="radio-live-start"
-            className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+            className="inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-5 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
           >
             {starting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
             {t('start')}
@@ -281,10 +281,10 @@ export function LiveSection({ locale, onRadioClosed }: { locale: string; onRadio
 
 function Frame({ t, children }: { t: ReturnType<typeof useTranslations>; children: React.ReactNode }) {
   return (
-    <section data-testid="radio-home-live" className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4">
+    <section data-testid="radio-home-live" className="flex flex-col gap-3 rounded-xl border border-radio-surface-raised bg-radio-surface p-4">
       <div>
-        <h2 className="text-base font-semibold text-workspace-text">{t('section')}</h2>
-        <p className="mt-0.5 text-sm text-workspace-secondary">{t('subtitle')}</p>
+        <h2 className="text-base font-semibold text-radio-text">{t('section')}</h2>
+        <p className="mt-0.5 text-sm text-radio-secondary">{t('subtitle')}</p>
       </div>
       {children}
     </section>
@@ -323,27 +323,27 @@ function DisclaimerSheet({
         aria-modal="true"
         aria-labelledby="radio-live-disclaimer-title"
         data-testid="radio-live-disclaimer"
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 outline-none sm:rounded-2xl"
+        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-radio-surface p-5 outline-none sm:rounded-2xl"
       >
         <h2 id="radio-live-disclaimer-title" className="text-base font-semibold">
           {t('title')}
         </h2>
-        <p className="mt-3 text-sm text-workspace-text">{t('what')}</p>
-        <p className="mt-2 text-sm text-workspace-text">{t('not')}</p>
-        <p className="mt-2 text-sm font-medium text-workspace-text" data-testid="radio-live-disclaimer-help">
+        <p className="mt-3 text-sm text-radio-text">{t('what')}</p>
+        <p className="mt-2 text-sm text-radio-text">{t('not')}</p>
+        <p className="mt-2 text-sm font-medium text-radio-text" data-testid="radio-live-disclaimer-help">
           {t('help')}
         </p>
         {state === 'failed' ? (
           // The acknowledgement failed: the sheet stays, nothing starts.
-          <div role="alert" className="mt-3 flex items-center gap-3 text-sm text-red-700" data-testid="radio-live-disclaimer-error">
+          <div role="alert" className="mt-3 flex items-center gap-3 text-sm text-radio-recording-ring" data-testid="radio-live-disclaimer-error">
             <span>{tLive('unavailable')}</span>
-            <button type="button" onClick={onAgree} className="min-h-11 rounded-lg border border-red-300 px-3 text-sm">
+            <button type="button" onClick={onAgree} className="min-h-11 rounded-lg border border-radio-recording-ring px-3 text-sm">
               {tStates('retry')}
             </button>
           </div>
         ) : null}
         <div className="mt-4 flex justify-end gap-2">
-          <button type="button" onClick={onLater} data-testid="radio-live-disclaimer-later" className="min-h-11 rounded-lg border border-gray-300 px-4 text-sm">
+          <button type="button" onClick={onLater} data-testid="radio-live-disclaimer-later" className="min-h-11 rounded-lg border border-radio-surface-raised px-4 text-sm">
             {t('later')}
           </button>
           <button
@@ -351,7 +351,7 @@ function DisclaimerSheet({
             disabled={state === 'saving'}
             onClick={onAgree}
             data-testid="radio-live-disclaimer-agree"
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-white disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-gradient-to-r from-radio-accent-start to-radio-accent-end ring-2 ring-radio-ring px-4 text-sm font-medium text-white disabled:opacity-60"
           >
             {state === 'saving' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
             {t('agree')}
