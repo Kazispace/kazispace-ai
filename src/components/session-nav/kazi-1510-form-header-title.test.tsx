@@ -111,3 +111,14 @@ describe('Form mode header title (KAZI-1510)', () => {
     expect(el.querySelector('h1')?.textContent?.trim()).toBe('雅思备考 · 11月27日');
   });
 });
+
+describe('workspace rail column in Form mode (KAZI-1510, #319 review R1)', () => {
+  it('a rail opened in Chat does not stay open beside the form page', async () => {
+    const { railColumnShown } = await import('./session-nav-shell');
+    expect(railColumnShown('chat', true, true)).toBe(true);
+    expect(railColumnShown(null, true, true)).toBe(true);
+    expect(railColumnShown('form', true, true)).toBe(false);
+    expect(railColumnShown('chat', false, true)).toBe(false);
+    expect(railColumnShown('chat', true, false)).toBe(false);
+  });
+});
