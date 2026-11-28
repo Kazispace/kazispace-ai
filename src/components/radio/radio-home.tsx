@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import { Loader2, Play, Settings } from 'lucide-react';
+import { Info, Loader2, Play, Settings } from 'lucide-react';
 
 import { LiveSection } from '@/components/radio/live-section';
 import { RadioCover } from '@/components/radio/radio-cover';
@@ -254,8 +254,11 @@ export function RadioHomeScreen({ locale }: { locale: string }) {
       ) : null}
 
       {notice?.text ? (
-        <div role="status" data-testid="radio-home-notice" className="flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-          <p>{notice.text}</p>
+        <div role="status" data-testid="radio-home-notice" className="flex items-start justify-between gap-3 rounded-xl border-l-4 border-radio-ring bg-radio-surface-raised p-3 text-sm text-radio-text">
+          <p className="flex items-start gap-2">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-radio-ring" aria-hidden />
+            {notice.text}
+          </p>
           <button type="button" onClick={() => setNotice(null)} className="shrink-0 text-xs underline">
             {t('notice.close')}
           </button>

@@ -48,6 +48,7 @@ import {
 import { buildClinicHubHref } from '@/lib/hub-entry';
 import { useUIStore } from '@/lib/store';
 import { isTelegramWebApp } from '@/lib/telegram';
+import { radioChoiceNumber } from '@/lib/radio/format';
 import { cn } from '@/lib/utils';
 import type { ApiResponse } from '@/types';
 import type {
@@ -601,7 +602,8 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
 
   // The header shows the story's name (Player · Layout). A story just started may not be in the
   // cached radio home yet: read it again once.
-  const storyTitle = home?.continue_listening?.find((x) => x.save_id === saveId)?.title ?? null;
+  const savedStory = home?.continue_listening?.find((x) => x.save_id === saveId) ?? null;
+  const storyTitle = savedStory?.title ?? null;
   const askedHomeAgain = useRef(false);
   useEffect(() => {
     if (home && !storyTitle && !askedHomeAgain.current) {
@@ -609,6 +611,16 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
       void refreshHome();
     }
   }, [home, storyTitle, refreshHome]);
+  // Player · Now playing (Personal radio 0.35): "the choice the listener is heading to" comes from the save
+  // (`choices_made + 1`); the turn answer does not carry it, so the home is read again when the story moves to a
+  // new part (#321 review R1 small 3), and the line follows the listener instead of going stale.
+  const nodeId = resp?.node?.node_id ?? null;
+  const lastNodeForProgress = useRef<string | null>(null);
+  useEffect(() => {
+    if (!nodeId) return;
+    if (lastNodeForProgress.current !== null && lastNodeForProgress.current !== nodeId) void refreshHome();
+    lastNodeForProgress.current = nodeId;
+  }, [nodeId, refreshHome]);
 
   const atChoicePoint = () => respRef.current?.node?.node_type === 'choice' && playerRef.current.done;
   const readChoicesAgain = useCallback(() => playerRef.current.playFrom(segLen), [segLen]);
@@ -1017,9 +1029,7 @@ export function StoryPlayerScreen({ locale, saveId, from }: { locale: string; sa
         back={back}
         aigcLabel={aigcLabel}
         title={storyTitle ?? t('player.title')}
-        // Player · Now playing (Personal radio 0.35): the cover. "The choice the listener is heading to" is left out
-        // here: the player does not track it after each choice, and the save's count would go stale.
-        nowPlaying={{ kind: 'story' }}
+        nowPlaying={{ kind: 'story', detail: savedStory ? t('studio.progress', { n: radioChoiceNumber(savedStory.choices_made) }) : null }}
         action={
           <div className="relative">
             <button

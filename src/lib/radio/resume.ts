@@ -2,6 +2,10 @@
  * The radio home's resume bar (KAZI-1512; kazispace-ui Personal radio 0.35, Radio home · Resume bar): the story
  * or episode the listener was last in while it is still in progress. It opens the player; it does not play on
  * the home (leaving the player stops it).
+ *
+ * Programmes: the spec's bar also covers "the programme the listener was last in", but `GET home` carries no
+ * programme progress (`RadioProgramSummary` has no position or time), so only stories and episodes can be picked
+ * today. When the server adds it, add programmes here (#321 review R1 small 2; follow-up under KAZI-1512).
  */
 import type { RadioHome, RadioSaveSummary, RadioStorylineSummary } from '@/types/radio';
 

@@ -16,7 +16,10 @@ const m = vi.hoisted(() => ({
   replace: vi.fn(),
   push: vi.fn(),
   toast: vi.fn(),
+  homeRefresh: vi.fn(),
 }));
+// KAZI-1512: what the radio home says about this save (Now playing's "Choice n"); null = the old fixture.
+const homeSave = vi.hoisted(() => ({ value: null as null | { save_id: string; title: string; choices_made: number } }));
 
 vi.mock('next-intl', () => ({
   useTranslations: (ns: string) => (key: string) => `${ns}.${key}`,
@@ -37,9 +40,16 @@ vi.mock('@/lib/store', () => ({
 vi.mock('@/hooks/use-radio-home', () => ({
   useRadioHome: () => ({
     access: 'open',
-    home: { prefs: { listen_window_on: false }, availability: { tts: true, asr: true, new_render: true } },
+    home: {
+      prefs: { listen_window_on: false },
+      availability: { tts: true, asr: true, new_render: true },
+      ...(homeSave.value ? { continue_listening: [homeSave.value] } : {}),
+    },
     isLoading: false,
-    refresh: () => Promise.resolve(),
+    refresh: () => {
+      m.homeRefresh();
+      return Promise.resolve();
+    },
   }),
 }));
 vi.mock('@/lib/radio/api', async (orig) => ({
@@ -128,6 +138,7 @@ beforeEach(() => {
   document.body.appendChild(container);
   root = createRoot(container);
   Object.values(m).forEach((f) => f.mockReset());
+  homeSave.value = null;
 });
 afterEach(() => {
   act(() => root.unmount());
@@ -137,6 +148,19 @@ afterEach(() => {
 });
 
 describe('StoryPlayerScreen', () => {
+  it('KAZI-1512 Now playing: the cover and the choice the listener is heading to; the home is read again on each new part', async () => {
+    homeSave.value = { save_id: 'sv1', title: 'Rainy night', choices_made: 1 };
+    m.save.mockResolvedValue({ success: true, data: resp({}) });
+    m.turn.mockResolvedValue({ success: true, data: resp({ nodeId: 'n2', save_version: 4 }) });
+    await mount();
+    expect(q('radio-now-playing')?.querySelector('[data-testid="radio-cover"]')?.getAttribute('data-kind')).toBe('story');
+    expect(q('radio-now-playing-detail')?.textContent).toBe('radio.studio.progress');
+    const before = m.homeRefresh.mock.calls.length; // the first part does not read it again
+    await act(async () => (qa('radio-choice')[0] as HTMLButtonElement).click());
+    await act(async () => {});
+    expect(m.homeRefresh.mock.calls.length).toBe(before + 1);
+  });
+
   it('resumes the save: captions, choice cards, back to the radio home', async () => {
     m.save.mockResolvedValue({ success: true, data: resp({}) });
     await mount();

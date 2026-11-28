@@ -58,6 +58,7 @@ vi.mock('@/lib/radio/api', async (orig) => ({
 
 import { RadioHomeScreen } from '@/components/radio/radio-home';
 import { ListeningIndicator, MicButton, formatElapsed } from '@/components/radio/voice-parts';
+import { NoticeCard } from '@/components/radio/ask-parts';
 import { PlayerShell } from '@/components/radio/player-parts';
 import { RadioCover } from '@/components/radio/radio-cover';
 import { pickRadioResume } from '@/lib/radio/resume';
@@ -186,6 +187,14 @@ describe('covers and the page', () => {
     expect(classes[0]).toContain('from-radio-accent-start');
     expect(classes[1]).toContain('from-radio-now');
     expect(classes[2]).toContain('from-radio-accent-end');
+  });
+
+  it('notices use the Radio palette with an icon, not a light card on the dark page (#321 review R1 small 1)', async () => {
+    await act(async () => root.render(<NoticeCard notice={{ kind: 'quota', text: 'Out of questions' } as never} onClose={() => {}} />));
+    const box = q('radio-notice');
+    expect(box?.className).toContain('bg-radio-surface-raised');
+    expect(box?.className).not.toMatch(/amber|gray-/);
+    expect(box?.querySelector('svg')).not.toBeNull();
   });
 
   it('the radio colours come from tokens 0.4', () => {

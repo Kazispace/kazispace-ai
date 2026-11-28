@@ -858,7 +858,7 @@ function LiveSessionView({
               </p>
             ))}
             {bubble && upgrade?.key_word_zh ? (
-              <p role="status" lang="zh" data-testid="radio-live-key-word-zh" className="mt-2 inline-block rounded-lg bg-gray-900 px-3 py-1.5 text-sm text-white">
+              <p role="status" lang="zh" data-testid="radio-live-key-word-zh" className="mt-2 inline-block rounded-lg bg-radio-surface-raised px-3 py-1.5 text-sm text-radio-text ring-1 ring-radio-ring">
                 {upgrade.key_word_zh}
               </p>
             ) : null}
