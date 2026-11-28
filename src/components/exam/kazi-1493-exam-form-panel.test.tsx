@@ -22,6 +22,7 @@ import {
 
 const api = vi.hoisted(() => ({
   exams: ['ielts', 'cet4', 'pet', 'fce'] as string[] | null,
+  types: null as Record<string, string[]> | null,
   sets: [] as unknown[],
   createSpace: vi.fn(),
   sendSpaceTurn: vi.fn(),
@@ -32,7 +33,7 @@ const api = vi.hoisted(() => ({
 
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }));
 vi.mock('@/lib/exam-form/api', () => ({
-  getEnglishExams: async () => api.exams,
+  getExamCatalog: async () => (api.exams ? { exams: api.exams, types: api.types } : null),
   listFormSets: async () => api.sets,
 }));
 vi.mock('@/lib/spaces-api', () => ({
@@ -119,6 +120,7 @@ const q = (id: string) => host!.querySelector<HTMLElement>(`[data-testid="${id}"
 beforeEach(() => {
   clearCurrentSet();
   api.exams = ['ielts', 'cet4', 'pet', 'fce'];
+  api.types = null;
   api.sets = [];
   api.createSpace.mockReset().mockResolvedValue({ success: true, data: { id: 'sp_form1' } });
   api.sendSpaceTurn.mockReset().mockResolvedValue(turnResponse('objective_set'));
