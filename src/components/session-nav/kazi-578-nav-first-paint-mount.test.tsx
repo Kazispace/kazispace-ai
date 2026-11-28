@@ -126,8 +126,8 @@ vi.mock('@/components/session-nav/session-icon-rail', () => ({
 }));
 
 vi.mock('@/components/session-nav/session-context-header', () => ({
-  SessionContextHeader: (props: { onOpenMobilePanel?: () => void; mobilePanelLabel?: string }) => (
-    <div data-testid="context-header">
+  SessionContextHeader: (props: { onOpenMobilePanel?: () => void; mobilePanelLabel?: string; fixedTitle?: string | null }) => (
+    <div data-testid="context-header" data-fixed-title={props.fixedTitle ?? ''}>
       {props.onOpenMobilePanel ? (
         <button type="button" aria-label={props.mobilePanelLabel} onClick={props.onOpenMobilePanel} />
       ) : null}
@@ -340,10 +340,14 @@ describe('KAZI-578 SessionNav first-paint mount timing', () => {
     expect(tabsEl).not.toBeNull();
     expect(header.compareDocumentPosition(tabsEl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(reservedColumns(host!).length).toBe(1); // the space list, pinned in Chat mode
+    // KAZI-1510: Chat mode keeps the open chat's name (no fixed title).
+    expect(header.getAttribute('data-fixed-title')).toBe('');
 
     await act(async () => {
       host!.querySelector<HTMLButtonElement>('[data-testid="exam-mode-form"]')!.click();
     });
+    // KAZI-1510 (Owen: "标题可以固定"): Form mode's header shows the Form tab's name.
+    expect(host!.querySelector('[data-testid="context-header"]')?.getAttribute('data-fixed-title')).toBe('form');
     // KAZI-1493: Form mode renders the Form page (its own tests: kazi-1493-exam-form-panel.test.tsx).
     expect(host!.querySelector('[data-testid="exam-form-panel"] [data-testid="exam-form-panel-stub"]')).not.toBeNull();
     expect(host!.querySelector('[data-testid="main-col"]')?.closest('[role="tabpanel"]')?.hasAttribute('hidden')).toBe(true);
@@ -353,6 +357,7 @@ describe('KAZI-578 SessionNav first-paint mount timing', () => {
       host!.querySelector<HTMLButtonElement>('[data-testid="exam-mode-chat"]')!.click();
     });
     expect(host!.querySelector('[data-testid="exam-form-panel"]')).toBeNull();
+    expect(host!.querySelector('[data-testid="context-header"]')?.getAttribute('data-fixed-title')).toBe('');
     expect(reservedColumns(host!).length).toBe(1);
   });
 
